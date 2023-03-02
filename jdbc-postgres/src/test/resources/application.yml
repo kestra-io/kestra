@@ -57,3 +57,6 @@ kestra:
       settings:
         table: "settings"
         cls: io.kestra.core.models.Setting
+      flowtopologies:
+        table: "flow_topologies"
+        cls: io.kestra.core.models.topologies.FlowTopology

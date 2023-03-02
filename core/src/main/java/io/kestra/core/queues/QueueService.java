@@ -6,10 +6,10 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
+import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.*;
-
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -45,6 +45,10 @@ public class QueueService {
             return ((ExecutorState) object).getExecutionId();
         } else if (object.getClass() == Setting.class) {
             return ((Setting) object).getKey();
+        } else if (object.getClass() == Executor.class) {
+          return ((Executor) object).getExecution().getId();
+        } else if (object.getClass() == FlowTopology.class) {
+            return ((FlowTopology) object).uid();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

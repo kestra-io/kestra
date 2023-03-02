@@ -1,22 +1,28 @@
 import {describe, it, expect} from "vitest"
 import _ from "lodash";
-import TreeNode from "../../../../src/components/graph/TreeNode.vue";
+import TreeTaskNode from "../../../../src/components/graph/TreeTaskNode.vue";
 import EACH_SEQUENTIAL_FLOWGRAPH from "../../../fixtures/flowgraphs/each-sequential.json";
 import EACH_SEQUENTIAL_EXECUTION from "../../../fixtures/executions/each-sequential.json";
 import mount from "../../../local.js";
 
 const localMount = (n, execution) => {
-    return mount(TreeNode, {
-        props: {
-            n: n,
-            execution: execution,
-            flowId: "flowId",
-            namespace: "namespace",
+    return mount(
+        TreeTaskNode,
+        {
+            props: {
+                n: n,
+                execution: execution,
+                flowId: "flowId",
+                namespace: "namespace",
+            }
+        },
+        (store) => {
+            store.commit("execution/setExecution", execution)
         }
-    })
+    )
 }
 
-describe("TreeNode", () => {
+describe("TreeTaskNode", () => {
     it("success execution", () => {
         const wrapper = localMount(
             EACH_SEQUENTIAL_FLOWGRAPH.nodes.filter(r => r.uid === "1-2")[0],
@@ -26,7 +32,10 @@ describe("TreeNode", () => {
         expect(wrapper.vm.task.id).toBe("1-2");
         expect(wrapper.vm.state).toBe("SUCCESS");
         expect(wrapper.vm.taskRuns).toHaveLength(3);
-        expect(wrapper.vm.duration).toBe(0.000633852);
+        expect(wrapper.vm.histories[0].state).toBe("CREATED");
+        expect(wrapper.vm.histories[0].date.toISOString()).toBe("2020-12-26T20:38:16.001Z");
+        expect(wrapper.vm.histories[1].state).toBe("SUCCESS");
+        expect(wrapper.vm.histories[1].date.toISOString()).toBe("2020-12-26T20:38:16.002Z");
     })
 
     it("sorting state", () => {

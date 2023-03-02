@@ -1,7 +1,6 @@
 import {createApp} from "vue"
 import VueAxios from "vue-axios";
 
-
 import App from "./App.vue"
 import initApp from "./utils/init"
 import configureAxios from "./utils/axios"

@@ -11,10 +11,13 @@ import TemplateEdit from "../components/templates/TemplateEdit.vue"
 import Templates from "../components/templates/Templates.vue"
 import FlowsSearch from "../components/flows/FlowsSearch.vue";
 import Errors from "../components/errors/Errors.vue";
+import Home from "../components/home/Home.vue";
+import Welcome from "../components/onboarding/Welcome.vue";
 
 export default [
     //Flows
-    {name: "home", path: "/", redirect: "/flows"},
+    {name: "home", path: "/", component: Home},
+    {name: "welcome", path: "/welcome", component: Welcome},
     {name: "flows/list", path: "/flows", component: Flows},
     {name: "flows/search", path: "/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/flows/new", component: FlowEdit},

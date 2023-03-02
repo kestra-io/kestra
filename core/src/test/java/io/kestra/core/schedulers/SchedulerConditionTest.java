@@ -96,7 +96,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
                     queueCount.countDown();
                     if (queueCount.getCount() == 0) {
-                        assertThat((ZonedDateTime) execution.getTrigger().getVariables().get("date"), is(ZonedDateTime.parse("2022-01-03T00:00:00+01:00")));
+                        assertThat(ZonedDateTime.parse((String) execution.getTrigger().getVariables().get("date")), is(ZonedDateTime.parse("2022-01-03T00:00:00+01:00")));
                     }
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));

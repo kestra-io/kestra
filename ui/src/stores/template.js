@@ -1,3 +1,6 @@
+import YamlUtils from "../utils/yamlUtils";
+import Utils from "../utils/utils";
+
 export default {
     namespaced: true,
     state: {
@@ -33,7 +36,8 @@ export default {
             })
         },
         saveTemplate({commit}, options) {
-            return this.$http.put(`/api/v1/templates/${options.template.namespace}/${options.template.id}`, options.template).then(response => {
+            const template = YamlUtils.parse(options.template)
+            return this.$http.put(`/api/v1/templates/${template.namespace}/${template.id}`, template).then(response => {
                 if (response.status >= 300) {
                     return Promise.reject(new Error("Server error on template save"))
                 } else {
@@ -44,7 +48,7 @@ export default {
             })
         },
         createTemplate({commit}, options) {
-            return this.$http.post("/api/v1/templates", options.template).then(response => {
+            return this.$http.post("/api/v1/templates", YamlUtils.parse(options.template)).then(response => {
                 commit("setTemplate", response.data)
 
                 return response.data;
@@ -55,6 +59,29 @@ export default {
                 commit("setTemplate", null)
             })
         },
+        exportTemplateByIds(_, options) {
+            return this.$http.post("/api/v1/templates/export/by-ids", options.ids, {responseType: "blob"})
+                .then(response => {
+                    const blob = new Blob([response.data], {type: "application/octet-stream"});
+                    const url = window.URL.createObjectURL(blob)
+                    Utils.downloadUrl(url, "templates.zip");
+                });
+        },
+        exportTemplateByQuery(_, options) {
+            return this.$http.get("/api/v1/templates/export/by-query", {params: options})
+                .then(response => {
+                    Utils.downloadUrl(response.request.responseURL, "templates.zip");
+                });
+        },
+        importTemplates(_, options) {
+            return this.$http.post("/api/v1/templates/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+        },
+        deleteTemplateByIds(_, options) {
+            return this.$http.delete("/api/v1/templates/delete/by-ids", {data: options.ids})
+        },
+        deleteTemplateByQuery(_, options) {
+            return this.$http.delete("/api/v1/templates/delete/by-query", options, {params: options})
+        }
     },
     mutations: {
         setTemplates(state, templates) {

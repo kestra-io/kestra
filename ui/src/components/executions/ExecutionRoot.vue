@@ -6,16 +6,18 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteExecution">
+                    <el-button :icon="Delete" type="danger" size="large" v-if="canDelete" @click="deleteExecution">
                         {{ $t('delete') }}
                     </el-button>
-
+                </li>
+                <li>
                     <template v-if="isAllowedTrigger">
-                        <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                        <trigger-flow type="default" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                     </template>
-
+                </li>
+                <li>
                     <template v-if="isAllowedEdit">
-                        <el-button :icon="Pencil" @click="editFlow">
+                        <el-button :icon="Pencil" type="default" size="large" @click="editFlow">
                             {{ $t('edit flow') }}
                         </el-button>
                     </template>
@@ -89,7 +91,24 @@
                                 self.closeSSE();
                             }
 
-                            this.$store.commit("execution/setExecution", JSON.parse(event.data));
+                            let execution = JSON.parse(event.data);
+
+                            if (!this.flow ||
+                                execution.flowId !== this.flow.id ||
+                                execution.namespace !== this.flow.namespace ||
+                                execution.flowRevision !== this.flow.revision
+                            ) {
+                                this.$store.dispatch(
+                                    "flow/loadFlow",
+                                    {namespace: execution.namespace, id: execution.flowId, revision: execution.flowRevision}
+                                );
+                                this.$store.dispatch("flow/loadRevisions", {
+                                    namespace: execution.namespace,
+                                    id: execution.flowId
+                                })
+                            }
+
+                            this.$store.commit("execution/setExecution", execution);
                         }
                     });
             },
@@ -162,6 +181,7 @@
             },
         },
         computed: {
+            ...mapState("flow", ["flow", "revisions"]),
             ...mapState("execution", ["execution"]),
             ...mapState("auth", ["user"]),
             tabs() {
@@ -218,7 +238,7 @@
                 return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             },
             canDelete() {
-                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.DELETE, this.execution.namespace);
+                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
             },
             ready() {
                 return this.execution !== undefined;

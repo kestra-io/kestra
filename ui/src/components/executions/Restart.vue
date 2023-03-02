@@ -17,32 +17,28 @@
 
         <template #footer>
             <el-button @click="isOpen = false">
-                Cancel
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button @click="restartLastRevision()">
+                {{ $t('replay latest revision') }}
             </el-button>
             <el-button type="primary" @click="restart()">
-                OK
+                {{ $t('ok') }}
             </el-button>
         </template>
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
 
-        <el-form class="text-muted">
-            <p>{{ $t("restart change revision") }}</p>
+        <el-form>
+            <p  class="text-muted">{{ $t("restart change revision") }}</p>
             <el-form-item :label="$t('revisions')">
-                <el-select
-                    v-model="revisionsSelected"
-                    filterable
-                    :persistent="false"
-                    :placeholder="$t('revisions')"
-                >
+                <el-select v-model="revisionsSelected">
                     <el-option
                         v-for="item in revisionsOptions"
                         :key="item.value"
                         :label="item.text"
                         :value="item.value"
-                    >
-                        {{ item.value }}
-                    </el-option>
+                    />
                 </el-select>
             </el-form-item>
         </el-form>
@@ -107,6 +103,10 @@
                         id: this.execution.flowId
                     })
             },
+            restartLastRevision() {
+                this.revisionsSelected = this.revisions[this.revisions.length - 1].revision;
+                this.restart();
+            },
             restart() {
                 this.isOpen = false
 
@@ -145,12 +145,14 @@
                 return this.isReplay ? "replay" : "restart";
             },
             revisionsOptions() {
-                return (this.revisions || []).map((revision) => {
-                    return {
-                        value: revision.revision,
-                        text: revision.revision + (this.sameRevision(revision.revision) ? " (" + this.$t("current") + ")" : ""),
-                    };
-                });
+                return (this.revisions || [])
+                    .map((revision) => {
+                        return {
+                            value: revision.revision,
+                            text: revision.revision + (this.sameRevision(revision.revision) ? " (" + this.$t("current") + ")" : ""),
+                        };
+                    })
+                    .reverse();
             },
             enabled() {
                 if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {

@@ -1,22 +1,25 @@
 package io.kestra.cli.commands.flows.namespaces;
 
-import io.kestra.cli.AbstractApiCommand;
-import io.kestra.cli.commands.flows.ValidateCommand;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
+import io.kestra.cli.commands.flows.FlowValidateCommand;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
+import javax.validation.ConstraintViolationException;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",
@@ -24,46 +27,51 @@ import javax.validation.ConstraintViolationException;
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
+public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    public YamlFlowParser yamlFlowParser;
 
-    @CommandLine.Parameters(index = "0", description = "the namespace of flow to update")
-    private String namespace;
-
-    @CommandLine.Parameters(index = "1", description = "the directory containing flows to from current namespace")
-    private Path directory;
 
     @Override
     public Integer call() throws Exception {
         super.call();
 
         try {
-            List<Flow> flows = Files.walk(directory)
+            List<String> flows = Files.walk(directory)
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
-                .map(path -> yamlFlowParser.parse(path.toFile()))
+                .map(path -> {
+                    try {
+                        return Files.readString(path, Charset.defaultCharset());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .collect(Collectors.toList());
 
+            String body = "";
             if (flows.size() == 0) {
-                stdErr("No flow found on '{}'", directory.toFile().getAbsolutePath());
-                return 1;
+                stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
+            } else {
+                body = String.join("\n---\n", flows);
             }
-
             try(DefaultHttpClient client = client()) {
-                MutableHttpRequest<List<Flow>> request = HttpRequest
-                    .POST("/api/v1/flows/" + namespace, flows);
+                MutableHttpRequest<String> request = HttpRequest
+                    .POST("/api/v1/flows/" + namespace + "?delete=" + !noDelete, body).contentType(MediaType.APPLICATION_YAML);
 
-                List<Flow> updated = client.toBlocking().retrieve(
+                List<FlowWithSource> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),
-                    Argument.listOf(Flow.class)
+                    Argument.listOf(FlowWithSource.class)
                 );
 
                 stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
                 updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
+            } catch (HttpClientResponseException e){
+                FlowValidateCommand.handleHttpException(e, "flow");
+                return 1;
             }
         } catch (ConstraintViolationException e) {
-            ValidateCommand.handleException(e);
+            FlowValidateCommand.handleException(e, "flow");
 
             return 1;
         }

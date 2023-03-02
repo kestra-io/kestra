@@ -38,7 +38,7 @@ abstract public class AbstractBash extends Task {
     @Schema(
         title = "Runner to use"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @NotNull
     @NotEmpty
     protected AbstractBash.Runner runner = Runner.PROCESS;
@@ -46,13 +46,14 @@ abstract public class AbstractBash extends Task {
     @Schema(
         title = "Docker options when using runner `DOCKER`"
     )
+    @PluginProperty
     protected DockerOptions dockerOptions;
 
     @Builder.Default
     @Schema(
         title = "Interpreter to used"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @NotNull
     @NotEmpty
     protected String interpreter = "/bin/sh";
@@ -61,7 +62,7 @@ abstract public class AbstractBash extends Task {
     @Schema(
         title = "Interpreter args used"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     protected String[] interpreterArgs = {"-c"};
 
     @Builder.Default
@@ -71,7 +72,7 @@ abstract public class AbstractBash extends Task {
             "The benefit of using -e is that it prevents errors snowballing into serious issues when they could " +
             "have been caught earlier."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @NotNull
     protected Boolean exitOnFailed = true;
 
@@ -89,7 +90,7 @@ abstract public class AbstractBash extends Task {
         description = "use `outputFiles`",
         deprecated = true
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Deprecated
     protected List<String> outputsFiles;
 
@@ -100,7 +101,7 @@ abstract public class AbstractBash extends Task {
             "If you add a files with `[\"first\"]`, you can use the special vars `echo 1 >> {[ outputFiles.first }}`" +
             " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     protected List<String> outputFiles;
 
     @Schema(
@@ -111,13 +112,13 @@ abstract public class AbstractBash extends Task {
             "and `echo 2 >> {[ outputDirs.myDir }}/file2.txt` and both files will be uploaded to internal storage." +
             " Then you can used them on others tasks using `{{ outputs.taskId.files['myDir/file1.txt'] }}`"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     protected List<String> outputDirs;
 
     @Schema(
-        title = "Input files are extra files supplied by user that make it simpler organize code.",
-        description = "Describe a files map (that can be a map or a json string) that will be written and usable in execution context. " +
-            "You can reach files using a workingDir variable like 'source {{workingDir}}/myfile.sh' "
+        title = "Input files are extra files that will be available in the script working directory.",
+        description = "You can define the files as map or a JSON string." +
+            "Each file can be defined inlined or can reference a file from Kestra's internal storage."
     )
     @PluginProperty(
         additionalProperties = String.class,
@@ -126,7 +127,7 @@ abstract public class AbstractBash extends Task {
     protected Object inputFiles;
 
     @Schema(
-        title = "Additional environnements variable to add for current process."
+        title = "Additional environments variable to add for current process."
     )
     @PluginProperty(
         additionalProperties = String.class,
@@ -138,7 +139,7 @@ abstract public class AbstractBash extends Task {
     @Schema(
         title = "Use `WARNING` state if any stdErr is sent"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @NotNull
     protected Boolean warningOnStdErr = true;
 

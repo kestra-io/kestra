@@ -41,36 +41,63 @@
             <el-form-item :label="$t('Default namespace')">
                 <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
             </el-form-item>
+
+            <el-form-item :label="$t('Default log level')">
+                <log-level-selector clearable :value="defaultLogLevel" @update:model-value="onLevelChange" />
+            </el-form-item>
+
+            <el-form-item v-if="canReadFlows || canReadTemplates" :label="$t('exports')">
+                <el-button v-if="canReadFlows" :icon="Download" size="large" @click="exportFlows()">
+                    {{ $t('export all flows') }}
+                </el-button>
+                <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()">
+                    {{ $t('export all templates') }}
+                </el-button>
+            </el-form-item>
         </el-form>
     </div>
 </template>
 
+<script setup>
+    import Download from "vue-material-design-icons/Download.vue";
+</script>
+
 <script>
     import RouteContext from "../../mixins/routeContext";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
+    import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
+    import Utils from "../../utils/utils";
+    import {mapGetters, mapState} from "vuex";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         mixins: [RouteContext],
         components: {
             NamespaceSelect,
+            LogLevelSelector,
         },
         data() {
             return {
                 defaultNamespace: undefined,
+                defaultLogLevel: undefined,
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
                 autofoldTextEditor: undefined,
+                guidedTour: undefined
             };
         },
         created() {
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+            this.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
+            this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -83,15 +110,25 @@
                 }
                 this.$toast().saved();
             },
+            onLevelChange(value) {
+                this.defaultLogLevel = value;
+
+                if (value) {
+                    localStorage.setItem("defaultLogLevel", value)
+                } else {
+                    localStorage.removeItem("defaultLogLevel")
+                }
+                this.$toast().saved();
+            },
             onLang(value) {
                 localStorage.setItem("lang", value);
                 this.$moment.locale(value);
-                this.$root.$i18n.locale = value;
+                this.$i18n.locale = value;
                 this.lang = value;
                 this.$toast().saved();
             },
             onTheme(value) {
-                this.$root.switchTheme(value)
+                Utils.switchTheme(value)
                 this.theme = value;
                 this.$toast().saved();
             },
@@ -107,6 +144,8 @@
             },
         },
         computed: {
+            ...mapGetters("core", ["guidedProperties"]),
+            ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")
@@ -129,7 +168,27 @@
                     {value: "vs", text: "Light"},
                     {value: "dark", text: "Dark"}
                 ]
-            }
+            },
+            canReadFlows() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+            },
+            canReadTemplates() {
+                return this.user && this.user.isAllowed(permission.TEMPLATE, action.READ);
+            },
+            exportFlows() {
+                return this.$store
+                    .dispatch("flow/exportFlowByQuery", {})
+                    .then(_ => {
+                        this.$toast().success(this.$t("flows exported"));
+                    })
+            },
+            exportTemplates() {
+                return this.$store
+                    .dispatch("template/exportTemplateByQuery", {})
+                    .then(_ => {
+                        this.$toast().success(this.$t("templates exported"));
+                    })
+            },
         }
     };
 </script>

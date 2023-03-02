@@ -36,8 +36,8 @@ class PluginListCommandTest {
 
         FileUtils.copyFile(
             new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()
-                .getResource("plugins/plugin-template-test-0.2.0-SNAPSHOT.jar")).toURI()),
-            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.2.0-SNAPSHOT.jar"))
+                .getResource("plugins/plugin-template-test-0.6.0-SNAPSHOT.jar")).toURI()),
+            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.6.0-SNAPSHOT.jar"))
         );
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

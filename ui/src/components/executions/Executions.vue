@@ -50,7 +50,10 @@
                     fixed
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
+                    @selection-change="handleSelectionChange"
                 >
+                    <el-table-column type="selection" v-if="!hidden.includes('selection') && (canUpdate || canDelete)" />
+
                     <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                         <template #default="scope">
                             <id :value="scope.row.id" :shrink="true" />
@@ -110,8 +113,48 @@
                 </el-table>
             </template>
         </data-table>
+
+        <bottom-line>
+            <ul>
+                <li v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
+                        <el-button v-if="canUpdate" :icon="Restart" size="large" @click="restartExecutions()">
+                            {{ $t('restart') }}
+                        </el-button>
+                        <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
+                            {{ $t('kill') }}
+                        </el-button>
+                        <el-button v-if="canDelete" :icon="Delete" size="large" @click="deleteExecutions()">
+                            {{ $t('delete') }}
+                        </el-button>
+                    </bottom-line-counter>
+                </li>
+
+                <li class="spacer" />
+
+                <template v-if="$route.name === 'flows/update'">
+                    <li>
+                        <template v-if="isAllowedEdit">
+                            <el-button :icon="Pencil" size="large" @click="editFlow">
+                                {{ $t('edit flow') }}
+                            </el-button>
+                        </template>
+                    </li>
+                    <li>
+                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                    </li>
+                </template>
+            </ul>
+        </bottom-line>
     </div>
 </template>
+
+<script setup>
+    import Restart from "vue-material-design-icons/Restart.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+</script>
 
 <script>
     import {mapState} from "vuex";
@@ -133,6 +176,11 @@
     import State from "../../utils/state";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
+    import BottomLine from "../layout/BottomLine.vue";
+    import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -149,7 +197,10 @@
             TriggerAvatar,
             DateAgo,
             Kicon,
-            Id
+            Id,
+            BottomLine,
+            BottomLineCounter,
+            TriggerFlow
         },
         props: {
             embed: {
@@ -170,12 +221,16 @@
                 isDefaultNamespaceAllow: true,
                 dailyReady: false,
                 dblClickRouteName: "executions/update",
-                flowTriggerDetails: undefined
+                flowTriggerDetails: undefined,
+                executionsSelection: [],
+                queryBulkAction: false
             };
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
+            ...mapState("auth", ["user"]),
+            ...mapState("flow", ["flow"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -188,9 +243,29 @@
                 return this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
-            }
+            },
+            canUpdate() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE);
+            },
+            canDelete() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE);
+            },
+            isAllowedEdit() {
+                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+            },
         },
         methods: {
+            handleSelectionChange(val) {
+                if (val.length === 0) {
+                    this.queryBulkAction = false
+                }
+                this.executionsSelection = val.map(x => x.id);
+            },
+            selectAll() {
+                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
+                    this.$refs.table.toggleAllSelection();
+                }
+            },
             isRunning(item){
                 return State.isRunning(item.state.current);
             },
@@ -235,6 +310,97 @@
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
+            },
+            restartExecutions() {
+                this.$toast().confirm(
+                    this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/queryRestartExecution", this.loadQuery({
+                                    sort: this.$route.query.sort || "state.startDate:desc",
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                                }))
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {}
+                )
+            },
+            deleteExecutions() {
+                this.$toast().confirm(
+                    this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/queryDeleteExecution", this.loadQuery({
+                                    sort: this.$route.query.sort || "state.startDate:desc",
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {}
+                )
+            },
+            killExecutions() {
+                this.$toast().confirm(
+                    this.$t("bulk kill", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/queryKill", this.loadQuery({
+                                    sort: this.$route.query.sort || "state.startDate:desc",
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkKill", {executionsId: this.executionsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {}
+                )
+            },
+            editFlow() {
+                this.$router.push({name:"flows/update", params: {
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        tab: "source"
+                    }})
             },
         }
     };

@@ -1,6 +1,6 @@
 <template>
     <el-date-picker
-        v-model="date"
+        :model-value="date"
         @update:model-value="onDate"
         type="datetimerange"
         :shortcuts="shortcuts"

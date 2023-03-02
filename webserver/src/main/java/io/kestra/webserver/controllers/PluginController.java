@@ -3,17 +3,25 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.docs.ClassPluginDocumentation;
 import io.kestra.core.docs.DocumentationGenerator;
 import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.templates.Template;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
+import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
-import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,7 +30,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
 
 @Validated
 @Controller("/api/v1/plugins/")
@@ -32,6 +39,42 @@ public class PluginController {
 
     @Inject
     private PluginService pluginService;
+
+    @Get(uri = "schemas/{type}")
+    @Operation(
+        tags = {"Plugins"},
+        summary = "Get all json schemas for a type",
+        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+    )
+    public HttpResponse<Map<String, Object>> schemas(
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type
+    ) {
+        return HttpResponse.ok()
+            .body(this.schemasCache(type))
+            .header("Cache-Control", "public, max-age=3600");
+    }
+
+    @Cacheable("default")
+    protected Map<String, Object> schemasCache(SchemaType type) {
+        if (type == SchemaType.flow) {
+            return jsonSchemaGenerator.schemas(Flow.class);
+        } else if (type == SchemaType.template) {
+            return jsonSchemaGenerator.schemas(Template.class);
+        } else if (type == SchemaType.task) {
+            return jsonSchemaGenerator.schemas(Task.class);
+        } else if (type == SchemaType.trigger) {
+            return jsonSchemaGenerator.schemas(AbstractTrigger.class);
+        } else {
+            throw new IllegalArgumentException("Invalid type " + type);
+        }
+    }
+
+    public enum SchemaType {
+        flow,
+        template,
+        task,
+        trigger
+    }
 
     @Get
     @ExecuteOn(TaskExecutors.IO)
@@ -75,11 +118,13 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
     public Doc pluginDocumentation(
-        @Parameter(description = "The plugin full class name") String cls
+        @Parameter(description = "The plugin full class name") @PathVariable String cls,
+        @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") boolean allProperties
     ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
             pluginService.allPlugins(),
-            cls
+            cls,
+            allProperties
         );
 
         return new Doc(
@@ -93,7 +138,7 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className)  {
+    private ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties)  {
         RegisteredPlugin registeredPlugin = plugins
             .stream()
             .filter(r -> r.hasClass(className))
@@ -107,7 +152,7 @@ public class PluginController {
         Class baseCls = registeredPlugin
             .baseClass(className);
 
-        return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, baseCls);
+        return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
     }
 
     @NoArgsConstructor
@@ -144,8 +189,8 @@ public class PluginController {
         }
 
         /**
-          * we filter from documentation all legacy org.kestra code ...
-          * we do it only on docs to avoid remove backward compatibility everywhere (worker, executor...)
+         * we filter from documentation all legacy org.kestra code ...
+         * we do it only on docs to avoid remove backward compatibility everywhere (worker, executor...)
          */
         private static <T extends Class<?>> Stream<T> filter(List<T> list) {
             return list

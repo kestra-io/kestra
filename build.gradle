@@ -11,7 +11,7 @@ plugins {
     id 'org.gradle.test-retry' version '1.5.0'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.44.0"
+    id "com.github.ben-manes.versions" version "0.45.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '6.0.0' apply false
@@ -22,7 +22,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id 'signing'
     id 'ru.vyarus.pom' version '2.2.2' apply false
-    id 'ru.vyarus.github-info' version '1.4.0' apply false
+    id 'ru.vyarus.github-info' version '1.5.0' apply false
 }
 
 idea {
@@ -70,8 +70,6 @@ allprojects {
     //
     configurations.all {
         resolutionStrategy {
-            force("org.apache.kafka:kafka-clients:" + kafkaVersion)
-            force("org.apache.kafka:kafka-streams:" + kafkaVersion)
             force("org.jooq:jooq:3.16.10")
             force("org.slf4j:slf4j-api:1.7.36")
 

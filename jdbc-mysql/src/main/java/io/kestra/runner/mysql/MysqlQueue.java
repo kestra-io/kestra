@@ -30,7 +30,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         return select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
             .fetchMany()
@@ -43,14 +43,15 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
             )
-            .from(this.table)
+            // force using the dedicated index, or it made a scan of the PK index
+            .from(this.table.useIndex("ix_type__consumers"))
             .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
                 DSL.condition("NOT(FIND_IN_SET(?, consumers) > 0)", consumerGroup)
             )))
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
             .fetchMany()

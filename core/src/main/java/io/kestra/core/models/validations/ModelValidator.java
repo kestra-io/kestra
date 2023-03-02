@@ -1,11 +1,11 @@
 package io.kestra.core.models.validations;
 
 import io.micronaut.validation.validator.Validator;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.Optional;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
@@ -14,12 +14,15 @@ public class ModelValidator {
     @Inject
     Validator validator;
 
-    public <T> Set<ConstraintViolation<T>> validate(T flow) {
-        return validator.validate(flow);
+    public <T> void validate(T model) throws ConstraintViolationException {
+        this.isValid(model)
+            .ifPresent(s -> {
+                throw s;
+            });
     }
 
-    public <T> Optional<ConstraintViolationException> isValid(T flow) {
-        Set<ConstraintViolation<T>> violations = this.validate(flow);
+    public <T> Optional<ConstraintViolationException> isValid(T model) {
+        Set<ConstraintViolation<T>> violations = validator.validate(model);
 
         if (violations.size() > 0) {
             return Optional.of(new ConstraintViolationException(violations));

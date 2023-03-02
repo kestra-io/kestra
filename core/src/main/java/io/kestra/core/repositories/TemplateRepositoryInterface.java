@@ -18,6 +18,12 @@ public interface TemplateRepositoryInterface {
         @Nullable String namespace
     );
 
+    // Should normally be TemplateWithSource but it didn't exist yet
+    List<Template> find(
+        @Nullable String query,
+        @Nullable String namespace
+    );
+
     List<Template> findByNamespace(String namespace);
 
     Template create(Template template);

@@ -1,39 +1,40 @@
 <template>
-    <div>
-        <flow-editor @save="save" v-model="content" lang="yaml" @update:model-value="onChange($event)" />
+    <div class="edit-flow-div">
+        <editor class="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
-                    <el-button :icon="icon.Delete" type="danger" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="icon.Delete" type="danger" size="large" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
 
                 <li>
                     <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
-                        <el-button :icon="icon.ContentCopy">
+                        <el-button :icon="icon.ContentCopy" size="large">
                             {{ $t('copy') }}
                         </el-button>
                     </router-link>
                 </li>
 
                 <li>
-                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" type="default" :namespace="flow.namespace" />
                 </li>
 
                 <li>
-                    <el-button :icon="icon.ContentSave" @click="save" v-if="canSave" type="primary">
+                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="info">
                         {{ $t('save') }}
                     </el-button>
                 </li>
             </ul>
         </bottom-line>
+        <div id="guided-right" />
     </div>
 </template>
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import {mapGetters} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import TriggerFlow from "./TriggerFlow.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -57,11 +58,44 @@
         },
         computed: {
             ...mapGetters("flow", ["flow"]),
+            ...mapGetters("core", ["guidedProperties"]),
+            ...mapState("flow", ["total"])
+        },
+        methods: {
+            stopTour() {
+                this.$tours["guidedTour"].stop();
+                this.$store.commit("core/setGuidedProperties", {
+                    ...this.guidedProperties,
+                    tourStarted: false
+                });
+            }
         },
         created() {
             this.loadFile();
         },
-        beforeUnmount() {
+        mounted() {
+            setTimeout(() => {
+                if (!this.guidedProperties.tourStarted
+                    && localStorage.getItem("tourDoneOrSkip") !== "true"
+                    && this.total === 0) {
+                    this.$tours["guidedTour"].start();
+                }
+            }, 200)
+            window.addEventListener("popstate", () => {
+                this.stopTour();
+            });
         },
+        watch: {
+            guidedProperties: function () {
+                if (localStorage.getItem("tourDoneOrSkip") !== "true") {
+                    if (this.guidedProperties.source !== undefined) {
+                        this.content = this.guidedProperties.source
+                    }
+                    if (this.guidedProperties.saveFlow) {
+                        this.save();
+                    }
+                }
+            }
+        }
     };
 </script>

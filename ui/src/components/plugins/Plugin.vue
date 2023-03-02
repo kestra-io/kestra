@@ -101,13 +101,13 @@
 
         mark {
             background: var(--bs-success);
-            color: var(--white);
+            color: var(--bs-white);
             font-size: var(--font-size-sm);
             padding: 2px 8px 2px 8px;
             border-radius: var(--bs-border-radius-sm);
 
             * {
-                color: var(--white) !important;
+                color: var(--bs-white) !important;
             }
         }
 

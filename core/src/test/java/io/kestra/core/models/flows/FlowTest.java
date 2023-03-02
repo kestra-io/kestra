@@ -2,6 +2,7 @@ package io.kestra.core.models.flows;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.tasks.debugs.Return;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -17,16 +18,20 @@ import javax.validation.ConstraintViolationException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 class FlowTest {
     @Inject
     YamlFlowParser yamlFlowParser = new YamlFlowParser();
 
+    @Inject
+    ModelValidator modelValidator;
+
     @Test
     void duplicate() {
         Flow flow = this.parse("flows/invalids/duplicate.yaml");
-        Optional<ConstraintViolationException> validate = flow.validate();
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
@@ -37,7 +42,7 @@ class FlowTest {
     @Test
     void duplicateParallel() {
         Flow flow = this.parse("flows/invalids/duplicate-parallel.yaml");
-        Optional<ConstraintViolationException> validate = flow.validate();
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
@@ -52,9 +57,8 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = flow.validateUpdate(updated);
 
         assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(2));
+        assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [date]"));
         assertThat(validate.get().getMessage(), containsString("Illegal flow id update"));
     }
 
@@ -62,12 +66,12 @@ class FlowTest {
     @Test
     void taskInvalid() {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
-        Optional<ConstraintViolationException> validate = flow.validate();
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("switch.tasks: No task defined"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: No task defined, neither cases or default have any tasks"));
     }
 
     @Test
@@ -92,6 +96,6 @@ class FlowTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file);
+        return yamlFlowParser.parse(file, Flow.class);
     }
 }

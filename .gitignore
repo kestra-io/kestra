@@ -43,5 +43,11 @@ docker/app/kestra
 docker/app/confs/*.yml
 docker/app/secrets/*.yml
 
+### Python
+core/src/main/resources/scripts/python/src/kestra.egg-info
+core/src/main/resources/scripts/python/dist
+core/src/main/resources/scripts/python/gradle.properties
+core/src/main/resources/scripts/python/README.md
+
 ### Build
 core/src/main/resources/gradle.properties

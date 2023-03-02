@@ -58,6 +58,15 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
             }
         ),
         @Example(
+            title = "Bash with an input file from Kestra's local storage created by a previous task.",
+            code = {
+                "inputFiles:",
+                "  data.csv: {{outputs.previousTaskId.uri}}",
+                "commands:",
+                "  - cat data.csv"
+            }
+        ),
+        @Example(
             title = "Run a command on a docker image",
             code = {
                 "runner: DOCKER",
@@ -76,6 +85,20 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "interpreter: cmd",
                 "interpreterArgs:",
                 "  - /c",
+            }
+        ),
+        @Example(
+            title = "Set outputs from bash standard output",
+            code = {
+                "commands:",
+                "  - echo '::{\"outputs\":{\"test\":\"value\",\"int\":2,\"bool\":true,\"float\":3.65}}::'",
+            }
+        ),
+        @Example(
+            title = "Send a counter metric from bash standard output",
+            code = {
+                "commands:",
+                "  - echo '::{\"metrics\":[{\"name\":\"count\",\"type\":\"counter\",\"value\":1,\"tags\":{\"tag1\":\"i\",\"tag2\":\"win\"}}]}::'",
             }
         )
     }

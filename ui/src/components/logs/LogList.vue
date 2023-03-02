@@ -11,7 +11,9 @@
                                 <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
-
+                                <div class="task-icon me-1" v-loading="this.tasksIcons[currentTaskRun.id] === undefined">
+                                    <task-icon :cls="tasksIcons[currentTaskRun.id]" v-if="this.tasksIcons[currentTaskRun.id]" only-icon />
+                                </div>
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
                                         <template #content>
@@ -83,10 +85,12 @@
                                             />
 
                                             <task-edit
+                                                :read-only="true"
                                                 component="el-dropdown-item"
                                                 :task-id="currentTaskRun.taskId"
                                                 :flow-id="execution.flowId"
                                                 :namespace="execution.namespace"
+                                                :revision="execution.flowRevision"
                                             />
                                         </el-dropdown-menu>
                                     </template>
@@ -125,8 +129,9 @@
     import State from "../../utils/state";
     import Status from "../Status.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import TaskEdit from "override/components/flows/TaskEdit.vue";
+    import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
+    import TaskIcon from "../plugins/TaskIcon.vue";
 
     export default {
         components: {
@@ -140,7 +145,8 @@
             Status,
             SubFlowLink,
             TaskEdit,
-            Duration
+            Duration,
+            TaskIcon
         },
         props: {
             level: {
@@ -173,6 +179,7 @@
                 showOutputs: {},
                 showMetrics: {},
                 fullscreen: false,
+                tasksIcons: {}
             };
         },
         watch: {
@@ -188,6 +195,18 @@
         created() {
             if (!this.fullScreenModal) {
                 this.loadLogs();
+            }
+            if (this.execution){
+                for(let currentTaskRun of this.execution.taskRunList){
+                    this.$store.dispatch("flow/loadTask", {
+                        namespace: currentTaskRun.namespace,
+                        id: currentTaskRun.flowId,
+                        taskId: currentTaskRun.taskId,
+                        revision: currentTaskRun.revision
+                    }).then(value => {
+                        this.tasksIcons[currentTaskRun.id] = value ? value.type : null
+                    })
+                }
             }
         },
         computed: {
@@ -273,7 +292,7 @@
                         log.attemptNumber === attemptNumber
                     );
                 });
-            },
+            }
         },
         beforeUnmount() {
             if (this.sse) {
@@ -314,6 +333,12 @@
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+            }
+
+            .task-icon {
+                width: 36px;
+                background: var(--bs-white);
+                padding: 6px;
             }
 
             small {

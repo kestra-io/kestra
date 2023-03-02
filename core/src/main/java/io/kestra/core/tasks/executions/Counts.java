@@ -78,13 +78,13 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
     @Schema(
         title = "A list of flows to be filtered"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     protected List<Flow> flows;
 
     @Schema(
         title = "A list of state to be filtered"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     protected List<State.Type> states;
 
     @NotNull

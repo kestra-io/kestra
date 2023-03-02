@@ -76,6 +76,7 @@ public class MultipleCondition extends Condition {
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9_-]+")
     @Schema(title = "A unique id for the whole flow")
+    @PluginProperty
     protected String id;
 
     @NotNull
@@ -84,6 +85,7 @@ public class MultipleCondition extends Condition {
         description = "See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available duration value.\n" +
             "The start of the window is always based on midnight except if you set windowAdvance parameter. Eg if you have a 10 minutes (PT10M) window, " +
             "the first window will be 00:00 to 00:10 and a new window will be started each 10 minutes")
+    @PluginProperty
     private Duration window;
 
     @NotNull
@@ -95,6 +97,7 @@ public class MultipleCondition extends Condition {
             "If you want to check the window between: \n" +
             "03:00 and 09:00 - 09:00 and 15:00 - 15:00 and 21:00 - 21:00 and 3:00" +
             "You will have to shift the window of 3 hours by settings windowAdvance: PT3H")
+    @PluginProperty
     private Duration windowAdvance;
 
     @NotNull
@@ -104,7 +107,6 @@ public class MultipleCondition extends Condition {
         description = "The key must be unique for a trigger since it will be use to store previous result."
     )
     @PluginProperty(
-        dynamic = false,
         additionalProperties = Condition.class
     )
     private Map<String, Condition> conditions;

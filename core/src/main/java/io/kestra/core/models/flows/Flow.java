@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
@@ -11,10 +12,10 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskValidationInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -29,19 +30,21 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 
-@SuperBuilder
+
+@SuperBuilder(toBuilder = true)
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Introspected
 @ToString
 @EqualsAndHashCode
+@FlowValidation
 public class Flow implements DeletedInterface {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Arrays.asList("revision", "deleted");
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });
@@ -232,53 +235,8 @@ public class Flow implements DeletedInterface {
         }
     }
 
-    public Optional<ConstraintViolationException> validate() {
-        Set<ConstraintViolation<?>> violations = new HashSet<>();
-
-        List<Task> allTasks = allTasksWithChilds();
-
-        // unique id
-        List<String> ids = allTasks
-            .stream()
-            .map(Task::getId)
-            .collect(Collectors.toList());
-
-        List<String> duplicates = ids
-            .stream()
-            .distinct()
-            .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
-
-        if (duplicates.size() > 0) {
-            violations.add(ManualConstraintViolation.of(
-                "Duplicate task id with name [" +   String.join(", ", duplicates) + "]",
-                this,
-                Flow.class,
-                "flow.tasks",
-                String.join(", ", duplicates)
-            ));
-        }
-
-        // validate tasks
-        allTasks
-            .forEach(task -> {
-                if (task instanceof TaskValidationInterface) {
-                    violations.addAll(((TaskValidationInterface<?>) task).failedConstraints());
-                }
-            });
-
-        if (violations.size() > 0) {
-            return Optional.of(new ConstraintViolationException(violations));
-        } else {
-            return Optional.empty();
-        }
-    }
-
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
-
-        // validate flow
-        updated.validate()
-            .ifPresent(e -> violations.addAll(e.getConstraintViolations()));
 
         // change flow id
         if (!updated.getId().equals(this.getId())) {
@@ -306,6 +264,23 @@ public class Flow implements DeletedInterface {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
             return Optional.empty();
+        }
+    }
+
+    public String generateSource() {
+        try {
+            return JacksonMapper.ofYaml()
+                .writeValueAsString(
+                    JacksonMapper
+                        .ofJson()
+                        .readTree(
+                            jsonMapper.copy()
+                                .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
+                                .writeValueAsString(this)
+                        )
+                );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 

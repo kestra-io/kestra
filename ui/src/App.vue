@@ -3,23 +3,28 @@
         <left-menu @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main :class="menuCollapsed" v-if="loaded">
-            <top-nav-bar :menu-collapsed="menuCollapsed" />
+            <top-nav-bar :menu-collapsed="menuCollapsed" v-if="displayNavBar" />
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />
             </template>
         </main>
+        <VueTour />
     </el-config-provider>
 </template>
+
+<script setup>
+    import Errors from "./components/errors/Errors.vue";
+</script>
 
 <script>
     import LeftMenu from "override/components/LeftMenu.vue";
     import TopNavBar from "./components/layout/TopNavBar.vue";
     import ErrorToast from "./components/ErrorToast.vue";
-    import Errors from "./components/errors/Errors.vue";
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import Utils from "./utils/utils";
     import {pageFromRoute} from "./utils/eventsRouter";
+    import VueTour from "./components/onboarding/VueTour.vue";
 
     export default {
         name: "App",
@@ -27,7 +32,7 @@
             LeftMenu,
             TopNavBar,
             ErrorToast,
-            Errors
+            VueTour
         },
         data() {
             return {
@@ -37,12 +42,21 @@
             };
         },
         computed: {
-            ...mapState("core", ["message", "error"])
+            ...mapState("core", ["message", "error"]),
+            ...mapGetters("core", ["guidedProperties"]),
+            displayNavBar() {
+                if (this.$router) {
+                    return this.$route.name !== "welcome";
+                }
+
+                return true;
+            }
         },
         created() {
             if (this.created === false) {
                 this.displayApp()
                 this.loadGeneralRessources()
+                this.initGuidedTour();
             }
         },
         methods: {
@@ -51,7 +65,7 @@
             },
             displayApp() {
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
-                this.switchTheme();
+                Utils.switchTheme();
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
@@ -79,29 +93,21 @@
                         });
                     })
             },
-            switchTheme(theme) {
-                // default theme
-                if (theme === undefined) {
-                    if (localStorage.getItem("theme")) {
-                        theme =  localStorage.getItem("theme");
-                    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                        theme = "dark";
-                    } else {
-                        theme = "light";
-                    }
+            initGuidedTour() {
+                this.$store.dispatch("flow/findFlows", {limit: 1})
+                    .then(flows => {
+                        this.$store.commit("flow/setOverallTotal", flows.total);
+                        if (flows.total === 0 && this.$route.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
+                            this.$router.push({name: "welcome"});
+                        }
+                    });
+            },
+        },
+        watch: {
+            $route(to) {
+                if (to.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
+                    this.redirectToWelcome && this.redirectToWelcome();
                 }
-
-                // class name
-                let htmlClass = document.getElementsByTagName("html")[0].classList;
-
-                htmlClass.forEach((cls) => {
-                    if (cls === "dark" || cls === "light") {
-                        htmlClass.remove(cls);
-                    }
-                })
-
-                htmlClass.add(theme);
-                localStorage.setItem("theme", theme);
             }
         }
     };

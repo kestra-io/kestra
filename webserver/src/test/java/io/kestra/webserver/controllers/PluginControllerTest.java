@@ -96,4 +96,64 @@ class PluginControllerTest {
             assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
         });
     }
+
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskWithBase() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+
+            io.kestra.webserver.controllers.PluginController.Doc doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask?all=true"),
+                io.kestra.webserver.controllers.PluginController.Doc.class
+            );
+
+            Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
+
+            assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.templates.ExampleTask"));
+            assertThat(properties.size(), is(7));
+            assertThat(properties.get("id").size(), is(4));
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
+        });
+    }
+
+    @Test
+    void flow() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            Map<String, Object> doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/schemas/flow"),
+                Argument.mapOf(String.class, Object.class)
+            );
+
+            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.flows.Flow"));
+        });
+    }
+
+    @Test
+    void template() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            Map<String, Object> doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/schemas/template"),
+                Argument.mapOf(String.class, Object.class)
+            );
+
+            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.templates.Template"));
+        });
+    }
+
+    @Test
+    void task() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            Map<String, Object> doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/schemas/task"),
+                Argument.mapOf(String.class, Object.class)
+            );
+
+            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.tasks.Task-2"));
+        });
+    }
 }

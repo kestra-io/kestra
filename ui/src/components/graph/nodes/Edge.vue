@@ -1,6 +1,6 @@
 <script lang="ts" setup>
     import type {EdgeProps, Position} from '@vue-flow/core'
-    import {EdgeLabelRenderer, getSmoothStepPath} from '@vue-flow/core'
+    import {EdgeLabelRenderer, getSmoothStepPath, useEdge} from '@vue-flow/core'
     import type {CSSProperties} from 'vue'
     import {computed} from 'vue'
     import Help from "vue-material-design-icons/Help.vue";
@@ -8,6 +8,7 @@
     import Exclamation from "vue-material-design-icons/Exclamation.vue";
     import Reload from "vue-material-design-icons/Reload.vue";
     import ViewParallelOutline from "vue-material-design-icons/ViewParallelOutline.vue";
+    import ViewSequentialOutline from "vue-material-design-icons/ViewSequentialOutline.vue";
 
     interface CustomEdgeProps<T = any> extends EdgeProps<T> {
         id: string
@@ -23,11 +24,12 @@
     }
 
     const props = defineProps<CustomEdgeProps>()
+    const {edge} = useEdge()
 
     const getEdgeLabel = (relation) => {
         let label = "";
 
-        if (relation.relationType && relation.relationType !== "SEQUENTIAL") {
+        if (relation.relationType) {
             label = relation.relationType.toLowerCase();
             if (relation.value) {
                 label += ` : ${relation.value}`;
@@ -46,6 +48,8 @@
                 return Help;
             } else if (relation.relationType === "PARALLEL") {
                 return ViewParallelOutline;
+            } else {
+                return ViewSequentialOutline;
             }
         }
 
@@ -71,11 +75,12 @@
                 pointerEvents: 'all',
                 position: 'absolute',
                 transform: `translate(-50%, -50%) translate(${path[1]}px,${path[2]}px)`,
+                zIndex: edge.targetNode.computedPosition.z + 1
             }"
             class="nodrag nopan"
             :class="props.data.edge.relation.relationType"
         >
-            <el-tooltip placement="bottom" :persistent="false">
+            <el-tooltip placement="bottom" transition="" :hide-after="0" :persistent="false">
                 <template #content>
                     {{ getEdgeLabel(props.data.edge.relation) }}
                 </template>

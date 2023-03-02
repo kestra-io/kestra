@@ -4,7 +4,6 @@ import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -30,7 +29,7 @@ public class StatsController {
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
     public List<DailyExecutionStatistics> dailyStatistics(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A string filter") @Nullable String q,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
@@ -38,7 +37,7 @@ public class StatsController {
     ) {
         // @TODO: seems to be converted back to utc by micronaut
         return executionRepository.dailyStatistics(
-            query,
+            q,
             namespace,
             flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
@@ -51,14 +50,14 @@ public class StatsController {
     @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for taskRuns")
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A string filter") @Nullable String q,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
         return executionRepository.dailyStatistics(
-            query,
+            q,
             namespace,
             flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
@@ -71,7 +70,7 @@ public class StatsController {
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions group by namespaces and flows")
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A string filter") @Nullable String q,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "A list of flows filter") @Nullable List<ExecutionRepositoryInterface.FlowFilter> flows,
@@ -80,7 +79,7 @@ public class StatsController {
         @Parameter(description = "Return only namespace result and skip flows") @Nullable Boolean namespaceOnly
     ) {
         return executionRepository.dailyGroupByFlowStatistics(
-            query,
+            q,
             namespace,
             flowId,
             flows != null && flows.get(0).getNamespace() != null && flows.get(0).getId() != null ? flows : null,

@@ -4,14 +4,10 @@ include 'cli'
 include 'core'
 
 include 'runner-memory'
-include 'runner-kafka'
 
 include 'storage-local'
 
-include 'repository-elasticsearch'
 include 'repository-memory'
-
-include 'indexer-kafka-elasticsearch'
 
 include 'jdbc'
 include 'jdbc-h2'

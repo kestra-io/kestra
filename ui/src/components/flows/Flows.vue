@@ -39,7 +39,9 @@
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
                         :row-class-name="rowClasses"
+                        @selection-change="handleSelectionChange"
                     >
+                        <el-table-column type="selection" v-if="(canRead)" />
                         <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <router-link
@@ -102,17 +104,47 @@
 
         <bottom-line>
             <ul>
+                <ul v-if="flowsSelection.length !== 0 && canRead">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()">
+                        <el-button v-if="canRead" :icon="Download" size="large" @click="exportFlows()">
+                            {{ $t('export') }}
+                        </el-button>
+                        <el-button v-if="canDelete" @click="deleteFlows" size="large" :icon="TrashCan">
+                            {{ $t('delete') }}
+                        </el-button>
+                        <el-button v-if="canDisable" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
+                            {{ $t('disable') }}
+                        </el-button>
+                    </bottom-line-counter>
+                </ul>
+                <li class="spacer" />
+                <li>
+                    <div class="el-input el-input-file el-input--large custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importFlows">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importFlows"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importFlows()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
+                        <el-button :icon="TextBoxSearch" size="large">
                             {{ $t('source search') }}
                         </el-button>
                     </router-link>
                 </li>
-
                 <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
                     <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary">
+                        <el-button :icon="Plus" type="info" size="large">
                             {{ $t('create') }}
                         </el-button>
                     </router-link>
@@ -125,6 +157,9 @@
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
+    import Download from "vue-material-design-icons/Download.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
 </script>
 
 <script>
@@ -146,7 +181,8 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
-
+    import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import Upload from "vue-material-design-icons/Upload.vue";
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
@@ -161,6 +197,8 @@
             MarkdownTooltip,
             Kicon,
             Labels,
+            BottomLineCounter,
+            Upload
         },
         data() {
             return {
@@ -169,6 +207,9 @@
                 action: action,
                 dailyGroupByFlowReady: false,
                 dailyReady: false,
+                flowsSelection: [],
+                queryBulkAction: false,
+                file: undefined,
             };
         },
         computed: {
@@ -187,9 +228,120 @@
                 return this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
-            }
+            },
+            canRead() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+            },
+            canDelete() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
+            },
+            canDisable() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE);
+            },
         },
         methods: {
+            handleSelectionChange(val) {
+                if (val.length === 0) {
+                    this.queryBulkAction = false
+                }
+                this.flowsSelection = val.map(x => {
+                    return {
+                        id: x.id,
+                        namespace: x.namespace
+                    }
+                });
+            },
+            selectAll() {
+                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
+                    this.$refs.table.toggleAllSelection();
+                }
+            },
+            exportFlows() {
+                this.$toast().confirm(
+                    this.$t("flow export", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("flow/exportFlowByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(_ => {
+                                    this.$toast().success(this.$t("flows exported"));
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("flow/exportFlowByIds", {ids: this.flowsSelection})
+                                .then(_ => {
+                                    this.$toast().success(this.$t("flows exported"));
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
+            disableFlows(){
+                this.$toast().confirm(
+                    this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("flow/disableFlowByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("flow/disableFlowByIds", {ids: this.flowsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
+            deleteFlows(){
+                this.$toast().confirm(
+                    this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("flow/deleteFlowByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("flow/deleteFlowByIds", {ids: this.flowsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
+            importFlows() {
+                const formData = new FormData();
+                formData.append("fileUpload", this.$refs.file.files[0]);
+                this.$store
+                    .dispatch("flow/importFlows", formData)
+                    .then(_ => {
+                        this.$toast().success(this.$t("flows imported"));
+                        this.loadData(() => {})
+                    })
+            },
             chartData(row) {
                 if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.namespace] && this.dailyGroupByFlow[row.namespace][row.id]) {
                     return this.dailyGroupByFlow[row.namespace][row.id];
@@ -245,7 +397,7 @@
                     })
             },
             rowClasses(row) {
-                return row && row.disabled ? "disabled" : "";
+                return row && row.row && row.row.disabled ? "disabled" : "";
             }
         }
     };

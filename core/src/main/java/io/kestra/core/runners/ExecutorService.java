@@ -176,7 +176,7 @@ public class ExecutorService {
 
                 List<TaskRun> taskRunByTasks = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
-                if (taskRunByTasks.stream().filter(t -> t.getState().isTerninated()).count() == taskRunByTasks.size()) {
+                if (taskRunByTasks.stream().filter(t -> t.getState().isTerminated()).count() == taskRunByTasks.size()) {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLED),
                         parent,
@@ -434,7 +434,7 @@ public class ExecutorService {
 
 
     private Executor handleListeners(Executor executor) {
-        if (!executor.getExecution().getState().isTerninated()) {
+        if (!executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 
@@ -457,7 +457,7 @@ public class ExecutorService {
     }
 
     private Executor handleEnd(Executor executor) {
-        if (executor.getExecution().getState().isTerninated()) {
+        if (executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 

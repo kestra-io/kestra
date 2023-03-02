@@ -1,5 +1,6 @@
 <template>
     <topology
+        :key="execution.id"
         v-if="execution && flowGraph"
         :flow-id="execution.flowId"
         :namespace="execution.namespace"
@@ -36,11 +37,14 @@
             },
         },
         mounted() {
-            this.loadGraph();
+            this.loadData();
         },
         methods: {
             forwardEvent(type, event) {
                 this.$emit(type, event);
+            },
+            loadData(){
+                this.loadGraph();
             },
             loadGraph() {
                 if (this.execution && (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id)) {

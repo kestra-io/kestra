@@ -2,6 +2,7 @@ package io.kestra.core.models.triggers.types;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.micronaut.http.HttpRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -29,12 +30,12 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Schema(
     title = "Trigger a flow from a webhook",
-    description = "Webbook trigger allow you to trigger a flow from a webhook url.\n" +
-        "The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`.\n" +
-        "Kestra accept `GET`, `POST` & `PUT` request on this url.\n" +
+    description = "Webbook trigger allow you to trigger a flow from a webhook url. " +
+        "The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`. " +
+        "Kestra accept `GET`, `POST` & `PUT` request on this url. " +
         "The whole body & headers will be available as variable:\n " +
-        "- `trigger.variables.body`\n" +
-        "- `trigger.variables.headers`"
+        "- `trigger.body`\n" +
+        "- `trigger.headers`"
 )
 @Plugin(
     examples = {
@@ -69,8 +70,10 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             "\n" +
             "::: warning\n" +
             "Take care when using manual key, the key is the only security to protect your webhook and must be considered as a secret !\n" +
-            ":::\n"
+            ":::\n",
+        defaultValue = "<generated-hash>"
     )
+    @PluginProperty
     private final String key = IdUtils.create();
 
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {

@@ -1,5 +1,8 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.SneakyThrows;
 import io.kestra.core.models.flows.Flow;
@@ -21,6 +24,9 @@ import static org.hamcrest.Matchers.is;
 abstract public class FlowListenersTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
+
+    @Inject
+    protected TaskDefaultService taskDefaultService;
 
     protected static Flow create(String flowId, String taskId) {
         return Flow.builder()
@@ -53,7 +59,7 @@ abstract public class FlowListenersTest {
         });
 
         // resend on startup done for kafka
-        if (flowListenersService.getClass().getName().equals("io.kestra.runner.kafka.KafkaFlowListeners")) {
+        if (flowListenersService.getClass().getName().equals("io.kestra.ee.runner.kafka.KafkaFlowListeners")) {
             wait(ref, () -> {
                 assertThat(count.get(), is(0));
                 assertThat(flowListenersService.flows().size(), is(0));
@@ -62,23 +68,26 @@ abstract public class FlowListenersTest {
 
         // create first
         Flow first = create("first_" + IdUtils.create(), "test");
+        Flow firstUpdated = create(first.getId(), "test2");
 
-        flowRepository.create(first);
+
+        flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
         });
 
         // create the same id than first, no additional flows
-        first = flowRepository.update(create(first.getId(), "test2"), first);
+        first = flowRepository.update(firstUpdated, first, firstUpdated.generateSource(), taskDefaultService.injectDefaults(firstUpdated));
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
             assertThat(flowListenersService.flows().get(0).getTasks().get(0).getId(), is("test2"));
         });
 
+        Flow second = create("second_" + IdUtils.create(), "test");
         // create a new one
-        flowRepository.create(create("second_" + IdUtils.create(), "test"));
+        flowRepository.create(second, second.generateSource(), taskDefaultService.injectDefaults(second));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));
@@ -92,7 +101,7 @@ abstract public class FlowListenersTest {
         });
 
         // restore must works
-        flowRepository.create(first);
+        flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));

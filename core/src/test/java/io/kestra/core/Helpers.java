@@ -12,7 +12,6 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,7 +19,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class Helpers {
-    public static long FLOWS_COUNT = 51;
+    public static long FLOWS_COUNT = 52;
 
     public static ApplicationContext applicationContext() throws URISyntaxException {
         return applicationContext(

@@ -1,9 +1,12 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button :icon="icon.Flash" :disabled="disabled" @click="onClick">
+        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="disabled" size="large" :type="type" @click="onClick">
             {{ $t('New execution') }}
         </el-button>
-        <el-dialog v-if="isOpen" v-model="isOpen" :title="$t('execute the flow')" destroy-on-close :append-to-body="true">
+        <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+            <template #title>
+                <span v-html="$t('execute the flow', {id: flowId})" />
+            </template>
             <flow-run @execution-trigger="closeModal" :redirect="true" />
         </el-dialog>
     </div>
@@ -16,6 +19,8 @@
     import {executeTask} from "../../utils/submitTask"
     import Flash from "vue-material-design-icons/Flash.vue";
     import {shallowRef} from "vue";
+    import {pageFromRoute} from "../../utils/eventsRouter";
+    import action from "../../models/action";
 
     export default {
         components: {
@@ -34,6 +39,10 @@
                 type: Boolean,
                 default: false
             },
+            type: {
+                type: String,
+                default: "info"
+            },
         },
         data() {
             return {
@@ -49,11 +58,25 @@
                     .dispatch("flow/loadFlow", {
                         id: this.flowId,
                         namespace: this.namespace,
+                        deleted: true
                     });
             }
         },
         methods: {
             onClick() {
+                if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow) {
+                    this.$store.dispatch("api/events", {
+                        type: "ONBOARDING",
+                        onboarding: {
+                            step: this.$tours["guidedTour"].currentStep._value,
+                            action: "next",
+                        },
+                        page: pageFromRoute(this.$router.currentRoute.value)
+                    });
+                    this.$tours["guidedTour"].nextStep();
+                    return;
+                }
+
                 if (!this.flow.inputs || this.flow.inputs.length === 0) {
                     this.$toast().confirm(
                         this.$t("execute flow now ?"),
@@ -75,6 +98,17 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapState("core", ["guidedProperties"]),
+        },
+        watch: {
+            guidedProperties: {
+                handler() {
+                    if (this.guidedProperties.executeFlow) {
+                        this.onClick();
+                    }
+                },
+                deep: true
+            }
         }
     };
 </script>

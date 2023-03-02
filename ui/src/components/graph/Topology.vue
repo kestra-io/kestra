@@ -1,21 +1,32 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance} from "vue";
+    import {useStore} from 'vuex'
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import dagre from "dagre"
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
+    import BottomLine from "../../components/layout/BottomLine.vue";
+    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {cssVariable} from "../../utils/global"
     import Cluster from "./nodes/Cluster.vue";
     import Dot from "./nodes/Dot.vue"
     import Task from "./nodes/Task.vue";
+    import Trigger from "./nodes/Trigger.vue";
     import Edge from "./nodes/Edge.vue";
     import {linkedElements} from "../../utils/vueFlow";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {saveFlowTemplate} from "../../utils/flowTemplate";
 
-    const {id, addNodes, addEdges, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow()
-
+    const {id, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow()
+    const store = useStore();
     const emit = defineEmits(["follow"])
+    const user = store.getters['user/user'];
+    const flow = store.getters['flow/flow'];
+    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const props = defineProps({
         flowGraph: {
@@ -38,6 +49,9 @@
 
     const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
+    const elements = ref([])
+    const haveChange = ref(false)
+    const flowYaml = ref({})
 
     const generateDagreGraph = () => {
         const dagreGraph = new dagre.graphlib.Graph({compound:true})
@@ -76,23 +90,27 @@
         return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask" || node.type === "io.kestra.core.models.hierarchies.GraphClusterRoot")
     };
 
+    const isTriggerNode = (node) => {
+        return node.trigger !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTrigger");
+    }
+
     const getNodeWidth = (node) => {
-        return isTaskNode(node) ? 202 : 5;
+        return isTaskNode(node) || isTriggerNode(node) ? 202 : 5;
     };
 
     const getNodeHeight = (node) => {
-        return isTaskNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
+        return isTaskNode(node) || isTriggerNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
     };
 
     const getNodePosition = (n, parent) => {
         const position = {x: n.x - n.width / 2, y: n.y - n.height / 2};
 
         // bug with parent node,
-        // if (parent) {
-        //     const parentPosition = getNodePosition(parent);
-        //     position.x = position.x - parentPosition.x;
-        //     position.y = position.y - parentPosition.y;
-        // }
+        if (parent) {
+            const parentPosition = getNodePosition(parent);
+            position.x = position.x - parentPosition.x;
+            position.y = position.y - parentPosition.y;
+        }
 
         return position;
     };
@@ -129,32 +147,33 @@
             const dagreNode = dagreGraph.node(cluster.cluster.uid)
             const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
 
-            addNodes([{
+            elements.value.push({
                 id: cluster.cluster.uid,
-                label: cluster.cluster.task.id,
+                label: cluster.cluster.uid,
                 type: "cluster",
-                // parentNode: parentNode,
+                parentNode: parentNode,
                 position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
                 style: {
                     width: dagreNode.width + "px",
                     height: dagreNode.height + "px",
                 },
-            }])
+            })
         }
 
         for (const node of props.flowGraph.nodes) {
             const dagreNode = dagreGraph.node(node.uid);
-
             let nodeType = "task";
             if (node.type.includes("GraphClusterEnd")) {
                 nodeType = "dot";
             } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
                 nodeType = "dot";
             } else if (node.type.includes("GraphClusterRoot")) {
-                nodeType = "task";
+                nodeType = "dot";
+            } else if (node.type.includes("GraphTrigger")) {
+                nodeType = "trigger";
             }
 
-            addNodes([{
+            elements.value.push({
                 id: node.uid,
                 label: isTaskNode(node) ? node.task.id : "",
                 type: nodeType,
@@ -165,18 +184,18 @@
                 },
                 sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                // parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
+                parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
                 data: {
                     node: node,
                     namespace: props.namespace,
                     flowId: props.flowId,
-                    execution: props.execution
+                    revision: props.execution ? props.execution.flowRevision : undefined,
                 },
-            }]);
+            })
         }
 
         for (const edge of props.flowGraph.edges) {
-            addEdges([{
+            elements.value.push({
                 id: edge.source + "|" + edge.target,
                 source: edge.source,
                 target: edge.target,
@@ -185,9 +204,8 @@
                 data: {
                     edge: edge
                 }
-            }])
+            })
         }
-
         fitView();
         isLoading.value = false;
     }
@@ -199,6 +217,11 @@
     watch(() => props.flowGraph, async () => {
         regenerateGraph()
     });
+
+
+    const isAllowedEdit = () => {
+        return user.isAllowed(permission.FLOW, action.UPDATE, flow.namespace);
+    };
 
     const onMouseOver = (node) => {
         addSelectedElements(linkedElements(id, node.uid));
@@ -212,16 +235,37 @@
     const forwardEvent = (type, event) => {
         emit(type, event);
     };
+
+    const onEdit = (event) => {
+        store.dispatch("flow/loadGraphFromSource", {flow: event})
+            .then(value => {
+                flowYaml.value = event;
+                haveChange.value = true;
+                store.dispatch("core/isUnsaved", true);
+            })
+    }
+
+    const save = () => {
+        store
+            .dispatch(`flow/saveFlow`, {flow: flowYaml.value})
+            .then((response) => {
+                toast.saved(response.id);
+                store.dispatch("core/isUnsaved", false);
+            })
+    };
+
 </script>
 
 <template>
     <el-card shadow="never" v-loading="isLoading">
         <VueFlow
+            v-model="elements"
             :default-marker-color="cssVariable('--bs-cyan')"
             :fit-view-on-init="true"
             :nodes-connectable="true"
             :nodes-draggable="false"
-            :elevate-nodes-on-select="false"
+            :elevate-nodes-on-select="true"
+            :elevate-edges-on-select="true"
         >
             <template #node-cluster="props">
                 <Cluster v-bind="props" />
@@ -235,6 +279,16 @@
                 <Task
                     v-bind="props"
                     @follow="forwardEvent('follow', $event)"
+                    @edit="onEdit"
+                    @mouseover="onMouseOver"
+                    @mouseleave="onMouseLeave"
+                />
+            </template>
+
+            <template #node-trigger="props">
+                <Trigger
+                    v-bind="props"
+                    @edit="onEdit"
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
                 />
@@ -252,11 +306,23 @@
             </Controls>
         </VueFlow>
     </el-card>
+    <bottom-line>
+        <ul>
+            <li>
+                <trigger-flow type="default" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+            </li>
+            <li>
+                <el-button :icon="ContentSave" size="large" @click="save" v-if="isAllowedEdit" :disabled="!haveChange" type="info">
+                    {{ $t('save') }}
+                </el-button>
+            </li>
+        </ul>
+    </bottom-line>
 </template>
 
 <style lang="scss" scoped>
     .el-card {
-        height: calc(100vh - 360px);
+        height: calc(100vh - 300px);
         :deep(.el-card__body) {
             height: 100%;
         }

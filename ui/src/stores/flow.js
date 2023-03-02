@@ -1,3 +1,11 @@
+import YamlUtils from "../utils/yamlUtils";
+import Utils from "../utils/utils";
+
+const textYamlHeader = {
+    headers: {
+        "Content-Type": "application/x-yaml"
+    }
+}
 export default {
     namespaced: true,
     state: {
@@ -6,6 +14,7 @@ export default {
         task: undefined,
         search: undefined,
         total: 0,
+        overallTotal: 0,
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,
@@ -37,32 +46,55 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
-                if (response.data.exception) {
-                    commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
-                    delete response.data.exception;
-                    commit("setFlow", JSON.parse(response.data.source));
-                } else {
-                    commit("setFlow", response.data)
-                }
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}?source=true`,
+                {
+                    validateStatus: (status) => {
+                        return options.deleted ? status === 200 || status === 404 : status === 200;
+                    }
+                })
+                .then(response => {
+                    if (response.data.exception) {
+                        commit("core/setMessage", {
+                            title: "Invalid source code",
+                            message: response.data.exception,
+                            variant: "danger"
+                        }, {root: true});
+                        delete response.data.exception;
+                        commit("setFlow", JSON.parse(response.data.source));
+                    } else {
+                        commit("setFlow", response.data);
+                    }
 
-                return response.data;
-            })
+                    return response.data;
+                })
         },
         loadTask({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}`).then(response => {
-                commit("setTask", response.data)
+            return this.$http.get(
+                `/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
+                {
+                    validateStatus: (status) => {
+                        return status === 200 || status === 404;
+                    }
+                }
+            )
+                .then(response => {
+                    if (response.status === 200) {
+                        commit("setTask", response.data)
 
-                return response.data;
-            })
+                        return response.data;
+                    } else {
+                        return null;
+                    }
+                })
         },
         saveFlow({commit, dispatch}, options) {
-            return this.$http.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow)
+            const flowData = YamlUtils.parse(options.flow)
+            return this.$http.put(`/api/v1/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
-                        commit("setFlow", response.data)
+                        commit("setFlow", response.data);
 
                         return response.data;
                     }
@@ -87,8 +119,8 @@ export default {
                 })
         },
         createFlow({commit}, options) {
-            return this.$http.post("/api/v1/flows", options.flow).then(response => {
-                commit("setFlow", response.data)
+            return this.$http.post("/api/v1/flows", options.flow, textYamlHeader).then(response => {
+                commit("setFlow", response.data);
 
                 return response.data;
             })
@@ -101,12 +133,28 @@ export default {
         loadGraph({commit}, flow) {
             return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
                 commit("setFlowGraph", response.data)
-                commit("setflowGraphParam", {
+                commit("setFlowGraphParam", {
                     namespace: flow.namespace,
                     id: flow.id,
                     revision: flow.revision
                 })
 
+                return response.data;
+            })
+        },
+        loadGraphFromSource({commit}, options) {
+            return this.$http.post("/api/v1/flows/graph", options.flow, textYamlHeader).then(response => {
+                commit("setFlowGraph", response.data)
+
+                let flow = YamlUtils.parse(options.flow);
+                flow.source = options.flow;
+
+                commit("setFlow", flow)
+                commit("setFlowGraphParam", {
+                    namespace: flow.namespace,
+                    id: flow.id,
+                    revision: flow.revision
+                })
 
                 return response.data;
             })
@@ -114,10 +162,38 @@ export default {
         loadRevisions({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
                 commit("setRevisions", response.data)
-
                 return response.data;
             })
         },
+        exportFlowByIds(_, options) {
+            return this.$http.post("/api/v1/flows/export/by-ids", options.ids, {responseType: "blob"})
+                .then(response => {
+                    const blob = new Blob([response.data], {type: "application/octet-stream"});
+                    const url = window.URL.createObjectURL(blob)
+                    Utils.downloadUrl(url, "flows.zip");
+                });
+        },
+        exportFlowByQuery(_, options) {
+            return this.$http.get("/api/v1/flows/export/by-query", {params: options})
+                .then(response => {
+                    Utils.downloadUrl(response.request.responseURL, "flows.zip");
+                });
+        },
+        importFlows(_, options) {
+            return this.$http.post("/api/v1/flows/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+        },
+        disableFlowByIds(_, options) {
+            return this.$http.post("/api/v1/flows/disable/by-ids", options.ids)
+        },
+        disableFlowByQuery(_, options) {
+            return this.$http.post("/api/v1/flows/disable/by-query", options, {params: options})
+        },
+        deleteFlowByIds(_, options) {
+            return this.$http.delete("/api/v1/flows/delete/by-ids", {data: options.ids})
+        },
+        deleteFlowByQuery(_, options) {
+            return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
+        }
     },
     mutations: {
         setFlows(state, flows) {
@@ -132,13 +208,13 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-                if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id || state.flowGraphParam.revision !== flow.revision) {
+                if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
                     state.flowGraph = undefined
                 }
             }
 
         },
-        setflowGraphParam(state, flow) {
+        setFlowGraphParam(state, flow) {
             state.flowGraphParam = flow
         },
         setTask(state, task) {
@@ -164,7 +240,7 @@ export default {
         addTrigger(state, trigger) {
             let flow = state.flow;
 
-            if (trigger.backfill  === undefined) {
+            if (trigger.backfill === undefined) {
                 trigger.backfill = {
                     start: undefined
                 }
@@ -181,15 +257,18 @@ export default {
         setTotal(state, total) {
             state.total = total
         },
+        setOverallTotal(state, total) {
+            state.overallTotal = total
+        },
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph
-        }
+        },
     },
     getters: {
-        flow (state) {
+        flow(state) {
             if (state.flow) {
                 return state.flow;
             }
-        }
+        },
     }
 }

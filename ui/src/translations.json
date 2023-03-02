@@ -1,6 +1,9 @@
 {
   "en": {
     "id": "Id",
+    "type": "Type",
+    "ok": "OK",
+    "close": "Close",
     "namespace": "Namespace",
     "description": "Description",
     "revision": "Revision",
@@ -43,7 +46,7 @@
     "queued duration": "Queued duration",
     "choose file": "Choose a file or drop it here...",
     "launch execution": "Execute",
-    "warning flow with triggers": "This flow contain triggers, a manual execution can failed if this one depends on triggers variables",
+    "warning flow with triggers": "This flow contains triggers and a manual execution will fail if this flow depends on triggers variables.",
     "triggered": "Execution trigger",
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
     "topology": "Topology",
@@ -88,6 +91,7 @@
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
     "error": "Error",
+    "form": "Form",
     "form error": "Form error",
     "display topology for flow": "Display topology for flow",
     "start date": "Start date",
@@ -101,6 +105,7 @@
     "restart confirm": "Are you sure to restart execution <code>{id}</code>?",
     "restart change revision": "You can change the revision that will be used for the new execution.",
     "replay": "Replay",
+    "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one?",
     "current": "current",
@@ -171,21 +176,13 @@
     "update aborted": "update aborted",
     "invalid flow": "Invalid flow",
     "invalid yaml": "Invalid YAML",
-    "add schedule": "Add a schedule",
-    "schedule": "Schedule",
-    "schedules": {
-      "cron": {
-        "expression": "Expression",
-        "backfilll": "Backfill",
-        "invalid": "Invalid cron expression"
-      }
-    },
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
     "download": "Download",
     "documentation": {
       "documentation": "Documentation",
+      "examples": "Flow examples",
       "developer": "Developer Guide",
       "github": "GitHub Issues"
     },
@@ -196,14 +193,14 @@
     },
     "last 30 days count": "{count} in last 30 days",
     "revisions": "Revisions",
-    "no revisions found": "Only one revision exist for this flow",
+    "no revisions found": "Only one revision exists for this flow",
     "see full revision": "See full revision",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
     "template": "Template",
     "template creation": "Template creation",
     "templates": "Templates",
-    "no result": "No result for current selection",
+    "no result": "No results for current selection",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger details",
@@ -216,10 +213,11 @@
     "Total": "Total",
     "sub flow": "Sub-flow",
     "New execution": "New execution",
-    "execute the flow": "Trigger the flow",
+    "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
     "Default namespace": "Default namespace",
-    "unsaved changed ?": "You have unsaved changed, do you want to leave this page?",
+    "Default log level": "Default log level",
+    "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
     "Editor theme": "Editor theme",
     "errors": {
       "404": {
@@ -240,10 +238,147 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>",
     "restore": "Restore",
-    "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?"
+    "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
+    "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
+    "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
+    "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
+    "selection": {
+      "selected": "<strong>{count}</strong> selected",
+      "all": "Select all <em>({count})</em>"
+    },
+    "cancel": "Cancel",
+    "homeDashboard": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last28Days": "Last 28 days",
+      "namespacesExecutions": "Executions per namespace",
+      "namespacesErrorExecutions": "Executions errors per namespace",
+      "failedExecutions": "Failed executions",
+      "errorLogs": "Errors logs",
+      "no executions": "Ready to see your Kestra flow in action?"
+    },
+    "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
+    "executions killed": "<code>{executionCount}</code> executions(s) killed",
+    "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "invalid bulk restart": "Could not restart executions",
+    "invalid bulk kill": "Could not kill executions",
+    "invalid bulk delete": "Could not delete executions",
+    "execution not found": "Execution <code>{executionId}</code> not found",
+    "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
+    "execution already finished": "Execution <code>{executionId}</code> already finished",
+    "seeing old revision": "You are seeing an old revision: {revision}",
+    "export": "Export",
+    "exports": "Exports",
+    "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
+    "templates exported": "Templates exported",
+    "export all templates": "Export all templates",
+    "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
+    "flows exported": "Flows exported",
+    "export all flows": "Export all flows",
+    "import": "Import",
+    "disable": "Disable",
+    "template delete": "Are you sure you want to delete <code>{templateCount}</code> template(s)?",
+    "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
+    "templates deleted": "<code>{count}</code> Template(s) deleted",
+    "flows deleted": "<code>{count}</code> Flow(s) deleted",
+    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
+    "flows disabled": "<code>{count}</code> Flow(s) disabled",
+    "dependencies": "Dependencies",
+    "see dependencies": "See dependencies",
+    "dependencies missing acls": "No permissions on this flow",
+    "dependencies delete flow": "This flow has dependencies. Deleting it will prevent theses dependencies to be executed!<br /><br /> Here is the list of concerned flows:",
+    "expand dependencies": "Expand dependencies",
+    "reset": "Restart",
+    "Reset guided tour": "Restart Guided Tour",
+    "onboarding-content": {
+      "step1": {
+        "title": "Welcome to Kestra's flow editor!",
+        "content": "Did you know that Kestra uses YAML, a simple and easy-to-read declarative language? This means that you can easily define your flows by writing out the steps in plain text. Don't worry if you still need to become familiar with YAML; we'll guide you through it step by step."
+      },
+      "step2": {
+        "title": "This is the Kestra Editor",
+        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with <code>#</code>. Tasks type and attributes can be searched thanks to the autocomplete feature with <kbd>CTRL or ⌘ + ENTER</kbd>."
+      },
+      "step3": {
+        "title": "Let's start with your first flow",
+        "content": "The first step to define a flow is to give it an ID, a namespace, and, optionally, a description."
+      },
+      "step4": {
+        "title": "Define inputs",
+        "content": "The next step is to define the inputs of your flow. This is done by giving each input a name and a type."
+      },
+      "step5": {
+        "title": "Add tasks",
+        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
+      },
+      "step6": {
+        "title": "Logs some information",
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log <code>The flow starts</code>."
+      },
+      "step7": {
+        "title": "Download a file",
+        "content": "Sometimes, you want to download a file from a remote server. This can be done by using the Download task. This task will download the file into Kestra's internal storage."
+      },
+      "step8": {
+        "title": "Use Python to do analytics",
+        "content": "Maybe this file contains some interesting data? Let's use Python and Pandas to do some analytics on it! This task uses the output of the previous task via the <code>outputs.downloadData.uri</code> variable and defines an output named <code>sumOfConsumption</code> thanks to the Kestra Python library."
+      },
+      "step9": {
+        "title": "Save your flow",
+        "content": "You're all set! Now, you can save your flow by clicking on the Save button."
+      },
+      "step10": {
+        "title": "Now execute your flow!",
+        "content": "You can execute your flow by clicking on the New execution button."
+      },
+      "step11": {
+        "title": "Enter inputs",
+        "content": "Finally, if your flow has inputs, you will be asked to enter them before executing the flow. We have already fill the input for you with a default value."
+      }
+    },
+    "onboarding-flow": {
+      "onboardComment1": "Flow declaration with a mandatory unique identifier, a namespace, and an optional description.",
+      "onboardComment2": "Flow identifier are unique inside a namespace.",
+      "inputs": "Flow inputs: each input has a name, a type, and an optional default value.",
+      "inputsDetails1": "We define one input of name 'csvUrl' with as default value the URL of the test data file.",
+      "inputsDetails2": "This test data is from the France Open Data portal and contains french electricity consumptions in CSV.",
+      "tasks1": "List of tasks that will be executed one after the other.",
+      "tasks2": "Each task must have an identifier unique for the flow and a type.",
+      "tasks3": "Depending on the type of the task, you may have to pass additional attributes.",
+      "taskLog1": "This is one of the simplest task: it echos a message in the log, like the 'echo' command.",
+      "taskLog2": "The message is passed thanks to the 'format' attribute.",
+      "taskDL": "This task will download the CSV, it will be sent to Kestra's internal storage and available from the task output.",
+      "taskDLUri1": "Here we use a variable from an input: {'{{'} and {'}}'} are separator of a Pebble expression in which we can access variables.",
+      "taskDLUri2": "All inputs are available from the 'inputs' variable using there name.",
+      "taskPython": "This task will analyse the CSV data using a Python script with the Pandas library.",
+      "taskPythonCSV1": "Here we define a file named 'data.csv' that will be available in the Python task working directory.",
+      "taskPythonCSV2": "This file is fetched from the internal storage by using the 'uri' output of the 'downloadData' task.",
+      "taskPythonMain1": "'main.py' is the Python script that will be executed.",
+      "taskPythonMain2": "It uses Pandas to read the CSV file, compute the sum of the 'conso' column, ",
+      "taskPythonMain3": "and set it as task output thanks to the Kestra Python library.",
+      "taskPythonRequirements": "As the script require the Pandas library, we must list it in the requirements."
+    },
+    "Skip tour": "Skip tour",
+    "Next step": "Next step",
+    "Previous step": "Previous step",
+    "Finish": "Finish",
+    "Step": "Step",
+    "welcome aboard": "\uD83D\uDE80 Welcome aboard!",
+    "welcome aboard content": "You're all set up with Kestra, start creating your first flow and see the magic in action!",
+    "welcome display require": "Ready to start using Kestra? Let's create <strong>your first flow</strong> together!",
+    "welcome button create": "Create my first flow",
+    "get started": "Get started",
+    "get started content": "Ready to dive in? Check out our documentation for step-by-step guides.",
+    "watch demo": "Watch our Demo Video",
+    "watch demo content": "Get a glimpse of Kestra's power with our demo video.",
+    "need help?": "Need help?",
+    "need help? content": "Need assistance with a specific feature or flow? Our community of data engineers and developers are here to help."
   },
   "fr": {
     "id": "Identifiant",
+    "type": "Type",
+    "ok": "OK",
+    "close": "Fermer",
     "description": "Description",
     "namespace": "Espace de nom",
     "revision": "Révision",
@@ -260,7 +395,7 @@
     "Default page": "Page par défaut",
     "confirmation": "Confirmation",
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
-    "success": "Succcès",
+    "success": "Succès",
     "save": "Enregistrer",
     "saved": "Enregistrement réussi",
     "saved done": "<em>{name}</em> est enregistré avec succès",
@@ -331,6 +466,7 @@
     "invalid field": "Champ invalide: {name}",
     "required field": "Champ requis",
     "error": "Erreur",
+    "form": "Formulaire",
     "form error": "Formulaire invalid",
     "display topology for flow": "Afficher la topologie du flow",
     "start date": "Date de début",
@@ -344,6 +480,7 @@
     "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
     "restart change revision": "Vous pouvez changer la révision qui sera utilisé pour la nouvelle execution relancée.",
     "replay": "Rejouer",
+    "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "Execution est rejouée",
     "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{-id}</code> et créer une nouvelle execution ?",
     "current": "actuel",
@@ -415,21 +552,13 @@
     "update aborted": "Mise à jour annulée",
     "invalid flow": "Flow invalide",
     "invalid yaml": "YAML invalide",
-    "add schedule": "Ajouter un planifications",
-    "schedule": "Tâche planifié",
-    "schedules": {
-      "cron": {
-        "expression": "Expression",
-        "backfilll": "Remblayage",
-        "invalid": "Expression cron invalide"
-      }
-    },
     "inputs": "Entrées",
     "input": "Entré",
     "variables": "Variables",
     "download": "Télécharger",
     "documentation": {
       "documentation": "Documentation",
+      "examples": "Examples de Flow",
       "developer": "Guide développeur",
       "github": "Bugs GitHub"
     },
@@ -460,9 +589,10 @@
     "Total": "Total",
     "sub flow": "Sous-flow",
     "New execution": "Nouvelle execution",
-    "execute the flow": "Créer une exécution",
+    "execute the flow": "Exécuter le flow <code>{id}</code>",
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
     "Default namespace": "Espace de nom par défaut",
+    "Default log level": "Niveau de log par défaut",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "Editor theme": "Theme de l'éditeur",
     "errors": {
@@ -484,6 +614,140 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
-    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?"
+    "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> execution(s) ?",
+    "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> execution(s) ?",
+    "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> execution(s) ?",
+    "selection": {
+      "selected": "<strong>{count}</strong> sélectionnés",
+      "all": "Tous sélectionnés ({count})"
+    },
+    "cancel": "Annuler",
+    "homeDashboard": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "last28Days": "Dernier 28 jours",
+      "namespacesExecutions": "Exécutions par espace de nom",
+      "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
+      "failedExecutions": "Exécutions en échec",
+      "errorLogs": "Journaux d'erreurs",
+      "no executions": "Prêt à voir votre flux Kestra en action ?"
+    },
+    "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
+    "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
+    "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
+    "invalid bulk restart": "Impossible de redémarrer",
+    "invalid bulk kill": "Impossible d'arrêter",
+    "invalid bulk delete": "Impossible de supprimer",
+    "execution not found": "Execution <code>{executionId}</code> non trouvée",
+    "execution not in state FAILED": "Execution <code>{executionId}</code> n'est pas dans l'état FAILED",
+    "execution already finished": "Execution <code>{executionId}</code> déjà terminée",
+    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
+    "seeing old revision": "Vous visualisez une ancienne revision : {revision}",
+    "export": "Exporter",
+    "exports": "Exporter",
+    "template export": "Êtes vous sûr de vouloir exporter <code>{templateCount}</code> template(s)?",
+    "templates exported": "Templates exportés",
+    "export all templates": "Exporter tous les templates",
+    "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
+    "flows exported": "Flows exportés",
+    "export all flows": "Exporter tous les flows",
+    "import": "Importer",
+    "disable": "Désactiver",
+    "template delete": "Êtes vous sûr de vouloir supprimer <code>{templateCount}</code> template(s)?",
+    "flow delete": "Êtes vous sûr de vouloir supprimer <code>{flowCount}</code> flow(s)?",
+    "templates deleted": "<code>{count}</code> Template(s) supprimé(s)",
+    "flows deleted": "<code>{count}</code> Flow(s) supprimé(s)",
+    "flow disable": "Êtes vous sûr de vouloir désactiver <code>{flowCount}</code> flow(s)?",
+    "flows disabled": "<code>{count}</code> Flow(s) désactivé(s)",
+    "dependencies": "Dépendances",
+    "see dependencies": "Voir les dépendances",
+    "dependencies missing acls": "Aucune permission sur ce flow",
+    "dependencies delete flow": "Ce flow a des dépendances, effacer celui-ci empêchera les dépendances de s'exécuter !<br /><br /> Voici la liste des flows concernés :",
+    "expand dependencies": "Voir les dépendances",
+    "reset": "Recommencer",
+    "Reset guided tour": "Recommencer la visite guidée",
+    "onboarding-content": {
+      "step1": {
+        "title": "Bienvenue sur l'éditeur de flow Kestra !",
+        "content": "Le saviez-vous que Kestra utilise le YAML, un langage déclaratif et facile à lire ? Cela signifie que vous pouvez facilement définir vos flows en écrivant les différentes tâches avec du texte brute. Ne vous inquiétez pas si vous devez encore vous familiariser avec le YAML; nous vous guiderons étape par étape."
+      },
+      "step2": {
+        "title": "Ceci est l'éditeur Kestra",
+        "content": "L'éditeur Kestra est l'endroit où vous allez rédigez le YAML qui décrira vos flows. Les commentaires commencent par <code>#</code>. Les différents types de tâches et leurs attributs peuvent être retrouvé grâce à la fonctionnalité d'auto-completion avec <kbd>CTRL ou ⌘ + ENTER</kbd>."
+      },
+      "step3": {
+        "title": "Commençons par votre premier flow",
+        "content": "La première étape pour définir un flow est de lui ajouter un ID, un namespace et optionnellement, une description."
+      },
+      "step4": {
+        "title": "Définition des inputs",
+        "content": "L'étape suivante est de définir les différentes entrées de votre flow. Cela se fait en attribuant à chaque entrée un nom et un type."
+      },
+      "step5": {
+        "title": "Ajout de tâches",
+        "content": "Ensuite, vous pouvez ajouter des tâches à votre flow. Une tâche est une étape de votre flow qui va exécuter une action spécifique. Par exemple, vous pouvez utiliser une tâche pour exécuter une requête SQL ou pour envoyer un mail."
+      },
+      "step6": {
+        "title": "Afficher des informations",
+        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flux est déclenché et affichera <code>The flow starts</code>."
+      },
+      "step7": {
+        "title": "Télécharger un fichier",
+        "content": "Parfois, vous voudrez télécharger un fichier depuis un serveur distant. Ceci peut être fait grâce à la tâche 'Download'. Cette tâche téléchargera le fichier dans le stockage interne de Kestra."
+      },
+      "step8": {
+        "title": "Python pour l'analytique",
+        "content": "Peut-être que ce fichier contient des données intéressantes ? Utilisons Python et Pandas pour faire quelques analyses dessus! Cette tâche utilise la sortie de la tâche précédente via la variable <code>>outputs.downloadData.uri</code> et définit une nouvelle sortie nommée <code>sumOfConsumption</code> grâce à la librairie Python de Kestra."
+      },
+      "step9": {
+        "title": "Sauvegarde de votre flow",
+        "content": "Tout est prêt! Maintenant, sauvegardez votre flow en cliquant sur le bouton Enregistrer."
+      },
+      "step10": {
+        "title": "Maintenant exécuter votre flow!",
+        "content": "Vous pouvez maintenant exécuter votre flow en cliquant sur le bouton Nouvelle Execution."
+      },
+      "step11": {
+        "title": "Insérer les inputs",
+        "content": "Finalement, si votre flow possède des entrées, il vous sera demandé de les insérer avant son exécution. Dans ce cas, nous l'avons déjà remplit grâce à la valeur par défaut."
+      }
+    },
+    "onboarding-flow": {
+      "onboardComment1": "Déclaration d'un flow avec un identifiant unique et un namespace obligatoire, ainsi qu'une description facultative.",
+      "onboardComment2": "Les identifiants d'un flux sont uniques à l'intérieur d'un namespace.",
+      "inputs": "Flow inputs: chaque entrée possède un nom, un type et une valeur par défaut facultative.",
+      "inputsDetails1": "Nous définissons une entrée de nom 'csvUrl' avec comme valeur par défaut l'URL du fichier de données de test.",
+      "inputsDetails2": "Ces données de test proviennent du portail France Open Data et contiennent des consommations d'électricité en français au format CSV.",
+      "tasks1": "Liste de tâches qui seront exécutées les unes après les autres.",
+      "tasks2": "Chaque tâche doit avoir un identifiant unique pour le flow et un type.",
+      "tasks3": "En fonction du type de tâche, vous devrez peut-être passer des attributs supplémentaires.",
+      "taskLog1": "Il s'agit de l'une des tâches les plus simples : elle affiche un message dans le journal, comme la commande 'echo'.",
+      "taskLog2": "Le message est transmis grâce à l'attribut 'format'.",
+      "taskDL": "Cette tâche permettra de télécharger le CSV, qui sera envoyé vers le stockage interne de Kestra et disponible à partir de la sortie de la tâche.",
+      "taskDLUri1": "Ici, nous utilisons une variable d'entrée : {'{{'} et {'}}'} sont les séparateurs d'une expression Pebble dans laquelle nous pouvons accéder aux variables.",
+      "taskDLUri2": "Toutes les entrées sont disponibles à partir de la variable 'inputs' en utilisant leur nom.",
+      "taskPython": "Cette tâche analysera les données CSV à l'aide d'un script Python avec la librairie Pandas.",
+      "taskPythonCSV1": "Ici, nous définissons un fichier nommé 'data.csv' qui sera disponible dans le répertoire de travail de la tâche Python.",
+      "taskPythonCSV2": "Ce fichier est récupéré depuis le stockage interne en utilisant la sortie 'uri' de la tâche 'downloadData'.",
+      "taskPythonMain1": "'main.py' est le script Python qui sera exécuté.",
+      "taskPythonMain2": "Il utilise Pandas pour lire le fichier CSV, calculer la somme de la colonne 'conso',",
+      "taskPythonMain3": "et la définir en tant que sortie de tâche grâce à la librairie Python de Kestra.",
+      "taskPythonRequirements": "Comme le script nécessite la librairie Pandas, nous devons la lister dans les requirements."
+    },
+    "Skip tour": "Passer",
+    "Next step": "Étape suivante",
+    "Previous step": "Étape précédente",
+    "Finish": "Terminer",
+    "Step": "Étape",
+    "welcome aboard": "\uD83D\uDE80 Bienvenue à bord !",
+    "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
+    "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flux</strong> !",
+    "welcome button create": "Créer mon premier flow",
+    "get started": "Démarrer",
+    "get started content": "Prêt à faire le grand saut? Jetez un oeil à notre documentation pour un guide étape par étape.",
+    "watch demo": "Voir notre démo",
+    "watch demo content": "Obtenez un aperçu de la puissance de Kestra grâce à notre vidéo de démonstration.",
+    "need help?": "Besoin d'aide?",
+    "need help? content": "Besoin d'assistance pour une fonctionnalité ou un flow? Notre communauté d'ingénieurs data et de développeurs sont là pour aider."
   }
 }

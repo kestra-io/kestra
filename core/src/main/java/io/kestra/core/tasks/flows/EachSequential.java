@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -56,9 +57,11 @@ import javax.validation.constraints.NotNull;
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
+    @PluginProperty(dynamic = true)
     private String value;
 
     @Valid
+    @PluginProperty
     protected List<Task> errors;
 
     @Override

@@ -157,7 +157,7 @@
             restoreRevision(index, revision) {
                 this.$toast()
                     .confirm(this.$t("restore confirm", {revision: this.revisionNumber(index)}), () => {
-                        return saveFlowTemplate(this, YamlUtils.parse(revision), "flow")
+                        return saveFlowTemplate(this, revision, "flow")
                             .then(this.load)
                             .then(() => {
                                 this.$router.push({query: {}});
@@ -175,7 +175,7 @@
                     return YamlUtils.stringify(YamlUtils.parse(source.source));
                 }
 
-                return YamlUtils.stringify(source);
+                return source.source ? source.source : YamlUtils.stringify(source);
             }
         },
         computed: {

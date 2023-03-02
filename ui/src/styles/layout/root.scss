@@ -37,11 +37,13 @@
     --el-box-shadow-lighter: $box-shadow-sm;
     --el-box-shadow-dark: $box-shadow-lg;
 
-    --el-button-hover-bg-color: var(--bs-gray-200);
+    --el-transition-duration: 0.2s;
+    --el-transition-duration-fast: 0.2s;
 }
 
 :root {
     #{--menu-width}: $menu-width;
+    #{--menu-collapsed-width}: 50px;
     #{--spacer}: $spacer;
 
     #{--font-size-xs}: $font-size-xs;

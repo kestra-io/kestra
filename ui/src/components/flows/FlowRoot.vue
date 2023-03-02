@@ -1,9 +1,16 @@
 <template>
     <div>
         <div v-if="ready">
-            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" @hook:mounted="mounted = true" />
-            <bottom-line v-if="mounted && displayBottomLine()">
+            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
+            <bottom-line v-if="displayBottomLine()">
                 <ul>
+                    <li>
+                        <template v-if="isAllowedEdit">
+                            <el-button :icon="Pencil" size="large" @click="editFlow">
+                                {{ $t('edit flow') }}
+                            </el-button>
+                        </template>
+                    </li>
                     <li>
                         <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
                     </li>
@@ -12,12 +19,15 @@
         </div>
     </div>
 </template>
+
+<script setup>
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+</script>
+
 <script>
     import Topology from "./Topology.vue";
-    import Schedule from "./Schedule.vue";
     import FlowSource from "./FlowSource.vue";
     import FlowRevisions from "./FlowRevisions.vue";
-    import FlowRun from "./FlowRun.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
@@ -27,6 +37,8 @@
     import Tabs from "../Tabs.vue";
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import Overview from "./Overview.vue";
+    import FlowDependencies from "./FlowDependencies.vue";
 
     export default {
         mixins: [RouteContext],
@@ -38,8 +50,8 @@
         data() {
             return {
                 tabIndex: undefined,
-                mounted: false,
-                previousFlow: undefined
+                previousFlow: undefined,
+                depedenciesCount: undefined
             };
         },
         watch: {
@@ -59,6 +71,11 @@
                         if (this.flow) {
                             this.previousFlow = this.flowKey();
                             this.$store.dispatch("flow/loadGraph", this.flow);
+                            this.$http
+                                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
+                                .then(response => {
+                                    this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
+                                })
                         }
                     });
                 }
@@ -68,13 +85,25 @@
                 return this.$route.params.namespace +  "/" + this.$route.params.id;
             },
             getTabs() {
-                const tabs = [
+                let tabs = [
                     {
                         name: undefined,
                         component: Topology,
                         title: this.$t("topology"),
                     },
                 ];
+
+                if (this.user.hasAny(permission.EXECUTION)) {
+                    tabs[0].name = "topology";
+
+                    tabs = [
+                        {
+                            name: undefined,
+                            component: Overview,
+                            title: this.$t("overview"),
+                        },
+                    ].concat(tabs)
+                }
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({
@@ -84,25 +113,11 @@
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
-                    tabs.push({
-                        name: "execute",
-                        component: FlowRun,
-                        title: this.$t("launch execution")
-                    });
-                }
-
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
                         name: "source",
                         component: FlowSource,
                         title: this.$t("source"),
-                    });
-
-                    tabs.push({
-                        name: "schedule",
-                        component: Schedule,
-                        title: this.$t("schedule"),
                     });
                 }
 
@@ -121,7 +136,14 @@
                         title: this.$t("logs"),
                     });
                 }
-
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)){
+                    tabs.push({
+                        name: "dependencies",
+                        component: FlowDependencies,
+                        title: this.$t("dependencies"),
+                        count: this.depedenciesCount
+                    })
+                }
                 return tabs;
             },
             activeTabName() {
@@ -133,8 +155,15 @@
             },
             displayBottomLine() {
                 const name = this.activeTabName();
-                return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule";
-            }
+                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "topology";
+            },
+            editFlow() {
+                this.$router.push({name:"flows/update", params: {
+                    namespace: this.flow.namespace,
+                    id: this.flow.id,
+                    tab: "source"
+                }})
+            },
         },
         computed: {
             ...mapState("flow", ["flow"]),
@@ -166,6 +195,9 @@
             },
             ready() {
                 return this.flow !== undefined;
+            },
+            isAllowedEdit() {
+                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             canExecute() {
                 return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)

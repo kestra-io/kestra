@@ -16,7 +16,7 @@
                     </el-form-item>
                     <el-form-item>
                         <log-level-selector
-                            :value="$route.query.level"
+                            :value="selectedLogLevel"
                             @update:model-value="onDataTableValue('level', $event)"
                         />
                     </el-form-item>
@@ -76,7 +76,7 @@
         props: {
             logLevel: {
                 type: String,
-                default: "INFO"
+                default: undefined
             },
             embed: {
                 type: Boolean,
@@ -99,6 +99,9 @@
             },
             isFlowEdit() {
                 return this.$route.name === "flows/update"
+            },
+            selectedLogLevel() {
+                return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
             }
         },
         methods: {
@@ -120,7 +123,7 @@
                     .dispatch("log/findLogs", this.loadQuery({
                         page: this.$route.query.page || this.internalPageNumber,
                         size: this.$route.query.size || this.internalPageSize,
-                        minLevel: this.$route.query.level || this.logLevel
+                        minLevel: this.selectedLogLevel
                     }))
                     .finally(() => {
                         this.isLoading = false

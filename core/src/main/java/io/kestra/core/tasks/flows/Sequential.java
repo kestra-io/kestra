@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -68,6 +69,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
 
     @Valid
     @NotEmpty
+    @PluginProperty
     private List<Task> tasks;
 
     @Override

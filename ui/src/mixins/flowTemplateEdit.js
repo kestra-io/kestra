@@ -4,18 +4,17 @@ import {mapGetters, mapState} from "vuex";
 import BottomLine from "../components/layout/BottomLine.vue";
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
-import FlowEditor from "override/components/inputs/FlowEditor.vue";
-import TemplateEditor from "override/components/inputs/TemplateEditor.vue";
+import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
 import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
+import {pageFromRoute} from "../utils/eventsRouter";
 
 export default {
     mixins: [RouteContext],
     components: {
-        FlowEditor,
-        TemplateEditor,
+        Editor,
         ContentSave,
         Delete,
         BottomLine
@@ -32,7 +31,9 @@ export default {
     computed: {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
+        ...mapGetters("template", ["template"]),
         ...mapGetters("core", ["isUnsaved"]),
+        ...mapState("core", ["guidedProperties"]),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -98,8 +99,19 @@ export default {
                 delete this.item.revision;
             }
 
-            this.content = YamlUtils.stringify(this.item);
-            this.previousContent = this.content;
+            if (this.dataType === "template") {
+                this.content = YamlUtils.stringify(this.template);
+                this.previousContent = this.content;
+            } else {
+                if (this.flow) {
+                    this.content = this.flow.source;
+                    this.previousContent = this.content;
+                } else {
+                    this.content = "";
+                    this.previousContent = "";
+                }
+            }
+
             if (this.isEdit) {
                 this.readOnlyEditFields = {
                     id: this.item.id,
@@ -107,9 +119,37 @@ export default {
             }
         },
         deleteConfirmMessage() {
-            return new Promise((resolve) => {
-                resolve(this.$t("delete confirm", {name: this.item.id}));
-            });
+            if (this.dataType === "template") {
+                return new Promise((resolve) => {
+                    resolve(this.$t("delete confirm", {name: this.item.id}));
+                });
+            }
+
+            return this.$http
+                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .then(response => {
+                    let warning = "";
+
+                    if (response.data && response.data.nodes) {
+                        const deps = response.data.nodes
+                            .filter(n => !(n.namespace === this.flow.namespace && n.id  === this.flow.id))
+                            .map(n => "<li>" + n.namespace + ".<code>" + n.id  + "</code></li>")
+                            .join("\n");
+
+                        warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                            "<div class=\"el-alert__content\">\n" +
+                            "<p class=\"el-alert__description\">\n" +
+                            this.$t("dependencies delete flow") +
+                            "<ul>\n" +
+                            deps +
+                            "</ul>\n" +
+                            "</p>\n" +
+                            "</div>\n" +
+                            "</div>"
+                    }
+
+                    return this.$t("delete confirm", {name: this.item.id}) + warning;
+                })
         },
         deleteFile() {
             if (this.item) {
@@ -122,6 +162,8 @@ export default {
                                 return this.$store
                                     .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
                                     .then(() => {
+                                        this.content = ""
+                                        this.previousContent = ""
                                         return this.$router.push({
                                             name: this.dataType + "s/list"
                                         });
@@ -137,6 +179,19 @@ export default {
             this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
         },
         save() {
+            if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.saveFlow) {
+                this.$store.dispatch("api/events", {
+                    type: "ONBOARDING",
+                    onboarding: {
+                        step: this.$tours["guidedTour"].currentStep._value,
+                        action: "next",
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
+                this.$tours["guidedTour"].nextStep();
+                return;
+            }
+
             if (this.item) {
                 let item;
                 try {
@@ -158,8 +213,8 @@ export default {
                         }
                     }
                 }
-                this.previousContent = YamlUtils.stringify(this.item);
-                saveFlowTemplate(this, item, this.dataType)
+                this.previousContent = this.content;
+                saveFlowTemplate(this, this.content, this.dataType)
                     .then((flow) => {
                         this.previousContent = YamlUtils.stringify(flow);
                         this.content = YamlUtils.stringify(flow);
@@ -181,10 +236,10 @@ export default {
                 }
                 this.previousContent = YamlUtils.stringify(this.item);
                 this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
-                    .then((flow) => {
-                        this.previousContent = YamlUtils.stringify(flow);
-                        this.content = YamlUtils.stringify(flow);
+                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
+                    .then((data) => {
+                        this.previousContent = data.source ? data.source : YamlUtils.stringify(data);
+                        this.content = data.source ? data.source : YamlUtils.stringify(data);
                         this.onChange();
 
                         this.$router.push({

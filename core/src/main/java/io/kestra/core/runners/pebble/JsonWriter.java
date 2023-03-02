@@ -67,6 +67,8 @@ public class JsonWriter extends Writer implements SpecializedWriter {
             writeSpecialized(MAPPER.writeValueAsString(o));
         } else if (o instanceof Collection) {
             writeSpecialized(MAPPER.writeValueAsString(o));
+        } else if (o.getClass().isArray()) {
+            writeSpecialized(MAPPER.writeValueAsString(o));
         } else {
             SpecializedWriter.super.write(o);
         }

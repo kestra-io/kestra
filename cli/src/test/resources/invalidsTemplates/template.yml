@@ -1,0 +1,4 @@
+id: invalids
+namespace: io.kestra.tests
+tasks:
+

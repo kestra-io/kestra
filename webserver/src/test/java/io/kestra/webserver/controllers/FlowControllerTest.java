@@ -1,37 +1,54 @@
 package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableList;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.tasks.flows.Sequential;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.repository.memory.MemoryFlowRepository;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.http.hateoas.JsonError;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import jakarta.inject.Inject;
+import java.util.Map;
+import java.util.zip.ZipFile;
 
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FlowControllerTest extends AbstractMemoryRunnerTest {
@@ -39,12 +56,34 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Client("/")
     RxHttpClient client;
 
+    @Inject
+    MemoryFlowRepository memoryFlowRepository;
+
+    @BeforeEach
+    protected void init() throws IOException, URISyntaxException {
+        memoryFlowRepository.findAll()
+            .forEach(memoryFlowRepository::delete);
+
+        super.init();
+
+        TestsUtils.loads(repositoryLoader);
+    }
+
     @Test
     void id() {
-        Flow result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), Flow.class);
+        String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
+        Flow flow = new YamlFlowParser().parse(result, Flow.class);
+        assertThat(flow.getId(), is("full"));
+        assertThat(flow.getTasks().size(), is(5));
+    }
 
-        assertThat(result.getId(), is("full"));
-        assertThat(result.getTasks().size(), is(5));
+    @Test
+    void idNoSource() {
+        Map<String, Object> map = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), Argument.mapOf(String.class, Object.class));
+        assertThat(map.get("source"), is(nullValue()));
+
+        FlowWithSource result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full?source=true"), FlowWithSource.class);
+        assertThat(result.getSource(), containsString("#triggers:"));
     }
 
     @Test
@@ -69,8 +108,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra" +
             ".tests/all-flowable/graph"), FlowGraph.class);
 
-        assertThat(result.getNodes().size(), is(28));
-        assertThat(result.getEdges().size(), is(31));
+        assertThat(result.getNodes().size(), is(34));
+        assertThat(result.getEdges().size(), is(37));
         assertThat(result.getClusters().size(), is(6));
     }
 
@@ -87,7 +126,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void findAll() {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
-        assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
+        assertThat(flows.getTotal(), greaterThanOrEqualTo(Helpers.FLOWS_COUNT));
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -103,7 +142,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<Flow> updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
         assertThat(updated.size(), is(3));
 
-        Flow retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f1"), Flow.class);
+        Flow retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f1"), String.class));
         assertThat(retrieve.getId(), is("f1"));
 
         // update
@@ -114,9 +153,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         // f3 & f4 must be updated
         updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
-        assertThat(updated.size(), is(2));
-        assertThat(updated.get(0).getInputs().get(0).getName(), is("3-3"));
-        assertThat(updated.get(1).getInputs().get(0).getName(), is("4"));
+        assertThat(updated.size(), is(4));
+        assertThat(updated.get(0).getInputs().get(0).getName(), is("2"));
+        assertThat(updated.get(1).getInputs().get(0).getName(), is("1"));
 
         // f1 & f2 must be deleted
         assertThrows(HttpClientResponseException.class, () -> {
@@ -152,9 +191,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         });
 
         // flow is not updated
-        retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f4"), Flow.class);
+        retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f4"), String.class));
         assertThat(retrieve.getInputs().get(0).getName(), is("4"));
-
 
         // send 2 same id
         e = assertThrows(
@@ -180,19 +218,40 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         } catch (Exception ignored) {
 
         }
+    }
 
+    @Test
+    void updateNamespaceAsString() {
+        // initial création
+        String flows = String.join("---\n", Arrays.asList(
+            generateFlowAsString("flow1","io.kestra.updatenamespace","a"),
+            generateFlowAsString("flow2","io.kestra.updatenamespace","a"),
+            generateFlowAsString("flow3","io.kestra.updatenamespace","a")
+        ));
+
+        List<FlowWithSource> updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+        assertThat(updated.size(), is(3));
+
+        client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow1"));
+        client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow2"));
+        client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow3"));
     }
 
     @Test
     void createFlow() {
         Flow flow = generateFlow("io.kestra.unittest", "a");
 
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+        Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getInputs().get(0).getName(), is("a"));
 
-        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), Flow.class);
+        Flow get = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), String.class));
         assertThat(get.getId(), is(flow.getId()));
         assertThat(get.getInputs().get(0).getName(), is("a"));
 
@@ -202,7 +261,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     void deleteFlow() {
         Flow flow = generateFlow("io.kestra.unittest", "a");
 
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), FlowWithSource.class);
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getRevision(), is(1));
 
@@ -296,7 +355,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(result.getId(), is(flow.getId()));
 
-        Flow finalFlow = generateFlow(IdUtils.create(), "io.kestra.unittest2", "b");;
+        Flow finalFlow = generateFlow(IdUtils.create(), "io.kestra.unittest2", "b");
+        ;
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(
@@ -319,6 +379,250 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
         assertThat(namespaces.size(), is(2));
+    }
+
+    @Test
+    void createFlowFromString() {
+        String flow = generateFlowAsString("io.kestra.unittest","a");
+        Flow assertFlow = parseFlow(flow);
+
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        assertThat(result.getId(), is(assertFlow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
+
+        FlowWithSource get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/" + assertFlow.getId() + "?source=true"), FlowWithSource.class);
+        assertThat(get.getId(), is(assertFlow.getId()));
+        assertThat(get.getInputs().get(0).getName(), is("a"));
+        assertThat(get.getSource(), containsString(" Comment i added"));
+    }
+
+    @Test
+    void createInvalidFlowFromString() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlow.yaml");
+        assert resource != null;
+
+        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(
+                POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML),
+                Flow.class
+            );
+        });
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void updateFlowFromString() throws IOException {
+        String flow = generateFlowAsString("updatedFlow","io.kestra.unittest","a");
+        Flow assertFlow = parseFlow(flow);
+
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        assertThat(result.getId(), is(assertFlow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
+
+        flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
+
+        FlowWithSource get = client.toBlocking().retrieve(
+            PUT("/api/v1/flows/io.kestra.unittest/updatedFlow", flow).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(get.getId(), is(assertFlow.getId()));
+        assertThat(get.getInputs().get(0).getName(), is("b"));
+
+        String finalFlow = flow;
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            HttpResponse<Void> response = client.toBlocking().exchange(
+                PUT("/api/v1/flows/io.kestra.unittest/" + IdUtils.create(), finalFlow).contentType(MediaType.APPLICATION_YAML)
+            );
+        });
+        assertThat(e.getStatus(), is(NOT_FOUND));
+    }
+
+    @Test
+    void updateInvalidFlowFromString() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
+        assert resource != null;
+
+        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        assertThat(result.getId(), is("test-flow"));
+
+        resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlowUpdate.yaml");
+        assert resource != null;
+
+        String finalFlow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(
+                PUT("/api/v1/flows/io.kestra.unittest/test-flow", finalFlow).contentType(MediaType.APPLICATION_YAML),
+                Argument.of(Flow.class),
+                Argument.of(JsonError.class)
+            );
+        });
+
+        String jsonError = e.getResponse().getBody(String.class).get();
+
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+        assertThat(jsonError, containsString("flow.id"));
+        assertThat(jsonError, containsString("flow.namespace"));
+    }
+
+    @Test
+    void exportByQuery() throws IOException {
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("flows", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try (ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(52L));
+        }
+
+        file.delete();
+    }
+
+    @Test
+    void exportByIds() throws IOException {
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "webhook"),
+            new IdWithNamespace("io.kestra.tests", "task-flow"));
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/export/by-ids", ids),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("flows", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try(ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(3L));
+        }
+
+        file.delete();
+    }
+
+    @Test
+    void importFlowsWithYaml() throws IOException {
+        var yaml = generateFlowAsString("io.kestra.unittest","a") + "---" +
+            generateFlowAsString("io.kestra.unittest","b") + "---" +
+            generateFlowAsString("io.kestra.unittest","c");
+
+        var temp = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(NO_CONTENT));
+        temp.delete();
+    }
+
+    @Test
+    void importFlowsWithZip() throws IOException {
+        // create a ZIP file using the extract endpoint
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
+            Argument.of(byte[].class));
+        File temp = File.createTempFile("flows", ".zip");
+        Files.write(temp.toPath(), zip);
+
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.zip", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(NO_CONTENT));
+        temp.delete();
+    }
+
+    @Test
+    void disableFlowsByIds() {
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "webhook"),
+            new IdWithNamespace("io.kestra.tests", "task-flow")
+        );
+
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(POST("/api/v1/flows/disable/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(3));
+
+        Flow eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/each-object"), String.class));
+        Flow webhook = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/webhook"), String.class));
+        Flow taskFlow = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/task-flow"), String.class));
+
+        assertThat(eachObject.isDisabled(), is(true));
+        assertThat(webhook.isDisabled(), is(true));
+        assertThat(taskFlow.isDisabled(), is(true));
+    }
+
+    @Test
+    void disableFlowsByQuery() throws InterruptedException {
+        Flow flow = generateFlow("toDisable","io.kestra.unittest.disabled", "a");
+        client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
+
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(POST("/api/v1/flows/disable/by-query?namespace=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(1));
+
+        Flow toDisable = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDisable"), String.class));
+
+        assertThat(toDisable.isDisabled(), is(true));
+    }
+
+    @Test
+    void deleteFlowsByQuery(){
+        postFlow("flow-a","io.kestra.tests.delete", "a");
+        postFlow("flow-b","io.kestra.tests.delete", "b");
+        postFlow("flow-c","io.kestra.tests.delete", "c");
+
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests.delete", "flow-a"),
+            new IdWithNamespace("io.kestra.tests.delete", "flow-b"),
+            new IdWithNamespace("io.kestra.tests.delete", "flow-c")
+        );
+
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(DELETE("/api/v1/flows/delete/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(3));
+
+        HttpClientResponseException flowA = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-a"));
+        });
+        HttpClientResponseException flowB = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-b"));
+        });
+        HttpClientResponseException flowC = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-c"));
+        });
+
+        assertThat(flowA.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(flowB.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(flowC.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deleteFlowsByIds(){
+        Flow flow = generateFlow("toDelete","io.kestra.unittest.delete", "a");
+        client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/flows/delete/by-query?namespace=io.kestra.unittest.delete"));
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDelete"));
+        });
+
+        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 
     private Flow generateFlow(String namespace, String inputName) {
@@ -357,5 +661,44 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .type(Return.class.getName())
             .format(format)
             .build();
+    }
+
+    private Flow parseFlow(String flow) {
+        return new YamlFlowParser().parse(flow, Flow.class);
+    }
+
+    private String generateFlowAsString(String friendlyId, String namespace, String format) {
+        return String.format("id: %s\n" +
+            "# Comment i added\n" +
+            "namespace: %s\n" +
+            "inputs:\n" +
+            "  - name: %s\n" +
+            "    type: STRING\n" +
+            "tasks:\n" +
+            "  - id: test\n" +
+            "    type: io.kestra.core.tasks.debugs.Return\n" +
+            "    format: test\n" +
+            "disabled: false\n" +
+            "deleted: false", friendlyId,namespace, format);
+
+    }
+    private String generateFlowAsString(String namespace, String format) {
+        return String.format("id: %s\n" +
+            "# Comment i added\n" +
+            "namespace: %s\n" +
+            "inputs:\n" +
+            "  - name: %s\n" +
+            "    type: STRING\n" +
+            "tasks:\n" +
+            "  - id: test\n" +
+            "    type: io.kestra.core.tasks.debugs.Return\n" +
+            "    format: test\n" +
+            "disabled: false\n" +
+            "deleted: false", IdUtils.create(),namespace, format);
+
+    }
+
+    private String postFlow(String friendlyId, String namespace, String format) {
+        return client.toBlocking().retrieve(POST("/api/v1/flows", generateFlow(friendlyId, namespace, format)), String.class);
     }
 }

@@ -5,7 +5,7 @@ import io.kestra.core.models.hierarchies.*;
 import java.net.URISyntaxException;
 
 public class Graph2DotService {
-    public static String dot(Graph<AbstractGraphTask, Relation> graph) throws URISyntaxException {
+    public static String dot(Graph<AbstractGraph, Relation> graph) throws URISyntaxException {
         StringBuilder sb = new StringBuilder();
 
         sb.append("digraph G {\n");
@@ -29,10 +29,10 @@ public class Graph2DotService {
         return sb.toString();
     }
 
-    private static String nodeAndEdges(Graph<AbstractGraphTask, Relation> graph, int level, String uid) {
+    private static String nodeAndEdges(Graph<AbstractGraph, Relation> graph, int level, String uid) {
         StringBuilder sb = new StringBuilder();
 
-        for(AbstractGraphTask node : graph.nodes()) {
+        for(AbstractGraph node : graph.nodes()) {
             if (node instanceof GraphCluster) {
                 GraphCluster subGraph = (GraphCluster) node;
 
@@ -44,7 +44,7 @@ public class Graph2DotService {
             }
         }
 
-        for(Graph.Edge<AbstractGraphTask, Relation> e : graph.edges()) {
+        for(Graph.Edge<AbstractGraph, Relation> e : graph.edges()) {
             sb.append(indent(level))
                 .append("  ")
                 .append(nodeName(e.getSource()))
@@ -61,24 +61,22 @@ public class Graph2DotService {
         return " ".repeat(level * 2);
     }
 
-    private static String node(AbstractGraphTask node) {
+    private static String node(AbstractGraph node) {
         return name(node) +  label(node);
     }
 
-    private static String label(AbstractGraphTask node) {
-        String shape = node instanceof GraphClusterRoot || node instanceof GraphClusterEnd ? "point" : "box";
-        String label = node instanceof GraphClusterRoot ? "start" : (node instanceof GraphClusterEnd ? "end" :
-            node.getUid() + (node.getTaskRun() != null ? " > " + node.getTaskRun().getValue() + " (" + node.getTaskRun().getId() + ")" : "")
-        );
+    private static String label(AbstractGraph node) {
+        String shape = node instanceof GraphClusterEnd ? "point" : "box";
+        String label = node instanceof GraphClusterEnd ? "end" : node.getLabel();
 
         return "[shape=" + shape + ",label=\"" + label + "\"]";
     }
 
-    private static String nodeName(AbstractGraphTask node) {
+    private static String nodeName(AbstractGraph node) {
         return "\"" + node.getUid() + "\"";
     }
 
-    private static String name(AbstractGraphTask node) {
+    private static String name(AbstractGraph node) {
         return "\"" + node.getUid() + "\"";
     }
 }

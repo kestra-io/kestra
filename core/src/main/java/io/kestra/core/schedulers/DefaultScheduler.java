@@ -41,7 +41,7 @@ public class DefaultScheduler extends AbstractScheduler {
         QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
 
         executionQueue.receive(execution -> {
-            if (execution.getState().getCurrent().isTerninated() && this.watchingTrigger.containsKey(execution.getId())) {
+            if (execution.getState().getCurrent().isTerminated() && this.watchingTrigger.containsKey(execution.getId())) {
                 Trigger trigger = watchingTrigger.get(execution.getId());
                 triggerQueue.emit(trigger.resetExecution());
                 triggerState.save(trigger.resetExecution());
@@ -49,7 +49,7 @@ public class DefaultScheduler extends AbstractScheduler {
         });
 
         triggerQueue.receive(trigger -> {
-            if (trigger.getExecutionId() != null) {
+            if (trigger != null && trigger.getExecutionId() != null) {
                 this.watchingTrigger.put(trigger.getExecutionId(), trigger);
             }
         });

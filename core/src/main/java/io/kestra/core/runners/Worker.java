@@ -475,6 +475,8 @@ public class Worker implements Runnable, Closeable {
 
         @Override
         public void run() {
+            Thread.currentThread().setContextClassLoader(this.task.getClass().getClassLoader());
+
             try {
                 // timeout
                 if (workerTask.getTask().getTimeout() != null) {

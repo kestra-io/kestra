@@ -30,7 +30,7 @@ public class FlowDotCommand extends AbstractCommand {
         super.call();
 
         YamlFlowParser parser = applicationContext.getBean(YamlFlowParser.class);
-        Flow flow = parser.parse(file.toFile());
+        Flow flow = parser.parse(file.toFile(), Flow.class);
 
         GraphCluster graph = GraphService.of(flow, null);
 

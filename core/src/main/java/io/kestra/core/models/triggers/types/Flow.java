@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers.types;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -73,6 +74,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             "So you will need to go to Logs tabs on the ui to understand the error\n" +
             ":::"
     )
+    @PluginProperty
     private Map<String, Object> inputs;
 
     public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {

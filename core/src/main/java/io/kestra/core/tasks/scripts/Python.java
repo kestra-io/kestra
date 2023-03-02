@@ -14,12 +14,10 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @SuperBuilder
@@ -72,6 +70,16 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "requirements:",
                 "  - requests"
             }
+        ),
+        @Example(
+            title = "Execute a python script with an input file from Kestra's local storage created by a previous task.",
+            code = {
+                "inputFiles:",
+                "  data.csv: {{outputs.previousTaskId.uri}}",
+                "  main.py: |",
+                "    with open('data.csv', 'r') as f:",
+                "      print(f.read())"
+            }
         )
     }
 )
@@ -100,7 +108,7 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
             "Disabled it if all the requirements is already on the file system.\n" +
             "If you disabled the virtual env creation, the `requirements` will be ignored."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     protected Boolean virtualEnv = true;
 
@@ -109,7 +117,8 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
         Map<String, String> map = super.finalInputFiles(runContext);
 
         map.put("kestra.py", IOUtils.toString(
-            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
+            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream(
+                "scripts/python/src/kestra.py")),
             Charsets.UTF_8
         ));
 

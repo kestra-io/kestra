@@ -6,7 +6,6 @@ let root = (import.meta.env.VITE_APP_API_URL || "") + KESTRA_BASE_PATH;
 if (!root.endsWith("/")) {
     root = root + "/";
 }
-
 // nprogress
 let requestsTotal = 0
 let requestsCompleted = 0
@@ -111,6 +110,9 @@ export default (callback, store, router) => {
                 router.push({name: "errors/401"});
 
                 return Promise.reject(errorResponse);
+            }
+            if (errorResponse.response.status === 400){
+                return Promise.reject(errorResponse.response.data)
             }
 
             if (errorResponse.response.data) {

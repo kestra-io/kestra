@@ -1,4 +1,4 @@
-import {ElNotification, ElMessageBox} from "element-plus"
+import {ElNotification, ElMessageBox, ElTable, ElTableColumn} from "element-plus"
 import {h} from "vue"
 
 export default {
@@ -8,9 +8,26 @@ export default {
 
             return {
                 _wrap: function(message) {
-                    return h("span", {innerHTML: message});
+                    if(Array.isArray(message) && message.length > 0){
+                        return h(
+                            ElTable,
+                            {
+                                stripe: true,
+                                tableLayout: "auto",
+                                fixed: true,
+                                data: message,
+                                class: ["mt-2"],
+                                size: "small",
+                            },
+                            [
+                                h(ElTableColumn, {label: "Message", formatter: (row) => { return h("span",{innerHTML:row.message})}})
+                            ]
+                        )
+                    } else {
+                        return h("span", {innerHTML: message});
+                    }
                 },
-                confirm: function(message, callback, cancel) {
+                confirm: function(message, callback) {
                     ElMessageBox.confirm(
                         this._wrap(message || self.$t("toast confirm")),
                         self.$t("confirmation"),
@@ -22,7 +39,7 @@ export default {
                             callback();
                         })
                         .catch(() => {
-                            cancel();
+
                         })
                 },
                 saved: function(name, title, options) {
@@ -71,18 +88,12 @@ export default {
                         ...{
                             title: title || self.$t("error"),
                             message: this._wrap(message),
-                            type: "danger",
+                            type: "error",
+                            duration: 0,
+                            customClass: "large"
                         },
                         ...(options || {})
                     })
-                },
-                unsavedConfirm(ok, ko) {
-                    self.$toast()
-                        .confirm(
-                            self.$t("unsaved changed ?"),
-                            () => {ok()},
-                            () => {ko()}
-                        );
                 },
             }
         }

@@ -4,6 +4,10 @@
 // element-plus
 @use "layout/element-plus-overload";
 
+// vue-tour
+@use "vue3-tour/dist/vue3-tour.css";
+@use "layout/vue-tour-overload.scss";
+
 // layout
 @use "layout/root";
 @use "layout/root-dark";
@@ -28,7 +32,7 @@ main {
     margin-left: auto;
 
     padding-top: var(--spacer);
-    padding-bottom: 60px !important;
+    padding-bottom: 86px !important;
     transition: all 0.3s ease;
 
     &.menu-collapsed {

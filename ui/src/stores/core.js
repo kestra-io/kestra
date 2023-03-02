@@ -4,6 +4,15 @@ export default {
         message: undefined,
         error: undefined,
         unsavedChange: false,
+        guidedProperties: {
+            tourStarted: false,
+            flowSource: undefined,
+            saveFlow: false,
+            executeFlow: false,
+            validateInputs: false,
+            monacoRange: undefined,
+            monacoDisableRange: undefined,
+        }
     },
     actions: {
         showMessage({commit}, message) {
@@ -25,11 +34,17 @@ export default {
         },
         setUnsavedChange(state, unsavedChange) {
             state.unsavedChange = unsavedChange
+        },
+        setGuidedProperties(state, guidedProperties) {
+            state.guidedProperties = guidedProperties
         }
     },
     getters: {
         unsavedChange(state) {
             return state.unsavedChange;
-        }
+        },
+        guidedProperties(state) {
+            return state.guidedProperties;
+        },
     }
 }

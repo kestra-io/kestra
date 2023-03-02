@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-tabs v-model="activeName">
+        <el-tabs class="nav-tabs-flow-root router-link" v-model="activeName">
             <el-tab-pane
                 v-for="tab in tabs"
                 :key="tab.name"
@@ -17,7 +17,7 @@
             </el-tab-pane>
         </el-tabs>
         <component
-            v-bind="activeTab.props"
+            v-bind="{...activeTab.props, ...$attrs}"
             ref="tabContent"
             :is="activeTab.component"
             :prevent-route-info="true"

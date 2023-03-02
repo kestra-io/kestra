@@ -7,8 +7,10 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -46,7 +48,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
-
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
 
@@ -55,7 +56,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             } catch (DeserializationException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
-                    return FlowSource.builder()
+                    return FlowWithException.builder()
                         .id(jsonNode.get("id").asText())
                         .namespace(jsonNode.get("namespace").asText())
                         .revision(jsonNode.get("revision").asInt())
@@ -99,19 +100,66 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public List<Flow> findRevisions(String namespace, String id) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                Select<Record1<String>> select = DSL
+                DSLContext context = DSL.using(configuration);
+                Select<Record2<String, String>> from;
+
+                from = revision.map(integer -> context
+                        .select(
+                            field("source_code", String.class),
+                            field("value", String.class)
+                        )
+                        .from(jdbcRepository.getTable())
+                        .where(field("namespace").eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(integer)))
+                    .orElseGet(() -> context
+                        .select(
+                            field("source_code", String.class),
+                            field("value", String.class)
+                        )
+                        .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                        .where(this.defaultFilter())
+                        .and(field("namespace", String.class).eq(namespace))
+                        .and(field("id", String.class).eq(id)));
+                Record2<String, String> fetched = from.fetchAny();
+
+                if (fetched == null) {
+                    return Optional.empty();
+                }
+
+                 return Optional.of(FlowWithSource.of(
+                    jdbcRepository.map(fetched),
+                    fetched.get("source_code", String.class)
+                ));
+            });
+    }
+
+    @Override
+    public List<FlowWithSource> findRevisions(String namespace, String id) {
+         return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                Select<Record2<String, String>> select = DSL
                     .using(configuration)
-                    .select(field("value", String.class))
+                    .select(
+                        field("source_code", String.class),
+                        field("value", String.class)
+                    )
                     .from(jdbcRepository.getTable())
                     .where(field("namespace", String.class).eq(namespace))
                     .and(field("id", String.class).eq(id))
                     .orderBy(field("revision", Integer.class).asc());
 
-                return this.jdbcRepository.fetch(select);
+                return select
+                    .fetch()
+                    .map(record -> FlowWithSource.of(
+                        jdbcRepository.map(record),
+                        record.get("source_code", String.class)
+                    ));
             });
     }
 
@@ -125,20 +173,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .select(field("value"))
                     .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
                     .where(this.defaultFilter());
-
-                return this.jdbcRepository.fetch(select);
-            });
-    }
-
-    @Override
-    public List<Flow> findAllWithRevisions() {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectJoinStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(jdbcRepository.getTable());
 
                 return this.jdbcRepository.fetch(select);
             });
@@ -205,6 +239,33 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @Override
+    public List<FlowWithSource> findWithSource(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                List<Field<Object>> fields = List.of(field("value"), field("source_code"));
+                SelectConditionStep<Record> select = this.fullTextSelect(context, fields);
+
+                select.and(this.findCondition(query, labels));
+
+                if (namespace != null) {
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    jdbcRepository.map(record),
+                    record.get("source_code", String.class)
+                ));
+            });
+    }
+
+
     abstract protected Condition findSourceCodeCondition(String query);
 
     @Override
@@ -237,53 +298,50 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Flow create(Flow flow) throws ConstraintViolationException {
-        // control if create is valid
-        flow.validate()
-            .ifPresent(s -> {
-                throw s;
-            });
+    public FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
+        if (this.findById(flow.getNamespace(), flow.getId()).isPresent()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Flow id already exists",
+                flow,
+                Flow.class,
+                "flow.id",
+                flow.getId()
+            )));
+        }
 
-        return this.save(flow, CrudEventType.CREATE);
+        // Check flow with defaults injected
+        modelValidator.validate(flowWithDefaults);
+
+        return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     @Override
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(flow))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
+    public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
+        // Check flow with defaults injected
+        modelValidator.validate(flowWithDefaults);
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE);
+        // control if update is valid
+        Optional<ConstraintViolationException> checkUpdate = previous.validateUpdate(flowWithDefaults);
+        if(checkUpdate.isPresent()){
+            throw checkUpdate.get();
+        }
 
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return saved;
+        return this.save(flow, CrudEventType.UPDATE, flowSource);
     }
 
     @SneakyThrows
-    private Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {
-        // validate the flow
-        modelValidator
-            .isValid(flow)
-            .ifPresent(s -> {
-                throw s;
-            });
-
+    private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // flow exists, return it
-        Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow)) {
+        Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().isUpdatable(flow, flowSource)) {
             return exists.get();
         }
 
-        List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
         if (revisions.size() > 0) {
             flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);
@@ -292,14 +350,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
-        fields.put(field("source_code"), JacksonMapper.ofYaml().writeValueAsString(flow));
+        fields.put(field("source_code"), flowSource);
 
         this.jdbcRepository.persist(flow, fields);
 
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return flow;
+        return FlowWithSource.of(flow, flowSource);
     }
 
     @SneakyThrows

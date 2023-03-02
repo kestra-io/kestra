@@ -51,7 +51,7 @@ public class OrCondition extends Condition implements ScheduleCondition {
         title = "The list of conditions to exclude",
         description = "If any conditions is true, it will allow events."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private List<Condition> conditions;
 
     @Override

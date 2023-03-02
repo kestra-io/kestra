@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -14,6 +15,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.ListUtils;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
@@ -98,7 +100,7 @@ public class FlowService {
         return !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution));
     }
 
-    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, @Nullable MultipleConditionStorageInterface multipleConditionStorage) {
         return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .filter(flow -> !flow.isDisabled())
@@ -200,7 +202,6 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
-
     public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()
@@ -209,6 +210,19 @@ public class FlowService {
                 .noneMatch(c -> c.getId().equals(p.getId()))
             )
             .collect(Collectors.toList());
+    }
+
+    public static String cleanupSource(String source) {
+        return source.replaceFirst("(?m)^revision: \\d+\n?","");
+    }
+
+    public static String injectDisabledTrue(String source) {
+        Pattern p = Pattern.compile("^disabled\\s*:\\s*false\\s*", Pattern.MULTILINE);
+        if (p.matcher(source).find()) {
+            return p.matcher(source).replaceAll("disabled: true\n");
+        }
+
+        return source + "\ndisabled: true";
     }
 
     @AllArgsConstructor

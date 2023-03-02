@@ -22,6 +22,9 @@ micronaut:
     idle-timeout: 60m
     netty:
       max-chunk-size: 10MB
+  caches:
+    default:
+      maximum-weight: 10485760
 
 jackson:
   serialization:
@@ -65,156 +68,6 @@ kestra:
     delay: 1s
     maxDelay: ""
 
-  kafka:
-    defaults:
-      topic-prefix: "kestra_"
-      consumer-prefix: "kestra_"
-      topic:
-        partitions: 16
-        replication-factor: 1
-
-      client:
-        properties:
-          metrics.recording.level: TRACE
-
-      consumer:
-        properties:
-          isolation.level: "read_committed"
-          auto.offset.reset: "earliest"
-          enable.auto.commit: "false"
-
-      producer:
-        properties:
-          acks: "all"
-          compression.type: "lz4"
-          max.request.size: "10485760"
-
-      stream:
-        properties:
-          processing.guarantee: "exactly_once_v2"
-          replication.factor: "${kestra.kafka.defaults.topic.replication-factor}"
-          acks: "all"
-          compression.type: "lz4"
-          max.request.size: "10485760"
-          cache.max.bytes.buffering: 0
-
-    topics:
-      execution:
-        name: "${kestra.kafka.defaults.topic-prefix}execution"
-        cls: io.kestra.core.models.executions.Execution
-        properties:
-          cleanup.policy: "compact"
-          retention.ms: "-1"
-          min.compaction.lag.ms: 86400000
-
-      flow:
-        name: "${kestra.kafka.defaults.topic-prefix}flow"
-        cls: io.kestra.core.models.flows.Flow
-        properties:
-          cleanup.policy: "compact"
-          retention.ms: "-1"
-          segment.bytes: "10485760"
-
-      flowlast:
-        name: "${kestra.kafka.defaults.topic-prefix}flow_last"
-        properties:
-          cleanup.policy: "compact"
-          retention.ms: "-1"
-          segment.bytes: "10485760"
-
-      template:
-        name: "${kestra.kafka.defaults.topic-prefix}template"
-        cls: io.kestra.core.models.templates.Template
-        properties:
-          cleanup.policy: "compact"
-          retention.ms: "-1"
-          segment.bytes: "10485760"
-
-      executor:
-        name: "${kestra.kafka.defaults.topic-prefix}executor_main-executor-changelog"
-        cls: io.kestra.core.runners.Executor
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      killed:
-        name: "${kestra.kafka.defaults.topic-prefix}executor_killed"
-        cls: io.kestra.core.models.executions.ExecutionKilled
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      executorflowtrigger:
-        name: "${kestra.kafka.defaults.topic-prefix}executor_flowtrigger"
-        cls: io.kestra.runner.kafka.streams.ExecutorFlowTrigger
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      executorworkertaskexecution:
-        cls: io.kestra.core.runners.WorkerTaskExecution
-        name: "${kestra.kafka.defaults.topic-prefix}executor_workertaskexecution"
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      workertask:
-        name: "${kestra.kafka.defaults.topic-prefix}workertask"
-        cls: io.kestra.core.runners.WorkerTask
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      workertaskresult:
-        name: "${kestra.kafka.defaults.topic-prefix}workertaskresult"
-        cls: io.kestra.core.runners.WorkerTaskResult
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      workerinstance:
-        cls: io.kestra.core.runners.WorkerInstance
-        name: "${kestra.kafka.defaults.topic-prefix}workerinstance"
-        properties:
-          cleanup.policy: "compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      executorworkerinstance:
-        name: "${kestra.kafka.defaults.topic-prefix}executor_workerinstance"
-        properties:
-          cleanup.policy: "compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      workertaskrunning:
-        cls: io.kestra.core.runners.WorkerTaskRunning
-        name: "${kestra.kafka.defaults.topic-prefix}workertaskrunning"
-        properties:
-          cleanup.policy: "delete,compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
-      logentry:
-        cls: io.kestra.core.models.executions.LogEntry
-        name: "${kestra.kafka.defaults.topic-prefix}logs"
-        properties:
-          cleanup.policy: "delete"
-
-      trigger:
-        cls: io.kestra.core.models.triggers.Trigger
-        name: "${kestra.kafka.defaults.topic-prefix}trigger"
-        properties:
-          cleanup.policy: "compact"
-          min.compaction.lag.ms: 86400000
-          delete.retention.ms: 86400000
-
   jdbc:
     tables:
       queues:
@@ -249,9 +102,12 @@ kestra:
       settings:
         table: "settings"
         cls: io.kestra.core.models.Setting
+      flowtopologies:
+        table: "flow_topologies"
+        cls: io.kestra.core.models.topologies.FlowTopology
 
     queues:
-      min-poll-interval: 100ms
+      min-poll-interval: 25ms
       max-poll-interval: 1000ms
       poll-switch-interval: 5s
 

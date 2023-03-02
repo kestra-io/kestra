@@ -43,6 +43,8 @@
     import Slack from "vue-material-design-icons/Slack.vue";
     import Github from "vue-material-design-icons/Github.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
+    import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
+    import FileDocumentArrowRightOutline from "vue-material-design-icons/FileDocumentArrowRightOutline.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -74,6 +76,14 @@
             },
             generateMenu() {
                 return [
+                    {
+                        href: "/",
+                        title: this.$t("home"),
+                        icon: {
+                            element: shallowRef(ViewDashboardVariantOutline),
+                            class: "menu-icon",
+                        },
+                    },
                     {
                         href: "/flows",
                         alias: [
@@ -155,6 +165,15 @@
                                     element: shallowRef(GoogleCirclesExtended),
                                     class: "menu-icon"
                                 },
+                            },
+                            {
+                                href: "https://kestra.io/docs/flow-examples/",
+                                title: this.$t("documentation.examples"),
+                                icon: {
+                                    element: shallowRef(FileDocumentArrowRightOutline),
+                                    class: "menu-icon"
+                                },
+                                external: true
                             },
                             {
                                 href: "https://api.kestra.io/v1/communities/slack/redirect",

@@ -4,15 +4,31 @@ editLink: false
 ---
 # {{ capitalizeFirst (replace title "-" " ") }}
 
-{{~#each docs.classPlugins as | classPlugin subgroup | }}
-## {{ defaultIfEmpty (capitalizeFirst subgroup) "Common" }}
+{{ description }}
 
-{{~#each classPlugin as | classes type | }}
+{{ longDescription }}
+
+{{~#each classPlugins }}
+    {{~#if @key.title}}
+## {{ @key.title }}
+    {{else}}
+## {{ @key.name }}
+    {{/if}}
+{{ @key.description }}
+
+{{~#each this as | classes type | }}
 ### {{ capitalizeFirst type }}
 
 {{#each classes as | class | ~}}
-* [{{simpleName}}]({{ type }}/{{#and subgroup}}{{subgroup}}/{{/and}}{{ name }}.html)
+* [{{simpleName}}]({{ type }}/{{#and subgroup.name}}{{#not subgroup.subgroupIsGroup}}{{subgroup.name}}/{{/not}}{{/and}}{{ name }}.html)
 {{/each ~}}
 
 {{/each ~}}
 {{/each ~}}
+
+{{~#if guides }}
+## Guides
+    {{~#each guides as | guide | }}
+* [{{ capitalizeFirst guide }}](guides/{{ guide }}.html)
+    {{/each}}
+{{/if}}

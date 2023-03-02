@@ -85,7 +85,7 @@ public class State {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Optional<Instant> getEndDate() {
-        if (!this.isTerninated()) {
+        if (!this.isTerminated()) {
             return Optional.empty();
         }
 
@@ -109,8 +109,8 @@ public class State {
     }
 
     @JsonIgnore
-    public boolean isTerninated() {
-        return this.current.isTerninated();
+    public boolean isTerminated() {
+        return this.current.isTerminated();
     }
 
     @JsonIgnore
@@ -135,6 +135,12 @@ public class State {
         return this.current.isFailed();
     }
 
+    @JsonIgnore
+    public boolean isRestartable() {
+        return this.current.isFailed();
+    }
+
+
     @Introspected
     public enum Type {
         CREATED,
@@ -147,7 +153,7 @@ public class State {
         FAILED,
         KILLED;
 
-        public boolean isTerninated() {
+        public boolean isTerminated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.PAUSED;
         }
 

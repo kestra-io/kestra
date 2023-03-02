@@ -5,7 +5,6 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.Await;
-import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;

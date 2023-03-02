@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.debugs;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.micronaut.core.annotation.NonNull;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -38,9 +39,11 @@ import javax.validation.constraints.NotBlank;
 public class Echo extends Task implements RunnableTask<VoidOutput> {
     @NonNull
     @NotBlank
+    @PluginProperty(dynamic = true)
     private String format;
 
     @Builder.Default
+    @PluginProperty
     private Level level = Level.INFO;
 
     @Override

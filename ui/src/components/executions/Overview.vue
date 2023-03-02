@@ -82,9 +82,6 @@
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
-            restart() {
-                this.$emit("follow");
-            },
             stop() {
                 if (!this.execution || State.isRunning(this.execution.state.current)) {
                     return new Date().toISOString(true)

@@ -22,13 +22,19 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 public class DocumentationGenerator {
@@ -61,7 +67,7 @@ public class DocumentationGenerator {
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
 
-    public List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
+    public List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException, URISyntaxException {
         ArrayList<Document> result = new ArrayList<>();
 
         result.addAll(index(registeredPlugin));
@@ -69,6 +75,8 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
+
+        result.addAll(guides(registeredPlugin));
 
         return result;
     }
@@ -84,8 +92,19 @@ public class DocumentationGenerator {
 
         if (plugin.getManifest() != null) {
             builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
-            builder.put("group", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group"));
-            builder.put("docs", JacksonMapper.toMap(pluginDocumentation));
+
+            if (plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description") != null) {
+                builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
+            }
+
+            var group = plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group");
+            builder.put("group", group);
+            longDescription(plugin, builder, group);
+            builder.put("classPlugins", pluginDocumentation.getClassPlugins());
+        }
+
+        if(!plugin.getGuides().isEmpty()) {
+            builder.put("guides", plugin.getGuides());
         }
 
         return Collections.singletonList(new Document(
@@ -93,6 +112,41 @@ public class DocumentationGenerator {
             render("index", builder.build()),
             null
         ));
+    }
+
+    private static List<Document> guides(RegisteredPlugin plugin) throws IOException, URISyntaxException {
+        String pluginName = Slugify.of(plugin.title());
+
+        var guides = plugin.getClassLoader().getResource("doc/guides");
+        if(guides != null) {
+            try (var fileSystem = FileSystems.newFileSystem(guides.toURI(), Collections.emptyMap())) {
+                var root = fileSystem.getPath("/doc/guides");
+                try (var stream = Files.walk(root, 1)) {
+                    return stream
+                        .skip(1) // first element is the root element
+                        .map(throwFunction(path -> new Document(
+                            pluginName + "/guides/" + path.getName(path.getParent().getNameCount()),
+                            new String(Files.readAllBytes(path)),
+                            null
+                            ))
+                        )
+                        .collect(Collectors.toList());
+                }
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    private static void longDescription(RegisteredPlugin plugin, ImmutableMap.Builder<String, Object> builder, String group) {
+        try (var is = plugin.getClassLoader().getResourceAsStream("doc/" + group + ".md")) {
+            if(is != null) {
+                builder.put("longDescription", IOUtils.toString(is, Charsets.UTF_8));
+            }
+        }
+        catch (Exception e) {
+            // silently fail
+        }
     }
 
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {

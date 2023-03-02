@@ -29,11 +29,13 @@
                         fixed
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
+                        @selection-change="handleSelectionChange"
                     >
+                        <el-table-column type="selection" v-if="(canRead)" />
                         <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <router-link
-                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                    :to="{name: 'templates/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
                                 >
                                     {{ scope.row.id }}
                                 </router-link>
@@ -62,9 +64,38 @@
 
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
+                <ul v-if="templatesSelection.length !== 0 && canRead">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="templatesSelection" :total="total" @update:model-value="selectAll()">
+                        <el-button v-if="canRead" :icon="Download" size="large" @click="exportTemplates()">
+                            {{ $t('export') }}
+                        </el-button>
+                        <el-button v-if="canDelete" @click="deleteTemplates" size="large" :icon="TrashCan">
+                            {{ $t('delete') }}
+                        </el-button>
+                    </bottom-line-counter>
+                </ul>
+
+                <li class="spacer" />
+                <li>
+                    <div class="el-input el-input-file el-input--large custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importTemplates">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importTemplates"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importTemplates()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
                 <li>
                     <router-link :to="{name: 'templates/create'}">
-                        <el-button :icon="Plus" type="primary">
+                        <el-button :icon="Plus" type="info" size="large">
                             {{ $t('create') }}
                         </el-button>
                     </router-link>
@@ -76,6 +107,8 @@
 
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
+    import Download from "vue-material-design-icons/Download.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
 </script>
 
 <script>
@@ -93,6 +126,8 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import _merge from "lodash/merge";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
+    import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import Upload from "vue-material-design-icons/Upload.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -104,12 +139,16 @@
             NamespaceSelect,
             Kicon,
             MarkdownTooltip,
+            BottomLineCounter,
+            Upload
         },
         data() {
             return {
                 isDefaultNamespaceAllow: true,
                 permission: permission,
                 action: action,
+                templatesSelection: [],
+                queryBulkAction: false
             };
         },
         computed: {
@@ -120,6 +159,12 @@
                 return {
                     title: this.$t("templates")
                 };
+            },
+            canRead() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+            },
+            canDelete() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
             },
         },
         methods: {
@@ -139,6 +184,83 @@
                         callback();
                     });
             },
+            handleSelectionChange(val) {
+                if (val.length === 0) {
+                    this.queryBulkAction = false
+                }
+                this.templatesSelection = val.map(x => {
+                    return {
+                        id: x.id,
+                        namespace: x.namespace
+                    }
+                });
+            },
+            selectAll() {
+                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
+                    this.$refs.table.toggleAllSelection();
+                }
+            },
+            exportTemplates() {
+                this.$toast().confirm(
+                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.total : this.templatesSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("template/exportTemplateByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(_ => {
+                                    this.$toast().success(this.$t("templates exported"));
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("template/exportTemplateByIds", {ids: this.templatesSelection})
+                                .then(_ => {
+                                    this.$toast().success(this.$t("templates exported"));
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
+            importTemplates() {
+                const formData = new FormData();
+                formData.append("fileUpload", this.$refs.file.files[0]);
+                this.$store
+                    .dispatch("template/importTemplates", formData)
+                    .then(_ => {
+                        this.$toast().success(this.$t("templates imported"));
+                        this.loadData(() => {})
+                    })
+            },
+            deleteTemplates(){
+                this.$toast().confirm(
+                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.total : this.templatesSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("template/deleteTemplateByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("template/deleteTemplateByIds", {ids: this.templatesSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
         },
     };
 </script>
+

@@ -1,5 +1,7 @@
 package io.kestra.cli.commands.sys;
 
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -16,6 +18,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 class FlowListenersRestoreCommandTest {
+
     @BeforeAll
     static void init() {
         if (!KestraClassLoader.isInit()) {
@@ -32,15 +35,16 @@ class FlowListenersRestoreCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
+            TaskDefaultService taskDefaultService = ctx.getBean(TaskDefaultService.class);
 
             Thread thread = new Thread(() -> {
                 Integer result = PicocliRunner.call(FlowListenersRestoreCommand.class, ctx, "--timeout=PT1S");
                 assertThat(result, is(0));
             });
             thread.start();
-
             for (int i = 0; i < COUNT; i++) {
-                flowRepository.create(RestoreQueueCommandTest.create());
+                Flow flow = RestoreQueueCommandTest.create();
+                flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
                 Thread.sleep(100);
             }
 

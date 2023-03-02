@@ -5,7 +5,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,6 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -22,6 +23,9 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Inject
     FlowRepositoryInterface flowRepository;
+
+    @Inject
+    TaskDefaultService taskDefaultService;
 
     @Test
     void restartSimple() throws Exception {
@@ -48,14 +52,19 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         Flow flow = flowRepository.findById("io.kestra.tests", "restart_last_failed").orElseThrow();
-        flowRepository.update(flow, flow.updateTask(
-            "a",
-            Return.builder()
-                .id("a")
-                .type(Return.class.getName())
-                .format("replace")
-                .build()
-        ));
+        flowRepository.update(
+            flow,
+            flow.updateTask(
+                "a",
+                Return.builder()
+                    .id("a")
+                    .type(Return.class.getName())
+                    .format("replace")
+                    .build()
+            ),
+            JacksonMapper.ofYaml().writeValueAsString(flow),
+            taskDefaultService.injectDefaults(flow)
+        );
 
 
         Execution restart = executionService.restart(execution, 2);

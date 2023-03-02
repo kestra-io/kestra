@@ -80,6 +80,17 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "args:",
                 "  - data.json",
             }
+        ),
+        @Example(
+            title = "Execute a node script with an input file from Kestra's local storage created by a previous task.",
+            code = {
+                "inputFiles:",
+                "  data.csv: {{outputs.previousTaskId.uri}}",
+                "  main.js: |",
+                "    const fs = require('fs')",
+                "    const result = fs.readFileSync('data.csv', 'utf-8')",
+                "    console.log(result)"
+            }
         )
     }
 )
@@ -89,6 +100,7 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
         title = "The node interpreter to use",
         description = "Set the node interpreter path to use"
     )
+    @PluginProperty
     private final String nodePath = "node";
 
     @Builder.Default
@@ -96,6 +108,7 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
         title = "The npm binary to use",
         description = "Set the npm binary path for node dependencies setup"
     )
+    @PluginProperty
     private final String npmPath = "npm";
 
     @Schema(

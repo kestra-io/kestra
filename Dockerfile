@@ -11,11 +11,10 @@ RUN apt-get update -y && \
     if [ -n "${APT_PACKAGES}" ]; then apt-get install -y --no-install-recommends ${APT_PACKAGES}; fi && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
-    if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi
-
-RUN groupadd kestra && \
-  useradd -m -g kestra kestra && \
-  chown -R kestra:kestra /app
+    if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
+    groupadd kestra && \
+    useradd -m -g kestra kestra && \
+    chown -R kestra:kestra /app
 
 USER kestra
 

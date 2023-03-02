@@ -1,13 +1,10 @@
 package io.kestra.core.models.hierarchies;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.ToString;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.utils.IdUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,19 +12,14 @@ import java.util.List;
 @ToString
 @Getter
 @Introspected
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
-public abstract class AbstractGraphTask {
-    protected final String uid;
-    @JsonInclude
-    protected final String type;
+public abstract class AbstractGraphTask extends AbstractGraph {
     private final Task task;
     private final TaskRun taskRun;
     private final List<String> values;
     private final RelationType relationType;
 
     public AbstractGraphTask() {
-        this.uid = IdUtils.create();
-        this.type = this.getClass().getName();
+        super();
 
         this.task = null;
         this.taskRun = null;
@@ -36,8 +28,7 @@ public abstract class AbstractGraphTask {
     }
 
     public AbstractGraphTask(Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
-        this.uid = IdUtils.create();
-        this.type = this.getClass().getName();
+        super();
 
         this.task = task;
         this.taskRun = taskRun;
@@ -45,6 +36,12 @@ public abstract class AbstractGraphTask {
         this.relationType = relationType;
     }
 
+    @Override
+    public String getLabel() {
+        return this.getUid() + (this.getTaskRun() != null ? " > " + this.getTaskRun().getValue() + " (" + this.getTaskRun().getId() + ")" : "");
+    }
+
+    @Override
     public String getUid() {
         List<String> list = new ArrayList<>();
 

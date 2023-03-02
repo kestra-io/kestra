@@ -48,14 +48,14 @@
 
             <template #footer>
                 <el-button @click="visible = false">
-                    Cancel
+                    {{ $t('cancel') }}
                 </el-button>
                 <el-button
                     type="primary"
                     @click="changeStatus()"
                     :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
                 >
-                    OK
+                    {{ $t('ok') }}
                 </el-button>
             </template>
         </el-dialog>

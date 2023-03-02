@@ -1,7 +1,9 @@
 package io.kestra.core.docs;
 
+import io.kestra.core.models.annotations.PluginSubGroup;
 import lombok.*;
 import io.kestra.core.plugins.RegisteredPlugin;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.Comparator;
 import java.util.List;
@@ -17,7 +19,9 @@ import java.util.stream.Collectors;
 public class PluginDocumentation {
     private String title;
     private String group;
-    private Map<String, Map<String, List<ClassPlugin>>> classPlugins;
+    private Map<SubGroup, Map<String, List<ClassPlugin>>> classPlugins;
+
+    private Map<String, String> guides;
 
     private PluginDocumentation(RegisteredPlugin plugin) {
         this.title = plugin.title();
@@ -34,11 +38,19 @@ public class PluginDocumentation {
                         .name(cls.getName())
                         .simpleName(cls.getSimpleName())
                         .type(entry.getKey());
-
-                    if (cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {
-                        builder.subgroup(cls.getPackageName().substring(this.group.length() + 1));
+                    if (cls.getPackageName().startsWith(this.group)) {
+                        var pluginSubGroup = cls.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
+                        var subGroupName =  cls.getPackageName().length() > this.group.length() ?
+                            cls.getPackageName().substring(this.group.length() + 1) : "";
+                        var subGroupTitle = pluginSubGroup != null ? pluginSubGroup.title() : subGroupName;
+                        var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
+                        // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes
+                        var subgroupIsGroup = cls.getPackageName().length() <= this.group.length();
+                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subgroupIsGroup);
+                        builder.subgroup(subgroup);
                     } else {
-                        builder.subgroup("");
+                        // should never occur
+                        builder.subgroup(new SubGroup(""));
                     }
 
                     return builder.build();
@@ -65,7 +77,28 @@ public class PluginDocumentation {
     public static class ClassPlugin {
         String name;
         String simpleName;
-        String subgroup;
+        SubGroup subgroup;
+        String group;
         String type;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    @EqualsAndHashCode(of = "name")
+    public static class SubGroup implements Comparable<SubGroup>{
+        String name;
+        String title;
+        String description;
+
+        boolean subgroupIsGroup;
+
+        SubGroup(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public int compareTo(SubGroup o) {
+            return name.compareTo(o.getName());
+        }
     }
 }

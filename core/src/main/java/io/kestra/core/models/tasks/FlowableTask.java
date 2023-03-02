@@ -1,5 +1,6 @@
 package io.kestra.core.models.tasks;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
@@ -17,6 +18,7 @@ public interface FlowableTask <T extends Output> {
     @Schema(
         title = "List of tasks to run if any tasks failed on this FlowableTask"
     )
+    @PluginProperty
     List<Task> getErrors();
 
     GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException;

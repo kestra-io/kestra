@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.State;
 
@@ -123,5 +124,28 @@ class ExecutionTest {
             ))
             .build()
         ), is(true));
+    }
+
+    @Test
+    void originalId() {
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .state(new State())
+            .build();
+        assertThat(execution.getOriginalId(), is(execution.getId()));
+
+        Execution restart1 = execution.childExecution(
+            IdUtils.create(),
+            execution.getTaskRunList(),
+            execution.withState(State.Type.RESTARTED).getState()
+        );
+        assertThat(restart1.getOriginalId(), is(execution.getId()));
+
+        Execution restart2 = restart1.childExecution(
+            IdUtils.create(),
+            restart1.getTaskRunList(),
+            restart1.withState(State.Type.PAUSED).getState()
+        );
+        assertThat(restart2.getOriginalId(), is(execution.getId()));
     }
 }

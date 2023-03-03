@@ -58,14 +58,14 @@ import java.util.Optional;
 public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "Duration of the pause.",
-        description = "If null and no timeout, a manual approval is needed, if not, the delay before automatically continue the execution"
+        description = "If null and no timeout, a manual approval is needed, if not, the delay before continuing the execution"
     )
     @PluginProperty
     private Duration delay;
 
     @Schema(
         title = "Timeout of the pause.",
-        description = "If null and no delay, a manual approval is needed, if the timeout is not done before the timeout, the task will failed"
+        description = "If null and no delay, a manual approval is needed, else a manual approval is needed before the timeout or the task will fail"
     )
     @PluginProperty
     private Duration timeout;

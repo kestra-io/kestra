@@ -184,13 +184,15 @@ public class MemoryExecutor implements ExecutorInterface {
                                 try {
                                     ExecutionState executionState = EXECUTIONS.get(workerTaskResultDelay.getExecutionId());
 
-                                    Execution markAsExecution = executionService.markAs(
-                                        executionState.execution,
-                                        workerTaskResultDelay.getTaskRunId(),
-                                        State.Type.RUNNING
-                                    );
+                                    if (executionState.execution.findTaskRunByTaskRunId(workerTaskResultDelay.getTaskRunId()).getState().getCurrent() == State.Type.PAUSED) {
+                                        Execution markAsExecution = executionService.markAs(
+                                            executionState.execution,
+                                            workerTaskResultDelay.getTaskRunId(),
+                                            workerTaskResultDelay.getState()
+                                        );
 
-                                    executionQueue.emit(markAsExecution);
+                                        executionQueue.emit(markAsExecution);
+                                    }
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }

@@ -443,13 +443,16 @@ public class JdbcExecutor implements ExecutorInterface {
                 Executor executor = new Executor(pair.getLeft(), null);
 
                 try {
-                    Execution markAsExecution = executionService.markAs(
-                        pair.getKey(),
-                        executionDelay.getTaskRunId(),
-                        State.Type.RUNNING
-                    );
+                    if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent() == State.Type.PAUSED) {
 
-                    executor = executor.withExecution(markAsExecution, "pausedRestart");
+                        Execution markAsExecution = executionService.markAs(
+                            pair.getKey(),
+                            executionDelay.getTaskRunId(),
+                            executionDelay.getState()
+                        );
+
+                        executor = executor.withExecution(markAsExecution, "pausedRestart");
+                    }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);
                 }

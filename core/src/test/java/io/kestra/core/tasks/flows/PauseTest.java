@@ -31,8 +31,13 @@ public class PauseTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void failed() throws Exception {
+    void delay() throws Exception {
         suite.runDelay(runnerUtils);
+    }
+
+    @Test
+    void timeout() throws Exception {
+        suite.runTimeout(runnerUtils);
     }
 
     @Singleton
@@ -87,6 +92,25 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(2L));
             assertThat(execution.getTaskRunList(), hasSize(3));
         }
-    }
 
+
+        public void runTimeout(RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOne("io.kestra.tests", "pause-timeout");
+
+            assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList(), hasSize(1));
+
+            execution = runnerUtils.awaitExecution(
+                e -> e.getState().getCurrent() == State.Type.FAILED,
+                () -> {},
+                Duration.ofSeconds(30)
+            );
+
+            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
+            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(1L));
+            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count(), is(1L));
+            assertThat(execution.getTaskRunList(), hasSize(1));
+        }
+    }
 }

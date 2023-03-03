@@ -481,7 +481,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Files.write(file.toPath(), zip);
 
         try (ZipFile zipFile = new ZipFile(file)) {
-            assertThat(zipFile.stream().count(), is(52L));
+            assertThat(zipFile.stream().count(), is(Helpers.FLOWS_COUNT));
         }
 
         file.delete();

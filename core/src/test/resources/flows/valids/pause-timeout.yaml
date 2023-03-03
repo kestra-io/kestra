@@ -1,0 +1,15 @@
+id: pause-timeout
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.core.tasks.flows.Pause
+    timeout: PT1S
+    tasks:
+      - id: ko
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - echo "trigger 1 seconds pause"
+  - id: last
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

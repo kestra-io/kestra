@@ -386,11 +386,12 @@ public class ExecutorService {
                 if (task instanceof Pause) {
                     Pause pauseTask = (Pause) task;
 
-                    if (pauseTask.getDelay() != null) {
+                    if (pauseTask.getDelay() != null || pauseTask.getTimeout() != null) {
                         return ExecutionDelay.builder()
                             .taskRunId(workerTaskResult.getTaskRun().getId())
                             .executionId(executor.getExecution().getId())
-                            .date(workerTaskResult.getTaskRun().getState().maxDate().plus(pauseTask.getDelay()))
+                            .date(workerTaskResult.getTaskRun().getState().maxDate().plus(pauseTask.getDelay() != null ? pauseTask.getDelay() : pauseTask.getTimeout()))
+                            .state(pauseTask.getDelay() != null ? State.Type.RUNNING : State.Type.FAILED)
                             .build();
                     }
                 }

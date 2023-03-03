@@ -227,4 +227,9 @@ public abstract class JdbcRunnerTest {
     public void pauseRunDelay() throws Exception {
         pauseTest.runDelay(runnerUtils);
     }
+
+    @Test
+    public void pauseRunTimeout() throws Exception {
+        pauseTest.runTimeout(runnerUtils);
+    }
 }

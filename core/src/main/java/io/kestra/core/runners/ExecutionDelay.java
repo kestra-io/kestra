@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.flows.State;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
@@ -19,4 +20,6 @@ public class ExecutionDelay {
 
     @NotNull
     Instant date;
+
+    @NotNull State.Type state;
 }

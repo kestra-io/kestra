@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import javax.validation.constraints.NotNull;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @ToString
 @Getter
 @NoArgsConstructor

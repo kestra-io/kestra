@@ -37,7 +37,7 @@ import javax.validation.constraints.NotNull;
                 "namespace: io.kestra.tests",
                 "flowId: my-sub-flows",
                 "inputs:",
-                "  file: \"{{ outputs.my-task.files.resolver }}\"",
+                "  file: \"{{ outputs.myTask.outputFiles.resolver }}\"",
                 "  store: 12",
                 "wait: false"
             }

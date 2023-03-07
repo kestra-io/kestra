@@ -1,5 +1,5 @@
 import JsYaml from "js-yaml";
-import yaml, {Document, YAMLMap} from "yaml";
+import yaml, {Document, LineCounter, Pair, YAMLMap, YAMLSeq} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
 
 const TOSTRING_OPTIONS = {lineWidth: 0};
@@ -160,5 +160,36 @@ export default class YamlUtils {
         const index = based.indexOf(value);
 
         return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    }
+
+    static getTaskType(source, position) {
+        const lineCounter = new LineCounter();
+        const yamlDoc = yaml.parseDocument(source, {lineCounter});
+        const cursorIndex = lineCounter.lineStarts[position.lineNumber-1] + position.column;
+        for(const item of yamlDoc.contents.items){
+            if(item.value instanceof YAMLSeq && item.key.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex){
+                return YamlUtils._getTaskType(item.value, cursorIndex, null)
+            }
+        }
+    }
+
+    static _getTaskType(element, cursorIndex, previousTaskType){
+        let taskType = previousTaskType
+        for(const item of element.items){
+            if(item instanceof Pair){
+                if(item.key.value === "type" && element.range[0] <= cursorIndex && element.range[1] >= cursorIndex){
+                    taskType = item.value.value
+                }
+                if((item.value instanceof YAMLSeq || item.value instanceof YAMLMap) && item.value.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex){
+                    taskType = this._getTaskType(item.value, cursorIndex, taskType)
+                }
+            }
+            else if(item.range[0] <= cursorIndex && item.range[1] >= cursorIndex){
+                if(item.items instanceof Array){
+                    taskType = this._getTaskType(item, cursorIndex)
+                }
+            }
+        }
+        return taskType
     }
 }

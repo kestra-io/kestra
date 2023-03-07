@@ -152,6 +152,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    void restartMultiple() throws Exception {
+        restartCaseTest.restartMultiple();
+    }
+
+    @Test
     void flowTrigger() throws Exception {
         flowTriggerCaseTest.trigger();
     }

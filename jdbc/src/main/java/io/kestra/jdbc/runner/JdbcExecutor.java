@@ -414,8 +414,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
         // delete if ended
         if (executorService.canBePurged(executor)) {
-            // TODO
-            // executorStateStorage.delete(executor.getExecution());
+            executorStateStorage.delete(executor.getExecution());
         }
     }
 

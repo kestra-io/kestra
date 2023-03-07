@@ -106,4 +106,31 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution.getParentId(), is(firstExecution.getId()));
         assertThat(finishedRestartedExecution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
+
+    public void restartMultiple() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "failed-first");
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
+        Execution restart = executionService.restart(execution, null);
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+
+        Execution restartEnded = runnerUtils.awaitExecution(
+            e -> e.getState().getCurrent() == State.Type.FAILED,
+            () -> executionQueue.emit(restart),
+            Duration.ofSeconds(120)
+        );
+
+        assertThat(restartEnded.getState().getCurrent(), is(State.Type.FAILED));
+
+        Execution newRestart = executionService.restart(restartEnded, null);
+
+        restartEnded = runnerUtils.awaitExecution(
+            e -> e.getState().getCurrent() == State.Type.FAILED,
+            () -> executionQueue.emit(newRestart),
+            Duration.ofSeconds(120)
+        );
+
+        assertThat(restartEnded.getState().getCurrent(), is(State.Type.FAILED));
+    }
 }

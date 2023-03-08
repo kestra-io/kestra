@@ -223,12 +223,16 @@ public class RunContext {
         }
 
         if (execution != null) {
+            ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.<String, Object>builder()
+                .put("id", execution.getId())
+                .put("startDate", execution.getState().getStartDate());
+
+            if (execution.getOriginalId() != null) {
+                executionMap.put("originalId", execution.getOriginalId());
+            }
+
             builder
-                .put("execution", ImmutableMap.of(
-                    "id", execution.getId(),
-                    "originalId", execution.getOriginalId(),
-                    "startDate", execution.getState().getStartDate()
-                ));
+                .put("execution", executionMap.build());
 
             if (execution.getTaskRunList() != null) {
                 builder.put("outputs", execution.outputs());

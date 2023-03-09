@@ -11,7 +11,7 @@
                     </router-link>
                 </el-breadcrumb-item>
 
-                <el-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :key="x">
+                <el-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :key="x">
                     <router-link :to="item.link">
                         {{ item.label }}
                     </router-link>

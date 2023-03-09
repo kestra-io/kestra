@@ -62,7 +62,7 @@
             <el-table-column prop="value" sortable :label="$t('value')">
                 <template #default="scope">
                     <span v-if="scope.row.type === 'timer'">
-                        {{ $filters.humanizeDuration(scope.row.value) }}
+                        {{ $filters.humanizeDuration(scope.row.value / 1000) }}
                     </span>
                     <span v-else>
                         {{ $filters.humanizeNumber(scope.row.value) }}

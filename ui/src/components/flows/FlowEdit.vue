@@ -53,7 +53,8 @@
                     ContentCopy: shallowRef(ContentCopy),
                     ContentSave: shallowRef(ContentSave),
                     Delete: shallowRef(Delete),
-                }
+                },
+                lastChangeWasGuided: false,
             };
         },
         computed: {
@@ -90,10 +91,16 @@
                 if (localStorage.getItem("tourDoneOrSkip") !== "true") {
                     if (this.guidedProperties.source !== undefined) {
                         this.content = this.guidedProperties.source
+                        this.lastChangeWasGuided = true;
                     }
                     if (this.guidedProperties.saveFlow) {
                         this.save();
                     }
+                }
+                else if(this.lastChangeWasGuided){
+                    console.log(this.guidedProperties)
+                    this.content = this.guidedProperties.source +"\n";
+                    this.lastChangeWasGuided = false;
                 }
             }
         }

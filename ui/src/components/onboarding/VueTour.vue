@@ -375,6 +375,14 @@
             skipTour(currentStep) {
                 this.dispatchEvent(currentStep,"skip")
                 localStorage.setItem("tourDoneOrSkip", "true");
+                this.$store.commit("core/setGuidedProperties", {
+                    ...this.guidedProperties,
+                    tourStarted:false,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: true,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined});
                 return this.$tours["guidedTour"].stop();
             },
             finishTour(currentStep) {
@@ -382,8 +390,8 @@
                 this.dispatchEvent(currentStep,"executed")
                 localStorage.setItem("tourDoneOrSkip", "true");
                 this.$store.commit("core/setGuidedProperties", {
+                    ...this.guidedProperties,
                     tourStarted:false,
-                    flowSource: "",
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: true,

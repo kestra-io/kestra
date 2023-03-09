@@ -108,7 +108,7 @@ public class JsonSchemaGenerator {
     @SuppressWarnings("unchecked")
     private static void fixFlow(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var flow = (Map<String, Object>) definitions.get("io.kestra.core.models.flows.Flow");
+        var flow = definitions.get("io.kestra.core.models.flows.Flow");
 
         var requireds = (List<String>) flow.get("required");
         requireds.remove("deleted");
@@ -120,7 +120,7 @@ public class JsonSchemaGenerator {
     @SuppressWarnings("unchecked")
     private static void fixTask(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+        var task = definitions.get("io.kestra.core.models.tasks.Task-2");
         var allOf = (List<Object>) task.get("allOf");
         allOf.remove(1);
     }
@@ -128,7 +128,7 @@ public class JsonSchemaGenerator {
     @SuppressWarnings("unchecked")
     private static void fixTrigger(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
+        var task = definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
         var allOf = (List<Object>) task.get("allOf");
         allOf.remove(1);
     }

@@ -138,6 +138,7 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);

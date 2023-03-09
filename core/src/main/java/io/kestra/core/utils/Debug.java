@@ -39,6 +39,7 @@ public class Debug {
     }
 
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <T> void log(T... args) {
         LOGGER.trace("\033[44;30m " + caller() + " \033[0m");
 

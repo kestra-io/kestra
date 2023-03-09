@@ -1,19 +1,17 @@
 package io.kestra.core.metrics;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.Nullable;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
-
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 
 @Singleton
 @Slf4j
@@ -89,7 +87,6 @@ public class MetricRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable
     public <T extends Number> T gauge(String name, T number, String... tags) {
         return this.meterRegistry.gauge(metricName(name), Tags.of(tags), number);
     }

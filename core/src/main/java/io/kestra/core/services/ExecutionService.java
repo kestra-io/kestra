@@ -87,8 +87,7 @@ public class ExecutionService {
             .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
 
         // We need to remove global error tasks and flowable error tasks if any
-        Set<Task> errorTasks = this.errorTaskIds(flow);
-        errorTasks.forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+        flow.allErrorsWithChilds().forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
 
         // Build and launch new execution
         Execution newExecution = execution
@@ -303,17 +302,6 @@ public class ExecutionService {
             .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
             .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
             .collect(Collectors.toSet());
-    }
-
-    private Set<Task> errorTaskIds(Flow flow) {
-        var allErrors = flow.getTasks().stream()
-            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
-            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())
-            .collect(Collectors.toCollection(HashSet::new));
-        if(flow.getErrors() != null && !flow.getErrors().isEmpty()) {
-            allErrors.addAll(flow.getErrors());
-        }
-        return allErrors;
     }
 
     private Set<String> getAncestors(Execution execution, TaskRun taskRun) {

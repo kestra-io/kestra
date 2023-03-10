@@ -171,6 +171,17 @@ public class Flow implements DeletedInterface {
         }
     }
 
+    public List<Task> allErrorsWithChilds() {
+        var allErrors = allTasksWithChilds().stream()
+            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())
+            .collect(Collectors.toCollection(ArrayList::new));
+        if(this.getErrors() != null && !this.getErrors().isEmpty()) {
+            allErrors.addAll(this.getErrors());
+        }
+        return allErrors;
+    }
+
     public Task findTaskByTaskId(String taskId) throws InternalException {
         return allTasks()
             .flatMap(t -> t.findById(taskId).stream())

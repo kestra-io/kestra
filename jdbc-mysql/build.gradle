@@ -5,12 +5,12 @@ dependencies {
     implementation project(":jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
-    runtimeOnly("mysql:mysql-connector-java:8.0.31")
-    runtimeOnly('org.flywaydb:flyway-mysql:9.11.0')
+    runtimeOnly("mysql:mysql-connector-java:8.0.32")
+    runtimeOnly('org.flywaydb:flyway-mysql:9.15.2')
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.2.0'
 }

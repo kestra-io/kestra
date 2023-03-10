@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -62,7 +63,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getState().getCurrent().isFailed()
         );
 
@@ -86,6 +86,10 @@ public class ExecutionService {
         this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
             .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
 
+        // We need to remove global error tasks and flowable error tasks if any
+        Set<Task> errorTasks = this.errorTaskIds(flow);
+        errorTasks.forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
         // Build and launch new execution
         Execution newExecution = execution
             .childExecution(
@@ -97,7 +101,7 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
-    private Set<String> taskRunToRestart(Execution execution, Flow flow, Predicate<TaskRun> predicate) throws InternalException {
+    private Set<String> taskRunToRestart(Execution execution, Predicate<TaskRun> predicate) {
         // Original tasks to be restarted
         Set<String> finalTaskRunToRestart = this
             .taskRunWithAncestors(
@@ -128,7 +132,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
@@ -187,7 +190,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
@@ -301,6 +303,17 @@ public class ExecutionService {
             .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
             .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
             .collect(Collectors.toSet());
+    }
+
+    private Set<Task> errorTaskIds(Flow flow) {
+        var allErrors = flow.getTasks().stream()
+            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())
+            .collect(Collectors.toCollection(HashSet::new));
+        if(flow.getErrors() != null && !flow.getErrors().isEmpty()) {
+            allErrors.addAll(flow.getErrors());
+        }
+        return allErrors;
     }
 
     private Set<String> getAncestors(Execution execution, TaskRun taskRun) {

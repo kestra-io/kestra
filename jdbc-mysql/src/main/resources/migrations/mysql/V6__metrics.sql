@@ -23,6 +23,7 @@ CREATE TABLE metrics (
     `task_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskId') STORED,
     `execution_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED NOT NULL,
     `taskrun_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskRunId') STORED,
+    `metric_name` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.name') STORED,
     `timestamp` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.timestamp' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
     INDEX ix_metrics_flow_id (deleted, namespace, flow_id),
     INDEX ix_metrics_execution_id (deleted, execution_id),

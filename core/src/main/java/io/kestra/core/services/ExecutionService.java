@@ -62,7 +62,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getState().getCurrent().isFailed()
         );
 
@@ -86,6 +85,11 @@ public class ExecutionService {
         this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
             .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
 
+        // We need to remove global error tasks and flowable error tasks if any
+        flow
+            .allErrorsWithChilds()
+            .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
         // Build and launch new execution
         Execution newExecution = execution
             .childExecution(
@@ -97,7 +101,7 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
-    private Set<String> taskRunToRestart(Execution execution, Flow flow, Predicate<TaskRun> predicate) throws InternalException {
+    private Set<String> taskRunToRestart(Execution execution, Predicate<TaskRun> predicate) {
         // Original tasks to be restarted
         Set<String> finalTaskRunToRestart = this
             .taskRunWithAncestors(
@@ -128,7 +132,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
@@ -187,7 +190,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 

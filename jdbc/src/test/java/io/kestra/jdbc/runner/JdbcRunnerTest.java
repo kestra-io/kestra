@@ -143,7 +143,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void restartFailed() throws Exception {
-        restartCaseTest.restartFailed();
+        restartCaseTest.restartFailedThenSuccess();
     }
 
     @Test

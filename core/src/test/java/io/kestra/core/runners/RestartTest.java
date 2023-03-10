@@ -9,8 +9,18 @@ public class RestartTest extends AbstractMemoryRunnerTest {
     private RestartCaseTest restartCaseTest;
 
     @Test
-    void restartFailed() throws Exception {
-        restartCaseTest.restartFailed();
+    void restartFailedThenSuccess() throws Exception {
+        restartCaseTest.restartFailedThenSuccess();
+    }
+
+    @Test
+    void restartFailedThenFailureWithGlobalErrors() throws Exception {
+        restartCaseTest.restartFailedThenFailureWithGlobalErrors();
+    }
+
+    @Test
+    void restartFailedThenFailureWithLocalErrors() throws Exception {
+        restartCaseTest.restartFailedThenFailureWithLocalErrors();
     }
 
     @Test

@@ -98,7 +98,7 @@
                     }
                 }
                 else if(this.lastChangeWasGuided) {
-                    this.content = this.guidedProperties.source +"\n";
+                    this.content = "";
                     this.lastChangeWasGuided = false;
                 }
             }

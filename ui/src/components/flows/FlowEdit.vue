@@ -98,7 +98,6 @@
                     }
                 }
                 else if(this.lastChangeWasGuided){
-                    console.log(this.guidedProperties)
                     this.content = this.guidedProperties.source +"\n";
                     this.lastChangeWasGuided = false;
                 }

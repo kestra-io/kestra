@@ -97,7 +97,7 @@
                         this.save();
                     }
                 }
-                else if(this.lastChangeWasGuided){
+                else if(this.lastChangeWasGuided) {
                     this.content = this.guidedProperties.source +"\n";
                     this.lastChangeWasGuided = false;
                 }

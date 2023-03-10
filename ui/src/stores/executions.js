@@ -6,7 +6,8 @@ export default {
         taskRun: undefined,
         task: undefined,
         total: 0,
-        logs: []
+        logs: [],
+        metrics: []
     },
     actions: {
         loadExecutions({commit}, options) {
@@ -110,6 +111,13 @@ export default {
             }).then(response => {
                 commit("setLogs", response.data)
             })
+        },
+        loadMetrics({commit}, options) {
+            return this.$http.get(`/api/v1/metrics/${options.executionId}`, {
+                params: options.params
+            }).then(response => {
+                commit("setMetrics", response.data)
+            })
         }
     },
     mutations: {
@@ -130,6 +138,9 @@ export default {
         },
         setLogs(state, logs) {
             state.logs = logs
+        },
+        setMetrics(state, metrics) {
+            state.metrics = metrics
         },
         appendLogs(state, logs) {
             state.logs.push(logs);

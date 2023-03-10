@@ -97,6 +97,7 @@ public abstract class AbstractExecutionServiceTest {
             true,
             true,
             true,
+            true,
             flow.getNamespace(),
             flow.getId(),
             ZonedDateTime.now(),
@@ -109,6 +110,7 @@ public abstract class AbstractExecutionServiceTest {
 
 
         purge = executionService.purge(
+            true,
             true,
             true,
             true,

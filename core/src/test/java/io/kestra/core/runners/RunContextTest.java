@@ -133,13 +133,10 @@ class RunContextTest extends AbstractMemoryRunnerTest {
             .get(1)
             .getAttempts()
             .get(0);
-        Counter length = (Counter) taskRunAttempt.findMetrics("length").get();
-        Timer duration = (Timer) taskRunAttempt.findMetrics("duration").get();
 
-        assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(length.getValue(), is(7.0D));
-        assertThat(duration.getValue().getNano(), is(greaterThan(0)));
-        assertThat(duration.getTags().get("format"), is("{{task.id}}"));
+        // metrics should no longer be retrieved from the task run attempt
+        assertThat(taskRunAttempt.findMetrics("length").isEmpty(), is(true));
+        assertThat(taskRunAttempt.findMetrics("duration").isEmpty(), is(true));
     }
 
     @Test

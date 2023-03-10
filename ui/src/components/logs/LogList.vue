@@ -58,7 +58,7 @@
                                                 :execution-id="currentTaskRun.outputs.executionId"
                                             />
 
-                                            <metrics :metrics="attempt.metrics" />
+                                            <metrics />
 
                                             <outputs
                                                 :outputs="currentTaskRun.outputs"

@@ -30,7 +30,6 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @AllArgsConstructor
@@ -176,9 +175,11 @@ public class Flow implements DeletedInterface {
             .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
             .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())
             .collect(Collectors.toCollection(ArrayList::new));
-        if(this.getErrors() != null && !this.getErrors().isEmpty()) {
+
+        if (this.getErrors() != null && !this.getErrors().isEmpty()) {
             allErrors.addAll(this.getErrors());
         }
+
         return allErrors;
     }
 

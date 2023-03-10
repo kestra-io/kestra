@@ -23,7 +23,6 @@ public class RestartTest extends AbstractMemoryRunnerTest {
         restartCaseTest.restartFailedThenFailureWithLocalErrors();
     }
 
-
     @Test
     void replay() throws Exception {
         restartCaseTest.replay();

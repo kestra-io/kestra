@@ -1,4 +1,4 @@
-id: get-log-taskid
+id: get-log-executionid
 namespace: io.kestra.tests
 tasks:
   - type: io.kestra.core.tasks.debugs.Echo
@@ -9,5 +9,4 @@ tasks:
     format: task 2
   - type: io.kestra.core.tasks.log.Fetch
     id: get-log-task
-    tasksId:
-      - task-1
+    executionId: "{{execution.id}}"

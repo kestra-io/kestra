@@ -7,5 +7,5 @@ tasks:
   - type: io.kestra.core.tasks.debugs.Echo
     id: task-2
     format: task 2
-  - type: io.kestra.core.tasks.debugs.Fetch
+  - type: io.kestra.core.tasks.log.Fetch
     id: get-log-task

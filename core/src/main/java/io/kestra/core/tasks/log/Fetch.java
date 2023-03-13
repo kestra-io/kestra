@@ -1,9 +1,8 @@
-package io.kestra.core.tasks.debugs;
+package io.kestra.core.tasks.log;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -18,7 +17,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -43,12 +44,25 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
             code = {
                 "level: WARN",
                 "tasksId: " +
-                "   - \"previous-task-id\""
+                    "   - \"previous-task-id\""
+            }
+        ),
+        @Example(
+            code = {
+                "level: WARN",
+                "executionId: \"{{execution.id}}\""
             }
         )
     }
 )
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
+
+    @Schema(
+        title = "Filter on specific execution",
+        description = "If not set, will use the current execution"
+    )
+    @PluginProperty(dynamic = true)
+    private String executionId;
 
     @Schema(
         title = "Filter on specific task(s)"
@@ -65,26 +79,26 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        String executionId = (String) new HashMap<>((Map<String, Object>) runContext.getVariables().get("execution")).get("id");
+        String executionId = this.executionId != null ? runContext.render(this.executionId) : (String) new HashMap<>((Map<String, Object>) runContext.getVariables().get("execution")).get("id");
         LogRepositoryInterface logRepository = runContext.getApplicationContext().getBean(LogRepositoryInterface.class);
-        List<LogEntry> logs = new ArrayList<>();
-
-        if(this.tasksId != null){
-            for (String taskId : tasksId) {
-                logs.addAll(logRepository.findByExecutionIdAndTaskId(executionId, taskId, level));
-            }
-        } else {
-            logs = logRepository.findByExecutionId(executionId, level);
-        }
 
         File tempFile = runContext.tempFile(".ion").toFile();
         AtomicLong count = new AtomicLong();
 
         try (OutputStream output = new FileOutputStream(tempFile)) {
-            logs.forEach(throwConsumer(log -> {
-                count.incrementAndGet();
-                FileSerde.write(output, log);
-            }));
+            if (this.tasksId != null) {
+                for (String taskId : tasksId) {
+                    logRepository.findByExecutionIdAndTaskId(executionId, taskId, level).forEach(throwConsumer(log -> {
+                        count.incrementAndGet();
+                        FileSerde.write(output, log);
+                    }));
+                }
+            } else {
+                logRepository.findByExecutionId(executionId, level).forEach(throwConsumer(log -> {
+                    count.incrementAndGet();
+                    FileSerde.write(output, log);
+                }));
+            }
         }
 
         return Output
@@ -98,12 +112,12 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The size of the rows fetch"
+            title = "The size of the fetched rows"
         )
         private Long size;
 
         @Schema(
-            title = "The uri of store result",
+            title = "The uri of stored results",
             description = "File format is ion"
         )
         private URI uri;

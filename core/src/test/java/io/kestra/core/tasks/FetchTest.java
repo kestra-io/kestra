@@ -35,4 +35,14 @@ public class FetchTest extends AbstractMemoryRunnerTest {
         TaskRun fetch = execution.getTaskRunList().get(2);
         assertThat(fetch.getOutputs().get("size"), is(1));
     }
+
+    @Test
+    void fetchWithExecutionId() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "get-log-executionid");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(3));
+        TaskRun fetch = execution.getTaskRunList().get(2);
+        assertThat(fetch.getOutputs().get("size"), is(2));
+    }
 }

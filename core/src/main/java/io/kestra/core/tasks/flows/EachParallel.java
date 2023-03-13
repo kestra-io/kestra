@@ -54,6 +54,18 @@ import javax.validation.constraints.NotNull;
             }
         ),
         @Example(
+            code = {
+                "value: ",
+                "- value 1",
+                "- value 2",
+                "- value 3",
+                "tasks:",
+                "  - id: each-value",
+                "    type: io.kestra.core.tasks.debugs.Return",
+                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+            }
+        ),
+        @Example(
             title = "Handling each value in parallel but only 1 child task for each value at the same time.",
             code = {
                 "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
@@ -80,7 +92,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotBlank
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parrallels tasks",
+        title = "Number of concurrent parallel tasks",
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
     )
     @PluginProperty
@@ -89,7 +101,12 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
     @PluginProperty(dynamic = true)
-    private String value;
+    @Schema(
+        title = "The list of values for this task",
+        description = "The value car be passed as a String, a list of String, or a list of objects",
+        anyOf = {String.class, Object[].class}
+    )
+    private Object value;
 
     @Valid
     @PluginProperty

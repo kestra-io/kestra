@@ -4,7 +4,10 @@ namespace: io.kestra.tests
 tasks:
   - id: 1_each
     type: io.kestra.core.tasks.flows.EachParallel
-    value: '["value 1", "value 2", "value 3"]'
+    value:
+    - value 1
+    - value 2
+    - value 3
     tasks:
       - id: 2-1_seq
         type: io.kestra.core.tasks.flows.Sequential

@@ -51,14 +51,31 @@ import javax.validation.constraints.NotNull;
                 "    type: io.kestra.core.tasks.debugs.Return",
                 "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
-        )
+        ),
+        @Example(
+            code = {
+                "value: ",
+                "- value 1",
+                "- value 2",
+                "- value 3",
+                "tasks:",
+                "  - id: each-value",
+                "    type: io.kestra.core.tasks.debugs.Return",
+                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+            }
+        ),
     }
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
     @PluginProperty(dynamic = true)
-    private String value;
+    @Schema(
+        title = "The list of values for this task",
+        description = "The value car be passed as a String, a list of String, or a list of objects",
+        anyOf = {String.class, Object[].class}
+    )
+    private Object value;
 
     @Valid
     @PluginProperty

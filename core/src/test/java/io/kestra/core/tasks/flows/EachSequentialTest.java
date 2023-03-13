@@ -1,6 +1,5 @@
 package io.kestra.core.tasks.flows;
 
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
@@ -39,6 +38,15 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     @Test
     void object() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "each-object");
+
+        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value"), containsString("json > JSON > [\"my-complex\"]"));
+    }
+
+    @Test
+    void objectInList() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-object-in-list");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

@@ -357,7 +357,6 @@ subprojects {
     }
 
     task sourcesJar(type: Jar) {
-        dependsOn = [':core:copyGradleProperties']
         archiveClassifier.set('sources')
         from sourceSets.main.allSource
     }

@@ -36,10 +36,10 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a tasks for a list of value sequentially",
-    description = "For each `value`, `tasks` will be executed\n" +
-        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` \n" +
-        "The current value is available on vars `{{ taskrun.value }}`."
+    title = "Execute a task for a list of values sequentially",
+    description = "For each `value`, the `tasks` list will be executed\n" +
+        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` or an array of valid JSON strings.\n" +
+        "The current value is available on the variable `{{ taskrun.value }}`."
 )
 @Plugin(
     examples = {

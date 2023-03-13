@@ -32,7 +32,7 @@ import javax.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
-            title = "Trigger another flow, passing some file and arguments",
+            title = "Trigger another flow, passing some files and arguments as inputs",
             code = {
                 "namespace: io.kestra.tests",
                 "flowId: my-sub-flows",
@@ -54,13 +54,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
 
     @NotNull
     @Schema(
-        title = "The flowId to trigger"
+        title = "The identifier of the flow to trigger"
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
-        title = "The revision of the flow you want to trigger",
+        title = "The revision of the flow to trigger",
         description = "By default, we trigger the last version."
     )
     @PluginProperty(dynamic = true)
@@ -90,7 +90,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
 
     @Schema(
         title = "Extract outputs from triggered executions.",
-        description = "Allow to specify key value (with value renderered), in order to extract any outputs from " +
+        description = "Allow to specify key value (with value rendered), in order to extract any outputs from " +
             "triggered execution."
     )
     @PluginProperty(dynamic = true)

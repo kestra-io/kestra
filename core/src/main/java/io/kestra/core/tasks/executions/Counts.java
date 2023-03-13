@@ -31,12 +31,12 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @NoArgsConstructor
 @Schema(
     title = "List execution counts for a list of flow",
-    description = "Mostly use for send an alert if a conditions is meet about execution counts."
+    description = "Can be used to send an alert if a condition is met about execution counts."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Send a slack notification if no execution for a flow on last 24h",
+            title = "Send a slack notification if no execution for a flow on the last 24h",
             full = true,
             code = {
                 "id: executions-count",

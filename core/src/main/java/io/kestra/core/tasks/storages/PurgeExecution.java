@@ -18,13 +18,13 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge all files from internal storage created by this execution.",
+    title = "Purge all files from the internal storage created by this execution.",
     description = "Will delete all the generated files from a flow for this current execution. This will delete:\n+" +
         "- inputs\n" +
         "- outputs\n" +
         "- triggers\n\n + " +
         "If the current execution don't have any generated files, the task will not failed.\n" +
-        "If you pass a internal storage uri from another execution, it **will not** be deleted, only current execution is deleted."
+        "If you pass an internal storage URI from another execution, it **will not** be deleted, only files from the current execution are deleted."
 )
 @Plugin(
     examples = {

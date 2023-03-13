@@ -48,7 +48,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Slf4j
 @Schema(
-    title = "Include a resuable template inside a flow"
+    title = "Include a reusable template inside a flow"
 )
 @Plugin(
     examples = {

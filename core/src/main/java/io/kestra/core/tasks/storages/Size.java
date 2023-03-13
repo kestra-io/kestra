@@ -19,7 +19,7 @@ import java.net.URI;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get a filesize from internal storage."
+    title = "Get the size of a file from the internal storage."
 )
 @Plugin(
     examples = {
@@ -33,7 +33,7 @@ import java.net.URI;
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(
         title = "the file",
-        description = "Must be a `kestra://` storage url"
+        description = "Must be a `kestra://` storage URL"
     )
     @PluginProperty(dynamic = true)
     private String uri;

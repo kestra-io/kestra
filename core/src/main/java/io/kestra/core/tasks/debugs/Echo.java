@@ -22,9 +22,9 @@ import javax.validation.constraints.NotBlank;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Simple debugging task that log a renderer value.",
+    title = "Debugging task that logs a rendered value.",
     description = "This task is mostly useful for debugging purpose.\n\n" +
-        "This one allow you to logs inputs or outputs variables for example, or to debug some templated functions."
+        "It allows you to log inputs or outputs variables or to debug some templated functions."
 )
 @Plugin(
     examples = {

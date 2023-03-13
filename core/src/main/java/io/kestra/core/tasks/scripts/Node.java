@@ -27,8 +27,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @NoArgsConstructor
 @Schema(
     title = "Execute a Node.js script",
-    description = "With this Node task, we can execute a full javascript script.\n" +
-        "The task will create a temprorary folder for every tasks and allows you to install some npm packages defined in an optional `package.json` file.\n" +
+    description = "With the Node task, you can execute a full javascript script.\n" +
+        "The task will create a temporary folder for each tasks and allows to install some npm packages defined in an optional `package.json` file.\n" +
         "\n" +
         "By convention, you need to define at least a `main.js` files in `inputFiles` that will be the script used.\n" +
         "You can also  add as many javascript files as you need in `inputFiles`.\n" +

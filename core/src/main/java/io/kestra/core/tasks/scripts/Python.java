@@ -27,8 +27,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @NoArgsConstructor
 @Schema(
     title = "Execute a Python script",
-    description = "With this Python task, we can execute a full python script.\n" +
-        "The task will create a fresh `virtualenv` for every tasks and allow you to install some python package define in `requirements` property.\n" +
+    description = "With the Python task, you can execute a full Python script.\n" +
+        "The task will create a fresh `virtualenv` for every tasks and allows to install some Python package define in `requirements` property.\n" +
         "\n" +
         "By convention, you need to define at least a `main.py` files in `inputFiles` that will be the script used.\n" +
         "But you are also able to add as many script as you need in `inputFiles`.\n" +

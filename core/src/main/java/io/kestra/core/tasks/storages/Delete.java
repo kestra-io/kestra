@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a file from internal storage."
+    title = "Delete a file from the internal storage."
 )
 @Plugin(
     examples = {

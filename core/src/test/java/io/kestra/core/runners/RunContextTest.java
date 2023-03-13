@@ -124,21 +124,6 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("return"));
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    @Test
-    void metrics() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "return");
-
-        TaskRunAttempt taskRunAttempt = execution.getTaskRunList()
-            .get(1)
-            .getAttempts()
-            .get(0);
-
-        // metrics should no longer be retrieved from the task run attempt
-        assertThat(taskRunAttempt.findMetrics("length").isEmpty(), is(true));
-        assertThat(taskRunAttempt.findMetrics("duration").isEmpty(), is(true));
-    }
-
     @Test
     void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));

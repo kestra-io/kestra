@@ -26,12 +26,4 @@ public class TaskRunAttempt {
             this.state.withState(state)
         );
     }
-
-    /**
-     * @deprecated Will always return an empty optional as metrics are now stored separatly.
-     */
-    @Deprecated
-    public Optional<AbstractMetricEntry<?>> findMetrics(String name) {
-        return Optional.empty();
-    }
 }

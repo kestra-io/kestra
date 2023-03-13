@@ -373,7 +373,11 @@
     "watch demo": "Watch our Demo Video",
     "watch demo content": "Get a glimpse of Kestra's power with our demo video.",
     "need help?": "Need help?",
-    "need help? content": "Need assistance with a specific feature or flow? Our community of data engineers and developers are here to help."
+    "need help? content": "Need assistance with a specific feature or flow? Our community of data engineers and developers are here to help.",
+    "show task documentation": "Show Task documentation",
+    "hide task documentation": "Hide Task documentation",
+    "show task documentation in editor": "Show Task documentation in editor",
+    "show documentation": "Show documentation"
   },
   "fr": {
     "id": "Identifiant",
@@ -750,6 +754,10 @@
     "watch demo": "Voir notre démo",
     "watch demo content": "Obtenez un aperçu de la puissance de Kestra grâce à notre vidéo de démonstration.",
     "need help?": "Besoin d'aide?",
-    "need help? content": "Besoin d'assistance pour une fonctionnalité ou un flow? Notre communauté d'ingénieurs data et de développeurs sont là pour aider."
+    "need help? content": "Besoin d'assistance pour une fonctionnalité ou un flow? Notre communauté d'ingénieurs data et de développeurs sont là pour aider.",
+    "show task documentation": "Show Task documentation",
+    "hide task documentation": "Hide Task documentation",
+    "show task documentation in editor": "Show Task documentation in editor",
+    "show documentation": "Show documentation"
   }
 }

@@ -12,6 +12,14 @@
                     <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
                 </el-tooltip>
             </el-button-group>
+            <span v-if="!this.guidedProperties.tourStarted">
+                <el-tooltip v-if="editorTypeDocumentation" :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
+                    <el-button type="info" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
+                </el-tooltip>
+                <el-tooltip v-else :content="$t('Click on a task to show documentation')" :persistent="false" transition="" :hide-after="0">
+                    <el-button type="info" :icon="icon.Help" circle style="float: right" size="small" @click="setShowDocumentation" />
+                </el-tooltip>
+            </span>
         </nav>
 
         <div class="editor-container" ref="container" :class="containerClass">
@@ -37,6 +45,9 @@
                     {{ placeholder }}
                 </div>
             </div>
+            <div v-if="!this.guidedProperties.tourStarted" :class="[editorTypeDocumentation && plugin && editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']">
+                <markdown v-if="plugin" :source="plugin.markdown" />
+            </div>
         </div>
     </div>
 </template>
@@ -46,7 +57,11 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapGetters, mapState} from "vuex";
+    import yamlUtils from "../../utils/yamlUtils";
+    import Markdown from "../layout/Markdown.vue";
+    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
+    import Close from "vue-material-design-icons/Close.vue";
 
     const MonacoEditor = defineAsyncComponent(() =>
         import("./MonacoEditor.vue")
@@ -66,10 +81,11 @@
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
             lineNumbers: {type: Boolean, default: undefined},
-            minimap: {type: Boolean, default: true},
+            minimap: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
+            Markdown
         },
         emits: ["save", "focusout", "tab", "update:modelValue"],
         editor: undefined,
@@ -80,11 +96,16 @@
                     UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
                     UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
                     Help: shallowRef(Help),
+                    BookMultipleOutline: shallowRef(BookMultipleOutline),
+                    Close: shallowRef(Close)
                 },
                 oldDecorations: [],
+                editorDocumentation: undefined
             };
         },
         computed: {
+            ...mapState("plugin", ["plugin","pluginSingleList","editorTypeDocumentation"]),
+            ...mapGetters("core", ["guidedProperties"]),
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
@@ -171,8 +192,11 @@
                     },
                     ...options
                 };
-            },
-            ...mapGetters("core", ["guidedProperties"]),
+            }
+        },
+        created() {
+            this.$store.dispatch("plugin/list");
+            this.editorDocumentation = localStorage.getItem("editorDocumentation") !== "false" && this.navbar;
         },
         methods: {
             editorDidMount(editor) {
@@ -287,6 +311,21 @@
                         this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
                     }
                 });
+
+                this.editor.onDidChangeCursorPosition(e => {
+                    let position = this.editor.getPosition();
+                    let model = this.editor.getModel();
+                    const taskType = yamlUtils.getTaskType(model.getValue(),position)
+                    if (taskType && this.pluginSingleList.includes(taskType)) {
+                        if(localStorage.getItem("editorDocumentation") !== "false") {
+                            this.$store
+                                .dispatch("plugin/load", {cls: taskType})
+                        }
+                        this.$store.commit("plugin/setEditorTypeDocumentation", taskType);
+                    } else {
+                        this.$store.commit("plugin/setEditorTypeDocumentation", undefined);
+                    }
+                });
             },
             autoFold(autoFold) {
                 if (autoFold) {
@@ -316,6 +355,14 @@
                 );
                 this.$tours["guidedTour"].start();
             },
+            setShowDocumentation() {
+                this.editorDocumentation = !this.editorDocumentation;
+                localStorage.setItem("editorDocumentation", (this.editorDocumentation).toString());
+                if(this.editorTypeDocumentation) {
+                    this.$store
+                        .dispatch("plugin/load", {cls: this.editorTypeDocumentation})
+                }
+            }
         },
     };
 </script>
@@ -371,6 +418,7 @@
             }
 
             .editor-wrapper {
+                min-width: 75%;
                 width: 100%;
                 position: relative;
 
@@ -422,6 +470,20 @@
 
     .disable-text {
         color: grey !important;
+    }
+
+    .plugin-doc {
+        position: relative;
+        overflow-x: hidden;
+        width: 0px;
+        margin: 0px;
+        padding: 0px;
+        transition: width var(--el-transition-duration) ease-in-out,padding var(--el-transition-duration) ease-in-out;
+    }
+
+    .plugin-doc-active {
+        width: 30%;
+        padding: calc(var(--spacer)*1.5);
     }
 
 </style>

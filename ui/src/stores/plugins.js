@@ -3,13 +3,15 @@ export default {
     state: {
         plugin: undefined,
         plugins: undefined,
-        icons: undefined
+        pluginSingleList: undefined,
+        icons: undefined,
+        editorTypeDocumentation: undefined
     },
     actions: {
         list({commit}) {
             return this.$http.get("/api/v1/plugins", {}).then(response => {
                 commit("setPlugins", response.data)
-
+                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages)).flat())
                 return response.data;
             })
         },
@@ -40,9 +42,15 @@ export default {
         setPlugins(state, plugins) {
             state.plugins = plugins
         },
+        setPluginSingleList(state, pluginSingleList) {
+            state.pluginSingleList = pluginSingleList
+        },
         setIcons(state, icons) {
             state.icons = icons
         },
+        setEditorTypeDocumentation(state, editorTypeDocumentation) {
+            state.editorTypeDocumentation = editorTypeDocumentation
+        }
     },
     getters: {}
 }

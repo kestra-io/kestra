@@ -55,8 +55,8 @@
                 </el-button>
             </el-form-item>
 
-            <el-form-item :label="$t('show task documentation in editor')">
-                <el-checkbox :label="$t('show documentation')" :model-value="editorDocumentation" @update:model-value="onEditorDocumentation" />
+            <el-form-item :label="$t('show documentation')">
+                <el-checkbox :label="$t('show task documentation in editor')" :model-value="editorDocumentation" @update:model-value="onEditorDocumentation" />
             </el-form-item>
         </el-form>
     </div>

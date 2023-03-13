@@ -130,11 +130,21 @@ public abstract class AbstractScheduler implements Scheduler {
             synchronized (this) {
                 if (flow.isDeleted()) {
                     ListUtils.emptyOnNull(flow.getTriggers())
-                        .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+                        .forEach(abstractTrigger -> {
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
+                            triggerStateSaved.remove(trigger.uid());
+
+                            triggerQueue.delete(trigger);
+                        });
                 } else if (previous != null) {
                     FlowService
                         .findRemovedTrigger(flow, previous)
-                        .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+                        .forEach(abstractTrigger -> {
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
+
+                            triggerStateSaved.remove(trigger.uid());
+                            triggerQueue.delete(trigger);
+                        });
                 }
             }
         });
@@ -430,14 +440,11 @@ public abstract class AbstractScheduler implements Scheduler {
                 // we don't find, so never started execution, create a trigger context with previous date in the past.
                 // this allows some edge case when the evaluation loop of schedulers will change second
                 // between start and end
-                // but since we could have some changed on the flow in meantime, we wait 1 min before saving them.
                 if (triggerStateSaved.containsKey(build.uid())) {
                     Trigger cachedTrigger = triggerStateSaved.get(build.uid());
 
-                    if (cachedTrigger.getUpdatedDate() != null && Instant.now().isAfter(cachedTrigger.getUpdatedDate().plusSeconds(60))) {
-                        triggerState.save(build);
-                        triggerStateSaved.remove(build.uid());
-                    }
+                    triggerState.save(build);
+                    triggerStateSaved.remove(build.uid());
 
                     return cachedTrigger;
                 } else {

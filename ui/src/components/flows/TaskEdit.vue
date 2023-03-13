@@ -57,6 +57,16 @@
                         :section="section"
                     />
                 </el-tab-pane>
+                <el-tab-pane v-if="pluginMardown" name="documentation">
+                    <template #label>
+                        <span>
+                            {{ $t('documentation.documentation') }}
+                        </span>
+                    </template>
+                    <div class="documentation">
+                        <markdown :source="pluginMardown" />
+                    </div>
+                </el-tab-pane>
             </el-tabs>
         </el-drawer>
     </component>
@@ -74,9 +84,10 @@
     import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
     import {mapState} from "vuex";
     import Utils from "../../utils/utils";
+    import Markdown from "../layout/Markdown.vue";
 
     export default {
-        components: {Editor, TaskEditor},
+        components: {Editor, TaskEditor, Markdown},
         emits: ["update:task"],
         props: {
             component: {
@@ -131,12 +142,12 @@
             },
             mapSectionWithSchema() {
                 switch (this.section) {
-                    case "tasks":
-                        return "task";
-                    case "triggers":
-                        return "trigger";
-                    default:
-                        return "task";
+                case "tasks":
+                    return "task";
+                case "triggers":
+                    return "trigger";
+                default:
+                    return "task";
                 }
             },
             saveTask() {
@@ -173,6 +184,10 @@
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
+                if(this.task.type) {
+                    this.$store
+                        .dispatch("plugin/load", {cls: this.task.type})
+                }
             },
         },
         data() {
@@ -190,6 +205,14 @@
             ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["revisions"]),
+            ...mapState("flow", ["revisions"]),
+            ...mapState("plugin", ["plugin"]),
+            pluginMardown() {
+                if(this.plugin && this.plugin.markdown) {
+                    return this.plugin.markdown
+                }
+                return null
+            },
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
             },
@@ -202,3 +225,9 @@
         }
     };
 </script>
+<style scoped lang="scss">
+    // Required, otherwise the doc titles and properties names are not visible
+    .documentation {
+        padding: var(--spacer);
+    }
+</style>

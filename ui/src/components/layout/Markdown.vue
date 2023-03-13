@@ -1,6 +1,6 @@
 <template>
     <div>
-        <span v-html="markdownRenderer" />
+        <span class="markdown" v-html="markdownRenderer" />
     </div>
 </template>
 
@@ -47,9 +47,11 @@
 
 <style lang="scss">
     .markdown {
+        font-size: var(--font-size-sm);
+
         a.header-anchor {
             color: var(--bs-gray-600);
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-md);
             font-weight: normal;
         }
     }

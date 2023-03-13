@@ -127,13 +127,15 @@ public abstract class AbstractScheduler implements Scheduler {
 
         // remove trigger on flow update
         this.flowListeners.listen((flow, previous) -> {
-            if (flow.isDeleted()) {
-                ListUtils.emptyOnNull(flow.getTriggers())
-                    .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
-            } else if (previous != null) {
-                FlowService
-                    .findRemovedTrigger(flow, previous)
-                    .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+            synchronized (this) {
+                if (flow.isDeleted()) {
+                    ListUtils.emptyOnNull(flow.getTriggers())
+                        .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+                } else if (previous != null) {
+                    FlowService
+                        .findRemovedTrigger(flow, previous)
+                        .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+                }
             }
         });
     }

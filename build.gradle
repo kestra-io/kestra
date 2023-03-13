@@ -231,28 +231,16 @@ jar {
 }
 
 shadowJar {
-    dependsOn = ['ui:assembleFrontend']
-
     archiveClassifier.set(null)
     mergeServiceFiles()
     zip64 true
 }
 
-distZip {
-    dependsOn(':shadowJar')
-}
-
-distTar {
-    dependsOn(':shadowJar')
-}
-
-startScripts {
-    dependsOn(':shadowJar')
-}
-
-startShadowScripts {
-    dependsOn(':jar')
-}
+distZip.dependsOn shadowJar
+distTar.dependsOn shadowJar
+startScripts.dependsOn shadowJar
+startShadowScripts.dependsOn jar
+shadowJar.dependsOn 'ui:assembleFrontend'
 
 /**********************************************************************************************************************\
  * Executable Jar
@@ -372,6 +360,8 @@ subprojects {
         archiveClassifier.set('sources')
         from sourceSets.main.allSource
     }
+    sourcesJar.dependsOn ':core:copyGradleProperties'
+    sourcesJar.dependsOn ':ui:assembleFrontend'
 
     task javadocJar(type: Jar) {
         archiveClassifier.set('javadoc')

@@ -71,7 +71,7 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("debugging task that return"));
+        assertThat(render, containsString("Debugging task that return"));
         assertThat(render, containsString("is mostly useful"));
     }
 

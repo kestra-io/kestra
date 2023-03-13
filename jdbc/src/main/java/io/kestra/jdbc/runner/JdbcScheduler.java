@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.*;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Replaces(DefaultScheduler.class)
 public class JdbcScheduler extends AbstractScheduler {
     private final QueueInterface<Execution> executionQueue;
-    private final AbstractJdbcTriggerRepository triggerRepository;
+    private final TriggerRepositoryInterface triggerRepository;
 
     @SuppressWarnings("unchecked")
     @Inject

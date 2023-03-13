@@ -36,4 +36,9 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
 
         return trigger;
     }
+
+    @Override
+    public void delete(Trigger trigger) {
+        triggers.remove(trigger);
+    }
 }

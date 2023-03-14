@@ -178,3 +178,13 @@ type: "{{cls}}"
 {{/if}}
 {{/each}}
 {{/if}}
+
+{{!-- {{                 Metrics                 }} --}}
+{{#if docMetrics}}
+    ## Metrics
+    {{#each docMetrics  as | metric | ~}}
+        ### `{{name}}`
+        * **Type:** =={{ type }}== {{#if unit }} ({{ unit }}) {{/if}}
+        {{#if description }} > {{ description }} {{/if}}
+    {{/each ~}}
+{{/if}}

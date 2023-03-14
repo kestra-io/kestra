@@ -17,9 +17,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 public class Timer extends AbstractMetricEntry<Duration> {
+    public static final String TYPE = "timer";
+
     @NotNull
     @JsonInclude
-    private final String type = "timer";
+    private final String type = TYPE;
 
     @NotNull
     @EqualsAndHashCode.Exclude

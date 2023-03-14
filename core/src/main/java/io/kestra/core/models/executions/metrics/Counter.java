@@ -16,9 +16,10 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 public final class Counter extends AbstractMetricEntry<Double> {
+    public static final String TYPE = "counter";
     @NotNull
     @JsonInclude
-    private final String type = "counter";
+    private final String type = TYPE;
 
     @NotNull
     @EqualsAndHashCode.Exclude

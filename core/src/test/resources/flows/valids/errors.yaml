@@ -8,7 +8,7 @@ tasks:
   - 'exit 1'
 errors:
   - id: t2
-    type: io.kestra.core.tasks.debugs.Log
+    type: io.kestra.core.tasks.log.Log
     message: second {{task.id}}
 
   - id: t3

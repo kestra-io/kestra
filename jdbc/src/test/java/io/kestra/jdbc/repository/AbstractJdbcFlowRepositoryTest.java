@@ -84,7 +84,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                     "revision", 1,
                     "tasks", List.of(Map.of(
                         "id", "invalid",
-                        "type", "io.kestra.core.tasks.debugs.Log",
+                        "type", "io.kestra.core.tasks.log.Log",
                         "level", "invalid"
                     )),
                     "deleted", false

@@ -15,5 +15,5 @@ tasks:
 
 errors:
   - id: never-happen
-    type: io.kestra.core.tasks.debugs.Log
+    type: io.kestra.core.tasks.log.Log
     message: Never {{task.id}}

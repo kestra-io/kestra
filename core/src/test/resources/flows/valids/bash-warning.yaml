@@ -9,5 +9,5 @@ tasks:
 
 errors:
   - id: error
-    type: io.kestra.core.tasks.debugs.Log
+    type: io.kestra.core.tasks.log.Log
     message: second {{task.id}}

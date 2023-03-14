@@ -11,7 +11,7 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.tasks.debugs.Log;
+import io.kestra.core.tasks.log.Log;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;

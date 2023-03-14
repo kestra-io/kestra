@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.debugs;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.tasks.log.Log;
 import io.micronaut.core.annotation.NonNull;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;

@@ -1,4 +1,4 @@
-package io.kestra.core.tasks.debugs;
+package io.kestra.core.tasks.log;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import javax.validation.constraints.NotBlank;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -26,9 +25,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Simple debugging task that log a renderer value.",
-    description = "This task is mostly useful for debugging purpose.\n\n" +
-        "This one allow you to logs inputs or outputs variables for example, or to debug some templated functions."
+    title = "Log a message in the task logs"
 )
 @Plugin(
     examples = {
@@ -54,7 +51,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         description = "Can be a string or an array of string",
         anyOf = {
             String.class,
-            ArrayList.class
+            String[].class
         }
     )
     @NonNull
@@ -77,7 +74,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
             String render = runContext.render((String) this.message);
             this.log(logger, this.level, render);
         } else if (this.message instanceof Collection) {
-            ArrayList<String> messages = (ArrayList<String>) this.message;
+            Collection<String> messages = (Collection<String>) this.message;
             messages.forEach(throwConsumer(message -> {
                 String render;
                 render = runContext.render(message);

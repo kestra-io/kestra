@@ -20,7 +20,7 @@ tasks:
   format: second {{ execution.id }}
 
 - id: t3
-  type: io.kestra.core.tasks.debugs.Log
+  type: io.kestra.core.tasks.log.Log
   message: third all optional args {{ outputs.t2.value }}
   timeout: PT60M
   retry:

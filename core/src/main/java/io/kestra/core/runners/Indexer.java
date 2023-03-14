@@ -37,7 +37,7 @@ public class Indexer implements IndexerInterface {
         LogRepositoryInterface logRepository,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
-        @Named(QueueFactoryInterface.WORKERTASKMETRIC_NAMED) QueueInterface<MetricEntry> metricQueue,
+        @Named(QueueFactoryInterface.METRIC_QUEUE) QueueInterface<MetricEntry> metricQueue,
         MetricRegistry metricRegistry
     ) {
         this.executionRepository = executionRepository;

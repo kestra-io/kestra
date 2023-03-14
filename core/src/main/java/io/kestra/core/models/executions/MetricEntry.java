@@ -59,7 +59,7 @@ public class MetricEntry implements DeletedInterface {
                 .name(metricEntry.name)
                 .tags(metricEntry.getTags())
                 .value(computeValue(metricEntry))
-                .timestamp(metricEntry.getCreationTime())
+                .timestamp(metricEntry.getTimestamp())
                 .build();
         }
 

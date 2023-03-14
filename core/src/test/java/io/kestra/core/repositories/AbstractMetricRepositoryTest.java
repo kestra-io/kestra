@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -30,13 +31,13 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(counter);
         metricRepository.save(timer);
 
-        List<MetricEntry> results = metricRepository.findByExecutionId(executionId);
+        List<MetricEntry> results = metricRepository.findByExecutionId(executionId, Pageable.from(1, 10));
         assertThat(results.size(), is(2));
 
-        results = metricRepository.findByExecutionIdAndTaskId(executionId, taskRun1.getTaskId());
+        results = metricRepository.findByExecutionIdAndTaskId(executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
         assertThat(results.size(), is(2));
 
-        results = metricRepository.findByExecutionIdAndTaskRunId(executionId, taskRun1.getId());
+        results = metricRepository.findByExecutionIdAndTaskRunId(executionId, taskRun1.getId(), Pageable.from(1, 10));
         assertThat(results.size(), is(1));
     }
 

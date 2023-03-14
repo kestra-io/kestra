@@ -24,7 +24,7 @@ import javax.validation.constraints.NotNull;
     @JsonSubTypes.Type(value = Timer.class, name = "timer"),
 })
 @ToString
-@EqualsAndHashCode(exclude="creationTime")
+@EqualsAndHashCode(exclude="timestamp")
 @Getter
 @NoArgsConstructor
 @Introspected
@@ -36,7 +36,7 @@ abstract public class AbstractMetricEntry<T> {
 
     protected Map<String, String> tags;
 
-    protected Instant creationTime = Instant.now();
+    protected Instant timestamp = Instant.now();
 
     protected AbstractMetricEntry(@NotNull String name, String[] tags) {
         this.name = name;

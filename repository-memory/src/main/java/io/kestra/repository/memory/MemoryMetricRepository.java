@@ -2,7 +2,9 @@ package io.kestra.repository.memory;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -15,17 +17,18 @@ public class MemoryMetricRepository implements MetricRepositoryInterface {
     private final List<MetricEntry> metrics = new ArrayList<>();
 
     @Override
-    public List<MetricEntry> findByExecutionId(String id) {
-        return metrics.stream().filter(metrics -> metrics.getExecutionId().equals(id)).collect(Collectors.toList());
+    public ArrayListTotal<MetricEntry> findByExecutionId(String id, Pageable pageable) {
+        var results = metrics.stream().filter(metrics -> metrics.getExecutionId().equals(id)).collect(Collectors.toList());
+        return new ArrayListTotal<>(results, results.size());
     }
 
     @Override
-    public List<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 

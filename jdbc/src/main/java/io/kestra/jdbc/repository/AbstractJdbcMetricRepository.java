@@ -2,8 +2,10 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -25,26 +27,32 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public List<MetricEntry> findByExecutionId(String id) {
-        return this.query(
+    public ArrayListTotal<MetricEntry> findByExecutionId(String id, Pageable pageable) {
+        var results = this.query(
             field("execution_id").eq(id)
+            , pageable
         );
+        return ArrayListTotal.of(pageable, results);
     }
 
     @Override
-    public List<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId) {
-        return this.query(
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Pageable pageable) {
+        var results =  this.query(
             field("execution_id").eq(executionId)
-                .and(field("task_id").eq(taskId))
+                .and(field("task_id").eq(taskId)),
+            pageable
         );
+        return ArrayListTotal.of(pageable, results);
     }
 
     @Override
-    public List<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId) {
-        return this.query(
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Pageable pageable) {
+        var results =  this.query(
             field("execution_id").eq(executionId)
-                .and(field("taskrun_id").eq(taskRunId))
+                .and(field("taskrun_id").eq(taskRunId)),
+            pageable
         );
+        return ArrayListTotal.of(pageable, results);
     }
 
     @Override
@@ -76,10 +84,11 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return metric;
     }
 
-    private List<MetricEntry> query(Condition condition) {
+    private List<MetricEntry> query(Condition condition, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -88,9 +97,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
                 select = select.and(condition);
 
-                return this.jdbcRepository.fetch(select
-                    .orderBy(field("timestamp").sort(SortOrder.ASC))
-                );
+                return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 }

@@ -62,7 +62,7 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.WORKERTASKMETRIC_NAMED)
+    @Named(QueueFactoryInterface.METRIC_QUEUE)
     public QueueInterface<MetricEntry> metricEntry() {
         return new MemoryQueue<>(MetricEntry.class, applicationContext);
     }

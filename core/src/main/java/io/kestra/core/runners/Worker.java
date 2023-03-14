@@ -79,7 +79,7 @@ public class Worker implements Runnable, Closeable {
         );
         this.metricEntryQueue = (QueueInterface<MetricEntry>) applicationContext.getBean(
             QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERTASKMETRIC_NAMED)
+            Qualifiers.byName(QueueFactoryInterface.METRIC_QUEUE)
         );
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 

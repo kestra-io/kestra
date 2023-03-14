@@ -61,7 +61,7 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.WORKERTASKMETRIC_NAMED)
+    @Named(QueueFactoryInterface.METRIC_QUEUE)
     public QueueInterface<MetricEntry> metricEntry() {
         return new MysqlQueue<>(MetricEntry.class, applicationContext);
     }

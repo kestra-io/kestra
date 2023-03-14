@@ -17,7 +17,7 @@ public interface QueueFactoryInterface {
     String FLOW_NAMED = "flowQueue";
     String TEMPLATE_NAMED = "templateQueue";
     String WORKERTASKLOG_NAMED = "workerTaskLogQueue";
-    String WORKERTASKMETRIC_NAMED = "workerTaskMetricQueue";
+    String METRIC_QUEUE = "workerTaskMetricQueue";
     String KILL_NAMED = "executionKilledQueue";
     String WORKERINSTANCE_NAMED = "workerInstanceQueue";
     String WORKERTASKRUNNING_NAMED = "workerTaskRuninngQueue";

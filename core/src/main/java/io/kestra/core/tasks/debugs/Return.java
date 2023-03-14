@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.debugs;
 
+import io.kestra.core.models.annotations.Metric;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -30,6 +31,10 @@ import java.time.Duration;
         @Example(
             code = "format: \"{{task.id}} > {{taskrun.startDate}}\""
         )
+    },
+    metrics = {
+        @Metric(name = "length", type = Counter.TYPE),
+        @Metric(name = "duration", type = Timer.TYPE)
     }
 )
 public class Return extends Task implements RunnableTask<Return.Output> {

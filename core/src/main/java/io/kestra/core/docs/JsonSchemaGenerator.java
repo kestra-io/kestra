@@ -264,6 +264,20 @@ public class JsonSchemaGenerator {
                     if (examples.size() > 0) {
                         collectedTypeAttributes.set("$examples", context.getGeneratorConfig().createArrayNode().addAll(examples));
                     }
+
+                    List<ObjectNode> metrics = Arrays
+                        .stream(pluginAnnotation.metrics())
+                        .map(metric -> context.getGeneratorConfig().createObjectNode()
+                            .put("name", metric.name())
+                            .put("type", metric.type())
+                            .put("unit", metric.unit())
+                            .put("description", metric.description())
+                        )
+                        .collect(Collectors.toList());
+
+                    if (metrics.size() > 0) {
+                        collectedTypeAttributes.set("$metrics", context.getGeneratorConfig().createArrayNode().addAll(metrics));
+                    }
                 }
             });
 
@@ -492,6 +506,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$examples")) {
             objectNode.set("$examples", mainClassDef.get("$examples"));
+        }
+        if (mainClassDef.has("$metrics")) {
+            objectNode.set("$metrics", mainClassDef.get("$metrics"));
         }
     }
 

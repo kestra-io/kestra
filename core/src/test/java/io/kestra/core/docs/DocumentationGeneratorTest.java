@@ -65,14 +65,17 @@ class DocumentationGeneratorTest {
     void returnDoc() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class bash = scan.findClass(Return.class.getName()).orElseThrow();
+        Class returnTask = scan.findClass(Return.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, returnTask, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Debugging task that return"));
         assertThat(render, containsString("is mostly useful"));
+        assertThat(render, containsString("## Metrics"));
+        assertThat(render, containsString("### `length`\n" + "        * **Type:** ==counter== "));
+        assertThat(render, containsString("### `duration`\n" + "        * **Type:** ==timer== "));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

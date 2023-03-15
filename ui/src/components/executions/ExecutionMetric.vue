@@ -1,6 +1,11 @@
 <template>
-    <div v-if="execution">
-        <collapse>
+    <data-table
+        v-if="execution"
+        @page-changed="onPageChanged"
+        ref="dataTable"
+        :total="total"
+    >
+        <template #navbar>
             <el-form-item>
                 <el-select
                     filterable
@@ -17,74 +22,77 @@
                     />
                 </el-select>
             </el-form-item>
-        </collapse>
-
-        <el-table
-            :data="metricsData"
-            ref="table"
-            :default-sort="{prop: 'name', order: 'ascending'}"
-            stripe
-            table-layout="auto"
-            fixed
-        >
-            <el-table-column prop="task" sortable :label="$t('task')">
-                <template #default="scope">
-                    <p>{{ scope.row.taskId }}</p>
-                </template>
-            </el-table-column>
-            <el-table-column prop="name" sortable :label="$t('name')">
-                <template #default="scope">
-                    <template v-if="scope.row.type === 'timer'">
-                        <kicon><timer /></kicon>
+        </template>
+        <template #table>
+            <el-table
+                :data="metricsData"
+                ref="table"
+                :default-sort="{prop: 'name', order: 'ascending'}"
+                stripe
+                table-layout="auto"
+                fixed
+            >
+                <el-table-column prop="task" sortable :label="$t('task')">
+                    <template #default="scope">
+                        <p>{{ scope.row.taskId }}</p>
                     </template>
-                    <template v-else>
-                        <kicon><counter /></kicon>
+                </el-table-column>
+                <el-table-column prop="name" sortable :label="$t('name')">
+                    <template #default="scope">
+                        <template v-if="scope.row.type === 'timer'">
+                            <kicon><timer /></kicon>
+                        </template>
+                        <template v-else>
+                            <kicon><counter /></kicon>
+                        </template>
+                        &nbsp;<code>{{ scope.row.name }}</code>
                     </template>
-                    &nbsp;<code>{{ scope.row.name }}</code>
-                </template>
-            </el-table-column>
+                </el-table-column>
 
-            <el-table-column prop="tags" sortable :label="$t('tags')">
-                <template #default="scope">
-                    <el-tag
-                        v-for="(value, key) in scope.row.tags"
-                        :key="key"
-                        class="me-1"
-                        type="info"
-                        size="small"
-                        disable-transitions
-                    >
-                        {{ key }}: <strong>{{ value }}</strong>
-                    </el-tag>
-                </template>
-            </el-table-column>
+                <el-table-column prop="tags" sortable :label="$t('tags')">
+                    <template #default="scope">
+                        <el-tag
+                            v-for="(value, key) in scope.row.tags"
+                            :key="key"
+                            class="me-1"
+                            type="info"
+                            size="small"
+                            disable-transitions
+                        >
+                            {{ key }}: <strong>{{ value }}</strong>
+                        </el-tag>
+                    </template>
+                </el-table-column>
 
-            <el-table-column prop="value" sortable :label="$t('value')">
-                <template #default="scope">
-                    <span v-if="scope.row.type === 'timer'">
-                        {{ $filters.humanizeDuration(scope.row.value / 1000) }}
-                    </span>
-                    <span v-else>
-                        {{ $filters.humanizeNumber(scope.row.value) }}
-                    </span>
-                </template>
-            </el-table-column>
-        </el-table>
-    </div>
+                <el-table-column prop="value" sortable :label="$t('value')">
+                    <template #default="scope">
+                        <span v-if="scope.row.type === 'timer'">
+                            {{ $filters.humanizeDuration(scope.row.value / 1000) }}
+                        </span>
+                        <span v-else>
+                            {{ $filters.humanizeNumber(scope.row.value) }}
+                        </span>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </template>
+    </data-table>
 </template>
 <script>
     import {mapState} from "vuex";
-    import Collapse from "../layout/Collapse.vue";
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
+    import DataTable from "../layout/DataTable.vue";
+    import DataTableActions from "../../mixins/dataTableActions";
 
     export default {
+        mixins: [DataTableActions],
         components: {
-            Collapse,
             Kicon,
             Timer,
             Counter,
+            DataTable
         },
         data() {
             return {
@@ -93,11 +101,11 @@
                 isJson: false,
                 debugError: "",
                 debugStackTrace: "",
-                isModalOpen: false,
+                isModalOpen: false
             };
         },
         mounted() {
-            this.loadMetrics();
+            this.loadData();
         },
         created() {
             if (this.$route.query.search) {
@@ -105,10 +113,15 @@
             }
         },
         methods: {
-            loadMetrics() {
+            loadData(callback) {
+                const params = {
+                    size: parseInt(this.$route.query.size || 25),
+                    page: parseInt(this.$route.query.page || 1)
+                }
                 this.$store.dispatch("execution/loadMetrics", {
                     executionId: this.$route.params.id,
-                })
+                    params: params
+                }).then(metrics => callback())
             },
         },
         computed: {
@@ -126,10 +139,12 @@
             },
             metricsData(){
                 if(this.filter){
-                    console.log(this.filter)
                     return this.metrics.filter(metric => metric.taskRunId === this.filter)
                 }
                 return this.metrics
+            },
+            total(){
+                return this.metrics.length
             }
         }
     };

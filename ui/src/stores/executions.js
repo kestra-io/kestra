@@ -7,7 +7,8 @@ export default {
         task: undefined,
         total: 0,
         logs: [],
-        metrics: []
+        metrics: [],
+        metricsTotal: 0,
     },
     actions: {
         loadExecutions({commit}, options) {
@@ -28,13 +29,13 @@ export default {
         },
         bulkRestartExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/restart/by-ids`,
+                "/api/v1/executions/restart/by-ids",
                 options.executionsId
             )
         },
         queryRestartExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/restart/by-query`,
+                "/api/v1/executions/restart/by-query",
                 {},
                 {params: options}
             )
@@ -62,10 +63,10 @@ export default {
             return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
         },
         bulkKill(_, options) {
-            return this.$http.delete(`/api/v1/executions/kill/by-ids`, {data: options.executionsId});
+            return this.$http.delete("/api/v1/executions/kill/by-ids", {data: options.executionsId});
         },
         queryKill(_, options) {
-            return this.$http.delete(`/api/v1/executions/kill/by-query`, {params: options});
+            return this.$http.delete("/api/v1/executions/kill/by-query", {params: options});
         },
         loadExecution({commit}, options) {
             return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
@@ -94,10 +95,10 @@ export default {
             })
         },
         bulkDeleteExecution({commit}, options) {
-            return this.$http.delete(`/api/v1/executions/by-ids`, {data: options.executionsId})
+            return this.$http.delete("/api/v1/executions/by-ids", {data: options.executionsId})
         },
         queryDeleteExecution({commit}, options) {
-            return this.$http.delete(`/api/v1/executions/by-query`, {params: options})
+            return this.$http.delete("/api/v1/executions/by-query", {params: options})
         },
         followExecution(_, options) {
             return new EventSource(`${this.$http.defaults.baseURL}api/v1/executions/${options.id}/follow`);
@@ -116,7 +117,8 @@ export default {
             return this.$http.get(`/api/v1/metrics/${options.executionId}`, {
                 params: options.params
             }).then(response => {
-                commit("setMetrics", response.data)
+                commit("setMetrics", response.data.results)
+                commit("setMetricsTotal", response.data.total)
             })
         }
     },
@@ -141,6 +143,9 @@ export default {
         },
         setMetrics(state, metrics) {
             state.metrics = metrics
+        },
+        setMetricsTotal(state, metrics) {
+            state.metricsTotal = metrics
         },
         appendLogs(state, logs) {
             state.logs.push(logs);

@@ -3,8 +3,8 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -36,7 +36,7 @@ public class MetricController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Metrics"}, summary = "Get metrics for a specific execution")
-    public ArrayListTotal<MetricEntry> findByExecution(
+    public PagedResults<MetricEntry> findByExecution(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -45,11 +45,11 @@ public class MetricController {
     ) {
         var pageable = Pageable.from(page, size, Sort.of(Sort.Order.asc("timestamp")));
         if (taskId != null) {
-            return metricsRepository.findByExecutionIdAndTaskId(executionId, taskId, pageable);
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(executionId, taskId, pageable));
         } else if (taskRunId != null) {
-            return metricsRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, pageable);
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, pageable));
         } else {
-            return metricsRepository.findByExecutionId(executionId, pageable);
+            return PagedResults.of(metricsRepository.findByExecutionId(executionId, pageable));
         }
     }
 }

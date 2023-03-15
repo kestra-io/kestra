@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.repository.memory.MemoryMetricRepository;
+import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -34,11 +35,11 @@ class MetricControllerTest extends AbstractMemoryRunnerTest {
         Execution result = triggerExecution(TESTS_FLOW_NS, "minimal", null, true);
         assertThat(result, notNullValue());
 
-        ArrayListTotal<MetricEntry> metrics = client.toBlocking().retrieve(
+        PagedResults<MetricEntry> metrics = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/metrics/" + result.getId()),
-            Argument.of(ArrayListTotal.class, MetricEntry.class)
+            Argument.of(PagedResults.class, MetricEntry.class)
         );
-        assertThat(metrics.size(), is(2));
+        assertThat(metrics.getTotal(), is(2L));
     }
 
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {

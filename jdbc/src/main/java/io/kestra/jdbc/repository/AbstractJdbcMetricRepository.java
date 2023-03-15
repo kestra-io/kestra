@@ -28,31 +28,28 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionId(String id, Pageable pageable) {
-        var results = this.query(
+        return this.query(
             field("execution_id").eq(id)
             , pageable
         );
-        return ArrayListTotal.of(pageable, results);
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Pageable pageable) {
-        var results =  this.query(
+        return  this.query(
             field("execution_id").eq(executionId)
                 .and(field("task_id").eq(taskId)),
             pageable
         );
-        return ArrayListTotal.of(pageable, results);
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Pageable pageable) {
-        var results =  this.query(
+        return this.query(
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId)),
             pageable
         );
-        return ArrayListTotal.of(pageable, results);
     }
 
     @Override
@@ -84,7 +81,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return metric;
     }
 
-    private List<MetricEntry> query(Condition condition, Pageable pageable) {
+    private ArrayListTotal<MetricEntry> query(Condition condition, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {

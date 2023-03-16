@@ -31,29 +31,29 @@ import lombok.experimental.SuperBuilder;
             full = true,
             code = {
                 "id: fail-on-switch\n" +
-                    "namespace: io.kestra.tests\n" +
-                    "\n" +
-                    "inputs:\n" +
-                    "  - name: param\n" +
-                    "    type: STRING\n" +
-                    "    required: true\n" +
-                    "\n" +
-                    "tasks:\n" +
-                    "  - id: switch\n" +
-                    "    type: io.kestra.core.tasks.flows.Switch\n" +
-                    "    value: \"{{inputs.param}}\"\n" +
-                    "    cases:\n" +
-                    "      case1:\n" +
-                    "        - id: case1\n" +
-                    "          type: io.kestra.core.tasks.debugs.Echo\n" +
-                    "          format: Case 1\n" +
-                    "      case2:\n" +
-                    "        - id: case2\n" +
-                    "          type: io.kestra.core.tasks.debugs.Echo\n" +
-                    "          format: Case 2\n" +
-                    "      notexist:\n" +
-                    "        - id: fail\n" +
-                    "          type: io.kestra.core.tasks.executions.Fail",
+                "namespace: io.kestra.tests\n" +
+                "\n" +
+                "inputs:\n" +
+                "  - name: param\n" +
+                "    type: STRING\n" +
+                "    required: true\n" +
+                "\n" +
+                "tasks:\n" +
+                "  - id: switch\n" +
+                "    type: io.kestra.core.tasks.flows.Switch\n" +
+                "    value: \"{{inputs.param}}\"\n" +
+                "    cases:\n" +
+                "      case1:\n" +
+                "        - id: case1\n" +
+                "          type: io.kestra.core.tasks.debugs.Echo\n" +
+                "          format: Case 1\n" +
+                "      case2:\n" +
+                "        - id: case2\n" +
+                "          type: io.kestra.core.tasks.debugs.Echo\n" +
+                "          format: Case 2\n" +
+                "      notexist:\n" +
+                "        - id: fail\n" +
+                "          type: io.kestra.core.tasks.executions.Fail",
             }
         ),
         @Example(
@@ -61,23 +61,23 @@ import lombok.experimental.SuperBuilder;
             full = true,
             code = {
                 "id: fail-on-condition\n" +
-                    "namespace: io.kestra.tests\n" +
-                    "\n" +
-                    "inputs:\n" +
-                    "  - name: param\n" +
-                    "    type: STRING\n" +
-                    "    required: true\n" +
-                    "\n" +
-                    "tasks:\n" +
-                    "  - id: before\n" +
-                    "    type: io.kestra.core.tasks.debugs.Echo\n" +
-                    "    format: I'm before the fail on condition \n" +
-                    "  - id: fail\n" +
-                    "    type: io.kestra.core.tasks.executions.Fail\n" +
-                    "    condition: '{{inputs.param == \"fail\"}}'\n" +
-                    "  - id: after\n" +
-                    "    type: io.kestra.core.tasks.debugs.Echo\n" +
-                    "    format: I'm after the fail on condition "
+                "namespace: io.kestra.tests\n" +
+                "\n" +
+                "inputs:\n" +
+                "  - name: param\n" +
+                "    type: STRING\n" +
+                "    required: true\n" +
+                "\n" +
+                "tasks:\n" +
+                "  - id: before\n" +
+                "    type: io.kestra.core.tasks.debugs.Echo\n" +
+                "    format: I'm before the fail on condition \n" +
+                "  - id: fail\n" +
+                "    type: io.kestra.core.tasks.executions.Fail\n" +
+                "    condition: '{{inputs.param == \"fail\"}}'\n" +
+                "  - id: after\n" +
+                "    type: io.kestra.core.tasks.debugs.Echo\n" +
+                "    format: I'm after the fail on condition "
             }
         )
     }
@@ -95,9 +95,9 @@ public class Fail extends Task implements RunnableTask<VoidOutput> {
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        if(condition != null) {
+        if (condition != null) {
             String rendered = runContext.render(condition);
-            if(Boolean.parseBoolean(rendered)) {
+            if (Boolean.parseBoolean(rendered)) {
                 runContext.logger().error(runContext.render(errorMessage));
                 throw new RuntimeException("Fail on a condition");
             }

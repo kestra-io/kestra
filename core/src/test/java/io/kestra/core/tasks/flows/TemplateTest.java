@@ -1,18 +1,20 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.ListenersTest;
-import io.kestra.core.tasks.debugs.Echo;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.tasks.log.Log;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
@@ -23,8 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -42,7 +42,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     public static final io.kestra.core.models.templates.Template TEMPLATE_1 = io.kestra.core.models.templates.Template.builder()
         .id("template")
         .namespace("io.kestra.tests")
-        .tasks(Collections.singletonList(Echo.builder().id("test").type(Echo.class.getName()).format("{{ parent.outputs.args['my-forward'] }}").build())).build();
+        .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
     public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
         templateRepository.create(TEMPLATE_1);

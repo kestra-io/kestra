@@ -3,15 +3,15 @@ namespace: io.kestra.tests
 
 tasks:
   - id: before
-    type: io.kestra.core.tasks.debugs.Echo
-    format: I'm before
+    type: io.kestra.core.tasks.log.Log
+    message: I'm before
 
   - id: sequential
     type: io.kestra.core.tasks.flows.Sequential
     tasks:
     - id: close
-      type: io.kestra.core.tasks.debugs.Echo
-      format: I'm close to fail
+      type: io.kestra.core.tasks.log.Log
+      message: I'm close to fail
     - id: failStep
       type: io.kestra.core.tasks.scripts.Bash
       description: "This fails"
@@ -19,9 +19,9 @@ tasks:
         - 'exit 1'
     errors:
     - id: errorHandler
-      type: io.kestra.core.tasks.debugs.Echo
-      format: I'm failing {{task.id}}
+      type: io.kestra.core.tasks.log.Log
+      message: I'm failing {{task.id}}
 
   - id: after
-    type: io.kestra.core.tasks.debugs.Echo
-    format: I'm after
+    type: io.kestra.core.tasks.log.Log
+    message: I'm after

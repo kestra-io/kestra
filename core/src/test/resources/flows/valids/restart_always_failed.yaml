@@ -9,6 +9,6 @@ tasks:
       - 'exit 1'
 errors:
   - id: errorHandler
-    type: io.kestra.core.tasks.debugs.Echo
-    format: I'm failing {{task.id}}
+    type: io.kestra.core.tasks.log.Log
+    message: I'm failing {{task.id}}
     level: INFO

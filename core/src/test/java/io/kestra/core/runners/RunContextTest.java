@@ -70,7 +70,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(1));
         assertThat(filters, hasSize(1));
         assertThat(filters.get(0).getLevel(), is(Level.WARN));
-        assertThat(filters.get(0).getMessage(), is("second io.kestra.core.tasks.debugs.Echo"));
+        assertThat(filters.get(0).getMessage(), is("second io.kestra.core.tasks.log.Log"));
 
 
         filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(2));

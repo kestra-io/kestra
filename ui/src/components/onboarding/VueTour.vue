@@ -318,8 +318,8 @@
                     "  # " + this.$t("onboarding-flow.taskLog1") + "\n" +
                         "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
                         "  - id: log\n" +
-                        "    type: io.kestra.core.tasks.debugs.Echo\n" +
-                        "    format: The flow starts",
+                        "    type: io.kestra.core.tasks.log.Log\n" +
+                        "    message: The flow starts",
                     "  # " + this.$t("onboarding-flow.taskDL") + "\n" +
                         "  - id: downloadData\n" +
                         "    type: io.kestra.plugin.fs.http.Download\n" +

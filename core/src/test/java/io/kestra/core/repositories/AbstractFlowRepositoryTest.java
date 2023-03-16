@@ -119,7 +119,7 @@ public abstract class AbstractFlowRepositoryTest {
         FlowWithSource flow = flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
 
         // submit new one, no change
-        Flow notSaved = flowRepository.update(flow, flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
+        Flow notSaved = flowRepository.update(flow, flow, first.generateSource(), taskDefaultService.injectDefaults(flow));
         assertThat(notSaved.getRevision(), is(flow.getRevision()));
 
         // submit new one with change

@@ -15,6 +15,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
@@ -280,20 +281,7 @@ public class Flow implements DeletedInterface {
     }
 
     public String generateSource() {
-        try {
-            return JacksonMapper.ofYaml()
-                .writeValueAsString(
-                    JacksonMapper
-                        .ofJson()
-                        .readTree(
-                            jsonMapper.copy()
-                                .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
-                                .writeValueAsString(this)
-                        )
-                );
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return FlowService.generateSource(this, null);
     }
 
     public Flow toDeleted() {

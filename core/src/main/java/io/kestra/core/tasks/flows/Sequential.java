@@ -35,8 +35,8 @@ import javax.validation.constraints.NotEmpty;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process tasks ones after others sequentially",
-    description = "Mostly use in order to group tasks."
+    title = "Process tasks one after the other sequentially",
+    description = "Used to group tasks."
 )
 @Plugin(
     examples = {

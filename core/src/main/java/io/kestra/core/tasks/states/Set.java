@@ -19,7 +19,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Set a state from internal storage.",
+    title = "Set a state in the state store.",
     description = "Values will be merged: \n" +
         "* If you provide a new key, the new key will be added\n" +
         "* If you provide an existing key, the previous key will be overwrite\n" +
@@ -32,7 +32,17 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
-            title = "Set a state key isolated by flow with `default` state name ",
+            title = "Set the default state for the current flow",
+            code = {
+                "id: setState",
+                "type: io.kestra.core.tasks.states.Set",
+                "data:",
+                "  '{{ inputs.store }}': '{{ outputs.download.md5 }}'",
+            },
+            full = true
+        ),
+        @Example(
+            title = "Set the `myState` state for the current flow",
             code = {
                 "id: setState",
                 "type: io.kestra.core.tasks.states.Set",

@@ -41,8 +41,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process some tasks conditionnaly depending on a contextual value",
-    description = "Allow some workflow based on context variables, allow you to branch your based on previous task."
+    title = "Process some tasks conditionally depending on a contextual value",
+    description = "Allow some workflow based on context variables, for example branch a flow based on a previous task."
 )
 @Plugin(
     examples = {

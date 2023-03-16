@@ -17,15 +17,24 @@ import java.io.FileNotFoundException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a state from internal storage."
+    title = "Delete a state from the state store."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Delete a state isolated by flow with `default` state name ",
+            title = "Delete the default state for the current flow",
             code = {
                 "id: getState",
                 "type: io.kestra.core.tasks.states.Delete",
+            },
+            full = true
+        ),
+        @Example(
+            title = "Delete the `myState` state for the current flow",
+            code = {
+                "id: getState",
+                "type: io.kestra.core.tasks.states.Delete",
+                "name: myState",
             },
             full = true
         )

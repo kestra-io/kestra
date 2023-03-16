@@ -30,26 +30,26 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Split files from internal storage on multiple files."
+    title = "Split a file from the internal storage onto multiple files."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Split file by file size.",
+            title = "Split a file by size.",
             code = {
                 "from: \"kestra://long/url/file1.txt\"",
                 "bytes: 10MB"
             }
         ),
         @Example(
-            title = "Split file by rows count.",
+            title = "Split a file by rows count.",
             code = {
                 "from: \"kestra://long/url/file1.txt\"",
                 "rows: 1000"
             }
         ),
         @Example(
-            title = "Partition a file in a defined number of partitions.",
+            title = "Split a file in a defined number of partitions.",
             code = {
                 "from: \"kestra://long/url/file1.txt\"",
                 "partitions: 8"
@@ -59,7 +59,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 )
 public class Split extends Task implements RunnableTask<Split.Output> {
     @Schema(
-        title = "The file to be splitted."
+        title = "The file to be split."
     )
     @PluginProperty(dynamic = true)
     private String from;

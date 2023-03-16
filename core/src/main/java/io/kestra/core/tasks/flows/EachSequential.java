@@ -36,10 +36,10 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a tasks for a list of value sequentially",
-    description = "For each `value`, `tasks` will be executed\n" +
-        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` \n" +
-        "The current value is available on vars `{{ taskrun.value }}`."
+    title = "Execute a task for a list of values sequentially",
+    description = "For each `value`, the `tasks` list will be executed\n" +
+        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` or an array of valid JSON strings.\n" +
+        "The current value is available on the variable `{{ taskrun.value }}`."
 )
 @Plugin(
     examples = {
@@ -51,14 +51,31 @@ import javax.validation.constraints.NotNull;
                 "    type: io.kestra.core.tasks.debugs.Return",
                 "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
-        )
+        ),
+        @Example(
+            code = {
+                "value: ",
+                "- value 1",
+                "- value 2",
+                "- value 3",
+                "tasks:",
+                "  - id: each-value",
+                "    type: io.kestra.core.tasks.debugs.Return",
+                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+            }
+        ),
     }
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
     @PluginProperty(dynamic = true)
-    private String value;
+    @Schema(
+        title = "The list of values for this task",
+        description = "The value car be passed as a String, a list of String, or a list of objects",
+        anyOf = {String.class, Object[].class}
+    )
+    private Object value;
 
     @Valid
     @PluginProperty

@@ -22,6 +22,7 @@ public class ClassPluginDocumentation<T> {
     private String docDescription;
     private String docBody;
     private List<ExampleDoc> docExamples;
+    private List<MetricDoc> docMetrics;
     private Map<String, Object> defs = new TreeMap<>();
     private Map<String, Object> inputs = new TreeMap<>();
     private Map<String, Object> outputs = new TreeMap<>();
@@ -86,6 +87,20 @@ public class ClassPluginDocumentation<T> {
                         )).toArray(new String[0]),
                         (String) r.get("code")
                     ))
+                ))
+                .collect(Collectors.toList());
+        }
+
+        if (this.propertiesSchema.containsKey("$metrics")) {
+            List<Map<String, Object>> metrics = (List<Map<String, Object>>) this.propertiesSchema.get("$metrics");
+
+            this.docMetrics = metrics
+                .stream()
+                .map(r -> new MetricDoc(
+                    (String) r.get("name"),
+                    (String) r.get("type"),
+                    (String) r.get("unit"),
+                    (String) r.get("description")
                 ))
                 .collect(Collectors.toList());
         }
@@ -156,5 +171,14 @@ public class ClassPluginDocumentation<T> {
     public static class ExampleDoc {
         String title;
         String task;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class MetricDoc {
+        String name;
+        String type;
+        String unit;
+        String description;
     }
 }

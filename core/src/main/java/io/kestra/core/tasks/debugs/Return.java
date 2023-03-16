@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.debugs;
 
+import io.kestra.core.models.annotations.Metric;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -21,20 +22,24 @@ import java.time.Duration;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Simple debugging task that return a renderer value.",
+    title = "Debugging task that returns a rendered value.",
     description = "This task is mostly useful for debugging purpose.\n\n" +
-        "This one allow you to see inputs or outputs variables for example, or to debug some templated functions."
+        "It allows you to see inputs or outputs variables or to debug some templated functions."
 )
 @Plugin(
     examples = {
         @Example(
             code = "format: \"{{task.id}} > {{taskrun.startDate}}\""
         )
+    },
+    metrics = {
+        @Metric(name = "length", type = Counter.TYPE),
+        @Metric(name = "duration", type = Timer.TYPE)
     }
 )
 public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(
-        title = "The templatized string to render"
+        title = "The templated string to render"
     )
     @PluginProperty(dynamic = true)
     private String format;

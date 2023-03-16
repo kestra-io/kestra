@@ -30,7 +30,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pause current execution and wait for a manual approval or a delay"
+    title = "Pause the current execution and wait for a manual approval (changing the task state from the UI) or a delay"
 )
 @Plugin(
     examples = {

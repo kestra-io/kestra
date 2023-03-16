@@ -43,8 +43,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
         @Example(
             code = {
                 "level: WARN",
-                "tasksId: " +
-                    "   - \"previous-task-id\""
+                "tasksId: ",
+                "  - \"previous-task-id\""
             }
         ),
         @Example(
@@ -56,7 +56,6 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
     }
 )
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
-
     @Schema(
         title = "Filter on specific execution",
         description = "If not set, will use the current execution"
@@ -88,16 +87,20 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
         try (OutputStream output = new FileOutputStream(tempFile)) {
             if (this.tasksId != null) {
                 for (String taskId : tasksId) {
-                    logRepository.findByExecutionIdAndTaskId(executionId, taskId, level).forEach(throwConsumer(log -> {
+                    logRepository
+                        .findByExecutionIdAndTaskId(executionId, taskId, level)
+                        .forEach(throwConsumer(log -> {
+                            count.incrementAndGet();
+                            FileSerde.write(output, log);
+                        }));
+                }
+            } else {
+                logRepository
+                    .findByExecutionId(executionId, level)
+                    .forEach(throwConsumer(log -> {
                         count.incrementAndGet();
                         FileSerde.write(output, log);
                     }));
-                }
-            } else {
-                logRepository.findByExecutionId(executionId, level).forEach(throwConsumer(log -> {
-                    count.incrementAndGet();
-                    FileSerde.write(output, log);
-                }));
             }
         }
 

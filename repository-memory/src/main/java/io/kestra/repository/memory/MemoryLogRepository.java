@@ -21,12 +21,18 @@ public class MemoryLogRepository implements LogRepositoryInterface {
 
     @Override
     public List<LogEntry> findByExecutionId(String id, Level minLevel) {
-        return logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(id) && logEntry.getLevel().equals(minLevel)).collect(Collectors.toList());
+        return logs
+            .stream()
+            .filter(logEntry -> logEntry.getExecutionId().equals(id) && logEntry.getLevel().equals(minLevel))
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
-        return logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getTaskId().equals(taskId) && logEntry.getLevel().equals(minLevel)).collect(Collectors.toList());
+        return logs
+            .stream()
+            .filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getTaskId().equals(taskId) && logEntry.getLevel().equals(minLevel))
+            .collect(Collectors.toList());
     }
 
     @Override

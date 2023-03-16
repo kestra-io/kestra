@@ -1,0 +1,18 @@
+id: fail-on-condition
+namespace: io.kestra.tests
+
+inputs:
+  - name: param
+    type: STRING
+    required: true
+
+tasks:
+  - id: before
+    type: io.kestra.core.tasks.debugs.Echo
+    format: I'm before the fail on condition
+  - id: fail
+    type: io.kestra.core.tasks.executions.Fail
+    condition: '{{inputs.param == "fail"}}'
+  - id: after
+    type: io.kestra.core.tasks.debugs.Echo
+    format: I'm after the fail on condition

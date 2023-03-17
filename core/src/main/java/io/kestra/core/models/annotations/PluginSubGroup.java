@@ -25,6 +25,7 @@ public @interface PluginSubGroup {
         ALERTING,
         CLOUD,
         STORAGE,
-        MISC
+        MISC,
+        TOOL
     }
 }

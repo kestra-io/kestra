@@ -166,12 +166,10 @@
                         options["model"] = monaco.editor.createModel(this.value, this.language);
                     }
 
-                    monaco.editor.addKeybindingRule(
-                        {
-                            keybinding:  monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
-                            command: "editor.action.triggerSuggest"
-                        }
-                    )
+                    monaco.editor.addKeybindingRule({
+                        keybinding:  monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
+                        command: "editor.action.triggerSuggest"
+                    })
 
                     this.editor = monaco.editor.create(this.$el, options);
                 }

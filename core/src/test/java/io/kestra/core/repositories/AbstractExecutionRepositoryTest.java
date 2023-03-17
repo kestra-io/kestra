@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.tasks.debugs.Return;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -106,6 +107,18 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.size(), is(10));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED));
+        assertThat(executions.getTotal(), is(8L));
+    }
+
+    @Test
+    protected void findWithSort() {
+        inject();
+
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 

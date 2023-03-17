@@ -6,6 +6,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.Helpers;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -157,6 +158,21 @@ class JsonSchemaGeneratorTest {
             var secondMetric = (Map<String, Object>) metrics.get(1);
             assertThat(secondMetric.get("name"), is("duration"));
             assertThat(secondMetric.get("type"), is("timer"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void echoTask() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) -> {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Echo.class);
+            System.out.println(returnSchema);
+            var definitions = (Map<String, Map<String, Object>>) returnSchema.get("definitions");
+            var returnTask = definitions.get("io.kestra.core.tasks.debugs.Echo-1");
+            var deprecated = (String) returnTask.get("$deprecated");
+            assertThat(deprecated, is("true"));
         });
     }
 

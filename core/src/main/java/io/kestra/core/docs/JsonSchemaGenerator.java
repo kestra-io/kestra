@@ -239,7 +239,6 @@ public class JsonSchemaGenerator {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
             }
 
-
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
             if (schema != null && schema.deprecated()) {
                 memberAttributes.put("$deprecated", true);
@@ -278,6 +277,13 @@ public class JsonSchemaGenerator {
                     if (metrics.size() > 0) {
                         collectedTypeAttributes.set("$metrics", context.getGeneratorConfig().createArrayNode().addAll(metrics));
                     }
+                }
+
+                // handle deprecated tasks
+                Schema schema = scope.getType().getErasedType().getAnnotation(Schema.class);
+                Deprecated deprecated = scope.getType().getErasedType().getAnnotation(Deprecated.class);
+                if ((schema != null && schema.deprecated()) || deprecated != null ) {
+                    collectedTypeAttributes.put("$deprecated", "true");
                 }
             });
 
@@ -509,6 +515,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$metrics")) {
             objectNode.set("$metrics", mainClassDef.get("$metrics"));
+        }
+        if (mainClassDef.has("$deprecated")) {
+            objectNode.set("$deprecated", mainClassDef.get("$deprecated"));
         }
     }
 

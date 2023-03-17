@@ -22,9 +22,9 @@ import javax.validation.constraints.NotBlank;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Debugging task that logs a rendered value.",
-    description = "This task is mostly useful for debugging purpose.\n\n" +
-        "It allows you to log inputs or outputs variables or to debug some templated functions."
+    title = "Log a message in the task logs.",
+    description = "This task is deprecated, please use the io.kestra.core.tasks.log.Log task instead.",
+    deprecated = true
 )
 @Plugin(
     examples = {

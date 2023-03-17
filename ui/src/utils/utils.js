@@ -56,13 +56,6 @@ export default class Utils {
                 return {key, value: flat[key], subflow: true};
             }
 
-            if (typeof (flat[key]) === "string") {
-                let date = moment(flat[key], moment.ISO_8601);
-                if (date.isValid()) {
-                    return {key, value: flat[key], date: true};
-                }
-            }
-
             if (typeof (flat[key]) === "number") {
                 return {key, value: Utils.number(flat[key])};
             }

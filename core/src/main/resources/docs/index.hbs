@@ -1,8 +1,9 @@
 ---
 title: {{ capitalizeFirst (replace title "-" " ") }}
 editLink: false
+{{#if icon}}icon: {{ icon }}{{~/if}}
 ---
-# {{ capitalizeFirst (replace title "-" " ") }}
+# {{#if icon ~}}<img width="25" src="data:image/svg+xml;base64,{{icon}}" /> {{/if }}{{ capitalizeFirst (replace title "-" " ") }}
 
 {{ description }}
 
@@ -10,9 +11,9 @@ editLink: false
 
 {{~#each classPlugins }}
     {{~#if @key.title}}
-## {{ @key.title }}
+## {{#if @key.icon ~}}<img width="25" src="data:image/svg+xml;base64,{{@key.icon}}" /> {{/if }}{{ @key.title }}
     {{else}}
-## {{ @key.name }}
+##  {{#if @key.icon ~}}<img width="25" src="data:image/svg+xml;base64,{{@key.icon}}" /> {{/if }}{{ @key.name }}
     {{/if}}
 {{ @key.description }}
 

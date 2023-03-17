@@ -103,6 +103,10 @@ public class DocumentationGenerator {
             builder.put("classPlugins", pluginDocumentation.getClassPlugins());
         }
 
+        if (pluginDocumentation.getIcon() != null) {
+            builder.put("icon", pluginDocumentation.getIcon());
+        }
+
         if(!plugin.getGuides().isEmpty()) {
             builder.put("guides", plugin.getGuides());
         }
@@ -110,7 +114,7 @@ public class DocumentationGenerator {
         return Collections.singletonList(new Document(
             docPath(plugin),
             render("index", builder.build()),
-            null
+            pluginDocumentation.getIcon()
         ));
     }
 
@@ -178,6 +182,18 @@ public class DocumentationGenerator {
             .findFirst()
             .orElse(null);
 
+        if (resourceAsStream != null) {
+            return Base64.getEncoder().encodeToString(
+                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+            );
+        }
+
+        return null;
+    }
+
+    @SneakyThrows
+    public static String icon(RegisteredPlugin plugin, String iconName) {
+        InputStream resourceAsStream = plugin.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
         if (resourceAsStream != null) {
             return Base64.getEncoder().encodeToString(
                 IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)

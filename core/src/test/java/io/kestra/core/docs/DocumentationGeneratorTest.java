@@ -1,5 +1,6 @@
 package io.kestra.core.docs;
 
+import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Flow;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -90,5 +91,19 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("* **Default:** `false`"));
+    }
+
+    @Test
+    void echo() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
+
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render, containsString("Echo"));
+        assertThat(render, containsString("- \uD83D\uDD12 Deprecated"));
     }
 }

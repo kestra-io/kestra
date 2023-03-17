@@ -41,6 +41,7 @@ public class PluginController {
     private PluginService pluginService;
 
     @Get(uri = "schemas/{type}")
+    @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
         summary = "Get all json schemas for a type",
@@ -87,7 +88,9 @@ public class PluginController {
             .collect(Collectors.toList());
     }
 
+
     @Get(uri = "icons")
+    @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
     public Map<String, PluginIcon> icons() {
         return pluginService

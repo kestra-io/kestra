@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 @ToString
 @NoArgsConstructor
 public class ClassPluginDocumentation<T> {
+    private Boolean deprecated;
     private String cls;
     private String icon;
     private String group;
@@ -72,6 +73,7 @@ public class ClassPluginDocumentation<T> {
 
         this.docDescription = this.propertiesSchema.containsKey("title") ? (String) this.propertiesSchema.get("title") : null;
         this.docBody = this.propertiesSchema.containsKey("description") ? (String) this.propertiesSchema.get("description") : null;
+        this.deprecated = this.propertiesSchema.containsKey("$deprecated");
 
         if (this.propertiesSchema.containsKey("$examples")) {
             List<Map<String, Object>> examples = (List<Map<String, Object>>) this.propertiesSchema.get("$examples");

@@ -120,7 +120,8 @@ public class PluginController {
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
-    public Doc pluginDocumentation(
+    @Cacheable("default")
+    public HttpResponse<Doc> pluginDocumentation(
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") boolean allProperties
     ) throws IOException {
@@ -130,14 +131,16 @@ public class PluginController {
             allProperties
         );
 
-        return new Doc(
-            DocumentationGenerator.render(classPluginDocumentation),
-            new Schema(
-                classPluginDocumentation.getPropertiesSchema(),
-                classPluginDocumentation.getOutputsSchema(),
-                classPluginDocumentation.getDefs()
-            )
-        );
+        return HttpResponse.ok()
+            .body(new Doc(
+                DocumentationGenerator.render(classPluginDocumentation),
+                new Schema(
+                    classPluginDocumentation.getPropertiesSchema(),
+                    classPluginDocumentation.getOutputsSchema(),
+                    classPluginDocumentation.getDefs()
+                )
+            ))
+            .header("Cache-Control", "public, max-age=3600");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

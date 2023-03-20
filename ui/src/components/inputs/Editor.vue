@@ -13,11 +13,8 @@
                 </el-tooltip>
             </el-button-group>
             <span v-if="!this.guidedProperties.tourStarted">
-                <el-tooltip v-if="editorTypeDocumentation" :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
+                <el-tooltip :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
                     <el-button type="info" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
-                </el-tooltip>
-                <el-tooltip v-else :content="$t('Click on a task to show documentation')" :persistent="false" transition="" :hide-after="0">
-                    <el-button type="info" :icon="icon.Help" circle style="float: right" size="small" @click="setShowDocumentation" />
                 </el-tooltip>
             </span>
         </nav>
@@ -45,8 +42,12 @@
                     {{ placeholder }}
                 </div>
             </div>
-            <div v-if="!this.guidedProperties.tourStarted" :class="[editorTypeDocumentation && plugin && editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']">
+            <div v-if="!this.guidedProperties.tourStarted" :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']">
                 <markdown v-if="plugin" :source="plugin.markdown" />
+                <div v-else>
+                    <div class="img get-started" />
+                    <el-alert type="info" :title="$t('focus task')" show-icon :closable="false" />
+                </div>
             </div>
         </div>
     </div>
@@ -100,11 +101,13 @@
                     Close: shallowRef(Close)
                 },
                 oldDecorations: [],
-                editorDocumentation: undefined
+                editorDocumentation: undefined,
+                plugin: undefined,
+                taskType: undefined
             };
         },
         computed: {
-            ...mapState("plugin", ["plugin","pluginSingleList","editorTypeDocumentation"]),
+            ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
@@ -317,13 +320,20 @@
                     let model = this.editor.getModel();
                     const taskType = yamlUtils.getTaskType(model.getValue(),position)
                     if (taskType && this.pluginSingleList.includes(taskType)) {
-                        if(localStorage.getItem("editorDocumentation") !== "false") {
+                        if (!this.pluginsDocumentation[taskType]) {
                             this.$store
                                 .dispatch("plugin/load", {cls: taskType})
+                                .then(plugin => {
+                                    this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [taskType]: plugin});
+                                    this.plugin = plugin;
+                                });
+                        } else if (this.pluginsDocumentation[taskType]) {
+                            this.plugin = this.pluginsDocumentation[taskType];
                         }
-                        this.$store.commit("plugin/setEditorTypeDocumentation", taskType);
+                        this.taskType = taskType;
                     } else {
-                        this.$store.commit("plugin/setEditorTypeDocumentation", undefined);
+                        this.plugin = undefined;
+                        this.taskType = undefined;
                     }
                 });
             },
@@ -358,9 +368,17 @@
             setShowDocumentation() {
                 this.editorDocumentation = !this.editorDocumentation;
                 localStorage.setItem("editorDocumentation", (this.editorDocumentation).toString());
-                if(this.editorTypeDocumentation) {
-                    this.$store
-                        .dispatch("plugin/load", {cls: this.editorTypeDocumentation})
+                if (this.taskType) {
+                    if (!this.pluginsDocumentation[this.taskType]) {
+                        this.$store
+                            .dispatch("plugin/load", {cls: this.taskType})
+                            .then(plugin => {
+                                this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [this.taskType]: plugin});
+                                this.plugin = plugin;
+                            });
+                    } else if (this.pluginsDocumentation[this.taskType]) {
+                        this.plugin = this.pluginsDocumentation[this.taskType];
+                    }
                 }
             }
         },
@@ -484,6 +502,19 @@
     .plugin-doc-active {
         width: 30%;
         padding: calc(var(--spacer)*1.5);
+    }
+
+    div.img {
+        min-height: 130px;
+        height: 100%;
+
+        &.get-started {
+            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat center;
+
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
+            }
+        }
     }
 
 </style>

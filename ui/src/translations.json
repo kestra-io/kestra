@@ -377,7 +377,8 @@
     "show task documentation": "Show Task documentation",
     "hide task documentation": "Hide Task documentation",
     "show task documentation in editor": "Show Task documentation in editor",
-    "show documentation": "Show documentation"
+    "show documentation": "Show documentation",
+    "focus task": "Focus on any element to see its documentation."
   },
   "fr": {
     "id": "Identifiant",
@@ -755,9 +756,10 @@
     "watch demo content": "Obtenez un aperçu de la puissance de Kestra grâce à notre vidéo de démonstration.",
     "need help?": "Besoin d'aide?",
     "need help? content": "Besoin d'assistance pour une fonctionnalité ou un flow? Notre communauté d'ingénieurs data et de développeurs sont là pour aider.",
-    "show task documentation": "Show Task documentation",
-    "hide task documentation": "Hide Task documentation",
-    "show task documentation in editor": "Show Task documentation in editor",
-    "show documentation": "Show documentation"
+    "show task documentation": "Afficher la documentation des tâches",
+    "hide task documentation": "Cacher la documentation des tâches",
+    "show task documentation in editor": "Afficher la documentation dans l'éditeur",
+    "show documentation": "Afficher la documentation",
+    "focus task": "Cliquer sur une tâche pour voir sa documentation"
   }
 }

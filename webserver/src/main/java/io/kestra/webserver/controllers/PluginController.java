@@ -120,6 +120,7 @@ public class PluginController {
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
+    @Cacheable("default")
     public Doc pluginDocumentation(
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") boolean allProperties

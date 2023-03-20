@@ -52,8 +52,7 @@ public class QueueService {
             return ((FlowTopology) object).uid();
         } else if (object.getClass() == MetricEntry.class) {
             return null;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }
     }

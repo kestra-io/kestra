@@ -16,6 +16,7 @@ public class TaskRunAttempt {
      */
     @Deprecated
     public void setMetrics(List<AbstractMetricEntry<?>> metrics) {
+
     }
 
     @NotNull

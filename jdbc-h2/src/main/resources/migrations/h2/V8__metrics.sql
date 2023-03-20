@@ -1,6 +1,6 @@
 ALTER TABLE queues
 ALTER COLUMN "type" ENUM(
-'io.kestra.core.models.executions.Execution',
+        'io.kestra.core.models.executions.Execution',
         'io.kestra.core.models.flows.Flow',
         'io.kestra.core.models.templates.Template',
         'io.kestra.core.models.executions.ExecutionKilled',

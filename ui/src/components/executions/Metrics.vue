@@ -1,7 +1,6 @@
 <template>
     <el-dropdown-item
         :icon="ChartAreaspline"
-        :disabled="!(metrics && metrics.length > 0)"
         @click="isOpen = !isOpen"
     >
         {{ $t('metrics') }}
@@ -54,7 +53,7 @@
             <el-table-column prop="value" sortable :label="$t('value')">
                 <template #default="scope">
                     <span v-if="scope.row.type === 'timer'">
-                        {{ $filters.humanizeDuration(scope.row.value) }}
+                        {{ $filters.humanizeDuration(scope.row.value / 1000) }}
                     </span>
                     <span v-else>
                         {{ $filters.humanizeNumber(scope.row.value) }}
@@ -73,6 +72,7 @@
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
+    import {mapState} from "vuex";
 
     export default {
         components: {
@@ -80,16 +80,30 @@
             Timer,
             Counter,
         },
-        props: {
-            metrics: {
-                type: Array,
-                default: undefined
-            }
-        },
         data() {
             return {
                 isOpen: false,
             };
+        },
+        mounted() {
+            this.loadMetrics()
+        },
+        computed: {
+            ...mapState("execution", ["metrics", "taskRun"]),
+        },
+        methods: {
+            loadMetrics() {
+                let params = {};
+
+                if (this.taskRun) {
+                    params.taskRunId = this.taskRun.id;
+                }
+
+                this.$store.dispatch("execution/loadMetrics", {
+                    executionId: this.$route.params.id,
+                    params: params,
+                })
+            },
         },
     };
 </script>

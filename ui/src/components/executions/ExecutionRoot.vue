@@ -47,6 +47,7 @@
     import Tabs from "../../components/Tabs.vue";
 
     import State from "../../utils/state";
+    import ExecutionMetric from "./ExecutionMetric.vue";
 
     export default {
         mixins: [RouteContext],
@@ -145,6 +146,11 @@
                         name: "outputs",
                         component: ExecutionOutput,
                         title: title("outputs")
+                    },
+                    {
+                        name: "metrics",
+                        component: ExecutionMetric,
+                        title: title("metrics")
                     }
                 ];
             },

@@ -6,6 +6,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.micronaut.context.ApplicationContext;
@@ -52,6 +53,7 @@ public class Worker implements Runnable, Closeable {
     private final WorkerTaskQueueInterface workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
+    private final QueueInterface<MetricEntry> metricEntryQueue;
     private final MetricRegistry metricRegistry;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
@@ -75,6 +77,10 @@ public class Worker implements Runnable, Closeable {
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.KILL_NAMED)
         );
+        this.metricEntryQueue = (QueueInterface<MetricEntry>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.METRIC_QUEUE)
+        );
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
@@ -87,9 +93,7 @@ public class Worker implements Runnable, Closeable {
             if (executionKilled != null) {
                 // @FIXME: the hashset will never expire killed execution
                 killedExecution.add(executionKilled.getExecutionId());
-            }
 
-            if (executionKilled != null) {
                 synchronized (this) {
                     workerThreadReferences
                         .stream()
@@ -188,6 +192,8 @@ public class Worker implements Runnable, Closeable {
             this.workerTaskResultQueue.emit(workerTaskResult);
 
             this.logTerminated(workerTask);
+
+            //FIXME should we remove it from the killedExecution set ?
 
             return workerTaskResult;
         }
@@ -350,18 +356,20 @@ public class Worker implements Runnable, Closeable {
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder
-            .metrics(runContext.metrics())
             .build()
             .withState(state);
 
         // logs
-        if (workerThread.getTaskOutput() != null) {
+        if (workerThread.getTaskOutput() != null && log.isDebugEnabled()) {
             log.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
         }
 
-        if (runContext.metrics().size() > 0) {
+        if (runContext.metrics().size() > 0 && log.isTraceEnabled()) {
             log.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
+
+        // metrics
+        runContext.metrics().forEach(metric -> this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric)));
 
         // save outputs
         List<TaskRunAttempt> attempts = this.addAttempt(workerTask, taskRunAttempt);
@@ -448,6 +456,7 @@ public class Worker implements Runnable, Closeable {
         workerTaskQueue.close();
         executionKilledQueue.close();
         workerTaskResultQueue.close();
+        metricEntryQueue.close();
     }
 
     @Getter

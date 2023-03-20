@@ -16,9 +16,6 @@
                 <el-tooltip :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
                     <el-button type="info" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
                 </el-tooltip>
-                <!--                <el-tooltip v-else :content="$t('Click on a task to show documentation')" :persistent="false" transition="" :hide-after="0">-->
-                <!--                    <el-button type="info" :icon="icon.Help" circle style="float: right" size="small" />-->
-                <!--                </el-tooltip>-->
             </span>
         </nav>
 
@@ -323,7 +320,7 @@
                     let model = this.editor.getModel();
                     const taskType = yamlUtils.getTaskType(model.getValue(),position)
                     if (taskType && this.pluginSingleList.includes(taskType)) {
-                        if(!this.pluginsDocumentation[taskType]) {
+                        if (!this.pluginsDocumentation[taskType]) {
                             this.$store
                                 .dispatch("plugin/load", {cls: taskType})
                                 .then(plugin => {
@@ -371,8 +368,8 @@
             setShowDocumentation() {
                 this.editorDocumentation = !this.editorDocumentation;
                 localStorage.setItem("editorDocumentation", (this.editorDocumentation).toString());
-                if(this.taskType) {
-                    if(!this.pluginsDocumentation[this.taskType]) {
+                if (this.taskType) {
+                    if (!this.pluginsDocumentation[this.taskType]) {
                         this.$store
                             .dispatch("plugin/load", {cls: this.taskType})
                             .then(plugin => {

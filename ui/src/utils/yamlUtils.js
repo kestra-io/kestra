@@ -166,9 +166,11 @@ export default class YamlUtils {
         const lineCounter = new LineCounter();
         const yamlDoc = yaml.parseDocument(source, {lineCounter});
         const cursorIndex = lineCounter.lineStarts[position.lineNumber-1] + position.column;
-        for(const item of yamlDoc.contents.items){
-            if(item.value instanceof YAMLSeq && item.key.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex){
-                return YamlUtils._getTaskType(item.value, cursorIndex, null)
+        if(yamlDoc.contents) {
+            for (const item of yamlDoc.contents.items) {
+                if (item.value instanceof YAMLSeq && item.key.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex) {
+                    return YamlUtils._getTaskType(item.value, cursorIndex, null)
+                }
             }
         }
     }

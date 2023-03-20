@@ -5,7 +5,7 @@ export default {
         plugins: undefined,
         pluginSingleList: undefined,
         icons: undefined,
-        editorTypeDocumentation: undefined
+        pluginsDocumentation: {}
     },
     actions: {
         list({commit}) {
@@ -48,8 +48,8 @@ export default {
         setIcons(state, icons) {
             state.icons = icons
         },
-        setEditorTypeDocumentation(state, editorTypeDocumentation) {
-            state.editorTypeDocumentation = editorTypeDocumentation
+        setPluginsDocumentation(state, pluginsDocumentation) {
+            state.pluginsDocumentation = pluginsDocumentation
         }
     },
     getters: {}

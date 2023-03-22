@@ -316,24 +316,26 @@
                 });
 
                 this.editor.onDidChangeCursorPosition(e => {
-                    let position = this.editor.getPosition();
-                    let model = this.editor.getModel();
-                    const taskType = yamlUtils.getTaskType(model.getValue(),position)
-                    if (taskType && this.pluginSingleList.includes(taskType)) {
-                        if (!this.pluginsDocumentation[taskType]) {
-                            this.$store
-                                .dispatch("plugin/load", {cls: taskType})
-                                .then(plugin => {
-                                    this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [taskType]: plugin});
-                                    this.plugin = plugin;
-                                });
-                        } else if (this.pluginsDocumentation[taskType]) {
-                            this.plugin = this.pluginsDocumentation[taskType];
+                    if (this.lang === "yaml") {
+                        let position = this.editor.getPosition();
+                        let model = this.editor.getModel();
+                        const taskType = yamlUtils.getTaskType(model.getValue(),position)
+                        if (taskType && this.pluginSingleList.includes(taskType)) {
+                            if (!this.pluginsDocumentation[taskType]) {
+                                this.$store
+                                    .dispatch("plugin/load", {cls: taskType})
+                                    .then(plugin => {
+                                        this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [taskType]: plugin});
+                                        this.plugin = plugin;
+                                    });
+                            } else if (this.pluginsDocumentation[taskType]) {
+                                this.plugin = this.pluginsDocumentation[taskType];
+                            }
+                            this.taskType = taskType;
+                        } else {
+                            this.plugin = undefined;
+                            this.taskType = undefined;
                         }
-                        this.taskType = taskType;
-                    } else {
-                        this.plugin = undefined;
-                        this.taskType = undefined;
                     }
                 });
             },

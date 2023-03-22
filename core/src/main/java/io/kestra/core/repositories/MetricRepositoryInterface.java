@@ -4,7 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.micronaut.data.model.Pageable;
 
-import java.util.List;
+import java.util.function.Function;
 
 public interface MetricRepositoryInterface extends SaveRepositoryInterface<MetricEntry> {
     ArrayListTotal<MetricEntry> findByExecutionId(String id, Pageable pageable);
@@ -14,4 +14,8 @@ public interface MetricRepositoryInterface extends SaveRepositoryInterface<Metri
     ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Pageable pageable);
 
     Integer purge(Execution execution);
+
+    default Function<String, String> sortMapping() throws IllegalArgumentException {
+        return s -> s;
+    }
 }

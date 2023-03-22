@@ -1,17 +1,13 @@
 <template>
-    <data-table
-        v-if="execution"
-        @page-changed="onPageChanged"
-        ref="dataTable"
-        :total="total"
-    >
+    <metrics-table ref="table" :task-run-id="taskRunId" :show-task="true">
         <template #navbar>
             <el-form-item>
                 <el-select
                     filterable
                     clearable
                     :persistent="false"
-                    v-model="filter"
+                    :model-value="taskRunId"
+                    @update:model-value="onFilter"
                     :placeholder="$t('display metric for specific task') + '...'"
                 >
                     <el-option
@@ -23,109 +19,41 @@
                 </el-select>
             </el-form-item>
         </template>
-        <template #table>
-            <el-table
-                :data="metricsData"
-                ref="table"
-                :default-sort="{prop: 'name', order: 'ascending'}"
-                stripe
-                table-layout="auto"
-                fixed
-            >
-                <el-table-column prop="task" sortable :label="$t('task')">
-                    <template #default="scope">
-                        <p>{{ scope.row.taskId }}</p>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="name" sortable :label="$t('name')">
-                    <template #default="scope">
-                        <template v-if="scope.row.type === 'timer'">
-                            <kicon><timer /></kicon>
-                        </template>
-                        <template v-else>
-                            <kicon><counter /></kicon>
-                        </template>
-                        &nbsp;<code>{{ scope.row.name }}</code>
-                    </template>
-                </el-table-column>
-
-                <el-table-column prop="tags" sortable :label="$t('tags')">
-                    <template #default="scope">
-                        <el-tag
-                            v-for="(value, key) in scope.row.tags"
-                            :key="key"
-                            class="me-1"
-                            type="info"
-                            size="small"
-                            disable-transitions
-                        >
-                            {{ key }}: <strong>{{ value }}</strong>
-                        </el-tag>
-                    </template>
-                </el-table-column>
-
-                <el-table-column prop="value" sortable :label="$t('value')">
-                    <template #default="scope">
-                        <span v-if="scope.row.type === 'timer'">
-                            {{ $filters.humanizeDuration(scope.row.value / 1000) }}
-                        </span>
-                        <span v-else>
-                            {{ $filters.humanizeNumber(scope.row.value) }}
-                        </span>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </template>
-    </data-table>
+    </metrics-table>
 </template>
 <script>
     import {mapState} from "vuex";
-    import Kicon from "../Kicon.vue";
-    import Timer from "vue-material-design-icons/Timer.vue";
-    import Counter from "vue-material-design-icons/Numeric.vue";
-    import DataTable from "../layout/DataTable.vue";
-    import DataTableActions from "../../mixins/dataTableActions";
+    import MetricsTable from "../executions/MetricsTable.vue";
 
     export default {
-        mixins: [DataTableActions],
         components: {
-            Kicon,
-            Timer,
-            Counter,
-            DataTable
+            MetricsTable
+        },
+        emits: ["follow"],
+        mounted() {
+            if (this.$refs.table) {
+                this.$refs.table.loadData(this.$refs.table.onDataLoaded);
+            }
         },
         data() {
             return {
-                filter: undefined,
-                debugExpression: "",
-                isJson: false,
-                debugError: "",
-                debugStackTrace: "",
-                isModalOpen: false
+                isModalOpen: false,
+                taskRunId: undefined
             };
         },
-        mounted() {
-            this.loadData();
-        },
-        created() {
-            if (this.$route.query.search) {
-                this.filter = this.$route.query.search || ""
+        props: {
+            preventRouteInfo : {
+                type: Boolean,
+                default: false
             }
         },
         methods: {
-            loadData(callback) {
-                const params = {
-                    size: parseInt(this.$route.query.size || 25),
-                    page: parseInt(this.$route.query.page || 1)
-                }
-                this.$store.dispatch("execution/loadMetrics", {
-                    executionId: this.$route.params.id,
-                    params: params
-                }).then(metrics => callback())
-            },
+            onFilter(value) {
+                this.taskRunId = value;
+            }
         },
         computed: {
-            ...mapState("execution", ["execution","metrics"]),
+            ...mapState("execution", ["execution"]),
             selectOptions() {
                 const options = {};
                 for (const taskRun of this.execution.taskRunList || []) {
@@ -137,15 +65,6 @@
 
                 return Object.values(options);
             },
-            metricsData(){
-                if(this.filter){
-                    return this.metrics.filter(metric => metric.taskRunId === this.filter)
-                }
-                return this.metrics
-            },
-            total(){
-                return this.metrics.length
-            }
-        }
+        },
     };
 </script>

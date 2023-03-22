@@ -19,6 +19,7 @@ export default {
             ready: false,
             internalPageSize: undefined,
             internalPageNumber: undefined,
+            internalSort: undefined,
         };
     },
     props: {
@@ -43,12 +44,21 @@ export default {
         }
     },
     methods: {
+        sortString(sortItem) {
+            if (sortItem && sortItem.prop && sortItem.order) {
+                return `${sortItem.prop}:${sortItem.order === "descending" ? "desc" : "asc"}`;
+            }
+        },
         onSort(sortItem) {
-            if (!this.embed && sortItem && sortItem.prop && sortItem.order) {
-                const sort = `${sortItem.prop}:${sortItem.order === "descending" ? "desc" : "asc"}`;
+            this.internalSort = this.sortString(sortItem);
+
+            if (!this.embed && this.internalSort) {
+                const sort = this.internalSort;
                 this.$router.push({
                     query: {...this.$route.query, sort}
                 });
+            } else {
+                this.load(this.onDataLoaded);
             }
         },
         onRowDoubleClick(item) {
@@ -87,7 +97,7 @@ export default {
                     }
                 });
             } else {
-                this.load();
+                this.load(this.onDataLoaded);
             }
         },
         queryWithFilter() {
@@ -103,7 +113,6 @@ export default {
         onDataLoaded () {
             this.ready = true
             this.loadInit = true;
-
 
             if (this.saveRestoreUrl) {
                 this.saveRestoreUrl()

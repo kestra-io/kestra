@@ -5,6 +5,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -21,6 +22,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+
+import java.util.List;
 
 @Validated
 @Controller("/api/v1/metrics")
@@ -39,11 +42,12 @@ public class MetricController {
     public PagedResults<MetricEntry> findByExecution(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId
     ) {
-        var pageable = Pageable.from(page, size, Sort.of(Sort.Order.asc("timestamp")));
+        var pageable = PageableUtils.from(page, size, sort, metricsRepository.sortMapping());
         if (taskId != null) {
             return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(executionId, taskId, pageable));
         } else if (taskRunId != null) {

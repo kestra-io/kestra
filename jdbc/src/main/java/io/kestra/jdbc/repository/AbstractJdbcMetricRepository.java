@@ -7,16 +7,11 @@ import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Record1;
-import org.jooq.SelectConditionStep;
-import org.jooq.SortOrder;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 @Singleton
 public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface, JdbcIndexerInterface<MetricEntry> {
@@ -96,5 +91,21 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
+    }
+
+    @Override
+    public Function<String, String> sortMapping() throws IllegalArgumentException {
+        Map<String, String> mapper = Map.of(
+            "namespace", "namespace",
+            "flowId", "flow_id",
+            "taskId", "task_id",
+            "executionId", "execution_id",
+            "taskrunId", "taskrun_id",
+            "name", "metric_name",
+            "timestamp", "timestamp",
+            "value", "metric_value"
+        );
+
+        return mapper::get;
     }
 }

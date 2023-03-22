@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
@@ -36,6 +37,7 @@ public class MetricEntry implements DeletedInterface {
     String name;
 
     @NotNull
+    @JsonInclude
     Double value;
 
     @NotNull

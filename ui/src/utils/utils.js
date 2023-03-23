@@ -52,22 +52,23 @@ export default class Utils {
         const flat = Utils.flatten(data);
 
         return Object.keys(flat).map(key => {
+            let rawValue = flat[key];
             if (key === "variables.executionId") {
-                return {key, value: flat[key], subflow: true};
+                return {key, value: rawValue, subflow: true};
             }
 
-            if (typeof (flat[key]) === "string") {
-                let date = moment(flat[key], moment.ISO_8601);
+            if (typeof rawValue === "string" && rawValue.match(/\d{4}-\d{2}-\d{2}/)) {
+                let date = moment(rawValue, moment.ISO_8601);
                 if (date.isValid()) {
-                    return {key, value: flat[key], date: true};
+                    return {key, value: rawValue, date: true};
                 }
             }
 
-            if (typeof (flat[key]) === "number") {
-                return {key, value: Utils.number(flat[key])};
+            if (typeof rawValue === "number") {
+                return {key, value: Utils.number(rawValue)};
             }
 
-            return {key, value: flat[key]};
+            return {key, value: rawValue};
 
         })
     }

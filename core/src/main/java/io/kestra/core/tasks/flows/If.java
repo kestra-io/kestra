@@ -9,6 +9,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -27,9 +28,11 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -83,7 +86,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
     @Schema(
         title = "List of tasks to execute when the condition is true."
     )
-    @NotNull
+    @NotEmpty
     private List<Task> then;
 
     @Valid
@@ -150,6 +153,23 @@ public class If extends Task implements FlowableTask<VoidOutput> {
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTask = this.childTasks(runContext, parentTaskRun);
+        if (childTask == null) {
+            // no next task to run, we guess the state from the parent task
+            return Optional.of(execution.guessFinalState(null, parentTaskRun));
+        }
+
+        return FlowableUtils.resolveState(
+            execution,
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            parentTaskRun,
+            runContext
         );
     }
 }

@@ -69,4 +69,20 @@ class IfTest  extends AbstractMemoryRunnerTest {
 
         // We cannot test null as inputs cannot be null
     }
+    
+    @Test
+    void ifWithoutElse() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "if-without-else", null,
+            (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.findTaskRunsByTaskId("when-true").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        execution = runnerUtils.runOne("io.kestra.tests", "if-without-else", null,
+            (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.findTaskRunsByTaskId("when-true").isEmpty(), is(true));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
 }

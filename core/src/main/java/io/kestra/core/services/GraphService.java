@@ -176,7 +176,9 @@ public class GraphService {
         Execution execution
     ) throws IllegalVariableEvaluationException {
         fillGraph(graph, then, RelationType.SEQUENTIAL, parent, execution, "then");
-        fillGraph(graph, _else, RelationType.SEQUENTIAL, parent, execution, "else");
+        if (_else != null) {
+            fillGraph(graph, _else, RelationType.SEQUENTIAL, parent, execution, "else");
+        }
 
         // error cases
         if (errors != null && errors.size() > 0) {

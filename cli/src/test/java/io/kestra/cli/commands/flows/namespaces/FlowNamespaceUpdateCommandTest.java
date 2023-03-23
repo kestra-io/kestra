@@ -109,4 +109,31 @@ class FlowNamespaceUpdateCommandTest {
             assertThat(out.toString(), containsString("1 flow(s)"));
         }
     }
+
+    @Test
+    void helper()  {
+        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("helper");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.cli",
+                directory.getPath(),
+
+            };
+            Integer call = PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
+
+            assertThat(call, is(0));
+            assertThat(out.toString(), containsString("1 flow(s)"));
+        }
+    }
 }

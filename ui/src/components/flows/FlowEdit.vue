@@ -1,6 +1,6 @@
 <template>
     <div class="edit-flow-div">
-        <editor class="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" />
+        <editor class="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
@@ -40,6 +40,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import {shallowRef} from "vue";
+    import yamlUtils from "../../utils/yamlUtils";
 
     export default {
         components: {
@@ -69,7 +70,7 @@
                     ...this.guidedProperties,
                     tourStarted: false
                 });
-            }
+            },
         },
         created() {
             this.loadFile();

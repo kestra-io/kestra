@@ -10,6 +10,7 @@ import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
+import yamlUtils from "../utils/yamlUtils";
 
 export default {
     mixins: [RouteContext],
@@ -34,6 +35,7 @@ export default {
         ...mapGetters("template", ["template"]),
         ...mapGetters("core", ["isUnsaved"]),
         ...mapState("core", ["guidedProperties"]),
+        ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -251,6 +253,23 @@ export default {
                         this.$toast().saved(item.id)
                     })
             }
-        }
+        },
+        updatePluginDocumentation(event) {
+            const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
+            if (taskType && this.pluginSingleList.includes(taskType)) {
+                if (!this.pluginsDocumentation[taskType]) {
+                    this.$store
+                        .dispatch("plugin/load", {cls: taskType})
+                        .then(plugin => {
+                            this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [taskType]: plugin});
+                            this.$store.commit("plugin/setEditorPlugin", plugin);
+                        });
+                } else if (this.pluginsDocumentation[taskType]) {
+                    this.$store.commit("plugin/setEditorPlugin", this.pluginsDocumentation[taskType]);
+                }
+            } else {
+                this.$store.commit("plugin/setEditorPlugin", undefined);
+            }
+        },
     }
 };

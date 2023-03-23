@@ -1,6 +1,6 @@
 <template>
     <div>
-        <editor @on-save="save" v-model="content" schemaType="template" lang="yaml" @update:model-value="onChange($event)" />
+        <editor @on-save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete">
             <ul>
                 <li>

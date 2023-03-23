@@ -43,7 +43,7 @@
                 </div>
             </div>
             <div v-if="!this.guidedProperties.tourStarted" :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']">
-                <markdown v-if="plugin" :source="plugin.markdown" />
+                <markdown v-if="editorPlugin" :source="editorPlugin.markdown" />
                 <div v-else>
                     <div class="img get-started" />
                     <el-alert type="info" :title="$t('focus task')" show-icon :closable="false" />
@@ -59,7 +59,6 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {mapGetters, mapState} from "vuex";
-    import yamlUtils from "../../utils/yamlUtils";
     import Markdown from "../layout/Markdown.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
@@ -88,7 +87,7 @@
             MonacoEditor,
             Markdown
         },
-        emits: ["save", "focusout", "tab", "update:modelValue"],
+        emits: ["save", "focusout", "tab", "update:modelValue", "cursor"],
         editor: undefined,
         data() {
             return {
@@ -107,7 +106,7 @@
             };
         },
         computed: {
-            ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
+            ...mapState("plugin", ["editorPlugin","pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
@@ -318,23 +317,7 @@
                 this.editor.onDidChangeCursorPosition(e => {
                     let position = this.editor.getPosition();
                     let model = this.editor.getModel();
-                    const taskType = yamlUtils.getTaskType(model.getValue(),position)
-                    if (taskType && this.pluginSingleList.includes(taskType)) {
-                        if (!this.pluginsDocumentation[taskType]) {
-                            this.$store
-                                .dispatch("plugin/load", {cls: taskType})
-                                .then(plugin => {
-                                    this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [taskType]: plugin});
-                                    this.plugin = plugin;
-                                });
-                        } else if (this.pluginsDocumentation[taskType]) {
-                            this.plugin = this.pluginsDocumentation[taskType];
-                        }
-                        this.taskType = taskType;
-                    } else {
-                        this.plugin = undefined;
-                        this.taskType = undefined;
-                    }
+                    this.$emit("cursor",{position: position, model: model})
                 });
             },
             autoFold(autoFold) {
@@ -368,18 +351,6 @@
             setShowDocumentation() {
                 this.editorDocumentation = !this.editorDocumentation;
                 localStorage.setItem("editorDocumentation", (this.editorDocumentation).toString());
-                if (this.taskType) {
-                    if (!this.pluginsDocumentation[this.taskType]) {
-                        this.$store
-                            .dispatch("plugin/load", {cls: this.taskType})
-                            .then(plugin => {
-                                this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [this.taskType]: plugin});
-                                this.plugin = plugin;
-                            });
-                    } else if (this.pluginsDocumentation[this.taskType]) {
-                        this.plugin = this.pluginsDocumentation[this.taskType];
-                    }
-                }
             }
         },
     };

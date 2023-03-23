@@ -165,14 +165,17 @@ export default class YamlUtils {
     static getTaskType(source, position) {
         const lineCounter = new LineCounter();
         const yamlDoc = yaml.parseDocument(source, {lineCounter});
-        const cursorIndex = lineCounter.lineStarts[position.lineNumber-1] + position.column;
-        if(yamlDoc.contents) {
-            for (const item of yamlDoc.contents.items) {
-                if (item.value instanceof YAMLSeq && item.key.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex) {
-                    return YamlUtils._getTaskType(item.value, cursorIndex, null)
+        if(yamlDoc.contents.items && yamlDoc.contents.items.find(e => e.key.value === "tasks")) {
+            const cursorIndex = lineCounter.lineStarts[position.lineNumber - 1] + position.column;
+            if (yamlDoc.contents) {
+                for (const item of yamlDoc.contents.items) {
+                    if (item.value instanceof YAMLSeq && item.key.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex) {
+                        return YamlUtils._getTaskType(item.value, cursorIndex, null)
+                    }
                 }
             }
         }
+        return null;
     }
 
     static _getTaskType(element, cursorIndex, previousTaskType){

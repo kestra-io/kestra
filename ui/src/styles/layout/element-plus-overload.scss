@@ -142,23 +142,7 @@
 // form horizontal
 form.ks-horizontal {
     .el-form-item {
-        @include res(xs) {
-            display: block;
-        }
-
-        @include res(sm) {
-            .el-form-item__label {
-                max-width: (math.div(1, 24) * 4 * 100) * 1%;
-                flex: 0 0 (math.div(1, 24) * 4 * 100) * 1%;
-                text-align: right;
-            }
-
-            .el-form-item__content {
-                align-items: flex-start;
-                max-width: (math.div(1, 24) * 20 * 100) * 1%;
-                flex: 0 0 (math.div(1, 24) * 20 * 100) * 1%;
-            }
-        }
+        display: block;
     }
 
     .submit {

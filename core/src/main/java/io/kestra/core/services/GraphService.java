@@ -167,6 +167,25 @@ public class GraphService {
         }
     }
 
+    public static void ifElse(
+        GraphCluster graph,
+        List<Task> then,
+        List<Task> _else,
+        List<Task> errors,
+        TaskRun parent,
+        Execution execution
+    ) throws IllegalVariableEvaluationException {
+        fillGraph(graph, then, RelationType.SEQUENTIAL, parent, execution, "then");
+        if (_else != null) {
+            fillGraph(graph, _else, RelationType.SEQUENTIAL, parent, execution, "else");
+        }
+
+        // error cases
+        if (errors != null && errors.size() > 0) {
+            fillGraph(graph, errors, RelationType.ERROR, parent, execution, null);
+        }
+    }
+
     private static void iterate(
         GraphCluster graph,
         List<Task> tasks,

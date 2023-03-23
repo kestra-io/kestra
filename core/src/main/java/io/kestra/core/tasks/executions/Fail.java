@@ -7,6 +7,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.TruthUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -85,7 +86,10 @@ import lombok.experimental.SuperBuilder;
 public class Fail extends Task implements RunnableTask<VoidOutput> {
 
     @PluginProperty(dynamic = true)
-    @Schema(title = "Optional condition, must evaluate to a boolean.")
+    @Schema(
+        title = "Optional condition, must coerce to a boolean.",
+        description = "Boolean coercion allows 0, -0, and '' to coerce to false, all other values to coerce to true."
+    )
     private String condition;
 
     @PluginProperty(dynamic = true)
@@ -97,7 +101,7 @@ public class Fail extends Task implements RunnableTask<VoidOutput> {
     public VoidOutput run(RunContext runContext) throws Exception {
         if (condition != null) {
             String rendered = runContext.render(condition);
-            if (Boolean.parseBoolean(rendered)) {
+            if (TruthUtils.isTruthy(rendered)) {
                 runContext.logger().error(runContext.render(errorMessage));
                 throw new RuntimeException("Fail on a condition");
             }

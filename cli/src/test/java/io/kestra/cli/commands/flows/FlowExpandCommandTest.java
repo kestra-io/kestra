@@ -37,7 +37,9 @@ class FlowExpandCommandTest {
                     "tasks:\n" +
                     "- id: t1\n" +
                     "  type: io.kestra.core.tasks.debugs.Return\n" +
-                    "  format: \"Lorem Ipsum is simply dummy text of the printing\"\n"
+                    "  format: |\n" +
+                    "    Lorem ipsum dolor sit amet\n" +
+                    "    Lorem ipsum dolor sit amet\n"
             ));
         }
     }

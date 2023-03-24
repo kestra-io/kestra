@@ -30,7 +30,7 @@ class FlowValidateCommandTest {
             Integer call = PicocliRunner.call(FlowValidateCommand.class, ctx, args);
 
             assertThat(call, is(0));
-            assertThat(out.toString(), containsString("✓ - io.kestra.tests / include"));
+            assertThat(out.toString(), containsString("✓ - io.kestra.cli / include"));
         }
     }
 }

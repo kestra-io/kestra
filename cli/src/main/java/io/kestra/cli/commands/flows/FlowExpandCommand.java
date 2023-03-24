@@ -28,7 +28,7 @@ public class FlowExpandCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
-        String content = HandleBarExpander.expand(Files.readString(file), file.getParent());
+        String content = IncludeHelperExpander.expand(Files.readString(file), file.getParent());
         Flow flow = yamlFlowParser.parse(content, Flow.class);
         modelValidator.validate(flow);
         stdOut(content);

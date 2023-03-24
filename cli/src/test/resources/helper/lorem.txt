@@ -1,1 +1,2 @@
-Lorem Ipsum is simply dummy text of the printing
+Lorem ipsum dolor sit amet
+Lorem ipsum dolor sit amet

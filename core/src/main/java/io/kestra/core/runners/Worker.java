@@ -481,7 +481,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
             this.logTerminated(workerTask);
 
-            //FIXME should we remove it from the killedExecution set ?
+            killedExecution.remove(workerTask.getTaskRun().getExecutionId());
 
             return workerTaskResult;
         }

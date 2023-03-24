@@ -37,6 +37,9 @@ class FlowExpandCommandTest {
                     "tasks:\n" +
                     "- id: t1\n" +
                     "  type: io.kestra.core.tasks.debugs.Return\n" +
+                    "  format: \"Lorem ipsum dolor sit amet\"\n" +
+                    "- id: t2\n" +
+                    "  type: io.kestra.core.tasks.debugs.Return\n" +
                     "  format: |\n" +
                     "    Lorem ipsum dolor sit amet\n" +
                     "    Lorem ipsum dolor sit amet\n"

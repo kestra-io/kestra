@@ -12,7 +12,7 @@ editLink: false
 {{~#each classPlugins }}
     {{~#if @key.title}}
 ## {{#if @key.icon ~}}<img width="25" src="data:image/svg+xml;base64,{{@key.icon}}" /> {{/if }}{{ @key.title }}
-    {{else}}
+    {{else if @key.name }}
 ##  {{#if @key.icon ~}}<img width="25" src="data:image/svg+xml;base64,{{@key.icon}}" /> {{/if }}{{ @key.name }}
     {{/if}}
 {{ @key.description }}

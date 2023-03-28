@@ -120,7 +120,6 @@ public class PluginController {
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
-    @Cacheable("default")
     public HttpResponse<Doc> pluginDocumentation(
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") boolean allProperties
@@ -144,7 +143,8 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties)  {
+    @Cacheable("default")
+    protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties)  {
         RegisteredPlugin registeredPlugin = plugins
             .stream()
             .filter(r -> r.hasClass(className))

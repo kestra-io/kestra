@@ -102,7 +102,7 @@
                 oldDecorations: [],
                 editorDocumentation: undefined,
                 plugin: undefined,
-                taskType: undefined
+                taskType: undefined,
             };
         },
         computed: {
@@ -317,7 +317,10 @@
                 this.editor.onDidChangeCursorPosition(e => {
                     let position = this.editor.getPosition();
                     let model = this.editor.getModel();
-                    this.$emit("cursor",{position: position, model: model})
+                    clearTimeout(this.lastTimeout);
+                    this.lastTimeout = setTimeout(() => {
+                        this.$emit("cursor",{position: position, model: model})
+                    }, 100);
                 });
             },
             autoFold(autoFold) {

@@ -46,15 +46,19 @@ import lombok.experimental.SuperBuilder;
                 "    cases:\n" +
                 "      case1:\n" +
                 "        - id: case1\n" +
-                "          type: io.kestra.core.tasks.debugs.Echo\n" +
-                "          format: Case 1\n" +
+                "          type: io.kestra.core.tasks.log.Log\n" +
+                "          message: Case 1\n" +
                 "      case2:\n" +
                 "        - id: case2\n" +
-                "          type: io.kestra.core.tasks.debugs.Echo\n" +
-                "          format: Case 2\n" +
+                "          type: io.kestra.core.tasks.log.Log\n" +
+                "          message: Case 2\n" +
                 "      notexist:\n" +
                 "        - id: fail\n" +
-                "          type: io.kestra.core.tasks.executions.Fail",
+                "          type: io.kestra.core.tasks.executions.Fail\n" +
+                "      default:\n" +
+                "        - id: default\n" +
+                "          type: io.kestra.core.tasks.log.Log\n" +
+                "          message: default"
             }
         ),
         @Example(

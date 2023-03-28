@@ -10,6 +10,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -254,5 +255,18 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories(), hasSize(4));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void bulkChangeStatus() throws Exception {
+        Execution firstFail = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
+        Execution secondFail = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
+
+        List<Execution> executions = executionService.bulkMarkAs(List.of(
+            Triple.of(firstFail, firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getId(), State.Type.RUNNING),
+            Triple.of(secondFail, secondFail.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.RUNNING)
+        ));
+
+        executions.get(0).getTaskRunList().get(0);
     }
 }

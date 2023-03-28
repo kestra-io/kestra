@@ -22,6 +22,7 @@ import jakarta.inject.Singleton;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
 import java.net.URI;
@@ -202,7 +203,7 @@ public class ExecutionService {
             if (!isFlowable || s.equals(taskRunId)) {
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
-                if (originalTaskRun.getAttempts() != null && originalTaskRun.getAttempts().size() > 0) {
+                if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
                     ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
                     attempts.set(attempts.size() - 1, attempts.get(attempts.size() - 1).withState(newState));
                     newTaskRun = newTaskRun.withAttempts(attempts);
@@ -216,6 +217,16 @@ public class ExecutionService {
 
         return newExecution
             .withState(State.Type.RESTARTED);
+    }
+
+    public List<Execution> bulkMarkAs(final List<Triple<Execution, String, State.Type>> executionWTaskRunIdWNewState){
+        return executionWTaskRunIdWNewState.stream().map(e -> {
+            try {
+                return this.markAs(e.getLeft(), e.getMiddle(), e.getRight());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }).collect(Collectors.toList());
     }
 
     public PurgeResult purge(

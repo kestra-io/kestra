@@ -159,11 +159,7 @@
                     return false;
                 }
 
-                if (State.isRunning(this.execution.state.current)) {
-                    return false;
-                }
-
-                return true;
+                return !State.isRunning(this.execution.state.current);
             }
         },
         data() {

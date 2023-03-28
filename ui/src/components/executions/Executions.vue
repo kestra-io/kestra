@@ -339,6 +339,34 @@
                     () => {}
                 )
             },
+            updateExecutionsStatus() {
+                this.$toast().confirm(
+                    this.$t("bulk status update", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/query", this.loadQuery({
+                                    sort: this.$route.query.sort || "state.startDate:desc",
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                                }))
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {}
+                )
+            },
             deleteExecutions() {
                 this.$toast().confirm(
                     this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),

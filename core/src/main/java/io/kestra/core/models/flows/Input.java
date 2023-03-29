@@ -1,7 +1,11 @@
 package io.kestra.core.models.flows;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.validations.InputValidation;
+import io.kestra.core.validations.Regex;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +21,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 @Introspected
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@InputValidation
 public class Input {
     @NotNull
     @NotBlank
@@ -35,9 +40,28 @@ public class Input {
 
     String defaults;
 
+    @Schema(
+        title = "Regular expression validating the value."
+    )
+    @Regex
+    String validator;
+
+    @JsonIgnore
+    public boolean canBeValidated() {
+        if (type == null) {
+            return false;
+        }
+        return type.canBeValidated();
+    }
+
     @Introspected
     public enum Type {
-        STRING,
+        STRING() {
+            @Override
+            public boolean canBeValidated() {
+                return true;
+            }
+        },
         INT,
         FLOAT,
         BOOLEAN,
@@ -47,6 +71,10 @@ public class Input {
         DURATION,
         FILE,
         JSON,
-        URI,
+        URI;
+
+        public boolean canBeValidated() {
+            return false;
+        }
     }
 }

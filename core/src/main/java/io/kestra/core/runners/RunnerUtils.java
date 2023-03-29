@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -120,6 +121,7 @@ public class RunnerUtils {
 
                 switch (input.getType()) {
                     case STRING:
+                        validateStringInput(input, current);
                         return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
                             input.getName(),
                             current
@@ -232,6 +234,20 @@ public class RunnerUtils {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return handleNestedInputs(results);
+    }
+
+    private void validateStringInput(Input input, String current) {
+        final String validator = input.getValidator();
+        if (validator == null) {
+            return;
+        }
+        try {
+            if (!Pattern.matches(validator, current)) {
+                throw new MissingRequiredInput("Invalid format for '" + input.getName() + "' defined by validator '" + validator + "'");
+            }
+        } catch (PatternSyntaxException e) {
+            throw new MissingRequiredInput("Invalid validator syntax '" + validator + "' for '" + input.getName() + "'");
+        }
     }
 
     @SuppressWarnings("unchecked")

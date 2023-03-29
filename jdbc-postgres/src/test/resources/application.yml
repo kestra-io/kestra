@@ -12,6 +12,8 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/postgres
+      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
+      ignore-migration-patterns: "*:missing"
 
 kestra:
   queue:

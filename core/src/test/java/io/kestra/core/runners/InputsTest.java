@@ -3,6 +3,9 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.utils.TestsUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -10,12 +13,15 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 
 import jakarta.inject.Inject;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -46,6 +52,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("nested.string", "a string")
         .put("nested.more.int", "123")
         .put("nested.bool", "true")
+        .put("validatedString", "A123")
         .build();
 
     @Inject
@@ -54,9 +61,16 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private YamlFlowParser yamlFlowParser;
+
     private Map<String, Object> typedInputs(Map<String, String> map) {
+        return typedInputs(map, flowRepository.findById("io.kestra.tests", "inputs").get());
+    }
+
+    private Map<String, Object> typedInputs(Map<String, String> map, Flow flow) {
         return runnerUtils.typedInputs(
-            flowRepository.findById("io.kestra.tests", "inputs").get(),
+            flow,
             Execution.builder()
                 .id("test")
                 .namespace("test")
@@ -171,6 +185,37 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void inputValidatedString() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("validatedString"), is("A123"));
+    }
+
+    @Test
+    void inputValidatedStringBadValue() {
+        HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("validatedString", "foo");
+
+        MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
+            Map<String, Object> typeds = typedInputs(map);
+        });
+
+        assertThat(e.getMessage(), containsString("Invalid format for "));
+    }
+
+    @Test
+    void inputValidatedStringBadSyntax() {
+        final Flow flow = parse("flows/invalids/inputs-bad-validator-syntax.yaml");
+        final HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("badValidatorSyntax", "foo");
+
+        final MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
+            typedInputs(map, flow);
+        });
+
+        assertThat(e.getMessage(), containsString("Invalid validator syntax"));
+    }
+
+    @Test
     void inputFailed() {
         HashMap<String, String> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
@@ -189,5 +234,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(((Map<String, Object>)typeds.get("nested")).get("string"), is("a string"));
         assertThat(((Map<String, Object>)typeds.get("nested")).get("bool"), is(true));
         assertThat(((Map<String, Object>)((Map<String, Object>)typeds.get("nested")).get("more")).get("int"), is(123));
+    }
+
+    private Flow parse(String path) {
+        URL resource = TestsUtils.class.getClassLoader().getResource(path);
+        assert resource != null;
+
+        File file = new File(resource.getFile());
+
+        return yamlFlowParser.parse(file, Flow.class);
     }
 }

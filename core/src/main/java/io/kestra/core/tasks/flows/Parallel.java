@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -74,7 +75,9 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Valid
     @PluginProperty
-    private List<Task> tasks;
+    @NotEmpty
+    @NotNull
+    private List<@NotNull Task> tasks;
 
     @Valid
     @PluginProperty

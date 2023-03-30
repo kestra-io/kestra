@@ -157,7 +157,9 @@ public class Flow implements DeletedInterface {
     }
 
     private Stream<Task> allTasksWithChilds(Task task) {
-        if (task.isFlowable()) {
+        if (task == null) {
+            return Stream.empty();
+        } else if (task.isFlowable()) {
             Stream<Task> taskStream = ((FlowableTask<?>) task).allChildTasks()
                 .stream()
                 .flatMap(this::allTasksWithChilds);

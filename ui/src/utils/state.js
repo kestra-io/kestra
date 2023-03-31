@@ -86,7 +86,7 @@ const STATE = Object.freeze({
         colorClass: "",
         color: "#6d81f5",
         icon: PauseCircle,
-        isRunning: false,
+        isRunning: true,
         isKillable: false,
         isFailed: false,
     }

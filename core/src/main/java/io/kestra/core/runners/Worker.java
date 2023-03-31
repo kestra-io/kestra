@@ -124,7 +124,7 @@ public class Worker implements Runnable, Closeable {
 
                                 WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
 
-                                if (workerTaskResult.getTaskRun().getState().isFailed()) {
+                                if (workerTaskResult.getTaskRun().getState().isFailed() || workerTaskResult.getTaskRun().getState().isPaused()) {
                                     break;
                                 }
 

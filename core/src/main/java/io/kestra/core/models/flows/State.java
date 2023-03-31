@@ -85,7 +85,7 @@ public class State {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Optional<Instant> getEndDate() {
-        if (!this.isTerminated()) {
+        if (!this.isTerminated() && !this.isPaused()) {
             return Optional.empty();
         }
 
@@ -136,8 +136,13 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isPaused() {
+        return this.current.isPaused();
+    }
+
+    @JsonIgnore
     public boolean isRestartable() {
-        return this.current.isFailed();
+        return this.current.isFailed() || this.isPaused();
     }
 
 
@@ -154,7 +159,7 @@ public class State {
         KILLED;
 
         public boolean isTerminated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.PAUSED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED;
         }
 
         public boolean isCreated() {
@@ -166,7 +171,11 @@ public class State {
         }
 
         public boolean isFailed() {
-            return this == Type.FAILED || this == Type.PAUSED;
+            return this == Type.FAILED;
+        }
+
+        public boolean isPaused() {
+            return this == Type.PAUSED;
         }
     }
 

@@ -159,6 +159,10 @@
                     return false;
                 }
 
+                if(this.taskRun.state.current === "PAUSED") {
+                    return true;
+                }
+
                 if (State.isRunning(this.execution.state.current)) {
                     return false;
                 }

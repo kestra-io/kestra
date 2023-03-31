@@ -5,10 +5,16 @@ tasks:
   - id: pause
     type: io.kestra.core.tasks.flows.Pause
     tasks:
-      - id: ko
+      - id: subtask
         type: io.kestra.core.tasks.scripts.Bash
         commands:
           - echo "trigger after manual restart"
   - id: last
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
+
+errors:
+  - id: failed-echo
+    type: io.kestra.core.tasks.debugs.Echo
+    description: "Log the error"
+    format: I'm failing {{task.id}}

@@ -4,9 +4,9 @@ namespace: io.kestra.tests
 tasks:
   - id: pause
     type: io.kestra.core.tasks.flows.Pause
-    delay: PT10S
+    delay: PT1S
     tasks:
-      - id: ko
+      - id: subtask
         type: io.kestra.core.tasks.scripts.Bash
         commands:
           - echo "trigger 1 seconds pause"

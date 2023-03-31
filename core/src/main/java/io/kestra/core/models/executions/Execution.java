@@ -283,7 +283,7 @@ public class Execution implements DeletedInterface {
 
         return Streams.findLast(this.taskRunList
             .stream()
-            .filter(t -> !t.getState().isTerminated())
+            .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
         );
     }
 

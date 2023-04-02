@@ -6,6 +6,7 @@
             :persistent="false"
             :hide-after="0"
             transition=""
+            :visible="tooltipContent !== ''"
         >
             <template #content>
                 <span v-html="tooltipContent" />
@@ -88,9 +89,7 @@
                     tooltip: {
                         external: function (context) {
                             let content = tooltip(context.tooltip);
-                            if (content) {
-                                tooltipContent.value = content;
-                            }
+                            tooltipContent.value = content;
                         },
                         callbacks: {
                             label: function(context) {
@@ -100,7 +99,10 @@
                                     return context.dataset.label + ": " + context.formattedValue
                                 }
                             }
-                        }
+                        },
+                        filter: (e) => {
+                            return e.raw > 0;
+                        },
                     },
                 },
                 scales: {

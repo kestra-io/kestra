@@ -1,1 +1,0 @@
-ALTER TABLE metrics ADD COLUMN metric_value FLOAT NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'value' AS FLOAT)) STORED

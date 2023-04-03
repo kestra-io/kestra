@@ -5,4 +5,4 @@ ALTER TABLE queues DROP CONSTRAINT IF EXISTS queues_pkey;
 
 DROP INDEX IF EXISTS queues_type__offset;
 
-CREATE INDEX IF NOT EXISTS queues_offset ON public.queues USING hash ("offset");
+CREATE INDEX IF NOT EXISTS queues_offset ON queues USING hash ("offset");

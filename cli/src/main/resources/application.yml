@@ -62,6 +62,8 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/h2
+      # We must ignore missing migrations as a V8 wrong migration was created and replaced by the V11
+      ignore-migration-patterns: "*:missing"
 
 kestra:
   retries:

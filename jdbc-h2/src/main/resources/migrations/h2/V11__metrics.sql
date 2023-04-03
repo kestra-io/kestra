@@ -14,7 +14,7 @@ ALTER COLUMN "type" ENUM(
     ) NOT NULL;
 
 /* ----------------------- metrics ----------------------- */
-CREATE TABLE metrics (
+CREATE TABLE IF NOT EXISTS metrics (
      "key" VARCHAR(30) NOT NULL PRIMARY KEY,
      "value" TEXT NOT NULL,
      "deleted" BOOL NOT NULL GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.deleted')),
@@ -27,6 +27,11 @@ CREATE TABLE metrics (
      "timestamp" TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSEDATETIME(JQ_STRING("value", '.timestamp'), 'yyyy-MM-dd''T''HH:mm:ss.SSS''Z'''))
 );
 
-CREATE INDEX metrics_flow_id ON logs ("deleted", "namespace", "flow_id");
-CREATE INDEX metrics_execution_id ON logs ("deleted", "execution_id");
-CREATE INDEX metrics_timestamp ON logs ("deleted", "timestamp");
+ALTER TABLE metrics ADD COLUMN IF NOT EXISTS "metric_value" DOUBLE GENERATED ALWAYS AS (JQ_DOUBLE("value", '.value'));
+
+DROP INDEX IF EXISTS metrics_flow_id;
+DROP INDEX IF EXISTS metrics_execution_id;
+DROP INDEX IF EXISTS metrics_timestamp;
+CREATE INDEX IF NOT EXISTS metrics_flow_id ON metrics ("deleted", "namespace", "flow_id");
+CREATE INDEX IF NOT EXISTS metrics_execution_id ON metrics ("deleted", "execution_id");
+CREATE INDEX IF NOT EXISTS metrics_timestamp ON metrics ("deleted", "timestamp");

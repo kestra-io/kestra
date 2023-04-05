@@ -310,7 +310,7 @@
         .vsm--link {
             padding: 0.3rem 0.5rem;
             margin-bottom: 0.3rem;
-            border-radius: var(--bs-border-radius);
+            border-radius: var(--bs-border-radius-lg);
             transition: padding 0.2s ease;
 
             html.dark & {
@@ -320,6 +320,14 @@
             &_exact-active,
             &_active {
                 font-weight: 700;
+                background-color: var(--bs-white);
+                color: var(--bs-primary);
+                box-shadow: 0 0.5rem 0.5rem var(--bs-gray-300);
+
+                html.dark & {
+                    background-color: var(--bs-primary);
+                    box-shadow: none;
+                }
             }
 
             &_disabled {

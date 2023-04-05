@@ -507,6 +507,11 @@
         margin: 0px;
         padding: 0px;
         transition: width var(--el-transition-duration) ease-in-out, padding var(--el-transition-duration) ease-in-out;
+        background-color: var(--bs-gray-300);
+
+        html.dark & {
+            background-color: var(--bs-gray-100);
+        }
     }
 
     .plugin-doc-active {

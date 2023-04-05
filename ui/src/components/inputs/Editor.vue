@@ -12,7 +12,7 @@
                     <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
                 </el-tooltip>
             </el-button-group>
-            <span v-if="!this.guidedProperties.tourStarted">
+            <span v-if="!this.guidedProperties.tourStarted" class="hide-on-small-screen">
                 <el-tooltip :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
                     <el-button type="primary" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
                 </el-tooltip>
@@ -42,7 +42,7 @@
                     {{ placeholder }}
                 </div>
             </div>
-            <div v-if="!this.guidedProperties.tourStarted" :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']">
+            <div v-if="!this.guidedProperties.tourStarted" :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']" class="hide-on-small-screen">
                 <markdown v-if="editorPlugin" :source="editorPlugin.markdown" />
                 <div v-else>
                     <div class="img get-started" />
@@ -360,6 +360,8 @@
 </script>
 
 <style lang="scss">
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+
     .ks-editor {
         width: 100%;
         .top-nav {
@@ -488,6 +490,13 @@
             html.dark & {
                 background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
             }
+        }
+    }
+
+    .hide-on-small-screen {
+        display: none;
+        @include res(md) {
+            display: initial;
         }
     }
 

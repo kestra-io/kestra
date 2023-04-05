@@ -588,7 +588,6 @@ form.ks-horizontal {
     --el-tag-bg-color: var(--bs-gray-600);
     --el-tag-hover-color: var(--bs-gray-600-darken-2);
     border: 0;
-    color: var(--bs-white);
 
     @each $i in (primary, success, warning, danger, error, info) {
         &.el-tag--#{$i} {

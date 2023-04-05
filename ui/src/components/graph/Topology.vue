@@ -312,7 +312,7 @@
                 <trigger-flow type="default" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
             </li>
             <li>
-                <el-button :icon="ContentSave" size="large" @click="save" v-if="isAllowedEdit" :disabled="!haveChange" type="info">
+                <el-button :icon="ContentSave" size="large" @click="save" v-if="isAllowedEdit" :disabled="!haveChange" type="primary">
                     {{ $t('save') }}
                 </el-button>
             </li>

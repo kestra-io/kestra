@@ -6,7 +6,7 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" size="large" v-if="canDelete" @click="deleteExecution">
+                    <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteExecution">
                         {{ $t('delete') }}
                     </el-button>
                 </li>

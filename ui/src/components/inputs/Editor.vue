@@ -14,7 +14,7 @@
             </el-button-group>
             <span v-if="!this.guidedProperties.tourStarted">
                 <el-tooltip :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
-                    <el-button type="info" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
+                    <el-button type="primary" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
                 </el-tooltip>
             </span>
         </nav>
@@ -186,7 +186,7 @@
                 return  {
                     ...{
                         tabSize: 2,
-                        fontFamily: "'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+                        fontFamily: "'Source Code Pro', monospace",
                         fontSize: 12,
                         showFoldingControls: "always",
                         scrollBeyondLastLine: false,
@@ -394,7 +394,7 @@
                 padding-top: 7px;
 
                 html.dark & {
-                    background-color: var(--bs-gray-100-darken-5);
+                    background-color: var(--bs-gray-100);
                 }
             }
 
@@ -439,14 +439,14 @@
 
     html.dark {
         .monaco-editor, .monaco-editor-background {
-            background-color: var(--bs-gray-100-darken-5);
-            --vscode-editor-background: var(--bs-gray-100-darken-5);
-            --vscode-breadcrumb-background: var(--bs-gray-100-darken-5);
-            --vscode-editorGutter-background: var(--bs-gray-100-darken-5);
+            background-color: var(--input-bg);
+            --vscode-editor-background: var(--input-bg);
+            --vscode-breadcrumb-background: var(--input-bg);
+            --vscode-editorGutter-background: var(--input-bg);
         }
 
         .monaco-editor .margin {
-            background-color: var(--bs-gray-100-darken-5);
+            background-color: var(--input-bg);
         }
     }
 

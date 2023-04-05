@@ -42,6 +42,7 @@
                 },
                 spacing: 0,
                 cutout: "75%",
+                borderWidth: 0,
                 borderColor: cssVariable("--bs-border-color"),
                 hoverBorderColor: cssVariable("--bs-border-color"),
                 plugins: {

@@ -95,7 +95,7 @@
                 </li>
                 <li>
                     <router-link :to="{name: 'templates/create'}">
-                        <el-button :icon="Plus" type="info" size="large">
+                        <el-button :icon="Plus" type="primary" size="large">
                             {{ $t('create') }}
                         </el-button>
                     </router-link>

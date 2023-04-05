@@ -261,6 +261,7 @@
                     background: url(../../../src/assets/logo.svg) 0 0 no-repeat;
                     background-size: 179px 55px;
                     display: block;
+                    transition: 0.2s all;
 
                     html.dark & {
                         background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
@@ -276,7 +277,11 @@
             font-size: var(--el-font-size-extra-small);
             text-align: center;
             display: block;
-            color: var(--bs-tertiary);
+            color: var(--bs-gray-400);
+
+            html.dark & {
+                color: var(--bs-gray-600);
+            }
         }
 
         .vsm--icon {
@@ -292,18 +297,24 @@
             }
         }
 
+        .vsm--item {
+            padding: 0 30px;
+            transition: padding 0.2s ease;
+        }
+
+        .vsm--child {
+            .vsm--item {
+                padding: 0;
+            }
+        }
         .vsm--link {
             padding: 0.3rem 0.5rem;
             margin-bottom: 0.3rem;
-            border-left: 4px solid transparent;
-            padding-left: 37px;
+            border-radius: var(--bs-border-radius);
+            transition: padding 0.2s ease;
 
-            &_level-1 {
-                &.vsm--link_exact-active,
-                &.vsm--link_active {
-                    box-shadow: none;
-                    border-left: 4px solid var(--bs-secondary);
-                }
+            html.dark & {
+                color: var(--bs-white);
             }
 
             &_exact-active,
@@ -324,9 +335,6 @@
             border-top: 1px solid var(--bs-border-color);
         }
 
-        &.vsm_collapsed .vsm--icon {
-            left: 0;
-        }
 
         a.vsm--link_active[href="#"] {
             cursor: initial !important;
@@ -339,36 +347,41 @@
             }
         }
 
-        .vsm--dropdown_mobile-item {
-            .vsm--item {
-                .vsm--title {
-                    left: 0;
-                    position: relative;
-                }
-            }
-        }
 
         a.vsm--link_active[href="#"] {
             cursor: initial !important;
         }
 
         html.dark & {
-            background-color: var(--bs-gray-100-darken-5);
+            background-color: var(--bs-gray-100);
 
             .vsm--dropdown {
                 background-color: var(--bs-gray-100);
             }
         }
 
+
+        .vsm--mobile-bg {
+            border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0 ;
+        }
+
         &.vsm_collapsed {
             .logo {
                 a {
-                    left: 11px;
+                    left: 8px;
+
+                    span.img {
+                        background-size: 207px 55px !important;
+                    }
                 }
             }
 
             .vsm--link {
                 padding-left: 13px;
+            }
+
+            .vsm--item {
+                padding: 0 5px;
             }
 
             span.version {

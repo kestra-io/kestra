@@ -1,6 +1,5 @@
 @use 'sass:math';
 @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-@use 'element-plus/theme-chalk/src/' as *;
 @import "../variable";
 
 // button
@@ -34,10 +33,7 @@
 // input
 .el-input, .el-date-editor, .el-textarea {
     --el-input-border-color: var(--bs-border-color);
-
-    html.dark & {
-        --el-input-bg-color: var(--bs-gray-100-darken-5);
-    }
+    --el-input-bg-color: var(--input-bg);
 }
 
 .el-input, .el-input-number, .el-select, .el-date-editor.el-input {
@@ -64,7 +60,7 @@
     }
 
     label {
-        display: flex;
+        displabey: flex;
         cursor: pointer;
         margin-left: 10px;
         line-height: 30px;
@@ -133,7 +129,7 @@
     --el-checkbox-font-size: var(--font-size-base);
 
     html.dark & {
-        --el-checkbox-bg-color: var(--bs-gray-100-darken-5);
+        --el-checkbox-bg-color: var(--input-bg);
     }
 }
 
@@ -220,6 +216,10 @@ form.ks-horizontal {
         display: none;
     }
 
+    .el-table__empty-text {
+        color: var(--bs-gray-600);
+    }
+
     th {
         white-space: nowrap;
         div.cell {
@@ -234,8 +234,25 @@ form.ks-horizontal {
             white-space: nowrap;
         }
 
-        a {
+        a, button {
             color: var(--bs-body-color);
+            width: 28px;
+            border-radius: var(--bs-border-radius);
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bs-gray-400);
+
+            .material-design-icon__svg {
+                bottom: -0.125rem;
+            }
+        }
+
+        button {
+            .material-design-icon__svg {
+                bottom: 0;
+            }
         }
     }
 
@@ -268,7 +285,7 @@ form.ks-horizontal {
 .el-tabs {
     .el-tabs__active-bar {
         height: 4px;
-        background-color: var(--bs-secondary);
+        background-color: var(--bs-primary);
     }
 
     .el-tabs__item {
@@ -276,17 +293,31 @@ form.ks-horizontal {
         transition: all 0.3s ease;
         > * {
             padding: var(--spacer) calc(var(--spacer) * 1.5);
-            color: var(--bs-tertiary);
+            color: var(--bs-gray-700);
         }
 
-        &.is-active {
-            color: var(--bs-secondary);
+        &.is-active > * {
+            color: var(--bs-primary);
+            font-weight: bold;
         }
     }
 
     .el-tabs__nav-wrap::after {
         height: 1px;
         background-color: var(--el-border-color);
+    }
+
+    html.dark & {
+        .el-tabs__active-bar {
+            background-color: var(--bs-secondary);
+        }
+
+        .el-tabs__item {
+            &.is-active > * {
+                color: var(--bs-secondary);
+            }
+        }
+
     }
 }
 
@@ -300,13 +331,10 @@ form.ks-horizontal {
 
     .el-card__header {
         padding: $card-cap-padding-y $card-cap-padding-x;
-        color: var(--bs-secondary);
         font-weight: bold;
+        font-size: var(--font-size-sm)
     }
 
-    .el-card__body {
-        padding: calc(var(--spacer) / 2);
-    }
 }
 
 // message box
@@ -368,11 +396,24 @@ form.ks-horizontal {
 
 // message box
 .el-pagination {
-    html.dark & {
-        --el-pagination-button-bg-color: var(--bs-gray-200);
-        --el-disabled-bg-color: var(--bs-gray-100);
-        --el-pagination-button-color: var(--bs-gray-600);
-        --el-pagination-hover-color: var(--bs-gray-800);
+    --el-pagination-bg-color: transparent;
+    --el-pagination-text-color: var(--bs-body-color);
+    --el-pagination-button-color: var(--bs-body-color);
+    --el-pagination-hover-color: var(--bs-purple);
+
+    //html.dark & {
+    //    --el-pagination-button-bg-color: var(--bs-gray-200);
+    //    --el-pagination-button-color: var(--bs-gray-600);
+    //    --el-pagination-hover-color: var(--bs-gray-800);
+    //}
+
+    li, button {
+        border: 1px solid var(--bs-border-color);
+        margin-right: 3px;
+
+        &.is-active {
+            border: 1px solid var(--bs-purple);
+        }
     }
 }
 
@@ -503,6 +544,13 @@ form.ks-horizontal {
     .el-alert__description {
         margin: 0;
     }
+
+
+    @each $type in $types {
+        &.el-alert--#{$type} {
+            border: 1px solid var(--el-color-#{$type}-light-5);
+        }
+    }
 }
 
 // notifications
@@ -553,6 +601,11 @@ form.ks-horizontal {
 // avatar
 .el-avatar {
     --el-avatar-bg-color: var(--bs-gray-400);
+    --el-avatar-text-color: var(--bs-black);
+
+    html.dark & {
+        --el-avatar-text-color: var(--bs-white);
+    }
 }
 
 

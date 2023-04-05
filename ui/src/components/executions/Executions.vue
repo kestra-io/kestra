@@ -124,7 +124,7 @@
                         <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
                             {{ $t('kill') }}
                         </el-button>
-                        <el-button v-if="canDelete" :icon="Delete" size="large" @click="deleteExecutions()">
+                        <el-button v-if="canDelete" :icon="Delete" size="large" type="default" @click="deleteExecutions()">
                             {{ $t('delete') }}
                         </el-button>
                     </bottom-line-counter>

@@ -1,6 +1,6 @@
 <template>
     <el-button class="news-link" @click="show">
-        <gift title="" />
+        <bell title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </el-button>
 
@@ -27,7 +27,7 @@
 
 <script>
     import {mapState} from "vuex";
-    import Gift from "vue-material-design-icons/Gift.vue";
+    import Bell from "vue-material-design-icons/Bell.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import CheckboxBlankCircle from "vue-material-design-icons/CheckboxBlankCircle.vue";
     import Markdown from "./Markdown.vue";
@@ -35,7 +35,7 @@
 
     export default {
         components: {
-            Gift,
+            Bell,
             OpenInNew,
             CheckboxBlankCircle,
             Markdown,
@@ -88,10 +88,10 @@
     }
 
     .new {
-        font-size: calc(var(--font-size-sm) * 0.7);
+        font-size: calc(var(--font-size-sm) * 0.7) !important;
         color: var(--el-color-error);
         position: absolute;
-        margin-left: 14px;
+        margin-left: 10px;
         margin-top: -12px;
 
         animation-name: grow;

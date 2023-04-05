@@ -15,4 +15,7 @@ export default defineConfig({
     plugins: [
         vue(),
     ],
+    css: {
+        devSourcemap: true
+    },
 })

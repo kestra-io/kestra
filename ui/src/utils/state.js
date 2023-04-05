@@ -12,7 +12,7 @@ const STATE = Object.freeze({
     CREATED: {
         name: "CREATED",
         colorClass: "info",
-        color: "#4F83A5",
+        color: "#9F9DFF",
         icon: ProgressWrench,
         isRunning: true,
         isKillable: true,
@@ -21,7 +21,7 @@ const STATE = Object.freeze({
     RESTARTED: {
         name: "RESTARTED",
         colorClass: "info",
-        color: "#4F83A5",
+        color: "#9F9DFF",
         icon: Restart,
         isRunning: false,
         isKillable: true,
@@ -30,7 +30,7 @@ const STATE = Object.freeze({
     SUCCESS: {
         name: "SUCCESS",
         colorClass: "success",
-        color: "#22b783",
+        color: "#03DABA",
         icon: CheckCircle,
         isRunning: false,
         isKillable: false,
@@ -39,7 +39,7 @@ const STATE = Object.freeze({
     RUNNING: {
         name: "RUNNING",
         colorClass: "primary",
-        color: "#4F83A5",
+        color: "#9F9DFF",
         icon: PlayCircle,
         isRunning: true,
         isKillable: true,
@@ -48,7 +48,7 @@ const STATE = Object.freeze({
     KILLING: {
         name: "KILLING",
         colorClass: "warning",
-        color: "#ffb822",
+        color: "#FCE07C",
         icon: CloseCircle,
         isRunning: true,
         isKillable: false,
@@ -57,7 +57,7 @@ const STATE = Object.freeze({
     KILLED: {
         name: "KILLED",
         colorClass: "warning",
-        color: "#ffb822",
+        color: "#FCE07C",
         icon: StopCircle,
         isRunning: false,
         isKillable: false,
@@ -66,7 +66,7 @@ const STATE = Object.freeze({
     WARNING: {
         name: "WARNING",
         colorClass: "warning",
-        color: "#ff8500",
+        color: "#FCB37C",
         icon: AlertCircle,
         isRunning: false,
         isKillable: false,
@@ -75,7 +75,7 @@ const STATE = Object.freeze({
     FAILED: {
         name: "FAILED",
         colorClass: "danger",
-        color: "#f5325c",
+        color: "#F1444C",
         icon: CloseCircle,
         isRunning: false,
         isKillable: false,
@@ -84,7 +84,7 @@ const STATE = Object.freeze({
     PAUSED: {
         name: "PAUSED",
         colorClass: "",
-        color: "#6d81f5",
+        color: "#8405FF",
         icon: PauseCircle,
         isRunning: false,
         isKillable: false,

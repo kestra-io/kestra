@@ -11,7 +11,7 @@
                     :hide-after="0"
                 >
                     <template #reference>
-                        <el-avatar class="me-1" size="small" button>
+                        <el-avatar shape="square" class="me-1" size="small" button>
                             {{ name(trigger) }}
                         </el-avatar>
                     </template>

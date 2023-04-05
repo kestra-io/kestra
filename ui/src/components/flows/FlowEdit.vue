@@ -4,7 +4,7 @@
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
-                    <el-button :icon="icon.Delete" type="danger" size="large" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="icon.Delete" size="large" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
@@ -22,7 +22,7 @@
                 </li>
 
                 <li>
-                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="info">
+                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="primary">
                         {{ $t('save') }}
                     </el-button>
                 </li>

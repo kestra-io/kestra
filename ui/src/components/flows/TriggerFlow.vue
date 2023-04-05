@@ -41,7 +41,7 @@
             },
             type: {
                 type: String,
-                default: "info"
+                default: "primary"
             },
         },
         data() {

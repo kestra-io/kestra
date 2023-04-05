@@ -31,9 +31,7 @@ public class FlowableUtils {
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, null);
-
-        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
+        return resolveSequentialNexts(execution, tasks, errors, null);
     }
 
     public static List<NextTaskRun> resolveSequentialNexts(

@@ -187,7 +187,7 @@
                 this.loadLogs();
             },
             execution: function() {
-                if (this.execution && this.execution.state.current !== State.RUNNING) {
+                if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED ) {
                     this.closeSSE();
                 }
             },

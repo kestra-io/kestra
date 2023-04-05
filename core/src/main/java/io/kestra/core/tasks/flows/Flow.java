@@ -183,7 +183,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         taskRun = taskRun.withOutputs(builder.build().toMap());
 
         if (transmitFailed &&
-            (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
+            (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
             taskRun = taskRun.withState(execution.getState().getCurrent());
         } else {

@@ -56,7 +56,7 @@ public class ExecutionService {
     private MetricRepositoryInterface metricRepository;
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!execution.getState().isTerminated()) {
+        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -66,7 +66,7 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            taskRun -> taskRun.getState().getCurrent().isFailed()
+            taskRun -> taskRun.getState().getCurrent().isFailed() || taskRun.getState().getCurrent().isPaused()
         );
 
         Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, revision == null);
@@ -125,7 +125,7 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, String taskRunId, @Nullable Integer revision) throws Exception {
-        if (!execution.getState().isTerminated()) {
+        if (!(execution.getState().isTerminated() || !(execution.getState().isTerminated() ))) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -184,7 +184,7 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
-        if (!execution.getState().isTerminated()) {
+        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );

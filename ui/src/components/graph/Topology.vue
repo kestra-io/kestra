@@ -535,17 +535,24 @@
     }
 
     const onDelete = (event) => {
-        const section = event.section ? event.section : "tasks";
         const flowParsed = YamlUtils.parse(flowYaml.value);
-        if (section === "tasks" && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
-            store.dispatch("core/showMessage", {
-                variant: "error",
-                title: t("can not delete"),
-                message: t("can not have less than 1 task")
-            });
-            return;
-        }
-        onEdit(YamlUtils.deleteTask(flowYaml.value, event.id, section));
+        toast.confirm(
+            t("delete task confirm", {taskId: flowParsed.id}),
+            () => {
+
+                const section = event.section ? event.section : "tasks";
+                if (section === "tasks" && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("can not delete"),
+                        message: t("can not have less than 1 task")
+                    });
+                    return;
+                }
+                onEdit(YamlUtils.deleteTask(flowYaml.value, event.id, section));
+            },
+            () => {}
+        )
     }
 
     const onCreateNewTask = (event) => {
@@ -694,7 +701,7 @@
                 n.style = {...n.style, opacity: "1", border: "none"}
             })
     }
-    
+
     const editorUpdate = (event) => {
         updatedFromEditor.value = true;
         flowYaml.value = event;

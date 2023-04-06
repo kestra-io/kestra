@@ -52,6 +52,11 @@ inputs:
   type: STRING
   validator: A\d+
   required: false
+- name: validatedInt
+  type: INT
+  min: 10
+  max: 20
+  required: false
 tasks:
 - id: string
   type: io.kestra.core.tasks.debugs.Return

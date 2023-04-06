@@ -4,33 +4,31 @@ import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
 import PlayCircle from "vue-material-design-icons/PlayCircle.vue";
 import CloseCircle from "vue-material-design-icons/CloseCircle.vue";
 import StopCircle from "vue-material-design-icons/StopCircle.vue";
-import Restart from "vue-material-design-icons/Restart.vue";
+import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue";
 import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-import ProgressWrench from "vue-material-design-icons/ProgressWrench.vue";
+import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue";
+import {cssVariable} from "./global"
 
 const STATE = Object.freeze({
     CREATED: {
         name: "CREATED",
-        colorClass: "info",
-        color: "#9F9DFF",
-        icon: ProgressWrench,
+        colorClass: "cyan",
+        icon: DotsVerticalCircle,
         isRunning: true,
         isKillable: true,
         isFailed: false,
     },
     RESTARTED: {
         name: "RESTARTED",
-        colorClass: "info",
-        color: "#9F9DFF",
-        icon: Restart,
+        colorClass: "cyan",
+        icon: SkipPreviousCircle,
         isRunning: false,
         isKillable: true,
         isFailed: false,
     },
     SUCCESS: {
         name: "SUCCESS",
-        colorClass: "success",
-        color: "#03DABA",
+        colorClass: "teal",
         icon: CheckCircle,
         isRunning: false,
         isKillable: false,
@@ -38,8 +36,7 @@ const STATE = Object.freeze({
     },
     RUNNING: {
         name: "RUNNING",
-        colorClass: "primary",
-        color: "#9F9DFF",
+        colorClass: "purple",
         icon: PlayCircle,
         isRunning: true,
         isKillable: true,
@@ -47,8 +44,7 @@ const STATE = Object.freeze({
     },
     KILLING: {
         name: "KILLING",
-        colorClass: "warning",
-        color: "#FCE07C",
+        colorClass: "yellow",
         icon: CloseCircle,
         isRunning: true,
         isKillable: false,
@@ -56,8 +52,7 @@ const STATE = Object.freeze({
     },
     KILLED: {
         name: "KILLED",
-        colorClass: "warning",
-        color: "#FCE07C",
+        colorClass: "yellow",
         icon: StopCircle,
         isRunning: false,
         isKillable: false,
@@ -65,8 +60,7 @@ const STATE = Object.freeze({
     },
     WARNING: {
         name: "WARNING",
-        colorClass: "warning",
-        color: "#FCB37C",
+        colorClass: "orange",
         icon: AlertCircle,
         isRunning: false,
         isKillable: false,
@@ -74,8 +68,7 @@ const STATE = Object.freeze({
     },
     FAILED: {
         name: "FAILED",
-        colorClass: "danger",
-        color: "#F1444C",
+        colorClass: "red",
         icon: CloseCircle,
         isRunning: false,
         isKillable: false,
@@ -83,8 +76,7 @@ const STATE = Object.freeze({
     },
     PAUSED: {
         name: "PAUSED",
-        colorClass: "",
-        color: "#8405FF",
+        colorClass: "indigo",
         icon: PauseCircle,
         isRunning: true,
         isKillable: false,
@@ -146,7 +138,7 @@ export default class State {
             return {
                 key: state.name,
                 icon: state.icon,
-                color: state.color
+                color: cssVariable("--bs-" + state.colorClass)
             }
         });
     }
@@ -156,7 +148,7 @@ export default class State {
     }
 
     static color() {
-        return _mapValues(STATE, state => state.color);
+        return _mapValues(STATE, state => cssVariable("--bs-" + state.colorClass));
     }
 
     static icon() {

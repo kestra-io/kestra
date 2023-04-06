@@ -18,7 +18,7 @@
 <script>
     import {defineComponent, computed, ref} from "vue";
     import {DoughnutChart} from "vue-chart-3"
-    import {tooltip, defaultConfig} from "../../utils/charts.js";
+    import {tooltip, defaultConfig, backgroundFromState} from "../../utils/charts.js";
     import State from "../../utils/state";
     import {cssVariable} from "../../utils/global";
 
@@ -56,12 +56,6 @@
                     },
                 }
             }))
-
-            const backgroundFromState = (state, alpha = 1) => {
-                const hex = State.color()[state];
-                const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
-                return `rgba(${r},${g},${b},${alpha})`;
-            }
 
             const chartData = computed(() => {
                 let background = Object.keys(props.data.executionCounts).map(function (state) {

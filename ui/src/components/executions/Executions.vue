@@ -114,7 +114,7 @@
             </template>
         </data-table>
 
-        <bottom-line>
+        <bottom-line v-if="displayBottomBar">
             <ul>
                 <li v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
                     <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
@@ -243,6 +243,10 @@
                 return this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
+            },
+            displayBottomBar() {
+                return (this.executionsSelection.length !== 0 && (this.canUpdate || this.canDelete)) ||
+                    (this.$route.name === 'flows/update');
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE);

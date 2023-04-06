@@ -1,4 +1,5 @@
 import _merge from "lodash/merge";
+import State from "./state";
 
 export function tooltip(tooltipModel) {
     const titleLines = tooltipModel.title || [];
@@ -122,4 +123,14 @@ export function chartClick(moment, router, route, event) {
         params: {tab: "executions"},
         query: query
     });
+}
+
+export function backgroundFromState(state, alpha = 1) {
+    const hex = State.color()[state];
+    if (!hex) {
+        return null;
+    }
+
+    const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
+    return `rgba(${r},${g},${b},${alpha})`;
 }

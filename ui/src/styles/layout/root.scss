@@ -64,4 +64,10 @@
             #{--bs-gray-#{$key}-darken-#{$i}}: #{darken($value, $i)};
         }
     }
+
+    @each $key, $value in $colors {
+        @each $i in (45) {
+            #{--bs-#{$key}-darken-#{$i}}: #{darken($value, $i)};
+        }
+    }
 }

@@ -7,7 +7,7 @@
     <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" class="sm" :title="$t('feeds.title')">
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mt-2">
-                <img class="float-right" :src="feed.image" alt="">
+                <img class="float-end" :src="feed.image" alt="">
             </div>
             <h5>
                 {{ feed.title }}
@@ -17,7 +17,7 @@
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
             <div class="text-end">
-                <a class="el-button el-button--primary mt-3 d-inline-block text-end" :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
+                <a class="el-button el-button--primary mt-3 " :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
             </div>
 
             <el-divider v-if="index !== feeds.length - 1" />

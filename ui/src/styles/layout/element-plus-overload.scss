@@ -1,4 +1,5 @@
 @use 'sass:math';
+@use "sass:map";
 @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 @import "../variable";
 
@@ -53,7 +54,8 @@
 .el-input-file.custom-upload {
     font-size: var(--el-font-size-base);
     border-radius: var(--el-border-radius-base);
-    border: var(--el-border);
+    border: 1px solid var(--el-border);
+    white-space: nowrap;
 
     .el-input__wrapper {
         background-color: transparent;
@@ -587,10 +589,12 @@ form.ks-horizontal {
 .el-tag {
     --el-tag-bg-color: var(--bs-gray-600);
     --el-tag-hover-color: var(--bs-gray-600-darken-2);
+    --el-tag-text-color: var(--bs-black);
     border: 0;
 
-    @each $i in (primary, success, warning, danger, error, info) {
+    @each $i in ($types) {
         &.el-tag--#{$i} {
+            --el-tag-text-color: #{darken(map.get($element-colors, $i, 'base'), 45%)};
             --el-tag-bg-color: var(--el-color-#{$i});
             --el-tag-hover-color: var(--el-color-#{$i}-dark-2);
         }

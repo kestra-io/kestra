@@ -65,8 +65,33 @@ $box-shadow-sm: 0 .125rem .25rem rgba($black, .075);
 $box-shadow: 0 .5rem 1rem rgba($black, .15);
 $box-shadow-lg: 0 1rem 3rem rgba($black, .175);
 
+// boostrap flags
+$enable-reduced-motion: false;
+
 // element-plus
 $types: primary, success, warning, danger, error, info !default;
+$element-colors: (
+    'white': $white,
+    'black': $black,
+    'primary': (
+        'base': $primary,
+    ),
+    'success': (
+        'base': $green,
+    ),
+    'warning': (
+        'base': $orange,
+    ),
+    'danger': (
+        'base': $red,
+    ),
+    'error': (
+        'base': $red,
+    ),
+    'info': (
+        'base': $cyan,
+    ),
+);
 
 // bootstrap
 @import "bootstrap/scss/functions";

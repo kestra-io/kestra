@@ -21,7 +21,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
-    import {defaultConfig, tooltip, chartClick} from "../../utils/charts.js";
+    import {defaultConfig, tooltip, chartClick, backgroundFromState} from "../../utils/charts.js";
     import State from "../../utils/state";
     import {useI18n} from "vue-i18n";
 
@@ -120,10 +120,6 @@
                     }
                 },
             }))
-
-            const backgroundFromState = (state) => {
-                return State.color()[state]
-            }
 
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 

@@ -1,7 +1,7 @@
 <template>
-    <el-button @click="$emit('click', $event)" class="status" :icon="icon" :size="this.size" :type="this.type" :class="cls">
+    <el-button @click="$emit('click', $event)" class="status" :icon="icon" :size="this.size" :class="cls">
         <template v-if="label">
-            {{ $filters.cap($filters.lower(status)) }}
+            {{ title || $filters.cap($filters.lower(status)) }}
         </template>
     </el-button>
 </template>
@@ -22,6 +22,10 @@
                 type: String,
                 default: ""
             },
+            title: {
+                type: String,
+                default: ""
+            },
             label: {
                 type: Boolean,
                 default: true
@@ -30,16 +34,15 @@
         emits: ["click"],
         computed: {
             cls() {
+                const bg = "status-" + State.colorClass()[this.status];
                 return {
-                    "no-label": !this.label
+                    "no-label": !this.label,
+                    [bg]: true,
                 }
             },
-            icon () {
+            icon() {
                 return State.icon()[this.status];
             },
-            type () {
-                return State.colorClass()[this.status];
-            }
         }
     };
 </script>
@@ -50,6 +53,10 @@
         &.no-label {
             padding: 8px;
             line-height: 1;
+        }
+
+        &:not(.no-label) {
+            border-radius: var(--bs-border-radius-pill);
         }
     }
 </style>

@@ -317,19 +317,6 @@
                 color: var(--bs-white);
             }
 
-            &_exact-active,
-            &_active {
-                font-weight: 700;
-                background-color: var(--bs-white);
-                color: var(--bs-primary);
-                box-shadow: 0 0.5rem 0.5rem var(--bs-gray-300);
-
-                html.dark & {
-                    background-color: var(--bs-primary);
-                    box-shadow: none;
-                }
-            }
-
             &_disabled {
                 opacity: 1;
             }

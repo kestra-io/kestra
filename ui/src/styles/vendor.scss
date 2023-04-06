@@ -20,25 +20,7 @@
         'extra-small': global-var.$font-size-xs,
     ),
 
-    $colors: (
-        'white': global-var.$white,
-        'black': global-var.$black,
-        'primary': (
-            'base': global-var.$primary,
-        ),
-        'success': (
-            'base': global-var.$green,
-        ),
-        'warning': (
-            'base': global-var.$yellow,
-        ),
-        'error': (
-            'base': global-var.$red,
-        ),
-        'info': (
-            'base': global-var.$cyan,
-        ),
-    ),
+    $colors: global-var.$element-colors,
 
     $border-radius: (
         'base': global-var.$border-radius,

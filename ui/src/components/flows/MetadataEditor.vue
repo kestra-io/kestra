@@ -210,7 +210,7 @@
                     namespace: this.newMetadata.namespace,
                     description: this.newMetadata.description,
                     labels: this.arrayToObject(this.newMetadata.labels),
-                    inputs: this.newMetadata.inputs,
+                    inputs: this.newMetadata.inputs.filter(e => e.name && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
                     taskDefaults: taskDefaults,
                     disabled: this.newMetadata.disabled

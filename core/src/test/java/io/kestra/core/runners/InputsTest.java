@@ -55,6 +55,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("nested.more.int", "123")
         .put("nested.bool", "true")
         .put("validatedString", "A123")
+        .put("validatedInt", "12")
         .build();
 
     @Inject
@@ -202,6 +203,31 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getMessage(), is("Invalid input 'foo', it must match the pattern 'A\\d+'"));
+    }
+
+    @Test
+    void inputValidatedInteger() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("validatedInt"), is(12));
+    }
+
+    @Test
+    void inputValidatedIntegerBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedInt", "9");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '9', it must be more than '10'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedInt", "21");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '21', it must be less than '20'"));
     }
 
     @Test

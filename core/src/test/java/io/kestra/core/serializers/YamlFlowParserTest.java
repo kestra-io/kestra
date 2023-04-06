@@ -113,10 +113,6 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        // FIXME the property path changes: io.kestra.core.models.flows.Flow["inputs"]->java.util.ArrayList[0]
-//        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].name")).findFirst().orElseThrow().getMessage(), containsString("must match"));
-//        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].type")).findFirst().orElseThrow().getMessage(), is("must not be null"));
-
         exception.getConstraintViolations().forEach(
             c -> assertThat(c.getMessage(), anyOf(
                 is("Invalid type: null"),
@@ -129,9 +125,9 @@ class YamlFlowParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size(), is(18));
+        assertThat(flow.getInputs().size(), is(19));
         assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(6L));
-        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(12L));
+        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(13L));
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(1L));
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
     }

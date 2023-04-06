@@ -66,7 +66,7 @@
         data() {
             return {
                 selectedTaskType: undefined,
-                taskObject: undefined,
+                taskObject: {},
                 isLoading: false,
                 plugin: undefined,
             };
@@ -89,7 +89,7 @@
             },
             onTaskTypeSelect() {
                 this.load();
-
+                this.taskObject.type = this.selectedTaskType;
                 const value = {
                     type: this.selectedTaskType
                 };

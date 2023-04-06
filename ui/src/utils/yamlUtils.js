@@ -225,26 +225,28 @@ export default class YamlUtils {
         yaml.visit(yamlDoc, {
             Seq(_, seq) {
                 for (const map of seq.items) {
-                    if (added) {
-                        return yaml.visit.BREAK;
-                    }
-                    if (map.get("id") === taskId) {
-                        const index = seq.items.indexOf(map);
-                        if (insertPosition === "before") {
-                            if (index === 0) {
-                                seq.items.unshift(newTaskNode)
-                            } else {
-                                seq.items.splice(index, 0, newTaskNode)
-                            }
-                        } else {
-                            if (index === seq.items.length - 1) {
-                                seq.items.push(newTaskNode)
-                            } else {
-                                seq.items.splice(index + 1, 0, newTaskNode)
-                            }
+                    if (isMap(map)) {
+                        if (added) {
+                            return yaml.visit.BREAK;
                         }
-                        added = true;
-                        return seq
+                        if (map.get("id") === taskId) {
+                            const index = seq.items.indexOf(map);
+                            if (insertPosition === "before") {
+                                if (index === 0) {
+                                    seq.items.unshift(newTaskNode)
+                                } else {
+                                    seq.items.splice(index, 0, newTaskNode)
+                                }
+                            } else {
+                                if (index === seq.items.length - 1) {
+                                    seq.items.push(newTaskNode)
+                                } else {
+                                    seq.items.splice(index + 1, 0, newTaskNode)
+                                }
+                            }
+                            added = true;
+                            return seq
+                        }
                     }
                 }
             }

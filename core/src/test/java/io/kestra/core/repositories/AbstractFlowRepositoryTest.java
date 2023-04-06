@@ -8,6 +8,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -113,7 +114,7 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("a").build()))
             .build();
         // create with repository
         FlowWithSource flow = flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
@@ -133,7 +134,7 @@ public abstract class AbstractFlowRepositoryTest {
                     .commands(Collections.singletonList("echo 1").toArray(new String[0]))
                     .build()
             ))
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
             .build();
 
         // revision is incremented
@@ -258,7 +259,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("a").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
@@ -269,7 +270,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow update = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest2")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
         ;

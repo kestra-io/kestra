@@ -1,16 +1,16 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.validations.InputValidation;
-import io.kestra.core.validations.Regex;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.models.flows.input.*;
 import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -21,8 +21,21 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 @Introspected
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-@InputValidation
-public class Input {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = BooleanInput.class, name = "BOOLEAN"),
+    @JsonSubTypes.Type(value = DateInput.class, name = "DATE"),
+    @JsonSubTypes.Type(value = DateTimeInput.class, name = "DATETIME"),
+    @JsonSubTypes.Type(value = DurationInput.class, name = "DURATION"),
+    @JsonSubTypes.Type(value = FileInput.class, name = "FILE"),
+    @JsonSubTypes.Type(value = FloatInput.class, name = "FLOAT"),
+    @JsonSubTypes.Type(value = IntInput.class, name = "INT"),
+    @JsonSubTypes.Type(value = JsonInput.class, name = "JSON"),
+    @JsonSubTypes.Type(value = StringInput.class, name = "STRING"),
+    @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
+    @JsonSubTypes.Type(value = URIInput.class, name = "URI")
+})
+public abstract class Input<T> {
     @NotNull
     @NotBlank
     @Pattern(regexp="[.a-zA-Z0-9_-]+")
@@ -40,28 +53,11 @@ public class Input {
 
     String defaults;
 
-    @Schema(
-        title = "Regular expression validating the value."
-    )
-    @Regex
-    String validator;
-
-    @JsonIgnore
-    public boolean canBeValidated() {
-        if (type == null) {
-            return false;
-        }
-        return type.canBeValidated();
-    }
+    public abstract void validate(T input) throws ConstraintViolationException;
 
     @Introspected
     public enum Type {
-        STRING() {
-            @Override
-            public boolean canBeValidated() {
-                return true;
-            }
-        },
+        STRING,
         INT,
         FLOAT,
         BOOLEAN,
@@ -72,9 +68,5 @@ public class Input {
         FILE,
         JSON,
         URI;
-
-        public boolean canBeValidated() {
-            return false;
-        }
     }
 }

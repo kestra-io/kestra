@@ -120,6 +120,7 @@
     const showTopology = ref(props.isCreating ? "source" : (props.execution ? "topology" : "combined"));
     const updatedFromEditor = ref(false);
     const timer = ref(null);
+    const dragging = ref(false);
 
 
     const flowables = () => {
@@ -468,14 +469,20 @@
         }
     };
 
-    // const onMouseOver = (node) => {
-    //     addSelectedElements(linkedElements(id, node.uid));
-    // }
-    //
-    // const onMouseLeave = () => {
-    //     removeSelectedNodes(getNodes.value);
-    //     removeSelectedEdges(getEdges.value);
-    // }
+    const onMouseOver = (node) => {
+        if (!dragging.value) {
+            linkedElements(id, node.uid).forEach((n) => {
+                if (n.type === "task") {
+                    n.style = {...n.style, border: "0.5px solid yellow"}
+                }
+            });
+        }
+
+    }
+
+    const onMouseLeave = () => {
+        resetNodesStyle();
+    }
 
     const forwardEvent = (type, event) => {
         emit(type, event);
@@ -619,13 +626,15 @@
     }
 
     onNodeDragStart((e) => {
-        // addSelectedElements(linkedElements(id, e.node.data.node.uid));
+        dragging.value = true;
+        getNodes.value.forEach(n => {
+            n.style = {...n.style, border: "none"}
+        })
         lastPosition.value = e.node.position;
     })
 
     onNodeDragStop((e) => {
-        // removeSelectedNodes(getNodes.value);
-        // removeSelectedEdges(getEdges.value);
+        dragging.value = false;
         if (checkIntersections(e.intersections, e.node) === null) {
             const taskNode1 = e.node;
             // check multiple intersection with task
@@ -647,11 +656,22 @@
     })
 
     onNodeDrag((e) => {
+        resetNodesStyle();
         getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
             if (n.type === "trigger" || (n.type === "task" && YamlUtils.isParentChildrenRelation(flowYaml.value, n.id, e.node.id))) {
                 n.style = {...n.style, opacity: "0.5"}
+            } else {
+                n.style = {...n.style, opacity: "1"}
             }
         })
+        if (!checkIntersections(e.intersections, e.node) && e.intersections.filter(n => n.type === "task").length === 1) {
+            e.intersections.forEach(n => {
+                if (n.type === "task") {
+                    n.style = {...n.style, border: "0.5px solid yellow"}
+                }
+            })
+            e.node.style = {...e.node.style, border: "0.5px solid yellow"}
+        }
     })
 
     const checkIntersections = (intersections, node) => {
@@ -668,6 +688,13 @@
         return null;
     }
 
+    const resetNodesStyle = () => {
+        getNodes.value.filter(n => n.type === "task" || n.type === " trigger")
+            .forEach(n => {
+                n.style = {...n.style, opacity: "1", border: "none"}
+            })
+    }
+    
     const editorUpdate = (event) => {
         updatedFromEditor.value = true;
         flowYaml.value = event;
@@ -768,6 +795,8 @@
                         @edit="onEdit"
                         @delete="onDelete"
                         @addFlowableError="onAddFlowableError"
+                        @mouseover="onMouseOver"
+                        @mouseleave="onMouseLeave"
                     />
                 </template>
 

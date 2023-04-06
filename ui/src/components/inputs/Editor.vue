@@ -412,7 +412,7 @@
             display: flex;
 
             &.full-height {
-                height: calc(100vh - 361px);
+                height: calc(100vh - 379px);
             }
 
             &.diff {

@@ -40,7 +40,7 @@
     const {edge} = useEdge()
     const emit = defineEmits(["edit"])
     const taskYaml = ref("");
-
+    const execution = store.getters["execution/execution"];
 
     const isBorderEdge = () => {
         if (!props.data.haveAdd && props.data.isFlowable) {
@@ -55,7 +55,7 @@
     const getEdgeLabel = (relation) => {
         let label = "";
         if (relation.relationType) {
-            label = t(relation.relationType.toLowerCase());
+            label = relation.relationType;
             if (relation.relationType === "CHOICE" && relation.value) {
                 label += ` : ${relation.value}`;
             }
@@ -148,10 +148,16 @@
 
     const addTooltip = () => {
         const addInformation = getAddTaskInformation();
+        const taskId = addInformation.insertPosition === 'before' ? props.data.nextTaskId : addInformation.taskId;
+
+        if (execution || !taskId) {
+            return ;
+        }
+
         if (!props.data.initTask) {
             return t("add at position", {
                 position: t(addInformation.insertPosition),
-                task: addInformation.insertPosition === 'before' ? props.data.nextTaskId : addInformation.taskId
+                task: taskId
             })
         } else {
             return t("create first task");
@@ -206,7 +212,7 @@
                     </template>
                     <template v-else>
                         {{ getEdgeLabel(props.data.edge.relation) }}<br/>
-                        {{ addTooltip() }}
+                        <span v-html="addTooltip()" />
                     </template>
                 </template>
                 <span>

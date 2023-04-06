@@ -3,35 +3,46 @@
         <el-drawer
             v-if="isEditOpen"
             v-model="isEditOpen"
-            :title="$t('Edit variable')"
             destroy-on-close
             size=""
             :append-to-body="true"
         >
-            <el-form-item>
-                <template #label>
-                    <code>{{ $t("name") }}</code>
-                </template>
-                <el-input
-                    placeholder="name"
-                    :model-value="newVariables[selectedIndex][0]"
-                    @update:model-value="updateIndex($event, selectedIndex, 'key')"
-                />
-            </el-form-item>
-            <el-form-item>
-                <template #label>
-                    <code>{{ $t("value") }}</code>
-                </template>
-                <el-input
-                    autosize
-                    type="textarea"
-                    :model-value="newVariables[selectedIndex][1]"
-                    @update:model-value="updateIndex($event, selectedIndex, 'value')"
-                />
-            </el-form-item>
-            <el-button @click="update()">
-                {{ $t("validate") }}
-            </el-button>
+            <template #header>
+                <code>variables</code>
+            </template>
+
+            <template #footer>
+                <div>
+                    <el-button :icon="ContentSave" @click="update()" type="primary">
+                        {{ $t('save') }}
+                    </el-button>
+                </div>
+            </template>
+
+            <el-form label-position="top">
+                <el-form-item>
+                    <template #label>
+                        <code>name</code>
+                    </template>
+                    <el-input
+                        :model-value="newVariables[selectedIndex][0]"
+                        @update:model-value="updateIndex($event, selectedIndex, 'key')"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <template #label>
+                        <code>value</code>
+                    </template>
+                    <editor
+                        :model-value="newVariables[selectedIndex][1]"
+                        :navbar="false"
+                        :full-height="false"
+                        :input="true"
+                        lang="text"
+                        @update:model-value="updateIndex($event, selectedIndex, 'value')"
+                    />
+                </el-form-item>
+            </el-form>
         </el-drawer>
         <div class="w-100">
             <div v-if="variables">
@@ -62,14 +73,19 @@
         </div>
     </div>
 </template>
+
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
+
 <script>
+    import Editor from "../inputs/Editor.vue";
+
     export default {
-        components: {},
+        components: {Editor},
         emits: ["update:modelValue"],
         props: {
             variables: {

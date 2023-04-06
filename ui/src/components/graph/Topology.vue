@@ -54,7 +54,6 @@
     const emit = defineEmits(["follow"])
     const user = store.getters["user/user"];
     const flow = store.getters["flow/flow"];
-    const execution = store.getters["execution/execution"];
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
@@ -118,7 +117,7 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(props.isCreating ? "source" : "combined");
+    const showTopology = ref(props.isCreating ? "source" : (props.execution ? "topology" : "combined"));
     const updatedFromEditor = ref(false);
     const timer = ref(null);
 
@@ -811,7 +810,7 @@
                     </ControlButton>
                 </Controls>
                 <Panel v-if="!isReadOnly" :position="PanelPosition.TopRight">
-                    <SwitchView @switch-view="switchView" />
+                    <SwitchView :type="showTopology" @switch-view="switchView" />
                 </Panel>
             </VueFlow>
         </div>
@@ -829,6 +828,7 @@
         >
             <SwitchView
                 v-if="showTopology === 'source' && !guidedProperties.tourStarted"
+                :type="showTopology"
                 class="to-topology-button"
                 @switch-view="switchView"
             />
@@ -876,11 +876,14 @@
         <el-drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
-            title="Flow metadata"
             destroy-on-close
             size=""
             :append-to-body="true"
         >
+            <template #header>
+                <code>flow metadata</code>
+            </template>
+
             <el-form label-position="top">
                 <metadata-editor
                     :metadata="getFlowMetadata()"
@@ -969,11 +972,6 @@
             height: 100%;
         }
     }
-
-    notDraggable {
-        border: 1px solid red;
-    }
-
 
     .to-topology-button {
         position: absolute;

@@ -2,34 +2,43 @@
     <el-form label-position="top">
         <el-form-item :required="true">
             <template #label>
-                <code>{{ $t("id") }}</code>
+                <code>id</code>
             </template>
             <el-input :disabled="editing" v-model="newMetadata.id" />
         </el-form-item>
         <el-form-item :required="true">
             <template #label>
-                <code>{{ $t("namespace") }}</code>
+                <code>namespace</code>
             </template>
             <el-input :disabled="editing" v-model="newMetadata.namespace" />
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("description") }}</code>
-                <el-button-group>
-                    <el-button type="primary" @click="preview = false">
-                        Edit
-                    </el-button>
-                    <el-button type="primary" @click="preview = true">
-                        Preview
-                    </el-button>
-                </el-button-group>
+                <div class="d-flex">
+                    <code class="flex-grow-1">description</code>
+                    <el-button-group size="small">
+                        <el-button type="primary" @click="preview = false">
+                            Edit
+                        </el-button>
+                        <el-button type="primary" @click="preview = true">
+                            Preview
+                        </el-button>
+                    </el-button-group>
+                </div>
             </template>
-            <el-input v-if="!preview" type="textarea" autosize v-model="newMetadata.description" />
+            <editor
+                v-if="!preview"
+                v-model="newMetadata.description"
+                :navbar="false"
+                :full-height="false"
+                :input="true"
+                lang="text"
+            />
             <markdown v-else :source="newMetadata.description" />
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("labels") }}</code>
+                <code>labels</code>
             </template>
             <div class="d-flex w-100" v-for="(item, index) in newMetadata.labels" :key="index">
                 <div class="flex-fill flex-grow-1 w-100 me-2">
@@ -58,25 +67,32 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("inputs") }}</code>
+                <code>inputs</code>
             </template>
             <metadata-inputs v-model="newMetadata.inputs" :inputs="newMetadata.inputs" />
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("variables") }}</code>
+                <code>variables</code>
             </template>
             <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("taskDefaults") }}</code>
+                <code>taskDefaults</code>
             </template>
-            <el-input type="textarea" autosize v-model="newMetadata.taskDefaults" />
+            <editor
+                v-if="!preview"
+                :v-model-value="newMetadata.taskDefaults"
+                :navbar="false"
+                :full-height="false"
+                :input="true"
+                lang="yaml"
+            />
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("disabled") }}</code>
+                <code>disabled</code>
             </template>
             <div>
                 <el-switch active-color="green" v-model="newMetadata.disabled" />
@@ -94,6 +110,7 @@
     import MetadataInputs from "./MetadataInputs.vue";
     import MetadataVariables from "./MetadataVariables.vue";
     import yamlUtils from "../../utils/yamlUtils";
+    import Editor from "../inputs/Editor.vue";
 
     export default {
         emits: ["update:modelValue"],
@@ -102,8 +119,9 @@
         },
         components: {
             markdown,
+            Editor,
             MetadataInputs,
-            MetadataVariables
+            MetadataVariables,
         },
         props: {
             metadata: {
@@ -203,3 +221,8 @@
     };
 </script>
 
+<style lang="scss" scoped>
+    :deep(label) {
+        padding-right: 0;
+    }
+</style>

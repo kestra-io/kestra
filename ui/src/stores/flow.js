@@ -1,5 +1,7 @@
+import axios from "axios";
 import YamlUtils from "../utils/yamlUtils";
 import Utils from "../utils/utils";
+import {apiRoot} from "../utils/axios";
 
 const textYamlHeader = {
     headers: {
@@ -203,14 +205,14 @@ export default {
             return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
         },
         validateFlow({commit}, options) {
-            return this.$http.post("/api/v1/flows/validate", options.flow, textYamlHeader)
+            return axios.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
                     commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
                     return response.data
                 })
         },
         validateTask({commit}, options) {
-            return this.$http.post("/api/v1/flows/validate/task", options.task, textYamlHeader)
+            return axios.post(`${apiRoot}flows/validate/task`, options.task, textYamlHeader)
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
                     return response.data

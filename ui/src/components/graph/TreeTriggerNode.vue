@@ -21,7 +21,7 @@
                     />
                 </el-button>
 
-                <el-tooltip v-if="!this.execution" content="Delete">
+                <el-tooltip v-if="!this.execution" content="Delete" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"

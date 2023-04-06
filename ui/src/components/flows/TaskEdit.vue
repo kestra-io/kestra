@@ -18,7 +18,9 @@
             </template>
             <template #footer>
                 <div v-loading="isLoading">
-                    <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !isReadOnly" type="primary">
+                    <ValidationError link  :error="taskError" />
+
+                    <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !isReadOnly" :disabled="taskError !== undefined" type="primary">
                         {{ $t('save') }}
                     </el-button>
                     <el-alert show-icon :closable="false" class="mb-0 mt-3" v-if="revision && isReadOnly" type="warning">
@@ -42,6 +44,7 @@
                         :full-height="false"
                         :navbar="false"
                         lang="yaml"
+                        @update:model-value="onInput"
                     />
                 </el-tab-pane>
                 <el-tab-pane name="form">
@@ -55,6 +58,7 @@
                         ref="editor"
                         v-model="taskYaml"
                         :section="section"
+                        @update:model-value="onInput"
                     />
                 </el-tab-pane>
                 <el-tab-pane v-if="pluginMardown" name="documentation">
@@ -82,12 +86,13 @@
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
     import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import Utils from "../../utils/utils";
     import Markdown from "../layout/Markdown.vue";
+    import ValidationError from "./ValidationError.vue";
 
     export default {
-        components: {Editor, TaskEditor, Markdown},
+        components: {Editor, TaskEditor, Markdown, ValidationError},
         emits: ["update:task"],
         props: {
             component: {
@@ -132,7 +137,6 @@
                                 namespace: this.flow.namespace,
                                 id: this.flow.id
                             });
-
                     }
 
                     return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId).toString();
@@ -189,6 +193,12 @@
                         .dispatch("plugin/load", {cls: this.task.type})
                 }
             },
+            onInput(value) {
+                clearTimeout(this.timer);
+                this.timer = setTimeout(() => {
+                    this.$store.dispatch("flow/validateTask", {task: value})
+                }, 500);
+            },
         },
         data() {
             return {
@@ -203,6 +213,7 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapGetters("flow", ["taskError"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["revisions"]),
             ...mapState("flow", ["revisions"]),
@@ -221,6 +232,11 @@
             },
             isReadOnly() {
                 return this.flow && this.revision && this.flow.revision !== this.revision
+            },
+            taskErrorContent() {
+                return this.taskError
+                    ? "<pre style='max-width: 40vw; white-space: pre-wrap'>" + this.taskError + "</pre>"
+                    :  ""
             }
         }
     };

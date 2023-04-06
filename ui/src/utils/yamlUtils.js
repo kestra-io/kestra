@@ -354,7 +354,9 @@ export default class YamlUtils {
     }
 
     static getFirstTask(source) {
-        return YamlUtils.parse(source).tasks[0].id;
+        let parse = YamlUtils.parse(source);
+
+        return parse && parse.tasks && parse.tasks[0].id;
     }
 
     static checkTaskAlreadyExist(source, taskYaml) {

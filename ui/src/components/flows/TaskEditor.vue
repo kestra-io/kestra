@@ -2,11 +2,8 @@
     <el-form label-position="top">
         <el-form-item>
             <template #label>
-                <div class="typeDiv">
-                    <code>{{ $t("type") }}</code>
-                    <el-tooltip :disabled="!taskError" :content="taskErrorContent" raw-content>
-                        <el-button :type="taskError ? 'danger' : 'success'" :icon="taskError ? Close : Check" />
-                    </el-tooltip>
+                <div class="type-div">
+                    <code>type</code>
                 </div>
             </template>
             <plugin-select
@@ -31,24 +28,11 @@
     import TaskRoot from "./tasks/TaskRoot.vue";
     import YamlUtils from "../../utils/yamlUtils";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
-    import Close from "vue-material-design-icons/Close.vue";
-    import Check from "vue-material-design-icons/Check.vue";
     import {mapGetters} from "vuex";
 
     export default {
         computed: {
             ...mapGetters("flow", ["taskError"]),
-            Check() {
-                return Check
-            },
-            Close() {
-                return Close
-            },
-            taskErrorContent() {
-                return this.taskError
-                    ? "<pre style='max-width: 40vw; white-space: pre-wrap'>" + this.taskError + "</pre>"
-                    :  ""
-            }
         },
         components: {
             TaskRoot,
@@ -101,12 +85,7 @@
 
             },
             onInput(value) {
-                clearTimeout(this.timer);
-                this.timer = setTimeout(() => {
-                    this.taskObject = value;
-                    this.$store.dispatch("flow/validateTask", {task: value})
-                    this.$emit("update:modelValue", YamlUtils.stringify(value));
-                }, 500);
+                this.$emit("update:modelValue", YamlUtils.stringify(value));
             },
             onTaskTypeSelect() {
                 this.load();
@@ -124,8 +103,8 @@
         },
     };
 </script>
-<style lang="scss">
-    .typeDiv {
+<style lang="scss" scoped>
+    .type-div {
         display: flex;
         justify-content: space-between;
     }

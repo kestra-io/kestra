@@ -3,84 +3,94 @@
         <el-drawer
             v-if="isEditOpen"
             v-model="isEditOpen"
-            :title="$t('Edit input')"
             destroy-on-close
             size=""
             :append-to-body="true"
         >
+            <template #header>
+                <code>inputs</code>
+            </template>
+
+            <template #footer>
+                <div>
+                    <el-button :icon="ContentSave" @click="update()" type="primary">
+                        {{ $t('save') }}
+                    </el-button>
+                </div>
+            </template>
+
             <div>
-                <el-form-item>
-                    <template #label>
-                        <code>{{ $t("name") }}</code>&nbsp;
-                    </template>
-                    <el-input
-                        placeholder="name"
-                        :model-value="selectedInput.name"
-                        @update:model-value="updateProps($event, selectedIndex, 'name')"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <template #label>
-                        <code>{{ $t("type") }}</code>&nbsp;
-                    </template>
-                    <el-select
-                        class="flex-fill flex-grow-1 w-100 me-2"
-                        placeholder="type"
-                        :model-value="selectedInput.type"
-                        @update:model-value="updateProps($event, selectedIndex, 'type')"
-                    >
-                        <el-option
-                            v-for="input in inputsType"
-                            :key="input.type"
-                            :value="input.type"
+                <el-form label-position="top">
+                    <el-form-item>
+                        <template #label>
+                            <code>name</code>
+                        </template>
+                        <el-input
+                            :model-value="selectedInput.name"
+                            @update:model-value="updateProps($event, selectedIndex, 'name')"
                         />
-                    </el-select>
-                </el-form-item>
-                <el-form-item>
-                    <template #label>
-                        <code>{{ $t("description") }}</code>&nbsp;
-                    </template>
-                    <el-input
-                        placeholder="description"
-                        :model-value="selectedInput.description"
-                        @update:model-value="updateProps($event, selectedIndex, 'description')"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <template #label>
-                        <code>{{ $t("required") }}</code>&nbsp;
-                    </template>
-                    <el-switch
-                        active-color="green"
-                        :model-value="selectedInput.required"
-                        @change="updateRequired(selectedIndex)"
-                    />
-                </el-form-item>
-                <el-form-item v-if="selectedInput.type !== 'FILE'">
-                    <template #label>
-                        <code>{{ $t("Have default") }}</code>&nbsp;
-                    </template>
-                    <el-switch
-                        active-color="green"
-                        :model-value="selectedInput.defaults !== undefined"
-                        @change="updateHaveDefaults(selectedIndex)"
-                    />
-                </el-form-item>
-                <el-form-item v-if="selectedInput.defaults !== undefined">
-                    <template #label>
-                        <code>{{ $t("Default value") }}</code>&nbsp;
-                    </template>
-                    <component
-                        :is="inputsType.find(e => e.type === selectedInput.type).component"
-                        v-bind="inputsType.find(e => e.type === selectedInput.type).props"
-                        :model-value="selectedInput.defaults"
-                        @update:model-value="updateProps($event, selectedIndex, 'defaults')"
-                    />
-                </el-form-item>
+                    </el-form-item>
+                    <el-form-item>
+                        <template #label>
+                            <code>type</code>
+                        </template>
+                        <el-select
+                            class="flex-fill flex-grow-1 w-100 me-2"
+                            :model-value="selectedInput.type"
+                            @update:model-value="updateProps($event, selectedIndex, 'type')"
+                        >
+                            <el-option
+                                v-for="input in inputsType"
+                                :key="input.type"
+                                :value="input.type"
+                            />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
+                        <template #label>
+                            <code>description</code>&nbsp
+                        </template>
+                        <editor
+                            :model-value="selectedInput.description"
+                            :navbar="false"
+                            :full-height="false"
+                            :input="true"
+                            lang="text"
+                            @update:model-value="updateProps($event, selectedIndex, 'description')"
+                        />
+                    </el-form-item>
+                    <el-form-item>
+                        <template #label>
+                            <code>required</code>
+                        </template>
+                        <el-switch
+                            active-color="green"
+                            :model-value="selectedInput.required"
+                            @change="updateRequired(selectedIndex)"
+                        />
+                    </el-form-item>
+                    <el-form-item v-if="selectedInput.type !== 'FILE'">
+                        <template #label>
+                            <div class="d-flex">
+                                <code class="flex-grow-1">defaults</code>
+                                <el-switch
+                                    active-color="green"
+                                    :model-value="selectedInput.defaults !== undefined"
+                                    @change="updateHaveDefaults(selectedIndex)"
+                                />
+                            </div>
+                        </template>
+
+                        <component
+                            v-if="selectedInput.defaults !== undefined"
+                            :is="inputsType.find(e => e.type === selectedInput.type).component"
+                            v-bind="inputsType.find(e => e.type === selectedInput.type).props"
+                            :model-value="selectedInput.defaults"
+                            @update:model-value="updateProps($event, selectedIndex, 'defaults')"
+                        />
+                    </el-form-item>
+                </el-form>
             </div>
-            <el-button @click="update()">
-                {{ $t("validate") }}
-            </el-button>
         </el-drawer>
         <div class="w-100">
             <div v-if="newInputs.length > 0">
@@ -88,7 +98,7 @@
                     <div class="flex-fill flex-grow-1 w-100 me-2">
                         <el-input
                             disabled
-                            :model-value="input.name + ' - ' + input.type"
+                            :model-value="input.name"
                         />
                     </div>
                     <div class="flex-shrink-1">
@@ -115,10 +125,13 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 <script>
+    import Editor from "../inputs/Editor.vue";
+
     export default {
-        components: {},
+        components: {Editor},
         emits: ["update:modelValue"],
         props: {
             inputs: {
@@ -129,12 +142,19 @@
             if (this.inputs && this.inputs.length > 0) this.newInputs = this.inputs;
         },
         data() {
+            const editorProps = {
+                navbar: false,
+                fullHeight: false,
+                input: true,
+                lang: "text"
+            }
+
             return {
                 newInputs: [],
                 inputsType: [
                     {
-                        component: "el-input",
-                        props: {},
+                        component: "editor",
+                        props: editorProps,
                         type: "STRING",
                     },
                     {
@@ -184,11 +204,8 @@
                         type: "FILE",
                     },
                     {
-                        component: "el-input",
-                        props: {
-                            type: "textarea",
-                            autosize: true
-                        },
+                        component: "editor",
+                        props: {...editorProps, ...{lang: "json"}},
                         type: "JSON",
                     },
                     {

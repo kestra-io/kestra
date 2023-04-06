@@ -65,7 +65,7 @@
                     :flow-id="task.flowId"
                 />
 
-                <el-tooltip v-if="isFlowable && !this.execution" content="Handle errors">
+                <el-tooltip v-if="isFlowable && !this.execution" content="Handle errors" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
@@ -74,7 +74,7 @@
                     />
                 </el-tooltip>
 
-                <el-tooltip v-if="!this.execution" content="Delete">
+                <el-tooltip v-if="!this.execution" content="Delete" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"

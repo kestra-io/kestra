@@ -120,6 +120,7 @@
     const showTopology = ref(props.isCreating ? "source" : (props.execution ? "topology" : "combined"));
     const updatedFromEditor = ref(false);
     const timer = ref(null);
+    const dragging = ref(false);
 
 
     const flowables = () => {
@@ -468,14 +469,20 @@
         }
     };
 
-    // const onMouseOver = (node) => {
-    //     addSelectedElements(linkedElements(id, node.uid));
-    // }
-    //
-    // const onMouseLeave = () => {
-    //     removeSelectedNodes(getNodes.value);
-    //     removeSelectedEdges(getEdges.value);
-    // }
+    const onMouseOver = (node) => {
+        if (!dragging.value) {
+            linkedElements(id, node.uid).forEach((n) => {
+                if (n.type === "task") {
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-yellow')}
+                }
+            });
+        }
+
+    }
+
+    const onMouseLeave = () => {
+        resetNodesStyle();
+    }
 
     const forwardEvent = (type, event) => {
         emit(type, event);
@@ -528,17 +535,24 @@
     }
 
     const onDelete = (event) => {
-        const section = event.section ? event.section : "tasks";
         const flowParsed = YamlUtils.parse(flowYaml.value);
-        if (section === "tasks" && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
-            store.dispatch("core/showMessage", {
-                variant: "error",
-                title: t("can not delete"),
-                message: t("can not have less than 1 task")
-            });
-            return;
-        }
-        onEdit(YamlUtils.deleteTask(flowYaml.value, event.id, section));
+        toast.confirm(
+            t("delete task confirm", {taskId: flowParsed.id}),
+            () => {
+
+                const section = event.section ? event.section : "tasks";
+                if (section === "tasks" && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("can not delete"),
+                        message: t("can not have less than 1 task")
+                    });
+                    return;
+                }
+                onEdit(YamlUtils.deleteTask(flowYaml.value, event.id, section));
+            },
+            () => {}
+        )
     }
 
     const onCreateNewTask = (event) => {
@@ -619,13 +633,14 @@
     }
 
     onNodeDragStart((e) => {
-        // addSelectedElements(linkedElements(id, e.node.data.node.uid));
+        dragging.value = true;
+        resetNodesStyle();
+        e.node.style = {...e.node.style, zIndex: 1976}
         lastPosition.value = e.node.position;
     })
 
     onNodeDragStop((e) => {
-        // removeSelectedNodes(getNodes.value);
-        // removeSelectedEdges(getEdges.value);
+        dragging.value = false;
         if (checkIntersections(e.intersections, e.node) === null) {
             const taskNode1 = e.node;
             // check multiple intersection with task
@@ -638,34 +653,27 @@
         } else {
             getNodes.value.find(n => n.id === e.node.id).position = lastPosition.value;
         }
-        getNodes.value.forEach(n => {
-            if (n.type === "task" || n.type === "trigger") {
-                n.style = {...n.style, opacity: "1"}
-            }
-        })
+        resetNodesStyle();
+        e.node.style = {...e.node.style, zIndex: 1}
         lastPosition.value = null;
     })
 
     onNodeDrag((e) => {
-        if (checkIntersections(e.intersections, e.node)) {
-            const taskNodeIds = e.intersections.filter(n => n.type === "task" || n.type === "trigger").map(n => n.id)
-            getNodes.value.forEach(n => {
-                if (n.type === "task" || n.type === "trigger") {
-                    if (taskNodeIds.includes(n.id)) {
-                        n.style = {...n.style, opacity: "0.5"}
-                    } else {
-                        n.style = {...n.style, opacity: "1"}
-                    }
+        resetNodesStyle();
+        getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
+            if (n.type === "trigger" || (n.type === "task" && YamlUtils.isParentChildrenRelation(flowYaml.value, n.id, e.node.id))) {
+                n.style = {...n.style, opacity: "0.5"}
+            } else {
+                n.style = {...n.style, opacity: "1"}
+            }
+        })
+        if (!checkIntersections(e.intersections, e.node) && e.intersections.filter(n => n.type === "task").length === 1) {
+            e.intersections.forEach(n => {
+                if (n.type === "task") {
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
                 }
             })
-        } else {
-            const tasksMeet = e.intersections.filter(n => n.type === "task").map(n => n.id);
-
-            getNodes.value.forEach(n => {
-                if (n.type === "task" || n.type === "trigger") {
-                    n.style = {...n.style, opacity: "1"}
-                }
-            })
+            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
         }
     })
 
@@ -681,6 +689,13 @@
             return "triggererror";
         }
         return null;
+    }
+
+    const resetNodesStyle = () => {
+        getNodes.value.filter(n => n.type === "task" || n.type === " trigger")
+            .forEach(n => {
+                n.style = {...n.style, opacity: "1", outline: "none"}
+            })
     }
 
     const editorUpdate = (event) => {
@@ -739,7 +754,11 @@
                     })
                 return;
             } else {
-                isEditMetadataOpen.value = true;
+                store.dispatch("core/showMessage", {
+                    variant: "error",
+                    title: t("can not save"),
+                    message: t("flow must have id and namespace")
+                });
                 return;
             }
         }
@@ -783,6 +802,8 @@
                         @edit="onEdit"
                         @delete="onDelete"
                         @addFlowableError="onAddFlowableError"
+                        @mouseover="onMouseOver"
+                        @mouseleave="onMouseLeave"
                     />
                 </template>
 

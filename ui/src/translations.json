@@ -402,7 +402,10 @@
     "switch-view": "Switch view",
     "source and topology": "Source and topology",
     "editor": "Editor",
-    "error in editor": "An error have been found in the editor"
+    "error in editor": "An error have been found in the editor",
+    "delete task confirm": "Do you want to delete the task <code>{taskId}</code> ?",
+    "can not save": "Can not save",
+    "flow must have id and namespace": "Flow must have an id and a namespace."
   },
   "fr": {
     "id": "Identifiant",
@@ -808,7 +811,9 @@
     "switch-view": "Changer de vue",
     "source and topology": "Source et topologie",
     "editor": "Éditeur",
-    "error in editor": "Une erreur a été trouvé dans l'éditeur"
-
+    "error in editor": "Une erreur a été trouvé dans l'éditeur",
+    "delete task confirm": "Êtes-vous sûr de vouloir supprimer la tâche <code>{taskId}</code> ?",
+    "can not save": "Impossible de sauvegarder",
+    "flow must have id and namespace": "Le flow doit avoir un id et un namespace."
   }
 }

@@ -93,7 +93,7 @@
             </div>
         </el-drawer>
         <div class="w-100">
-            <div v-if="newInputs.length > 0">
+            <div>
                 <div class="d-flex w-100" v-for="(input, index) in newInputs" :key="index">
                     <div class="flex-fill flex-grow-1 w-100 me-2">
                         <el-input
@@ -112,11 +112,6 @@
                         </el-button-group>
                     </div>
                 </div>
-            </div>
-            <div v-else class="d-flex justify-content-center">
-                <el-button :icon="Plus" type="success" class="w-25" @click="addInput">
-                    Add
-                </el-button>
             </div>
         </div>
     </div>
@@ -150,7 +145,7 @@
             }
 
             return {
-                newInputs: [],
+                newInputs: [{}],
                 inputsType: [
                     {
                         component: "editor",

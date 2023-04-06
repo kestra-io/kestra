@@ -754,7 +754,11 @@
                     })
                 return;
             } else {
-                isEditMetadataOpen.value = true;
+                store.dispatch("core/showMessage", {
+                    variant: "error",
+                    title: t("can not save"),
+                    message: t("flow must have id and namespace")
+                });
                 return;
             }
         }

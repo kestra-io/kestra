@@ -647,26 +647,11 @@
     })
 
     onNodeDrag((e) => {
-        if (checkIntersections(e.intersections, e.node)) {
-            const taskNodeIds = e.intersections.filter(n => n.type === "task" || n.type === "trigger").map(n => n.id)
-            getNodes.value.forEach(n => {
-                if (n.type === "task" || n.type === "trigger") {
-                    if (taskNodeIds.includes(n.id)) {
-                        n.style = {...n.style, opacity: "0.5"}
-                    } else {
-                        n.style = {...n.style, opacity: "1"}
-                    }
-                }
-            })
-        } else {
-            const tasksMeet = e.intersections.filter(n => n.type === "task").map(n => n.id);
-
-            getNodes.value.forEach(n => {
-                if (n.type === "task" || n.type === "trigger") {
-                    n.style = {...n.style, opacity: "1"}
-                }
-            })
-        }
+        getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
+            if (n.type === "trigger" || (n.type === "task" && YamlUtils.isParentChildrenRelation(flowYaml.value, n.id, e.node.id))) {
+                n.style = {...n.style, opacity: "0.5"}
+            }
+        })
     })
 
     const checkIntersections = (intersections, node) => {

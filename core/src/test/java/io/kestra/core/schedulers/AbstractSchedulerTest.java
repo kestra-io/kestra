@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.models.flows.input.StringInput;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.*;
@@ -46,13 +47,13 @@ abstract public class AbstractSchedulerTest {
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .inputs(List.of(
-                Input.builder()
+                StringInput.builder()
                     .type(Input.Type.STRING)
                     .name("testInputs")
                     .required(false)
                     .defaults("test")
                     .build(),
-                Input.builder()
+                StringInput.builder()
                     .type(Input.Type.STRING)
                     .name("def")
                     .required(false)

@@ -13,6 +13,7 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
@@ -149,24 +150,6 @@ public class ValidationFactory {
     }
 
     @Singleton
-    ConstraintValidator<InputValidation, Input> inputValidation() {
-        return (value, annotationMetadata, context) -> {
-            if (value == null) {
-                return true;
-            }
-
-            if (value.getValidator() != null && !value.canBeValidated()) {
-                context.messageTemplate(
-                    "Invalid Input: Validator defined at [" + value.getName() + "] is not allowed for type [" + value.getType() + "]"
-                );
-                return false;
-            }
-
-            return true;
-        };
-    }
-
-    @Singleton
     ConstraintValidator<Regex, String> patternValidator() {
         return (value, annotationMetadata, context) -> {
             if (value == null) {
@@ -174,7 +157,7 @@ public class ValidationFactory {
             }
 
             try {
-                java.util.regex.Pattern.compile(value);
+                Pattern.compile(value);
             } catch(PatternSyntaxException e) {
                 context.messageTemplate("invalid pattern [" + value + "]");
                 return false;

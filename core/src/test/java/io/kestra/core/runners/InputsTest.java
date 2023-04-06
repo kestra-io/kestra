@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
+import javax.validation.ConstraintViolationException;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -195,24 +197,11 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         HashMap<String, String> map = new HashMap<>(inputs);
         map.put("validatedString", "foo");
 
-        MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(map);
         });
 
-        assertThat(e.getMessage(), containsString("Invalid format for "));
-    }
-
-    @Test
-    void inputValidatedStringBadSyntax() {
-        final Flow flow = parse("flows/invalids/inputs-bad-validator-syntax.yaml");
-        final HashMap<String, String> map = new HashMap<>(inputs);
-        map.put("badValidatorSyntax", "foo");
-
-        final MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
-            typedInputs(map, flow);
-        });
-
-        assertThat(e.getMessage(), containsString("Invalid validator syntax"));
+        assertThat(e.getMessage(), is("Invalid input 'foo', it must match the pattern 'A\\d+'"));
     }
 
     @Test

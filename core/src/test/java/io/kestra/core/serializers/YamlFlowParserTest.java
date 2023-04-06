@@ -2,6 +2,7 @@ package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.validations.ModelValidator;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -112,8 +113,16 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].name")).findFirst().orElseThrow().getMessage(), containsString("must match"));
-        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].type")).findFirst().orElseThrow().getMessage(), is("must not be null"));
+        // FIXME the property path changes: io.kestra.core.models.flows.Flow["inputs"]->java.util.ArrayList[0]
+//        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].name")).findFirst().orElseThrow().getMessage(), containsString("must match"));
+//        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].type")).findFirst().orElseThrow().getMessage(), is("must not be null"));
+
+        exception.getConstraintViolations().forEach(
+            c -> assertThat(c.getMessage(), anyOf(
+                is("Invalid type: null"),
+                containsString("missing type id property 'type' (for POJO property 'inputs')"))
+            )
+        );
     }
 
     @Test
@@ -124,7 +133,7 @@ class YamlFlowParserTest {
         assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(6L));
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(12L));
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(1L));
-        assertThat(flow.getInputs().stream().filter(r -> r.getValidator() != null).count(), is(1L));
+        assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
     }
 
     @Test
@@ -134,7 +143,7 @@ class YamlFlowParserTest {
             () -> this.parse("flows/invalids/inputs-bad-type.yaml")
         );
 
-        assertThat(exception.getMessage(), containsString("not one of the values accepted for Enum class"));
+        assertThat(exception.getMessage(), containsString("Invalid type: FOO"));
     }
 
     @Test

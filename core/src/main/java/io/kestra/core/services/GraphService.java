@@ -97,6 +97,14 @@ public class GraphService {
             .collect(Collectors.toList());
     }
 
+    public static List<String> flowables(Flow flow) {
+        return flow.allTasksWithChilds()
+            .stream()
+            .filter(task -> task instanceof FlowableTask)
+            .map(task -> task.getId())
+            .collect(Collectors.toList());
+    }
+
     public static Set<AbstractGraph> successors(GraphCluster graphCluster, List<String> taskRunIds) {
         List<FlowGraph.Edge> edges = GraphService.edges(graphCluster);
         List<AbstractGraph> nodes = GraphService.nodes(graphCluster);

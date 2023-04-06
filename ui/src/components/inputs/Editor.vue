@@ -1,22 +1,42 @@
 <template>
-    <div class="ks-editor">
+    <div class="ks-editor edit-flow-editor">
         <nav v-if="original === undefined && navbar" class="top-nav">
-            <el-button-group>
-                <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
-                    <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
-                </el-tooltip>
-                <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
-                    <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
-                </el-tooltip>
-                <el-tooltip v-if="schemaType === 'flow'" :content="$t('Reset guided tour')" :persistent="false" transition="" :hide-after="0">
-                    <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
-                </el-tooltip>
-            </el-button-group>
-            <span v-if="!this.guidedProperties.tourStarted" class="hide-on-small-screen">
-                <el-tooltip :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')" :persistent="false" transition="" :hide-after="0">
-                    <el-button type="primary" :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline" circle style="float: right" size="small" @click="setShowDocumentation" />
-                </el-tooltip>
-            </span>
+            <div>
+                <el-button-group>
+                    <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
+                        <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
+                    </el-tooltip>
+                    <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
+                        <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
+                    </el-tooltip>
+                    <el-tooltip
+                        v-if="schemaType === 'flow' && creating"
+                        :content="$t('Reset guided tour')"
+                        :persistent="false"
+                        transition=""
+                        :hide-after="0"
+                    >
+                        <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
+                    </el-tooltip>
+                </el-button-group>
+                <span v-if="!this.guidedProperties.tourStarted && showDoc" class="hide-on-small-screen">
+                    <el-tooltip
+                        :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')"
+                        :persistent="false"
+                        transition=""
+                        :hide-after="0"
+                    >
+                        <el-button
+                            type="primary"
+                            :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline"
+                            circle
+                            style="float: right"
+                            size="small"
+                            @click="setShowDocumentation"
+                        />
+                    </el-tooltip>
+                </span>
+            </div>
         </nav>
 
         <div class="editor-container" ref="container" :class="containerClass">
@@ -32,8 +52,9 @@
                     @editor-did-mount="editorDidMount"
                     :language="lang"
                     :schema-type="schemaType"
+                    class="position-relative"
                 />
-
+                <slot />
                 <div
                     v-show="showPlaceholder"
                     class="placeholder"
@@ -42,7 +63,10 @@
                     {{ placeholder }}
                 </div>
             </div>
-            <div v-if="!this.guidedProperties.tourStarted" :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']" class="hide-on-small-screen">
+            <div
+                v-if="!this.guidedProperties.tourStarted && showDoc"
+                :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']"
+            class="hide-on-small-screen">
                 <markdown v-if="editorPlugin" :source="editorPlugin.markdown" />
                 <div v-else>
                     <div class="img get-started" />
@@ -82,10 +106,12 @@
             readOnly: {type: Boolean, default: false},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
+            showDoc: {type: Boolean, default: true},
+            creating: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
-            Markdown
+            Markdown,
         },
         emits: ["save", "focusout", "tab", "update:modelValue", "cursor"],
         editor: undefined,
@@ -106,8 +132,9 @@
             };
         },
         computed: {
-            ...mapState("plugin", ["editorPlugin","pluginsDocumentation"]),
+            ...mapState("plugin", ["editorPlugin", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
+            ...mapGetters("flow", ["flowError"]),
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
@@ -123,7 +150,7 @@
             },
             showPlaceholder() {
                 return this.input === true && !this.focus &&
-                    (!Object.hasOwn(this, "editor") || this.editor === undefined|| !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
+                    (!Object.hasOwn(this, "editor") || this.editor === undefined || !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
             },
             options() {
                 const options = {}
@@ -133,13 +160,13 @@
                     options.folding = false;
                     options.renderLineHighlight = "none"
                     options.wordBasedSuggestions = false;
-                    options.occurrencesHighlight= false
+                    options.occurrencesHighlight = false
                     options.hideCursorInOverviewRuler = true
                     options.overviewRulerBorder = false
                     options.overviewRulerLanes = 0
                     options.lineNumbersMinChars = 0;
                     options.fontSize = 13;
-                    options.minimap =  {
+                    options.minimap = {
                         enabled: false
                     }
                     options.scrollBeyondLastColumn = 0;
@@ -170,7 +197,7 @@
                 }
 
                 if (this.minimap === false) {
-                    options.minimap =  {
+                    options.minimap = {
                         enabled: false
 
                     }
@@ -183,7 +210,7 @@
                 options.wordWrap = true
                 options.automaticLayout = true;
 
-                return  {
+                return {
                     ...{
                         tabSize: 2,
                         fontFamily: "'Source Code Pro', monospace",
@@ -233,9 +260,12 @@
                 });
 
                 if (this.input) {
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {})
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {})
-                    this.editor.addCommand(KeyCode.F1, () => {})
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {
+                    })
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {
+                    })
+                    this.editor.addCommand(KeyCode.F1, () => {
+                    })
                 }
 
                 if (this.original === undefined && this.navbar && this.fullHeight) {
@@ -319,7 +349,7 @@
                     let model = this.editor.getModel();
                     clearTimeout(this.lastTimeout);
                     this.lastTimeout = setTimeout(() => {
-                        this.$emit("cursor",{position: position, model: model})
+                        this.$emit("cursor", {position: position, model: model})
                     }, 100);
                 });
             },
@@ -341,13 +371,14 @@
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.$store.commit("core/setGuidedProperties", {
-                    tourStarted:false,
+                    tourStarted: false,
                     flowSource: undefined,
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: false,
                     monacoRange: undefined,
-                    monacoDisableRange: undefined}
+                    monacoDisableRange: undefined
+                }
                 );
                 this.$tours["guidedTour"].start();
             },
@@ -364,6 +395,7 @@
 
     .ks-editor {
         width: 100%;
+
         .top-nav {
             background-color: var(--bs-gray-300);
             padding: calc(var(--spacer) / 2);
@@ -378,8 +410,9 @@
 
         .editor-container {
             display: flex;
+
             &.full-height {
-                height: calc(100vh - 361px);
+                height: calc(100vh - 379px);
             }
 
             &.diff {
@@ -425,6 +458,7 @@
 
                     p {
                         margin-bottom: calc(var(--spacer) / 2);
+
                         &:last-child {
                             display: none;
                         }
@@ -458,7 +492,7 @@
         box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
 
         html.dark & {
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255, 255, 255, 0.2);
         }
     }
 
@@ -472,12 +506,12 @@
         width: 0px;
         margin: 0px;
         padding: 0px;
-        transition: width var(--el-transition-duration) ease-in-out,padding var(--el-transition-duration) ease-in-out;
+        transition: width var(--el-transition-duration) ease-in-out, padding var(--el-transition-duration) ease-in-out;
     }
 
     .plugin-doc-active {
         width: 30%;
-        padding: calc(var(--spacer)*1.5);
+        padding: calc(var(--spacer) * 1.5);
     }
 
     div.img {

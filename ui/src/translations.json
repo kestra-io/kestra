@@ -379,7 +379,30 @@
     "hide task documentation": "Hide Task documentation",
     "show task documentation in editor": "Show Task documentation in editor",
     "show documentation": "Show documentation",
-    "focus task": "Focus on any element to see its documentation."
+    "focus task": "Focus on any element to see its documentation.",
+    "validate": "Validate",
+    "add global error handler": "Add global error handler",
+    "add trigger": "Add trigger",
+    "edit metadata": "Edit Metadata",
+    "taskDefaults": "Task Defaults",
+    "disabled": "Disabled",
+    "before": "before",
+    "after": "after",
+    "add at position": "Add {position} <code>{task}</code>",
+    "create first task": "Create your first task",
+    "dynamic": "Dynamic",
+    "choice": "Choice",
+    "sequential": "Sequential",
+    "can not delete": "Can not delete",
+    "can not have less than 1 task": "Flows can not have less than 1 task.",
+    "task id already exist": "Task Id already exists",
+    "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
+    "flow already exists": "Flow already exists",
+    "namespace not allowed": "Namespace not allowed",
+    "switch-view": "Switch view",
+    "source and topology": "Source and topology",
+    "editor": "Editor",
+    "error in editor": "An error have been found in the editor"
   },
   "fr": {
     "id": "Identifiant",
@@ -431,7 +454,7 @@
     "warning flow with triggers": "Ce flow contient des déclencheurs, une execution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
     "triggered": "Execution déclenchée",
     "triggered done": "L'exécution <em>{name}</em> est déclenchée !",
-    "topology": "Topology",
+    "topology": "Topologie",
     "date": "Date",
     "datepicker": {
       "last1hour": "Dernière heure",
@@ -552,7 +575,7 @@
     "display output for specific task": "Afficher les output pour cette tâche",
     "display metric for specific task": "Afficher les mesures pour cette tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
-    "stream": "Flux",
+    "stream": "Flow",
     "execution statistics": "Statistiques d'exécution ",
     "avg duration": "Durée moyenne d'exécution",
     "neutral trend": "Stable",
@@ -615,8 +638,8 @@
     "toggle fullscreen": "Permuter le plein écran",
     "copied": "Copié",
     "tags": "Tags",
-    "disabled flow title": "Ce flux est désactivé",
-    "disabled flow desc": "Ce flux est désactivé, veuillez le réactiver pour l'exécuter.",
+    "disabled flow title": "Ce flow est désactivé",
+    "disabled flow desc": "Ce flow est désactivé, veuillez le réactiver pour l'exécuter.",
     "labels": "Labels",
     "feeds": {
       "title": "Quoi de neuf sur Kestra"
@@ -639,7 +662,7 @@
       "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
       "failedExecutions": "Exécutions en échec",
       "errorLogs": "Journaux d'erreurs",
-      "no executions": "Prêt à voir votre flux Kestra en action ?"
+      "no executions": "Prêt à voir votre flow Kestra en action ?"
     },
     "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
     "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
@@ -698,7 +721,7 @@
       },
       "step6": {
         "title": "Afficher des informations",
-        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flux est déclenché et affichera <code>The flow starts</code>."
+        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flow est déclenché et affichera <code>The flow starts</code>."
       },
       "step7": {
         "title": "Télécharger un fichier",
@@ -723,7 +746,7 @@
     },
     "onboarding-flow": {
       "onboardComment1": "Déclaration d'un flow avec un identifiant unique et un namespace obligatoire, ainsi qu'une description facultative.",
-      "onboardComment2": "Les identifiants d'un flux sont uniques à l'intérieur d'un namespace.",
+      "onboardComment2": "Les identifiants d'un flow sont uniques à l'intérieur d'un namespace.",
       "inputs": "Flow inputs: chaque entrée possède un nom, un type et une valeur par défaut facultative.",
       "inputsDetails1": "Nous définissons une entrée de nom 'csvUrl' avec comme valeur par défaut l'URL du fichier de données de test.",
       "inputsDetails2": "Ces données de test proviennent du portail France Open Data et contiennent des consommations d'électricité en français au format CSV.",
@@ -750,7 +773,7 @@
     "Step": "Étape",
     "welcome aboard": "\uD83D\uDE80 Bienvenue à bord !",
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
-    "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flux</strong> !",
+    "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
     "welcome button create": "Créer mon premier flow",
     "get started": "Démarrer",
     "get started content": "Prêt à faire le grand saut? Jetez un oeil à notre documentation pour un guide étape par étape.",
@@ -762,6 +785,30 @@
     "hide task documentation": "Cacher la documentation des tâches",
     "show task documentation in editor": "Afficher la documentation dans l'éditeur",
     "show documentation": "Afficher la documentation",
-    "focus task": "Cliquer sur une tâche pour voir sa documentation"
+    "focus task": "Cliquer sur une tâche pour voir sa documentation",
+    "validate": "Valider",
+    "add global error handler": "Gérer les erreurs globales",
+    "add trigger": "Ajouter un déclencheur",
+    "edit metadata": "Éditer les métadonnées",
+    "taskDefaults": "Valeur de tâches par défaut",
+    "disabled": "Désactivé",
+    "before": "avant",
+    "after": "après",
+    "add at position": "Ajouter {position} <code>{task}</code>",
+    "create first task": "Créer votre première tâche",
+    "dynamic": "Dynamique",
+    "choice": "Choix",
+    "sequential": "Séquentiel",
+    "can not delete": "Suppression impossible",
+    "can not have less than 1 task": "Un flow ne peut avoir moins d'1 tâche.",
+    "task id already exist": "Identifiant de tâche déjà utilisé",
+    "Task Id already exist in the flow": "L'identifiant {taskId} est déjà utilisé dans le flow.",
+    "flow already exists": "Flow déjà existant",
+    "namespace not allowed": "Espace de nom non autorisé",
+    "switch-view": "Changer de vue",
+    "source and topology": "Source et topologie",
+    "editor": "Éditeur",
+    "error in editor": "Une erreur a été trouvé dans l'éditeur"
+
   }
 }

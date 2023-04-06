@@ -2,7 +2,9 @@
     <el-form label-position="top">
         <el-form-item>
             <template #label>
-                <code>{{ $t('type') }}</code>&nbsp;
+                <div class="type-div">
+                    <code>type</code>
+                </div>
             </template>
             <plugin-select
                 v-model="selectedTaskType"
@@ -26,8 +28,12 @@
     import TaskRoot from "./tasks/TaskRoot.vue";
     import YamlUtils from "../../utils/yamlUtils";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
+    import {mapGetters} from "vuex";
 
     export default {
+        computed: {
+            ...mapGetters("flow", ["taskError"]),
+        },
         components: {
             TaskRoot,
             PluginSelect
@@ -37,9 +43,13 @@
             if (this.modelValue) {
                 this.taskObject = YamlUtils.parse(this.modelValue);
                 this.selectedTaskType = this.taskObject.type;
+                this.$store.dispatch("flow/validateTask", {task: this.modelValue})
 
                 this.load();
             }
+        },
+        beforeUnmount() {
+            this.$store.commit("flow/setTaskError", undefined);
         },
         props: {
             modelValue: {
@@ -58,7 +68,7 @@
                 selectedTaskType: undefined,
                 taskObject: undefined,
                 isLoading: false,
-                plugin: undefined
+                plugin: undefined,
             };
         },
         methods: {
@@ -75,7 +85,6 @@
 
             },
             onInput(value) {
-                this.taskObject = value;
                 this.$emit("update:modelValue", YamlUtils.stringify(value));
             },
             onTaskTypeSelect() {
@@ -94,4 +103,9 @@
         },
     };
 </script>
-
+<style lang="scss" scoped>
+    .type-div {
+        display: flex;
+        justify-content: space-between;
+    }
+</style>

@@ -151,5 +151,11 @@ export default {
             state.logs.push(logs);
         }
     },
-    getters: {}
+    getters: {
+        execution(state) {
+            if (state.execution) {
+                return state.execution;
+            }
+        },
+    }
 }

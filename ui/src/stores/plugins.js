@@ -56,6 +56,10 @@ export default {
             state.editorPlugin = editorPlugin
         }
     },
-    getters: {}
+    getters: {
+        getPluginSingleList: state => state.pluginSingleList,
+        getPluginsDocumentation: state => state.pluginsDocumentation,
+
+    }
 }
 

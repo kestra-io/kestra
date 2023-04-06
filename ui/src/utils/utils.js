@@ -176,4 +176,8 @@ export default class Utils {
     static getTheme() {
         return localStorage.getItem("theme") || "light";
     }
+
+    static splitFirst(str, separator){
+        return str.split(separator).slice(1).join(separator);
+    }
 }

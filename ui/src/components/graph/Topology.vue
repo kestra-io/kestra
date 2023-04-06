@@ -473,7 +473,7 @@
         if (!dragging.value) {
             linkedElements(id, node.uid).forEach((n) => {
                 if (n.type === "task") {
-                    n.style = {...n.style, border: "0.5px solid yellow"}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-yellow')}
                 }
             });
         }
@@ -670,10 +670,10 @@
         if (!checkIntersections(e.intersections, e.node) && e.intersections.filter(n => n.type === "task").length === 1) {
             e.intersections.forEach(n => {
                 if (n.type === "task") {
-                    n.style = {...n.style, border: "0.5px solid yellow"}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
                 }
             })
-            e.node.style = {...e.node.style, border: "0.5px solid yellow"}
+            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
         }
     })
 
@@ -694,7 +694,7 @@
     const resetNodesStyle = () => {
         getNodes.value.filter(n => n.type === "task" || n.type === " trigger")
             .forEach(n => {
-                n.style = {...n.style, opacity: "1", border: "none"}
+                n.style = {...n.style, opacity: "1", outline: "none"}
             })
     }
 

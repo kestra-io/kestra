@@ -120,7 +120,7 @@
         }
         // If left node is a flowable task or is not a task, then we insert
         // the new task before the right task node
-        const [taskId, insertPosition] = leftNodeIsTask && !leftNodeIsFlowable ? [props.id.split("|")[0], "after"] : [props.id.split("|")[1], "before"];
+        const [taskId, insertPosition] = leftNodeIsTask && !leftNodeIsFlowable ? [props.id.split("|")[0], "after"] : [props.data.nextTaskId, "before"];
 
         return {taskId: taskId, taskYaml: taskYaml.value, insertPosition: insertPosition}
     }

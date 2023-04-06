@@ -1,6 +1,6 @@
 <template>
     <div class="edit-flow-div">
-        <editor class="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
+        <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>

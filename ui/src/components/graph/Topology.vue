@@ -824,7 +824,7 @@
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
             :show-doc="showTopology !== 'combined'"
-            :creating="true"
+            :creating="isCreating"
         >
             <SwitchView
                 v-if="showTopology === 'source' && !guidedProperties.tourStarted"

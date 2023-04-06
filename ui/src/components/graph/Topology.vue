@@ -634,9 +634,8 @@
 
     onNodeDragStart((e) => {
         dragging.value = true;
-        getNodes.value.forEach(n => {
-            n.style = {...n.style, border: "none"}
-        })
+        resetNodesStyle();
+        e.node.style = {...e.node.style, zIndex: 1976}
         lastPosition.value = e.node.position;
     })
 
@@ -654,11 +653,8 @@
         } else {
             getNodes.value.find(n => n.id === e.node.id).position = lastPosition.value;
         }
-        getNodes.value.forEach(n => {
-            if (n.type === "task" || n.type === "trigger") {
-                n.style = {...n.style, opacity: "1"}
-            }
-        })
+        resetNodesStyle();
+        e.node.style = {...e.node.style, zIndex: 1}
         lastPosition.value = null;
     })
 

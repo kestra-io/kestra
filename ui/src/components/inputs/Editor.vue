@@ -19,23 +19,6 @@
                         <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
                     </el-tooltip>
                 </el-button-group>
-                <span v-if="!this.guidedProperties.tourStarted && showDoc" class="hide-on-small-screen">
-                    <el-tooltip
-                        :content="editorDocumentation ? $t('hide task documentation') : $t('show task documentation')"
-                        :persistent="false"
-                        transition=""
-                        :hide-after="0"
-                    >
-                        <el-button
-                            type="primary"
-                            :icon="editorDocumentation ? icon.Close : icon.BookMultipleOutline"
-                            circle
-                            style="float: right"
-                            size="small"
-                            @click="setShowDocumentation"
-                        />
-                    </el-tooltip>
-                </span>
             </div>
         </nav>
 
@@ -54,23 +37,12 @@
                     :schema-type="schemaType"
                     class="position-relative"
                 />
-                <slot />
                 <div
                     v-show="showPlaceholder"
                     class="placeholder"
                     @click="onPlaceholderClick"
                 >
                     {{ placeholder }}
-                </div>
-            </div>
-            <div
-                v-if="!this.guidedProperties.tourStarted && showDoc"
-                :class="[editorDocumentation ? 'plugin-doc-active' : '','plugin-doc']"
-            class="hide-on-small-screen">
-                <markdown v-if="editorPlugin" :source="editorPlugin.markdown" />
-                <div v-else>
-                    <div class="img get-started" />
-                    <el-alert type="info" :title="$t('focus task')" show-icon :closable="false" />
                 </div>
             </div>
         </div>
@@ -83,7 +55,6 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {mapGetters, mapState} from "vuex";
-    import Markdown from "../layout/Markdown.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
 
@@ -106,14 +77,12 @@
             readOnly: {type: Boolean, default: false},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
-            showDoc: {type: Boolean, default: true},
             creating: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
-            Markdown,
         },
-        emits: ["save", "focusout", "tab", "update:modelValue", "cursor"],
+        emits: ["save", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
         editor: undefined,
         data() {
             return {
@@ -132,7 +101,6 @@
             };
         },
         computed: {
-            ...mapState("plugin", ["editorPlugin", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowError"]),
             themeComputed() {
@@ -381,17 +349,13 @@
                 }
                 );
                 this.$tours["guidedTour"].start();
-            },
-            setShowDocumentation() {
-                this.editorDocumentation = !this.editorDocumentation;
-                localStorage.setItem("editorDocumentation", (this.editorDocumentation).toString());
+                this.$emit("restartGuidedTour", true);
             }
         },
     };
 </script>
 
 <style lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .ks-editor {
         width: 100%;
@@ -447,7 +411,6 @@
             .editor-wrapper {
                 min-width: 75%;
                 width: 100%;
-                position: relative;
 
                 .monaco-hover-content {
                     h4 {
@@ -500,25 +463,6 @@
         color: grey !important;
     }
 
-    .plugin-doc {
-        position: relative;
-        overflow-x: hidden;
-        width: 0px;
-        margin: 0px;
-        padding: 0px;
-        transition: width var(--el-transition-duration) ease-in-out, padding var(--el-transition-duration) ease-in-out;
-        background-color: var(--bs-gray-300);
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .plugin-doc-active {
-        width: 30%;
-        padding: calc(var(--spacer) * 1.5);
-    }
-
     div.img {
         min-height: 130px;
         height: 100%;
@@ -529,13 +473,6 @@
             html.dark & {
                 background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
             }
-        }
-    }
-
-    .hide-on-small-screen {
-        display: none;
-        @include res(md) {
-            display: initial;
         }
     }
 

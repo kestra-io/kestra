@@ -9,6 +9,7 @@ import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -470,13 +471,21 @@ public class FlowController {
     @Post(uri = "/validate/task", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public ValidateConstraintViolation validateTask(
-        @Parameter(description = "A list of flows") @Body String task
+        @Parameter(description = "A list of flows") @Body String task,
+        @Parameter(description = "Type of task") @QueryValue(defaultValue = "task") String section
     ) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
-            Task taskParse = yamlFlowParser.parse(task, Task.class);
-            modelValidator.validate(taskParse);
+            if (section.equals("task")) {
+                Task taskParse = yamlFlowParser.parse(task, Task.class);
+                modelValidator.validate(taskParse);
+            } else if (section.equals("trigger")) {
+                AbstractTrigger triggerParse = yamlFlowParser.parse(task, AbstractTrigger.class);
+                modelValidator.validate(triggerParse);
+            } else {
+                throw new IllegalArgumentException("Invalid section, must be 'task' or 'trigger'");
+            }
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
         }

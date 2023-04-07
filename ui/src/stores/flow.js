@@ -212,7 +212,7 @@ export default {
                 })
         },
         validateTask({commit}, options) {
-            return axios.post(`${apiRoot}flows/validate/task`, options.task, textYamlHeader)
+            return axios.post(`${apiRoot}flows/validate/task`, options.task, {...textYamlHeader, params: {section: options.section ? options.section : "task"}})
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
                     return response.data

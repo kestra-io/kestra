@@ -43,7 +43,7 @@
             if (this.modelValue) {
                 this.taskObject = YamlUtils.parse(this.modelValue);
                 this.selectedTaskType = this.taskObject.type;
-                this.$store.dispatch("flow/validateTask", {task: this.modelValue})
+                this.$store.dispatch("flow/validateTask", {task: this.modelValue, section: this.section})
 
                 this.load();
             }

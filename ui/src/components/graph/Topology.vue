@@ -118,7 +118,7 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(props.isCreating ? "source" : (props.execution ? "topology" : "combined"));
+    const showTopology = ref(props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined"));
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
@@ -449,6 +449,10 @@
 
     watch(() => props.flowGraph, async () => {
         regenerateGraph()
+    });
+
+    watch(() => props.isReadOnly, async () => {
+        showTopology.value = props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined");
     });
 
     watch(() => props.guidedProperties, () => {

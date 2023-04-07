@@ -4,7 +4,7 @@
         :flow-id="flow.id"
         :namespace="flow.namespace"
         :flow-graph="flowGraph"
-        :is-read-only="false"
+        :is-read-only="isReadOnly"
         :flow-error="flowError"
     />
 </template>
@@ -18,6 +18,10 @@
         },
         props: {
             preventRouteInfo: {
+                type: Boolean,
+                default: false
+            },
+            isReadOnly: {
                 type: Boolean,
                 default: false
             }

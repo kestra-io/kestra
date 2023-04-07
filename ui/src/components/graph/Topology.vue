@@ -421,6 +421,7 @@
         document.removeEventListener("popstate", () => {
             stopTour();
         });
+        store.commit("flow/setFlowGraph", undefined);
     })
 
     const stopTour = () => {

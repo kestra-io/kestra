@@ -2,7 +2,7 @@
     import type {EdgeProps, Position} from '@vue-flow/core'
     import {EdgeLabelRenderer, getSmoothStepPath, useEdge} from '@vue-flow/core'
     import type {CSSProperties} from 'vue'
-    import {computed, getCurrentInstance, ref} from 'vue'
+    import {computed, getCurrentInstance, ref, watch} from 'vue'
     import TaskEditor from "../../flows/TaskEditor.vue"
     import Help from "vue-material-design-icons/Help.vue";
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
@@ -15,6 +15,7 @@
     import yamlUtils from "../../../utils/yamlUtils.js";
     import YamlUtils from "../../../utils/yamlUtils.js";
     import {useStore} from "vuex";
+    import ValidationError from "../../flows/ValidationError.vue";
 
     const store = useStore();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -41,6 +42,12 @@
     const emit = defineEmits(["edit"])
     const taskYaml = ref("");
     const execution = store.getters["execution/execution"];
+    const timer = ref(undefined);
+    const taskError = ref(store.getters["flow/taskError"])
+
+    watch(() => store.getters["flow/taskError"], async () => {
+        taskError.value = store.getters["flow/taskError"];
+    });
 
     const isBorderEdge = () => {
         if (!props.data.haveAdd && props.data.isFlowable) {
@@ -104,6 +111,10 @@
 
     const updateTask = (task) => {
         taskYaml.value = task;
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => {
+            store.dispatch("flow/validateTask", {task: task})
+        }, 500);
     }
 
     const getAddTaskInformation = () => {
@@ -237,7 +248,8 @@
                     />
                 </el-form>
                 <template #footer>
-                    <el-button :disabled="!taskHaveId()" :icon="ContentSave" @click="forwardTask" type="primary">
+                    <ValidationError link :error="taskError"/>
+                    <el-button :disabled="!taskHaveId() || taskError" :icon="ContentSave" @click="forwardTask" type="primary">
                         {{ $t("save") }}
                     </el-button>
                 </template>

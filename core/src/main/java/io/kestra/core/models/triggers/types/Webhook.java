@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers.types;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -79,7 +80,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);
 
-        ObjectMapper mapper = JacksonMapper.ofJson();
+        ObjectMapper mapper = JacksonMapper.ofJson().setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
 
         Execution.ExecutionBuilder builder = Execution.builder()
             .id(IdUtils.create())

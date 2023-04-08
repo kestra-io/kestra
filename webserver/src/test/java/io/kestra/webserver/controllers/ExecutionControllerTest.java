@@ -482,5 +482,18 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             Execution.class
         );
         assertThat(execution.getTrigger().getVariables().get("body"), is(nullValue()));
+
+        execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key,
+                    "{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"
+                ),
+            Execution.class
+        );
+        assertThat(execution.getTrigger().getVariables().get("body"), is("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"));
+
     }
+
+
 }

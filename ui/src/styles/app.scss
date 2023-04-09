@@ -48,3 +48,24 @@ main {
         }
     }
 }
+
+// status
+@each $key, $value in global-var.$colors {
+    .bg-#{$key} {
+        background-color: $value;
+    }
+
+    .el-button.status-#{$key} {
+        cursor: default;
+        border: 0.5px solid $value;
+        background: var(--bs-white);
+
+        .material-design-icon {
+            color: $value;
+        }
+
+        html.dark & {
+            background: var(--bs-tertiary);
+        }
+    }
+}

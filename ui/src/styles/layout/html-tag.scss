@@ -26,8 +26,12 @@ blockquote {
     border-left: 5px solid var(--bs-gray-400);
     margin-top: calc(var(--spacer) * 2);
     padding: calc(var(--spacer) / 4)  0 calc(var(--spacer) / 4) var(--spacer);
-    color: var(--bs-gray-500);
+    color: var(--bs-gray-600);
     p {
         margin-bottom: 0;
+    }
+
+    html.dark & {
+        color: var(--bs-gray-700);
     }
 }

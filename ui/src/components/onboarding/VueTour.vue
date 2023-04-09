@@ -106,8 +106,8 @@
                         content: this.$t("onboarding-content.step1.content"),
                     },
                     {
-                        target: "nav",
                         highlightElement: ".edit-flow-editor",
+                        target: "nav",
                         header: {
                             title: this.$t("onboarding-content.step2.title"),
                         },

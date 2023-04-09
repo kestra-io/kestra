@@ -6,6 +6,7 @@
             :persistent="false"
             :hide-after="0"
             transition=""
+            :visible="tooltipContent !== ''"
         >
             <template #content>
                 <span v-html="tooltipContent" />
@@ -20,7 +21,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
-    import {defaultConfig, tooltip, chartClick} from "../../utils/charts.js";
+    import {defaultConfig, tooltip, chartClick, backgroundFromState} from "../../utils/charts.js";
     import State from "../../utils/state";
     import {useI18n} from "vue-i18n";
 
@@ -88,9 +89,7 @@
                     tooltip: {
                         external: function (context) {
                             let content = tooltip(context.tooltip);
-                            if (content) {
-                                tooltipContent.value = content;
-                            }
+                            tooltipContent.value = content;
                         },
                         callbacks: {
                             label: function(context) {
@@ -100,7 +99,10 @@
                                     return context.dataset.label + ": " + context.formattedValue
                                 }
                             }
-                        }
+                        },
+                        filter: (e) => {
+                            return e.raw > 0;
+                        },
                     },
                 },
                 scales: {
@@ -118,10 +120,6 @@
                     }
                 },
             }))
-
-            const backgroundFromState = (state) => {
-                return State.color()[state]
-            }
 
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 

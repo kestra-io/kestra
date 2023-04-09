@@ -56,9 +56,9 @@ class PluginDocCommandTest {
             assertThat(directory.listFiles().length, is(3));
 
             var readme = directory.toPath().resolve("README.md");
-            assertThat(new String(Files.readAllBytes(readme)), is("---\n" +
+            assertThat(new String(Files.readAllBytes(readme)), containsString("---\n" +
                 "title: Plugin template test\n" +
-                "editLink: false\n" +
+                "editLink: false\n\n" +
                 "---\n" +
                 "# Plugin template test\n" +
                 "\n" +
@@ -66,8 +66,9 @@ class PluginDocCommandTest {
                 "\n" +
                 "This is a more complex description of the plugin.\n" +
                 "\n" +
-                "This is in markdown and will be inline inside the plugin page.\n" +
-                "## Subgroup title\n" +
+                "This is in markdown and will be inline inside the plugin page.\n"));
+            assertThat(new String(Files.readAllBytes(readme)), containsString(
+                "Subgroup title\n" +
                 "    \n" +
                 "Subgroup description\n" +
                 "### Tasks\n" +

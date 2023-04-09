@@ -20,25 +20,7 @@
         'extra-small': global-var.$font-size-xs,
     ),
 
-    $colors: (
-        'white': #ffffff,
-        'black': #000000,
-        'primary': (
-            'base': global-var.$primary,
-        ),
-        'success': (
-            'base': global-var.$green,
-        ),
-        'warning': (
-            'base': global-var.$yellow,
-        ),
-        'error': (
-            'base': global-var.$red,
-        ),
-        'info': (
-            'base': global-var.$cyan,
-        ),
-    ),
+    $colors: global-var.$element-colors,
 
     $border-radius: (
         'base': global-var.$border-radius,
@@ -51,13 +33,14 @@
 
 // vue-sidebar
 @use "vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
-    $primary-color: global-var.$secondary,
+    $primary-color: global-var.$primary,
     $base-bg: global-var.$white,
-    $item-color: global-var.$tertiary,
-    $item-active-color: global-var.$secondary,
+    $item-color: global-var.$black,
+    $item-active-bg: global-var.$primary,
+    $item-active-color: global-var.$white,
     $item-font-size: global-var.$font-size-base,
-    $item-hover-color: global-var.$tertiary,
-    $item-hover-bg: darken(global-var.$secondary, 5%),
+    $item-hover-color: global-var.$white,
+    $item-hover-bg: global-var.$secondary,
 );
 
 // third
@@ -68,5 +51,5 @@
 @use "@vue-flow/controls/dist/style.css" as controls;
 
 //noinspection CssUnknownTarget
-@import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;700;800&family=Source+Code+Pro:wght@400;700;800&display=swap");
 

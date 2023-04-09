@@ -159,7 +159,15 @@
                     return false;
                 }
 
-                return !State.isRunning(this.execution.state.current);
+                if(this.taskRun.state.current === "PAUSED") {
+                    return true;
+                }
+
+                if (State.isRunning(this.execution.state.current)) {
+                    return false;
+                }
+
+                return true;
             }
         },
         data() {

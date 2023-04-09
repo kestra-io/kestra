@@ -12,6 +12,8 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/postgres
+      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
+      ignore-migration-patterns: "*:missing"
 
 kestra:
   queue:
@@ -42,6 +44,9 @@ kestra:
       logs:
         table: "logs"
         cls: io.kestra.core.models.executions.LogEntry
+      metrics:
+        table: "metrics"
+        cls: io.kestra.core.models.executions.MetricEntry
       multipleconditions:
         table: "multipleconditions"
         cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow

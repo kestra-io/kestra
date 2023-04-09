@@ -21,7 +21,6 @@
                 :page-size="internalSize"
                 v-model:page-size="internalSize"
                 small
-                background
                 layout="prev, pager, next"
                 :pager-count="5"
                 :total="Math.min((max || total ),total)"
@@ -103,8 +102,7 @@
             padding: 0 4px;
             line-height: 1.85;
             font-size: var(--el-font-size-extra-small);
-            border-radius: var(--bs-border-radius-sm);
-            border: 1px solid var(--bs-border-color);
+            color: var(--bs-purple);
             white-space: nowrap;
         }
     }

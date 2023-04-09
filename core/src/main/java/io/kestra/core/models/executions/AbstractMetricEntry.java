@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,7 +24,7 @@ import javax.validation.constraints.NotNull;
     @JsonSubTypes.Type(value = Timer.class, name = "timer"),
 })
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude="timestamp")
 @Getter
 @NoArgsConstructor
 @Introspected
@@ -34,6 +35,8 @@ abstract public class AbstractMetricEntry<T> {
     protected String name;
 
     protected Map<String, String> tags;
+
+    protected Instant timestamp = Instant.now();
 
     protected AbstractMetricEntry(@NotNull String name, String[] tags) {
         this.name = name;

@@ -1,11 +1,11 @@
 <template>
     <el-card @click="openLink">
         <Export class="icon" />
-        <div class="content">
-            <div>
-                <div class="img" :class="imgClass" />
+        <div class="content row">
+            <div class="col-lg-4 col-xl-6">
+                <img :src="imgSrc" class="img-fluid" alt="" />
             </div>
-            <div>
+            <div class="col-lg-8 col-xl-6">
                 <h3>{{ title }}</h3>
                 <p>{{ content }}</p>
             </div>
@@ -58,6 +58,13 @@
                     window.open(this.link, "_blank");
                 }
             }
+        },
+        computed: {
+            imgSrc() {
+                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+
+                return new URL("../../assets/onboarding/onboarding-" + this.imgClass + "-" + (darkTheme ? "dark" : "light") + ".svg", import.meta.url).href;
+            },
         }
     }
 </script>
@@ -71,7 +78,6 @@
     }
 
     p {
-        color: var(--bs-gray-500);
         margin-bottom: 0;
     }
 
@@ -79,45 +85,18 @@
         position: absolute;
         top: calc(var(--spacer) / 2);
         right: calc(var(--spacer) / 2);
-        color: var(--bs-gray-500);
         font-size: var(--font-size-lg);
     }
 
-    .content {
-        display: flex;
+    p, .icon {
+        color: var(--bs-gray-500);
 
-        > div:first-child {
-            min-width: 160px;
-            flex-wrap: nowrap;
+        html.dark & {
+            color: var(--bs-gray-700);
         }
     }
 
-    div.img {
-        min-height: 130px;
-        height: 100%;
-
-        &.get-started {
-            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat top left;
-
-            html.dark & {
-                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat top left;
-            }
-        }
-
-        &.demo-video {
-            background: url("../../assets/onboarding/onboarding-demo-light.svg") no-repeat top left;
-
-            html.dark & {
-                background: url("../../assets/onboarding/onboarding-demo-dark.svg") no-repeat top left;
-            }
-        }
-
-        &.help {
-            background: url("../../assets/onboarding/onboarding-help-light.svg") no-repeat top left;
-
-            html.dark & {
-                background: url("../../assets/onboarding/onboarding-help-dark.svg") no-repeat top left;
-            }
-        }
+    img {
+        max-width: 100%;
     }
 </style>

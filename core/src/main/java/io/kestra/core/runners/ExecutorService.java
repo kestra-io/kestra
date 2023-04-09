@@ -377,6 +377,12 @@ public class ExecutorService {
     }
 
     private Executor handlePausedDelay(Executor executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
+        if (workerTaskResults
+            .stream()
+            .noneMatch(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)) {
+            return executor;
+        }
+
         List<ExecutionDelay> list = workerTaskResults
             .stream()
             .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
@@ -401,8 +407,10 @@ public class ExecutorService {
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
-        if (list.size() == 0) {
-            return executor;
+        if(executor.getExecution().getState().getCurrent() != State.Type.PAUSED) {
+            return executor
+                .withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePausedDelay")
+                .withWorkerTaskDelays(list, "handlePausedDelay");
         }
 
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
@@ -458,7 +466,7 @@ public class ExecutorService {
     }
 
     private Executor handleEnd(Executor executor) {
-        if (executor.getExecution().getState().isTerminated()) {
+        if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().isPaused()) {
             return executor;
         }
 

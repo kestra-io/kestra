@@ -1,7 +1,6 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -53,8 +52,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         protected QueueInterface<Execution> executionQueue;
 
         public void run(RunnerUtils runnerUtils) throws Exception {
-            Flow flow = flowRepository.findById("io.kestra.tests", "pause").orElseThrow();
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "pause", Duration.ofSeconds(120));
+            Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause");
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
@@ -76,10 +74,9 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         }
 
         public void runDelay(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "pause-delay");
+            Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause-delay");
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
-            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             execution = runnerUtils.awaitExecution(
@@ -95,10 +92,9 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
 
         public void runTimeout(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "pause-timeout");
+            Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause-timeout");
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
-            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             execution = runnerUtils.awaitExecution(

@@ -4,6 +4,7 @@ import io.kestra.core.models.Setting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -49,6 +50,8 @@ public class QueueService {
           return ((Executor) object).getExecution().getId();
         } else if (object.getClass() == FlowTopology.class) {
             return ((FlowTopology) object).uid();
+        } else if (object.getClass() == MetricEntry.class) {
+            return null;
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

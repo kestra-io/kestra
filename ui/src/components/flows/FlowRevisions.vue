@@ -71,6 +71,7 @@
                 :model-value="revisionRightText"
                 :original="revisionLeftText"
                 lang="yaml"
+                :show-doc="false"
             />
         </div>
 

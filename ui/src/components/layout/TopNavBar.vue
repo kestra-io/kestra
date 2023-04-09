@@ -19,8 +19,13 @@
             </el-breadcrumb>
         </div>
         <div class="side ms-auto ps-2">
-            <auth />
+            <a href="https://api.kestra.io/v1/communities/slack/redirect"
+               target="_blank"
+               class="el-button el-button--small is-text is-has-bg">
+                Live chat
+            </a>
             <news />
+            <auth />
         </div>
     </nav>
 </template>
@@ -55,26 +60,26 @@
         .top-title {
             overflow: hidden;
             h1 {
-                color: var(--el-primary);
+                color: var(--bs-black);
                 margin-bottom: calc(var(--spacer) * 0.5);
                 font-weight: bold;
 
                 html.dark & {
-                    color: var(--tertiary);
+                    color: var(--bs-white);
                 }
             }
 
-            .el-breadcrumb {
-                color: var(--bs-secondary);
+            :deep(.el-breadcrumb) {
                 display: flex;
+
                 a {
                     font-weight: normal;
-                    color: var(--bs-secondary);
+                    color: var(--bs-gray-500);
                     white-space: nowrap;
                 }
 
                 .el-breadcrumb__separator {
-                    color: var(--bs-tertiary);
+                    color: var(--bs-gray-500);
                 }
 
                 .el-breadcrumb__item {
@@ -92,6 +97,12 @@
                 a {
                     cursor: pointer !important;
                 }
+
+                html.dark & {
+                    a, .el-breadcrumb__separator {
+                        color: var(--bs-gray-700);
+                    }
+                }
             }
         }
 
@@ -106,8 +117,25 @@
                 border: 0;
                 padding-left: 8px;
                 padding-right: 8px;
-                color: var(--bs-secondary);
+                color: var(--bs-gray-700);
                 background-color: transparent;
+
+                .material-design-icon {
+                    font-size: var(--font-size-lg);
+                }
+            }
+
+            .is-text {
+                font-weight: bold;
+                border: 1px solid var(--bs-border-color);
+                height: 32px;
+                line-height: 32px;
+                background-color: var(--bs-white) !important;
+
+                html.dark & {
+                    color: var(--bs-white);
+                    background-color: var(--bs-gray-500) !important;
+                }
             }
         }
     }

@@ -137,7 +137,7 @@
                     });
                 }
 
-                if (this.execution.originalId !== this.execution.id) {
+                if (this.execution.originalId && this.execution.originalId !== this.execution.id) {
                     ret.push({
                         key: this.$t("original execution"),
                         value: this.execution.originalId,

@@ -264,22 +264,16 @@ public class RunnerUtils {
         return this.runOne(namespace, flowId, revision, inputs, null);
     }
 
+    public Execution runOne(String namespace, String flowId, Duration duration) throws TimeoutException {
+        return this.runOne(namespace, flowId, null, null, duration);
+    }
+
     public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
-            duration
-        );
-    }
-
-    public Execution runOne(String namespace, String flowId, Duration duration) throws TimeoutException {
-        return this.runOne(
-            flowRepository
-                .findById(namespace, flowId, Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
-            (f, e) -> ImmutableMap.of(),
             duration
         );
     }
@@ -296,6 +290,32 @@ public class RunnerUtils {
         Execution execution = this.newExecution(flow, inputs);
 
         return this.awaitExecution(isTerminatedExecution(execution, flow), () -> {
+            this.executionQueue.emit(execution);
+        }, duration);
+    }
+
+    public Execution runOneUntilPaused(String namespace, String flowId) throws TimeoutException {
+        return this.runOneUntilPaused(namespace, flowId, null, null, null);
+    }
+
+    public Execution runOneUntilPaused(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOneUntilPaused(
+            flowRepository
+                .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+            inputs,
+            duration
+        );
+    }
+
+    public Execution runOneUntilPaused(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        if (duration == null) {
+            duration = Duration.ofSeconds(15);
+        }
+
+        Execution execution = this.newExecution(flow, inputs);
+
+        return this.awaitExecution(isPausedExecution(execution), () -> {
             this.executionQueue.emit(execution);
         }, duration);
     }
@@ -332,6 +352,10 @@ public class RunnerUtils {
 
     public Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {
         return e -> e.getId().equals(execution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
+    }
+
+    public Predicate<Execution> isPausedExecution(Execution execution) {
+        return e -> e.getId().equals(execution.getId()) && e.getState().isPaused();
     }
 
     private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {

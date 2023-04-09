@@ -1,15 +1,15 @@
 <template>
     <div>
-        <editor @on-save="save" v-model="content" schemaType="template" lang="yaml" @update:model-value="onChange($event)" />
+        <editor @on-save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" size="large" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
 
                     <template v-if="canSave">
-                        <el-button :icon="ContentSave" @click="save" type="info" size="large">
+                        <el-button :icon="ContentSave" @click="save" type="primary" size="large">
                             {{ $t('save') }}
                         </el-button>
                     </template>

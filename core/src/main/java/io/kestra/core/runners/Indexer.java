@@ -3,10 +3,12 @@ package io.kestra.core.runners;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.micronaut.context.annotation.Requires;
@@ -23,6 +25,9 @@ public class Indexer implements IndexerInterface {
     private final QueueInterface<Execution> executionQueue;
     private final LogRepositoryInterface logRepository;
     private final QueueInterface<LogEntry> logQueue;
+
+    private final MetricRepositoryInterface metricRepository;
+    private final QueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
 
     @Inject
@@ -31,12 +36,16 @@ public class Indexer implements IndexerInterface {
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         LogRepositoryInterface logRepository,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
+        MetricRepositoryInterface metricRepositor,
+        @Named(QueueFactoryInterface.METRIC_QUEUE) QueueInterface<MetricEntry> metricQueue,
         MetricRegistry metricRegistry
     ) {
         this.executionRepository = executionRepository;
         this.executionQueue = executionQueue;
         this.logRepository = logRepository;
         this.logQueue = logQueue;
+        this.metricRepository = metricRepositor;
+        this.metricQueue = metricQueue;
         this.metricRegistry = metricRegistry;
     }
 
@@ -44,6 +53,7 @@ public class Indexer implements IndexerInterface {
     public void run() {
         this.send(executionQueue, executionRepository);
         this.send(logQueue, logRepository);
+        this.send(metricQueue, metricRepository);
     }
 
     protected <T> void send(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
@@ -62,5 +72,6 @@ public class Indexer implements IndexerInterface {
     public void close() throws IOException {
         this.executionQueue.close();
         this.logQueue.close();
+        this.metricQueue.close();
     }
 }

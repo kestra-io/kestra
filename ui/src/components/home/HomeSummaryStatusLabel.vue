@@ -16,9 +16,7 @@
                 </div>
 
                 <div class="big-number">
-                    <el-tag type="info" disable-transitions>
-                        {{ count }}
-                    </el-tag>
+                    {{ count }}
                 </div>
             </div>
         </template>
@@ -60,7 +58,7 @@
         > div {
             justify-content: center;
             align-items: center;
-
+            color: var(--bs-gray-900);
 
             .icon {
                 vertical-align: middle;
@@ -70,28 +68,24 @@
                 flex-grow: 1;
 
                 h6 {
-                    font-weight: 400;
                     line-height: 1;
                     margin-bottom: 0;
+                    font-size: var(--font-size-sm);
+                    text-transform: uppercase;
+                    font-weight: bold;
                 }
 
                 .percent {
-                    color: var(--bs-gray-500);
                     line-height: 1.5;
                     font-size: var(--font-size-xs);
                 }
             }
 
-            :deep(.el-tag) {
-                font-size: 150%;
-                background: none;
-                color: var(--bs-gray-600);
-                font-weight: 400;
-                padding: 0;
-            }
 
             .big-number {
                 vertical-align: middle;
+                font-size: 150%;
+                font-weight: bold;
             }
         }
     }

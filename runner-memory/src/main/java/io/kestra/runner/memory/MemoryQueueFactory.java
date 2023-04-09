@@ -1,5 +1,6 @@
 package io.kestra.runner.memory;
 
+import io.kestra.core.models.executions.MetricEntry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import org.apache.commons.lang3.NotImplementedException;
@@ -57,6 +58,13 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     public QueueInterface<LogEntry> logEntry() {
         return new MemoryQueue<>(LogEntry.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.METRIC_QUEUE)
+    public QueueInterface<MetricEntry> metricEntry() {
+        return new MemoryQueue<>(MetricEntry.class, applicationContext);
     }
 
     @Override

@@ -3,6 +3,7 @@ package io.kestra.runner.postgres;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
@@ -56,6 +57,13 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     public QueueInterface<LogEntry> logEntry() {
         return new PostgresQueue<>(LogEntry.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.METRIC_QUEUE)
+    public QueueInterface<MetricEntry> metricEntry() {
+        return new PostgresQueue<>(MetricEntry.class, applicationContext);
     }
 
     @Override

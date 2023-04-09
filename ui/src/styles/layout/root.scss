@@ -51,6 +51,7 @@
     #{--font-size-base}: $font-size-base;
     #{--font-size-lg}: $font-size-lg;
     #{--card-bg}: $card-bg;
+    #{--input-bg}: $input-bg;
 
     #{--bs-tertiary}: $tertiary;
 
@@ -61,6 +62,12 @@
         @each $i in (2, 3, 5, 7, 10, 15) {
             #{--bs-gray-#{$key}-lighten-#{$i}}: #{lighten($value, $i)};
             #{--bs-gray-#{$key}-darken-#{$i}}: #{darken($value, $i)};
+        }
+    }
+
+    @each $key, $value in $colors {
+        @each $i in (45) {
+            #{--bs-#{$key}-darken-#{$i}}: #{darken($value, $i)};
         }
     }
 }

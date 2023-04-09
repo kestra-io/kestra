@@ -4,10 +4,10 @@
         :header="title"
     >
         <el-row :span="12" :gutter="15" v-if="count > 0" class="home-summary">
-            <el-col :md="6" :lg="12" :xl="6">
+            <el-col :md="6" :lg="12" :xl="12">
                 <status-pie :data="data" />
             </el-col>
-            <el-col :md="6" :lg="12" :xl="6">
+            <el-col :md="6" :lg="12" :xl="12">
                 <home-summary-status-label class="mt-sm-4 mt-md-0 mt-lg-4 mt-xl-0" :data="data" />
             </el-col>
         </el-row>
@@ -46,3 +46,9 @@
     };
 </script>
 
+
+<style lang="scss" scoped>
+    .home-summary {
+        justify-content: center;
+    }
+</style>

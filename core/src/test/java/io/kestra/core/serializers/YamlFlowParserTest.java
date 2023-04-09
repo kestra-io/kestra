@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 
@@ -210,6 +211,16 @@ class YamlFlowParserTest {
 
         assertThat(exception.getConstraintViolations().size(), is(1));
         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("File not found at location"));
+    }
+
+    @Test
+    void invalidParallel() {
+        Flow parse = this.parse("flows/invalids/invalid-parallel.yaml");
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(parse);
+
+        assertThat(valid.isPresent(), is(true));
+        assertThat(valid.get().getConstraintViolations().size(), is(8));
+        assertThat(new ArrayList<>(valid.get().getConstraintViolations()).stream().filter(r -> r.getMessage().contains("must not be empty")).count(), is(3L));
     }
 
     private Flow parse(String path) {

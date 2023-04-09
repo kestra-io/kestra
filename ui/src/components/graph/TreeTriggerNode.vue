@@ -21,6 +21,15 @@
                     />
                 </el-button>
 
+                <el-tooltip v-if="!this.execution" content="Delete" transition="" :hide-after="0" :persistent="false">
+                    <el-button
+                        class="node-action"
+                        size="small"
+                        @click="forwardEvent('delete', {id: this.trigger.id, section: 'triggers'})"
+                        :icon="Delete"
+                    />
+                </el-tooltip>
+
                 <task-edit
                     class="node-action"
                     :modal-id="`modal-source-${hash}`"
@@ -42,6 +51,7 @@
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import TreeNode from "./TreeNode.vue"
+    import Delete from "vue-material-design-icons/Delete.vue";
 
     export default {
         components: {
@@ -49,7 +59,7 @@
             TaskEdit,
             TreeNode,
         },
-        emits: ["edit"],
+        emits: ["edit", "delete"],
         props: {
             n: {
                 type: Object,
@@ -82,11 +92,15 @@
         computed: {
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
+            ...mapState("execution", ["execution"]),
             hash() {
                 return this.n.uid.hashCode();
             },
             trigger() {
                 return this.n.trigger;
+            },
+            Delete() {
+                return Delete;
             },
         },
     };

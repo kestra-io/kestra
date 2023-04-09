@@ -2,7 +2,7 @@ package io.kestra.cli.commands.flows.namespaces;
 
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.flows.FlowValidateCommand;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.cli.commands.flows.IncludeHelperExpander;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -42,7 +42,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 .filter(YamlFlowParser::isValidExtension)
                 .map(path -> {
                     try {
-                        return Files.readString(path, Charset.defaultCharset());
+                        return IncludeHelperExpander.expand(Files.readString(path, Charset.defaultCharset()), path.getParent());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -59,9 +59,9 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 MutableHttpRequest<String> request = HttpRequest
                     .POST("/api/v1/flows/" + namespace + "?delete=" + !noDelete, body).contentType(MediaType.APPLICATION_YAML);
 
-                List<FlowWithSource> updated = client.toBlocking().retrieve(
+                List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),
-                    Argument.listOf(FlowWithSource.class)
+                    Argument.listOf(UpdateResult.class)
                 );
 
                 stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");

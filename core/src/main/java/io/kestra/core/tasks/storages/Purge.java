@@ -80,6 +80,13 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     private boolean purgeLog = true;
 
     @Schema(
+        title = "Purge metric from repository"
+    )
+    @PluginProperty
+    @Builder.Default
+    private boolean purgeMetric = true;
+
+    @Schema(
         title = "Purge file from internal storage"
     )
     @PluginProperty
@@ -93,6 +100,7 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
         ExecutionService.PurgeResult purgeResult = executionService.purge(
             purgeExecution,
             purgeLog,
+            purgeMetric,
             purgeStorage,
             namespace,
             flowId,

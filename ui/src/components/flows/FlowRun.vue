@@ -4,7 +4,7 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
-        <el-form class="ks-horizontal" :model="inputs" ref="form">
+        <el-form label-position="top" :model="inputs" ref="form">
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"

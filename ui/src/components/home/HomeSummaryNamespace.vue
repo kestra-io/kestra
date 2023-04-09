@@ -7,6 +7,7 @@
         />
     </el-card>
 </template>
+
 <script>
     import NamespaceTreeMap from "./NamespaceTreeMap.vue";
     import State from "../../utils/state";
@@ -47,20 +48,3 @@
         }
     };
 </script>
-
-<style lang="scss" scoped>
-@import "../../styles/_variable.scss";
-
-@media (min-width: map-get($grid-breakpoints, "lg")) and (max-width: 1500px) {
-    .row.home-summary > div {
-        -webkit-box-flex: 0;
-        -ms-flex: 0 0 100%;
-        flex: 0 0 100%;
-        max-width: 100%;
-        &.legend {
-            margin-top: $spacer * 1.5;
-        }
-    }
-}
-
-</style>

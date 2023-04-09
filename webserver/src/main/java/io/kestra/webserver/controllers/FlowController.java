@@ -95,7 +95,8 @@ public class FlowController {
     public FlowGraph flowGraphSource(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
-        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
+        Flow flowParsed = taskDefaultService.injectDefaults(yamlFlowParser.parse(flow, Flow.class));
+        modelValidator.validate(flowParsed);
 
         return FlowGraph.of(flowParsed);
     }
@@ -463,6 +464,23 @@ public class FlowController {
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/validate/task", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public ValidateConstraintViolation validateTask(
+        @Parameter(description = "A list of flows") @Body String task
+    ) {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+
+        try {
+            Task taskParse = yamlFlowParser.parse(task, Task.class);
+            modelValidator.validate(taskParse);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        }
+        return validateConstraintViolationBuilder.build();
     }
 
     @ExecuteOn(TaskExecutors.IO)

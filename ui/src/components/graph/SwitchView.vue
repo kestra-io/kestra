@@ -4,6 +4,9 @@
         <el-tooltip :content="$t('source')" transition="" :hide-after="0" :persistent="false">
             <el-button :type="buttonType('source')" @click="switchView('source')" :icon="FileDocumentEdit" />
         </el-tooltip>
+        <el-tooltip :content="$t('source and doc')" transition="" :hide-after="0" :persistent="false">
+            <el-button :type="buttonType('doc')" @click="switchView('doc')" :icon="BookOpenPageVariantOutline" />
+        </el-tooltip>
         <el-tooltip :content="$t('source and topology')" transition="" :hide-after="0" :persistent="false">
             <el-button :type="buttonType('combined')" @click="switchView('combined')" :icon="FileChart" />
         </el-tooltip>
@@ -17,8 +20,7 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
     import Graph from "vue-material-design-icons/Graph.vue";
     import FileChart from "vue-material-design-icons/FileChart.vue";
-    import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
-    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue";
+    import BookOpenPageVariantOutline from "vue-material-design-icons/BookOpenPageVariantOutline.vue";
 </script>
 
 <script>

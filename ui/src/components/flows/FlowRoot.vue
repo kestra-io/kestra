@@ -26,7 +26,6 @@
 
 <script>
     import Topology from "./Topology.vue";
-    import FlowSource from "./FlowSource.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
@@ -89,12 +88,15 @@
                     {
                         name: undefined,
                         component: Topology,
-                        title: this.$t("editor"),
+                        title: this.$t("topology"),
+                        props: {
+                            isReadOnly: true
+                        }
                     },
                 ];
 
                 if (this.user.hasAny(permission.EXECUTION)) {
-                    tabs[0].name = "editor";
+                    tabs[0].name = "topology";
 
                     tabs = [
                         {
@@ -116,7 +118,7 @@
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
                         name: "source",
-                        component: FlowSource,
+                        component: Topology,
                         title: this.$t("source"),
                     });
                 }

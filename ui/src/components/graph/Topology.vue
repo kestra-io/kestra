@@ -15,6 +15,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import ValidationError from "../../components/flows/ValidationError.vue";
     import SwitchView from "./SwitchView.vue";
+    import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import {cssVariable} from "../../utils/global"
     import Cluster from "./nodes/Cluster.vue";
     import Dot from "./nodes/Dot.vue"
@@ -118,7 +119,7 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(props.isCreating ? "source" : (props.execution ? "topology" : "combined"));
+    const showTopology = ref(props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined"));
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
@@ -415,6 +416,7 @@
                 && localStorage.getItem("tourDoneOrSkip") !== "true"
                 && props.total === 0) {
                 tours["guidedTour"].start();
+                showTopology.value = "source";
             }
         }, 200)
         window.addEventListener("popstate", () => {
@@ -427,6 +429,7 @@
         document.removeEventListener("popstate", () => {
             stopTour();
         });
+        store.commit("flow/setFlowGraph", undefined);
     })
 
     const stopTour = () => {
@@ -454,6 +457,10 @@
         regenerateGraph()
     });
 
+    watch(() => props.isReadOnly, async () => {
+        showTopology.value = props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined");
+    });
+
     watch(() => props.guidedProperties, () => {
         if (localStorage.getItem("tourDoneOrSkip") !== "true") {
             if (props.guidedProperties.source !== undefined) {
@@ -479,7 +486,7 @@
         if (!dragging.value) {
             linkedElements(id, node.uid).forEach((n) => {
                 if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-yellow')}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-yellow")}
                 }
             });
         }
@@ -687,10 +694,10 @@
         if (!checkIntersections(e.intersections, e.node) && e.intersections.filter(n => n.type === "task").length === 1) {
             e.intersections.forEach(n => {
                 if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
                 }
             })
-            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
+            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
         }
     })
 
@@ -847,30 +854,24 @@
                         <ArrowCollapseRight v-if="isHorizontal" />
                     </ControlButton>
                 </Controls>
-                <Panel v-if="!isReadOnly" :position="PanelPosition.TopRight">
-                    <SwitchView :type="showTopology" @switch-view="switchView" />
-                </Panel>
             </VueFlow>
         </div>
         <editor
-            v-if="showTopology === 'source' || showTopology === 'combined'"
-            :class="showTopology === 'combined'? 'editor-combined' : ''"
+            v-if="['doc', 'combined', 'source'].includes(showTopology)"
+            :class="['doc','combined'].includes(showTopology) ? 'editor-combined' : ''"
             @save="save"
             v-model="flowYaml"
             schema-type="flow"
             lang="yaml"
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
-            :show-doc="showTopology !== 'combined'"
             :creating="isCreating"
-        >
-            <SwitchView
-                v-if="showTopology === 'source' && !guidedProperties.tourStarted"
-                :type="showTopology"
-                class="to-topology-button"
-                @switch-view="switchView"
-            />
-        </editor>
+            @restartGuidedTour="() => showTopology = 'source'"
+        />
+        <PluginDocumentation
+            v-if="showTopology === 'doc'"
+            class="plugin-doc"
+        />
         <el-drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
@@ -943,6 +944,12 @@
                 </el-button>
             </template>
         </el-drawer>
+        <SwitchView
+            v-if="!isReadOnly"
+            :type="showTopology"
+            class="to-topology-button"
+            @switch-view="switchView"
+        />
     </el-card>
     <bottom-line>
         <ul>
@@ -1007,6 +1014,7 @@
 <style lang="scss" scoped>
     .el-card {
         height: calc(100vh - 300px);
+        position: relative;
 
         :deep(.el-card__body) {
             height: 100%;
@@ -1015,8 +1023,8 @@
 
     .to-topology-button {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 30px;
+        right: 30px;
     }
 
     .editor {
@@ -1043,5 +1051,20 @@
 
     .vueflow-hide {
         width: 0%;
+    }
+
+    .plugin-doc {
+        overflow-x: hidden;
+        padding: calc(var(--spacer) * 3);
+        height: 100%;
+        width: 50%;
+        float: right;
+        overflow-y: scroll;
+        padding: calc(var(--spacer) * 1.5);
+        background-color: var(--bs-gray-300);
+
+        html.dark & {
+            background-color: var(--bs-gray-500);
+        }
     }
 </style>

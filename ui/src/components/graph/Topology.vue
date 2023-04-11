@@ -13,6 +13,7 @@
 
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import ValidationError from "../../components/flows/ValidationError.vue";
     import SwitchView from "./SwitchView.vue";
     import {cssVariable} from "../../utils/global"
     import Cluster from "./nodes/Cluster.vue";
@@ -121,6 +122,11 @@
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
+    const taskError = ref(store.getters["flow/taskError"])
+
+    watch(() => store.getters["flow/taskError"], async () => {
+        taskError.value = store.getters["flow/taskError"];
+    });
 
 
     const flowables = () => {
@@ -562,6 +568,11 @@
     }
 
     const onUpdateNewTrigger = (event) => {
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
+            task: event,
+            section: "trigger"
+        }), 500);
         newTrigger.value = event;
     }
 
@@ -583,6 +594,12 @@
     }
 
     const onUpdateNewError = (event) => {
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
+            task: event,
+            section: "task"
+        }), 500);
+
         newError.value = event;
     }
 
@@ -869,7 +886,8 @@
                 />
             </el-form>
             <template #footer>
-                <el-button :icon="ContentSave" @click="onSaveNewError()" type="primary">
+                <ValidationError :error="taskError" />
+                <el-button :icon="ContentSave" @click="onSaveNewError()" type="primary" :disabled="taskError">
                     {{ $t("save") }}
                 </el-button>
             </template>
@@ -889,7 +907,8 @@
                 />
             </el-form>
             <template #footer>
-                <el-button :icon="ContentSave" @click="onSaveNewTrigger()" type="primary">
+                <ValidationError :error="taskError" />
+                <el-button :icon="ContentSave" @click="onSaveNewTrigger()" type="primary" :disabled="taskError">
                     {{ $t("save") }}
                 </el-button>
             </template>

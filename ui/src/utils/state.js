@@ -28,7 +28,7 @@ const STATE = Object.freeze({
     },
     SUCCESS: {
         name: "SUCCESS",
-        colorClass: "teal",
+        colorClass: "green",
         icon: CheckCircle,
         isRunning: false,
         isKillable: false,

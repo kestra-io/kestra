@@ -163,7 +163,7 @@
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.flow.namespace,
                     id: this.flow.id,
-                    tab: "source"
+                    tab: "editor"
                 }})
             },
         },

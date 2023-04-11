@@ -33,6 +33,8 @@
         style: CSSProperties,
         yamlSource: String,
         flowablesIds: Array<String>,
+        isReadOnly: Boolean,
+        isAllowedEdit: Boolean
     }
 
     const props = defineProps<CustomEdgeProps>()
@@ -162,7 +164,7 @@
         const taskId = addInformation.insertPosition === 'before' ? props.data.nextTaskId : addInformation.taskId;
 
         if (execution || !taskId) {
-            return ;
+            return;
         }
 
         if (!props.data.initTask) {
@@ -214,21 +216,20 @@
             }"
             class="nodrag nopan"
             :class="props.data.edge.relation.relationType"
-
         >
             <el-tooltip placement="bottom" :persistent="false" transition="" :hide-after="0">
                 <template #content>
-                    <template v-if="!isHover">
-                        {{ getEdgeLabel(props.data.edge.relation) }}
+                    <template v-if="isHover && !isReadOnly && isAllowedEdit">
+                        {{ getEdgeLabel(props.data.edge.relation) }}<br/>
+                        <span v-html="addTooltip()"/>
                     </template>
                     <template v-else>
-                        {{ getEdgeLabel(props.data.edge.relation) }}<br/>
-                        <span v-html="addTooltip()" />
+                        {{ getEdgeLabel(props.data.edge.relation) }}
                     </template>
                 </template>
                 <span>
-                    <el-button v-if="!isHover" :icon="getEdgeIcon(props.data.edge.relation)" link/>
-                    <el-button v-else :icon="Plus" link @click="isOpen = true"/>
+                    <el-button v-if="isHover && !isReadOnly && isAllowedEdit" :icon="Plus" link @click="isOpen = true"/>
+                    <el-button v-else :icon="getEdgeIcon(props.data.edge.relation)" link/>
                 </span>
             </el-tooltip>
 
@@ -249,7 +250,9 @@
                 </el-form>
                 <template #footer>
                     <ValidationError link :error="taskError"/>
-                    <el-button :disabled="!taskHaveId() || taskError" :icon="ContentSave" @click="forwardTask" type="primary">
+                    <el-button :disabled="!taskHaveId() || taskError" :icon="ContentSave" @click="forwardTask"
+                               type="primary"
+                    >
                         {{ $t("save") }}
                     </el-button>
                 </template>

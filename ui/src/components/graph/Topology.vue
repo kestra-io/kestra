@@ -1,5 +1,5 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch, getCurrentInstance, computed, onBeforeUnmount} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount} from "vue";
     import {mapState, useStore} from "vuex"
     import {VueFlow, Panel, useVueFlow, Position, MarkerType, PanelPosition} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
@@ -10,6 +10,9 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileEdit from "vue-material-design-icons/FileEdit.vue";
     import Exclamation from "vue-material-design-icons/Exclamation.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
 
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
@@ -33,6 +36,7 @@
     import editor from "../inputs/Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
+    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
 
     const {
         id,
@@ -54,7 +58,6 @@
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
     const emit = defineEmits(["follow"])
-    const user = store.getters["user/user"];
     const flow = store.getters["flow/flow"];
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -124,6 +127,7 @@
     const timer = ref(null);
     const dragging = ref(false);
     const taskError = ref(store.getters["flow/taskError"])
+    const user = store.getters["auth/user"];
 
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
@@ -479,9 +483,9 @@
 
     const isAllowedEdit = () => {
         if (props.isCreating) {
-            return user.isAllowed(permission.FLOW, action.CREATE, props.namespace);
+            return user && user.isAllowed(permission.FLOW, action.CREATE, props.namespace);
         } else {
-            return user.isAllowed(permission.FLOW, action.UPDATE, flow.namespace);
+            return user && user.isAllowed(permission.FLOW, action.UPDATE, flow.namespace);
         }
     };
 
@@ -798,6 +802,64 @@
             })
     };
 
+    const canExecute = () => {
+        return user.isAllowed(permission.EXECUTION, action.CREATE, namespace)
+    }
+
+    const canDelete = () => {
+        return (
+            user.isAllowed(
+                permission.FLOW,
+                action.DELETE,
+                namespace
+            )
+        );
+    }
+
+    const deleteFlow = () => {
+        const metadata = getFlowMetadata();
+
+        return http
+            .get(`/api/v1/flows/${metadata.namespace}/${metadata.id}/dependencies`, {params: {destinationOnly: true}})
+            .then(response => {
+                let warning = "";
+
+                if (response.data && response.data.nodes) {
+                    const deps = response.data.nodes
+                        .filter(n => !(n.namespace === metadata.namespace && n.id === metadata.id))
+                        .map(n => "<li>" + n.namespace + ".<code>" + n.id + "</code></li>")
+                        .join("\n");
+
+                    warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                        "<div class=\"el-alert__content\">\n" +
+                        "<p class=\"el-alert__description\">\n" +
+                        this.$t("dependencies delete flow") +
+                        "<ul>\n" +
+                        deps +
+                        "</ul>\n" +
+                        "</p>\n" +
+                        "</div>\n" +
+                        "</div>"
+                }
+
+                return t("delete confirm", {name: metadata.id}) + warning;
+            }).then(message => {
+                toast
+                    .confirm(message, () => {
+                        return store
+                            .dispatch("flow/deleteFlow", metadata)
+                            .then(() => {
+                                return router.push({
+                                    name: "flows/list"
+                                });
+                            })
+                            .then(() => {
+                                toast.deleted(metadata.id);
+                            })
+                    });
+            });
+    }
+
 </script>
 
 <template>
@@ -832,6 +894,8 @@
                         @addFlowableError="onAddFlowableError"
                         @mouseover="onMouseOver"
                         @mouseleave="onMouseLeave"
+                        :is-read-only="isReadOnly"
+                        :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
 
@@ -840,6 +904,8 @@
                         v-bind="props"
                         @edit="onEdit"
                         @delete="onDelete"
+                        :is-read-only="isReadOnly"
+                        :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
 
@@ -849,6 +915,8 @@
                         :yaml-source="flowYaml"
                         :flowables-ids="flowables()"
                         @edit="onCreateNewTask"
+                        :is-read-only="isReadOnly"
+                        :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
 
@@ -957,37 +1025,82 @@
     </el-card>
     <bottom-line>
         <ul>
-            <li>
-                <el-button
-                    :icon="Exclamation"
-                    size="large"
-                    v-if="isAllowedEdit"
-                    @click="isNewErrorOpen = true;"
-                    :disabled="!flowHaveTasks()"
-                >
-                    {{ $t("add global error handler") }}
-                </el-button>
-            </li>
-            <li>
-                <el-button
-                    :icon="LightningBolt"
-                    size="large"
-                    v-if="isAllowedEdit"
-                    @click="isNewTriggerOpen = true;"
-                    :disabled="!flowHaveTasks()"
-                >
-                    {{ $t("add trigger") }}
-                </el-button>
-            </li>
-            <li>
-                <el-button
-                    :icon="FileEdit"
-                    size="large"
-                    v-if="isAllowedEdit"
-                    @click="isEditMetadataOpen = true;"
-                >
-                    {{ $t("edit metadata") }}
-                </el-button>
+            <li v-if="(isAllowedEdit || canDelete) && !isReadOnly">
+                <el-dropdown>
+                    <el-button size="large" type="default">
+                        <DotsVertical title="" />
+                        {{ t("actions") }}
+                    </el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu class="dropdown-menu">
+                            <el-dropdown-item v-if="!props.isCreating && canDelete">
+                                <el-button
+                                    :link="true"
+                                    class="dropdown-button"
+                                    :icon="Delete"
+                                    size="large"
+                                    @click="deleteFlow"
+                                >
+                                    {{ $t("delete") }}
+                                </el-button>
+                            </el-dropdown-item>
+
+                            <el-dropdown-item v-if="!props.isCreating">
+                                <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
+                                    <el-button
+                                        :link="true"
+                                        class="dropdown-button"
+                                        :icon="ContentCopy"
+                                        size="large"
+                                    >
+                                        {{ $t("copy") }}
+                                    </el-button>
+                                </router-link>
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                                v-if="isAllowedEdit"
+                            >
+                                <el-button
+                                    :link="true"
+                                    class="dropdown-button"
+                                    :icon="Exclamation"
+                                    size="large"
+                                    @click="isNewErrorOpen = true;"
+                                    :disabled="!flowHaveTasks()"
+                                >
+                                    {{ $t("add global error handler") }}
+                                </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                                v-if="isAllowedEdit"
+                            >
+                                <el-button
+                                    :link="true"
+                                    class="dropdown-button"
+                                    :icon="LightningBolt"
+                                    size="large"
+                                    @click="isNewTriggerOpen = true;"
+                                    :disabled="!flowHaveTasks()"
+                                >
+                                    {{ $t("add trigger") }}
+                                </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                                v-if="isAllowedEdit"
+                            >
+                                <el-button
+                                    :link="true"
+                                    class="dropdown-button"
+                                    :icon="FileEdit"
+                                    size="large"
+                                    @click="isEditMetadataOpen = true;"
+                                >
+                                    {{ $t("edit metadata") }}
+                                </el-button>
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </li>
             <li v-if="flow">
                 <trigger-flow
@@ -1069,6 +1182,20 @@
 
         html.dark & {
             background-color: var(--bs-gray-500);
+        }
+    }
+
+    .dropdown-menu {
+        display: flex;
+        flex-direction: column;
+        width: 20rem;
+    }
+
+    .dropdown-button {
+        color: var(--bs-white);
+
+        &:hover {
+            color: var(--bs-white);
         }
     }
 </style>

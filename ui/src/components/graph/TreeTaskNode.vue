@@ -65,7 +65,7 @@
                     :flow-id="task.flowId"
                 />
 
-                <el-tooltip v-if="isFlowable && !this.execution" content="Handle errors" transition="" :hide-after="0" :persistent="false">
+                <el-tooltip v-if="isFlowable && !this.execution && !isReadOnly && isAllowedEdit" content="Handle errors" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
@@ -74,7 +74,7 @@
                     />
                 </el-tooltip>
 
-                <el-tooltip v-if="!this.execution" content="Delete" transition="" :hide-after="0" :persistent="false">
+                <el-tooltip v-if="!this.execution && !isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
@@ -96,6 +96,7 @@
 
                 <el-tooltip content="Edit task" :persistent="false" transition="" :hide-after="0">
                     <task-edit
+                        v-if="!this.isReadOnly && isAllowedEdit"
                         class="node-action"
                         :task="task"
                         :flow-id="flowId"
@@ -190,7 +191,15 @@
             isFlowable: {
                 type: Boolean,
                 required: true
-            }
+            },
+            isReadOnly: {
+                type: Boolean,
+                required: true
+            },
+            isAllowedEdit: {
+                type: Boolean,
+                required: true
+            },
         },
         methods: {
             forwardEvent(type, event) {

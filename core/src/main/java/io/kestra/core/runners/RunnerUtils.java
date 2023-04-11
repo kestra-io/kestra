@@ -268,13 +268,13 @@ public class RunnerUtils {
         return this.runOne(namespace, flowId, null, null, duration);
     }
 
-    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration timeout) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
-            duration
+            timeout
         );
     }
 
@@ -282,16 +282,16 @@ public class RunnerUtils {
         return this.runOne(flow, inputs, null);
     }
 
-    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
-        if (duration == null) {
-            duration = Duration.ofSeconds(15);
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration timeout) throws TimeoutException {
+        if (timeout == null) {
+            timeout = Duration.ofSeconds(15);
         }
 
         Execution execution = this.newExecution(flow, inputs);
 
         return this.awaitExecution(isTerminatedExecution(execution, flow), () -> {
             this.executionQueue.emit(execution);
-        }, duration);
+        }, timeout);
     }
 
     public Execution runOneUntilPaused(String namespace, String flowId) throws TimeoutException {

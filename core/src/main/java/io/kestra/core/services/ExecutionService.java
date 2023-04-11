@@ -22,8 +22,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.With;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,9 +38,6 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @Singleton
 public class ExecutionService {
-    @Inject
-    private ApplicationContext applicationContext;
-
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
 
@@ -57,11 +54,7 @@ public class ExecutionService {
     private MetricRepositoryInterface metricRepository;
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
-            throw new IllegalStateException("Execution must be terminated to be restarted, " +
-                "current state is '" + execution.getState().getCurrent() + "' !"
-            );
-        }
+        throwIfRunning(execution);
 
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
@@ -126,7 +119,7 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, String taskRunId, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || !(execution.getState().isTerminated() ))) {
+        if (!execution.getState().isTerminated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -159,8 +152,8 @@ public class ExecutionService {
         // remove all child for replay task id
         Set<String> taskRunToRemove = GraphService.successors(graphCluster, List.of(taskRunId))
             .stream()
-            .filter(task -> task instanceof AbstractGraphTask)
-            .map(task -> ((AbstractGraphTask) task))
+            .filter(AbstractGraphTask.class::isInstance)
+            .map(AbstractGraphTask.class::cast)
             .filter(task -> task.getTaskRun() != null)
             .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
             .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
@@ -185,14 +178,25 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
-            throw new IllegalStateException("Execution must be terminated to be restarted, " +
-                "current state is '" + execution.getState().getCurrent() + "' !"
-            );
-        }
+        return markAs(UpdateStatusInputDto.builder()
+            .execution(execution)
+            .taskRunId(taskRunId)
+            .newState(newState)
+            .build());
+    }
 
+    public Execution markAs(UpdateStatusInputDto updateStatusInputDto) throws Exception {
+        Execution execution = updateStatusInputDto.getExecution();
+        throwIfRunning(execution);
+
+        return markAsWithoutCheck(updateStatusInputDto);
+    }
+
+    private Execution markAsWithoutCheck(UpdateStatusInputDto updateStatusInputDto) throws Exception {
+        Execution execution = updateStatusInputDto.getExecution();
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
+        String taskRunId = updateStatusInputDto.getTaskRunId();
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -205,6 +209,7 @@ public class ExecutionService {
             boolean isFlowable = flow.findTaskByTaskId(originalTaskRun.getTaskId()).isFlowable();
 
             if (!isFlowable || s.equals(taskRunId)) {
+                State.Type newState = updateStatusInputDto.getNewState();
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
@@ -223,14 +228,33 @@ public class ExecutionService {
             .withState(State.Type.RESTARTED);
     }
 
-    public List<Execution> bulkMarkAs(final List<Triple<Execution, String, State.Type>> executionWTaskRunIdWNewState){
-        return executionWTaskRunIdWNewState.stream().map(e -> {
+    public List<Execution> bulkMarkAs(final List<UpdateStatusInputDto> executionWTaskRunIdWNewState) {
+        executionWTaskRunIdWNewState.stream().map(UpdateStatusInputDto::getExecution).forEach(ExecutionService::throwIfRunning);
+
+        return executionWTaskRunIdWNewState.stream().map(updateStatusInputDto -> {
             try {
-                return this.markAs(e.getLeft(), e.getMiddle(), e.getRight());
+                return this.markAsWithoutCheck(updateStatusInputDto);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         }).collect(Collectors.toList());
+    }
+
+    private static void throwIfRunning(Execution execution) {
+        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
+            throw new IllegalStateException("Execution must be terminated to be restarted, " +
+                "current state is '" + execution.getState().getCurrent() + "' !"
+            );
+        }
+    }
+
+    @With
+    @Getter
+    @Builder(toBuilder = true)
+    public static class UpdateStatusInputDto {
+        private Execution execution;
+        private String taskRunId;
+        private State.Type newState;
     }
 
     public PurgeResult purge(
@@ -263,7 +287,7 @@ public class ExecutionService {
                     builder.logsCount(this.logRepository.purge(execution));
                 }
 
-                if(purgeMetric) {
+                if (purgeMetric) {
                     this.metricRepository.purge(execution);
                 }
 
@@ -362,8 +386,7 @@ public class ExecutionService {
         if (!task.isFlowable() || task instanceof Worker) {
             // The current task run is the reference task run, its default state will be newState
             alterState = originalTaskRun.withState(newStateType).getState();
-        }
-        else {
+        } else {
             // The current task run is an ascendant of the reference task run
             alterState = originalTaskRun.withState(State.Type.RUNNING).getState();
         }

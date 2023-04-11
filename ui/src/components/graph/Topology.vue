@@ -404,6 +404,9 @@
     }
 
     onMounted(() => {
+        if (props.isCreating) {
+            store.commit("flow/setFlowGraph", undefined);
+        }
         initYamlSource();
         generateGraph();
         // Regenerate graph on window resize
@@ -429,8 +432,8 @@
         document.removeEventListener("popstate", () => {
             stopTour();
         });
-        store.commit("flow/setFlowGraph", undefined);
     })
+
 
     const stopTour = () => {
         tours["guidedTour"].stop();
@@ -564,7 +567,8 @@
                 }
                 onEdit(YamlUtils.deleteTask(flowYaml.value, event.id, section));
             },
-            () => {}
+            () => {
+            }
         )
     }
 

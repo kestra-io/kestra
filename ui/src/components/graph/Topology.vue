@@ -122,7 +122,7 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined"));
+    const showTopology = ref(props.execution || props.isReadOnly ? "topology" : "doc");
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
@@ -432,6 +432,7 @@
     })
 
     onBeforeUnmount(() => {
+        store.commit()
         document.removeEventListener("keydown", save);
         document.removeEventListener("popstate", () => {
             stopTour();
@@ -1033,70 +1034,53 @@
                     </el-button>
                     <template #dropdown>
                         <el-dropdown-menu class="dropdown-menu">
-                            <el-dropdown-item v-if="!props.isCreating && canDelete">
-                                <el-button
-                                    :link="true"
-                                    class="dropdown-button"
-                                    :icon="Delete"
-                                    size="large"
-                                    @click="deleteFlow"
-                                >
-                                    {{ $t("delete") }}
-                                </el-button>
+                            <el-dropdown-item
+                                v-if="!props.isCreating && canDelete"
+                                class="dropdown-button"
+                                :icon="Delete"
+                                size="large"
+                                @click="deleteFlow"
+                            >
+                                {{ $t("delete") }}
                             </el-dropdown-item>
 
-                            <el-dropdown-item v-if="!props.isCreating">
-                                <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
-                                    <el-button
-                                        :link="true"
-                                        class="dropdown-button"
-                                        :icon="ContentCopy"
-                                        size="large"
-                                    >
-                                        {{ $t("copy") }}
-                                    </el-button>
-                                </router-link>
+                            <el-dropdown-item
+                                v-if="!props.isCreating"
+                                class="dropdown-button"
+                                :icon="ContentCopy"
+                                size="large"
+                                @click="() => router.push({name: 'flows/create', query: {copy: true}})"
+                            >
+                                {{ $t("copy") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="isAllowedEdit"
+                                class="dropdown-button"
+                                :icon="Exclamation"
+                                size="large"
+                                @click="isNewErrorOpen = true;"
+                                :disabled="!flowHaveTasks()"
                             >
-                                <el-button
-                                    :link="true"
-                                    class="dropdown-button"
-                                    :icon="Exclamation"
-                                    size="large"
-                                    @click="isNewErrorOpen = true;"
-                                    :disabled="!flowHaveTasks()"
-                                >
-                                    {{ $t("add global error handler") }}
-                                </el-button>
+                                {{ $t("add global error handler") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="isAllowedEdit"
+                                class="dropdown-button"
+                                :icon="LightningBolt"
+                                size="large"
+                                @click="isNewTriggerOpen = true;"
+                                :disabled="!flowHaveTasks()"
                             >
-                                <el-button
-                                    :link="true"
-                                    class="dropdown-button"
-                                    :icon="LightningBolt"
-                                    size="large"
-                                    @click="isNewTriggerOpen = true;"
-                                    :disabled="!flowHaveTasks()"
-                                >
-                                    {{ $t("add trigger") }}
-                                </el-button>
+                                {{ $t("add trigger") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="isAllowedEdit"
+                                class="dropdown-button"
+                                :icon="FileEdit"
+                                size="large"
+                                @click="isEditMetadataOpen = true;"
                             >
-                                <el-button
-                                    :link="true"
-                                    class="dropdown-button"
-                                    :icon="FileEdit"
-                                    size="large"
-                                    @click="isEditMetadataOpen = true;"
-                                >
-                                    {{ $t("edit metadata") }}
-                                </el-button>
+                                {{ $t("edit metadata") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
@@ -1189,13 +1173,5 @@
         display: flex;
         flex-direction: column;
         width: 20rem;
-    }
-
-    .dropdown-button {
-        color: var(--bs-white);
-
-        &:hover {
-            color: var(--bs-white);
-        }
     }
 </style>

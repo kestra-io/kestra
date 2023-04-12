@@ -1,18 +1,18 @@
 package io.kestra.repository.memory;
 
 import io.kestra.core.models.executions.Execution;
-import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
 
+import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.inject.Singleton;
-
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -21,12 +21,18 @@ public class MemoryLogRepository implements LogRepositoryInterface {
 
     @Override
     public List<LogEntry> findByExecutionId(String id, Level minLevel) {
-        throw new UnsupportedOperationException();
+        return logs
+            .stream()
+            .filter(logEntry -> logEntry.getExecutionId().equals(id) && logEntry.getLevel().equals(minLevel))
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
-        throw new UnsupportedOperationException();
+        return logs
+            .stream()
+            .filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getTaskId().equals(taskId) && logEntry.getLevel().equals(minLevel))
+            .collect(Collectors.toList());
     }
 
     @Override

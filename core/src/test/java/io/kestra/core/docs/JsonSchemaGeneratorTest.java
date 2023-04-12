@@ -6,7 +6,8 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.scripts.ScriptOutput;
+import io.kestra.core.tasks.debugs.Echo;
+import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.Helpers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -84,6 +85,7 @@ class JsonSchemaGeneratorTest {
             assertThat((String) bash.get("markdownDescription"), containsString("outputFiles.first"));
 
             var bashType = definitions.get("io.kestra.core.tasks.scripts.Bash-2");
+            assertThat(bashType, is(notNullValue()));
 
             var python = definitions.get("io.kestra.core.tasks.scripts.Python-1");
             assertThat((List<String>) python.get("required"), not(contains("exitOnFailed")));
@@ -138,6 +140,43 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void returnTask() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) -> {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Return.class);
+            var definitions = (Map<String, Map<String, Object>>) returnSchema.get("definitions");
+            var returnTask = definitions.get("io.kestra.core.tasks.debugs.Return-1");
+            var metrics = (List<Object>) returnTask.get("$metrics");
+            assertThat(metrics.size(), is(2));
+
+            var firstMetric = (Map<String, Object>) metrics.get(0);
+            assertThat(firstMetric.get("name"), is("length"));
+            assertThat(firstMetric.get("type"), is("counter"));
+            var secondMetric = (Map<String, Object>) metrics.get(1);
+            assertThat(secondMetric.get("name"), is("duration"));
+            assertThat(secondMetric.get("type"), is("timer"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void echoTask() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) -> {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Echo.class);
+            System.out.println(returnSchema);
+            var definitions = (Map<String, Map<String, Object>>) returnSchema.get("definitions");
+            var returnTask = definitions.get("io.kestra.core.tasks.debugs.Echo-1");
+            var deprecated = (String) returnTask.get("$deprecated");
+            assertThat(deprecated, is("true"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
     @Test
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);

@@ -42,6 +42,9 @@ kestra:
       logs:
         table: "logs"
         cls: io.kestra.core.models.executions.LogEntry
+      metrics:
+        table: "metrics"
+        cls: io.kestra.core.models.executions.MetricEntry
       multipleconditions:
         table: "multipleconditions"
         cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow

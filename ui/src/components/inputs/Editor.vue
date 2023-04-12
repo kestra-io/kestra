@@ -1,17 +1,25 @@
 <template>
-    <div class="ks-editor">
+    <div class="ks-editor edit-flow-editor">
         <nav v-if="original === undefined && navbar" class="top-nav">
-            <el-button-group>
-                <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
-                    <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
-                </el-tooltip>
-                <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
-                    <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
-                </el-tooltip>
-                <el-tooltip v-if="schemaType === 'flow'" :content="$t('Reset guided tour')" :persistent="false" transition="" :hide-after="0">
-                    <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
-                </el-tooltip>
-            </el-button-group>
+            <div>
+                <el-button-group>
+                    <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
+                        <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
+                    </el-tooltip>
+                    <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
+                        <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
+                    </el-tooltip>
+                    <el-tooltip
+                        v-if="schemaType === 'flow' && creating"
+                        :content="$t('Reset guided tour')"
+                        :persistent="false"
+                        transition=""
+                        :hide-after="0"
+                    >
+                        <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
+                    </el-tooltip>
+                </el-button-group>
+            </div>
         </nav>
 
         <div class="editor-container" ref="container" :class="containerClass">
@@ -27,8 +35,8 @@
                     @editor-did-mount="editorDidMount"
                     :language="lang"
                     :schema-type="schemaType"
+                    class="position-relative"
                 />
-
                 <div
                     v-show="showPlaceholder"
                     class="placeholder"
@@ -46,7 +54,9 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapGetters, mapState} from "vuex";
+    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
+    import Close from "vue-material-design-icons/Close.vue";
 
     const MonacoEditor = defineAsyncComponent(() =>
         import("./MonacoEditor.vue")
@@ -66,12 +76,13 @@
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
             lineNumbers: {type: Boolean, default: undefined},
-            minimap: {type: Boolean, default: true},
+            minimap: {type: Boolean, default: false},
+            creating: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
         },
-        emits: ["save", "focusout", "tab", "update:modelValue"],
+        emits: ["save", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
         editor: undefined,
         data() {
             return {
@@ -80,11 +91,18 @@
                     UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
                     UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
                     Help: shallowRef(Help),
+                    BookMultipleOutline: shallowRef(BookMultipleOutline),
+                    Close: shallowRef(Close)
                 },
                 oldDecorations: [],
+                editorDocumentation: undefined,
+                plugin: undefined,
+                taskType: undefined,
             };
         },
         computed: {
+            ...mapGetters("core", ["guidedProperties"]),
+            ...mapGetters("flow", ["flowError"]),
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
@@ -100,7 +118,7 @@
             },
             showPlaceholder() {
                 return this.input === true && !this.focus &&
-                    (!Object.hasOwn(this, "editor") || this.editor === undefined|| !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
+                    (!Object.hasOwn(this, "editor") || this.editor === undefined || !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
             },
             options() {
                 const options = {}
@@ -110,13 +128,13 @@
                     options.folding = false;
                     options.renderLineHighlight = "none"
                     options.wordBasedSuggestions = false;
-                    options.occurrencesHighlight= false
+                    options.occurrencesHighlight = false
                     options.hideCursorInOverviewRuler = true
                     options.overviewRulerBorder = false
                     options.overviewRulerLanes = 0
                     options.lineNumbersMinChars = 0;
                     options.fontSize = 13;
-                    options.minimap =  {
+                    options.minimap = {
                         enabled: false
                     }
                     options.scrollBeyondLastColumn = 0;
@@ -147,7 +165,7 @@
                 }
 
                 if (this.minimap === false) {
-                    options.minimap =  {
+                    options.minimap = {
                         enabled: false
 
                     }
@@ -160,10 +178,10 @@
                 options.wordWrap = true
                 options.automaticLayout = true;
 
-                return  {
+                return {
                     ...{
                         tabSize: 2,
-                        fontFamily: "'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+                        fontFamily: "'Source Code Pro', monospace",
                         fontSize: 12,
                         showFoldingControls: "always",
                         scrollBeyondLastLine: false,
@@ -171,8 +189,11 @@
                     },
                     ...options
                 };
-            },
-            ...mapGetters("core", ["guidedProperties"]),
+            }
+        },
+        created() {
+            this.$store.dispatch("plugin/list");
+            this.editorDocumentation = localStorage.getItem("editorDocumentation") !== "false" && this.navbar;
         },
         methods: {
             editorDidMount(editor) {
@@ -207,9 +228,12 @@
                 });
 
                 if (this.input) {
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {})
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {})
-                    this.editor.addCommand(KeyCode.F1, () => {})
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {
+                    })
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {
+                    })
+                    this.editor.addCommand(KeyCode.F1, () => {
+                    })
                 }
 
                 if (this.original === undefined && this.navbar && this.fullHeight) {
@@ -257,35 +281,44 @@
                     editor.onDidContentSizeChange(e => {
                         this.$refs.container.style.height = (e.contentHeight + 7) + "px";
                     });
+
+                    this.editor.onDidContentSizeChange(_ => {
+                        if (this.guidedProperties.monacoRange) {
+                            editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
+                            let decorations = [
+                                {
+                                    range: this.guidedProperties.monacoRange,
+                                    options: {
+                                        isWholeLine: true,
+                                        inlineClassName: "highlight-text"
+                                    },
+                                    className: "highlight-text",
+                                }
+                            ];
+                            decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
+                                {
+                                    range: this.guidedProperties.monacoDisableRange,
+                                    options: {
+                                        isWholeLine: true,
+                                        inlineClassName: "disable-text"
+                                    },
+                                    className: "disable-text",
+                                },
+                            ]) : decorations;
+                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                        } else {
+                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                        }
+                    });
                 }
 
-                this.editor.onDidContentSizeChange(_ => {
-                    if (this.guidedProperties.monacoRange) {
-                        editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
-                        let decorations = [
-                            {
-                                range: this.guidedProperties.monacoRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "highlight-text"
-                                },
-                                className: "highlight-text",
-                            }
-                        ];
-                        decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
-                            {
-                                range: this.guidedProperties.monacoDisableRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "disable-text"
-                                },
-                                className: "disable-text",
-                            },
-                        ]) : decorations;
-                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
-                    } else {
-                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
-                    }
+                this.editor.onDidChangeCursorPosition(e => {
+                    let position = this.editor.getPosition();
+                    let model = this.editor.getModel();
+                    clearTimeout(this.lastTimeout);
+                    this.lastTimeout = setTimeout(() => {
+                        this.$emit("cursor", {position: position, model: model})
+                    }, 100);
                 });
             },
             autoFold(autoFold) {
@@ -306,23 +339,27 @@
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.$store.commit("core/setGuidedProperties", {
-                    tourStarted:false,
+                    tourStarted: false,
                     flowSource: undefined,
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: false,
                     monacoRange: undefined,
-                    monacoDisableRange: undefined}
+                    monacoDisableRange: undefined
+                }
                 );
                 this.$tours["guidedTour"].start();
-            },
+                this.$emit("restartGuidedTour", true);
+            }
         },
     };
 </script>
 
 <style lang="scss">
+
     .ks-editor {
         width: 100%;
+
         .top-nav {
             background-color: var(--bs-gray-300);
             padding: calc(var(--spacer) / 2);
@@ -337,8 +374,9 @@
 
         .editor-container {
             display: flex;
+
             &.full-height {
-                height: calc(100vh - 361px);
+                height: calc(100vh - 379px);
             }
 
             &.diff {
@@ -355,7 +393,7 @@
                 padding-top: 7px;
 
                 html.dark & {
-                    background-color: var(--bs-gray-100-darken-5);
+                    background-color: var(--bs-gray-100);
                 }
             }
 
@@ -371,8 +409,8 @@
             }
 
             .editor-wrapper {
+                min-width: 75%;
                 width: 100%;
-                position: relative;
 
                 .monaco-hover-content {
                     h4 {
@@ -383,6 +421,7 @@
 
                     p {
                         margin-bottom: calc(var(--spacer) / 2);
+
                         &:last-child {
                             display: none;
                         }
@@ -399,14 +438,14 @@
 
     html.dark {
         .monaco-editor, .monaco-editor-background {
-            background-color: var(--bs-gray-100-darken-5);
-            --vscode-editor-background: var(--bs-gray-100-darken-5);
-            --vscode-breadcrumb-background: var(--bs-gray-100-darken-5);
-            --vscode-editorGutter-background: var(--bs-gray-100-darken-5);
+            background-color: var(--input-bg);
+            --vscode-editor-background: var(--input-bg);
+            --vscode-breadcrumb-background: var(--input-bg);
+            --vscode-editorGutter-background: var(--input-bg);
         }
 
         .monaco-editor .margin {
-            background-color: var(--bs-gray-100-darken-5);
+            background-color: var(--input-bg);
         }
     }
 
@@ -416,12 +455,25 @@
         box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
 
         html.dark & {
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255, 255, 255, 0.2);
         }
     }
 
     .disable-text {
         color: grey !important;
+    }
+
+    div.img {
+        min-height: 130px;
+        height: 100%;
+
+        &.get-started {
+            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat center;
+
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
+            }
+        }
     }
 
 </style>

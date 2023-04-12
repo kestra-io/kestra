@@ -58,12 +58,32 @@ public class Execution implements DeletedInterface {
 
     String parentId;
 
+    String originalId;
+
     @With
     ExecutionTrigger trigger;
 
     @NotNull
     @Builder.Default
     boolean deleted = false;
+
+    public static class ExecutionBuilder {
+        void prebuild() {
+            this.originalId = this.id;
+        }
+    }
+
+    public static ExecutionBuilder builder() {
+        return new CustomExecutionBuilder();
+    }
+
+    private static class CustomExecutionBuilder extends ExecutionBuilder {
+        @Override
+        public Execution build() {
+            this.prebuild();
+            return super.build();
+        }
+    }
 
     public Execution withState(State.Type state) {
         return new Execution(
@@ -76,6 +96,7 @@ public class Execution implements DeletedInterface {
             this.variables,
             this.state.withState(state),
             this.parentId,
+            this.originalId,
             this.trigger,
             this.deleted
         );
@@ -104,6 +125,7 @@ public class Execution implements DeletedInterface {
             this.variables,
             this.state,
             this.parentId,
+            this.originalId,
             this.trigger,
             this.deleted
         );
@@ -120,6 +142,7 @@ public class Execution implements DeletedInterface {
             this.variables,
             state,
             childExecutionId != null ? this.getId() : null,
+            this.originalId,
             this.trigger,
             this.deleted
         );
@@ -260,7 +283,7 @@ public class Execution implements DeletedInterface {
 
         return Streams.findLast(this.taskRunList
             .stream()
-            .filter(t -> !t.getState().isTerminated())
+            .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
         );
     }
 

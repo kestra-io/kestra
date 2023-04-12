@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
@@ -17,7 +16,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Slugify;
@@ -36,8 +34,6 @@ import java.util.stream.Stream;
 
 @NoArgsConstructor
 public class RunContext {
-    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
-
     // Injected
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;
@@ -223,11 +219,16 @@ public class RunContext {
         }
 
         if (execution != null) {
+            ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.<String, Object>builder()
+                .put("id", execution.getId())
+                .put("startDate", execution.getState().getStartDate());
+
+            if (execution.getOriginalId() != null) {
+                executionMap.put("originalId", execution.getOriginalId());
+            }
+
             builder
-                .put("execution", ImmutableMap.of(
-                    "id", execution.getId(),
-                    "startDate", execution.getState().getStartDate()
-                ));
+                .put("execution", executionMap.build());
 
             if (execution.getTaskRunList() != null) {
                 builder.put("outputs", execution.outputs());

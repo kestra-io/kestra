@@ -7,6 +7,7 @@
                 :lg="8"
                 :md="24"
                 :offset="32"
+                class="mb-4"
             >
                 <onboarding-card
                     :title="card.title"
@@ -33,13 +34,13 @@
                     {
                         title: this.$t("get started"),
                         content: this.$t("get started content"),
-                        imgClass: "get-started",
+                        imgClass: "started",
                         link: "https://kestra.io/docs/getting-started/"
                     },
                     {
                         title: this.$t("watch demo"),
                         content: this.$t("watch demo content"),
-                        imgClass: "demo-video",
+                        imgClass: "demo",
                         link: "<iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/pSz6cPGYPPQ\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen></iframe>"
                     },
                     {

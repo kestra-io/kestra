@@ -15,6 +15,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
@@ -29,7 +30,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -157,7 +157,9 @@ public class Flow implements DeletedInterface {
     }
 
     private Stream<Task> allTasksWithChilds(Task task) {
-        if (task.isFlowable()) {
+        if (task == null) {
+            return Stream.empty();
+        } else if (task.isFlowable()) {
             Stream<Task> taskStream = ((FlowableTask<?>) task).allChildTasks()
                 .stream()
                 .flatMap(this::allTasksWithChilds);
@@ -169,6 +171,19 @@ public class Flow implements DeletedInterface {
         } else {
             return Stream.of(task);
         }
+    }
+
+    public List<Task> allErrorsWithChilds() {
+        var allErrors = allTasksWithChilds().stream()
+            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        if (this.getErrors() != null && !this.getErrors().isEmpty()) {
+            allErrors.addAll(this.getErrors());
+        }
+
+        return allErrors;
     }
 
     public Task findTaskByTaskId(String taskId) throws InternalException {
@@ -268,20 +283,7 @@ public class Flow implements DeletedInterface {
     }
 
     public String generateSource() {
-        try {
-            return JacksonMapper.ofYaml()
-                .writeValueAsString(
-                    JacksonMapper
-                        .ofJson()
-                        .readTree(
-                            jsonMapper.copy()
-                                .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
-                                .writeValueAsString(this)
-                        )
-                );
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return FlowService.generateSource(this, null);
     }
 
     public Flow toDeleted() {

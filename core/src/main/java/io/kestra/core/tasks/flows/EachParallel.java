@@ -33,12 +33,12 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a tasks for a list of value in parallel.",
-    description = "For each `value`, `tasks` will be executed\n" +
-        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` \n" +
-        "The current value is available on vars `{{ taskrun.value }}`.\n" +
-        "The task list will be executed in parallel, for example if you have a 3 value with each one 2 tasks, all the " +
-        "6 tasks will be computed in parallel with out any garantee on the order.\n" +
+    title = "Execute a task for a list of values in parallel.",
+    description = "For each `value`, the `tasks` list will be executed\n" +
+        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]`  or an array of valid JSON strings.\n" +
+        "The current value is available on the variable `{{ taskrun.value }}`.\n" +
+        "The task list will be executed in parallel, for example if you have a 3 values with 2 tasks, all the " +
+        "6 tasks will be computed in parallel without any guarantee on the order.\n" +
         "If you want to have each value in parallel, but no concurrent task for each value, you need to wrap the tasks " +
         "with a `Sequential` tasks"
 )
@@ -54,7 +54,19 @@ import javax.validation.constraints.NotNull;
             }
         ),
         @Example(
-            title = "Handling each value in parralel but only 1 child task for each value at the same time.",
+            code = {
+                "value: ",
+                "- value 1",
+                "- value 2",
+                "- value 3",
+                "tasks:",
+                "  - id: each-value",
+                "    type: io.kestra.core.tasks.debugs.Return",
+                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+            }
+        ),
+        @Example(
+            title = "Handling each value in parallel but only 1 child task for each value at the same time.",
             code = {
                 "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
                 "tasks:",
@@ -80,7 +92,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotBlank
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parrallels tasks",
+        title = "Number of concurrent parallel tasks",
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
     )
     @PluginProperty
@@ -89,7 +101,12 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
     @PluginProperty(dynamic = true)
-    private String value;
+    @Schema(
+        title = "The list of values for this task",
+        description = "The value car be passed as a String, a list of String, or a list of objects",
+        anyOf = {String.class, Object[].class}
+    )
+    private Object value;
 
     @Valid
     @PluginProperty

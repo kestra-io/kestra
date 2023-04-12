@@ -1,8 +1,9 @@
 <script setup>
     import {Handle} from "@vue-flow/core"
     import TreeTriggerNode from "../TreeTriggerNode.vue";
+    import TreeTaskNode from "../TreeTaskNode.vue";
 
-    const emit = defineEmits(["mouseover", "mouseleave", "edit"])
+    const emit = defineEmits(["mouseover", "mouseleave", "edit", "delete"])
 
     const props = defineProps({
         sourcePosition: {
@@ -15,6 +16,14 @@
         },
         data: {
             type: Object,
+            required: true
+        },
+        isReadOnly: {
+            type: Boolean,
+            required: true
+        },
+        isAllowedEdit: {
+            type: Boolean,
             required: true
         },
     })
@@ -45,7 +54,10 @@
         :namespace="data.namespace"
         :flow-id="data.flowId"
         :revision="data.revision"
+        :is-read-only="props.isReadOnly"
+        :is-allowed-edit="props.isAllowedEdit"
         @edit="forwardEvent('edit', $event)"
+        @delete="forwardEvent('delete', $event)"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
     />

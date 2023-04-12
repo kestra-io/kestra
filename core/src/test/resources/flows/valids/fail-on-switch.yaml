@@ -1,0 +1,24 @@
+id: fail-on-switch
+namespace: io.kestra.tests
+
+inputs:
+  - name: param
+    type: STRING
+    required: true
+
+tasks:
+  - id: switch
+    type: io.kestra.core.tasks.flows.Switch
+    value: "{{inputs.param}}"
+    cases:
+      case1:
+        - id: case1
+          type: io.kestra.core.tasks.debugs.Echo
+          format: Case 1
+      case2:
+        - id: case2
+          type: io.kestra.core.tasks.debugs.Echo
+          format: Case 2
+      notexist:
+        - id: fail
+          type: io.kestra.core.tasks.executions.Fail

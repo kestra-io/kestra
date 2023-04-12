@@ -3,21 +3,21 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.github.johnrengelman.shadow" version "8.1.0"
     id "application"
 
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
-    id 'org.gradle.test-retry' version '1.5.0'
+    id 'org.gradle.test-retry' version '1.5.2'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.45.0"
+    id "com.github.ben-manes.versions" version "0.46.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '6.0.0' apply false
 
     // release
-    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
+    id "io.github.gradle-nexus.publish-plugin" version "1.3.0"
     id 'net.researchgate.release' version '3.0.2'
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id 'signing'
@@ -79,14 +79,6 @@ allprojects {
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.13")
-        }
-    }
-
-    // https://github.com/micronaut-projects/micronaut-openapi/issues/894
-    configurations.all {
-        resolutionStrategy {
-            force("io.micronaut.openapi:micronaut-openapi-bom:4.7.1")
-            force("io.micronaut.openapi:micronaut-openapi:4.7.1")
         }
     }
 
@@ -239,12 +231,16 @@ jar {
 }
 
 shadowJar {
-    dependsOn = ['ui:assembleFrontend']
-
     archiveClassifier.set(null)
     mergeServiceFiles()
     zip64 true
 }
+
+distZip.dependsOn shadowJar
+distTar.dependsOn shadowJar
+startScripts.dependsOn shadowJar
+startShadowScripts.dependsOn jar
+shadowJar.dependsOn 'ui:assembleFrontend'
 
 /**********************************************************************************************************************\
  * Executable Jar
@@ -361,9 +357,13 @@ subprojects {
     }
 
     task sourcesJar(type: Jar) {
+        dependsOn = [':core:copyGradleProperties']
+        dependsOn = [':ui:assembleFrontend']
         archiveClassifier.set('sources')
         from sourceSets.main.allSource
     }
+    sourcesJar.dependsOn ':core:copyGradleProperties'
+    sourcesJar.dependsOn ':ui:assembleFrontend'
 
     task javadocJar(type: Jar) {
         archiveClassifier.set('javadoc')

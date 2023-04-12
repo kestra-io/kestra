@@ -26,6 +26,27 @@
                 <span v-if="execution && histories"><duration :histories="histories" /></span>
             </span>
 
+            <el-drawer
+                v-if="isNewErrorOpen"
+                v-model="isNewErrorOpen"
+                title="Add an error handler"
+                destroy-on-close
+                size=""
+                :append-to-body="true"
+            >
+                <el-form label-position="top">
+                    <task-editor
+                        section="tasks"
+                        @update:model-value="onUpdateNewError( $event)"
+                    />
+                </el-form>
+                <template #footer>
+                    <el-button :icon="ContentSave" @click="onSaveNewError()" :disabled="!newError" type="primary">
+                        {{ $t("save") }}
+                    </el-button>
+                </template>
+            </el-drawer>
+
             <el-button-group>
                 <el-button
                     v-if="task.description"
@@ -44,6 +65,24 @@
                     :flow-id="task.flowId"
                 />
 
+                <el-tooltip v-if="isFlowable && !this.execution && !isReadOnly && isAllowedEdit" content="Handle errors" transition="" :hide-after="0" :persistent="false">
+                    <el-button
+                        class="node-action"
+                        size="small"
+                        @click="isNewErrorOpen = true"
+                        :icon="AlertCircleOutline"
+                    />
+                </el-tooltip>
+
+                <el-tooltip v-if="!this.execution && !isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
+                    <el-button
+                        class="node-action"
+                        size="small"
+                        @click="forwardEvent('delete', {id: this.task.id, section: 'tasks'})"
+                        :icon="Delete"
+                    />
+                </el-tooltip>
+
                 <el-tooltip v-if="this.execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
                     <el-button
                         class="node-action"
@@ -55,16 +94,19 @@
                     </el-button>
                 </el-tooltip>
 
-                <task-edit
-                    class="node-action"
-                    :task="task"
-                    :flow-id="flowId"
-                    size="small"
-                    :namespace="namespace"
-                    :revision="revision"
-                    :emit-only="true"
-                    @update:task="forwardEvent('edit', $event)"
-                />
+                <el-tooltip content="Edit task" :persistent="false" transition="" :hide-after="0">
+                    <task-edit
+                        v-if="!this.isReadOnly && isAllowedEdit"
+                        class="node-action"
+                        :task="task"
+                        :flow-id="flowId"
+                        size="small"
+                        :namespace="namespace"
+                        :revision="revision"
+                        :emit-only="true"
+                        @update:task="forwardEvent('edit', $event)"
+                    />
+                </el-tooltip>
             </el-button-group>
             <el-drawer
                 v-if="isOpen && execution"
@@ -108,6 +150,10 @@
     import Collapse from "../layout/Collapse.vue";
     import Duration from "../layout/Duration.vue";
     import TreeNode from "./TreeNode.vue";
+    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import taskEditor from "../flows/TaskEditor.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
     export default {
         components: {
@@ -122,8 +168,9 @@
             Collapse,
             Duration,
             TreeNode,
+            taskEditor
         },
-        emits: ["follow", "edit"],
+        emits: ["follow", "edit", "delete","addFlowableError"],
         props: {
             n: {
                 type: Object,
@@ -141,6 +188,18 @@
                 type: Number,
                 default: undefined
             },
+            isFlowable: {
+                type: Boolean,
+                required: true
+            },
+            isReadOnly: {
+                type: Boolean,
+                required: true
+            },
+            isAllowedEdit: {
+                type: Boolean,
+                required: true
+            },
         },
         methods: {
             forwardEvent(type, event) {
@@ -156,15 +215,33 @@
             onLevelChange(level) {
                 this.logLevel = level;
             },
+            onUpdateNewError(event){
+                this.newError = event;
+            },
+            onSaveNewError(){
+                this.forwardEvent("addFlowableError", {taskId: this.task.id, error: this.newError})
+                this.isNewErrorOpen = false;
+            }
         },
         data() {
             return {
                 logLevel: localStorage.getItem("defaultLogLevel") || "INFO",
                 filter: undefined,
                 isOpen: false,
+                isNewErrorOpen: false,
+                newError: null
             };
         },
         computed: {
+            ContentSave() {
+                return ContentSave
+            },
+            AlertCircleOutline() {
+                return AlertCircleOutline;
+            },
+            Delete() {
+                return Delete;
+            },
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
             ...mapState("execution", ["execution"]),

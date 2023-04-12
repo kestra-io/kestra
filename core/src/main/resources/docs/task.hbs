@@ -109,7 +109,7 @@ icon: {{ icon }}
 {{~/inline~}}
 {{!-- {{                 Main doc                 }} --}}
 <h1>
-    {{#if icon ~}}<img width="25" src="data:image/svg+xml;base64,{{icon}}" alt="{{shortName}}" />{{/if }} {{shortName}}
+    {{#if icon ~}}<img width="25" src="data:image/svg+xml;base64,{{icon}}" alt="{{shortName}}" />{{/if }} {{shortName}} {{~#if deprecated }}- 🔒 Deprecated{{~/if}}
 </h1>
 
 ```yaml
@@ -177,4 +177,14 @@ type: "{{cls}}"
 {{/each}}
 {{/if}}
 {{/each}}
+{{/if}}
+
+{{!-- {{                 Metrics                 }} --}}
+{{#if docMetrics}}
+    ## Metrics
+    {{#each docMetrics  as | metric | ~}}
+        ### `{{name}}`
+        * **Type:** =={{ type }}== {{#if unit }} ({{ unit }}) {{/if}}
+        {{#if description }} > {{ description }} {{/if}}
+    {{/each ~}}
 {{/if}}

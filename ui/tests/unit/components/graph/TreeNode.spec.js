@@ -14,6 +14,9 @@ const localMount = (n, execution) => {
                 execution: execution,
                 flowId: "flowId",
                 namespace: "namespace",
+                isFlowable: false,
+                isReadOnly: false,
+                isAllowedEdit: false
             }
         },
         (store) => {

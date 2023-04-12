@@ -47,9 +47,19 @@ public class RestoreQueueService {
         return this.send(templates, QueueFactoryInterface.TEMPLATE_NAMED, Template.class, noRecreate);
     }
 
-    public int triggers(boolean noRecreate) {
+    public int triggers(boolean noRecreate, boolean noTriggerExecutionId) {
         TriggerRepositoryInterface triggerRepository = applicationContext.getBean(TriggerRepositoryInterface.class);
         List<Trigger> triggers = new ArrayList<>(triggerRepository.findAll());
+
+        if (noTriggerExecutionId) {
+            triggers = triggers
+                .stream()
+                .map(trigger -> trigger.toBuilder()
+                    .executionId(null)
+                    .build()
+                )
+                .collect(Collectors.toList());
+        }
 
         return this.send(triggers, QueueFactoryInterface.TRIGGER_NAMED, Trigger.class, noRecreate);
     }

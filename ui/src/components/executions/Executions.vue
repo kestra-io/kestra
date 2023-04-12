@@ -114,7 +114,7 @@
             </template>
         </data-table>
 
-        <bottom-line>
+        <bottom-line v-if="displayBottomBar">
             <ul>
                 <li v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
                     <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
@@ -124,7 +124,7 @@
                         <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
                             {{ $t('kill') }}
                         </el-button>
-                        <el-button v-if="canDelete" :icon="Delete" size="large" @click="deleteExecutions()">
+                        <el-button v-if="canDelete" :icon="Delete" size="large" type="default" @click="deleteExecutions()">
                             {{ $t('delete') }}
                         </el-button>
                     </bottom-line-counter>
@@ -243,6 +243,10 @@
                 return this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
+            },
+            displayBottomBar() {
+                return (this.executionsSelection.length !== 0 && (this.canUpdate || this.canDelete)) ||
+                    (this.$route.name === "flows/update");
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE);
@@ -397,10 +401,10 @@
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
-                        tab: "source"
-                    }})
+                    namespace: this.flow.namespace,
+                    id: this.flow.id,
+                    tab: "editor"
+                }})
             },
         }
     };

@@ -99,7 +99,7 @@ abstract public class AbstractBash extends Task {
         description = "List of key that will generate temporary files.\n" +
             "On the command, just can use with special variable named `outputFiles.key`.\n" +
             "If you add a files with `[\"first\"]`, you can use the special vars `echo 1 >> {[ outputFiles.first }}`" +
-            " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
+            " and you used on others tasks using `{{ outputs.taskId.outputFiles.first }}`"
     )
     @PluginProperty
     protected List<String> outputFiles;
@@ -110,7 +110,7 @@ abstract public class AbstractBash extends Task {
             "On the command, just can use with special variable named `outputDirs.key`.\n" +
             "If you add a files with `[\"myDir\"]`, you can use the special vars `echo 1 >> {[ outputDirs.myDir }}/file1.txt` " +
             "and `echo 2 >> {[ outputDirs.myDir }}/file2.txt` and both files will be uploaded to internal storage." +
-            " Then you can used them on others tasks using `{{ outputs.taskId.files['myDir/file1.txt'] }}`"
+            " Then you can used them on others tasks using `{{ outputs.taskId.outputFiles['myDir/file1.txt'] }}`"
     )
     @PluginProperty
     protected List<String> outputDirs;

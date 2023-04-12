@@ -10,4 +10,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 public @interface Plugin {
     Example[] examples();
+
+    Metric[] metrics() default {};
 }

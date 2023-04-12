@@ -105,8 +105,11 @@
     div.line {
         white-space: pre-wrap;
         word-break: break-all;
-        padding-right: calc(var(--spacer) / 2);
+        padding: 2px 2px 0 2px;
 
+        span {
+            margin-bottom: 2px;
+        }
         .el-tag {
             border-radius: 0;
             border: 0;
@@ -129,10 +132,10 @@
             span:first-child {
                 margin-right: 6px;
                 font-family: var(--bs-font-sans-serif);
-                color: var(--bs-gray-400);
+                color: var(--bs-gray-500);
 
                 html.dark & {
-                    color: var(--bs-gray-400-darken-15);
+                    color: var(--bs-gray-700);
                 }
                 user-select: none;
 
@@ -142,7 +145,8 @@
             }
 
             &:not(.el-tag), & a {
-                color: var(--bs-gray-600);
+                color: var(--bs-gray-700);
+                border-radius: var(--bs-border-radius);
             }
 
             & a:hover {
@@ -151,6 +155,7 @@
 
             &.log-level {
                 white-space: pre;
+                border-radius: var(--bs-border-radius);
             }
         }
 

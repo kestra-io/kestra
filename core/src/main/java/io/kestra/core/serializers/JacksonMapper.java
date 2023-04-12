@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactoryBuilder;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import io.kestra.core.contexts.KestraClassLoader;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
+import org.yaml.snakeyaml.LoaderOptions;
 
 import java.time.ZoneId;
 import java.util.Map;
@@ -44,11 +46,14 @@ abstract public class JacksonMapper {
 
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.configure(
         new ObjectMapper(
-            new YAMLFactory()
+            YAMLFactory
+                .builder()
+                .loaderOptions(new LoaderOptions())
                 .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
                 .configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER, false)
                 .configure(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID, false)
                 .configure(YAMLGenerator.Feature.SPLIT_LINES, false)
+                .build()
         )
     );
 

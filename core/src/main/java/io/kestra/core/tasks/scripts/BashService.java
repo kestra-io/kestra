@@ -103,9 +103,9 @@ abstract public class BashService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
-            //noinspection unchecked
             return (Map<String, String>) inputFiles;
         } else if (inputFiles instanceof String) {
             final TypeReference<Map<String, String>> reference = new TypeReference<>() {};

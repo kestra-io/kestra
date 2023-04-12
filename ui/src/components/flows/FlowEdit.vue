@@ -1,10 +1,10 @@
 <template>
     <div class="edit-flow-div">
-        <editor class="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" />
+        <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
-                    <el-button :icon="icon.Delete" type="danger" size="large" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="icon.Delete" size="large" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
@@ -22,7 +22,7 @@
                 </li>
 
                 <li>
-                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="info">
+                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="primary">
                         {{ $t('save') }}
                     </el-button>
                 </li>
@@ -53,7 +53,8 @@
                     ContentCopy: shallowRef(ContentCopy),
                     ContentSave: shallowRef(ContentSave),
                     Delete: shallowRef(Delete),
-                }
+                },
+                lastChangeWasGuided: false,
             };
         },
         computed: {
@@ -68,7 +69,7 @@
                     ...this.guidedProperties,
                     tourStarted: false
                 });
-            }
+            },
         },
         created() {
             this.loadFile();
@@ -90,10 +91,15 @@
                 if (localStorage.getItem("tourDoneOrSkip") !== "true") {
                     if (this.guidedProperties.source !== undefined) {
                         this.content = this.guidedProperties.source
+                        this.lastChangeWasGuided = true;
                     }
                     if (this.guidedProperties.saveFlow) {
                         this.save();
                     }
+                }
+                else if(this.lastChangeWasGuided) {
+                    this.content = "";
+                    this.lastChangeWasGuided = false;
                 }
             }
         }

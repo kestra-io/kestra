@@ -16,6 +16,7 @@ public class FlowGraph {
     List<AbstractGraph> nodes;
     List<Edge> edges;
     List<Cluster> clusters;
+    List<String> flowables;
 
     public static FlowGraph of(Flow flow) throws IllegalVariableEvaluationException {
         return FlowGraph.of(flow, null);
@@ -25,6 +26,7 @@ public class FlowGraph {
         GraphCluster graph = GraphService.of(flow, execution);
 
         return FlowGraph.builder()
+            .flowables(GraphService.flowables(flow))
             .nodes(GraphService.nodes(graph))
             .edges(GraphService.edges(graph))
             .clusters(GraphService.clusters(graph, new ArrayList<>())
@@ -34,7 +36,9 @@ public class FlowGraph {
                     .stream()
                     .map(AbstractGraph::getUid)
                     .collect(Collectors.toList()),
-                    g.getValue()
+                    g.getValue(),
+                    g.getKey().getRoot().getUid(),
+                    g.getKey().getEnd().getUid()
                 ))
                 .collect(Collectors.toList())
             )
@@ -59,5 +63,7 @@ public class FlowGraph {
         private final AbstractGraph cluster;
         private final List<String> nodes;
         private final List<String> parents;
+        private final String start;
+        private final String end;
     }
 }

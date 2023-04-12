@@ -6,7 +6,7 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" size="large" v-if="canDelete" @click="deleteExecution">
+                    <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteExecution">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
@@ -47,6 +47,7 @@
     import Tabs from "../../components/Tabs.vue";
 
     import State from "../../utils/state";
+    import ExecutionMetric from "./ExecutionMetric.vue";
 
     export default {
         mixins: [RouteContext],
@@ -145,6 +146,11 @@
                         name: "outputs",
                         component: ExecutionOutput,
                         title: title("outputs")
+                    },
+                    {
+                        name: "metrics",
+                        component: ExecutionMetric,
+                        title: title("metrics")
                     }
                 ];
             },
@@ -152,7 +158,7 @@
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.$route.params.namespace,
                     id: this.$route.params.flowId,
-                    tab: "source"
+                    tab: "editor"
                 }})
             },
             deleteExecution() {

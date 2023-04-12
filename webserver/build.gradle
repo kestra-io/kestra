@@ -1,5 +1,10 @@
 publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 
+if (rootProject.name == "kestra") {
+    processResources {
+        dependsOn(':ui:assembleFrontend')
+    }
+}
 
 dependencies {
 
@@ -21,3 +26,4 @@ dependencies {
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 }
+

@@ -1,10 +1,7 @@
 package io.kestra.core.services;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.Nullable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.conditions.types.MultipleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -12,19 +9,28 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
  * Provides business logic to manipulate {@link Flow}
  */
 @Singleton
+@Slf4j
 public class FlowService {
     @Inject
     RunContextFactory runContextFactory;
@@ -223,6 +229,80 @@ public class FlowService {
         }
 
         return source + "\ndisabled: true";
+    }
+
+    public static String generateSource(Flow flow, @Nullable String source) {
+        try {
+            if (source == null) {
+                return toYamlWithoutDefault(flow);
+            }
+
+            if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(source)) {
+                source = toYamlWithoutDefault(flow);
+            }
+        } catch (JsonProcessingException e) {
+            log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
+        }
+
+        return source;
+    }
+
+    @SneakyThrows
+    private static String toYamlWithoutDefault(Object object) throws JsonProcessingException {
+        String json = JacksonMapper
+            .ofJson()
+            .copy()
+            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
+            .writeValueAsString(object);
+
+        Object map = fixSnakeYaml(JacksonMapper.toMap(json));
+
+        return JacksonMapper.ofYaml().writeValueAsString(map);
+    }
+
+    /**
+     * Dirty hack but only concern previous flow with no source code in org.yaml.snakeyaml.emitter.Emitter:
+     * <pre>
+     * if (previousSpace) {
+     *   spaceBreak = true;
+     * }
+     * </pre>
+     * This control will detect ` \n` as a no valid entry on a string and will break the multiline to transform in single line
+     *
+     * @param object the object to fix
+     * @return the modified object
+     */
+    private static Object fixSnakeYaml(Object object) {
+        if (object instanceof Map) {
+            return ((Map<?, ?>) object)
+                .entrySet()
+                .stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(
+                    fixSnakeYaml(entry.getKey()),
+                    fixSnakeYaml(entry.getValue())
+                ))
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (u, v) -> {
+                        throw new IllegalStateException(String.format("Duplicate key %s", u));
+                    },
+                    LinkedHashMap::new
+                ));
+        } else if (object instanceof Collection) {
+            return ((Collection<?>) object)
+                .stream()
+                .map(FlowService::fixSnakeYaml)
+                .collect(Collectors.toList());
+        } else if (object instanceof String) {
+            String item = (String) object;
+
+            if (item.contains("\n")) {
+                return item.replaceAll("\\s+\\n", "\\\n");
+            }
+        }
+
+        return object;
     }
 
     @AllArgsConstructor

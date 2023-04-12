@@ -1,10 +1,5 @@
 <template>
-    <div class="wrapper" v-if="enabled">
-        <el-button @click="kill" type="warning" class="me-1">
-            <stop-circle-outline />
-            {{ $t("kill") }}
-        </el-button>
-    </div>
+    <status status="KILLING" :title="$t('kill')" v-if="enabled" @click="kill" class="me-1" />
 </template>
 <script>
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
@@ -12,9 +7,10 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import State from "../../utils/state";
+    import Status from "../Status.vue";
 
     export default {
-        components: {StopCircleOutline},
+        components: {StopCircleOutline, Status},
         props: {
             execution: {
                 type: Object,
@@ -48,8 +44,8 @@
     };
 </script>
 
-<style lang="scss">
-.wrapper {
-    display: inline;
-}
+<style lang="scss" scoped>
+    button.el-button {
+        cursor: pointer !important;
+    }
 </style>

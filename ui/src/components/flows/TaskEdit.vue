@@ -18,7 +18,9 @@
             </template>
             <template #footer>
                 <div v-loading="isLoading">
-                    <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !isReadOnly" type="primary">
+                    <ValidationError link  :error="taskError" />
+
+                    <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !isReadOnly" :disabled="taskError !== undefined" type="primary">
                         {{ $t('save') }}
                     </el-button>
                     <el-alert show-icon :closable="false" class="mb-0 mt-3" v-if="revision && isReadOnly" type="warning">
@@ -42,6 +44,7 @@
                         :full-height="false"
                         :navbar="false"
                         lang="yaml"
+                        @update:model-value="onInput"
                     />
                 </el-tab-pane>
                 <el-tab-pane name="form">
@@ -55,7 +58,18 @@
                         ref="editor"
                         v-model="taskYaml"
                         :section="section"
+                        @update:model-value="onInput"
                     />
+                </el-tab-pane>
+                <el-tab-pane v-if="pluginMardown" name="documentation">
+                    <template #label>
+                        <span>
+                            {{ $t('documentation.documentation') }}
+                        </span>
+                    </template>
+                    <div class="documentation">
+                        <markdown :source="pluginMardown" />
+                    </div>
                 </el-tab-pane>
             </el-tabs>
         </el-drawer>
@@ -72,11 +86,13 @@
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
     import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import Utils from "../../utils/utils";
+    import Markdown from "../layout/Markdown.vue";
+    import ValidationError from "./ValidationError.vue";
 
     export default {
-        components: {Editor, TaskEditor},
+        components: {Editor, TaskEditor, Markdown, ValidationError},
         emits: ["update:task"],
         props: {
             component: {
@@ -121,7 +137,6 @@
                                 namespace: this.flow.namespace,
                                 id: this.flow.id
                             });
-
                     }
 
                     return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId).toString();
@@ -131,12 +146,12 @@
             },
             mapSectionWithSchema() {
                 switch (this.section) {
-                    case "tasks":
-                        return "task";
-                    case "triggers":
-                        return "trigger";
-                    default:
-                        return "task";
+                case "tasks":
+                    return "task";
+                case "triggers":
+                    return "trigger";
+                default:
+                    return "task";
                 }
             },
             saveTask() {
@@ -173,6 +188,16 @@
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
+                if(this.task.type) {
+                    this.$store
+                        .dispatch("plugin/load", {cls: this.task.type})
+                }
+            },
+            onInput(value) {
+                clearTimeout(this.timer);
+                this.timer = setTimeout(() => {
+                    this.$store.dispatch("flow/validateTask", {task: value})
+                }, 500);
             },
         },
         data() {
@@ -188,8 +213,17 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapGetters("flow", ["taskError"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["revisions"]),
+            ...mapState("flow", ["revisions"]),
+            ...mapState("plugin", ["plugin"]),
+            pluginMardown() {
+                if(this.plugin && this.plugin.markdown) {
+                    return this.plugin.markdown
+                }
+                return null
+            },
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
             },
@@ -198,7 +232,18 @@
             },
             isReadOnly() {
                 return this.flow && this.revision && this.flow.revision !== this.revision
+            },
+            taskErrorContent() {
+                return this.taskError
+                    ? "<pre style='max-width: 40vw; white-space: pre-wrap'>" + this.taskError + "</pre>"
+                    :  ""
             }
         }
     };
 </script>
+<style scoped lang="scss">
+    // Required, otherwise the doc titles and properties names are not visible
+    .documentation {
+        padding: var(--spacer);
+    }
+</style>

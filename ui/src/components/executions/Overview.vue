@@ -137,6 +137,18 @@
                     });
                 }
 
+                if (this.execution.originalId && this.execution.originalId !== this.execution.id) {
+                    ret.push({
+                        key: this.$t("original execution"),
+                        value: this.execution.originalId,
+                        link: {
+                            flowId: this.execution.flowId,
+                            id: this.execution.originalId,
+                            namespace: this.execution.namespace
+                        }
+                    });
+                }
+
                 return ret;
             },
             inputs() {

@@ -63,10 +63,12 @@ public class JsonSchemaGenerator {
             // hack
             if (cls == Flow.class) {
                 fixFlow(map);
+                fixCondition(map);
             } else if (cls == Task.class) {
                 fixTask(map);
             } else if (cls == AbstractTrigger.class) {
                 fixTrigger(map);
+                fixCondition(map);
             }
 
             return map;
@@ -108,7 +110,7 @@ public class JsonSchemaGenerator {
     @SuppressWarnings("unchecked")
     private static void fixFlow(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var flow = (Map<String, Object>) definitions.get("io.kestra.core.models.flows.Flow");
+        var flow = definitions.get("io.kestra.core.models.flows.Flow");
 
         var requireds = (List<String>) flow.get("required");
         requireds.remove("deleted");
@@ -120,7 +122,7 @@ public class JsonSchemaGenerator {
     @SuppressWarnings("unchecked")
     private static void fixTask(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+        var task = definitions.get("io.kestra.core.models.tasks.Task-2");
         var allOf = (List<Object>) task.get("allOf");
         allOf.remove(1);
     }
@@ -128,8 +130,15 @@ public class JsonSchemaGenerator {
     @SuppressWarnings("unchecked")
     private static void fixTrigger(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
-        var allOf = (List<Object>) task.get("allOf");
+        var trigger = definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
+        var allOf = (List<Object>) trigger.get("allOf");
+        allOf.remove(1);
+    }
+
+    private static void fixCondition(Map<String, Object> map) {
+        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+        var condition = definitions.get("io.kestra.core.models.conditions.Condition-2");
+        var allOf = (List<Object>) condition.get("allOf");
         allOf.remove(1);
     }
 
@@ -230,7 +239,6 @@ public class JsonSchemaGenerator {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
             }
 
-
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
             if (schema != null && schema.deprecated()) {
                 memberAttributes.put("$deprecated", true);
@@ -255,6 +263,27 @@ public class JsonSchemaGenerator {
                     if (examples.size() > 0) {
                         collectedTypeAttributes.set("$examples", context.getGeneratorConfig().createArrayNode().addAll(examples));
                     }
+
+                    List<ObjectNode> metrics = Arrays
+                        .stream(pluginAnnotation.metrics())
+                        .map(metric -> context.getGeneratorConfig().createObjectNode()
+                            .put("name", metric.name())
+                            .put("type", metric.type())
+                            .put("unit", metric.unit())
+                            .put("description", metric.description())
+                        )
+                        .collect(Collectors.toList());
+
+                    if (metrics.size() > 0) {
+                        collectedTypeAttributes.set("$metrics", context.getGeneratorConfig().createArrayNode().addAll(metrics));
+                    }
+                }
+
+                // handle deprecated tasks
+                Schema schema = scope.getType().getErasedType().getAnnotation(Schema.class);
+                Deprecated deprecated = scope.getType().getErasedType().getAnnotation(Deprecated.class);
+                if ((schema != null && schema.deprecated()) || deprecated != null ) {
+                    collectedTypeAttributes.put("$deprecated", "true");
                 }
             });
 
@@ -483,6 +512,12 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$examples")) {
             objectNode.set("$examples", mainClassDef.get("$examples"));
+        }
+        if (mainClassDef.has("$metrics")) {
+            objectNode.set("$metrics", mainClassDef.get("$metrics"));
+        }
+        if (mainClassDef.has("$deprecated")) {
+            objectNode.set("$deprecated", mainClassDef.get("$deprecated"));
         }
     }
 

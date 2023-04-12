@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 public class AutocompleteUtils {
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <T, R> List<R> map(Function<T, R> map, List<T>... lists) throws HttpStatusException {
         Stream<T> stream = Stream.empty();
 
@@ -26,6 +27,7 @@ public class AutocompleteUtils {
     }
 
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <T> List<T> from(List<T>... lists) throws HttpStatusException {
         return AutocompleteUtils
             .map(o -> o, lists);

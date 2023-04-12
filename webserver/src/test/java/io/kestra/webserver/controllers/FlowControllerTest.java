@@ -310,6 +310,20 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void updateFlowMultilineJson() {
+        String flowId = IdUtils.create();
+
+        Flow flow = generateFlowWithFlowable(flowId, "io.kestra.unittest", "\n \n a         \nb\nc");
+
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+        assertThat(result.getId(), is(flow.getId()));
+
+        FlowWithSource withSource = client.toBlocking().retrieve(GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "?source=true").contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+        assertThat(withSource.getId(), is(flow.getId()));
+        assertThat(withSource.getSource(), containsString("format: |2-"));
+    }
+
+    @Test
     void updateTaskFlow() throws InternalException {
         String flowId = IdUtils.create();
 
@@ -481,7 +495,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Files.write(file.toPath(), zip);
 
         try (ZipFile zipFile = new ZipFile(file)) {
-            assertThat(zipFile.stream().count(), is(52L));
+            assertThat(zipFile.stream().count(), is(Helpers.FLOWS_COUNT));
         }
 
         file.delete();

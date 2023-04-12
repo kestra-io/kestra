@@ -46,7 +46,7 @@
                                 </div>
 
                                 <el-dropdown trigger="click">
-                                    <el-button type="primary">
+                                    <el-button type="default">
                                         <DotsVertical title="" />
                                     </el-button>
                                     <template #dropdown>
@@ -58,7 +58,7 @@
                                                 :execution-id="currentTaskRun.outputs.executionId"
                                             />
 
-                                            <metrics :metrics="attempt.metrics" />
+                                            <metrics />
 
                                             <outputs
                                                 :outputs="currentTaskRun.outputs"
@@ -187,7 +187,7 @@
                 this.loadLogs();
             },
             execution: function() {
-                if (this.execution && this.execution.state.current !== State.RUNNING) {
+                if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED ) {
                     this.closeSSE();
                 }
             },
@@ -323,6 +323,10 @@
                 background: var(--bs-gray-400);
                 padding: .375rem .75rem;
                 white-space: nowrap;
+
+                html.dark & {
+                    color: var(--bs-gray-600);
+                }
             }
 
             .task-id, .task-duration {
@@ -345,14 +349,23 @@
                 color: var(--bs-gray-500);
             }
 
-            .task-duration {
+            .task-duration small {
                 white-space: nowrap;
 
+                html.dark & {
+                    color: var(--bs-gray-600);
+                }
+            }
+
+            .el-dropdown {
+                > .el-button {
+                    border: 0;
+                }
             }
 
             .task-status {
                 button {
-
+                    border: 0;
                 }
             }
 

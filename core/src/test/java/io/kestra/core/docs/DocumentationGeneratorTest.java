@@ -1,5 +1,6 @@
 package io.kestra.core.docs;
 
+import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Flow;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -19,13 +20,15 @@ import java.util.Objects;
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class DocumentationGeneratorTest {
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
+
+    @Inject
+    DocumentationGenerator documentationGenerator;
 
     @Test
     void tasks() throws URISyntaxException, IOException {
@@ -65,14 +68,17 @@ class DocumentationGeneratorTest {
     void returnDoc() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class bash = scan.findClass(Return.class.getName()).orElseThrow();
+        Class returnTask = scan.findClass(Return.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, returnTask, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("debugging task that return"));
+        assertThat(render, containsString("Debugging task that return"));
         assertThat(render, containsString("is mostly useful"));
+        assertThat(render, containsString("## Metrics"));
+        assertThat(render, containsString("### `length`\n" + "        * **Type:** ==counter== "));
+        assertThat(render, containsString("### `duration`\n" + "        * **Type:** ==timer== "));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -87,5 +93,30 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("* **Default:** `false`"));
+    }
+
+    @Test
+    void echo() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
+
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render, containsString("Echo"));
+        assertThat(render, containsString("- \uD83D\uDD12 Deprecated"));
+    }
+
+    @Test
+    void pluginDoc() throws IOException, URISyntaxException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin core = pluginScanner.scan();
+
+        List<Document> docs = documentationGenerator.generate(core);
+        Document doc = docs.get(0);
+        assertThat(doc.getIcon(), is(notNullValue()));
+        assertThat(doc.getBody(), containsString("##  <img width=\"25\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMzIiIGhlaWdodD0iMzIiCiAgICAgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgbWVldCIgdmlld0JveD0iMCAwIDMyIDMyIgogICAgIHN0eWxlPSItbXMtdHJhbnNmb3JtOiByb3RhdGUoMzYwZGVnKTsgLXdlYmtpdC10cmFuc2Zvcm06IHJvdGF0ZSgzNjBkZWcpOyB0cmFuc2Zvcm06IHJvdGF0ZSgzNjBkZWcpOyI+CiAgICA8ZGVmcy8+CiAgICA8cGF0aCBkPSJNMjAgMjRoLTR2Mmg0djNoOHYtOGgtOHptMi0xaDR2NGgtNHoiIGZpbGw9IiMwRDE1MjMiLz4KICAgIDxwYXRoIGQ9Ik00IDIwdjJoNC41ODZMMiAyOC41ODZMMy40MTQgMzBMMTAgMjMuNDE0VjI4aDJ2LThINHoiIGZpbGw9IiMwRDE1MjMiLz4KICAgIDxwYXRoCiAgICAgICAgZD0iTTI0IDVhMy45OTYgMy45OTYgMCAwIDAtMy44NTggM0gxNHYyaDYuMTQyYTMuOTQgMy45NCAwIDAgMCAuNDI1IDEuMDE5TDE0IDE3LjU4NkwxNS40MTQgMTlsNi41NjctNi41NjdBMy45NTIgMy45NTIgMCAwIDAgMjQgMTNhNCA0IDAgMCAwIDAtOHptMCA2YTIgMiAwIDEgMSAyLTJhMi4wMDIgMi4wMDIgMCAwIDEtMiAyeiIKICAgICAgICBmaWxsPSIjMEQxNTIzIi8+CiAgICA8cGF0aCBkPSJNOS42OTMgMTIuNzVhNSA1IDAgMCAxIDAtNy41bDEuMzI0IDEuNWEzIDMgMCAwIDAgMCA0LjUwMXoiIGZpbGw9IiMwRDE1MjMiLz4KICAgIDxwYXRoIGQ9Ik03LjA0NyAxNS43NTFhOSA5IDAgMCAxIDAtMTMuNTAxbDEuMzI0IDEuNWE3IDcgMCAwIDAgMCAxMC41MDF6IiBmaWxsPSIjMEQxNTIzIi8+Cjwvc3ZnPg==\" /> flows"));
     }
 }

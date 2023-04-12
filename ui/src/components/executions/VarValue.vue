@@ -3,7 +3,7 @@
         v-if="isFile(value)"
         :icon="Download"
         target="_blank"
-        type="info"
+        type="primary"
         :href="itemUrl(value)"
     >
         {{ $t('download') }}

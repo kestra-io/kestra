@@ -30,7 +30,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pause current execution and wait for a manual approval or a delay"
+    title = "Pause the current execution and wait for a manual approval (changing the task state from the UI) or a delay"
 )
 @Plugin(
     examples = {
@@ -58,10 +58,17 @@ import java.util.Optional;
 public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "Duration of the pause.",
-        description = "If null, a manual approval is need, if not, the delay before automatically continue the execution"
+        description = "If null and no timeout, a manual approval is needed, if not, the delay before continuing the execution"
     )
     @PluginProperty
     private Duration delay;
+
+    @Schema(
+        title = "Timeout of the pause.",
+        description = "If null and no delay, a manual approval is needed, else a manual approval is needed before the timeout or the task will fail"
+    )
+    @PluginProperty
+    private Duration timeout;
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {

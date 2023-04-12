@@ -15,5 +15,7 @@ public interface TriggerRepositoryInterface {
     List<Trigger> findAll();
 
     Trigger save(Trigger trigger);
+
+    void delete(Trigger trigger);
 }
 

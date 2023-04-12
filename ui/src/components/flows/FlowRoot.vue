@@ -26,7 +26,6 @@
 
 <script>
     import Topology from "./Topology.vue";
-    import FlowSource from "./FlowSource.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
@@ -90,6 +89,9 @@
                         name: undefined,
                         component: Topology,
                         title: this.$t("topology"),
+                        props: {
+                            isReadOnly: true
+                        }
                     },
                 ];
 
@@ -115,9 +117,9 @@
 
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        name: "source",
-                        component: FlowSource,
-                        title: this.$t("source"),
+                        name: "editor",
+                        component: Topology,
+                        title: this.$t("editor"),
                     });
                 }
 
@@ -155,13 +157,13 @@
             },
             displayBottomLine() {
                 const name = this.activeTabName();
-                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "topology";
+                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.flow.namespace,
                     id: this.flow.id,
-                    tab: "source"
+                    tab: "editor"
                 }})
             },
         },
@@ -200,7 +202,10 @@
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             canExecute() {
-                return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
+                if(this.flow) {
+                    return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
+                }
+                return false;
             },
         },
         unmounted () {

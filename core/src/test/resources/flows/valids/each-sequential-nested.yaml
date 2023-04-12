@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: 1_each
     type: io.kestra.core.tasks.flows.EachSequential
-    value: '["s1", "s2", "s3"]'
+    value: ["s1", "s2", "s3"]
     tasks:
       - id: 1-1_return
         type: io.kestra.core.tasks.debugs.Return

@@ -70,7 +70,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(1));
         assertThat(filters, hasSize(1));
         assertThat(filters.get(0).getLevel(), is(Level.WARN));
-        assertThat(filters.get(0).getMessage(), is("second io.kestra.core.tasks.debugs.Echo"));
+        assertThat(filters.get(0).getMessage(), is("second io.kestra.core.tasks.log.Log"));
 
 
         filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(2));
@@ -122,24 +122,6 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         );
         assertThat(execution.getTaskRunList().get(1).getOutputs().get("value"), is("task-id"));
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("return"));
-    }
-
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    @Test
-    void metrics() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "return");
-
-        TaskRunAttempt taskRunAttempt = execution.getTaskRunList()
-            .get(1)
-            .getAttempts()
-            .get(0);
-        Counter length = (Counter) taskRunAttempt.findMetrics("length").get();
-        Timer duration = (Timer) taskRunAttempt.findMetrics("duration").get();
-
-        assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(length.getValue(), is(7.0D));
-        assertThat(duration.getValue().getNano(), is(greaterThan(0)));
-        assertThat(duration.getTags().get("format"), is("{{task.id}}"));
     }
 
     @Test

@@ -18,15 +18,24 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get a state from internal storage."
+    title = "Get a state from the state store."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Get a state isolated by flow with `default` state name ",
+            title = "Get the default state for the current flow",
             code = {
                 "id: getState",
                 "type: io.kestra.core.tasks.states.Get",
+            },
+            full = true
+        ),
+        @Example(
+            title = "Get the `myState` state for the current flow",
+            code = {
+                "id: getState",
+                "type: io.kestra.core.tasks.states.Get",
+                "name: myState",
             },
             full = true
         )

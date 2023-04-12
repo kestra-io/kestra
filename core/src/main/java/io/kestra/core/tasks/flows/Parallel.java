@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -33,8 +34,8 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process task in parallel",
-    description = "This task processes tasks in parallel. It makes it convinient to process many tasks at once."
+    title = "Process tasks in parallel",
+    description = "This task processes tasks in parallel. It makes it convenient to process many tasks at once."
 )
 @Plugin(
     examples = {
@@ -66,7 +67,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @NotBlank
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parrallels tasks",
+        title = "Number of concurrent parallel tasks",
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
     )
     @PluginProperty
@@ -74,7 +75,9 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Valid
     @PluginProperty
-    private List<Task> tasks;
+    @NotEmpty
+    @NotNull
+    private List<@NotNull Task> tasks;
 
     @Valid
     @PluginProperty

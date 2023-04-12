@@ -431,9 +431,10 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable @Body Map<String, String> inputs,
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
-        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait
+        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
+        @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) {
-        Optional<Flow> find = flowRepository.findById(namespace, id);
+        Optional<Flow> find = flowRepository.findById(namespace, id, revision);
         if (find.isEmpty()) {
             return null;
         }

@@ -106,8 +106,8 @@
                         content: this.$t("onboarding-content.step1.content"),
                     },
                     {
-                        target: "nav",
                         highlightElement: ".edit-flow-editor",
+                        target: "nav",
                         header: {
                             title: this.$t("onboarding-content.step2.title"),
                         },
@@ -318,8 +318,8 @@
                     "  # " + this.$t("onboarding-flow.taskLog1") + "\n" +
                         "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
                         "  - id: log\n" +
-                        "    type: io.kestra.core.tasks.debugs.Echo\n" +
-                        "    format: The flow starts",
+                        "    type: io.kestra.core.tasks.log.Log\n" +
+                        "    message: The flow starts",
                     "  # " + this.$t("onboarding-flow.taskDL") + "\n" +
                         "  - id: downloadData\n" +
                         "    type: io.kestra.plugin.fs.http.Download\n" +
@@ -375,6 +375,14 @@
             skipTour(currentStep) {
                 this.dispatchEvent(currentStep,"skip")
                 localStorage.setItem("tourDoneOrSkip", "true");
+                this.$store.commit("core/setGuidedProperties", {
+                    ...this.guidedProperties,
+                    tourStarted:false,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: true,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined});
                 return this.$tours["guidedTour"].stop();
             },
             finishTour(currentStep) {
@@ -382,8 +390,8 @@
                 this.dispatchEvent(currentStep,"executed")
                 localStorage.setItem("tourDoneOrSkip", "true");
                 this.$store.commit("core/setGuidedProperties", {
+                    ...this.guidedProperties,
                     tourStarted:false,
-                    flowSource: "",
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: true,

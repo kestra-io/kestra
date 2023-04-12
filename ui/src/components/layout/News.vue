@@ -1,13 +1,13 @@
 <template>
     <el-button class="news-link" @click="show">
-        <gift title="" />
+        <bell title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </el-button>
 
     <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" class="sm" :title="$t('feeds.title')">
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mt-2">
-                <img class="float-right" :src="feed.image" alt="">
+                <img class="float-end" :src="feed.image" alt="">
             </div>
             <h5>
                 {{ feed.title }}
@@ -17,7 +17,7 @@
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
             <div class="text-end">
-                <a class="el-button el-button--primary mt-3 d-inline-block text-end" :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
+                <a class="el-button el-button--primary mt-3 " :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
             </div>
 
             <el-divider v-if="index !== feeds.length - 1" />
@@ -27,7 +27,7 @@
 
 <script>
     import {mapState} from "vuex";
-    import Gift from "vue-material-design-icons/Gift.vue";
+    import Bell from "vue-material-design-icons/Bell.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import CheckboxBlankCircle from "vue-material-design-icons/CheckboxBlankCircle.vue";
     import Markdown from "./Markdown.vue";
@@ -35,7 +35,7 @@
 
     export default {
         components: {
-            Gift,
+            Bell,
             OpenInNew,
             CheckboxBlankCircle,
             Markdown,
@@ -88,10 +88,10 @@
     }
 
     .new {
-        font-size: calc(var(--font-size-sm) * 0.7);
+        font-size: calc(var(--font-size-sm) * 0.7) !important;
         color: var(--el-color-error);
         position: absolute;
-        margin-left: 14px;
+        margin-left: 10px;
         margin-top: -12px;
 
         animation-name: grow;

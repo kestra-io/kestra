@@ -31,9 +31,7 @@ public class FlowableUtils {
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, null);
-
-        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
+        return resolveSequentialNexts(execution, tasks, errors, null);
     }
 
     public static List<NextTaskRun> resolveSequentialNexts(
@@ -193,15 +191,36 @@ public class FlowableUtils {
     private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, String value) throws IllegalVariableEvaluationException {
-        String renderValue = runContext.render(value);
-
+    public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
         List<Object> values;
-        try {
-            values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
-        } catch (JsonProcessingException e) {
-            throw new IllegalVariableEvaluationException(e);
+
+        if(value instanceof String) {
+            String renderValue = runContext.render((String) value);
+            try {
+                values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
+            }
         }
+        else if(value instanceof List) {
+            values = new ArrayList<>(((List<?>) value).size());
+            for(Object obj: (List<Object>) value) {
+                if(obj instanceof String){
+                    values.add(runContext.render((String) obj));
+                }
+                else if(obj instanceof Map) {
+                    //JSON or YAML map
+                    values.add(runContext.render((Map) obj));
+                }
+                else {
+                    throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
+                }
+            }
+        }
+        else {
+            throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
+        }
+
 
         List<Object> distinctValue = values
             .stream()

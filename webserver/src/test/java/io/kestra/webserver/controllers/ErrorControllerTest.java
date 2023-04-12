@@ -2,7 +2,7 @@ package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.tasks.debugs.Echo;
+import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpStatus;
@@ -83,8 +83,8 @@ class ErrorControllerTest {
             "namespace", "io.kestra.test",
             "tasks", Collections.singletonList(ImmutableMap.of(
                 "id", IdUtils.create(),
-                "type", Echo.class.getName(),
-                "format", "Yeah !",
+                "type", Log.class.getName(),
+                "message", "Yeah !",
                 "level", "WRONG"
             ))
         );
@@ -97,7 +97,7 @@ class ErrorControllerTest {
 
         String response = exception.getResponse().getBody(String.class).get();
         assertThat(response, containsString("Cannot deserialize value of type `org.slf4j.event.Level` from String \\\"WRONG\\\""));
-        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0] > io.kestra.core.tasks.debugs.Echo[\\\"level\\\"]\""));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0] > io.kestra.core.tasks.log.Log[\\\"level\\\"]\""));
     }
 
 }

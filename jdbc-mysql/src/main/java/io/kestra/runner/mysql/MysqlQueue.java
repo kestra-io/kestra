@@ -58,6 +58,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             .get(0);
     }
 
+    @SuppressWarnings("RedundantCast")
     @Override
     protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, List<Integer> offsets) {
         ctx
@@ -66,7 +67,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("consumers"),
                 DSL.field("CONCAT_WS(',', consumers, ?)", String.class, consumerGroup)
             )
-            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)))
+            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)))
             .execute();
     }
 }

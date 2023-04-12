@@ -1,67 +1,97 @@
 // color system
-$blue: #1761fd;
-$indigo: #6610f2;
-$purple: #6d81f5;
-$pink: #fd3c97;
-$red: #f5325c;
-$orange: #ff8500;
-$yellow: #ffb822;
-$green: #22b783;
-$teal: #03d87f;
-$cyan: #12a4ed;
+$blue: #1761FD !default;
+$indigo: #8405FF !default;
+$purple: #9F9DFF !default;
+$pink: #FD3C97 !default;
+$red: #E36065 !default;
+$red-light: #FF9D9D !default;
+$orange: #FCB37C !default;
+$yellow: #FCE07C !default;
+$green: #03DABA !default;
+$teal: #03D87F !default;
+$cyan: #60C5FE !default;
 
 // primary color
-$primary: #192A4E;
-$secondary: #4F83A5;
-$tertiary: #9EBFD5;
+$primary: #8405FF !default;
+$secondary: #C182FF !default;
+$tertiary: #2F3342 !default;
 
 // gray
-$white: #FFF;
-$gray-100: #f8f8fc;
-$gray-200: #f1f5fa;
-$gray-300: #eaf0f9;
-$gray-400: #b6c2e4;
-$gray-500: #8997bd;
-$gray-600: #7081b9;
-$gray-700: #303e67;
-$gray-800: #2c3652;
-$gray-900: #1d2c48;
-$black: #000;
+$white: #FFF !default;
+$gray-100: #f8f8fc !default;
+$gray-200: #f1f5fa !default;
+$gray-300: #eaf0f9 !default;
+$gray-400: #b6c2e4 !default;
+$gray-500: #8997bd !default;
+$gray-600: #7081b9 !default;
+$gray-700: #303e67 !default;
+$gray-800: #2c3652 !default;
+$gray-900: #1d2c48 !default;
+$black: #26282D !default;
 
-$light: $gray-200;
-$dark: $gray-900;
+$light: $gray-200 !default;
+$dark: $gray-900 !default;
 
 // fonts
-$font-size-base: 1rem;
-$font-family-sans-serif: "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-$font-family-monospace: 'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-$font-size-xs: $font-size-base * 0.75;
+$font-size-base: 1rem !default;
+$font-family-sans-serif: "Public Sans", sans-serif;
+$font-family-monospace: "Source Code Pro", monospace;
+$font-size-xs: $font-size-base * 0.75 !default;
 
 // border radius
-$border-radius: 0.25rem;
-$border-radius-lg: 0.5rem;
-$border-radius-sm: 0.15rem;
+$border-radius: 0.25rem !default;
+$border-radius-lg: 0.5rem !default;
+$border-radius-sm: 0.15rem !default;
 
 // layout
-$menu-width: 268px;
-$spacer: 1rem;
+$menu-width: 268px !default;
+$spacer: 1rem !default;
 
 // body
-$body-color: $gray-700;
-$border-color: $gray-300;
-$body-bg: $gray-100;
-$card-bg: $white;
+$body-color: $gray-800 !default;
+$border-color: $gray-300 !default;
+$body-bg: $gray-100 !default;
+$card-bg: $white !default;
+$input-bg: $white !default;
 
-$link-color: $cyan;
+$link-color: $primary !default;
 
 // border radius
-$border-radius: .25rem;
-$border-radius-sm: .15rem;
+$border-radius: .25rem !default;
+$border-radius-sm: .15rem !default;
 
 // shadow
 $box-shadow-sm: 0 .125rem .25rem rgba($black, .075);
 $box-shadow: 0 .5rem 1rem rgba($black, .15);
 $box-shadow-lg: 0 1rem 3rem rgba($black, .175);
+
+// boostrap flags
+$enable-reduced-motion: false;
+
+// element-plus
+$types: primary, success, warning, danger, error, info !default;
+$element-colors: (
+    'white': $white,
+    'black': $black,
+    'primary': (
+        'base': $primary,
+    ),
+    'success': (
+        'base': $green,
+    ),
+    'warning': (
+        'base': $orange,
+    ),
+    'danger': (
+        'base': $red,
+    ),
+    'error': (
+        'base': $red,
+    ),
+    'info': (
+        'base': $cyan,
+    ),
+);
 
 // bootstrap
 @import "bootstrap/scss/functions";

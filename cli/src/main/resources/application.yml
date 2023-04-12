@@ -52,6 +52,8 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/postgres
+      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
+      ignore-migration-patterns: "*:missing"
     mysql:
       enabled: true
       locations:
@@ -60,6 +62,8 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/h2
+      # We must ignore missing migrations as a V8 wrong migration was created and replaced by the V11
+      ignore-migration-patterns: "*:missing"
 
 kestra:
   retries:
@@ -87,6 +91,9 @@ kestra:
       logs:
         table: "logs"
         cls: io.kestra.core.models.executions.LogEntry
+      metrics:
+        table: "metrics"
+        cls: io.kestra.core.models.executions.MetricEntry
       multipleconditions:
         table: "multipleconditions"
         cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
@@ -115,45 +122,6 @@ kestra:
       initial-delay: 1h
       fixed-delay: 1h
       retention: 7d
-
-  elasticsearch:
-    defaults:
-      indice-prefix: "kestra_"
-    indices:
-      flows:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}flows"
-        cls: io.kestra.core.models.flows.Flow
-        mapping-file: flow
-      flows-revisions:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}flows_revisions"
-        cls: io.kestra.core.models.flows.Flow
-        mapping-file: flow
-      executions:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}executions"
-        cls: io.kestra.core.models.executions.Execution
-        mapping-file: execution
-      templates:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}templates"
-        cls: io.kestra.core.models.templates.Template
-        mapping-file: template
-      triggers:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}triggers"
-        cls: io.kestra.core.models.triggers.Trigger
-        mapping-file: trigger
-      logs:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}logs"
-        cls: io.kestra.core.models.executions.LogEntry
-        mapping-file: log
-      settings:
-        index: "${kestra.elasticsearch.defaults.indice-prefix}settings"
-        cls: io.kestra.core.models.Setting
-        mapping-file: setting
-
-  indexer:
-    models:
-      - io.kestra.core.models.executions.Execution
-      - io.kestra.core.models.triggers.Trigger
-      - io.kestra.core.models.executions.LogEntry
 
   plugins:
     repositories:

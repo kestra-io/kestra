@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.Worker;
 import io.kestra.core.utils.IdUtils;
@@ -51,8 +52,11 @@ public class ExecutionService {
     @Inject
     private LogRepositoryInterface logRepository;
 
+    @Inject
+    private MetricRepositoryInterface metricRepository;
+
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!execution.getState().isTerminated()) {
+        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -62,8 +66,7 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
-            taskRun -> taskRun.getState().getCurrent().isFailed()
+            taskRun -> taskRun.getState().getCurrent().isFailed() || taskRun.getState().getCurrent().isPaused()
         );
 
         Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, revision == null);
@@ -86,6 +89,11 @@ public class ExecutionService {
         this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
             .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
 
+        // We need to remove global error tasks and flowable error tasks if any
+        flow
+            .allErrorsWithChilds()
+            .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
         // Build and launch new execution
         Execution newExecution = execution
             .childExecution(
@@ -97,7 +105,7 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
-    private Set<String> taskRunToRestart(Execution execution, Flow flow, Predicate<TaskRun> predicate) throws InternalException {
+    private Set<String> taskRunToRestart(Execution execution, Predicate<TaskRun> predicate) {
         // Original tasks to be restarted
         Set<String> finalTaskRunToRestart = this
             .taskRunWithAncestors(
@@ -117,7 +125,7 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, String taskRunId, @Nullable Integer revision) throws Exception {
-        if (!execution.getState().isTerminated()) {
+        if (!(execution.getState().isTerminated() || !(execution.getState().isTerminated() ))) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -128,7 +136,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
@@ -177,7 +184,7 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
-        if (!execution.getState().isTerminated()) {
+        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -187,7 +194,6 @@ public class ExecutionService {
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            flow,
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
@@ -219,6 +225,7 @@ public class ExecutionService {
     public PurgeResult purge(
         Boolean purgeExecution,
         Boolean purgeLog,
+        Boolean purgeMetric,
         Boolean purgeStorage,
         @Nullable String namespace,
         @Nullable String flowId,
@@ -243,6 +250,10 @@ public class ExecutionService {
 
                 if (purgeLog) {
                     builder.logsCount(this.logRepository.purge(execution));
+                }
+
+                if(purgeMetric) {
+                    this.metricRepository.purge(execution);
                 }
 
                 if (purgeStorage) {

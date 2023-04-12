@@ -30,6 +30,9 @@ public class RestoreQueueCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--no-triggers"}, description = "Don't send triggers")
     private boolean noTriggers = false;
 
+    @CommandLine.Option(names = {"--no-triggers-execution-id"}, description = "Remove executionId from trigger")
+    private boolean noTriggerExecutionId = false;
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -50,7 +53,7 @@ public class RestoreQueueCommand extends AbstractCommand {
 
         // trigger
         if (!this.noTriggers) {
-            int size = restoreQueueService.triggers(noRecreate);
+            int size = restoreQueueService.triggers(noRecreate, noTriggerExecutionId);
             stdOut("Successfully send {0} triggers", size);
         }
 

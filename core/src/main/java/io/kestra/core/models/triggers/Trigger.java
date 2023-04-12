@@ -10,7 +10,7 @@ import java.util.Arrays;
 import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @ToString
 @EqualsAndHashCode
 @Getter

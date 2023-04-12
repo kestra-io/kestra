@@ -1,7 +1,6 @@
 import ExecutionRoot from "../components/executions/ExecutionRoot.vue"
 import Executions from "../components/executions/Executions.vue"
 import TaskRuns from "../components/taskruns/TaskRuns.vue"
-import FlowEdit from "../components/flows/FlowEdit.vue"
 import FlowRoot from "../components/flows/FlowRoot.vue"
 import Flows from "../components/flows/Flows.vue"
 import LogsWrapper from "../components/logs/LogsWrapper.vue"
@@ -13,6 +12,7 @@ import FlowsSearch from "../components/flows/FlowsSearch.vue";
 import Errors from "../components/errors/Errors.vue";
 import Home from "../components/home/Home.vue";
 import Welcome from "../components/onboarding/Welcome.vue";
+import FlowCreate from "../components/flows/FlowCreate.vue";
 
 export default [
     //Flows
@@ -20,7 +20,7 @@ export default [
     {name: "welcome", path: "/welcome", component: Welcome},
     {name: "flows/list", path: "/flows", component: Flows},
     {name: "flows/search", path: "/flows/search", component: FlowsSearch},
-    {name: "flows/create", path: "/flows/new", component: FlowEdit},
+    {name: "flows/create", path: "/flows/new", component: FlowCreate},
     {name: "flows/update", path: "/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
 
     //Executions

@@ -19,7 +19,7 @@
     import {useRoute, useRouter} from "vue-router"
     import Utils from "../../utils/utils.js";
     import TreeMapChart from "../../charts/TreeMapChart"
-    import {defaultConfig, chartClick} from "../../utils/charts";
+    import {defaultConfig, chartClick, backgroundFromState} from "../../utils/charts";
     import {color} from "chart.js/helpers";
     import State from "../../utils/state";
 
@@ -41,10 +41,6 @@
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
             const dataReady = computed(() => props.data !== undefined)
-
-            const backgroundFromState = (state) => {
-                return State.color()[state]
-            }
 
             const tooltip = (context) => {
                 const tooltip = context.tooltip;

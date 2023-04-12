@@ -72,8 +72,17 @@ public class ProcessBuilderScriptRunner implements ScriptRunnerInterface {
             return new RunResult(exitCode, stdOut, stdErr);
         } catch (InterruptedException e) {
             logger.warn("Killing process {} for InterruptedException", pid);
+            killDescendantsOf(process.toHandle(), logger);
             process.destroy();
             throw e;
         }
+    }
+
+    private void killDescendantsOf(ProcessHandle process, Logger logger) {
+        process.descendants().forEach(processHandle -> {
+            if (!processHandle.destroy()) {
+                logger.warn("Descendant process {} of {} couldn't be killed", processHandle.pid(), process.pid());
+            }
+        });
     }
 }

@@ -15,6 +15,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -143,12 +144,17 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void restartFailed() throws Exception {
-        restartCaseTest.restartFailed();
+        restartCaseTest.restartFailedThenSuccess();
     }
 
     @Test
     void replay() throws Exception {
         restartCaseTest.replay();
+    }
+
+    @Test
+    void restartMultiple() throws Exception {
+        restartCaseTest.restartMultiple();
     }
 
     @Test
@@ -226,5 +232,10 @@ public abstract class JdbcRunnerTest {
     @Test
     public void pauseRunDelay() throws Exception {
         pauseTest.runDelay(runnerUtils);
+    }
+
+    @Test
+    public void pauseRunTimeout() throws Exception {
+        pauseTest.runTimeout(runnerUtils);
     }
 }

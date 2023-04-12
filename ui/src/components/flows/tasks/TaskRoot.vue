@@ -14,11 +14,6 @@
 
     export default {
         mixins: [Task],
-        computed: {
-            properties() {
-
-            }
-        }
     };
 </script>
 

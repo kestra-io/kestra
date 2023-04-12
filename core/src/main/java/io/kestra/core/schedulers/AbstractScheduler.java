@@ -17,9 +17,11 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.AllArgsConstructor;
@@ -46,6 +48,7 @@ import jakarta.inject.Singleton;
 public abstract class AbstractScheduler implements Scheduler {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
+    private final QueueInterface<Trigger> triggerQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
@@ -77,6 +80,7 @@ public abstract class AbstractScheduler implements Scheduler {
     ) {
         this.applicationContext = applicationContext;
         this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
+        this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
@@ -119,8 +123,31 @@ public abstract class AbstractScheduler implements Scheduler {
             },
             "scheduler-listener"
         );
-
         thread.start();
+
+        // remove trigger on flow update
+        this.flowListeners.listen((flow, previous) -> {
+            synchronized (this) {
+                if (flow.isDeleted()) {
+                    ListUtils.emptyOnNull(flow.getTriggers())
+                        .forEach(abstractTrigger -> {
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
+                            triggerStateSaved.remove(trigger.uid());
+
+                            triggerQueue.delete(trigger);
+                        });
+                } else if (previous != null) {
+                    FlowService
+                        .findRemovedTrigger(flow, previous)
+                        .forEach(abstractTrigger -> {
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
+
+                            triggerStateSaved.remove(trigger.uid());
+                            triggerQueue.delete(trigger);
+                        });
+                }
+            }
+        });
     }
 
     private void computeSchedulable(List<Flow> flows) {
@@ -413,14 +440,11 @@ public abstract class AbstractScheduler implements Scheduler {
                 // we don't find, so never started execution, create a trigger context with previous date in the past.
                 // this allows some edge case when the evaluation loop of schedulers will change second
                 // between start and end
-                // but since we could have some changed on the flow in meantime, we wait 1 min before saving them.
                 if (triggerStateSaved.containsKey(build.uid())) {
                     Trigger cachedTrigger = triggerStateSaved.get(build.uid());
 
-                    if (cachedTrigger.getUpdatedDate() != null && Instant.now().isAfter(cachedTrigger.getUpdatedDate().plusSeconds(60))) {
-                        triggerState.save(build);
-                        triggerStateSaved.remove(build.uid());
-                    }
+                    triggerState.save(build);
+                    triggerStateSaved.remove(build.uid());
 
                     return cachedTrigger;
                 } else {

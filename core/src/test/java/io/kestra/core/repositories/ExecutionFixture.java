@@ -28,7 +28,6 @@ class ExecutionFixture {
                 .state(new State())
                 .attempts(Collections.singletonList(
                     TaskRunAttempt.builder()
-                        .metrics(Collections.singletonList(Counter.of("counter", 1)))
                         .build()
                 ))
                 .outputs(ImmutableMap.of(
@@ -53,7 +52,6 @@ class ExecutionFixture {
                 .state(new State())
                 .attempts(Collections.singletonList(
                     TaskRunAttempt.builder()
-                        .metrics(Collections.singletonList(Timer.of("test", Duration.ofMillis(150))))
                         .build()
                 ))
                 .outputs(ImmutableMap.of(

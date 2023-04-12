@@ -1,6 +1,8 @@
 package io.kestra.cli.commands;
 
 import io.kestra.cli.AbstractApiCommand;
+import lombok.*;
+import lombok.extern.jackson.Jacksonized;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -14,4 +16,12 @@ public abstract class AbstractServiceNamespaceUpdateCommand extends AbstractApiC
 
     @CommandLine.Option(names = {"--no-delete"}, description = "if missing should not be deleted")
     public boolean noDelete = false ;
+
+    @Builder
+    @Value
+    @Jacksonized
+    public static class UpdateResult {
+        String id;
+        String namespace;
+    }
 }

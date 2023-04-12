@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class PluginDocumentation {
     private String title;
     private String group;
+    private String icon;
     private Map<SubGroup, Map<String, List<ClassPlugin>>> classPlugins;
 
     private Map<String, String> guides;
@@ -26,6 +27,7 @@ public class PluginDocumentation {
     private PluginDocumentation(RegisteredPlugin plugin) {
         this.title = plugin.title();
         this.group = plugin.group();
+        this.icon = DocumentationGenerator.icon(plugin, "plugin-icon");
 
         this.classPlugins = plugin.allClassGrouped()
             .entrySet()
@@ -46,7 +48,8 @@ public class PluginDocumentation {
                         var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
                         // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes
                         var subgroupIsGroup = cls.getPackageName().length() <= this.group.length();
-                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subgroupIsGroup);
+                        var subGroupIcon = DocumentationGenerator.icon(plugin, cls.getPackageName());
+                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subGroupIcon, subgroupIsGroup);
                         builder.subgroup(subgroup);
                     } else {
                         // should never occur
@@ -89,6 +92,7 @@ public class PluginDocumentation {
         String name;
         String title;
         String description;
+        String icon;
 
         boolean subgroupIsGroup;
 

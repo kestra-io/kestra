@@ -432,7 +432,7 @@
     })
 
     onBeforeUnmount(() => {
-        store.commit()
+        store.commit("plugin/setEditorPlugin",undefined);
         document.removeEventListener("keydown", save);
         document.removeEventListener("popstate", () => {
             stopTour();
@@ -484,9 +484,9 @@
 
     const isAllowedEdit = () => {
         if (props.isCreating) {
-            return user && user.isAllowed(permission.FLOW, action.CREATE, props.namespace);
+            return user && getFlowMetadata().namespace && user.isAllowed(permission.FLOW, action.CREATE, getFlowMetadata().namespace);
         } else {
-            return user && user.isAllowed(permission.FLOW, action.UPDATE, flow.namespace);
+            return user && user.isAllowed(permission.FLOW, action.UPDATE, props.namespace);
         }
     };
 

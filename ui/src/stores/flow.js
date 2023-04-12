@@ -148,7 +148,12 @@ export default {
         },
         loadGraphFromSource({commit}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            return this.$http.post("/api/v1/flows/graph", options.flow, {...config})
+            const flowParsed = YamlUtils.parse(options.flow);
+            let flowSource = options.flow
+            if(!flowParsed.id || !flowParsed.namespace){
+                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+            }
+            return this.$http.post("/api/v1/flows/graph", flowSource, {...config})
                 .then(response => {
                     if (response.status === 422) {
                         return response;
@@ -157,14 +162,12 @@ export default {
 
                     let flow = YamlUtils.parse(options.flow);
                     flow.source = options.flow;
-                    if (flow.id && flow.namespace) {
-                        commit("setFlow", flow)
-                        commit("setFlowGraphParam", {
-                            namespace: flow.namespace,
-                            id: flow.id,
-                            revision: flow.revision
-                        })
-                    }
+                    commit("setFlow", flow)
+                    commit("setFlowGraphParam", {
+                        namespace: flow.namespace ? flow.namespace : "default",
+                        id: flow.id ? flow.id : "default",
+                        revision: flow.revision
+                    })
 
                     return response;
                 })

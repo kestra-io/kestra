@@ -117,9 +117,9 @@
 
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        name: "source",
+                        name: "editor",
                         component: Topology,
-                        title: this.$t("source"),
+                        title: this.$t("editor"),
                     });
                 }
 
@@ -163,7 +163,7 @@
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.flow.namespace,
                     id: this.flow.id,
-                    tab: "source"
+                    tab: "editor"
                 }})
             },
         },

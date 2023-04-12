@@ -281,36 +281,36 @@
                     editor.onDidContentSizeChange(e => {
                         this.$refs.container.style.height = (e.contentHeight + 7) + "px";
                     });
-                }
 
-                this.editor.onDidContentSizeChange(_ => {
-                    if (this.guidedProperties.monacoRange) {
-                        editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
-                        let decorations = [
-                            {
-                                range: this.guidedProperties.monacoRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "highlight-text"
+                    this.editor.onDidContentSizeChange(_ => {
+                        if (this.guidedProperties.monacoRange) {
+                            editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
+                            let decorations = [
+                                {
+                                    range: this.guidedProperties.monacoRange,
+                                    options: {
+                                        isWholeLine: true,
+                                        inlineClassName: "highlight-text"
+                                    },
+                                    className: "highlight-text",
+                                }
+                            ];
+                            decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
+                                {
+                                    range: this.guidedProperties.monacoDisableRange,
+                                    options: {
+                                        isWholeLine: true,
+                                        inlineClassName: "disable-text"
+                                    },
+                                    className: "disable-text",
                                 },
-                                className: "highlight-text",
-                            }
-                        ];
-                        decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
-                            {
-                                range: this.guidedProperties.monacoDisableRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "disable-text"
-                                },
-                                className: "disable-text",
-                            },
-                        ]) : decorations;
-                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
-                    } else {
-                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
-                    }
-                });
+                            ]) : decorations;
+                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                        } else {
+                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                        }
+                    });
+                }
 
                 this.editor.onDidChangeCursorPosition(e => {
                     let position = this.editor.getPosition();

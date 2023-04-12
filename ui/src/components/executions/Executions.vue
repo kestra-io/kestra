@@ -246,7 +246,7 @@
             },
             displayBottomBar() {
                 return (this.executionsSelection.length !== 0 && (this.canUpdate || this.canDelete)) ||
-                    (this.$route.name === 'flows/update');
+                    (this.$route.name === "flows/update");
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE);
@@ -401,10 +401,10 @@
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
-                        tab: "source"
-                    }})
+                    namespace: this.flow.namespace,
+                    id: this.flow.id,
+                    tab: "editor"
+                }})
             },
         }
     };

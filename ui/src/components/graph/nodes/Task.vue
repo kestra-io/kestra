@@ -17,6 +17,14 @@
             type: Object,
             required: true
         },
+        isReadOnly: {
+            type: Boolean,
+            required: true
+        },
+        isAllowedEdit: {
+            type: Boolean,
+            required: true
+        },
     })
 
     const mouseover = () => {
@@ -46,6 +54,8 @@
         :flow-id="data.flowId"
         :revision="data.revision"
         :is-flowable="data.isFlowable"
+        :is-read-only="props.isReadOnly"
+        :is-allowed-edit="props.isAllowedEdit"
         @follow="forwardEvent('follow', $event)"
         @edit="forwardEvent('edit', $event)"
         @delete="forwardEvent('delete', $event)"

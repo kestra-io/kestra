@@ -21,7 +21,7 @@
                     />
                 </el-button>
 
-                <el-tooltip v-if="!this.execution" content="Delete" transition="" :hide-after="0" :persistent="false">
+                <el-tooltip v-if="!this.execution && !this.isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
@@ -31,6 +31,7 @@
                 </el-tooltip>
 
                 <task-edit
+                    v-if="!this.isReadOnly && isAllowedEdit"
                     class="node-action"
                     :modal-id="`modal-source-${hash}`"
                     :task="trigger"
@@ -76,6 +77,14 @@
             revision: {
                 type: Number,
                 default: undefined
+            },
+            isReadOnly: {
+                type: Boolean,
+                required: true
+            },
+            isAllowedEdit: {
+                type: Boolean,
+                required: true
             },
         },
         methods: {

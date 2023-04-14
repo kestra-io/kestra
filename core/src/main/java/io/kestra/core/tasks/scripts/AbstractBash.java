@@ -530,7 +530,7 @@ abstract public class AbstractBash extends Task {
                 description = "The minimum allowed value is 4m. Because kernel memory cannot be swapped out, a " +
                     "container which is starved of kernel memory may block host machine resources, which can have " +
                     "side effects on the host machine and on other containers. " +
-                    "See [https://docs.docker.com/config/containers/resource_constraints/#--kernel-memory-details](--kernel-memory) details."
+                    "See [--kernel-memory](https://docs.docker.com/config/containers/resource_constraints/#--kernel-memory-details) details."
             )
             @PluginProperty(dynamic = true)
             private String kernelMemory;

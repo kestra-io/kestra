@@ -2,7 +2,7 @@
     import type {EdgeProps, Position} from '@vue-flow/core'
     import {EdgeLabelRenderer, getSmoothStepPath, useEdge} from '@vue-flow/core'
     import type {CSSProperties} from 'vue'
-    import {computed, getCurrentInstance, ref} from 'vue'
+    import {computed, getCurrentInstance, ref, watch} from 'vue'
     import TaskEditor from "../../flows/TaskEditor.vue"
     import Help from "vue-material-design-icons/Help.vue";
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
@@ -15,6 +15,7 @@
     import yamlUtils from "../../../utils/yamlUtils.js";
     import YamlUtils from "../../../utils/yamlUtils.js";
     import {useStore} from "vuex";
+    import ValidationError from "../../flows/ValidationError.vue";
 
     const store = useStore();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -32,6 +33,8 @@
         style: CSSProperties,
         yamlSource: String,
         flowablesIds: Array<String>,
+        isReadOnly: Boolean,
+        isAllowedEdit: Boolean
     }
 
     const props = defineProps<CustomEdgeProps>()
@@ -41,6 +44,12 @@
     const emit = defineEmits(["edit"])
     const taskYaml = ref("");
     const execution = store.getters["execution/execution"];
+    const timer = ref(undefined);
+    const taskError = ref(store.getters["flow/taskError"])
+
+    watch(() => store.getters["flow/taskError"], async () => {
+        taskError.value = store.getters["flow/taskError"];
+    });
 
     const isBorderEdge = () => {
         if (!props.data.haveAdd && props.data.isFlowable) {
@@ -104,6 +113,10 @@
 
     const updateTask = (task) => {
         taskYaml.value = task;
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => {
+            store.dispatch("flow/validateTask", {task: task})
+        }, 500);
     }
 
     const getAddTaskInformation = () => {
@@ -151,7 +164,7 @@
         const taskId = addInformation.insertPosition === 'before' ? props.data.nextTaskId : addInformation.taskId;
 
         if (execution || !taskId) {
-            return ;
+            return;
         }
 
         if (!props.data.initTask) {
@@ -203,21 +216,20 @@
             }"
             class="nodrag nopan"
             :class="props.data.edge.relation.relationType"
-
         >
             <el-tooltip placement="bottom" :persistent="false" transition="" :hide-after="0">
                 <template #content>
-                    <template v-if="!isHover">
-                        {{ getEdgeLabel(props.data.edge.relation) }}
+                    <template v-if="isHover && !isReadOnly && isAllowedEdit">
+                        {{ getEdgeLabel(props.data.edge.relation) }}<br/>
+                        <span v-html="addTooltip()"/>
                     </template>
                     <template v-else>
-                        {{ getEdgeLabel(props.data.edge.relation) }}<br/>
-                        <span v-html="addTooltip()" />
+                        {{ getEdgeLabel(props.data.edge.relation) }}
                     </template>
                 </template>
                 <span>
-                    <el-button v-if="!isHover" :icon="getEdgeIcon(props.data.edge.relation)" link/>
-                    <el-button v-else :icon="Plus" link @click="isOpen = true"/>
+                    <el-button v-if="isHover && !isReadOnly && isAllowedEdit" :icon="Plus" link @click="isOpen = true"/>
+                    <el-button v-else :icon="getEdgeIcon(props.data.edge.relation)" link/>
                 </span>
             </el-tooltip>
 
@@ -237,7 +249,10 @@
                     />
                 </el-form>
                 <template #footer>
-                    <el-button :disabled="!taskHaveId()" :icon="ContentSave" @click="forwardTask" type="primary">
+                    <ValidationError link :error="taskError"/>
+                    <el-button :disabled="!taskHaveId() || taskError" :icon="ContentSave" @click="forwardTask"
+                               type="primary"
+                    >
                         {{ $t("save") }}
                     </el-button>
                 </template>

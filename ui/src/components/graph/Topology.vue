@@ -1,5 +1,5 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch, getCurrentInstance, computed, onBeforeUnmount} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount} from "vue";
     import {mapState, useStore} from "vuex"
     import {VueFlow, Panel, useVueFlow, Position, MarkerType, PanelPosition} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
@@ -10,10 +10,15 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileEdit from "vue-material-design-icons/FileEdit.vue";
     import Exclamation from "vue-material-design-icons/Exclamation.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
 
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import ValidationError from "../../components/flows/ValidationError.vue";
     import SwitchView from "./SwitchView.vue";
+    import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import {cssVariable} from "../../utils/global"
     import Cluster from "./nodes/Cluster.vue";
     import Dot from "./nodes/Dot.vue"
@@ -31,6 +36,7 @@
     import editor from "../inputs/Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
+    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
 
     const {
         id,
@@ -52,7 +58,6 @@
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
     const emit = defineEmits(["follow"])
-    const user = store.getters["user/user"];
     const flow = store.getters["flow/flow"];
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -117,10 +122,16 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(props.isCreating ? "source" : (props.execution ? "topology" : "combined"));
+    const showTopology = ref(props.execution || props.isReadOnly ? "topology" : "doc");
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
+    const taskError = ref(store.getters["flow/taskError"])
+    const user = store.getters["auth/user"];
+
+    watch(() => store.getters["flow/taskError"], async () => {
+        taskError.value = store.getters["flow/taskError"];
+    });
 
 
     const flowables = () => {
@@ -397,6 +408,9 @@
     }
 
     onMounted(() => {
+        if (props.isCreating) {
+            store.commit("flow/setFlowGraph", undefined);
+        }
         initYamlSource();
         generateGraph();
         // Regenerate graph on window resize
@@ -409,6 +423,7 @@
                 && localStorage.getItem("tourDoneOrSkip") !== "true"
                 && props.total === 0) {
                 tours["guidedTour"].start();
+                showTopology.value = "source";
             }
         }, 200)
         window.addEventListener("popstate", () => {
@@ -417,11 +432,13 @@
     })
 
     onBeforeUnmount(() => {
+        store.commit("plugin/setEditorPlugin",undefined);
         document.removeEventListener("keydown", save);
         document.removeEventListener("popstate", () => {
             stopTour();
         });
     })
+
 
     const stopTour = () => {
         tours["guidedTour"].stop();
@@ -448,6 +465,10 @@
         regenerateGraph()
     });
 
+    watch(() => props.isReadOnly, async () => {
+        showTopology.value = props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined");
+    });
+
     watch(() => props.guidedProperties, () => {
         if (localStorage.getItem("tourDoneOrSkip") !== "true") {
             if (props.guidedProperties.source !== undefined) {
@@ -463,9 +484,9 @@
 
     const isAllowedEdit = () => {
         if (props.isCreating) {
-            return user.isAllowed(permission.FLOW, action.CREATE, props.namespace);
+            return user && getFlowMetadata().namespace && user.isAllowed(permission.FLOW, action.CREATE, getFlowMetadata().namespace);
         } else {
-            return user.isAllowed(permission.FLOW, action.UPDATE, flow.namespace);
+            return user && user.isAllowed(permission.FLOW, action.UPDATE, props.namespace);
         }
     };
 
@@ -473,7 +494,7 @@
         if (!dragging.value) {
             linkedElements(id, node.uid).forEach((n) => {
                 if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-yellow')}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-yellow")}
                 }
             });
         }
@@ -551,7 +572,8 @@
                 }
                 onEdit(YamlUtils.deleteTask(flowYaml.value, event.id, section));
             },
-            () => {}
+            () => {
+            }
         )
     }
 
@@ -562,6 +584,11 @@
     }
 
     const onUpdateNewTrigger = (event) => {
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
+            task: event,
+            section: "trigger"
+        }), 500);
         newTrigger.value = event;
     }
 
@@ -583,6 +610,12 @@
     }
 
     const onUpdateNewError = (event) => {
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
+            task: event,
+            section: "task"
+        }), 500);
+
         newError.value = event;
     }
 
@@ -670,10 +703,10 @@
         if (!checkIntersections(e.intersections, e.node) && e.intersections.filter(n => n.type === "task").length === 1) {
             e.intersections.forEach(n => {
                 if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
                 }
             })
-            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable('--bs-primary')}
+            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
         }
     })
 
@@ -770,6 +803,64 @@
             })
     };
 
+    const canExecute = () => {
+        return user.isAllowed(permission.EXECUTION, action.CREATE, namespace)
+    }
+
+    const canDelete = () => {
+        return (
+            user.isAllowed(
+                permission.FLOW,
+                action.DELETE,
+                namespace
+            )
+        );
+    }
+
+    const deleteFlow = () => {
+        const metadata = getFlowMetadata();
+
+        return http
+            .get(`/api/v1/flows/${metadata.namespace}/${metadata.id}/dependencies`, {params: {destinationOnly: true}})
+            .then(response => {
+                let warning = "";
+
+                if (response.data && response.data.nodes) {
+                    const deps = response.data.nodes
+                        .filter(n => !(n.namespace === metadata.namespace && n.id === metadata.id))
+                        .map(n => "<li>" + n.namespace + ".<code>" + n.id + "</code></li>")
+                        .join("\n");
+
+                    warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                        "<div class=\"el-alert__content\">\n" +
+                        "<p class=\"el-alert__description\">\n" +
+                        this.$t("dependencies delete flow") +
+                        "<ul>\n" +
+                        deps +
+                        "</ul>\n" +
+                        "</p>\n" +
+                        "</div>\n" +
+                        "</div>"
+                }
+
+                return t("delete confirm", {name: metadata.id}) + warning;
+            }).then(message => {
+                toast
+                    .confirm(message, () => {
+                        return store
+                            .dispatch("flow/deleteFlow", metadata)
+                            .then(() => {
+                                return router.push({
+                                    name: "flows/list"
+                                });
+                            })
+                            .then(() => {
+                                toast.deleted(metadata.id);
+                            })
+                    });
+            });
+    }
+
 </script>
 
 <template>
@@ -804,6 +895,8 @@
                         @addFlowableError="onAddFlowableError"
                         @mouseover="onMouseOver"
                         @mouseleave="onMouseLeave"
+                        :is-read-only="isReadOnly"
+                        :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
 
@@ -812,6 +905,8 @@
                         v-bind="props"
                         @edit="onEdit"
                         @delete="onDelete"
+                        :is-read-only="isReadOnly"
+                        :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
 
@@ -821,6 +916,8 @@
                         :yaml-source="flowYaml"
                         :flowables-ids="flowables()"
                         @edit="onCreateNewTask"
+                        :is-read-only="isReadOnly"
+                        :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
 
@@ -830,30 +927,24 @@
                         <ArrowCollapseRight v-if="isHorizontal" />
                     </ControlButton>
                 </Controls>
-                <Panel v-if="!isReadOnly" :position="PanelPosition.TopRight">
-                    <SwitchView :type="showTopology" @switch-view="switchView" />
-                </Panel>
             </VueFlow>
         </div>
         <editor
-            v-if="showTopology === 'source' || showTopology === 'combined'"
-            :class="showTopology === 'combined'? 'editor-combined' : ''"
+            v-if="['doc', 'combined', 'source'].includes(showTopology)"
+            :class="['doc','combined'].includes(showTopology) ? 'editor-combined' : ''"
             @save="save"
             v-model="flowYaml"
             schema-type="flow"
             lang="yaml"
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
-            :show-doc="showTopology !== 'combined'"
             :creating="isCreating"
-        >
-            <SwitchView
-                v-if="showTopology === 'source' && !guidedProperties.tourStarted"
-                :type="showTopology"
-                class="to-topology-button"
-                @switch-view="switchView"
-            />
-        </editor>
+            @restartGuidedTour="() => showTopology = 'source'"
+        />
+        <PluginDocumentation
+            v-if="showTopology === 'doc'"
+            class="plugin-doc"
+        />
         <el-drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
@@ -869,7 +960,8 @@
                 />
             </el-form>
             <template #footer>
-                <el-button :icon="ContentSave" @click="onSaveNewError()" type="primary">
+                <ValidationError :error="taskError" />
+                <el-button :icon="ContentSave" @click="onSaveNewError()" type="primary" :disabled="taskError">
                     {{ $t("save") }}
                 </el-button>
             </template>
@@ -889,7 +981,8 @@
                 />
             </el-form>
             <template #footer>
-                <el-button :icon="ContentSave" @click="onSaveNewTrigger()" type="primary">
+                <ValidationError :error="taskError" />
+                <el-button :icon="ContentSave" @click="onSaveNewTrigger()" type="primary" :disabled="taskError">
                     {{ $t("save") }}
                 </el-button>
             </template>
@@ -924,40 +1017,74 @@
                 </el-button>
             </template>
         </el-drawer>
+        <SwitchView
+            v-if="!isReadOnly"
+            :type="showTopology"
+            class="to-topology-button"
+            @switch-view="switchView"
+        />
     </el-card>
     <bottom-line>
         <ul>
-            <li>
-                <el-button
-                    :icon="Exclamation"
-                    size="large"
-                    v-if="isAllowedEdit"
-                    @click="isNewErrorOpen = true;"
-                    :disabled="!flowHaveTasks()"
-                >
-                    {{ $t("add global error handler") }}
-                </el-button>
-            </li>
-            <li>
-                <el-button
-                    :icon="LightningBolt"
-                    size="large"
-                    v-if="isAllowedEdit"
-                    @click="isNewTriggerOpen = true;"
-                    :disabled="!flowHaveTasks()"
-                >
-                    {{ $t("add trigger") }}
-                </el-button>
-            </li>
-            <li>
-                <el-button
-                    :icon="FileEdit"
-                    size="large"
-                    v-if="isAllowedEdit"
-                    @click="isEditMetadataOpen = true;"
-                >
-                    {{ $t("edit metadata") }}
-                </el-button>
+            <li v-if="(isAllowedEdit || canDelete) && !isReadOnly">
+                <el-dropdown>
+                    <el-button size="large" type="default">
+                        <DotsVertical title="" />
+                        {{ t("actions") }}
+                    </el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu class="dropdown-menu">
+                            <el-dropdown-item
+                                v-if="!props.isCreating && canDelete"
+                                class="dropdown-button"
+                                :icon="Delete"
+                                size="large"
+                                @click="deleteFlow"
+                            >
+                                {{ $t("delete") }}
+                            </el-dropdown-item>
+
+                            <el-dropdown-item
+                                v-if="!props.isCreating"
+                                class="dropdown-button"
+                                :icon="ContentCopy"
+                                size="large"
+                                @click="() => router.push({name: 'flows/create', query: {copy: true}})"
+                            >
+                                {{ $t("copy") }}
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                                v-if="isAllowedEdit"
+                                class="dropdown-button"
+                                :icon="Exclamation"
+                                size="large"
+                                @click="isNewErrorOpen = true;"
+                                :disabled="!flowHaveTasks()"
+                            >
+                                {{ $t("add global error handler") }}
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                                v-if="isAllowedEdit"
+                                class="dropdown-button"
+                                :icon="LightningBolt"
+                                size="large"
+                                @click="isNewTriggerOpen = true;"
+                                :disabled="!flowHaveTasks()"
+                            >
+                                {{ $t("add trigger") }}
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                                v-if="isAllowedEdit"
+                                class="dropdown-button"
+                                :icon="FileEdit"
+                                size="large"
+                                @click="isEditMetadataOpen = true;"
+                            >
+                                {{ $t("edit metadata") }}
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </li>
             <li v-if="flow">
                 <trigger-flow
@@ -988,6 +1115,7 @@
 <style lang="scss" scoped>
     .el-card {
         height: calc(100vh - 300px);
+        position: relative;
 
         :deep(.el-card__body) {
             height: 100%;
@@ -996,8 +1124,8 @@
 
     .to-topology-button {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 30px;
+        right: 30px;
     }
 
     .editor {
@@ -1024,5 +1152,26 @@
 
     .vueflow-hide {
         width: 0%;
+    }
+
+    .plugin-doc {
+        overflow-x: hidden;
+        padding: calc(var(--spacer) * 3);
+        height: 100%;
+        width: 50%;
+        float: right;
+        overflow-y: scroll;
+        padding: calc(var(--spacer) * 1.5);
+        background-color: var(--bs-gray-300);
+
+        html.dark & {
+            background-color: var(--bs-gray-500);
+        }
+    }
+
+    .dropdown-menu {
+        display: flex;
+        flex-direction: column;
+        width: 20rem;
     }
 </style>

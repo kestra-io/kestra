@@ -29,6 +29,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
@@ -701,24 +702,83 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Change state for a taskrun in an execution")
     public Execution changeState(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "the taskRun id and state to apply") @Body StateRequest stateRequest
+        @Parameter(description = "the taskRun id and state to apply") @Body TaskRunStateRequest taskRunStateRequest
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        Execution replay = executionService.markAs(execution.get(), stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.markAs(execution.get(), taskRunStateRequest.getTaskRunId(), taskRunStateRequest.getState());
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
 
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
+    @Getter
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class TaskRunStateRequest {
         String taskRunId;
         State.Type state;
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/state", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Change state for a taskrun in an execution")
+    public HttpResponse<?> bulkChangeState(
+        @Parameter(description = "executionId, taskRunId and state to apply") @Body List<ExecutionStateRequest> executionStateRequests
+    ) {
+        List<ExecutionService.UpdateStatusInputDto> updateStatusInputDtos = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (ExecutionStateRequest executionStateRequest : executionStateRequests) {
+            String executionId = executionStateRequest.getExecutionId();
+            Optional<Execution> execution = executionRepository.findById(executionId);
+
+            if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                updateStatusInputDtos.add(ExecutionService.UpdateStatusInputDto.builder()
+                        .execution(execution.get())
+                        .taskRunId(executionStateRequest.getTaskRunId())
+                        .newState(executionStateRequest.getState())
+                    .build());
+            }
+        }
+        if (invalids.size() > 0) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid execution status")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        List<Execution> replays = executionService.bulkMarkAs(updateStatusInputDtos);
+        replays.forEach(replay -> {
+            executionQueue.emit(replay);
+            eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
+        });
+
+        return HttpResponse.ok(replays);
+    }
+
+    @Getter
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class ExecutionStateRequest extends TaskRunStateRequest {
+        String executionId;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -786,13 +846,11 @@ public class ExecutionController {
                 );
         }
 
-        executions.forEach(execution -> {
-            killQueue.emit(ExecutionKilled
-                .builder()
-                .executionId(execution.getId())
-                .build()
-            );
-        });
+        executions.forEach(execution -> killQueue.emit(ExecutionKilled
+            .builder()
+            .executionId(execution.getId())
+            .build()
+        ));
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }

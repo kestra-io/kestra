@@ -792,7 +792,7 @@ public class ExecutionController {
                 endDate,
                 state
             )
-            .filter(e -> !e.getState().getCurrent().equals(newStatus))
+            .filter(e -> !e.getState().getCurrent().equals(newStatus) && !e.getState().getCurrent().isRunning())
             .map(e -> e.getTaskRunList().stream().filter(t -> e.getState().getCurrent().equals(t.getState().getCurrent())).map(t -> {
                 Execution restart;
                 try {

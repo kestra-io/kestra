@@ -18,6 +18,7 @@ public class ClassPluginDocumentation<T> {
     private String cls;
     private String icon;
     private String group;
+    private String pluginTitle;
     private String subGroup;
     private String shortName;
     private String docDescription;
@@ -35,6 +36,7 @@ public class ClassPluginDocumentation<T> {
     private ClassPluginDocumentation(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
         this.cls = cls.getName();
         this.group = plugin.group();
+        this.pluginTitle = plugin.title();
         this.icon = DocumentationGenerator.icon(plugin, cls);
 
         if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {

@@ -1,8 +1,8 @@
 ---
-title: {{json shortName}}
+title: {{ capitalizeFirst (replace pluginTitle "-" " ") }} {{shortName}}
 editLink: false
 {{#if docDescription}}
-description: {{ json docDescription }}
+description: {{ docDescription }}
 {{~/if}}
 {{#if icon}}
 icon: {{ icon }}

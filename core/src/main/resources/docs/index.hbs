@@ -1,5 +1,6 @@
 ---
 title: {{ capitalizeFirst (replace title "-" " ") }}
+{{#if description}}description: {{ description }}{{~/if}}
 editLink: false
 {{#if icon}}icon: {{ icon }}{{~/if}}
 ---

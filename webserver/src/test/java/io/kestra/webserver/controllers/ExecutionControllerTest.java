@@ -513,14 +513,15 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(failedTaskRun.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(t2.size(), is(0));
 
-        client.toBlocking().retrieve(
+        runnerUtils.awaitExecution(e -> e.getState().isTerminated(), () -> client.toBlocking().retrieve(
             HttpRequest
                 .POST(
                     "/api/v1/executions/" + executionId + "/state",
                     "{\"taskRunId\":\"" + failedTaskRun.getId() + "\",\"state\":\"SUCCESS\"}"
                 ),
             Execution.class
-        );
+        ), Duration.ofSeconds(120));
+
 
 
         persistedExecution = executionRepositoryInterface.findById(executionId).get();
@@ -570,10 +571,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             HttpRequest
                 .POST(
                     "/api/v1/executions/state?newStatus=SUCCESS",
-                    "[" +
-                        failedFirstExecutionId + "," +
+                    "[\"" +
+                        failedFirstExecutionId + "\",\"" +
                         failOnConditionExecutionId +
-                        "]"
+                        "\"]"
                 ),
             Execution[].class
         ), Duration.ofSeconds(120));

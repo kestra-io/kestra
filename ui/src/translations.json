@@ -263,6 +263,7 @@
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "executions updated": "<code>{executionCount}</code> executions(s) updated",
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk status update": "Could not update executions status",
     "invalid bulk kill": "Could not kill executions",
@@ -525,23 +526,23 @@
     "change status confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
     "change status hint": {
       "WARNING": [
-        "Le flow serra marqué en état WARNING.",
+        "Le flow sera marqué en état WARNING.",
         "Les tâches suivantes seront executées.",
         "Les tâches d'erreurs seront executées."
       ],
       "FAILED": [
-        "Le flow serra marqué en état FAILED.",
+        "Le flow sera marqué en état FAILED.",
         "Aucune autre tâche ne serra executée.",
         "Les tâches d'erreurs seront executées."
       ],
       "SUCCESS": [
-        "Le flow redémerra comme si cette tâche était en SUCCESS",
-        "Tous les tâches bloqués seront executées.",
-        "Le flow passera en état SUCCESS si tous les taches sont aussi SUCCESS"
+        "Le flow redémarrera comme si cette tâche était en SUCCESS",
+        "Toutes les tâches bloquées seront executées.",
+        "Le flow passera en état SUCCESS si toutes les tâches sont aussi en SUCCESS"
       ],
       "RUNNING": [
-        "Le flow redémerra et executera les tâches suivantes",
-        "Tous les tâches bloqués seront executées."
+        "Le flow redémarrera et executera les tâches suivantes",
+        "Toutes les tâches bloquées seront executées."
       ]
     },
     "mark as": "Marqué comme <code>{status}</code>",
@@ -674,6 +675,7 @@
     "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
     "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
     "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
+    "executions updated": "<code>{executionCount}</code> exécutions(s) mise(s) à jour",
     "invalid bulk restart": "Impossible de redémarrer",
     "invalid bulk status update": "Impossible de modifier le statut des exécutions",
     "invalid bulk kill": "Impossible d'arrêter",

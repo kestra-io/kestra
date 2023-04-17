@@ -642,4 +642,43 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(after.get(0).getState().getCurrent(), is(State.Type.SUCCESS));
         //
     }
+
+    @Test
+    void changeStatusByQuery_NoStateFilter_ShouldUpdateTaskRunsBasedOnExecutionState() throws TimeoutException {
+        String failedFirstExecutionId = runnerUtils.runOne(TESTS_FLOW_NS, "failed-first").getId();
+        String failOnConditionExecutionId = runnerUtils.runOne(TESTS_FLOW_NS, "fail-on-condition", 1, (f, e) -> Map.of("param", "fail")).getId();
+
+        List<String> pendingExecutionIds = Lists.newArrayList(failedFirstExecutionId, failOnConditionExecutionId);
+        runnerUtils.awaitExecution(e -> {
+            if (Optional.ofNullable(e.getState().getCurrent()).map(State.Type::isTerminated).orElse(false)) pendingExecutionIds.remove(e.getId());
+            return pendingExecutionIds.isEmpty();
+        }, () -> client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/state/by-query?newStatus=SUCCESS", null)
+        ), Duration.ofSeconds(120));
+
+
+        // failed-first after update
+        Execution persistedFailedFirstExecution = executionRepositoryInterface.findById(failedFirstExecutionId).get();
+        List<TaskRun> t1 = persistedFailedFirstExecution.findTaskRunsByTaskId("t1");
+        List<TaskRun> t2 = persistedFailedFirstExecution.findTaskRunsByTaskId("t2");
+
+        assertThat(t1.size(), is(1));
+        assertThat(t1.get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(t2.size(), is(1));
+        assertThat(t2.get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        //
+        // fail-on-condition after update
+        Execution persistedFailOnConditionExecution = executionRepositoryInterface.findById(failOnConditionExecutionId).get();
+        List<TaskRun> before = persistedFailOnConditionExecution.findTaskRunsByTaskId("before");
+        List<TaskRun> fail = persistedFailOnConditionExecution.findTaskRunsByTaskId("fail");
+        List<TaskRun> after = persistedFailOnConditionExecution.findTaskRunsByTaskId("after");
+
+        assertThat(before.size(), is(1));
+        assertThat(before.get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(fail.size(), is(1));
+        assertThat(fail.get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(after.size(), is(1));
+        assertThat(after.get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        //
+    }
 }

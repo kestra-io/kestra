@@ -78,7 +78,7 @@
                                             <change-status
                                                 component="el-dropdown-item"
                                                 :key="`change-status-${index}-${attempt.state.startDate}`"
-                                                :execution="execution"
+                                                :executions="[execution]"
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"
                                                 @follow="forwardEvent('follow', $event)"
@@ -121,7 +121,7 @@
     import {mapState} from "vuex";
     import LogLine from "./LogLine.vue";
     import Restart from "../executions/Restart.vue";
-    import ChangeStatus from "../executions/ChangeTaskRunStatus.vue";
+    import ChangeStatus from "../executions/ChangeStatus.vue";
     import Metrics from "../executions/Metrics.vue";
     import Outputs from "../executions/Outputs.vue";
     import Clock from "vue-material-design-icons/Clock.vue";

@@ -117,13 +117,11 @@
         <bottom-line v-if="displayBottomBar">
             <ul>
                 <li v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection.map(execution => execution.id)" :total="total" @update:model-value="selectAll()">
                         <el-button v-if="canUpdate" :icon="Restart" size="large" @click="restartExecutions()">
                             {{ $t('restart') }}
                         </el-button>
-                        <el-button v-if="canUpdate" :icon="StateMachine" size="large" @click="updateExecutionsStatus()">
-                            {{ $t('change status') }}
-                        </el-button>
+                        <ChangeStatus component="el-button" size="large" @refresh="this.loadData()" :executions="executionsSelection" :query="this.queryBulkAction ? this.loadQuery(this.getBulkQueryBase()) : undefined" :total="total" />
                         <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
                             {{ $t('kill') }}
                         </el-button>
@@ -157,7 +155,6 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
 </script>
 
 <script>
@@ -185,6 +182,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import ChangeStatus from "./ChangeStatus.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -204,7 +202,8 @@
             Id,
             BottomLine,
             BottomLineCounter,
-            TriggerFlow
+            TriggerFlow,
+            ChangeStatus
         },
         props: {
             embed: {
@@ -228,7 +227,8 @@
                 flowTriggerDetails: undefined,
                 executionsSelection: [],
                 queryBulkAction: false,
-                newStatus: undefined
+                newStatus: undefined,
+                changeStatusPrompt: false
             };
         },
         computed: {
@@ -268,7 +268,7 @@
                 if (val.length === 0) {
                     this.queryBulkAction = false
                 }
-                this.executionsSelection = val.map(x => x.id);
+                this.executionsSelection = val;
             },
             selectAll() {
                 if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
@@ -326,17 +326,14 @@
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/queryRestartExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                }))
+                                .dispatch("execution/queryRestartExecution", this.loadQuery(this.getBulkQueryBase()))
                                 .then(r => {
                                     this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection.map(execution => execution.id)})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();
@@ -348,37 +345,11 @@
                     () => {}
                 )
             },
-            updateExecutionsStatus() {
-                this.$toast().confirm(
-                    this.$t("bulk status update", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryChangeStatus", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                    newStatus: this.newStatus
-                                }))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions updated", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkChangeStatus", {
-                                    executionsId: this.executionsSelection,
-                                    newStatus: this.newStatus
-                                })
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions updated", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {}
-                )
+            getBulkQueryBase() {
+                return {
+                    sort: this.$route.query.sort || "state.startDate:desc",
+                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                };
             },
             deleteExecutions() {
                 this.$toast().confirm(
@@ -386,17 +357,14 @@
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/queryDeleteExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
+                                .dispatch("execution/queryDeleteExecution", this.loadQuery(this.getBulkQueryBase(), false))
                                 .then(r => {
                                     this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection.map(execution => execution.id)})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
                                     this.loadData();
@@ -414,17 +382,14 @@
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/queryKill", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
+                                .dispatch("execution/queryKill", this.loadQuery(this.getBulkQueryBase(), false))
                                 .then(r => {
                                     this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkKill", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkKill", {executionsId: this.executionsSelection.map(execution => execution.id)})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
                                     this.loadData();

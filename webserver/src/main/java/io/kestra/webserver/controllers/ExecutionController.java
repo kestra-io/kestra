@@ -1,15 +1,38 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Await;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
@@ -29,39 +52,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.FilenameUtils;
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.types.Webhook;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
-
-import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,7 +69,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -613,12 +610,12 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-                return HttpResponse.badRequest(BulkErrorResponse
-                        .builder()
-                        .message("invalid bulk restart")
-                        .invalids(invalids)
-                        .build()
-                    );
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk restart")
+                .invalids(invalids)
+                .build()
+            );
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
@@ -734,7 +731,7 @@ public class ExecutionController {
     public HttpResponse<?> bulkChangeState(
         @Parameter(description = "Execution ids to impact") @Body List<String> executionIds,
         @Parameter(description = "The new status") @Nullable @QueryValue(value = "newStatus") State.Type newStatus
-        ) {
+    ) {
         List<ExecutionService.UpdateStatusInputDto> updateStatusInputDtos = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -751,8 +748,8 @@ public class ExecutionController {
                 ));
             } else {
                 updateStatusInputDtos.add(ExecutionService.UpdateStatusInputDto.builder()
-                        .execution(execution.get())
-                        .newState(newStatus)
+                    .execution(execution.get())
+                    .newState(newStatus)
                     .build());
             }
         }
@@ -786,8 +783,6 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
     ) {
-        List<State.Type> finalStateFilter = Optional.ofNullable(state).orElse(List.of(State.Type.FAILED));
-
         Integer count = Math.toIntExact(executionRepository
             .find(
                 query,
@@ -797,7 +792,7 @@ public class ExecutionController {
                 endDate,
                 state
             )
-            .map(e -> e.getTaskRunList().stream().filter(t -> finalStateFilter.contains(t.getState().getCurrent())).map(t -> {
+            .map(e -> e.getTaskRunList().stream().filter(t -> e.getState().getCurrent().equals(t.getState().getCurrent())).map(t -> {
                 Execution restart;
                 try {
                     restart = executionService.markAs(
@@ -876,11 +871,11 @@ public class ExecutionController {
 
         if (invalids.size() > 0) {
             return HttpResponse.badRequest(BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk kill")
-                    .invalids(invalids)
-                    .build()
-                );
+                .builder()
+                .message("invalid bulk kill")
+                .invalids(invalids)
+                .build()
+            );
         }
 
         executions.forEach(execution -> killQueue.emit(ExecutionKilled

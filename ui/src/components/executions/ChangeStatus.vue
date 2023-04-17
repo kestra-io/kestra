@@ -1,0 +1,234 @@
+<template>
+    <component
+        :is="component"
+        :icon="icon.StateMachine"
+        @click="visible = !visible"
+        :disabled="!enabled"
+    >
+        <span>{{ $t('change status') }}</span>
+
+        <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
+            <template #header>
+                <h5>{{ $t("confirmation") }}</h5>
+            </template>
+
+            <template #default>
+                <div v-if="this.executions.length === 0">
+                    <p v-html="$t('change status confirm', {id: executions[0].id, task: taskRun.taskId})"/>
+
+                    <p>
+                        Current status is :
+                        <status size="small" class="me-1" :status="this.taskRun.state.current"/>
+                    </p>
+                </div>
+                <div v-else>
+                    <p v-html="$t('bulk status update', {executionCount: this.executions.length || this.total})"/>
+                </div>
+
+                <el-select
+                    :required="true"
+                    v-model="selectedStatus"
+                    :persistent="false"
+                >
+                    <el-option
+                        v-for="item in states"
+                        :key="item.code"
+                        :value="item.code"
+                        :disabled="item.disabled"
+                    >
+                        <template #default>
+                            <status size="small" :label="false" class="me-1" :status="item.code" />
+                            <span v-html="item.label" />
+                        </template>
+                    </el-option>
+                </el-select>
+
+                <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
+                    <ul>
+                        <li v-for="(text, i) in $t('change status hint')[this.selectedStatus]" :key="i">
+                            {{ text }}
+                        </li>
+                    </ul>
+                </div>
+            </template>
+
+            <template #footer>
+                <el-button @click="visible = false">
+                    {{ $t('cancel') }}
+                </el-button>
+                <el-button
+                    type="primary"
+                    @click="changeStatus()"
+                    :disabled="selectedStatus === null"
+                >
+                    {{ $t('ok') }}
+                </el-button>
+            </template>
+        </el-dialog>
+    </component>
+</template>
+
+<script>
+    import StateMachine from "vue-material-design-icons/StateMachine.vue";
+    import {mapState} from "vuex";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import State from "../../utils/state";
+    import Status from "../../components/Status.vue";
+    import ExecutionUtils from "../../utils/executionUtils";
+    import {shallowRef} from "vue";
+    import Utils from "../../utils/utils";
+    import _merge from "lodash/merge";
+
+    export default {
+        components: {StateMachine, Status},
+        props: {
+            component: {
+                type: String,
+                default: "b-button"
+            },
+            executions: {
+                type: Array,
+                required: true,
+                default: []
+            },
+            query: {
+                type: Object,
+                required: false
+            },
+            total: {
+                type: Number,
+                required: false
+            },
+            taskRun: {
+                type: Object,
+                required: false,
+                default: undefined
+            },
+            attemptIndex: {
+                type: Number,
+                required: false,
+                default: undefined
+            }
+        },
+        emits: ["follow", "refresh"],
+        methods: {
+            changeStatus() {
+                this.visible = false;
+
+                if(this.query !== undefined) {
+                    this.$store
+                        .dispatch("execution/queryChangeStatus", _merge(this.query, {
+                            newStatus: this.selectedStatus
+                        }))
+                        .then(r => {
+                            this.$toast().success(this.$t("executions updated", {executionCount: r.data.count}));
+                            this.$emit("refresh")
+                        })
+                }
+                else if(this.taskRun){
+                    this.$store
+                        .dispatch("execution/changeStatus", {
+                            executionId: this.executions[0].id,
+                            taskRunId: this.taskRun.id,
+                            state: this.selectedStatus
+                        })
+                        .then(response => {
+                            if (response.data.id === this.executions[0].id) {
+                                return ExecutionUtils.waitForState(this.$http, response.data);
+                            } else {
+                                return response.data;
+                            }
+                        })
+                        .then((execution) => {
+                            this.$store.commit("execution/setExecution", execution)
+                            if (execution.id === this.executions[0].id) {
+                                this.$emit("follow")
+                            } else {
+                                this.$router.push({name: "executions/update", params: {...{namespace: execution.namespace, flowId: execution.flowId, id: execution.id}, ...{tab: "gantt"}}});
+                            }
+
+                            this.$toast().success(this.$t("change status done"));
+                        })
+                }
+                else {
+                    this.$store
+                        .dispatch("execution/bulkChangeStatus", {
+                            executionsId: this.executions.map(execution => execution.id),
+                            newStatus: this.selectedStatus
+                        })
+                        .then(r => {
+                            this.$toast().success(this.$t("executions updated", {executionCount: r.data.length}));
+                            this.$emit("refresh")
+                        }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                        return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                    }), this.$t(e.message)))
+                }
+
+                this.selectedStatus = undefined
+            },
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            uuid() {
+                return "changestatus-" + Utils.uid();
+            },
+            states() {
+                let taskRuns = this.executions.flatMap(e => e.taskRunList);
+                return taskRuns.some(taskRun => taskRun.state.current === "PAUSED") ?
+                    [
+                        State.FAILED,
+                        State.RUNNING,
+                    ] :
+                    [
+                        State.FAILED,
+                        State.SUCCESS,
+                        State.WARNING,
+                    ]
+                    .filter(value => taskRuns.every(taskRun => value !== taskRun.state.current))
+                    .map(value => {
+                        return {
+                            code: value,
+                            label: this.$t("mark as", {status: value}),
+                        };
+                    })
+            },
+            enabled() {
+                if (!(this.user && this.executions.every(execution => this.user.isAllowed(permission.EXECUTION, action.UPDATE, execution.namespace)))) {
+                    return false;
+                }
+
+                if (this.taskRun?.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex) {
+                    return false;
+                }
+
+                if(this.taskRun?.state.current === "PAUSED") {
+                    return true;
+                }
+
+                if (this.executions.some(execution => State.isRunning(execution.state.current))) {
+                    return false;
+                }
+
+                return true;
+            }
+        },
+        data() {
+            return {
+                selectedStatus: undefined,
+                visible: false,
+                icon: {StateMachine: shallowRef(StateMachine)}
+            };
+        },
+    };
+</script>
+
+<style lang="scss">
+
+.alert-status-change  {
+    ul {
+        margin-bottom: 0;
+        padding-left: 10px;
+    }
+}
+</style>

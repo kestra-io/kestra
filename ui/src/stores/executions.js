@@ -62,7 +62,12 @@ export default {
         bulkChangeStatus(_, options) {
             return this.$http.post(
                 `/api/v1/executions/state`,
-                options.executionsId
+                options.executionsId,
+                {
+                    params: {
+                        newStatus: options.newStatus
+                    }
+                }
             )
         },
         queryChangeStatus(_, options) {

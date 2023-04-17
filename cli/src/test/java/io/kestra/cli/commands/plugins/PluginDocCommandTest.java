@@ -58,6 +58,7 @@ class PluginDocCommandTest {
             var readme = directory.toPath().resolve("README.md");
             assertThat(new String(Files.readAllBytes(readme)), containsString("---\n" +
                 "title: Plugin template test\n" +
+                "description: Plugin template for Kestra\n" +
                 "editLink: false\n\n" +
                 "---\n" +
                 "# Plugin template test\n" +

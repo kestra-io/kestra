@@ -248,7 +248,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
         ExecutionService.UpdateStatusInputDto updateToFailStatus = ExecutionService.UpdateStatusInputDto.builder()
             .execution(execution)
-            .taskRunId(execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId())
+            .taskRunIds(List.of(execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId()))
             .newState(State.Type.FAILED)
             .build();
         Execution restart = executionService.markAs(updateToFailStatus);
@@ -261,7 +261,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories(), hasSize(4));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts(), nullValue());
 
-        restart = executionService.markAs(updateToFailStatus.withTaskRunId(execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId()));
+        restart = executionService.markAs(updateToFailStatus.withTaskRunIds(List.of(execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId())));
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -284,12 +284,10 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         List<Execution> executions = executionService.bulkMarkAs(List.of(
             ExecutionService.UpdateStatusInputDto.builder()
                 .execution(firstFail)
-                .taskRunId(firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getId())
                 .newState(State.Type.RUNNING)
                 .build(),
             ExecutionService.UpdateStatusInputDto.builder()
                 .execution(secondFail)
-                .taskRunId(secondFail.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId())
                 .newState(State.Type.RUNNING)
                 .build()
         ));
@@ -316,12 +314,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         Assertions.assertThrows(IllegalStateException.class, () -> executionService.bulkMarkAs(List.of(
             ExecutionService.UpdateStatusInputDto.builder()
                 .execution(firstFail)
-                .taskRunId(firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getId())
+                .taskRunIds(List.of(firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getId()))
                 .newState(State.Type.RUNNING)
                 .build(),
             ExecutionService.UpdateStatusInputDto.builder()
                 .execution(runningSecondExecution)
-                .taskRunId(runningSecondExecution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId())
+                .taskRunIds(List.of(runningSecondExecution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId()))
                 .newState(State.Type.RUNNING)
                 .build()
         )));

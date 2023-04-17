@@ -180,7 +180,7 @@ public class ExecutionService {
     public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
         return markAs(UpdateStatusInputDto.builder()
             .execution(execution)
-            .taskRunId(taskRunId)
+            .taskRunIds(List.of(taskRunId))
             .newState(newState)
             .build());
     }
@@ -196,10 +196,13 @@ public class ExecutionService {
         Execution execution = updateStatusInputDto.getExecution();
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
-        String taskRunId = updateStatusInputDto.getTaskRunId();
+        List<String> taskRunIds = updateStatusInputDto.getTaskRunIds().isEmpty()
+            ? execution.findAllByCurrentState().stream().map(TaskRun::getId).collect(Collectors.toList())
+            : updateStatusInputDto.getTaskRunIds();
+
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
-            taskRun -> taskRun.getId().equals(taskRunId)
+            taskRun -> taskRunIds.contains(taskRun.getId())
         );
 
         Execution newExecution = execution;
@@ -208,7 +211,7 @@ public class ExecutionService {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
             boolean isFlowable = flow.findTaskByTaskId(originalTaskRun.getTaskId()).isFlowable();
 
-            if (!isFlowable || s.equals(taskRunId)) {
+            if (!isFlowable || taskRunIds.contains(s)) {
                 State.Type newState = updateStatusInputDto.getNewState();
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
@@ -253,7 +256,8 @@ public class ExecutionService {
     @Builder(toBuilder = true)
     public static class UpdateStatusInputDto {
         private Execution execution;
-        private String taskRunId;
+        @Builder.Default
+        private List<String> taskRunIds = new ArrayList<>();
         private State.Type newState;
     }
 

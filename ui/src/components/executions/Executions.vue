@@ -121,6 +121,9 @@
                         <el-button v-if="canUpdate" :icon="Restart" size="large" @click="restartExecutions()">
                             {{ $t('restart') }}
                         </el-button>
+                        <el-button v-if="canUpdate" :icon="StateMachine" size="large" @click="updateExecutionsStatus()">
+                            {{ $t('change status') }}
+                        </el-button>
                         <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
                             {{ $t('kill') }}
                         </el-button>
@@ -154,6 +157,7 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue";
 </script>
 
 <script>
@@ -223,7 +227,8 @@
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined,
                 executionsSelection: [],
-                queryBulkAction: false
+                queryBulkAction: false,
+                newStatus: undefined
             };
         },
         computed: {
@@ -349,19 +354,23 @@
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/query", this.loadQuery({
+                                .dispatch("execution/queryChangeStatus", this.loadQuery({
                                     sort: this.$route.query.sort || "state.startDate:desc",
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                                    newStatus: this.newStatus
                                 }))
                                 .then(r => {
-                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
+                                    this.$toast().success(this.$t("executions updated", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkChangeStatus", {
+                                    executionsId: this.executionsSelection,
+                                    newStatus: this.newStatus
+                                })
                                 .then(r => {
-                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
+                                    this.$toast().success(this.$t("executions updated", {executionCount: r.data.count}));
                                     this.loadData();
                                 }).catch(e => this.$toast().error(e.invalids.map(exec => {
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}

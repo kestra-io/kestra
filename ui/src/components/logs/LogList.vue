@@ -121,7 +121,7 @@
     import {mapState} from "vuex";
     import LogLine from "./LogLine.vue";
     import Restart from "../executions/Restart.vue";
-    import ChangeStatus from "../executions/ChangeStatus.vue";
+    import ChangeStatus from "../executions/ChangeTaskRunStatus.vue";
     import Metrics from "../executions/Metrics.vue";
     import Outputs from "../executions/Outputs.vue";
     import Clock from "vue-material-design-icons/Clock.vue";

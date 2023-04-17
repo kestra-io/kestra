@@ -5,6 +5,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.micronaut.context.annotation.Value;
@@ -70,6 +71,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -728,15 +730,15 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/state", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Executions"}, summary = "Change state for a taskrun in an execution")
+    @Operation(tags = {"Executions"}, summary = "Change status for given executions")
     public HttpResponse<?> bulkChangeState(
-        @Parameter(description = "executionId, taskRunId and state to apply") @Body List<ExecutionStateRequest> executionStateRequests
-    ) {
+        @Parameter(description = "Execution ids to impact") @Body List<String> executionIds,
+        @Parameter(description = "The new status") @Nullable @QueryValue(value = "newStatus") State.Type newStatus
+        ) {
         List<ExecutionService.UpdateStatusInputDto> updateStatusInputDtos = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
-        for (ExecutionStateRequest executionStateRequest : executionStateRequests) {
-            String executionId = executionStateRequest.getExecutionId();
+        for (String executionId : executionIds) {
             Optional<Execution> execution = executionRepository.findById(executionId);
 
             if (execution.isEmpty()) {
@@ -750,8 +752,7 @@ public class ExecutionController {
             } else {
                 updateStatusInputDtos.add(ExecutionService.UpdateStatusInputDto.builder()
                         .execution(execution.get())
-                        .taskRunId(executionStateRequest.getTaskRunId())
-                        .newState(executionStateRequest.getState())
+                        .newState(newStatus)
                     .build());
             }
         }
@@ -773,12 +774,48 @@ public class ExecutionController {
         return HttpResponse.ok(replays);
     }
 
-    @Getter
-    @EqualsAndHashCode
-    @AllArgsConstructor
-    @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class ExecutionStateRequest extends TaskRunStateRequest {
-        String executionId;
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/state/by-query", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Update executions state")
+    public HttpResponse<BulkResponse> updateExecutionsStatusByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The new status") @Nullable @QueryValue(value = "newStatus") State.Type newStatus,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
+    ) {
+        List<State.Type> finalStateFilter = Optional.ofNullable(state).orElse(List.of(State.Type.FAILED));
+
+        Integer count = Math.toIntExact(executionRepository
+            .find(
+                query,
+                namespace,
+                flowId,
+                startDate,
+                endDate,
+                state
+            )
+            .map(e -> e.getTaskRunList().stream().filter(t -> finalStateFilter.contains(t.getState().getCurrent())).map(t -> {
+                Execution restart;
+                try {
+                    restart = executionService.markAs(
+                        e,
+                        t.getId(),
+                        newStatus
+                    );
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+                executionQueue.emit(restart);
+                eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+                return 1;
+            }).count())
+            .reduce(Long::sum)
+            .blockingGet());
+
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)

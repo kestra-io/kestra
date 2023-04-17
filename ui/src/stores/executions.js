@@ -59,6 +59,19 @@ export default {
                     state: options.state,
                 })
         },
+        bulkChangeStatus(_, options) {
+            return this.$http.post(
+                `/api/v1/executions/state`,
+                options.executionsId
+            )
+        },
+        queryChangeStatus(_, options) {
+            return this.$http.post(
+                "/api/v1/executions/state/by-query",
+                {},
+                {params: options}
+            )
+        },
         kill(_, options) {
             return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
         },

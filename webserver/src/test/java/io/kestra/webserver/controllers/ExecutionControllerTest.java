@@ -86,7 +86,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
 
-    private MultipartBody createInputsFlowBody() {
+    private MultipartBody createInputsLabelsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
             ExecutionControllerTest.class.getClassLoader().getResource("application.yml")
@@ -103,29 +103,33 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             .addPart("instant", "2019-10-06T18:27:49Z")
             .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
+            .addPart("label-a", "label-1")
+            .addPart("label-b", "label-2")
             .build();
     }
 
-    private Execution triggerInputsFlowExecution(Boolean wait) {
-        MultipartBody requestBody = createInputsFlowBody();
+    private Execution triggerInputsLabelsFlowExecution(Boolean wait) {
+        MultipartBody requestBody = createInputsLabelsFlowBody();
 
         return triggerExecution(TESTS_FLOW_NS, "inputs", requestBody, wait);
     }
 
     @Test
     void trigger() {
-        Execution result = triggerInputsFlowExecution(false);
+        Execution result = triggerInputsLabelsFlowExecution(false);
 
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
         assertThat(result.getInputs().get("float"), is(42.42));
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
+        assertThat(result.getLabels().get("a"), is("label-1"));
+        assertThat(result.getLabels().get("b"), is("label-2"));
     }
 
     @Test
     void triggerAndWait() {
-        Execution result = triggerInputsFlowExecution(true);
+        Execution result = triggerInputsLabelsFlowExecution(true);
 
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(result.getTaskRunList().size(), is(5));
@@ -133,7 +137,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void get() {
-        Execution result = triggerInputsFlowExecution(false);
+        Execution result = triggerInputsLabelsFlowExecution(false);
 
         // Get the triggered execution by execution id
         Execution foundExecution = client.retrieve(
@@ -170,7 +174,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void triggerAndFollow() {
-        Execution result = triggerInputsFlowExecution(false);
+        Execution result = triggerInputsLabelsFlowExecution(false);
 
         RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class, embeddedServer.getURL());
 
@@ -494,6 +498,4 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTrigger().getVariables().get("body"), is("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"));
 
     }
-
-
 }

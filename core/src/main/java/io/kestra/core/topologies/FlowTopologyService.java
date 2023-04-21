@@ -122,7 +122,7 @@ public class FlowTopologyService {
         List<AbstractTrigger> triggers = ListUtils.emptyOnNull(child.getTriggers());
 
         // simulated execution
-        Execution execution = runnerUtils.newExecution(parent, (f, e) -> null);
+        Execution execution = runnerUtils.newExecution(parent, (f, e) -> null, null);
 
         // keep only flow trigger
         List<io.kestra.core.models.triggers.types.Flow> flowTriggers = triggers

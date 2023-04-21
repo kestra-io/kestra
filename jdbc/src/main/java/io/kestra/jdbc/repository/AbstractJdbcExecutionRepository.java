@@ -98,6 +98,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .in(state.stream().map(Enum::name).collect(Collectors.toList()));
     }
 
+    abstract protected Condition labelsFilter(Map<String, String> labels);
+
+    @Override
     public ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String query,
@@ -105,7 +108,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -119,7 +123,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     flowId,
                     startDate,
                     endDate,
-                    state
+                    state,
+                    labels
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -133,7 +138,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     ) {
         return Flowable.create(
             emitter -> this.jdbcRepository
@@ -148,7 +154,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         flowId,
                         startDate,
                         endDate,
-                        state
+                        state,
+                        labels
                     );
 
                     select.fetch()
@@ -168,7 +175,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     ) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -190,6 +198,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (state != null) {
             select = select.and(this.statesFilter(state));
+        }
+
+        if (labels != null) {
+            select = select.and(this.labelsFilter(labels));
         }
 
         return select;

@@ -239,7 +239,8 @@ public class ExecutionService {
                 flowId,
                 null,
                 endDate,
-                state
+                state,
+                null
             )
             .map(execution -> {
                 PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();

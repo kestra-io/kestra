@@ -15,7 +15,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -81,63 +80,63 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void full() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "full", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "full", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
     @Test
     void logs() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(3));
     }
 
     @Test
     void errors() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "errors", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "errors", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }
 
     @Test
     void sequential() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "sequential", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "sequential", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }
 
     @Test
     void parallel() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @Test
     void parallelNested() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }
 
     @Test
     void eachSequentialNested() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(23));
     }
 
     @Test
     void eachParallel() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @Test
     void eachParallelNested() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested", null, null, Duration.ofSeconds(60), null);
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }

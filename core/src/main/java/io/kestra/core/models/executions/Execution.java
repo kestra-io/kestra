@@ -51,6 +51,9 @@ public class Execution implements DeletedInterface {
     Map<String, Object> inputs;
 
     @With
+    Map<String, String> labels;
+
+    @With
     Map<String, Object> variables;
 
     @NotNull
@@ -93,6 +96,7 @@ public class Execution implements DeletedInterface {
             this.flowRevision,
             this.taskRunList,
             this.inputs,
+            this.labels,
             this.variables,
             this.state.withState(state),
             this.parentId,
@@ -122,6 +126,7 @@ public class Execution implements DeletedInterface {
             this.flowRevision,
             newTaskRunList,
             this.inputs,
+            this.labels,
             this.variables,
             this.state,
             this.parentId,
@@ -139,6 +144,7 @@ public class Execution implements DeletedInterface {
             this.flowRevision,
             taskRunList,
             this.inputs,
+            this.labels,
             this.variables,
             state,
             childExecutionId != null ? this.getId() : null,

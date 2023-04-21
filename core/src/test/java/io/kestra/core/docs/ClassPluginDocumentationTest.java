@@ -38,7 +38,7 @@ class ClassPluginDocumentationTest {
 
             assertThat(doc.getDocExamples().size(), is(2));
             assertThat(doc.getIcon(), is(notNullValue()));
-            assertThat(doc.getInputs().size(), is(2));
+            assertThat(doc.getInputs().size(), is(5));
 
             // simple
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("type"), is("string"));

@@ -39,7 +39,7 @@ public class ClassPluginDocumentation<T> {
         this.pluginTitle = plugin.title();
         this.icon = DocumentationGenerator.icon(plugin, cls);
 
-        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {
+        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length() && cls.getPackageName().charAt(this.group.length()) == '.') {
             this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
         }
 

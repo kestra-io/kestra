@@ -43,7 +43,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("ExampleTask"));
-        assertThat(render, containsString("description: Short description for this task"));
+        assertThat(render, containsString("description: \"Short description for this task\""));
         assertThat(render, containsString("`VALUE_1`"));
         assertThat(render, containsString("`VALUE_2`"));
     }

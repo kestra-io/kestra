@@ -55,13 +55,13 @@ class PluginDocCommandTest {
             assertThat(directory.isDirectory(), is(true));
             assertThat(directory.listFiles().length, is(3));
 
-            var readme = directory.toPath().resolve("README.md");
+            var readme = directory.toPath().resolve("index.md");
             assertThat(new String(Files.readAllBytes(readme)), containsString("---\n" +
-                "title: Plugin template test\n" +
-                "description: Plugin template for Kestra\n" +
+                "title: Template test\n" +
+                "description: \"Plugin template for Kestra\"\n" +
                 "editLink: false\n\n" +
                 "---\n" +
-                "# Plugin template test\n" +
+                "# Template test\n" +
                 "\n" +
                 "Plugin template for Kestra\n" +
                 "\n" +
@@ -74,12 +74,12 @@ class PluginDocCommandTest {
                 "Subgroup description\n" +
                 "### Tasks\n" +
                 "\n" +
-                "* [ExampleTask](tasks/io.kestra.plugin.templates.ExampleTask.html)\n" +
+                "* [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)\n" +
                 "\n" +
                 "## Guides\n" +
-                "* [Authentication](guides/authentication.html)\n" +
+                "* [Authentication](./guides/authentication.md)\n" +
                 "    \n" +
-                "* [Reporting](guides/reporting.html)\n" +
+                "* [Reporting](./guides/reporting.md)\n" +
                 "    \n"));
 
             // check @PluginProperty from an interface

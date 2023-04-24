@@ -36,8 +36,8 @@ idea {
  * Main
  **********************************************************************************************************************/
 mainClassName = "io.kestra.cli.App"
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 17
+targetCompatibility = 17
 
 dependencies {
     implementation project(":cli")
@@ -50,8 +50,8 @@ dependencies {
 allprojects {
     group "io.kestra"
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     repositories {
         mavenCentral()
@@ -137,8 +137,8 @@ subprojects {
     apply plugin: "com.adarshr.test-logger"
     apply plugin: "org.gradle.test-retry"
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     dependencies {
         // lombok

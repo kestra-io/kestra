@@ -857,10 +857,36 @@
             });
     }
 
+    const dragEditor = (e) => {
+        let dragX = e.clientX;
+        // get element from window with id "el-col-vueflow"
+        let block = window.document.getElementById("editor-col-size");
+        document.onmousemove = function onMouseMove(e) {
+            block.style.width = block.offsetWidth + e.clientX - dragX + "px";
+            dragX = e.clientX;
+        }
+        // remove mouse-move listener on mouse-up
+        document.onmouseup = () => document.onmousemove = document.onmouseup = null;
+    }
+
 </script>
 
 <template>
     <el-card shadow="never" v-loading="isLoading">
+        <editor
+            id="editor-col-size"
+            v-if="['doc', 'combined', 'source'].includes(showTopology)"
+            :class="['doc','combined'].includes(showTopology) ? 'editor-combined' : ''"
+            @save="save"
+            v-model="flowYaml"
+            schema-type="flow"
+            lang="yaml"
+            @update:model-value="editorUpdate($event)"
+            @cursor="updatePluginDocumentation($event)"
+            :creating="isCreating"
+            @restartGuidedTour="() => showTopology = 'source'"
+        />
+        <div class="slider" @mousedown="dragEditor" v-if="['doc','combined'].includes(showTopology)" />
         <div
             :class="showTopology === 'combined'? 'vueflow-combined' : showTopology === 'topology' ? 'vueflow': 'vueflow-hide'"
             id="el-col-vueflow"
@@ -925,18 +951,6 @@
                 </Controls>
             </VueFlow>
         </div>
-        <editor
-            v-if="['doc', 'combined', 'source'].includes(showTopology)"
-            :class="['doc','combined'].includes(showTopology) ? 'editor-combined' : ''"
-            @save="save"
-            v-model="flowYaml"
-            schema-type="flow"
-            lang="yaml"
-            @update:model-value="editorUpdate($event)"
-            @cursor="updatePluginDocumentation($event)"
-            :creating="isCreating"
-            @restartGuidedTour="() => showTopology = 'source'"
-        />
         <PluginDocumentation
             v-if="showTopology === 'doc'"
             class="plugin-doc"
@@ -1115,6 +1129,7 @@
 
         :deep(.el-card__body) {
             height: 100%;
+            display: flex;
         }
     }
 
@@ -1132,7 +1147,6 @@
     .editor-combined {
         height: 100%;
         width: 50%;
-        float: left;
     }
 
     .vueflow {
@@ -1142,8 +1156,7 @@
 
     .vueflow-combined {
         height: 100%;
-        width: 50%;
-        float: right;
+        flex-grow: 8;
     }
 
     .vueflow-hide {
@@ -1154,8 +1167,7 @@
         overflow-x: hidden;
         padding: calc(var(--spacer) * 3);
         height: 100%;
-        width: 50%;
-        float: right;
+        flex-grow: 8;
         overflow-y: scroll;
         padding: calc(var(--spacer) * 1.5);
         background-color: var(--bs-gray-300);
@@ -1169,5 +1181,15 @@
         display: flex;
         flex-direction: column;
         width: 20rem;
+    }
+
+    .slider {
+        width: calc(1rem/3);
+        border-radius: 0.25rem;
+        margin: 0 0.25rem;
+        background-color: var(--bs-secondary);
+        border: none;
+        cursor: col-resize;
+        user-select: none; /* disable selection */
     }
 </style>

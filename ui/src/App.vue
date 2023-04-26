@@ -44,6 +44,7 @@
         computed: {
             ...mapState("core", ["message", "error"]),
             ...mapGetters("core", ["guidedProperties"]),
+            ...mapState("flow", ["overallTotal"]),
             displayNavBar() {
                 if (this.$router) {
                     return this.$route.name !== "welcome";
@@ -105,7 +106,7 @@
         },
         watch: {
             $route(to) {
-                if (to.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
+                if (to.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true" && this.overallTotal === 0) {
                     this.$router.push({name: "welcome"});
                 }
             }

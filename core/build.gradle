@@ -34,9 +34,9 @@ dependencies {
 
     // schema
     implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.31.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.28.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.28.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.28.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.31.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.31.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.31.0'
 
     // test
     testImplementation project(':repository-memory')

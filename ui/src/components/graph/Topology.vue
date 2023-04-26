@@ -746,6 +746,9 @@
                 updatedFromEditor.value = false;
             }
         }
+        if (event == "source") {
+            window.document.getElementById("editor").style = null;
+        }
     }
 
     const save = (e) => {
@@ -859,14 +862,19 @@
 
     const dragEditor = (e) => {
         let dragX = e.clientX;
-        // get element from window with id "el-col-vueflow"
-        let block = window.document.getElementById("editor-col-size");
+        let block = window.document.getElementById("editor");
+        let blockWidth = block.offsetWidth;
+        let parentWidth = block.parentNode.offsetWidth;
+        let blockWidthPercent = (blockWidth / parentWidth) * 100;
+
         document.onmousemove = function onMouseMove(e) {
-            block.style.width = block.offsetWidth + e.clientX - dragX + "px";
-            dragX = e.clientX;
+            let newWidthPercent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
+            block.style.width = newWidthPercent + "%";
         }
-        // remove mouse-move listener on mouse-up
-        document.onmouseup = () => document.onmousemove = document.onmouseup = null;
+
+        document.onmouseup = () => {
+            document.onmousemove = document.onmouseup = null;
+        }
     }
 
 </script>
@@ -874,7 +882,7 @@
 <template>
     <el-card shadow="never" v-loading="isLoading">
         <editor
-            id="editor-col-size"
+            id="editor"
             v-if="['doc', 'combined', 'source'].includes(showTopology)"
             :class="['doc','combined'].includes(showTopology) ? 'editor-combined' : ''"
             @save="save"
@@ -1139,11 +1147,6 @@
         right: 30px;
     }
 
-    .editor {
-        height: 100%;
-        width: 100%;
-    }
-
     .editor-combined {
         height: 100%;
         width: 50%;
@@ -1155,8 +1158,7 @@
     }
 
     .vueflow-combined {
-        height: 100%;
-        flex-grow: 8;
+        flex-grow: 1;
     }
 
     .vueflow-hide {
@@ -1165,9 +1167,7 @@
 
     .plugin-doc {
         overflow-x: hidden;
-        padding: calc(var(--spacer) * 3);
-        height: 100%;
-        flex-grow: 8;
+        flex-grow: 1;
         overflow-y: scroll;
         padding: calc(var(--spacer) * 1.5);
         background-color: var(--bs-gray-300);

@@ -23,6 +23,7 @@
 
 <style scoped lang="scss">
     .plugin-documentation-div {
+        width: 0;
     }
 
     ::-webkit-scrollbar {

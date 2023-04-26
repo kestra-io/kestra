@@ -3,6 +3,9 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.utils.TestsUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -10,12 +13,15 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 
 import jakarta.inject.Inject;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+
+import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -46,6 +54,8 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("nested.string", "a string")
         .put("nested.more.int", "123")
         .put("nested.bool", "true")
+        .put("validatedString", "A123")
+        .put("validatedInt", "12")
         .build();
 
     @Inject
@@ -54,9 +64,16 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private YamlFlowParser yamlFlowParser;
+
     private Map<String, Object> typedInputs(Map<String, String> map) {
+        return typedInputs(map, flowRepository.findById("io.kestra.tests", "inputs").get());
+    }
+
+    private Map<String, Object> typedInputs(Map<String, String> map, Flow flow) {
         return runnerUtils.typedInputs(
-            flowRepository.findById("io.kestra.tests", "inputs").get(),
+            flow,
             Execution.builder()
                 .id("test")
                 .namespace("test")
@@ -171,6 +188,49 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void inputValidatedString() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("validatedString"), is("A123"));
+    }
+
+    @Test
+    void inputValidatedStringBadValue() {
+        HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("validatedString", "foo");
+
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(map);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input 'foo', it must match the pattern 'A\\d+'"));
+    }
+
+    @Test
+    void inputValidatedInteger() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("validatedInt"), is(12));
+    }
+
+    @Test
+    void inputValidatedIntegerBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedInt", "9");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '9', it must be more than '10'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedInt", "21");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '21', it must be less than '20'"));
+    }
+
+    @Test
     void inputFailed() {
         HashMap<String, String> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
@@ -189,5 +249,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(((Map<String, Object>)typeds.get("nested")).get("string"), is("a string"));
         assertThat(((Map<String, Object>)typeds.get("nested")).get("bool"), is(true));
         assertThat(((Map<String, Object>)((Map<String, Object>)typeds.get("nested")).get("more")).get("int"), is(123));
+    }
+
+    private Flow parse(String path) {
+        URL resource = TestsUtils.class.getClassLoader().getResource(path);
+        assert resource != null;
+
+        File file = new File(resource.getFile());
+
+        return yamlFlowParser.parse(file, Flow.class);
     }
 }

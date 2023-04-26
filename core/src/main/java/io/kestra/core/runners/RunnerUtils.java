@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -118,120 +119,126 @@ public class RunnerUtils {
                     return Optional.empty();
                 }
 
-                switch (input.getType()) {
-                    case STRING:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            current
-                        ));
-
-                    case INT:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Integer.valueOf(current)
-                        ));
-
-                    case FLOAT:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Float.valueOf(current)
-                        ));
-
-                    case BOOLEAN:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Boolean.valueOf(current)
-                        ));
-
-                    case DATETIME:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                Instant.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case DATE:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                LocalDate.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case TIME:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                LocalTime.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case DURATION:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                Duration.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case FILE:
-                        try {
-                            URI uri = URI.create(current.replace(File.separator, "/"));
-
-                            if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
-                                return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                    input.getName(),
-                                    uri
-                                ));
-                            } else {
-                                return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                    input.getName(),
-                                    storageInterface.from(flow, execution, input, new File(current))
-                                ));
-                            }
-                        } catch (Exception e) {
-                            throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
-                        }
-
-                    case JSON:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<>(
-                                input.getName(),
-                                JacksonMapper.toObject(current)
-                            ));
-                        } catch (JsonProcessingException e) {
-                            throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case URI:
-                        Matcher matcher = URI_PATTERN.matcher(current);
-                        if (matcher.matches()) {
-                            return Optional.of(new AbstractMap.SimpleEntry<>(
-                                input.getName(),
-                                current
-                            ));
-                        } else {
-                            throw new MissingRequiredInput("Invalid URI format for '" + input.getName() + "' for '" + current + "'");
-                        }
-
-                    default:
-                        throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
-                }
+                var parsedInput = parseInput(flow, execution, input, current);
+                parsedInput.ifPresent(parsed -> input.validate(parsed.getValue()));
+                return parsedInput;
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return handleNestedInputs(results);
+    }
+
+    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input input, String current) {
+        switch (input.getType()) {
+            case STRING:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    current
+                ));
+
+            case INT:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    Integer.valueOf(current)
+                ));
+
+            case FLOAT:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    Float.valueOf(current)
+                ));
+
+            case BOOLEAN:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    Boolean.valueOf(current)
+                ));
+
+            case DATETIME:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        Instant.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case DATE:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        LocalDate.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case TIME:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        LocalTime.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case DURATION:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        Duration.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case FILE:
+                try {
+                    URI uri = URI.create(current.replace(File.separator, "/"));
+
+                    if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
+                        return Optional.of(new AbstractMap.SimpleEntry<>(
+                            input.getName(),
+                            uri
+                        ));
+                    } else {
+                        return Optional.of(new AbstractMap.SimpleEntry<>(
+                            input.getName(),
+                            storageInterface.from(flow, execution, input, new File(current))
+                        ));
+                    }
+                } catch (Exception e) {
+                    throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
+                }
+
+            case JSON:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        JacksonMapper.toObject(current)
+                    ));
+                } catch (JsonProcessingException e) {
+                    throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case URI:
+                Matcher matcher = URI_PATTERN.matcher(current);
+                if (matcher.matches()) {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        current
+                    ));
+                } else {
+                    throw new MissingRequiredInput("Invalid URI format for '" + input.getName() + "' for '" + current + "'");
+                }
+
+            default:
+                throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
+        }
     }
 
     @SuppressWarnings("unchecked")

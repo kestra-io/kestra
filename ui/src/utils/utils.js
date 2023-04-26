@@ -84,6 +84,10 @@ export default class Utils {
      * @return Formatted string.
      */
     static humanFileSize(bytes, si = false, dp = 1) {
+        if (bytes === undefined) {
+           // when the size is 0 it arrives as undefined here!
+           return "0B";
+        }
         const thresh = si ? 1000 : 1024;
 
         if (Math.abs(bytes) < thresh) {

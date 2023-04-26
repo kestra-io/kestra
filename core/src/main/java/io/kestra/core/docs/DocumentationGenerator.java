@@ -91,7 +91,7 @@ public class DocumentationGenerator {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
         if (plugin.getManifest() != null) {
-            builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
+            builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title").replace("plugin-", ""));
 
             if (plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description") != null) {
                 builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
@@ -204,13 +204,13 @@ public class DocumentationGenerator {
     }
 
     private static <T> String docPath(RegisteredPlugin registeredPlugin) {
-        String pluginName = Slugify.of(registeredPlugin.title());
+        String pluginName = Slugify.of(registeredPlugin.path());
 
-        return pluginName + "/README.md";
+        return pluginName + "/index.md";
     }
 
     private static <T> String docPath(RegisteredPlugin registeredPlugin, String type, ClassPluginDocumentation<T> classPluginDocumentation) {
-        String pluginName = Slugify.of(registeredPlugin.title());
+        String pluginName = Slugify.of(registeredPlugin.path());
 
         return pluginName + "/" + type + "/" +
             (classPluginDocumentation.getSubGroup() != null ? classPluginDocumentation.getSubGroup() + "/" : "") +

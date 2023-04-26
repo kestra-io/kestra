@@ -1,5 +1,6 @@
 ---
 title: {{ capitalizeFirst (replace title "-" " ") }}
+{{#if description}}description: {{ json description }}{{~/if}}
 editLink: false
 {{#if icon}}icon: {{ icon }}{{~/if}}
 ---
@@ -21,7 +22,7 @@ editLink: false
 ### {{ capitalizeFirst type }}
 
 {{#each classes as | class | ~}}
-* [{{simpleName}}]({{ type }}/{{#and subgroup.name}}{{#not subgroup.subgroupIsGroup}}{{subgroup.name}}/{{/not}}{{/and}}{{ name }}.html)
+* [{{simpleName}}](./{{ type }}/{{#and subgroup.name}}{{#not subgroup.subgroupIsGroup}}{{subgroup.name}}/{{/not}}{{/and}}{{ name }}.md)
 {{/each ~}}
 
 {{/each ~}}
@@ -30,6 +31,6 @@ editLink: false
 {{~#if guides }}
 ## Guides
     {{~#each guides as | guide | }}
-* [{{ capitalizeFirst guide }}](guides/{{ guide }}.html)
+* [{{ capitalizeFirst guide }}](./guides/{{ guide }}.md)
     {{/each}}
 {{/if}}

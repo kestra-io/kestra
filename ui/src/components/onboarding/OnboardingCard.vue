@@ -3,21 +3,19 @@
         <Export class="icon" />
         <div class="content row">
             <div class="col-lg-4 col-xl-6">
-                <img :src="imgSrc" class="img-fluid" alt="" />
+                <div class="img img-fluid" :class="imgClass" />
             </div>
             <div class="col-lg-8 col-xl-6">
                 <h3>{{ title }}</h3>
                 <p>{{ content }}</p>
             </div>
-
         </div>
-
     </el-card>
 </template>
 
 <script>
     import Export from "vue-material-design-icons/Export.vue";
-    import {ElMessageBox} from 'element-plus'
+    import {ElMessageBox} from "element-plus"
 
     export default {
         name: "OnboardingCard",
@@ -63,7 +61,7 @@
             imgSrc() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
-                return new URL("../../assets/onboarding/onboarding-" + this.imgClass + "-" + (darkTheme ? "dark" : "light") + ".svg", import.meta.url).href;
+                return "../../assets/onboarding/onboarding-" + this.imgClass + "-" + (darkTheme ? "dark" : "light") + ".svg";
             },
         }
     }
@@ -96,7 +94,32 @@
         }
     }
 
-    img {
+
+    div.img {
         max-width: 100%;
+
+        &.started {
+            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat center;
+
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
+            }
+        }
+
+        &.demo {
+            background: url("../../assets/onboarding/onboarding-demo-light.svg") no-repeat center;
+
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-demo-dark.svg") no-repeat center;
+            }
+        }
+
+        &.help {
+            background: url("../../assets/onboarding/onboarding-help-light.svg") no-repeat center;
+
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-help-dark.svg") no-repeat center;
+            }
+        }
     }
 </style>

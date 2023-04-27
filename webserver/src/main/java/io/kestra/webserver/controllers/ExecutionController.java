@@ -435,7 +435,8 @@ public class ExecutionController {
     public Execution trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs and labels") @Nullable @Body Map<String, String> inputsAndLabels,
+        @Parameter(description = "The inputs") @Nullable @Body Map<String, String> inputs,
+        @Parameter(description = "The labels") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
@@ -451,8 +452,8 @@ public class ExecutionController {
 
         Execution current = runnerUtils.newExecution(
             find.get(),
-            (flow, execution) -> runnerUtils.typedInputs(flow, execution, RequestUtils.extractInputs(inputsAndLabels), files),
-            RequestUtils.extractLabels(inputsAndLabels)
+            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files),
+            RequestUtils.toMap(labels)
         );
 
         executionQueue.emit(current);

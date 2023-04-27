@@ -57,7 +57,8 @@ public class FlowCaseTest {
             "task-flow",
             null,
             (f, e) -> ImmutableMap.of("string", input),
-            Duration.ofMinutes(1));
+            Duration.ofMinutes(1)
+        );
 
         countDownLatch.await(1, TimeUnit.MINUTES);
 

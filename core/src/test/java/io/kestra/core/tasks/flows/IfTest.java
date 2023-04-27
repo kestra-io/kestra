@@ -69,7 +69,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
 
         // We cannot test null as inputs cannot be null
     }
-
+    
     @Test
     void ifWithoutElse() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "if-without-else", null,

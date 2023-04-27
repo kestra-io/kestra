@@ -73,7 +73,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     private Map<String, String> inputs;
 
     @Schema(
-        title = "The labels to pass to the triggered flow"
+        title = "The labels to pass to the triggered flow execution"
     )
     @PluginProperty(dynamic = true)
     private Map<String, String> labels;

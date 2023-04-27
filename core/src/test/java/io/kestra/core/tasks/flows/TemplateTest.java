@@ -60,8 +60,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
                 "with-string", "myString",
                 "with-optional", "myOpt"
             )),
-            Duration.ofSeconds(60),
-                null);
+            Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

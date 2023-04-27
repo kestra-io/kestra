@@ -17,7 +17,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
     @Test
     void failOnSwitch() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "fail-on-switch", null,
-            (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120), null);
+            (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.findTaskRunsByTaskId("switch").get(0).getState().getCurrent(), is(State.Type.FAILED));
@@ -27,7 +27,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
     @Test
     void failOnCondition() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "fail-on-condition", null,
-            (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120), null);
+            (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.findTaskRunsByTaskId("fail").get(0).getState().getCurrent(), is(State.Type.FAILED));
@@ -37,7 +37,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
     @Test
     void dontFailOnCondition() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "fail-on-condition", null,
-            (f, e) -> Map.of("param", "success") , Duration.ofSeconds(120), null);
+            (f, e) -> Map.of("param", "success") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.findTaskRunsByTaskId("fail").get(0).getState().getCurrent(), is(State.Type.SUCCESS));

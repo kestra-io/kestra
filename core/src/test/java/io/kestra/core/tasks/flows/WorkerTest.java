@@ -39,8 +39,7 @@ public class WorkerTest extends AbstractMemoryRunnerTest {
     public static class Suite {
         public void success(RunnerUtils runnerUtils) throws TimeoutException {
             Execution execution = runnerUtils.runOne("io.kestra.tests", "worker", null,
-                (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60),
-                    null);
+                (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60));
 
             assertThat(execution.getTaskRunList(), hasSize(4));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -49,8 +48,7 @@ public class WorkerTest extends AbstractMemoryRunnerTest {
 
         public void failed(RunnerUtils runnerUtils) throws TimeoutException {
             Execution execution = runnerUtils.runOne("io.kestra.tests", "worker", null,
-                (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60),
-                    null);
+                (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60));
 
             assertThat(execution.getTaskRunList(), hasSize(3));
             assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

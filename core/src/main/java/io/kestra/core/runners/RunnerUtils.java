@@ -275,6 +275,10 @@ public class RunnerUtils {
         return this.runOne(namespace, flowId, null, null, duration, null);
     }
 
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(namespace, flowId, revision, inputs, duration, null);
+    }
+
     public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
         return this.runOne(
             flowRepository
@@ -287,6 +291,10 @@ public class RunnerUtils {
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
         return this.runOne(flow, inputs, null, null);
+    }
+
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(flow, inputs, duration, null);
     }
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {

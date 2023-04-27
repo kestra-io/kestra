@@ -8,11 +8,9 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
-import org.jooq.Field;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,23 +36,7 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     }
 
     @Override
-    protected Condition labelsFilter(Map<String, String> labels) {
-        return DSL.and(labels.entrySet()
-            .stream()
-            .map(pair -> {
-                    final Field<String> field = DSL.field("value #>> '{labels, " + pair.getKey() + "}'", String.class);
-
-                    if (pair.getValue() == null) {
-                        return field.isNotNull();
-                    } else {
-                        return field.eq(pair.getValue());
-                    }
-                }
-            ).collect(Collectors.toList()));
-    }
-
-    @Override
-    protected Condition findCondition(String query) {
-        return this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query);
+    protected Condition findCondition(String query, Map<String, String> labels) {
+        return PostgresExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }
 }

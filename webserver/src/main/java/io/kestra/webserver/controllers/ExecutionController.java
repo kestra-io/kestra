@@ -126,7 +126,7 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
@@ -315,7 +315,7 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         Integer count = executionRepository
             .find(
@@ -436,7 +436,7 @@ public class ExecutionController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable @Body Map<String, String> inputs,
-        @Parameter(description = "The labels") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
@@ -644,7 +644,7 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         Integer count = executionRepository
             .find(
@@ -817,7 +817,7 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         Integer count = executionRepository
             .find(

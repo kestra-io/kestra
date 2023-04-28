@@ -125,7 +125,13 @@ public class ClassPluginDocumentation<T> {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> flatten(Map<String, Object> map, List<String> required, String parentName) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new TreeMap<>((key1, key2) -> {
+            boolean key1Required = required.contains(key1);
+            boolean key2Required = required.contains(key2);
+            if(key1Required == key2Required) return key1.compareTo(key2);
+
+            return key1Required ? -1 : 1;
+        });
 
         for (Map.Entry<String, Object> current : map.entrySet()) {
             Map<String, Object> finalValue = (Map<String, Object>) current.getValue();

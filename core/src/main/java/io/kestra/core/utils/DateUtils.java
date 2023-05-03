@@ -27,4 +27,16 @@ public class DateUtils {
 
         return currentDate;
     }
+
+    public static String groupByType(Long dayCount) {
+        if (dayCount > 365) {
+            return "month";
+        } else if (dayCount > 180) {
+            return "week";
+        } else if (dayCount > 1) {
+            return "day";
+        } else {
+            return "hour";
+        }
+    }
 }

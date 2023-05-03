@@ -38,6 +38,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
+    import FlowMetrics from "./FlowMetrics.vue";
 
     export default {
         mixins: [RouteContext],
@@ -136,6 +137,14 @@
                         name: "logs",
                         component: FlowLogs,
                         title: this.$t("logs"),
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        name: "metrics",
+                        component: FlowMetrics,
+                        title: this.$t("metrics"),
                     });
                 }
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)){

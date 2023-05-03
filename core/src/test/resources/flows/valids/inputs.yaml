@@ -57,6 +57,36 @@ inputs:
   min: 10
   max: 20
   required: false
+- name: validatedDate
+  type: DATE
+  after: 2023-01-01
+  before: 2023-12-31
+  required: false
+- name: validatedDateTime
+  type: DATETIME
+  after: "2023-01-01T00:00:00Z"
+  before: "2023-12-31T23:59:59Z"
+  required: false
+- name: validatedDuration
+  type: DURATION
+  min: PT10S
+  max: PT20S
+  required: false
+- name: validatedFile
+  type: FILE
+  extension: .yml
+  required: false
+- name: validatedFloat
+  type: FLOAT
+  min: 0.1
+  max: 0.5
+  required: false
+- name: validatedTime
+  type: TIME
+  after: "01:00:00"
+  before: "11:59:59"
+  required: false
+
 tasks:
 - id: string
   type: io.kestra.core.tasks.debugs.Return

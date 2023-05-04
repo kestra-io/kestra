@@ -56,6 +56,9 @@
                         .dispatch("template/loadTemplate", this.$route.params)
                         .then(this.loadFile);
                 }
+            },
+            onChange() {
+                this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
             }
         }
     };

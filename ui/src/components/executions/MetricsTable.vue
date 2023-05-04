@@ -36,6 +36,18 @@
                     </template>
                 </el-table-column>
 
+                <el-table-column prop="value" sortable :label="$t('value')">
+                    <template #default="scope">
+                    <span v-if="scope.row.type === 'timer'">
+                        {{ $filters.humanizeDuration(scope.row.value / 1000) }}
+                    </span>
+                        <span v-else>
+                        {{ $filters.humanizeNumber(scope.row.value) }}
+                    </span>
+                    </template>
+                </el-table-column>
+
+
                 <el-table-column prop="tags" :label="$t('tags')">
                     <template #default="scope">
                         <el-tag
@@ -48,17 +60,6 @@
                         >
                             {{ key }}: <strong>{{ value }}</strong>
                         </el-tag>
-                    </template>
-                </el-table-column>
-
-                <el-table-column prop="value" sortable :label="$t('value')">
-                    <template #default="scope">
-                    <span v-if="scope.row.type === 'timer'">
-                        {{ $filters.humanizeDuration(scope.row.value / 1000) }}
-                    </span>
-                        <span v-else>
-                        {{ $filters.humanizeNumber(scope.row.value) }}
-                    </span>
                     </template>
                 </el-table-column>
             </el-table>

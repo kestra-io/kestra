@@ -54,6 +54,13 @@
             font-size: var(--font-size-md);
             font-weight: normal;
         }
+
+        .warning {
+            background-color: #fef9e5;
+            border: 1px solid #fef3cb;
+            padding: 5px;
+            color: #655a32;
+        }
     }
 
     .markdown-tooltip {

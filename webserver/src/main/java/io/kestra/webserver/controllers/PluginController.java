@@ -130,9 +130,13 @@ public class PluginController {
             allProperties
         );
 
+        var doc = DocumentationGenerator.render(classPluginDocumentation);
+        doc = doc.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n");
+        doc = doc.replaceAll("\n::\n", "\n:::\n");
+
         return HttpResponse.ok()
             .body(new Doc(
-                DocumentationGenerator.render(classPluginDocumentation),
+                doc,
                 new Schema(
                     classPluginDocumentation.getPropertiesSchema(),
                     classPluginDocumentation.getOutputsSchema(),

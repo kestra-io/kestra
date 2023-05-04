@@ -122,7 +122,7 @@ public class PluginController {
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
     public HttpResponse<Doc> pluginDocumentation(
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
-        @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") boolean allProperties
+        @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
             pluginService.allPlugins(),

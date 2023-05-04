@@ -21,7 +21,7 @@ export default {
                 throw new Error("missing required cls");
             }
 
-            return this.$http.get(`/api/v1/plugins/${options.cls}?all=true`, {}).then(response => {
+            return this.$http.get(`/api/v1/plugins/${options.cls}`, {}).then(response => {
                 commit("setPlugin", response.data)
 
                 return response.data;

@@ -733,7 +733,7 @@
         haveChange.value = true;
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(event), 1000);
+        timer.value = setTimeout(() => onEdit(event), 500);
     }
 
     const switchView = (event) => {

@@ -175,6 +175,7 @@ public class JsonSchemaGenerator {
         builder
 
             .with(new JavaxValidationModule(
+                JavaxValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                 JavaxValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                 JavaxValidationOption.INCLUDE_PATTERN_EXPRESSIONS
             ))

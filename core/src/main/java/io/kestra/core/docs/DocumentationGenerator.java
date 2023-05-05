@@ -128,6 +128,7 @@ public class DocumentationGenerator {
                 try (var stream = Files.walk(root, 1)) {
                     return stream
                         .skip(1) // first element is the root element
+                        .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
                         .map(throwFunction(path -> new Document(
                             pluginName + "/guides/" + path.getName(path.getParent().getNameCount()),
                             new String(Files.readAllBytes(path)),

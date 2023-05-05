@@ -67,7 +67,7 @@ public class Flow implements DeletedInterface {
     Map<String, String> labels;
 
     @Valid
-    List<Input> inputs;
+    List<Input<?>> inputs;
 
     Map<String, Object> variables;
 

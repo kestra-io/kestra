@@ -3,6 +3,7 @@ package io.kestra.cli;
 import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
+import io.kestra.cli.services.StartupHookInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.annotation.Introspected;
@@ -41,6 +42,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
     @Inject
     private EndpointDefaultConfiguration endpointConfiguration;
 
+    @Inject
+    private StartupHookInterface startupHook;
+
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
 
@@ -69,6 +73,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(CommandLine.Command.class).name());
         startLogger();
         sendServerLog();
+        if (this.startupHook != null) {
+            this.startupHook.start(this);
+        }
         startWebserver();
 
         return 0;

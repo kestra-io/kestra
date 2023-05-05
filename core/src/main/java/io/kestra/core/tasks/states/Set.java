@@ -24,10 +24,10 @@ import java.util.Map;
         "* If you provide a new key, the new key will be added\n" +
         "* If you provide an existing key, the previous key will be overwrite\n" +
         "\n" +
-        "::: warning\n" +
+        "::alert{type=\"warning\"}\n" +
         "This method have no concurrency safe, if many executions for the same flow are concurrent, there is no guarantee on isolation on the value.\n" +
         "The value can be overwrite by others executions.\n" +
-        ":::\n"
+        "::\n"
 )
 @Plugin(
     examples = {

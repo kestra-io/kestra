@@ -130,7 +130,7 @@ public class RunnerUtils {
         return handleNestedInputs(results);
     }
 
-    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input input, String current) {
+    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, String current) {
         switch (input.getType()) {
             case STRING:
                 return Optional.of(new AbstractMap.SimpleEntry<>(

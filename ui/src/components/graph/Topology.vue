@@ -1,7 +1,7 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount} from "vue";
-    import {mapState, useStore} from "vuex"
-    import {VueFlow, Panel, useVueFlow, Position, MarkerType, PanelPosition} from "@vue-flow/core"
+import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed} from "vue";
+    import {useStore} from "vuex"
+    import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import dagre from "dagre"
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
@@ -29,14 +29,12 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import YamlUtils from "../../utils/yamlUtils";
-    import {getElement} from "bootstrap/js/src/util";
     import Utils from "../../utils/utils";
     import taskEditor from "../flows/TaskEditor.vue";
     import metadataEditor from "../flows/MetadataEditor.vue";
     import editor from "../inputs/Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
-    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
 
     const {
         id,
@@ -107,9 +105,10 @@
             type: String,
             default: undefined
         }
-
     })
 
+    const editorWidthStorageKey = "editor-width";
+    const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
     const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
     const elements = ref([])
@@ -407,6 +406,12 @@
         return undefined;
     }
 
+    const persistEditorWidth = () => {
+        if (editorWidthPercentage.value !== null) {
+            localStorage.setItem(editorWidthStorageKey, editorWidthPercentage.value);
+        }
+    }
+
     onMounted(() => {
         if (props.isCreating) {
             store.commit("flow/setFlowGraph", undefined);
@@ -429,6 +434,7 @@
         window.addEventListener("popstate", () => {
             stopTour();
         });
+        window.addEventListener("beforeunload", persistEditorWidth);
     })
 
     onBeforeUnmount(() => {
@@ -437,6 +443,10 @@
         document.removeEventListener("popstate", () => {
             stopTour();
         });
+
+        window.removeEventListener("beforeunload", persistEditorWidth);
+
+        persistEditorWidth();
     })
 
 
@@ -744,6 +754,9 @@
                 updatedFromEditor.value = false;
             }
         }
+        if (event == "source") {
+            window.document.getElementById("editor").style = null;
+        }
     }
 
     const save = (e) => {
@@ -855,10 +868,43 @@
             });
     }
 
+    const combinedEditor = computed(() => ['doc','combined'].includes(showTopology.value));
+
+    const dragEditor = (e) => {
+        let editorDomElement = document.getElementById("editor");
+
+        let dragX = e.clientX;
+        let blockWidth = editorDomElement.offsetWidth;
+        let parentWidth = editorDomElement.parentNode.offsetWidth;
+        let blockWidthPercent = (blockWidth / parentWidth) * 100;
+
+        document.onmousemove = function onMouseMove(e) {
+            editorWidthPercentage.value = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100) + "%"
+        }
+
+        document.onmouseup = () => {
+            document.onmousemove = document.onmouseup = null;
+        }
+    }
 </script>
 
 <template>
     <el-card shadow="never" v-loading="isLoading">
+        <editor
+            id="editor"
+            v-if="['doc', 'combined', 'source'].includes(showTopology)"
+            :class="combinedEditor ? 'editor-combined' : ''"
+            :style="combinedEditor ? {width: editorWidthPercentage} : {}"
+            @save="save"
+            v-model="flowYaml"
+            schema-type="flow"
+            lang="yaml"
+            @update:model-value="editorUpdate($event)"
+            @cursor="updatePluginDocumentation($event)"
+            :creating="isCreating"
+            @restartGuidedTour="() => showTopology = 'source'"
+        />
+        <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
         <div
             :class="showTopology === 'combined'? 'vueflow-combined' : showTopology === 'topology' ? 'vueflow': 'vueflow-hide'"
             id="el-col-vueflow"
@@ -923,18 +969,6 @@
                 </Controls>
             </VueFlow>
         </div>
-        <editor
-            v-if="['doc', 'combined', 'source'].includes(showTopology)"
-            :class="['doc','combined'].includes(showTopology) ? 'editor-combined' : ''"
-            @save="save"
-            v-model="flowYaml"
-            schema-type="flow"
-            lang="yaml"
-            @update:model-value="editorUpdate($event)"
-            @cursor="updatePluginDocumentation($event)"
-            :creating="isCreating"
-            @restartGuidedTour="() => showTopology = 'source'"
-        />
         <PluginDocumentation
             v-if="showTopology === 'doc'"
             class="plugin-doc"
@@ -1113,6 +1147,7 @@
 
         :deep(.el-card__body) {
             height: 100%;
+            display: flex;
         }
     }
 
@@ -1122,15 +1157,9 @@
         right: 30px;
     }
 
-    .editor {
-        height: 100%;
-        width: 100%;
-    }
-
     .editor-combined {
         height: 100%;
         width: 50%;
-        float: left;
     }
 
     .vueflow {
@@ -1139,9 +1168,7 @@
     }
 
     .vueflow-combined {
-        height: 100%;
-        width: 50%;
-        float: right;
+        flex-grow: 1;
     }
 
     .vueflow-hide {
@@ -1150,10 +1177,7 @@
 
     .plugin-doc {
         overflow-x: hidden;
-        padding: calc(var(--spacer) * 3);
-        height: 100%;
-        width: 50%;
-        float: right;
+        flex-grow: 1;
         overflow-y: scroll;
         padding: calc(var(--spacer) * 1.5);
         background-color: var(--bs-gray-300);
@@ -1167,5 +1191,15 @@
         display: flex;
         flex-direction: column;
         width: 20rem;
+    }
+
+    .slider {
+        width: calc(1rem/3);
+        border-radius: 0.25rem;
+        margin: 0 0.25rem;
+        background-color: var(--bs-secondary);
+        border: none;
+        cursor: col-resize;
+        user-select: none; /* disable selection */
     }
 </style>

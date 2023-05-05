@@ -64,7 +64,7 @@
         </el-form-item>
     </div>
     <el-card>
-        <BarChart ref="chartRef" :chart-data="chartData" v-if="aggregatedMetric" />
+        <BarChart ref="chartRef" :chart-data="chartData" :options="options" v-if="aggregatedMetric" />
     </el-card>
 </template>
 
@@ -97,12 +97,39 @@
                     datasets: [
                         {
                             label: this.$t(this.aggregation) + " " + this.$t("of") + " " + this.metric,
-                            backgroundColor: "#03DABA",
+                            backgroundColor: "#9F9DFF",
                             borderRadius: 4,
                             data: this.aggregatedMetric.aggregations.map(e => e.value ? e.value : 0)
                         }
                     ]
                 };
+            },
+            options() {
+                return {
+                    scales: {
+                        x: {
+                            grid: {
+                                borderColor: "#404559",
+                                color: "#404559"
+                            },
+                            ticks: {
+                                fontColor: "#918BA9",
+                                autoSkip: true,
+                                minRotation: 0,
+                                maxRotation: 0
+                            }
+                        },
+                        y: {
+                            grid: {
+                                borderColor: "#404559",
+                                color: "#404559"
+                            },
+                            ticks: {
+                                fontColor: "#918BA9"
+                            }
+                        }
+                    }
+                }
             },
             tasks() {
                 return this.flow.tasks.map(e => e.id);

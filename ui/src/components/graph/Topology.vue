@@ -185,14 +185,16 @@
         });
         generateGraph();
 
-        const sourceFromLocalStorage = localStorage.getItem(localStorageKey.value);
-        if(sourceFromLocalStorage !== null) {
-            toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
-                flowYaml.value = sourceFromLocalStorage;
-                onEdit(flowYaml.value);
-            })
+        if(!props.isReadOnly) {
+            const sourceFromLocalStorage = localStorage.getItem(localStorageKey.value);
+            if (sourceFromLocalStorage !== null) {
+                toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
+                    flowYaml.value = sourceFromLocalStorage;
+                    onEdit(flowYaml.value);
+                })
 
-            localStorage.removeItem(localStorageKey.value);
+                localStorage.removeItem(localStorageKey.value);
+            }
         }
     }
 

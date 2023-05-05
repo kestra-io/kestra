@@ -37,9 +37,9 @@ import javax.validation.constraints.NotNull;
     examples = @Example(
         title = "This flow will be triggered after each successfully execution of flow `io.kestra.tests.trigger-flow` " +
             "and forward the `uri` of `my-task` taskId outputs.",
+        full = true,
         code = "id: trigger-flow-listener\n" +
             "namespace: io.kestra.tests\n" +
-            "revision: 1\n" +
             "\n" +
             "inputs:\n" +
             "  - name: from-parent\n" +

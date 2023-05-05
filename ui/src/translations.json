@@ -410,6 +410,7 @@
     "save draft": {
       "prompt": {
         "base": "The current Flow is not valid. Do you still want to save it as a draft ?",
+        "http_error": "Unable to validate the Flow due to an HTTP error. Do you want to save the current Flow as draft ?",
         "creation": "You will retrieve it on your next Flow creation.",
         "existing": "You will retrieve it on your next <code>{namespace}.{id}</code> Flow edition."
       },
@@ -831,6 +832,7 @@
     "save draft": {
       "prompt": {
         "base": "Le Flow actuel est invalide. Voulez-vous le sauvegarder en tant que brouillon ?",
+        "http_error": "Impossible de valider le Flow en raison d'une erreur HTTP. Voulez-vous sauvegarder le Flow actuel en tant que brouillon ?",
         "creation": "Vous le récupérerez à votre prochaine création de Flow.",
         "existing": "Vous le récupérerez à votre prochaine édition du Flow <code>{namespace}.{id}</code>."
       },

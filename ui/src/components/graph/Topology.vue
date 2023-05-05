@@ -552,6 +552,31 @@
         }
     };
 
+    const showDraftPopup = (draftReason, refreshAfterSelect = false) => {
+        toast.confirm(draftReason + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {
+            namespace: flow.namespace,
+            id: flow.id
+        })),
+            () => {
+                localStorage.setItem(localStorageKey.value, flowYaml.value);
+                store.dispatch("core/isUnsaved", false);
+                if(refreshAfterSelect){
+                    router.go();
+                }else {
+                    router.push({
+                        name: "flows/list"
+                    })
+                }
+            },
+            () => {
+                if(refreshAfterSelect) {
+                    store.dispatch("core/isUnsaved", false);
+                    router.go();
+                }
+            }
+        )
+    }
+
     const onEdit = (event) => {
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
@@ -573,6 +598,9 @@
                 }
 
                 return value;
+            }).catch(e => {
+                showDraftPopup(t("save draft.prompt.http_error"), true);
+                return Promise.reject(e);
             })
     }
 
@@ -801,14 +829,7 @@
                 flowParsed = YamlUtils.parse(flowYaml.value);
             } catch (_) {}
             if (validation[0].constraints) {
-                toast.confirm(t("save draft.prompt.base") + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {namespace: flow.namespace, id: flow.id})),
-                    () => {
-                        localStorage.setItem(localStorageKey.value, flowYaml.value);
-                        store.dispatch("core/isUnsaved", false);
-                        router.push({
-                            name: "flows/list"
-                        })
-                    })
+                showDraftPopup(t("save draft.prompt.base"));
                 return;
             }
 

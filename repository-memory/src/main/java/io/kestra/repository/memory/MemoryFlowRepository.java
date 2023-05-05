@@ -131,7 +131,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         //TODO Non used query, just returns all flow and filter by namespace if set
         List<Flow> results = flows.values()
             .stream()
-            .filter(flow -> namespace == null || flow.getNamespace().startsWith(namespace))
+            .filter(flow -> namespace == null || flow.getNamespace().equals(namespace) || flow.getNamespace().startsWith(namespace + "."))
             .collect(Collectors.toList());
         return ArrayListTotal.of(pageable, results);
     }
@@ -145,7 +145,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         //TODO Non used query, just returns all flow and filter by namespace if set
         return flows.values()
             .stream()
-            .filter(flow -> namespace == null || flow.getNamespace().startsWith(namespace))
+            .filter(flow ->  namespace == null || flow.getNamespace().equals(namespace) || flow.getNamespace().startsWith(namespace + "."))
             .sorted(Comparator.comparingInt(Flow::getRevision))
             .map(flow -> findByIdWithSource(flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision())).get())
             .collect(Collectors.toList());

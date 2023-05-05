@@ -212,7 +212,10 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace("io.kestra.tests");
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 2));
+
+        save = flowRepository.findByNamespace("io.kestra.tests2");
+        assertThat((long) save.size(), is(1L));
 
         save = flowRepository.findByNamespace("io.kestra.tests.minimal.bis");
         assertThat((long) save.size(), is(1L));
@@ -230,7 +233,10 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findWithSource() {
         List<FlowWithSource> save = flowRepository.findWithSource(null, "io.kestra.tests", Collections.emptyMap());
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+
+        save = flowRepository.findWithSource(null, "io.kestra.tests2", Collections.emptyMap());
+        assertThat((long) save.size(), is(1L));
 
         save = flowRepository.findWithSource(null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
@@ -368,7 +374,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findDistinctNamespace() {
         List<String> distinctNamespace = flowRepository.findDistinctNamespace();
-        assertThat((long) distinctNamespace.size(), is(2L));
+        assertThat((long) distinctNamespace.size(), is(3L));
     }
 
     @Singleton

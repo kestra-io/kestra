@@ -732,10 +732,8 @@
         flowYaml.value = event;
         haveChange.value = true;
 
-        if (showTopology.value === "combined") {
-            clearTimeout(timer.value);
-            timer.value = setTimeout(() => onEdit(event), 500);
-        }
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => onEdit(event), 500);
     }
 
     const switchView = (event) => {

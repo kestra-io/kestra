@@ -69,9 +69,9 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         title = "The unique key that will be part of the url",
         description = "If you don't provide a key, a random one will be generated. Is used as key for generating the url of the webhook.\n" +
             "\n" +
-            "::: warning\n" +
+            "::alert{type=\"warning\"}\n" +
             "Take care when using manual key, the key is the only security to protect your webhook and must be considered as a secret !\n" +
-            ":::\n",
+            "::\n",
         defaultValue = "<generated-hash>"
     )
     @PluginProperty

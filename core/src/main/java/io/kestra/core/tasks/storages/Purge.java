@@ -21,11 +21,13 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge execution, logs or storage files."
+    title = "Purge executions, logs, metrics, and storage files.",
+    description = "This task can be used to purge flow executions data for all flows, for a specific namespace, or for a specific flow."
 )
 @Plugin(
     examples = {
         @Example(
+            title = "Purge all flow execution data for flows ended more than one month ago.",
             code = {
                 "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
                 "states: ",
@@ -40,21 +42,21 @@ import java.util.List;
 public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Schema(
         title = "Namespace to purge or namespace for a flow",
-        description = "If `flowId` isn't provide, this is a namespace prefix, else the namespace of flow"
+        description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
     @Schema(
         title = "The flow id to purge",
-        description = "You need to provide the `namespace` properties if you want to purge a flow"
+        description = "You need to provide the `namespace` properties if you want to purge a flow."
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
         title = "The max date to purge",
-        description = "All date after this date will be purged."
+        description = "All data of flows executed before this date will be purged."
     )
     @PluginProperty(dynamic = true)
     private String endDate;
@@ -66,28 +68,28 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     private List<State.Type> states;
 
     @Schema(
-        title = "Purge execution from repository"
+        title = "Purge executions from the repository."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeExecution = true;
 
     @Schema(
-        title = "Purge log from repository"
+        title = "Purge logs from the repository."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeLog = true;
 
     @Schema(
-        title = "Purge metric from repository"
+        title = "Purge metrics from the repository."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeMetric = true;
 
     @Schema(
-        title = "Purge file from internal storage"
+        title = "Purge files from the internal storage."
     )
     @PluginProperty
     @Builder.Default

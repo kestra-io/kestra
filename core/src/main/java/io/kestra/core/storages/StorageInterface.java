@@ -140,7 +140,7 @@ public interface StorageInterface {
     }
 
     @Retryable(includes = {IOException.class})
-    default URI from(Flow flow, Execution execution, Input input, File file) throws IOException {
+    default URI from(Flow flow, Execution execution, Input<?> input, File file) throws IOException {
         return this.from(flow, execution, input.getName(), file);
     }
 

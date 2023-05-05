@@ -20,11 +20,11 @@ dependencies {
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
-    implementation 'com.github.oshi:oshi-core:6.4.0'
+    implementation 'com.github.oshi:oshi-core:6.4.1'
     implementation 'io.pebbletemplates:pebble:3.2.0'
 
     // scheduler
-    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.0'
+    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
 
     // process
     implementation ('com.github.docker-java:docker-java:3.3.0') {
@@ -33,17 +33,17 @@ dependencies {
     implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.0'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.28.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.28.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.28.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.28.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.31.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.31.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.31.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.31.0'
 
     // test
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.2.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"

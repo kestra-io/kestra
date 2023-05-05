@@ -3,7 +3,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.github.johnrengelman.shadow" version "8.1.0"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
     id "application"
 
     // test
@@ -74,8 +74,8 @@ allprojects {
             force("org.slf4j:slf4j-api:1.7.36")
 
             // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.21.10")
-            force("com.google.protobuf:protobuf-java-util:3.21.10")
+            force("com.google.protobuf:protobuf-java:3.22.3")
+            force("com.google.protobuf:protobuf-java-util:3.22.3")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.13")
@@ -120,7 +120,7 @@ allprojects {
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         implementation 'com.github.jknack:handlebars:4.3.1'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20220705'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '31.1-jre'

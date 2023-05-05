@@ -36,8 +36,8 @@ class PluginDocCommandTest {
 
         FileUtils.copyFile(
             new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()
-                .getResource("plugins/plugin-template-test-0.6.0-SNAPSHOT.jar")).toURI()),
-            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.6.0-SNAPSHOT.jar"))
+                .getResource("plugins/plugin-template-test-0.9.0-SNAPSHOT.jar")).toURI()),
+            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.9.0-SNAPSHOT.jar"))
         );
 
         Path docPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
@@ -84,7 +84,8 @@ class PluginDocCommandTest {
 
             // check @PluginProperty from an interface
             var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
-            assertThat(new String(Files.readAllBytes(task)), containsString("### `example`\n" +
+            String taskDoc = new String(Files.readAllBytes(task));
+            assertThat(taskDoc, containsString("### `example`\n" +
                 "\n" +
                 "* **Type:** ==string==\n" +
                 "* **Dynamic:** ✔️\n" +
@@ -93,6 +94,16 @@ class PluginDocCommandTest {
                 "\n" +
                 "\n" +
                 "> Example interface\n"));
+            assertThat(taskDoc, containsString("### `requiredExample`\n" +
+                "\n" +
+                "* **Type:** ==string==\n" +
+                "* **Dynamic:** ❌\n" +
+                "* **Required:** ✔️\n" +
+                "* **Min length:** `1`\n" +
+                "\n" +
+                "\n" +
+                "\n" +
+                "> Required Example interface\n"));
 
             var authenticationGuide = directory.toPath().resolve("guides/authentication.md");
             assertThat(new String(Files.readAllBytes(authenticationGuide)), containsString("This is how to authenticate for this plugin:"));

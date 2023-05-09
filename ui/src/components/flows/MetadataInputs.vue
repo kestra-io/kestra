@@ -18,78 +18,27 @@
                     </el-button>
                 </div>
             </template>
-
             <div>
-                <el-form label-position="top">
-                    <el-form-item>
-                        <template #label>
-                            <code>name</code>
-                        </template>
-                        <el-input
-                            :model-value="selectedInput.name"
-                            @update:model-value="updateProps($event, selectedIndex, 'name')"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <template #label>
-                            <code>type</code>
-                        </template>
-                        <el-select
-                            class="flex-fill flex-grow-1 w-100 me-2"
-                            :model-value="selectedInput.type"
-                            @update:model-value="updateProps($event, selectedIndex, 'type')"
-                        >
-                            <el-option
-                                v-for="input in inputsType"
-                                :key="input.type"
-                                :value="input.type"
-                            />
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item>
-                        <template #label>
-                            <code>description</code>&nbsp
-                        </template>
-                        <editor
-                            :model-value="selectedInput.description"
-                            :navbar="false"
-                            :full-height="false"
-                            :input="true"
-                            lang="text"
-                            @update:model-value="updateProps($event, selectedIndex, 'description')"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <template #label>
-                            <code>required</code>
-                        </template>
-                        <el-switch
-                            active-color="green"
-                            :model-value="selectedInput.required"
-                            @change="updateRequired(selectedIndex)"
-                        />
-                    </el-form-item>
-                    <el-form-item v-if="selectedInput.type !== 'FILE'">
-                        <template #label>
-                            <div class="d-flex">
-                                <code class="flex-grow-1">defaults</code>
-                                <el-switch
-                                    active-color="green"
-                                    :model-value="selectedInput.defaults !== undefined"
-                                    @change="updateHaveDefaults(selectedIndex)"
-                                />
-                            </div>
-                        </template>
-
-                        <component
-                            v-if="selectedInput.defaults !== undefined"
-                            :is="inputsType.find(e => e.type === selectedInput.type).component"
-                            v-bind="inputsType.find(e => e.type === selectedInput.type).props"
-                            :model-value="selectedInput.defaults"
-                            @update:model-value="updateProps($event, selectedIndex, 'defaults')"
-                        />
-                    </el-form-item>
-                </el-form>
+                <el-select
+                    :model-value="getCls(selectedInput.type)"
+                    @update:model-value="onChangeType"
+                >
+                    <el-option
+                        v-for="(input, index) in inputsType"
+                        :key="index"
+                        :label="input.type"
+                        :value="input.cls"
+                    />
+                </el-select>
+                <task-root
+                    v-loading="loading"
+                    v-if="inputSchema"
+                    name="root"
+                    :model-value="selectedInput"
+                    @update:model-value="updateSelected($event, selectedIndex)"
+                    :schema="inputSchema.schema"
+                    :definitions="inputSchema.schema.definitions"
+                />
             </div>
         </el-drawer>
         <div class="w-100">
@@ -121,107 +70,99 @@
     import Minus from "vue-material-design-icons/Minus.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import TaskRoot from "./tasks/TaskRoot.vue";
 </script>
 <script>
-    import Editor from "../inputs/Editor.vue";
+    import {mapState} from "vuex";
 
     export default {
-        components: {Editor},
         emits: ["update:modelValue"],
         props: {
             inputs: {
                 type: Object,
             }
         },
+        computed: {
+            ...mapState("plugin", ["inputSchema"]),
+        },
         mounted() {
             if (this.inputs && this.inputs.length > 0) this.newInputs = this.inputs;
         },
         data() {
-            const editorProps = {
-                navbar: false,
-                fullHeight: false,
-                input: true,
-                lang: "text"
-            }
-
             return {
-                newInputs: [{}],
+                newInputs: [{type: "STRING"}],
                 inputsType: [
                     {
-                        component: "editor",
-                        props: editorProps,
+                        cls: "io.kestra.core.models.flows.input.StringInput",
                         type: "STRING",
                     },
                     {
-                        component: "el-input-number",
-                        props: {},
+                        cls: "io.kestra.core.models.flows.input.IntInput",
                         type: "INT",
                     },
                     {
-                        component: "el-switch",
-                        props: {
-                            activeColor: "green"
-                        },
+                        cls: "io.kestra.core.models.flows.input.BooleanInput",
                         type: "BOOLEAN",
                     },
                     {
-                        component: "el-input",
-                        props: {},
+                        cls: "io.kestra.core.models.flows.input.FloatInput",
                         type: "FLOAT",
                     },
                     {
-                        component: "el-date-picker",
-                        props: {
-                            type: "datetime"
-                        },
+                        cls: "io.kestra.core.models.flows.input.DateTimeInput",
                         type: "DATETIME",
                     },
                     {
-                        component: "el-date-picker",
-                        props: {
-                            type: "date"
-                        },
+                        cls: "io.kestra.core.models.flows.input.DateInput",
                         type: "DATE",
                     },
                     {
-                        component: "el-time-picker",
-                        props: {},
+                        cls: "io.kestra.core.models.flows.input.TimeInput",
                         type: "TIME",
                     },
                     {
-                        component: "el-input",
-                        props: {},
+                        cls: "io.kestra.core.models.flows.input.DurationInput",
                         type: "DURATION",
                     },
                     {
-                        component: "el-input",
-                        props: {},
+                        cls: "io.kestra.core.models.flows.input.FileInput",
                         type: "FILE",
                     },
                     {
-                        component: "editor",
-                        props: {...editorProps, ...{lang: "json"}},
+                        cls: "io.kestra.core.models.flows.input.JsonInput",
                         type: "JSON",
                     },
                     {
-                        component: "el-input",
-                        props: {},
+                        cls: "io.kestra.core.models.flows.input.URIInput",
                         type: "URI",
                     }
                 ],
                 selectedInput: undefined,
                 selectedIndex: undefined,
-                isEditOpen: false
+                isEditOpen: false,
+                loading: false
             }
         },
         methods: {
             selectInput(input, index) {
+                this.loading = true;
                 this.selectedInput = input;
                 this.selectedIndex = index;
                 this.isEditOpen = true;
+                this.loadSchema(this.getCls(input.type))
+            },
+            getCls(type) {
+                return this.inputsType.find(e => e.type === type).cls
+            },
+            getType(cls) {
+                return this.inputsType.find(e => e.cls === cls).type
+            },
+            loadSchema(cls) {
+                this.$store.dispatch("plugin/loadInputSchema", {cls: cls})
+                    .then(_ => this.loading = false);
             },
             update() {
-                if(this.newInputs.map(e => e.name).length !== new Set(this.newInputs.map(e => e.name)).size) {
+                if (this.newInputs.map(e => e.name).length !== new Set(this.newInputs.map(e => e.name)).size) {
                     this.$store.dispatch("core/showMessage", {
                         variant: "error",
                         title: this.$t("error"),
@@ -232,32 +173,20 @@
                     this.$emit("update:modelValue", this.newInputs);
                 }
             },
-            updateProps(event, index, property) {
-                this.newInputs[index][property] = event;
-                if (property === "type") {
-                    this.newInputs[index].required = false;
-                    delete this.newInputs[index].defaults;
-                }
-            },
-            updateRequired(index) {
-                this.newInputs[index].required = !this.newInputs[index].required;
-                if (this.newInputs[index].required) {
-                    delete this.newInputs[index].defaults;
-                }
-            },
-            updateHaveDefaults(index) {
-                if (this.newInputs[index].defaults !== undefined) {
-                    delete this.newInputs[index].defaults;
-                } else {
-                    this.newInputs[index].defaults = "";
-                    this.newInputs[index].required = false;
-                }
+            updateSelected(value) {
+                this.newInputs[this.selectedIndex] = value;
             },
             deleteInput(index) {
                 this.newInputs.splice(index, 1);
             },
             addInput() {
-                this.newInputs.push({})
+                this.newInputs.push({type: "STRING"});
+            },
+            onChangeType(value) {
+                this.loading = true;
+                this.selectedInput = {type: this.getType(value), name: this.newInputs[this.selectedIndex].name};
+                this.newInputs[this.selectedIndex] = this.selectedInput;
+                this.loadSchema(value)
             }
         },
     };

@@ -1,7 +1,7 @@
 package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
-import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.models.flows.Input;
 import lombok.*;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-public class ClassPluginDocumentation<T> extends ClassDocumentation {
+public class ClassInputDocumentation<T> extends ClassDocumentation {
     private Boolean deprecated;
     private String cls;
     private String icon;
@@ -24,7 +24,6 @@ public class ClassPluginDocumentation<T> extends ClassDocumentation {
     private String docDescription;
     private String docBody;
     private List<ExampleDoc> docExamples;
-    private List<MetricDoc> docMetrics;
     private Map<String, Object> defs = new TreeMap<>();
     private Map<String, Object> inputs = new TreeMap<>();
     private Map<String, Object> outputs = new TreeMap<>();
@@ -33,29 +32,16 @@ public class ClassPluginDocumentation<T> extends ClassDocumentation {
 
 
     @SuppressWarnings("unchecked")
-    private ClassPluginDocumentation(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
+    private ClassInputDocumentation(JsonSchemaGenerator jsonSchemaGenerator, Class<? extends Input<?>> cls) {
         this.cls = cls.getName();
-        this.group = plugin.group();
-        this.pluginTitle = plugin.title();
-        this.icon = DocumentationGenerator.icon(plugin, cls);
-
-        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length() && cls.getPackageName().charAt(this.group.length()) == '.') {
-            this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
-        }
-
         this.shortName = cls.getSimpleName();
 
-        this.propertiesSchema = jsonSchemaGenerator.properties(baseCls, cls);
-        this.outputsSchema = jsonSchemaGenerator.outputs(baseCls, cls);
+        this.propertiesSchema = jsonSchemaGenerator.properties(Input.class, cls);
+        this.outputsSchema = jsonSchemaGenerator.outputs(Input.class, cls);
 
         if (this.propertiesSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
             this.propertiesSchema.remove("$defs");
-        }
-
-        if (this.outputsSchema.containsKey("$defs")) {
-            this.defs.putAll((Map<String, Object>) this.outputsSchema.get("$defs"));
-            this.outputsSchema.remove("$defs");
         }
 
         // add $required on defs
@@ -95,40 +81,12 @@ public class ClassPluginDocumentation<T> extends ClassDocumentation {
                 .collect(Collectors.toList());
         }
 
-        if (this.propertiesSchema.containsKey("$metrics")) {
-            List<Map<String, Object>> metrics = (List<Map<String, Object>>) this.propertiesSchema.get("$metrics");
-
-            this.docMetrics = metrics
-                .stream()
-                .map(r -> new MetricDoc(
-                    (String) r.get("name"),
-                    (String) r.get("type"),
-                    (String) r.get("unit"),
-                    (String) r.get("description")
-                ))
-                .collect(Collectors.toList());
-        }
-
         if (this.propertiesSchema.containsKey("properties")) {
             this.inputs = flatten(properties(this.propertiesSchema), required(this.propertiesSchema));
         }
-
-        if (this.outputsSchema.containsKey("properties")) {
-            this.outputs = flatten(properties(this.outputsSchema), required(this.outputsSchema));
-        }
     }
 
-    public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
-        return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, cls, baseCls);
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class MetricDoc {
-        String name;
-        String type;
-        String unit;
-        String description;
+    public static <T> ClassInputDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, Class<? extends Input<?>> cls) {
+        return new ClassInputDocumentation<>(jsonSchemaGenerator, cls);
     }
 }
-

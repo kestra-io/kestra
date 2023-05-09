@@ -6,7 +6,8 @@ export default {
         pluginSingleList: undefined,
         icons: undefined,
         pluginsDocumentation: {},
-        editorPlugin: undefined
+        editorPlugin: undefined,
+        inputSchema: undefined
     },
     actions: {
         list({commit}) {
@@ -34,6 +35,13 @@ export default {
                 return response.data;
             })
         },
+        loadInputSchema({commit}, options) {
+            return this.$http.get(`/api/v1/plugins/schemas/input/${options.cls}`, {}).then(response => {
+                commit("setInputSchema", response.data)
+
+                return response.data;
+            })
+        }
 
     },
     mutations: {
@@ -54,6 +62,9 @@ export default {
         },
         setEditorPlugin(state, editorPlugin) {
             state.editorPlugin = editorPlugin
+        },
+        setInputSchema(state, schema) {
+            state.inputSchema = schema
         }
     },
     getters: {

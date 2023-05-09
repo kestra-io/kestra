@@ -60,7 +60,7 @@ public class MetricController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/flow/{namespace}/{flowId}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Metrics"}, summary = "Get metrics for a specific flow")
+    @Operation(tags = {"Metrics"}, summary = "Get metrics names for a specific flow")
     public List<String> flowMetrics(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId
@@ -70,7 +70,7 @@ public class MetricController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/flow/{namespace}/{flowId}/task/{taskId}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Metrics"}, summary = "Get metrics for a specific task in a flow")
+    @Operation(tags = {"Metrics"}, summary = "Get metrics names for a specific task in a flow")
     public List<String> taskMetrics(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId,
@@ -81,14 +81,14 @@ public class MetricController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/flow/{namespace}/{flowId}/{metric}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Metrics"}, summary = "Get metrics for a specific flow")
+    @Operation(tags = {"Metrics"}, summary = "Get metrics aggregations for a specific flow")
     public MetricAggregations aggregateByFlowId(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId,
         @Parameter(description = "The metric name") @PathVariable String metric,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
-        @Parameter(description = "The type of aggregation") @QueryValue(defaultValue = "sum") String aggregation
+        @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
         return metricsRepository.aggregateByFlowId(
             namespace,
@@ -103,7 +103,7 @@ public class MetricController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/flow/{namespace}/{flowId}/task/{taskId}/{metric}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Metrics"}, summary = "Get metrics for a specific flow")
+    @Operation(tags = {"Metrics"}, summary = "Get metrics aggregations for a specific flow")
     public MetricAggregations aggregateByFlowIdAndTaskId(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId,
@@ -111,7 +111,7 @@ public class MetricController {
         @Parameter(description = "The metric name") @PathVariable String metric,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
-        @Parameter(description = "The type of aggregation") @QueryValue(defaultValue = "sum") String aggregation
+        @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
         return metricsRepository.aggregateByFlowId(
             namespace,

@@ -3,26 +3,20 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.kestra.core.exceptions.MissingRequiredInput;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.utils.TestsUtils;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
-
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
+import javax.validation.ConstraintViolationException;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,8 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
-
-import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -210,7 +202,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             Map<String, Object> typeds = typedInputs(mapMax);
         });
 
-        assertThat(e.getMessage(), is("'2024-01-01T00:00:00Z', it must be before '2023-12-31T23:59:59Z'"));
+        assertThat(e.getMessage(), is("Invalid input '2024-01-01T00:00:00Z', it must be before '2023-12-31T23:59:59Z'"));
     }
 
     @Test

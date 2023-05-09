@@ -41,7 +41,8 @@
                         title: this.$t("watch demo"),
                         content: this.$t("watch demo content"),
                         imgClass: "demo",
-                        link: "<iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/pSz6cPGYPPQ\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen></iframe>"
+                        link: "<iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/yuV_rgnpXU8\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen></iframe>"
+
                     },
                     {
                         title: this.$t("need help?"),

@@ -19,11 +19,11 @@ import java.util.List;
 @NoArgsConstructor
 @Schema(
     title = "Purge all files from the internal storage created by this execution.",
-    description = "Will delete all the generated files from a flow for this current execution. This will delete all files from:\n+" +
+    description = "Will delete all the generated files from a flow for the current execution. This will delete all files from:\n" +
         "- inputs\n" +
         "- outputs\n" +
-        "- triggers\n\n + " +
-        "If the current execution don't have any generated files, the task will not failed."
+        "- triggers\n\n" +
+        "If the current execution doesn't have any generated files, the task will not fail."
 )
 @Plugin(
     examples = {

@@ -96,9 +96,9 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse);
             }
 
-            if (errorResponse.response.status === 401 && (!store.getters["auth/isLogged"] || store.getters["auth/expired"])) {
-                window.location = "/ui/login?from=" + window.location.pathname +
-                    (window.location.search ? "?" + window.location.search : "")
+            if (errorResponse.response.status === 401 && !store.getters["auth/isLogged"]) {
+                window.location = `/ui/login?from=${window.location.pathname +
+                (window.location.search ? "?" + window.location.search : "")}`
             }
 
             if (errorResponse.response.status === 401 &&
@@ -111,6 +111,23 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse);
             }
 
+            // Authentication expired
+            if (errorResponse.response.status === 401 &&
+                store.getters["auth/isLogged"]) {
+                document.body.classList.add("login")
+
+                store.dispatch("core/isUnsaved", false);
+                store.commit("auth/setUser", undefined);
+                store.commit("layout/setTopNavbar", undefined);
+                router.push({
+                    name: "login",
+                    query: {
+                        expired: 1,
+                        from: window.location.pathname + (window.location.search ? "?" + window.location.search : "")
+                    }
+                })
+            }
+
             if (errorResponse.response.status === 400){
                 return Promise.reject(errorResponse.response.data)
             }
@@ -121,11 +138,6 @@ export default (callback, store, router) => {
                     content: errorResponse.response.data,
                     variant: "error"
                 })
-
-                if(errorResponse.response.status === 401 &&
-                    store.getters["auth/isLogged"]){
-                    store.commit("auth/setExpired", true);
-                }
 
                 return Promise.reject(errorResponse);
             }

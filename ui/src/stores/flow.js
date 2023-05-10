@@ -33,6 +33,7 @@ export default {
             }).then(response => {
                 commit("setFlows", response.data.results)
                 commit("setTotal", response.data.total)
+                commit("setOverallTotal", response.data.total)
 
                 return response.data;
             })
@@ -70,6 +71,7 @@ export default {
                         commit("setFlow", response.data);
                     }
 
+                    commit("setOverallTotal", 1)
                     return response.data;
                 })
         },

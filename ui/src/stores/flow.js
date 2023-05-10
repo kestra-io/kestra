@@ -52,6 +52,7 @@ export default {
         loadFlow({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}?source=true`,
                 {
+                    params: options,
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }

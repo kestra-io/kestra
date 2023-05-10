@@ -5,7 +5,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.Rethrow;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
@@ -162,29 +161,6 @@ class PebbleVariableRendererTest {
         String render = variableRenderer.render("{{ second }}", vars);
 
         assertThat(render, is("1"));
-    }
-
-    @Test
-    void verbatim() throws IllegalVariableEvaluationException {
-        ImmutableMap<String, Object> vars = ImmutableMap.of(
-            "var", "1"
-        );
-
-        String render = variableRenderer.render("{% verbatim %}{{ var }}{% endverbatim %}", vars);
-
-        assertThat(render, is("{{ var }}"));
-    }
-
-    @Test
-    @Disabled("Due to recursion in our VariableRenderer, we cannot use inline verbatim")
-    void inlineVerbatim() throws IllegalVariableEvaluationException {
-        ImmutableMap<String, Object> vars = ImmutableMap.of(
-            "var", "1"
-        );
-
-        String render = variableRenderer.render("{{ \"{{\" }} var {{ \"}}\" }}", vars);
-
-        assertThat(render, is("{{ var }}"));
     }
 
     @Test

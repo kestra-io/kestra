@@ -97,7 +97,7 @@ public class VariableRenderer {
         String currentTemplate = inline;
         String current = "";
         PebbleTemplate compiledTemplate;
-        do {
+        while (!isSame) {
             try {
                 compiledTemplate = pebbleEngine.getLiteralTemplate(currentTemplate);
 
@@ -128,17 +128,14 @@ public class VariableRenderer {
             isSame = currentTemplate.equals(current);
             currentTemplate = current;
         }
-        while(!isSame && !isVerbatim(inline));
 
         return current;
     }
 
-    private boolean isVerbatim(String inline) {
-        return inline.startsWith("{%verbatim") || inline.startsWith("{% verbatim") || inline.startsWith("\"{{\"");
-    }
-
     public IllegalVariableEvaluationException properPebbleException(PebbleException e) {
-        if (e instanceof AttributeNotFoundException current) {
+        if (e instanceof AttributeNotFoundException) {
+            AttributeNotFoundException current = (AttributeNotFoundException) e;
+
             return new IllegalVariableEvaluationException(
                 "Missing variable: '" + current.getAttributeName() +
                     "' on '" + current.getFileName() +

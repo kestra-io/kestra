@@ -16,19 +16,13 @@ import java.util.stream.Collectors;
 public class ClassInputDocumentation<T> extends ClassDocumentation {
     private Boolean deprecated;
     private String cls;
-    private String icon;
-    private String group;
-    private String pluginTitle;
-    private String subGroup;
     private String shortName;
     private String docDescription;
     private String docBody;
     private List<ExampleDoc> docExamples;
     private Map<String, Object> defs = new TreeMap<>();
     private Map<String, Object> inputs = new TreeMap<>();
-    private Map<String, Object> outputs = new TreeMap<>();
     private Map<String, Object> propertiesSchema;
-    private Map<String, Object> outputsSchema;
 
 
     @SuppressWarnings("unchecked")
@@ -37,7 +31,6 @@ public class ClassInputDocumentation<T> extends ClassDocumentation {
         this.shortName = cls.getSimpleName();
 
         this.propertiesSchema = jsonSchemaGenerator.properties(Input.class, cls);
-        this.outputsSchema = jsonSchemaGenerator.outputs(Input.class, cls);
 
         if (this.propertiesSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));

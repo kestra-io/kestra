@@ -113,7 +113,8 @@
                     !this.input ? "" : "single-line",
                     !this.fullHeight ? "" : "full-height",
                     !this.original ? "" : "diff",
-                    "theme-" + this.themeComputed
+                    "theme-" + this.themeComputed,
+                    this.themeComputed === "dark" ? "custom-dark-vs-theme" : ""
                 ]
             },
             showPlaceholder() {
@@ -436,7 +437,7 @@
         }
     }
 
-    html.dark {
+    .custom-dark-vs-theme {
         .monaco-editor, .monaco-editor-background {
             background-color: var(--input-bg);
             --vscode-editor-background: var(--input-bg);

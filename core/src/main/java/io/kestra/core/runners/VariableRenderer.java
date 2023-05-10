@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -93,8 +95,17 @@ public class VariableRenderer {
             return null;
         }
 
+        // pre-process verbatim tags
+        Pattern verbatimPattern = Pattern.compile("\\{%[-]*\\s*verbatim\\s*%\\}(.*?)\\{%\\s*endverbatim\\s*[-]*%\\}");
+        Matcher verbatimMatcher = verbatimPattern.matcher(inline);
+        Map<String, String> replacers = new HashMap<>();
+        String currentTemplate = verbatimMatcher.replaceAll(result -> {
+            var uuid = UUID.randomUUID().toString();
+            replacers.put(uuid, result.group(1));
+            return uuid;
+        });
+
         boolean isSame = false;
-        String currentTemplate = inline;
         String current = "";
         PebbleTemplate compiledTemplate;
         while (!isSame) {
@@ -129,13 +140,15 @@ public class VariableRenderer {
             currentTemplate = current;
         }
 
+        // post-process verbatim tags
+        for(var entry: replacers.entrySet()) {
+            current = current.replace(entry.getKey(), entry.getValue());
+        }
         return current;
     }
 
     public IllegalVariableEvaluationException properPebbleException(PebbleException e) {
-        if (e instanceof AttributeNotFoundException) {
-            AttributeNotFoundException current = (AttributeNotFoundException) e;
-
+        if (e instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
                 "Missing variable: '" + current.getAttributeName() +
                     "' on '" + current.getFileName() +

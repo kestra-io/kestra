@@ -31,7 +31,7 @@
                                 </span>
                             </template>
                             <div
-                                :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
+                                :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
                                 class="task-progress"
                                 @click="onTaskSelect(currentTaskRun.task)"
                             >

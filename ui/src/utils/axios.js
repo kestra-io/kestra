@@ -96,9 +96,14 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse);
             }
 
-            if (errorResponse.response.status === 401 && !store.getters["auth/isLogged"]) {
+            if (errorResponse.response.status === 401
+                && !store.getters["auth/isLogged"]) {
+                if(window.location.pathname === "/ui/login"){
+                    return Promise.reject(errorResponse);
+                }
+
                 window.location = `/ui/login?from=${window.location.pathname +
-                (window.location.search ? "?" + window.location.search : "")}`
+                (window.location.search ?? "")}`
             }
 
             if (errorResponse.response.status === 401 &&
@@ -123,7 +128,7 @@ export default (callback, store, router) => {
                     name: "login",
                     query: {
                         expired: 1,
-                        from: window.location.pathname + (window.location.search ? "?" + window.location.search : "")
+                        from: window.location.pathname + (window.location.search ?? "")
                     }
                 })
             }

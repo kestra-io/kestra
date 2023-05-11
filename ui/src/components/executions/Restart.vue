@@ -1,15 +1,34 @@
 <template>
-    <component
-        :is="component"
-        :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
-        @click="isOpen = !isOpen"
-        v-if="isReplay || enabled"
-        :disabled="!enabled"
-        :class="!isReplay ? 'restart me-1' : ''"
+    <el-tooltip
+        :persistent="false"
+        transition=""
+        :hide-after="0"
+        :content="tooltip"
+        raw-content
+        :placement="tooltipPosition"
     >
-        {{ $t(replayOrRestart) }}
-    </component>
-
+        <component
+            :is="component"
+            :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
+            @click="isOpen = !isOpen"
+            v-if="component !== 'el-dropdown-item' && (isReplay || enabled)"
+            :disabled="!enabled"
+            :class="!isReplay ? 'restart me-1' : ''"
+        >
+            {{ $t(replayOrRestart) }}
+        </component>
+        <span v-else-if="component === 'el-dropdown-item' && (isReplay || enabled)">
+            <component
+                :is="component"
+                :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
+                @click="isOpen = !isOpen"
+                :disabled="!enabled"
+                :class="!isReplay ? 'restart me-1' : ''"
+            >
+                {{ $t(replayOrRestart) }}
+            </component>
+        </span>
+    </el-tooltip>
     <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
@@ -84,6 +103,10 @@
                 type: Number,
                 required: false,
                 default: undefined
+            },
+            tooltipPosition: {
+                type: String,
+                default: "bottom"
             }
         },
         emits: ["follow"],
@@ -163,7 +186,7 @@
                     return false;
                 }
 
-                if (this.isReplay && (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex)) {
+                if (this.isReplay && (this.taskRun?.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex)) {
                     return false;
                 }
 
@@ -173,6 +196,13 @@
 
                 return (this.isReplay && !State.isRunning(this.execution.state.current)) ||
                     (!this.isReplay && this.execution.state.current === State.FAILED);
+            },
+            tooltip(){
+                if(this.isReplay){
+                    return this?.taskRun?.id ? this.$t("replay from task tooltip", {taskId: this.taskRun.taskId}) :  this.$t("replay from beginning tooltip");
+                }
+
+                return this.$t("restart tooltip", {state: this.execution.state.current})
             }
         },
         data() {

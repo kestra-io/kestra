@@ -1,23 +1,29 @@
 export const executeTask = (submitor, flow, values, options) => {
     const formData = new FormData();
     for (let input of flow.inputs || []) {
-        if (values[input.name] !== undefined) {
+        const inputName = input.name;
+        const inputValue = values[inputName];
+        if (inputValue !== undefined) {
             if (input.type === "DATETIME") {
-                formData.append(input.name, values[input.name].toISOString());
+                formData.append(inputName, submitor.$moment(inputValue).toISOString());
             } else if (input.type === "DATE") {
-                formData.append(input.name, submitor.$moment(values[input.name]).format("YYYY-MM-DD"));
+                formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {
-                formData.append(input.name, submitor.$moment(values[input.name]).format("hh:mm:ss"));
+                formData.append(inputName, submitor.$moment(inputValue).format("hh:mm:ss"));
             } else if (input.type === "DURATION") {
-                formData.append(input.name, submitor.$moment.duration(submitor.$moment(values[input.name]).format("hh:mm:ss")));
+                formData.append(inputName, submitor.$moment.duration(submitor.$moment(inputValue).format("hh:mm:ss")));
             } else if (input.type === "FILE") {
-                formData.append("files", values[input.name], input.name);
+                if(typeof(inputValue) === "string"){
+                    formData.append(inputName, inputValue);
+                }else {
+                    formData.append("files", inputValue, inputName);
+                }
             } else {
-                formData.append(input.name, values[input.name]);
+                formData.append(inputName, inputValue);
             }
         } else if (input.required) {
             submitor.$toast().error(
-                submitor.$t("invalid field", {name: input.name}),
+                submitor.$t("invalid field", {name: inputName}),
                 submitor.$t("form error")
             )
 

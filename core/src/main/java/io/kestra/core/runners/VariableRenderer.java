@@ -93,15 +93,15 @@ public class VariableRenderer {
             return null;
         }
 
-        // pre-process inline for escape sequence
-
-
         boolean isSame = false;
         String currentTemplate = inline;
         String current = "";
         PebbleTemplate compiledTemplate;
         while (!isSame) {
             try {
+                // pre-process currentTemplate for escape sequence
+                currentTemplate = currentTemplate.replace("\\{{", "<||").replace("\\}}", "||>");
+
                 compiledTemplate = pebbleEngine.getLiteralTemplate(currentTemplate);
 
                 Writer writer = new JsonWriter(new StringWriter());
@@ -132,6 +132,8 @@ public class VariableRenderer {
             currentTemplate = current;
         }
 
+        // post-process currentTemplate for escape sequence
+        current = current.replace("<||", "{{").replace("||>", "}}");
         return current;
     }
 

@@ -164,6 +164,29 @@ class PebbleVariableRendererTest {
     }
 
     @Test
+    void escape() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "first", "1"
+        );
+
+        String render = variableRenderer.render("\\{{first\\}}", vars);
+
+        assertThat(render, is("{{first}}"));
+    }
+
+    @Test
+    void escapeRecursive() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "first", "1",
+            "second", "\\{{first\\}}"
+        );
+
+        String render = variableRenderer.render("{{ second }}", vars);
+
+        assertThat(render, is("{{first}}"));
+    }
+
+    @Test
     void eval() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
             "block", ImmutableMap.of("test", ImmutableMap.of("child", "awesome")),

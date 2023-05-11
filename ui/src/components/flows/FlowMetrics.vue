@@ -91,6 +91,25 @@
         },
         computed: {
             ...mapState("flow", ["flow", "metrics", "aggregatedMetric"]),
+            theme() {
+                return localStorage.getItem("theme") || "light";
+            },
+            xGrid() {
+                return this.theme === "light" ?
+                    {}
+                    : {
+                        borderColor: "#404559",
+                        color: "#404559"
+                    }
+            },
+            yGrid() {
+                return this.theme === "light" ?
+                    {}
+                    : {
+                        borderColor: "#404559",
+                        color: "#404559"
+                    }
+            },
             chartData() {
                 return {
                     labels: this.aggregatedMetric.aggregations.map(e => moment(e.date).format(this.getFormat(this.aggregatedMetric.groupBy))),
@@ -108,10 +127,7 @@
                 return {
                     scales: {
                         x: {
-                            grid: {
-                                borderColor: "#404559",
-                                color: "#404559"
-                            },
+                            grid: this.xGrid,
                             ticks: {
                                 fontColor: "#918BA9",
                                 autoSkip: true,
@@ -120,10 +136,7 @@
                             }
                         },
                         y: {
-                            grid: {
-                                borderColor: "#404559",
-                                color: "#404559"
-                            },
+                            grid: this.yGrid,
                             ticks: {
                                 fontColor: "#918BA9"
                             }
@@ -133,12 +146,14 @@
             },
             tasks() {
                 return this.flow.tasks.map(e => e.id);
+            },
+            aggregation() {
+                return this.$route.query.aggregation ? this.$t(this.$route.query.aggregation) : this.$t("sum");
             }
         },
         data() {
             return {
                 metric: null,
-                aggregation: "sum",
                 date: null,
                 taskId: null,
             }

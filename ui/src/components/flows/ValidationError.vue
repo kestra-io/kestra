@@ -37,6 +37,10 @@
         max-width: 40vw;
         white-space: pre-wrap;
         background: transparent;
+        color: var(--bs-gray-100);
+        html.dark & {
+            color: var(--bs-gray-900);
+        }
         padding: 0;
     }
 

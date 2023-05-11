@@ -227,28 +227,28 @@ export default {
                 })
         },
         loadFlowMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/flow/${options.namespace}/${options.id}`)
+            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTaskMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/flow/${options.namespace}/${options.id}/task/${options.taskId}`)
+            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadFlowAggregatedMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/flow/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data
                 })
         },
         loadTaskAggregatedMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/flow/${options.namespace}/${options.id}/task/${options.taskId}/${options.metric}`, {params: options})
+            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data

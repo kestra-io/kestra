@@ -51,6 +51,8 @@ public class RunContext {
 
     protected transient Path temporaryDirectory;
 
+    private String triggerExecutionId;
+
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
      *
@@ -87,7 +89,8 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Flow flow, AbstractTrigger trigger) {
         this.initBean(applicationContext);
 
-        this.storageOutputPrefix = this.storageInterface.outputPrefix(flow);
+        this.triggerExecutionId = IdUtils.create();
+        this.storageOutputPrefix = this.storageInterface.outputPrefix(flow, trigger, triggerExecutionId);
         this.variables = this.variables(flow, null, null, null, trigger);
         this.initLogger(flow, trigger);
     }
@@ -160,6 +163,10 @@ public class RunContext {
             ).orElseThrow(),
             LogEntry.of(flow, trigger)
         );
+    }
+
+    public String getTriggerExecutionId() {
+        return triggerExecutionId;
     }
 
     public Map<String, Object> getVariables() {

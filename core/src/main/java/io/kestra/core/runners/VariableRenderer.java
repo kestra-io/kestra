@@ -93,6 +93,9 @@ public class VariableRenderer {
             return null;
         }
 
+        // pre-process inline for escape sequence
+
+
         boolean isSame = false;
         String currentTemplate = inline;
         String current = "";

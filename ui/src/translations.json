@@ -516,7 +516,7 @@
     "replay": "Rejouer",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "Execution est rejouée",
-    "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{-id}</code> et créer une nouvelle execution ?",
+    "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{id}</code> et créer une nouvelle execution ?",
     "current": "actuel",
     "change status": "Changer le statut",
     "change status done": "Le statut de la tâche a était mis à jour",

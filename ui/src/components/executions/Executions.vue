@@ -52,7 +52,7 @@
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                 >
-                    <el-table-column type="selection" v-if="!hidden.includes('selection') && (canUpdate || canDelete)" />
+                    <el-table-column type="selection" v-if="!hidden.includes('selection') && (canCheck)" />
 
                     <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                         <template #default="scope">
@@ -248,11 +248,14 @@
                 return (this.executionsSelection.length !== 0 && (this.canUpdate || this.canDelete)) ||
                     (this.$route.name === "flows/update");
             },
+            canCheck() {
+                return this.canDelete || this.canUpdate;
+            },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE);
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.$route.query.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE);
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.$route.query.namespace);
             },
             isAllowedEdit() {
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);

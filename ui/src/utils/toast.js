@@ -38,9 +38,6 @@ export default {
                         .then(() => {
                             callback();
                         })
-                        .catch(() => {
-                            callbackIfCancel()
-                        })
                 },
                 saved: function(name, title, options) {
                     ElNotification.closeAll();

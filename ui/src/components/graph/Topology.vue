@@ -132,10 +132,13 @@
         return (props.isCreating ? "creation" : `${flow.namespace}.${flow.id}`) + "_draft";
     })
 
+    const autoRestorelocalStorageKey = computed(() => {
+        return "autoRestore-"+localStorageKey.value;
+    })
+    
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
     });
-
 
     const flowables = () => {
         return props.flowGraph && props.flowGraph.flowables ? props.flowGraph.flowables : [];
@@ -184,14 +187,18 @@
         generateGraph();
 
         if(!props.isReadOnly) {
-            const sourceFromLocalStorage = localStorage.getItem(localStorageKey.value);
+            let restoredLocalStorageKey;
+            const sourceFromLocalStorage = localStorage.getItem((restoredLocalStorageKey = autoRestorelocalStorageKey.value)) ?? localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
             if (sourceFromLocalStorage !== null) {
-                toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
-                    flowYaml.value = sourceFromLocalStorage;
-                    onEdit(flowYaml.value);
-                })
+                if(restoredLocalStorageKey === autoRestorelocalStorageKey.value){
+                    onEdit(sourceFromLocalStorage);
+                }else {
+                    toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
+                        onEdit(sourceFromLocalStorage);
+                    })
+                }
 
-                localStorage.removeItem(localStorageKey.value);
+                localStorage.removeItem(restoredLocalStorageKey);
             }
         }
     }
@@ -463,7 +470,10 @@
 
         window.removeEventListener("beforeunload", persistEditorWidth);
 
-        persistEditorWidth();
+        // Will get redirected to login page
+        if (!store.getters["auth/isLogged"] && haveChange.value) {
+            persistEditorContent(true);
+        }
     })
 
 
@@ -552,38 +562,33 @@
         }
     };
 
-    const showDraftPopup = (draftReason, refreshAfterSelect = false) => {
+    const persistEditorContent = (autoRestore) => {
+        if(autoRestore && localStorage.getItem(localStorageKey.value)) {
+            return;
+        }
+
+        localStorage.setItem(autoRestore ? autoRestorelocalStorageKey.value : localStorageKey.value, flowYaml.value);
+        store.dispatch("core/isUnsaved", false);
+        haveChange.value = false;
+    }
+
+    const showDraftPopup = (draftReason) => {
         toast.confirm(draftReason + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {
             namespace: flow.namespace,
             id: flow.id
         })),
             () => {
-                localStorage.setItem(localStorageKey.value, flowYaml.value);
-                store.dispatch("core/isUnsaved", false);
-                if(refreshAfterSelect){
-                    router.go();
-                }else {
-                    router.push({
-                        name: "flows/list"
-                    })
-                }
-            },
-            () => {
-                if(refreshAfterSelect) {
-                    store.dispatch("core/isUnsaved", false);
-                    router.go();
-                }
+                persistEditorContent(false);
             }
-        )
+        );
     }
 
     const onEdit = (event) => {
+        flowYaml.value = event;
+        haveChange.value = true;
+        store.dispatch("core/isUnsaved", true);
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
-                flowYaml.value = event;
-                haveChange.value = true;
-                store.dispatch("core/isUnsaved", true);
-
                 if (!value[0].constraints) {
                     // flowYaml need to be update before
                     // loadGraphFromSource to avoid
@@ -598,10 +603,7 @@
                 }
 
                 return value;
-            }).catch(e => {
-                showDraftPopup(t("save draft.prompt.http_error"), true);
-                return Promise.reject(e);
-            })
+            });
     }
 
     const onDelete = (event) => {

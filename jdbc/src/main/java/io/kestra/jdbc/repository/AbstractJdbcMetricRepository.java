@@ -108,7 +108,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     endDate,
                     aggregation
                 ))
-            .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate).toDays()))
+            .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate).toDays()).val())
             .build();
     }
 
@@ -210,7 +210,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 var selectGroup = select.groupBy(dateFields);
 
                 List<MetricAggregation> result = this.jdbcRepository
-                    .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate).toDays()));
+                    .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate).toDays()).val());
 
                 List<MetricAggregation> fillResult = fillDate(result, startDate, endDate);
 
@@ -247,12 +247,13 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     private List<MetricAggregation> fillDate(List<MetricAggregation> result, ZonedDateTime startDate, ZonedDateTime endDate) {
-        String groupByType = DateUtils.groupByType(Duration.between(startDate, endDate).toDays());
-        if (groupByType.equals("month")) {
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate).toDays());
+
+        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
             return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
-        } else if (groupByType.equals("week")) {
+        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
             return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
-        } else if (groupByType.equals("day")) {
+        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
             return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
         } else {
             return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");

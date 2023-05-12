@@ -1,71 +1,95 @@
 <template>
-    <div class="navbar-flow-metrics mb-1">
-        <el-form-item class="m-1">
-            <el-select
-                :model-value="taskId"
-                filterable
-                :persistent="false"
-                :placeholder="$t('task')"
-                clearable
-                @update:model-value="updateTask($event)"
-            >
-                <el-option
-                    v-for="item in tasks"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+    <nav>
+        <collapse>
+            <el-form-item>
+                <el-select
+                    :model-value="$route.query.task"
+                    filterable
+                    :persistent="false"
+                    :placeholder="$t('task')"
+                    clearable
+                    @update:model-value="updateQuery('task', $event)"
                 >
-                    {{ item }}
-                </el-option>
-            </el-select>
-        </el-form-item>
-        <el-form-item class="m-1">
-            <el-select
-                :model-value="metric"
-                filterable
-                :persistent="false"
-                :placeholder="$t('metric')"
-                @update:model-value="updateMetric($event)"
-            >
-                <el-option
-                    v-for="item in metrics"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    <el-option
+                        v-for="item in tasks"
+                        :key="item"
+                        :label="item"
+                        :value="item"
+                    >
+                        {{ item }}
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <el-select
+                    :model-value="$route.query.metric"
+                    filterable
+                    :clearable="true"
+                    :persistent="false"
+                    :placeholder="$t('metric')"
+                    @update:model-value="updateQuery('metric',$event)"
                 >
-                    {{ item }}
-                </el-option>
-            </el-select>
-        </el-form-item>
-        <el-form-item class="m-1">
-            <el-select
-                :model-value="aggregation"
-                filterable
-                :persistent="false"
-                :placeholder="$t('metric')"
-                @update:model-value="updateQuery('aggregation',$event)"
-            >
-                <el-option
-                    v-for="item in ['sum','avg','min','max']"
-                    :key="item"
-                    :label="$t(item)"
-                    :value="item"
+                    <el-option
+                        v-for="item in metrics"
+                        :key="item"
+                        :label="item"
+                        :value="item"
+                    >
+                        {{ item }}
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <el-select
+                    :model-value="$route.query.aggregation"
+                    filterable
+                    :clearable="true"
+                    :persistent="false"
+                    :placeholder="$t('aggregation')"
+                    @update:model-value="updateQuery('aggregation',$event)"
                 >
-                    {{ $t(item) }}
-                </el-option>
-            </el-select>
-        </el-form-item>
-        <el-form-item class="m-1">
-            <date-range
-                :start-date="$route.query.startDate"
-                :end-date="$route.query.endDate"
-                @update:model-value="onDateChange($event)"
-            />
-        </el-form-item>
+                    <el-option
+                        v-for="item in ['sum','avg','min','max']"
+                        :key="item"
+                        :label="$t(item)"
+                        :value="item"
+                    />
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <date-range
+                    :start-date="$route.query.startDate"
+                    :end-date="$route.query.endDate"
+                    @update:model-value="onDateChange($event)"
+                />
+            </el-form-item>
+        </collapse>
+    </nav>
+
+    <div v-loading="isLoading">
+        <el-card>
+            <el-tooltip
+                popper-class="tooltip-stats"
+                placement="bottom"
+                :persistent="false"
+                :hide-after="0"
+                transition=""
+                :visible="tooltipContent !== undefined"
+                v-if="aggregatedMetric"
+            >
+                <template #content>
+                    <span v-html="tooltipContent" />
+                </template>
+                <BarChart ref="chartRef" :chart-data="chartData" :options="options" v-if="aggregatedMetric" />
+            </el-tooltip>
+            <span v-else>
+            <el-alert type="info" :closable="false">
+                {{ $t("metric choice") }}
+            </el-alert>
+        </span>
+        </el-card>
+
     </div>
-    <el-card>
-        <BarChart ref="chartRef" :chart-data="chartData" :options="options" v-if="aggregatedMetric" />
-    </el-card>
 </template>
 
 <script>
@@ -73,10 +97,14 @@
     import {mapState} from "vuex";
     import moment from "moment";
     import DateRange from "../layout/DateRange.vue";
+    import {defaultConfig, tooltip} from "../../utils/charts";
+    import {cssVariable} from "../../utils/global";
+    import Collapse from "../layout/Collapse.vue";
 
     export default {
         name: "FlowMetrics",
         components: {
+            Collapse,
             BarChart,
             DateRange,
         },
@@ -114,9 +142,9 @@
                 return {
                     labels: this.aggregatedMetric.aggregations.map(e => moment(e.date).format(this.getFormat(this.aggregatedMetric.groupBy))),
                     datasets: [
-                        {
-                            label: this.$t(this.aggregation) + " " + this.$t("of") + " " + this.metric,
-                            backgroundColor: "#9F9DFF",
+                        !this.display ? [] : {
+                            label: this.$t(this.$route.query.aggregation.toLowerCase()) + " " + this.$t("of") + " " + this.$route.query.metric,
+                            backgroundColor: cssVariable("--el-color-success"),
                             borderRadius: 4,
                             data: this.aggregatedMetric.aggregations.map(e => e.value ? e.value : 0)
                         }
@@ -124,67 +152,98 @@
                 };
             },
             options() {
-                return {
+                const darken = this.theme === "light" ? cssVariable("--bs-gray-400") : cssVariable("--bs-gray-600");
+                const lighten = this.theme === "light" ? cssVariable("--bs-gray-200") : cssVariable("--bs-gray-400");
+
+                return defaultConfig({
+                    plugins: {
+                        tooltip: {
+                            external: (context) => {
+                                this.tooltipContent = tooltip(context.tooltip);
+                            },
+                        }
+                    },
                     scales: {
                         x: {
-                            grid: this.xGrid,
+                            display: true,
+                            grid: {
+                                borderColor: lighten,
+                                color: lighten,
+                                drawTicks: false
+                            },
                             ticks: {
-                                fontColor: "#918BA9",
+                                color: darken,
                                 autoSkip: true,
                                 minRotation: 0,
-                                maxRotation: 0
+                                maxRotation: 0,
                             }
                         },
                         y: {
-                            grid: this.yGrid,
+                            display: true,
+                            grid: {
+                                borderColor: lighten,
+                                color: lighten,
+                                drawTicks: false
+                            },
                             ticks: {
-                                fontColor: "#918BA9"
+                                color: darken
                             }
                         }
                     }
-                }
+                })
             },
             tasks() {
                 return this.flow.tasks.map(e => e.id);
             },
-            aggregation() {
-                return this.$route.query.aggregation ? this.$t(this.$route.query.aggregation) : this.$t("sum");
+            display() {
+                return this.$route.query.metric && this.$route.query.aggregation;
             }
         },
         data() {
             return {
-                metric: null,
-                date: null,
-                taskId: null,
+                tooltipContent: undefined,
+                isLoading: false,
             }
         },
         methods: {
             loadMetrics() {
-                this.$store.dispatch(this.taskId ? "flow/loadTaskMetrics" : "flow/loadFlowMetrics", {
-                    ...this.$route.params,
-                    taskId: this.taskId
-                })
-                    .then(
-                        () => {
-                            if (this.metrics.length > 0) {
-                                this.metric = this.metrics[0];
+                this.$store
+                    .dispatch(this.$route.query.task ? "flow/loadTaskMetrics" : "flow/loadFlowMetrics", {
+                        ...this.$route.params,
+                        taskId: this.$route.query.task
+                    })
+                    .then(() => {
+                        if (this.metrics.length > 0) {
+                            if (this.$route.query.metric && !this.metrics.includes(this.$route.query.metric)) {
+                                let query = {...this.$route.query};
+                                delete query.metric;
+
+                                this.$router.push({query: query}).then(_ => this.loadAggregatedMetrics());
+                            } else {
                                 this.loadAggregatedMetrics();
                             }
                         }
-                    );
+                    });
             },
             loadAggregatedMetrics() {
-                this.$store.dispatch(this.taskId ? "flow/loadTaskAggregatedMetrics" : "flow/loadFlowAggregatedMetrics", {
-                    ...this.$route.params,
-                    ...this.$route.query,
-                    metric: this.metric,
-                    aggregate: this.aggregation,
-                    taskId: this.taskId
-                });
+                this.isLoading = true;
+
+                if (this.display) {
+                    this.$store.dispatch(this.$route.query.task ? "flow/loadTaskAggregatedMetrics" : "flow/loadFlowAggregatedMetrics", {
+                        ...this.$route.params,
+                        ...this.$route.query,
+                        metric: this.$route.query.metric,
+                        aggregate: this.$route.query.aggregation,
+                        taskId: this.$route.query.task
+                    })
+                } else {
+                    this.$store.commit("flow/setAggregatedMetric", undefined)
+                }
+                this.isLoading = false;
             },
             onDateChange(keyOrObject) {
                 let query = {...this.$route.query};
-                for (const [key, value] of Object.entries(keyOrObject)) {
+                for (consst [key, value] of Object.entries(keyOrObject)) {
                     if (value === undefined || value === "" || value === null) {
                         delete query[key]
                     } else {
@@ -202,19 +261,16 @@
                 } else {
                     query[key] = value;
                 }
-                this[key] = value;
+
                 this.$router.push({query: query}).then(_ => {
-                    this.loadAggregatedMetrics();
+                    if (key === "task") {
+                        this.loadMetrics();
+                    } else {
+                        this.loadAggregatedMetrics();
+                    }
                 })
             },
-            updateMetric(metric) {
-                this.metric = metric;
-                this.loadAggregatedMetrics();
-            },
-            updateTask(task) {
-                this.taskId = task;
-                this.loadMetrics()
-            },
+
             getFormat(groupBy) {
                 switch (groupBy) {
                 case "hour":

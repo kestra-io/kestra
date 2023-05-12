@@ -5,6 +5,7 @@ import io.kestra.core.exceptions.InternalException;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 
 public class DateUtils {
     public static ZonedDateTime parseZonedDateTime(String render) throws InternalException {
@@ -28,15 +29,26 @@ public class DateUtils {
         return currentDate;
     }
 
-    public static String groupByType(Long dayCount) {
+    public static GroupType groupByType(Long dayCount) {
         if (dayCount > 365) {
-            return "month";
+            return GroupType.MONTH;
         } else if (dayCount > 180) {
-            return "week";
+            return GroupType.WEEK;
         } else if (dayCount > 1) {
-            return "day";
+            return GroupType.DAY;
         } else {
-            return "hour";
+            return GroupType.HOUR;
+        }
+    }
+
+    public enum GroupType {
+        MONTH,
+        WEEK,
+        DAY,
+        HOUR;
+
+        public String val() {
+            return this.name().toLowerCase(Locale.ROOT);
         }
     }
 }

@@ -412,6 +412,9 @@
     "min": "Min",
     "max": "Max",
     "metric": "Metric",
+    "aggregation": "Aggregation",
+    "metric choice": "Please choose a metric an an aggregation",
+    "of": "of",
     "save draft": {
       "prompt": {
         "base": "The current Flow is not valid. Do you still want to save it as a draft ?",
@@ -839,6 +842,9 @@
     "min": "Minimum",
     "max": "Maximum",
     "metric": "Métrique",
+    "aggregation": "Agrégation",
+    "metric choice": "Merci de sélectionner une métrique et une agrégation",
+    "of": "de",
     "save draft": {
       "prompt": {
         "base": "Le Flow actuel est invalide. Voulez-vous le sauvegarder en tant que brouillon ?",

@@ -56,7 +56,6 @@
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
     const emit = defineEmits(["follow"])
-    const flow = store.getters["flow/flow"];
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
@@ -128,12 +127,14 @@
     const user = store.getters["auth/user"];
 
     const localStorageKey = computed(() => {
-        return (props.isCreating ? "creation" : `${flow.namespace}.${flow.id}`) + "_draft";
+        return (props.isCreating ? "creation" : `${flow.value.namespace}.${flow.value.id}`) + "_draft";
     })
 
     const autoRestorelocalStorageKey = computed(() => {
         return "autoRestore-"+localStorageKey.value;
     })
+
+    const flow = computed(() => store.getters["flow/flow"]);
 
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
@@ -173,13 +174,16 @@
         dagre.layout(dagreGraph)
         return dagreGraph;
     }
-    const flowHaveTasks = (source) => {
-        const flow = source ? source : flowYaml.value
-        return flow ? YamlUtils.flowHaveTasks(flow) : false;
+    const flowHaveTasks = () => {
+        try {
+            return flow.value ? YamlUtils.flowHaveTasks(flow.value.source) : false;
+        } catch (e) {
+            return false;
+        }
     }
 
     const initYamlSource = () => {
-        flowYaml.value = flow ? flow.source : YamlUtils.stringify({
+        flowYaml.value = flow.value ? flow.value.source : YamlUtils.stringify({
             id: props.flowId,
             namespace: props.namespace
         });
@@ -192,7 +196,7 @@
                 if(restoredLocalStorageKey === autoRestorelocalStorageKey.value){
                     onEdit(sourceFromLocalStorage);
                 }else {
-                    toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
+                    toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.value.namespace}.${flow.value.id}`}), () => {
                         onEdit(sourceFromLocalStorage);
                     })
                 }
@@ -231,7 +235,7 @@
     };
 
     const regenerateGraph = () => {
-        if(!props.flowError) {
+        if(!props.flowError && flow.value) {
             removeEdges(getEdges.value)
             removeNodes(getNodes.value)
             removeSelectedElements(getElements.value)
@@ -374,11 +378,11 @@
     }
 
     const getFirstTaskId = () => {
-        return YamlUtils.getFirstTask(flowYaml.value);
+        return YamlUtils.getFirstTask(flow.value.source);
     }
 
     const getNextTaskId = (target) => {
-        while (YamlUtils.extractTask(flowYaml.value, target) === undefined) {
+        while (YamlUtils.extractTask(flow.value.source, target) === undefined) {
             const edge = props.flowGraph.edges.find(e => e.source === target)
             if (!edge) {
                 return null
@@ -563,8 +567,8 @@
 
     const showDraftPopup = (draftReason) => {
         toast.confirm(draftReason + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {
-                          namespace: flow.namespace,
-                          id: flow.id
+                          namespace: flow.value.namespace,
+                          id: flow.value.id
                       })),
                       () => {
                           persistEditorContent(false);
@@ -1145,9 +1149,8 @@
                     </template>
                 </el-dropdown>
             </li>
-            <li v-if="flow">
+            <li v-if="!props.isCreating && flow">
                 <trigger-flow
-                    v-if="!props.isCreating"
                     type="default"
                     :disabled="flow.disabled"
                     :flow-id="flow.id"

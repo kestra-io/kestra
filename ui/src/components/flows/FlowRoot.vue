@@ -219,6 +219,7 @@
         },
         unmounted () {
             this.$store.commit("flow/setFlow", undefined)
+            this.$store.commit("flow/setFlowGraph", undefined)
         }
     };
 </script>

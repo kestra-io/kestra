@@ -163,11 +163,11 @@ export default {
                     if (response.status === 422) {
                         return response;
                     }
-                    commit("setFlowGraph", response.data)
 
                     let flow = YamlUtils.parse(options.flow);
                     flow.source = options.flow;
-                    commit("setFlow", flow)
+                    commit("setFlow", flow);
+                    commit("setFlowGraph", response.data);
                     commit("setFlowGraphParam", {
                         namespace: flow.namespace ? flow.namespace : "default",
                         id: flow.id ? flow.id : "default",

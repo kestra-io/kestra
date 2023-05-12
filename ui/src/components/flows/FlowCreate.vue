@@ -31,7 +31,9 @@
             }
         },
         beforeUnmount() {
+            this.$store.commit("flow/setFlowGraph", undefined);
             this.$store.commit("flow/setFlowError", undefined);
+            this.$store.commit("flow/setFlow", undefined);
         },
         computed: {
             ...mapState("flow", ["flowGraph", "total"]),

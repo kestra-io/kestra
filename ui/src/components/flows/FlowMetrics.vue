@@ -243,7 +243,7 @@
             },
             onDateChange(keyOrObject) {
                 let query = {...this.$route.query};
-                for (consst [key, value] of Object.entries(keyOrObject)) {
+                for (const [key, value] of Object.entries(keyOrObject)) {
                     if (value === undefined || value === "" || value === null) {
                         delete query[key]
                     } else {

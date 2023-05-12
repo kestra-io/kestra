@@ -413,7 +413,7 @@
     "max": "Max",
     "metric": "Metric",
     "aggregation": "Aggregation",
-    "metric choice": "Please choose a metric an an aggregation",
+    "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
     "save draft": {
       "prompt": {

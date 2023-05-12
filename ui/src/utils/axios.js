@@ -144,6 +144,11 @@ export default (callback, store, router) => {
                     variant: "error"
                 })
 
+                if(errorResponse.response.status === 401 &&
+                    store.getters["auth/isLogged"]){
+                    store.commit("auth/setExpired", true);
+                }
+
                 return Promise.reject(errorResponse);
             }
 

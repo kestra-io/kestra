@@ -579,9 +579,6 @@
         })),
             () => {
                 persistEditorContent(false);
-                router.push({
-                    name: "flows/list"
-                })
             }
         );
     }

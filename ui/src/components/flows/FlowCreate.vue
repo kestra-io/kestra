@@ -17,8 +17,10 @@
 <script>
     import Topology from "../graph/Topology.vue";
     import {mapGetters, mapState} from "vuex";
+    import RouteContext from "../../mixins/routeContext";
 
     export default {
+        mixins: [RouteContext],
         components: {
             Topology
         },
@@ -37,6 +39,11 @@
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowError"]),
+            routeInfo() {
+                return {
+                    title: this.$t("flows")
+                };
+            },
         },
         beforeRouteLeave(to, from, next) {
             this.$store.commit("flow/setFlow", null);

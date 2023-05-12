@@ -41,7 +41,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                     >
-                        <el-table-column type="selection" v-if="(canRead)" />
+                        <el-table-column type="selection" v-if="(canCheck)" />
                         <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <router-link
@@ -229,14 +229,17 @@
                     .add(-30, "days")
                     .toDate();
             },
+            canCheck() {
+                return this.canRead || this.canDelete || this.canDisable;
+            },
             canRead() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+                return this.user && this.user.isAllowed(permission.FLOW, action.READ, this.$route.query.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
+                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE, this.$route.query.namespace);
             },
             canDisable() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE);
+                return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
             },
         },
         methods: {

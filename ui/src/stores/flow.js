@@ -21,7 +21,9 @@ export default {
         flowGraphParam: undefined,
         revisions: undefined,
         flowError: undefined,
-        taskError: undefined
+        taskError: undefined,
+        metrics: [],
+        aggregatedMetrics: undefined
     },
 
     actions: {
@@ -153,7 +155,7 @@ export default {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow
-            if(!flowParsed.id || !flowParsed.namespace){
+            if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post("/api/v1/flows/graph", flowSource, {...config})
@@ -221,6 +223,34 @@ export default {
             return axios.post(`${apiRoot}flows/validate/task`, options.task, {...textYamlHeader, params: {section: options.section ? options.section : "task"}})
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
+                    return response.data
+                })
+        },
+        loadFlowMetrics({commit}, options) {
+            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
+                .then(response => {
+                    commit("setMetrics", response.data)
+                    return response.data
+                })
+        },
+        loadTaskMetrics({commit}, options) {
+            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+                .then(response => {
+                    commit("setMetrics", response.data)
+                    return response.data
+                })
+        },
+        loadFlowAggregatedMetrics({commit}, options) {
+            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+                .then(response => {
+                    commit("setAggregatedMetric", response.data)
+                    return response.data
+                })
+        },
+        loadTaskAggregatedMetrics({commit}, options) {
+            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+                .then(response => {
+                    commit("setAggregatedMetric", response.data)
                     return response.data
                 })
         },
@@ -298,6 +328,12 @@ export default {
         },
         setTaskError(state, taskError) {
             state.taskError = taskError
+        },
+        setMetrics(state, metrics) {
+            state.metrics = metrics
+        },
+        setAggregatedMetric(state, aggregatedMetric) {
+            state.aggregatedMetric = aggregatedMetric
         },
     },
     getters: {

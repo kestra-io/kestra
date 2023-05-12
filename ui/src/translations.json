@@ -407,6 +407,14 @@
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code> ?",
     "can not save": "Can not save",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
+    "avg": "Average",
+    "sum": "Sum",
+    "min": "Min",
+    "max": "Max",
+    "metric": "Metric",
+    "aggregation": "Aggregation",
+    "metric choice": "Please choose a metric an an aggregation",
+    "of": "of",
     "save draft": {
       "prompt": {
         "base": "The current Flow is not valid. Do you still want to save it as a draft ?",
@@ -829,6 +837,14 @@
     "delete task confirm": "Êtes-vous sûr de vouloir supprimer la tâche <code>{taskId}</code> ?",
     "can not save": "Impossible de sauvegarder",
     "flow must have id and namespace": "Le flow doit avoir un id et un namespace.",
+    "avg": "Moyenne",
+    "sum": "Somme",
+    "min": "Minimum",
+    "max": "Maximum",
+    "metric": "Métrique",
+    "aggregation": "Agrégation",
+    "metric choice": "Merci de sélectionner une métrique et une agrégation",
+    "of": "de",
     "save draft": {
       "prompt": {
         "base": "Le Flow actuel est invalide. Voulez-vous le sauvegarder en tant que brouillon ?",

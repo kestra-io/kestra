@@ -4,6 +4,7 @@ import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -11,6 +12,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,6 +41,33 @@ public abstract class AbstractMetricRepositoryTest {
 
         results = metricRepository.findByExecutionIdAndTaskRunId(executionId, taskRun1.getId(), Pageable.from(1, 10));
         assertThat(results.size(), is(1));
+
+        MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
+            "namespace",
+            "flow",
+            null,
+            counter.getName(),
+            ZonedDateTime.now().minusDays(30),
+            ZonedDateTime.now(),
+            "sum"
+        );
+
+        assertThat(aggregationResults.getAggregations().size(), is(31));
+        assertThat(aggregationResults.getGroupBy(), is("day"));
+
+        aggregationResults = metricRepository.aggregateByFlowId(
+            "namespace",
+            "flow",
+            null,
+            counter.getName(),
+            ZonedDateTime.now().minusDays(190),
+            ZonedDateTime.now(),
+            "sum"
+        );
+
+        assertThat(aggregationResults.getAggregations().size(), is(28));
+        assertThat(aggregationResults.getGroupBy(), is("week"));
+
     }
 
     private Counter counter() {

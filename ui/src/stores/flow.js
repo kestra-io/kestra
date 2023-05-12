@@ -33,6 +33,7 @@ export default {
             }).then(response => {
                 commit("setFlows", response.data.results)
                 commit("setTotal", response.data.total)
+                commit("setOverallTotal", response.data.total)
 
                 return response.data;
             })
@@ -52,6 +53,7 @@ export default {
         loadFlow({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}?source=true`,
                 {
+                    params: options,
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
@@ -69,6 +71,7 @@ export default {
                         commit("setFlow", response.data);
                     }
 
+                    commit("setOverallTotal", 1)
                     return response.data;
                 })
         },

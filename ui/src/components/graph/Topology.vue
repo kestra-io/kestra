@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed} from "vue";
     import {useStore} from "vuex"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
@@ -128,6 +128,10 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
     const taskError = ref(store.getters["flow/taskError"])
     const user = store.getters["auth/user"];
 
+    const localStorageKey = computed(() => {
+        return (props.isCreating ? "creation" : `${flow.namespace}.${flow.id}`) + "_draft";
+    })
+
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
     });
@@ -177,7 +181,19 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
             id: props.flowId,
             namespace: props.namespace
         });
-        return flowYaml.value;
+        generateGraph();
+
+        if(!props.isReadOnly) {
+            const sourceFromLocalStorage = localStorage.getItem(localStorageKey.value);
+            if (sourceFromLocalStorage !== null) {
+                toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
+                    flowYaml.value = sourceFromLocalStorage;
+                    onEdit(flowYaml.value);
+                })
+
+                localStorage.removeItem(localStorageKey.value);
+            }
+        }
     }
 
     const isTaskNode = (node) => {
@@ -209,13 +225,15 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
     };
 
     const regenerateGraph = () => {
-        removeEdges(getEdges.value)
-        removeNodes(getNodes.value)
-        removeSelectedElements(getElements.value)
-        elements.value = []
-        nextTick(() => {
-            generateGraph();
-        })
+        if(!props.flowError) {
+            removeEdges(getEdges.value)
+            removeNodes(getNodes.value)
+            removeSelectedElements(getElements.value)
+            elements.value = []
+            nextTick(() => {
+                generateGraph();
+            })
+        }
     }
 
     const toggleOrientation = () => {
@@ -417,7 +435,6 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
             store.commit("flow/setFlowGraph", undefined);
         }
         initYamlSource();
-        generateGraph();
         // Regenerate graph on window resize
         observeWidth();
         // Save on ctrl+s in topology
@@ -535,30 +552,56 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
         }
     };
 
+    const showDraftPopup = (draftReason, refreshAfterSelect = false) => {
+        toast.confirm(draftReason + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {
+            namespace: flow.namespace,
+            id: flow.id
+        })),
+            () => {
+                localStorage.setItem(localStorageKey.value, flowYaml.value);
+                store.dispatch("core/isUnsaved", false);
+                if(refreshAfterSelect){
+                    router.go();
+                }else {
+                    router.push({
+                        name: "flows/list"
+                    })
+                }
+            },
+            () => {
+                if(refreshAfterSelect) {
+                    store.dispatch("core/isUnsaved", false);
+                    router.go();
+                }
+            }
+        )
+    }
+
     const onEdit = (event) => {
-        store.dispatch("flow/validateFlow", {flow: event})
+        return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
-                if (value[0].constraints && !flowHaveTasks(event)) {
-                    flowYaml.value = event;
-                    haveChange.value = true;
-                } else {
+                flowYaml.value = event;
+                haveChange.value = true;
+                store.dispatch("core/isUnsaved", true);
+
+                if (!value[0].constraints) {
                     // flowYaml need to be update before
                     // loadGraphFromSource to avoid
                     // generateGraph to be triggered with the old value
-                    flowYaml.value = event;
                     store.dispatch("flow/loadGraphFromSource", {
                         flow: event, config: {
                             validateStatus: (status) => {
                                 return status === 200 || status === 422;
                             }
                         }
-                    }).then(response => {
-                        haveChange.value = true;
-                        store.dispatch("core/isUnsaved", true);
                     })
                 }
-            })
 
+                return value;
+            }).catch(e => {
+                showDraftPopup(t("save draft.prompt.http_error"), true);
+                return Promise.reject(e);
+            })
     }
 
     const onDelete = (event) => {
@@ -740,7 +783,6 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
     const editorUpdate = (event) => {
         updatedFromEditor.value = true;
         flowYaml.value = event;
-        haveChange.value = true;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(event), 500);
@@ -780,9 +822,18 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
             tours["guidedTour"].nextStep();
             return;
         }
-        if (props.isCreating) {
-            const flowParsed = YamlUtils.parse(flowYaml.value);
-            if (flowParsed.id && flowParsed.namespace) {
+
+        onEdit(flowYaml.value).then(validation => {
+            let flowParsed;
+            try {
+                flowParsed = YamlUtils.parse(flowYaml.value);
+            } catch (_) {}
+            if (validation[0].constraints) {
+                showDraftPopup(t("save draft.prompt.base"));
+                return;
+            }
+
+            if (props.isCreating) {
                 store.dispatch("flow/createFlow", {flow: flowYaml.value})
                     .then((response) => {
                         toast.saved(response.id);
@@ -792,22 +843,17 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
                             params: {id: flowParsed.id, namespace: flowParsed.namespace, tab: "editor"}
                         });
                     })
-                return;
-            } else {
-                store.dispatch("core/showMessage", {
-                    variant: "error",
-                    title: t("can not save"),
-                    message: t("flow must have id and namespace")
-                });
-                return;
+            }else {
+                store
+                    .dispatch("flow/saveFlow", {flow: flowYaml.value})
+                    .then((response) => {
+                        toast.saved(response.id);
+                        store.dispatch("core/isUnsaved", false);
+                    })
             }
-        }
-        store
-            .dispatch("flow/saveFlow", {flow: flowYaml.value})
-            .then((response) => {
-                toast.saved(response.id);
-                store.dispatch("core/isUnsaved", false);
-            })
+
+            haveChange.value = false;
+        })
     };
 
     const canExecute = () => {
@@ -1129,8 +1175,8 @@ import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, co
                     size="large"
                     @click="save"
                     v-if="isAllowedEdit"
-                    :disabled="!haveChange || !flowHaveTasks()"
-                    type="primary"
+                    :type="flowError || !haveChange ? 'danger' : 'primary'"
+                    :disabled="!haveChange"
                     class="edit-flow-save-button"
                 >
                     {{ $t("save") }}

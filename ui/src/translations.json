@@ -406,7 +406,19 @@
     "error in editor": "An error have been found in the editor",
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code> ?",
     "can not save": "Can not save",
-    "flow must have id and namespace": "Flow must have an id and a namespace."
+    "flow must have id and namespace": "Flow must have an id and a namespace.",
+    "save draft": {
+      "prompt": {
+        "base": "The current Flow is not valid. Do you still want to save it as a draft ?",
+        "http_error": "Unable to validate the Flow due to an HTTP error. Do you want to save the current Flow as draft ?",
+        "creation": "You will retrieve it on your next Flow creation.",
+        "existing": "You will retrieve it on your next <code>{namespace}.{id}</code> Flow edition."
+      },
+      "retrieval": {
+        "creation": "A Flow creation draft was retrieved, do you want to resume its edition ?",
+        "existing": "A <code>{flowFullName}</code> Flow draft was retrieved, do you want to resume its edition ?"
+      }
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -816,6 +828,18 @@
     "error in editor": "Une erreur a été trouvé dans l'éditeur",
     "delete task confirm": "Êtes-vous sûr de vouloir supprimer la tâche <code>{taskId}</code> ?",
     "can not save": "Impossible de sauvegarder",
-    "flow must have id and namespace": "Le flow doit avoir un id et un namespace."
+    "flow must have id and namespace": "Le flow doit avoir un id et un namespace.",
+    "save draft": {
+      "prompt": {
+        "base": "Le Flow actuel est invalide. Voulez-vous le sauvegarder en tant que brouillon ?",
+        "http_error": "Impossible de valider le Flow en raison d'une erreur HTTP. Voulez-vous sauvegarder le Flow actuel en tant que brouillon ?",
+        "creation": "Vous le récupérerez à votre prochaine création de Flow.",
+        "existing": "Vous le récupérerez à votre prochaine édition du Flow <code>{namespace}.{id}</code>."
+      },
+      "retrieval": {
+        "creation": "Un brouillon de création de Flow existe, voulez-vous reprendre son édition ?",
+        "existing": "Un brouillon pour le Flow <code>{flowFullName}</code> existe, voulez-vous reprendre son édition?"
+      }
+    }
   }
 }

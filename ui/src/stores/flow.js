@@ -211,7 +211,7 @@ export default {
             return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
         },
         validateFlow({commit}, options) {
-            return axios.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
+            return this.$http.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
                     commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
                     return response.data

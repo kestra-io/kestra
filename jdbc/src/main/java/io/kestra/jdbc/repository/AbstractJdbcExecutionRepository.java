@@ -340,7 +340,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             select = select.and(field("namespace").eq(namespace));
             select = select.and(field("flow_id").eq(flowId));
         } else if (namespace != null) {
-            select = select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+            select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
         }
 
         if (query != null) {

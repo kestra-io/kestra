@@ -90,7 +90,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                 }
 
                 if (namespace != null) {
-                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -117,7 +117,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                 }
 
                 if (namespace != null) {
-                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
 
                 return this.jdbcRepository.fetch(select);

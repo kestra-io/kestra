@@ -232,7 +232,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 select.and(this.findCondition(query, labels));
 
                 if (namespace != null) {
-                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -255,7 +255,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 select.and(this.findCondition(query, labels));
 
                 if (namespace != null) {
-                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
 
                 return select.fetch().map(record -> FlowWithSource.of(
@@ -282,7 +282,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
 
                 if (namespace != null) {
-                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
 
                 return this.jdbcRepository.fetchPage(

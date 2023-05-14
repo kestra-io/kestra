@@ -215,6 +215,9 @@
             this.menu = this.disabledCurrentRoute(this.generateMenu());
         },
         watch: {
+            "$i18n.locale"() {
+                this.menu = this.disabledCurrentRoute(this.generateMenu());
+            },
             $route() {
                 this.menu = this.disabledCurrentRoute(this.generateMenu());
             }

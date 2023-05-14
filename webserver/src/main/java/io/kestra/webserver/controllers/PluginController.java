@@ -1,9 +1,8 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.core.docs.ClassPluginDocumentation;
-import io.kestra.core.docs.DocumentationGenerator;
-import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.docs.*;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
@@ -12,6 +11,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
@@ -75,6 +75,42 @@ public class PluginController {
         template,
         task,
         trigger
+    }
+
+    @Get(uri = "schemas/input/{className}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = {"Plugins"},
+        summary = "Get all json schemas for a type",
+        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+    )
+    public MutableHttpResponse<Doc> inputSchemas(
+        @Parameter(description = "The schema needed") @PathVariable String className
+    ) throws ClassNotFoundException, IOException {
+        ClassInputDocumentation classInputDocumentation = this.inputDocumentation(className);
+
+        return HttpResponse.ok()
+            .body(new Doc(
+                DocumentationGenerator.render(classInputDocumentation),
+                new Schema(
+                    classInputDocumentation.getPropertiesSchema(),
+                    null,
+                    classInputDocumentation.getDefs()
+                )
+            ))
+            .header("Cache-Control", "public, max-age=3600");
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Cacheable("default")
+    protected ClassInputDocumentation inputDocumentation(String className) throws ClassNotFoundException {
+        Class<?> cls = Class.forName(className);
+        if (Input.class.isAssignableFrom(cls)) {
+            Class<? extends Input<?>> inputCls = (Class<? extends Input<?>>) cls;
+            return ClassInputDocumentation.of(jsonSchemaGenerator, inputCls);
+        } else {
+            throw new NoSuchElementException("Class Input '" + className + "' doesn't exists ");
+        }
     }
 
     @Get
@@ -148,7 +184,7 @@ public class PluginController {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Cacheable("default")
-    protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties)  {
+    protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties) {
         RegisteredPlugin registeredPlugin = plugins
             .stream()
             .filter(r -> r.hasClass(className))

@@ -1,8 +1,7 @@
 <template>
     <el-checkbox
-        :model-value="values"
+        :model-value="modelValue"
         @update:model-value="onInput"
-        :value="true"
     />
 </template>
 

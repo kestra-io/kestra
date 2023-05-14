@@ -56,10 +56,15 @@
         }
 
         .warning {
-            background-color: #fef9e5;
-            border: 1px solid #fef3cb;
-            padding: 5px;
-            color: #655a32;
+            background-color: var(--el-color-warning-light-9);
+            border: 1px solid var(--el-color-warning-light-5);
+            padding: 8px 16px;
+            color: var(--el-color-warning);
+            border-radius: var(--el-border-radius-base);
+
+            p:last-child {
+                margin-bottom: 0;
+            }
         }
     }
 

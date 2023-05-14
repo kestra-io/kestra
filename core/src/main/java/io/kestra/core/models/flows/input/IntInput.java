@@ -8,14 +8,12 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
-import java.util.regex.Pattern;
 import javax.validation.ConstraintViolationException;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 public class IntInput extends Input<Integer> {
-
     @Schema(title = "Minimal value.")
     Integer min;
 

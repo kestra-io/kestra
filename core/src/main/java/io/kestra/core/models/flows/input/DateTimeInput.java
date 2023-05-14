@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Set;
 import javax.validation.ConstraintViolationException;
 
@@ -16,7 +15,6 @@ import javax.validation.ConstraintViolationException;
 @Getter
 @NoArgsConstructor
 public class DateTimeInput extends Input<Instant> {
-
     @Schema(title = "Minimal value.")
     Instant after;
 

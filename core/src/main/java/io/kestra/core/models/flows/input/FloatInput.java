@@ -14,7 +14,6 @@ import javax.validation.ConstraintViolationException;
 @Getter
 @NoArgsConstructor
 public class FloatInput extends Input<Float> {
-
     @Schema(title = "Minimal value.")
     Float min;
 

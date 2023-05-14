@@ -15,7 +15,6 @@ import javax.validation.ConstraintViolationException;
 @Getter
 @NoArgsConstructor
 public class DurationInput extends Input<Duration> {
-
     @Schema(title = "Minimal value.")
     Duration min;
 

@@ -1,12 +1,8 @@
 package io.kestra.core.docs;
 
-import com.google.common.base.CaseFormat;
-import io.kestra.core.models.flows.Input;
 import lombok.*;
-import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Getter
@@ -34,7 +30,9 @@ public class ClassDocumentation {
         Map<String, Object> result = new TreeMap<>((key1, key2) -> {
             boolean key1Required = required.contains(key1);
             boolean key2Required = required.contains(key2);
-            if(key1Required == key2Required) return key1.compareTo(key2);
+            if (key1Required == key2Required) {
+                return key1.compareTo(key2);
+            }
 
             return key1Required ? -1 : 1;
         });

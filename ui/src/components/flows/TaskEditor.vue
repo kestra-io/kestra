@@ -77,6 +77,7 @@
                 this.$store
                     .dispatch("plugin/load", {
                         cls: this.selectedTaskType,
+                        all: true
                     })
                     .then((response) => {
                         this.plugin = response;

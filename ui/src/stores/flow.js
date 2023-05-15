@@ -16,7 +16,7 @@ export default {
         task: undefined,
         search: undefined,
         total: 0,
-        overallTotal: 0,
+        overallTotal: undefined,
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,

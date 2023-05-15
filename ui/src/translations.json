@@ -241,9 +241,10 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
-    "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
+    "bulk status update": "Are you sure you want to update status of <code>{executionCount}</code> failed execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
+    "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
     "selection": {
       "selected": "<strong>{count}</strong> selected",
       "all": "Select all <em>({count})</em>"
@@ -262,7 +263,9 @@
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "executions updated": "<code>{executionCount}</code> executions(s) updated",
     "invalid bulk restart": "Could not restart executions",
+    "invalid bulk status update": "Could not update executions status",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
     "execution not found": "Execution <code>{executionId}</code> not found",
@@ -543,23 +546,23 @@
     "change status confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
     "change status hint": {
       "WARNING": [
-        "Le flow serra marqué en état WARNING.",
+        "Le flow sera marqué en état WARNING.",
         "Les tâches suivantes seront executées.",
         "Les tâches d'erreurs seront executées."
       ],
       "FAILED": [
-        "Le flow serra marqué en état FAILED.",
+        "Le flow sera marqué en état FAILED.",
         "Aucune autre tâche ne serra executée.",
         "Les tâches d'erreurs seront executées."
       ],
       "SUCCESS": [
-        "Le flow redémerra comme si cette tâche était en SUCCESS",
-        "Tous les tâches bloqués seront executées.",
-        "Le flow passera en état SUCCESS si tous les taches sont aussi SUCCESS"
+        "Le flow redémarrera comme si cette tâche était en SUCCESS",
+        "Toutes les tâches bloquées seront executées.",
+        "Le flow passera en état SUCCESS si toutes les tâches sont aussi en SUCCESS"
       ],
       "RUNNING": [
-        "Le flow redémerra et executera les tâches suivantes",
-        "Tous les tâches bloqués seront executées."
+        "Le flow redémarrera et executera les tâches suivantes",
+        "Toutes les tâches bloquées seront executées."
       ]
     },
     "mark as": "Marqué comme <code>{status}</code>",
@@ -670,9 +673,10 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
-    "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> execution(s) ?",
-    "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> execution(s) ?",
-    "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> execution(s) ?",
+    "bulk restart": "Êtes-vous sûr de vouloir redémarrer <code>{executionCount}</code> execution(s) ?",
+    "bulk status update": "Êtes-vous sûr de vouloir modifier le statut de <code>{executionCount}</code> execution(s)?",
+    "bulk delete": "Êtes-vous sûr de vouloir supprimer <code>{executionCount}</code> execution(s) ?",
+    "bulk kill": "Êtes-vous sûr de vouloir arrêter <code>{executionCount}</code> execution(s) ?",
     "selection": {
       "selected": "<strong>{count}</strong> sélectionnés",
       "all": "Tous sélectionnés ({count})"
@@ -691,7 +695,9 @@
     "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
     "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
     "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
+    "executions updated": "<code>{executionCount}</code> exécutions(s) mise(s) à jour",
     "invalid bulk restart": "Impossible de redémarrer",
+    "invalid bulk status update": "Impossible de modifier le statut des exécutions",
     "invalid bulk kill": "Impossible d'arrêter",
     "invalid bulk delete": "Impossible de supprimer",
     "execution not found": "Execution <code>{executionId}</code> non trouvée",

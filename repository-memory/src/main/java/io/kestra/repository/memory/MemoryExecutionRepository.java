@@ -13,10 +13,10 @@ import io.micronaut.data.model.Pageable;
 import io.reactivex.Flowable;
 import jakarta.inject.Singleton;
 
+import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -34,7 +34,8 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
 
     @Override
     public Flowable<Execution> find(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state) {
-        return null;
+        return Optional.ofNullable(state).map(states -> Flowable.fromArray(executions.values().stream().filter(e -> states.contains(e.getState().getCurrent())).toArray(Execution[]::new)))
+            .orElse(Flowable.fromArray(executions.values().toArray(Execution[]::new)));
     }
 
     @Override
@@ -54,7 +55,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
 
     @Override
     public Optional<Execution> findById(String executionId) {
-        return executions.containsKey(executionId) ? Optional.of(executions.get(executionId)) : Optional.empty();
+        return Optional.ofNullable(executions.get(executionId));
     }
 
     @Override

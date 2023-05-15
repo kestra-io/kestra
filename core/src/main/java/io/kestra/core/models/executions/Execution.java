@@ -264,6 +264,12 @@ public class Execution implements DeletedInterface {
             .findFirst();
     }
 
+    public List<TaskRun> findAllByCurrentState(){
+        return Optional.ofNullable(this.taskRunList).orElse(Collections.emptyList()).stream()
+            .filter(t -> t.getState().getCurrent() == state.getCurrent())
+            .collect(Collectors.toList());
+    }
+
     public Optional<TaskRun> findFirstRunning() {
         if (this.taskRunList == null) {
             return Optional.empty();

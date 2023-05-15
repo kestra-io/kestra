@@ -78,7 +78,7 @@
                                             <change-status
                                                 component="el-dropdown-item"
                                                 :key="`change-status-${index}-${attempt.state.startDate}`"
-                                                :execution="execution"
+                                                :executions="[execution]"
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"
                                                 @follow="forwardEvent('follow', $event)"

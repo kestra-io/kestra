@@ -1,18 +1,27 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
+import org.hamcrest.Matchers;
+import org.hamcrest.core.Every;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -26,6 +35,9 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Inject
     TaskDefaultService taskDefaultService;
+
+    @Inject
+    ExecutionRepositoryInterface executionRepository;
 
     @Test
     void restartSimple() throws Exception {
@@ -234,7 +246,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-        Execution restart = executionService.markAs(execution, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), State.Type.FAILED);
+        ExecutionService.UpdateStatusInputDto updateToFailStatus = ExecutionService.UpdateStatusInputDto.builder()
+            .execution(execution)
+            .taskRunIds(List.of(execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId()))
+            .newState(State.Type.FAILED)
+            .build();
+        Execution restart = executionService.markAs(updateToFailStatus);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -244,7 +261,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories(), hasSize(4));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts(), nullValue());
 
-        restart = executionService.markAs(execution, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
+        restart = executionService.markAs(updateToFailStatus.withTaskRunIds(List.of(execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId())));
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -254,5 +271,57 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories(), hasSize(4));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void bulkMarkAs() throws Exception {
+        Execution firstFail = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
+        Execution secondFail = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
+
+        assertThat(firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(secondFail.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+
+        List<Execution> executions = executionService.bulkMarkAs(List.of(
+            ExecutionService.UpdateStatusInputDto.builder()
+                .execution(firstFail)
+                .newState(State.Type.RUNNING)
+                .build(),
+            ExecutionService.UpdateStatusInputDto.builder()
+                .execution(secondFail)
+                .newState(State.Type.RUNNING)
+                .build()
+        ));
+
+        assertThat(executionRepository.findByFlowId("io.kestra.tests", "restart-each", Pageable.from(1)).getTotal(), is(2L));
+        assertThat(executions.get(0).findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(executions.get(1).findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.RUNNING));
+
+        // However executions are not updated in database
+        assertThat(executionRepository.findById(firstFail.getId()).get().findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(executionRepository.findById(secondFail.getId()).get().findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void bulkMarkAsIncorrectState_ShouldNotUpdateAnyExecution() throws Exception {
+        Execution firstFail = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
+        Execution secondFail = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
+
+        assertThat(firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(secondFail.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+
+        Execution runningSecondExecution = executionService.markAs(secondFail, secondFail.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.RUNNING);
+
+        Assertions.assertThrows(IllegalStateException.class, () -> executionService.bulkMarkAs(List.of(
+            ExecutionService.UpdateStatusInputDto.builder()
+                .execution(firstFail)
+                .taskRunIds(List.of(firstFail.findTaskRunByTaskIdAndValue("2-1-1_t1", List.of("value 1")).getId()))
+                .newState(State.Type.RUNNING)
+                .build(),
+            ExecutionService.UpdateStatusInputDto.builder()
+                .execution(runningSecondExecution)
+                .taskRunIds(List.of(runningSecondExecution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId()))
+                .newState(State.Type.RUNNING)
+                .build()
+        )));
     }
 }

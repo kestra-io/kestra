@@ -15,7 +15,7 @@ import Welcome from "../components/onboarding/Welcome.vue";
 import FlowCreate from "../components/flows/FlowCreate.vue";
 import FlowMetrics from "../components/flows/FlowMetrics.vue";
 
-export default [
+export default  [
     //Flows
     {name: "home", path: "/", component: Home},
     {name: "welcome", path: "/welcome", component: Welcome},

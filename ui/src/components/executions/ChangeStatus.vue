@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'el-button'">{{ $t('change status') }}</span>
+        <span>{{ $t('change status') }}</span>
 
         <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
             <template #header>
@@ -13,11 +13,17 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change status confirm', {id: execution.id, task: taskRun.taskId})" />
+                <div v-if="this.executions.length === 0">
+                    <p v-html="$t('change status confirm', {id: executions[0].id, task: taskRun.taskId})"/>
 
-                <p>
-                    Current status is : <status size="small" class="me-1" :status="this.taskRun.state.current" />
-                </p>
+                    <p>
+                        Current status is :
+                        <status size="small" class="me-1" :status="this.taskRun.state.current"/>
+                    </p>
+                </div>
+                <div v-else>
+                    <p v-html="$t('bulk status update', {executionCount: this.executions.length || this.total})"/>
+                </div>
 
                 <el-select
                     :required="true"
@@ -53,7 +59,7 @@
                 <el-button
                     type="primary"
                     @click="changeStatus()"
-                    :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
+                    :disabled="selectedStatus === null"
                 >
                     {{ $t('ok') }}
                 </el-button>
@@ -71,6 +77,8 @@
     import Status from "../../components/Status.vue";
     import ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef} from "vue";
+    import Utils from "../../utils/utils";
+    import _merge from "lodash/merge";
 
     export default {
         components: {StateMachine, Status},
@@ -79,9 +87,18 @@
                 type: String,
                 default: "b-button"
             },
-            execution: {
+            executions: {
+                type: Array,
+                required: true,
+                default: []
+            },
+            query: {
                 type: Object,
-                required: true
+                required: false
+            },
+            total: {
+                type: Number,
+                required: false
             },
             taskRun: {
                 type: Object,
@@ -94,43 +111,71 @@
                 default: undefined
             }
         },
-        emits: ["follow"],
+        emits: ["follow", "refresh"],
         methods: {
             changeStatus() {
                 this.visible = false;
 
-                this.$store
-                    .dispatch("execution/changeStatus", {
-                        executionId: this.execution.id,
-                        taskRunId: this.taskRun.id,
-                        state: this.selectedStatus
-                    })
-                    .then(response => {
-                        if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, response.data);
-                        } else {
-                            return response.data;
-                        }
-                    })
-                    .then((execution) => {
-                        this.$store.commit("execution/setExecution", execution)
-                        if (execution.id === this.execution.id) {
-                            this.$emit("follow")
-                        } else {
-                            this.$router.push({name: "executions/update", params: {...{namespace: execution.namespace, flowId: execution.flowId, id: execution.id}, ...{tab: "gantt"}}});
-                        }
+                if(this.query !== undefined) {
+                    this.$store
+                        .dispatch("execution/queryChangeStatus", _merge(this.query, {
+                            newStatus: this.selectedStatus
+                        }))
+                        .then(r => {
+                            this.$toast().success(this.$t("executions updated", {executionCount: r.data.count}));
+                            this.$emit("refresh")
+                        })
+                }
+                else if(this.taskRun){
+                    this.$store
+                        .dispatch("execution/changeStatus", {
+                            executionId: this.executions[0].id,
+                            taskRunId: this.taskRun.id,
+                            state: this.selectedStatus
+                        })
+                        .then(response => {
+                            if (response.data.id === this.executions[0].id) {
+                                return ExecutionUtils.waitForState(this.$http, response.data);
+                            } else {
+                                return response.data;
+                            }
+                        })
+                        .then((execution) => {
+                            this.$store.commit("execution/setExecution", execution)
+                            if (execution.id === this.executions[0].id) {
+                                this.$emit("follow")
+                            } else {
+                                this.$router.push({name: "executions/update", params: {...{namespace: execution.namespace, flowId: execution.flowId, id: execution.id}, ...{tab: "gantt"}}});
+                            }
 
-                        this.$toast().success(this.$t("change status done"));
-                    })
+                            this.$toast().success(this.$t("change status done"));
+                        })
+                }
+                else {
+                    this.$store
+                        .dispatch("execution/bulkChangeStatus", {
+                            executionsId: this.executions.map(execution => execution.id),
+                            newStatus: this.selectedStatus
+                        })
+                        .then(r => {
+                            this.$toast().success(this.$t("executions updated", {executionCount: r.data.length}));
+                            this.$emit("refresh")
+                        }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                        return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                    }), this.$t(e.message)))
+                }
+
+                this.selectedStatus = undefined
             },
         },
         computed: {
             ...mapState("auth", ["user"]),
             uuid() {
-                return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
+                return "changestatus-" + Utils.uid();
             },
             states() {
-                return (this.taskRun.state.current === "PAUSED" ?
+                let taskRuns = this.executions.flatMap(e => e.taskRunList);
+                return taskRuns.some(taskRun => taskRun.state.current === "PAUSED") ?
                     [
                         State.FAILED,
                         State.RUNNING,
@@ -140,30 +185,28 @@
                         State.SUCCESS,
                         State.WARNING,
                     ]
-                )
-                    .filter(value => value !== this.taskRun.state.current)
+                    .filter(value => taskRuns.every(taskRun => value !== taskRun.state.current))
                     .map(value => {
                         return {
                             code: value,
                             label: this.$t("mark as", {status: value}),
-                            disabled: value === this.taskRun.state.current
                         };
                     })
             },
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.user && this.executions.every(execution => this.user.isAllowed(permission.EXECUTION, action.UPDATE, execution.namespace)))) {
                     return false;
                 }
 
-                if (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex) {
+                if (this.taskRun?.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex) {
                     return false;
                 }
 
-                if(this.taskRun.state.current === "PAUSED") {
+                if(this.taskRun?.state.current === "PAUSED") {
                     return true;
                 }
 
-                if (State.isRunning(this.execution.state.current)) {
+                if (this.executions.some(execution => State.isRunning(execution.state.current))) {
                     return false;
                 }
 

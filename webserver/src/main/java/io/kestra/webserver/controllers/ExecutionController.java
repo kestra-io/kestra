@@ -1,14 +1,38 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Await;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
@@ -28,38 +52,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.FilenameUtils;
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.types.Webhook;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.reactivestreams.Publisher;
-
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.reactivestreams.Publisher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -610,12 +610,12 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-                return HttpResponse.badRequest(BulkErrorResponse
-                        .builder()
-                        .message("invalid bulk restart")
-                        .invalids(invalids)
-                        .build()
-                    );
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk restart")
+                .invalids(invalids)
+                .build()
+            );
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
@@ -701,24 +701,117 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Change state for a taskrun in an execution")
     public Execution changeState(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "the taskRun id and state to apply") @Body StateRequest stateRequest
+        @Parameter(description = "the taskRun id and state to apply") @Body TaskRunStateRequest taskRunStateRequest
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        Execution replay = executionService.markAs(execution.get(), stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.markAs(execution.get(), taskRunStateRequest.getTaskRunId(), taskRunStateRequest.getState());
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
 
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
+    @Getter
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class TaskRunStateRequest {
         String taskRunId;
         State.Type state;
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/state", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Change status for given executions")
+    public HttpResponse<?> bulkChangeState(
+        @Parameter(description = "Execution ids to impact") @Body List<String> executionIds,
+        @Parameter(description = "The new status") @Nullable @QueryValue(value = "newStatus") State.Type newStatus
+    ) {
+        List<ExecutionService.UpdateStatusInputDto> updateStatusInputDtos = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionIds) {
+            Optional<Execution> execution = executionRepository.findById(executionId);
+
+            if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                updateStatusInputDtos.add(ExecutionService.UpdateStatusInputDto.builder()
+                    .execution(execution.get())
+                    .newState(newStatus)
+                    .build());
+            }
+        }
+        if (invalids.size() > 0) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid execution status")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        List<Execution> replays = executionService.bulkMarkAs(updateStatusInputDtos);
+        replays.forEach(replay -> {
+            executionQueue.emit(replay);
+            eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
+        });
+
+        return HttpResponse.ok(replays);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/state/by-query", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Update executions state")
+    public HttpResponse<BulkResponse> updateExecutionsStatusByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The new status") @Nullable @QueryValue(value = "newStatus") State.Type newStatus,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
+    ) {
+        Integer count = Math.toIntExact(executionRepository
+            .find(
+                query,
+                namespace,
+                flowId,
+                startDate,
+                endDate,
+                state
+            )
+            .filter(e -> !e.getState().getCurrent().equals(newStatus) && !e.getState().getCurrent().isRunning())
+            .map(e -> e.getTaskRunList().stream().filter(t -> e.getState().getCurrent().equals(t.getState().getCurrent())).map(t -> {
+                Execution restart;
+                try {
+                    restart = executionService.markAs(
+                        e,
+                        t.getId(),
+                        newStatus
+                    );
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+                executionQueue.emit(restart);
+                eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+                return 1;
+            }).count())
+            .reduce(Long::sum)
+            .blockingGet());
+
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -779,20 +872,18 @@ public class ExecutionController {
 
         if (invalids.size() > 0) {
             return HttpResponse.badRequest(BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk kill")
-                    .invalids(invalids)
-                    .build()
-                );
-        }
-
-        executions.forEach(execution -> {
-            killQueue.emit(ExecutionKilled
                 .builder()
-                .executionId(execution.getId())
+                .message("invalid bulk kill")
+                .invalids(invalids)
                 .build()
             );
-        });
+        }
+
+        executions.forEach(execution -> killQueue.emit(ExecutionKilled
+            .builder()
+            .executionId(execution.getId())
+            .build()
+        ));
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }

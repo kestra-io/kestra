@@ -1,5 +1,5 @@
 <template>
-    <el-card :header="$t('last 30 days count', {count: formattedCount})" shadow="never">
+    <el-card :header="header" shadow="never">
         <div class="state-global-charts" :class="{big: big}">
             <template v-if="hasData">
                 <state-chart
@@ -38,6 +38,14 @@
             big: {
                 type: Boolean,
                 default: false
+            },
+            startDate: {
+                type: String,
+                default: undefined
+            },
+            endDate: {
+                type: String,
+                default: undefined
             }
         },
         computed: {
@@ -51,6 +59,30 @@
             },
             hasData() {
                 return this.count > 0;
+            },
+            daysCount() {
+                if (this.startDate && this.endDate) {
+                    return this.$moment(this.endDate).diff(this.$moment(this.startDate), "days") + 1;
+                }
+                return 31;
+            },
+            header() {
+                if(this.startDate && this.endDate) {
+                    if (this.$moment(this.endDate).isSame(this.$moment(this.startDate), "milliseconds")) {
+                        return this.$t("date count", {
+                            date: this.$moment(this.endDate).format("LLLL"),
+                            count: this.formattedCount
+                        });
+                    }
+                    if (this.$moment(this.endDate).isBefore(this.$moment(), "day")) {
+                        return this.$t("date range count", {
+                            startDate: this.$moment(this.startDate).format("LLLL"),
+                            endDate: this.$moment(this.endDate).format("LLLL"),
+                            count: this.formattedCount
+                        });
+                    }
+                }
+                return this.$t("last X days count", {count: this.formattedCount, days: this.daysCount});
             }
         }
     };

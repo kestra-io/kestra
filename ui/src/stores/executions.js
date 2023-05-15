@@ -79,6 +79,8 @@ export default {
             return this.$http.get("/api/v1/executions/search", {params: options}).then(response => {
                 commit("setExecutions", response.data.results)
                 commit("setTotal", response.data.total)
+
+                return response.data
             })
         },
         triggerExecution(_, options) {

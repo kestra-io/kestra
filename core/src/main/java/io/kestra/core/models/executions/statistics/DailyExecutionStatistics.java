@@ -1,21 +1,21 @@
 package io.kestra.core.models.executions.statistics;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.flows.State;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Value;
-import io.kestra.core.models.flows.State;
 
-import java.time.LocalDate;
+import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
 public class DailyExecutionStatistics {
     @NotNull
-    protected LocalDate startDate;
+    protected Instant date;
 
     @NotNull
     private Duration duration;
@@ -33,6 +33,8 @@ public class DailyExecutionStatistics {
         State.Type.KILLED, 0L,
         State.Type.PAUSED, 0L
     ));
+
+    private String groupBy;
 
     @Value
     @Builder

@@ -134,3 +134,16 @@ export function backgroundFromState(state, alpha = 1) {
     const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
     return `rgba(${r},${g},${b},${alpha})`;
 }
+
+export function getFormat(groupBy) {
+    switch (groupBy) {
+        case "hour":
+            return "LLL";
+        case "day":
+            return "l";
+        case "week":
+            return "DD.MM";
+        case "month":
+            return "MM.YYYY";
+    }
+}

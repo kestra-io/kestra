@@ -109,7 +109,6 @@
 
     const editorWidthStorageKey = "editor-width";
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
-    const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
     const elements = ref([])
     const haveChange = ref(false)
@@ -135,7 +134,7 @@
     const autoRestorelocalStorageKey = computed(() => {
         return "autoRestore-"+localStorageKey.value;
     })
-    
+
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
     });
@@ -147,7 +146,7 @@
     const generateDagreGraph = () => {
         const dagreGraph = new dagre.graphlib.Graph({compound: true})
         dagreGraph.setDefaultEdgeLabel(() => ({}))
-        dagreGraph.setGraph({rankdir: isHorizontal.value ? "LR" : "TB"})
+        dagreGraph.setGraph({rankdir: showTopology.value === "topology" ? "LR" : "TB"})
 
         for (const node of props.flowGraph.nodes) {
             dagreGraph.setNode(node.uid, {
@@ -216,7 +215,7 @@
     };
 
     const getNodeHeight = (node) => {
-        return isTaskNode(node) || isTriggerNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
+        return isTaskNode(node) || isTriggerNode(node) ? 55 : (showTopology.value === "topology" ? 55 : 5);
     };
 
     const getNodePosition = (n, parent, alignTo) => {
@@ -243,16 +242,6 @@
         }
     }
 
-    const toggleOrientation = () => {
-        localStorage.setItem(
-            "topology-orientation",
-            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
-        );
-        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
-        regenerateGraph();
-        fitView();
-    };
-
     const generateGraph = () => {
         isLoading.value = true;
         if (!props.flowGraph) {
@@ -265,8 +254,8 @@
                     width: "5px",
                     height: "5px"
                 },
-                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                sourcePosition: showTopology.value === "topology" ? Position.Right : Position.Bottom,
+                targetPosition: showTopology.value === "topology" ? Position.Left : Position.Top,
                 parentNode: undefined,
                 draggable: false,
             })
@@ -274,13 +263,13 @@
                 id: "end",
                 label: "",
                 type: "dot",
-                position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
+                position: showTopology.value === "topology" ? {x: 50, y: 0} : {x: 0, y: 50},
                 style: {
                     width: "5px",
                     height: "5px"
                 },
-                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                sourcePosition: showTopology.value === "topology" ? Position.Right : Position.Bottom,
+                targetPosition: showTopology.value === "topology" ? Position.Left : Position.Top,
                 parentNode: undefined,
                 draggable: false,
             })
@@ -325,8 +314,8 @@
                 parentNode: parentNode,
                 position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
                 style: {
-                    width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
-                    height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
+                    width: clusterUid === "Triggers" && showTopology.value === "topology" ? "400px" : dagreNode.width + "px",
+                    height: clusterUid === "Triggers" && !showTopology.value === "topology" ? "250px" : dagreNode.height + "px",
                 },
             })
         }
@@ -352,8 +341,8 @@
                     width: getNodeWidth(node) + "px",
                     height: getNodeHeight(node) + "px"
                 },
-                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                sourcePosition: showTopology.value === "topology" ? Position.Right : Position.Bottom,
+                targetPosition: showTopology.value === "topology" ? Position.Left : Position.Top,
                 parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
                 draggable: nodeType === "task" && !props.isReadOnly,
                 data: {
@@ -574,12 +563,12 @@
 
     const showDraftPopup = (draftReason) => {
         toast.confirm(draftReason + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {
-            namespace: flow.namespace,
-            id: flow.id
-        })),
-            () => {
-                persistEditorContent(false);
-            }
+                          namespace: flow.namespace,
+                          id: flow.id
+                      })),
+                      () => {
+                          persistEditorContent(false);
+                      }
         );
     }
 
@@ -916,7 +905,7 @@
             });
     }
 
-    const combinedEditor = computed(() => ['doc','combined'].includes(showTopology.value));
+    const combinedEditor = computed(() => ["doc","combined"].includes(showTopology.value));
 
     const dragEditor = (e) => {
         let editorDomElement = document.getElementById("editor");
@@ -1008,13 +997,7 @@
                         :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
-
-                <Controls :show-interactive="false">
-                    <ControlButton @click="toggleOrientation">
-                        <ArrowCollapseDown v-if="!isHorizontal" />
-                        <ArrowCollapseRight v-if="isHorizontal" />
-                    </ControlButton>
-                </Controls>
+                <Controls :show-interactive="false" />
             </VueFlow>
         </div>
         <PluginDocumentation

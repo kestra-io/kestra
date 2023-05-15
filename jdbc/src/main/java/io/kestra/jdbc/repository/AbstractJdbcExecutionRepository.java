@@ -442,7 +442,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     private static Map<java.sql.Date, Result<Record>> fillMissingDate(Map<java.sql.Date, Result<Record>> result, ZonedDateTime startDate, ZonedDateTime endDate) {
         LocalDate compare = startDate.toLocalDate();
 
-        while (compare.compareTo(endDate.toLocalDate()) < 0) {
+        while (compare.compareTo(endDate.toLocalDate()) <= 0) {
             java.sql.Date sqlDate = java.sql.Date.valueOf(compare);
 
             if (!result.containsKey(sqlDate)) {

@@ -96,7 +96,7 @@
     import {mapState} from "vuex";
     import moment from "moment";
     import DateRange from "../layout/DateRange.vue";
-    import {defaultConfig, tooltip} from "../../utils/charts";
+    import {defaultConfig, getFormat, tooltip} from "../../utils/charts";
     import {cssVariable} from "../../utils/global";
     import Collapse from "../layout/Collapse.vue";
 
@@ -139,7 +139,7 @@
             },
             chartData() {
                 return {
-                    labels: this.aggregatedMetric.aggregations.map(e => moment(e.date).format(this.getFormat(this.aggregatedMetric.groupBy))),
+                    labels: this.aggregatedMetric.aggregations.map(e => moment(e.date).format(getFormat(this.aggregatedMetric.groupBy))),
                     datasets: [
                         !this.display ? [] : {
                             label: this.$t(this.$route.query.aggregation.toLowerCase()) + " " + this.$t("of") + " " + this.$route.query.metric,
@@ -267,19 +267,6 @@
                     }
                 })
             },
-
-            getFormat(groupBy) {
-                switch (groupBy) {
-                case "hour":
-                    return "LLL";
-                case "day":
-                    return "l";
-                case "week":
-                    return "DD.MM";
-                case "month":
-                    return "MM.YYYY";
-                }
-            }
         }
     }
 </script>

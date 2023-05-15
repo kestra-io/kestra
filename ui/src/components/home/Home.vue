@@ -1,13 +1,21 @@
 <template>
     <div class="home" v-loading="!dailyReady">
-
         <div v-if="displayCharts">
-            <collapse v-if="!flowId && !namespaceRestricted">
-                <el-form-item>
+            <collapse>
+                <el-form-item v-if="!flowId && !namespaceRestricted">
                     <namespace-select
                         :data-type="'flow'"
                         :model-value="selectedNamespace"
                         @update:model-value="onNamespaceSelect"
+                    />
+                </el-form-item>
+                <el-form-item
+                    class="date-range"
+                >
+                    <date-range
+                        :start-date="startDate"
+                        :end-date="endDate"
+                        @update:model-value="onDateChange($event)"
                     />
                 </el-form-item>
             </collapse>
@@ -18,6 +26,8 @@
                 :ready="dailyReady"
                 :data="daily"
                 :big="true"
+                :start-date="startDate"
+                :end-date="endDate"
             />
 
             <home-description v-if="namespace" :description="description" class="mb-4" />
@@ -26,21 +36,21 @@
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
                         v-if="dailyReady"
-                        :title="$t('homeDashboard.today')"
+                        :title="todayTitle"
                         :data="today"
                     />
                 </el-col>
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
                         v-if="dailyReady"
-                        :title="$t('homeDashboard.yesterday')"
+                        :title="yesterdayTitle"
                         :data="yesterday"
                     />
                 </el-col>
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
                         v-if="dailyReady"
-                        :title="$t('homeDashboard.last28Days')"
+                        :title="lastDaysTitle"
                         :data="alls"
                     />
                 </el-col>
@@ -103,7 +113,6 @@
             <onboarding-bottom v-if="!flowId" />
         </div>
     </div>
-
 </template>
 <script>
     import Collapse from "../layout/Collapse.vue";
@@ -123,10 +132,13 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
+    import DateRange from "../layout/DateRange.vue";
+    import {getFormat} from "../../utils/charts";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
         components: {
+            DateRange,
             OnboardingBottom,
             Collapse,
             StateGlobalChart,
@@ -154,6 +166,7 @@
         },
         created() {
             this.loadStats();
+            this.haveExecutions();
         },
         watch: {
             $route(newValue, oldValue) {
@@ -172,7 +185,12 @@
                 executionCounts: undefined,
                 alls: undefined,
                 namespacesStats: undefined,
-                namespaceRestricted: !!this.namespace
+                namespaceRestricted: !!this.namespace,
+                endDate: this.$moment(new Date()).endOf("day").toISOString(true),
+                startDate: this.$moment(this.$moment(new Date()).endOf("day").toISOString(true))
+                    .add(-30, "days")
+                    .startOf("day")
+                    .toISOString(true)
             };
         },
         methods: {
@@ -189,6 +207,12 @@
 
                 return _merge(base, queryFilter)
             },
+            haveExecutions() {
+                this.$store.dispatch("execution/findExecutions", {limit: 1})
+                    .then(executions => {
+                        this.executionCounts = executions.total;
+                    });
+            },
             loadStats() {
                 this.dailyReady = false;
                 this.$store
@@ -199,15 +223,11 @@
                     .then((daily) => {
                         let data = [...daily];
                         let sorted = data.sort((a, b) => {
-                            return new Date(b.startDate) - new Date(a.startDate);
+                            return new Date(b.date) - new Date(a.date);
                         });
                         this.today = sorted.shift();
                         this.yesterday = sorted.shift();
                         this.alls = this.mergeStats(sorted);
-                        this.executionCounts = daily
-                            .reduce((accumulator, value)  => {
-                                return accumulator + Object.values(value.executionCounts).reduce((a, b) => a + b, 0);
-                            }, 0);
                         this.dailyReady = true;
                     });
 
@@ -247,6 +267,23 @@
                     query: {...this.$route.query, namespace}
                 });
             },
+            onDateChange(dates) {
+                for (const [key, value] of Object.entries(dates)) {
+                    if (value === undefined || value === "" || value === null) {
+                        if (key === "startDate") {
+                            this.startDate = this.$moment(this.$moment(new Date()).endOf("day").toISOString(true))
+                                .add(-30, "days")
+                                .startOf("day")
+                                .toISOString(true)
+                        } else if (key === "endDate") {
+                            this.endDate = this.$moment(new Date()).endOf("day").toISOString(true)
+                        }
+                    } else {
+                        this[key] = value;
+                    }
+                }
+                this.loadStats();
+            }
         },
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
@@ -281,18 +318,26 @@
             selectedNamespace() {
                 return this.namespace || this.$route.query.namespace;
             },
-            endDate() {
-                return this.$moment(new Date()).endOf("day").toISOString(true)
-            },
-            startDate() {
-                return this.$moment(this.endDate)
-                    .add(-30, "days")
-                    .startOf("day")
-                    .toISOString(true)
-            },
             isAllowedTrigger() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
+            todayTitle() {
+                if (this.$moment(this.today.date).isSame(this.$moment(), "day")) {
+                    return this.$t("homeDashboard.today");
+                }
+                return this.$moment(this.today.date).format(getFormat(this.today.groupBy))
+            },
+            yesterdayTitle() {
+                if (this.$moment(this.today.date).isSame(this.$moment(), "day")) {
+                    return this.$t("homeDashboard.yesterday");
+                }
+                return this.$moment(this.yesterday.date).format(getFormat(this.today.groupBy))
+            },
+            lastDaysTitle() {
+                return this.$t("homeDashboard.lastXdays",
+                               {days: this.$moment(this.yesterday.date)
+                                   .diff(this.$moment(this.startDate), "days")});
+            }
         }
     };
 </script>
@@ -303,6 +348,10 @@
             .el-card {
                 height: 100%;
             }
+        }
+
+        .date-range {
+            width: 30rem;
         }
 
         .new-execution-img {

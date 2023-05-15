@@ -37,6 +37,8 @@
                     class="mb-4"
                     :ready="dailyReady"
                     :data="daily"
+                    :start-date="startDate"
+                    :end-date="endDate"
                 />
             </template>
 
@@ -237,10 +239,10 @@
                 };
             },
             endDate() {
-                return new Date();
+                return this.$route.query.end ? this.$route.query.end : new Date();
             },
             startDate() {
-                return this.$moment(this.endDate)
+                return this.$route.query.start ? this.$route.query.start : this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
             },

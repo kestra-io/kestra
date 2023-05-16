@@ -71,7 +71,7 @@
                 if (this.activeTab === tab) {
                     return this.$route;
                 } else {
-                    return {name: this.routeName, params: {...this.$route.params, ...{tab: tab.name}}};
+                    return {name: this.routeName, params: {...this.$route.params, ...{tab: tab.name}}, query: {...(tab.query || {})}};
                 }
             },
         },

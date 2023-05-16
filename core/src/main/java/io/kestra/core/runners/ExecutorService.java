@@ -63,6 +63,9 @@ public class ExecutorService {
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
+            // if killing: move created tasks to killed as they are not already started
+            executor = this.handleCreatedKilling(executor);
+            // if all tasks are  killed or terminated, set the execution to killed
             executor = this.handleKilling(executor);
 
             // killing, so no more nexts
@@ -78,7 +81,6 @@ public class ExecutorService {
             executor = this.handleWorkerTask(executor);
 
             // search for worker task result
-            executor = this.handleChildWorkerCreatedKilling(executor);
             executor = this.handleChildWorkerTaskResult(executor);
 
             // search for flow task
@@ -416,7 +418,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    private Executor handleChildWorkerCreatedKilling(Executor executor) throws InternalException {
+    private Executor handleCreatedKilling(Executor executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
         }

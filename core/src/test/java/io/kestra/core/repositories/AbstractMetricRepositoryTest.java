@@ -26,9 +26,9 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void all() {
         String executionId = FriendlyId.createFriendlyId();
-        TaskRun taskRun1 = taskRun(executionId);
-        MetricEntry counter = MetricEntry.of(taskRun1, counter());
-        TaskRun taskRun2 = taskRun(executionId);
+        TaskRun taskRun1 = taskRun(executionId, "task");
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+        TaskRun taskRun2 = taskRun(executionId, "task");
         MetricEntry timer = MetricEntry.of(taskRun2, timer());
         metricRepository.save(counter);
         metricRepository.save(timer);
@@ -70,20 +70,42 @@ public abstract class AbstractMetricRepositoryTest {
 
     }
 
-    private Counter counter() {
-        return Counter.of("counter", 1);
+     @Test
+     void names() {
+         String executionId = FriendlyId.createFriendlyId();
+         TaskRun taskRun1 = taskRun(executionId, "task");
+         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+
+         TaskRun taskRun2 = taskRun(executionId, "task2");
+         MetricEntry counter2 = MetricEntry.of(taskRun2, counter("counter2"));
+
+         metricRepository.save(counter);
+         metricRepository.save(counter2);
+
+
+         List<String> flowMetricsNames = metricRepository.flowMetrics("namespace", "flow");
+         List<String> taskMetricsNames = metricRepository.taskMetrics("namespace", "flow", "task");
+         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics("namespace", "flow");
+
+         assertThat(flowMetricsNames.size(), is(2));
+         assertThat(taskMetricsNames.size(), is(1));
+         assertThat(tasksWithMetrics.size(), is(2));
+     }
+
+    private Counter counter(String metricName) {
+        return Counter.of(metricName, 1);
     }
 
     private Timer timer() {
         return Timer.of("counter", Duration.ofSeconds(5));
     }
 
-    private TaskRun taskRun(String executionId) {
+    private TaskRun taskRun(String executionId, String taskId) {
         return TaskRun.builder()
             .flowId("flow")
             .namespace("namespace")
             .executionId(executionId)
-            .taskId("task")
+            .taskId(taskId)
             .id(FriendlyId.createFriendlyId())
             .build();
     }

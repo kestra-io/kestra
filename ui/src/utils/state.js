@@ -47,7 +47,7 @@ const STATE = Object.freeze({
         colorClass: "yellow",
         icon: CloseCircle,
         isRunning: true,
-        isKillable: false,
+        isKillable: true,
         isFailed: true,
     },
     KILLED: {
@@ -79,7 +79,7 @@ const STATE = Object.freeze({
         colorClass: "indigo",
         icon: PauseCircle,
         isRunning: true,
-        isKillable: false,
+        isKillable: true,
         isFailed: false,
     }
 });

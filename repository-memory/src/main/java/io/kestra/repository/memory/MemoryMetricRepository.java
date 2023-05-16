@@ -46,6 +46,11 @@ public class MemoryMetricRepository implements MetricRepositoryInterface {
     }
 
     @Override
+    public List<String> tasksWithMetrics(String namespace, String flowId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public MetricAggregations aggregateByFlowId(String namespace, String flowId, @Nullable String taskId, String metric, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, String aggregation) {
         throw new UnsupportedOperationException();
     }

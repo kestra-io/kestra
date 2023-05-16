@@ -11,7 +11,7 @@
                     @update:model-value="updateQuery('task', $event)"
                 >
                     <el-option
-                        v-for="item in tasks"
+                        v-for="item in tasksWithMetrics"
                         :key="item"
                         :label="item"
                         :value="item"
@@ -83,12 +83,11 @@
                 <BarChart ref="chartRef" :chart-data="chartData" :options="options" v-if="aggregatedMetric" />
             </el-tooltip>
             <span v-else>
-            <el-alert type="info" :closable="false">
-                {{ $t("metric choice") }}
-            </el-alert>
-        </span>
+                <el-alert type="info" :closable="false">
+                    {{ $t("metric choice") }}
+                </el-alert>
+            </span>
         </el-card>
-
     </div>
 </template>
 
@@ -118,7 +117,7 @@
             }
         },
         computed: {
-            ...mapState("flow", ["flow", "metrics", "aggregatedMetric"]),
+            ...mapState("flow", ["flow", "metrics", "aggregatedMetric","tasksWithMetrics"]),
             theme() {
                 return localStorage.getItem("theme") || "light";
             },
@@ -192,9 +191,6 @@
                     }
                 })
             },
-            tasks() {
-                return this.flow.tasks.map(e => e.id);
-            },
             display() {
                 return this.$route.query.metric && this.$route.query.aggregation;
             }
@@ -207,6 +203,7 @@
         },
         methods: {
             loadMetrics() {
+                this.$store.dispatch("flow/loadTasksWithMetrics",{...this.$route.params})
                 this.$store
                     .dispatch(this.$route.query.task ? "flow/loadTaskMetrics" : "flow/loadFlowMetrics", {
                         ...this.$route.params,

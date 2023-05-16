@@ -64,9 +64,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         String namespace,
         String flowId
     ) {
-        return this.queryMetrics(
+        return this.queryDistinct(
             field("flow_id").eq(flowId)
-                .and(field("namespace").eq(namespace))
+                .and(field("namespace").eq(namespace)),
+            "metric_name"
         );
     }
 
@@ -76,10 +77,23 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         String flowId,
         String taskId
     ) {
-        return this.queryMetrics(
+        return this.queryDistinct(
             field("flow_id").eq(flowId)
                 .and(field("namespace").eq(namespace))
-                .and(field("task_id").eq(taskId))
+                .and(field("task_id").eq(taskId)),
+            "metric_name"
+        );
+    }
+
+    @Override
+    public List<String> tasksWithMetrics(
+        String namespace,
+        String flowId
+    ) {
+        return this.queryDistinct(
+            field("flow_id").eq(flowId)
+                .and(field("namespace").eq(namespace)),
+            "task_id"
         );
     }
 
@@ -141,20 +155,20 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return metric;
     }
 
-    private List<String> queryMetrics(Condition condition) {
+    private List<String> queryDistinct(Condition condition, String field) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .selectDistinct(field("metric_name"))
+                    .selectDistinct(field(field))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
 
                 select = select.and(condition);
 
-                return select.fetch().map(record -> record.get("metric_name", String.class));
+                return select.fetch().map(record -> record.get(field, String.class));
             });
     }
 

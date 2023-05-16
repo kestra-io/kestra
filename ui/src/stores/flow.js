@@ -23,7 +23,8 @@ export default {
         flowError: undefined,
         taskError: undefined,
         metrics: [],
-        aggregatedMetrics: undefined
+        aggregatedMetrics: undefined,
+        tasksWithMetrics: []
     },
 
     actions: {
@@ -240,6 +241,13 @@ export default {
                     return response.data
                 })
         },
+        loadTasksWithMetrics({commit}, options) {
+            return axios.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
+                .then(response => {
+                    commit("setTasksWithMetrics", response.data)
+                    return response.data
+                })
+        },
         loadFlowAggregatedMetrics({commit}, options) {
             return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
                 .then(response => {
@@ -335,6 +343,9 @@ export default {
         setAggregatedMetric(state, aggregatedMetric) {
             state.aggregatedMetric = aggregatedMetric
         },
+        setTasksWithMetrics(state, tasksWithMetrics) {
+            state.tasksWithMetrics = tasksWithMetrics
+        }
     },
     getters: {
         flow(state) {

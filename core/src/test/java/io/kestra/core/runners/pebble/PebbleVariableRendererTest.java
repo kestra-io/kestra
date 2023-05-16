@@ -164,6 +164,25 @@ class PebbleVariableRendererTest {
     }
 
     @Test
+    void raw() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "var", "1"
+        );
+
+        String render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %}", vars);
+        assertThat(render, is("See some code {{ var }}"));
+
+        render = variableRenderer.render("See some code {%raw%}{{ var }}{%endraw%}", vars);
+        assertThat(render, is("See some code {{ var }}"));
+
+        render = variableRenderer.render("See some code {%-  raw%}{{ var }}{%endraw -%}", vars);
+        assertThat(render, is("See some code {{ var }}"));
+
+        render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %} and some other code {% raw %}{{ var2 }}{% endraw %}", vars);
+        assertThat(render, is("See some code {{ var }} and some other code {{ var2 }}"));
+    }
+
+    @Test
     void eval() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
             "block", ImmutableMap.of("test", ImmutableMap.of("child", "awesome")),

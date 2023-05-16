@@ -67,10 +67,16 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     private Integer revision;
 
     @Schema(
-        title = "The input to pass to the triggered flow"
+        title = "The inputs to pass to the triggered flow"
     )
     @PluginProperty(dynamic = true)
     private Map<String, String> inputs;
+
+    @Schema(
+        title = "The labels to pass to the triggered flow execution"
+    )
+    @PluginProperty(dynamic = true)
+    private Map<String, String> labels;
 
     @Builder.Default
     @Schema(
@@ -112,6 +118,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
+        Map<String, String> labels = new HashMap<>();
+        if (this.labels != null) {
+            for (Map.Entry<String, String> entry: this.labels.entrySet()) {
+                labels.put(entry.getKey(), runContext.render(entry.getValue()));
+            }
+        }
+
         Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
 
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
@@ -130,8 +143,8 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         return runnerUtils
             .newExecution(
                 flow,
-                (f, e) -> runnerUtils.typedInputs(f, e, inputs)
-            )
+                (f, e) -> runnerUtils.typedInputs(f, e, inputs),
+                labels)
             .withTrigger(ExecutionTrigger.builder()
                 .id(this.getId())
                 .type(this.getType())

@@ -8,7 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
-import java.util.Arrays;
+import java.util.Map;
 
 @Singleton
 @MysqlRepositoryEnabled
@@ -19,7 +19,7 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findCondition(String query) {
-        return this.jdbcRepository.fullTextCondition(Arrays.asList("namespace", "flow_id", "id"), query);
+    protected Condition findCondition(String query, Map<String, String> labels) {
+        return MysqlExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }
 }

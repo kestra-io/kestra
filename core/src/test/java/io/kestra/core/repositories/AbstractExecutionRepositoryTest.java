@@ -106,11 +106,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED));
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
         assertThat(executions.getTotal(), is(8L));
     }
 
@@ -118,11 +118,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findWithSort() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED));
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
         assertThat(executions.getTotal(), is(8L));
     }
 

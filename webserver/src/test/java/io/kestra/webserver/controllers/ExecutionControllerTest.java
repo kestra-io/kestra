@@ -79,7 +79,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
+                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2" + (wait ? "&wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -121,6 +121,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getInputs().get("float"), is(42.42));
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
+        assertThat(result.getLabels().get("a"), is("label-1"));
+        assertThat(result.getLabels().get("b"), is("label-2"));
     }
 
     @Test
@@ -494,6 +496,4 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTrigger().getVariables().get("body"), is("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"));
 
     }
-
-
 }

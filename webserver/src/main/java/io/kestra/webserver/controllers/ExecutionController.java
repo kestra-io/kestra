@@ -800,7 +800,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/by-query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
-    public HttpResponse<BulkResponse> killByQuery(
+    public HttpResponse<?> killByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
@@ -808,7 +808,7 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
     ) {
-        Integer count = executionRepository
+        var ids = executionRepository
             .find(
                 query,
                 namespace,
@@ -817,23 +817,11 @@ public class ExecutionController {
                 endDate,
                 state
             )
-            .map(e -> {
-                if (!e.getState().isRunning()) {
-                    throw new IllegalStateException("Execution must be running to be killed, " +
-                        "current state is '" + e.getState().getCurrent() + "' !"
-                    );
-                }
-
-                killQueue.emit(ExecutionKilled
-                    .builder()
-                    .executionId(e.getId())
-                    .build());
-                return 1;
-            })
-            .reduce(Integer::sum)
+            .map(execution -> execution.getId())
+            .toList()
             .blockingGet();
 
-        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+        return killByIds(ids);
     }
 
     private boolean isStopFollow(Flow flow, Execution execution) {

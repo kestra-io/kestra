@@ -204,7 +204,19 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage(), containsString("Invalid type: io.kestra.core.tasks.debugs.MissingOne"));
+        assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage(), containsString("Invalid type: io.kestra.core.tasks.debugs.MissingOne"));
+    }
+
+    @Test
+    void invalidProperty() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/invalid-property.yaml")
+        );
+
+        assertThat(exception.getMessage(), is("Unrecognized field \"invalid\" (class io.kestra.core.tasks.debugs.Return), not marked as ignorable (7 known properties: \"timeout\", \"format\", \"retry\", \"type\", \"id\", \"description\", \"disabled\"])"));
+        assertThat(exception.getConstraintViolations().size(), is(1));
+        assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString(), is("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.core.tasks.debugs.Return[\"invalid\"]"));
     }
 
 

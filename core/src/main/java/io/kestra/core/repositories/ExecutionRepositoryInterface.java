@@ -34,7 +34,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     );
 
     Flowable<Execution> find(
@@ -43,7 +44,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     );
 
     ArrayListTotal<TaskRun> findTaskRun(

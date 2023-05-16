@@ -28,12 +28,12 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Execution> find(Pageable pageable, String query, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state) {
+    public ArrayListTotal<Execution> find(Pageable pageable, String query, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Flowable<Execution> find(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state) {
+    public Flowable<Execution> find(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels) {
         return null;
     }
 

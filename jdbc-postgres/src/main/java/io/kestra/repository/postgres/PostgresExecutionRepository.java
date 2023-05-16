@@ -2,7 +2,6 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.micronaut.context.ApplicationContext;
@@ -12,8 +11,8 @@ import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -37,7 +36,7 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     }
 
     @Override
-    protected Condition findCondition(String query) {
-        return this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query);
+    protected Condition findCondition(String query, Map<String, String> labels) {
+        return PostgresExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }
 }

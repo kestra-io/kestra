@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.helpers.HandleBarDeserializer;
@@ -75,12 +76,11 @@ public class YamlFlowParser {
         try {
             return mapper.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
-            if (e.getCause() instanceof ConstraintViolationException) {
-                throw (ConstraintViolationException) e.getCause();
+            if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
+                throw constraintViolationException;
             }
-            else if (e instanceof InvalidTypeIdException) {
+            else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
                 // This error is thrown when a non-existing task is used
-                InvalidTypeIdException invalidTypeIdException = (InvalidTypeIdException) e;
                 throw new ConstraintViolationException(
                     "Invalid type: " + invalidTypeIdException.getTypeId(),
                     Set.of(
@@ -100,6 +100,20 @@ public class YamlFlowParser {
                         )
                     )
                 );
+            }
+            else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
+                var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
+                throw new ConstraintViolationException(
+                    message,
+                    Collections.singleton(
+                        ManualConstraintViolation.of(
+                            e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
+                            input,
+                            String.class,
+                            unrecognizedPropertyException.getPathReference(),
+                            null
+                        )
+                    ));
             }
             else {
                 throw new ConstraintViolationException(

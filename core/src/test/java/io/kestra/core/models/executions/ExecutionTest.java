@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.State;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -147,5 +148,15 @@ class ExecutionTest {
             restart1.withState(State.Type.PAUSED).getState()
         );
         assertThat(restart2.getOriginalId(), is(execution.getId()));
+    }
+
+    @Test
+    void labels() {
+        final Execution execution = Execution.builder()
+            .labels(Map.of("test", "test-value"))
+            .build();
+
+        assertThat(execution.getLabels().size(), is(1));
+        assertThat(execution.getLabels().get("test"), is("test-value"));
     }
 }

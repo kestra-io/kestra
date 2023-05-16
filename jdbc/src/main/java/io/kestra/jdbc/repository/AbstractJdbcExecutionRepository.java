@@ -91,13 +91,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             });
     }
 
-    abstract protected Condition findCondition(String query);
+    abstract protected Condition findCondition(String query, Map<String, String> labels);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).collect(Collectors.toList()));
     }
 
+    @Override
     public ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String query,
@@ -105,7 +106,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -119,7 +121,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     flowId,
                     startDate,
                     endDate,
-                    state
+                    state,
+                    labels
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -133,7 +136,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     ) {
         return Flowable.create(
             emitter -> this.jdbcRepository
@@ -148,7 +152,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         flowId,
                         startDate,
                         endDate,
-                        state
+                        state,
+                        labels
                     );
 
                     select.fetch()
@@ -168,7 +173,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        @Nullable Map<String, String> labels
     ) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -178,7 +184,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter());
 
-        select = filteringQuery(select, namespace, flowId, null, query);
+        select = filteringQuery(select, namespace, flowId, null, query, labels);
 
         if (startDate != null) {
             select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -311,7 +317,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                select = filteringQuery(select, namespace, flowId, flows, query);
+                select = filteringQuery(select, namespace, flowId, flows, query, null);
 
                 List<Field<?>> groupFields = new ArrayList<>();
                 if (context.configuration().dialect() != SQLDialect.H2) {
@@ -334,8 +340,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
-        @Nullable String query
-    ) {
+        @Nullable String query,
+        @Nullable Map<String, String> labels) {
         if (flowId != null && namespace != null) {
             select = select.and(field("namespace").eq(namespace));
             select = select.and(field("flow_id").eq(flowId));
@@ -343,8 +349,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
         }
 
-        if (query != null) {
-            select = select.and(this.findCondition(query));
+        if (query != null || labels != null) {
+            select = select.and(this.findCondition(query, labels));
         }
 
         if (flows != null) {

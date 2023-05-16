@@ -260,41 +260,49 @@ public class RunnerUtils {
     }
 
     public Execution runOne(String namespace, String flowId) throws TimeoutException {
-        return this.runOne(namespace, flowId, null, null, null);
+        return this.runOne(namespace, flowId, null, null, null, null);
     }
 
     public Execution runOne(String namespace, String flowId, Integer revision) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, null, null);
+        return this.runOne(namespace, flowId, revision, null, null, null);
     }
 
     public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, inputs, null);
+        return this.runOne(namespace, flowId, revision, inputs, null, null);
     }
 
     public Execution runOne(String namespace, String flowId, Duration duration) throws TimeoutException {
-        return this.runOne(namespace, flowId, null, null, duration);
+        return this.runOne(namespace, flowId, null, null, duration, null);
     }
 
     public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(namespace, flowId, revision, inputs, duration, null);
+    }
+
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
-            duration
-        );
+            duration,
+            labels);
     }
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
-        return this.runOne(flow, inputs, null);
+        return this.runOne(flow, inputs, null, null);
     }
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(flow, inputs, duration, null);
+    }
+
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
         if (duration == null) {
             duration = Duration.ofSeconds(15);
         }
 
-        Execution execution = this.newExecution(flow, inputs);
+        Execution execution = this.newExecution(flow, inputs, labels);
 
         return this.awaitExecution(isTerminatedExecution(execution, flow), () -> {
             this.executionQueue.emit(execution);
@@ -320,7 +328,7 @@ public class RunnerUtils {
             duration = Duration.ofSeconds(15);
         }
 
-        Execution execution = this.newExecution(flow, inputs);
+        Execution execution = this.newExecution(flow, inputs, null);
 
         return this.awaitExecution(isPausedExecution(execution), () -> {
             this.executionQueue.emit(execution);
@@ -369,7 +377,7 @@ public class RunnerUtils {
         return e -> e.getParentId() != null && e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
     }
 
-    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {
+    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Map<String, String> labels) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
             .namespace(flow.getNamespace())
@@ -380,6 +388,10 @@ public class RunnerUtils {
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));
+        }
+
+        if (labels != null) {
+            execution = execution.withLabels(labels);
         }
 
         return execution;

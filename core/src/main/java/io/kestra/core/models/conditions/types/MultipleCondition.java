@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.services.FlowService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -71,6 +72,7 @@ import javax.validation.constraints.Pattern;
         )
     }
 )
+@Slf4j
 public class MultipleCondition extends Condition {
     @NotNull
     @NotBlank
@@ -119,8 +121,6 @@ public class MultipleCondition extends Condition {
      */
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        Logger logger = conditionContext.getRunContext().logger();
-
         MultipleConditionStorageInterface multipleConditionStorage = conditionContext.getMultipleConditionStorage();
         Objects.requireNonNull(multipleConditionStorage);
 
@@ -147,14 +147,14 @@ public class MultipleCondition extends Condition {
 
         boolean result = conditions.size() == validatedCount;
 
-        if (result && logger.isDebugEnabled()) {
-            logger.debug(
+        if (result && log.isDebugEnabled()) {
+            log.debug(
                 "[namespace: {}] [flow: {}] Multiple conditions validated !",
                 conditionContext.getFlow().getNamespace(),
                 conditionContext.getFlow().getId()
             );
-        } else if (logger.isTraceEnabled()) {
-            logger.trace(
+        } else if (log.isTraceEnabled()) {
+            log.trace(
                 "[namespace: {}] [flow: {}] Multiple conditions failed ({}/{}) with '{}'",
                 conditionContext.getFlow().getNamespace(),
                 conditionContext.getFlow().getId(),

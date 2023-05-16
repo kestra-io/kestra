@@ -33,6 +33,8 @@ import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
+    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
+
     private Handlebars handlebars;
     private final PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
@@ -95,11 +97,10 @@ public class VariableRenderer {
             return null;
         }
 
-        // pre-process verbatim tags
-        Pattern verbatimPattern = Pattern.compile("\\{%[-]*\\s*verbatim\\s*%\\}(.*?)\\{%\\s*endverbatim\\s*[-]*%\\}");
-        Matcher verbatimMatcher = verbatimPattern.matcher(inline);
-        Map<String, String> replacers = new HashMap<>();
-        String currentTemplate = verbatimMatcher.replaceAll(result -> {
+        // pre-process raw tags
+        Matcher rawMatcher = RAW_PATTERN.matcher(inline);
+        Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
+        String currentTemplate = rawMatcher.replaceAll(result -> {
             var uuid = UUID.randomUUID().toString();
             replacers.put(uuid, result.group(1));
             return uuid;
@@ -140,7 +141,7 @@ public class VariableRenderer {
             currentTemplate = current;
         }
 
-        // post-process verbatim tags
+        // post-process raw tags
         for(var entry: replacers.entrySet()) {
             current = current.replace(entry.getKey(), entry.getValue());
         }

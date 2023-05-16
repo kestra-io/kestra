@@ -5,7 +5,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.Rethrow;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
@@ -165,21 +164,21 @@ class PebbleVariableRendererTest {
     }
 
     @Test
-    void verbatim() throws IllegalVariableEvaluationException {
+    void raw() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
             "var", "1"
         );
 
-        String render = variableRenderer.render("See some code {% verbatim %}{{ var }}{% endverbatim %}", vars);
+        String render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %}", vars);
         assertThat(render, is("See some code {{ var }}"));
 
-        render = variableRenderer.render("See some code {%verbatim%}{{ var }}{%endverbatim%}", vars);
+        render = variableRenderer.render("See some code {%raw%}{{ var }}{%endraw%}", vars);
         assertThat(render, is("See some code {{ var }}"));
 
-        render = variableRenderer.render("See some code {%-  verbatim%}{{ var }}{%endverbatim -%}", vars);
+        render = variableRenderer.render("See some code {%-  raw%}{{ var }}{%endraw -%}", vars);
         assertThat(render, is("See some code {{ var }}"));
 
-        render = variableRenderer.render("See some code {% verbatim %}{{ var }}{% endverbatim %} and some other code {% verbatim %}{{ var2 }}{% endverbatim %}", vars);
+        render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %} and some other code {% raw %}{{ var2 }}{% endraw %}", vars);
         assertThat(render, is("See some code {{ var }} and some other code {{ var2 }}"));
     }
 

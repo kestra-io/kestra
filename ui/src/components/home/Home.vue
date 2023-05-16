@@ -20,7 +20,7 @@
                 :big="true"
             />
 
-            <home-description v-if="namespace" class="mb-4" />
+            <home-description v-if="namespace" :description="description" class="mb-4" />
 
             <el-row :gutter="15" class="auto-height mb-4">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
@@ -144,6 +144,10 @@
                 default: undefined
             },
             flowId: {
+                type: String,
+                default: undefined
+            },
+            description: {
                 type: String,
                 default: undefined
             },

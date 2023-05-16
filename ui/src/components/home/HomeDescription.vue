@@ -1,11 +1,11 @@
 <template>
     <el-card
         class="description"
-        v-if="flow?.description"
+        v-if="source"
         :header="$t('description')"
     >
         <div>
-            <markdown class="markdown-tooltip" v-if="flow.description" :source="flow.description" />
+            <markdown class="markdown-tooltip" :source="source" />
         </div>
     </el-card>
 </template>
@@ -17,8 +17,17 @@
         components: {
             Markdown
         },
+        props: {
+            description: {
+                type: String,
+                default: undefined
+            },
+        },
         computed: {
             ...mapGetters("flow", ["flow"]),
+            source() {
+                return this.description || this.flow?.description;
+            }
         }
     };
 </script>

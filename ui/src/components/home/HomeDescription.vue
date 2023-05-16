@@ -1,7 +1,7 @@
 <template>
     <el-card
         class="description"
-        v-if="flow.description"
+        v-if="flow?.description"
         :header="$t('description')"
     >
         <div>

@@ -2,7 +2,7 @@
     <div class="home" v-loading="!dailyReady">
 
         <div v-if="displayCharts">
-            <collapse v-if="!flowId">
+            <collapse v-if="!flowId && !namespaceRestricted">
                 <el-form-item>
                     <namespace-select
                         :data-type="'flow'"
@@ -167,7 +167,8 @@
                 yesterday: undefined,
                 executionCounts: undefined,
                 alls: undefined,
-                namespacesStats: undefined
+                namespacesStats: undefined,
+                namespaceRestricted: !!this.namespace
             };
         },
         methods: {

@@ -129,7 +129,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
     public List<Task> allChildTasks() {
         return Stream
             .concat(
-                this.then.stream(),
+                this.then != null ? this.then.stream() : Stream.empty(),
                 Stream.concat(
                     this._else != null ? this._else.stream() : Stream.empty(),
                     this.errors != null ? this.errors.stream() : Stream.empty())

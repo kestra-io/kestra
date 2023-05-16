@@ -21,6 +21,8 @@ public interface MetricRepositoryInterface extends SaveRepositoryInterface<Metri
 
     List<String> taskMetrics(String namespace, String flowId, String taskId);
 
+    List<String> tasksWithMetrics(String namespace, String flowId);
+
     MetricAggregations aggregateByFlowId(String namespace, String flowId, @Nullable String taskId, String metric, ZonedDateTime startDate, ZonedDateTime endDate, String aggregation);
 
     Integer purge(Execution execution);

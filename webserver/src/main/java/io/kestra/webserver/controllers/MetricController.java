@@ -80,6 +80,16 @@ public class MetricController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/tasks/{namespace}/{flowId}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Metrics"}, summary = "Get tasks id that have metrics for a specific flow, include deleted or renamed tasks")
+    public List<String> tasks(
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow Id") @PathVariable String flowId
+    ) {
+        return metricsRepository.tasksWithMetrics(namespace, flowId);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/aggregates/{namespace}/{flowId}/{metric}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Metrics"}, summary = "Get metrics aggregations for a specific flow")
     public MetricAggregations aggregateByFlowId(

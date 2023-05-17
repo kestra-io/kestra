@@ -13,6 +13,8 @@
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
+    import SplitCellsHorizontal from "../../assets/icons/SplitCellsHorizontal.vue"
+    import SplitCellsVertical from "../../assets/icons/SplitCellsVertical.vue"
 
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
@@ -109,6 +111,7 @@
 
     const editorWidthStorageKey = "editor-width";
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
+    const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
     const elements = ref([])
     const haveChange = ref(false)
@@ -146,7 +149,7 @@
     const generateDagreGraph = () => {
         const dagreGraph = new dagre.graphlib.Graph({compound: true})
         dagreGraph.setDefaultEdgeLabel(() => ({}))
-        dagreGraph.setGraph({rankdir: showTopology.value === "topology" ? "LR" : "TB"})
+        dagreGraph.setGraph({rankdir: isHorizontal.value ? "LR" : "TB"})
 
         for (const node of props.flowGraph.nodes) {
             dagreGraph.setNode(node.uid, {
@@ -215,7 +218,7 @@
     };
 
     const getNodeHeight = (node) => {
-        return isTaskNode(node) || isTriggerNode(node) ? 55 : (showTopology.value === "topology" ? 55 : 5);
+        return isTaskNode(node) || isTriggerNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
     };
 
     const getNodePosition = (n, parent, alignTo) => {
@@ -242,6 +245,16 @@
         }
     }
 
+    const toggleOrientation = () => {
+        localStorage.setItem(
+            "topology-orientation",
+            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
+        );
+        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
+        regenerateGraph();
+        fitView();
+    };
+
     const generateGraph = () => {
         isLoading.value = true;
         if (!props.flowGraph) {
@@ -254,8 +267,8 @@
                     width: "5px",
                     height: "5px"
                 },
-                sourcePosition: showTopology.value === "topology" ? Position.Right : Position.Bottom,
-                targetPosition: showTopology.value === "topology" ? Position.Left : Position.Top,
+                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
                 parentNode: undefined,
                 draggable: false,
             })
@@ -263,13 +276,13 @@
                 id: "end",
                 label: "",
                 type: "dot",
-                position: showTopology.value === "topology" ? {x: 50, y: 0} : {x: 0, y: 50},
+                position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
                 style: {
                     width: "5px",
                     height: "5px"
                 },
-                sourcePosition: showTopology.value === "topology" ? Position.Right : Position.Bottom,
-                targetPosition: showTopology.value === "topology" ? Position.Left : Position.Top,
+                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
                 parentNode: undefined,
                 draggable: false,
             })
@@ -314,8 +327,8 @@
                 parentNode: parentNode,
                 position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
                 style: {
-                    width: clusterUid === "Triggers" && showTopology.value === "topology" ? "400px" : dagreNode.width + "px",
-                    height: clusterUid === "Triggers" && !showTopology.value === "topology" ? "250px" : dagreNode.height + "px",
+                    width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
+                    height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
                 },
             })
         }
@@ -341,8 +354,8 @@
                     width: getNodeWidth(node) + "px",
                     height: getNodeHeight(node) + "px"
                 },
-                sourcePosition: showTopology.value === "topology" ? Position.Right : Position.Bottom,
-                targetPosition: showTopology.value === "topology" ? Position.Left : Position.Top,
+                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
                 parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
                 draggable: nodeType === "task" && !props.isReadOnly,
                 data: {
@@ -782,6 +795,7 @@
     const switchView = (event) => {
         showTopology.value = event
         if (["topology", "combined"].includes(showTopology.value)) {
+            isHorizontal.value = showTopology.value === "combined" ? false : localStorage.getItem("topology-orientation") === "1";
             if (updatedFromEditor.value) {
                 onEdit(flowYaml.value)
                 updatedFromEditor.value = false;
@@ -997,7 +1011,13 @@
                         :is-allowed-edit="isAllowedEdit()"
                     />
                 </template>
-                <Controls :show-interactive="false" />
+
+                <Controls :show-interactive="false">
+                    <ControlButton @click="toggleOrientation" v-if="showTopology === 'topology'">
+                        <SplitCellsVertical :size="48" v-if="!isHorizontal" />
+                        <SplitCellsHorizontal v-if="isHorizontal" />
+                    </ControlButton>
+                </Controls>
             </VueFlow>
         </div>
         <PluginDocumentation

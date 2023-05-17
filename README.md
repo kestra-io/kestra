@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Infinitely scalable open source orchestration & scheduling platform. <br>
+    Infinitely edited scalable open source orchestration & scheduling platform. <br>
 </h1>
 
 <div align="center">

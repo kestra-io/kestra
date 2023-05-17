@@ -402,6 +402,10 @@ export default class YamlUtils {
         return isChildrenOf;
     }
 
+    static replaceIdAndNamespace(source, id, namespace) {
+        return source.replace(/^(id\s*:\s*(["']?))\S*/m, "$1"+id+"$2").replace(/^(namespace\s*:\s*(["']?))\S*/m, "$1"+namespace+"$2")
+    }
+
     static updateMetadata(source, metadata) {
         // TODO: check how to keep comments
         const yamlDoc = yaml.parseDocument(source);

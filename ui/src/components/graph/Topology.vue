@@ -129,6 +129,7 @@
     const dragging = ref(false);
     const taskError = ref(store.getters["flow/taskError"])
     const user = store.getters["auth/user"];
+    const routeParams = router.currentRoute.value.params;
 
     const localStorageKey = computed(() => {
         return (props.isCreating ? "creation" : `${flow.namespace}.${flow.id}`) + "_draft";
@@ -846,8 +847,16 @@
                         });
                     })
             }else {
-                store
-                    .dispatch("flow/saveFlow", {flow: flowYaml.value})
+                if(routeParams.id !== flowParsed.id || routeParams.namespace !== flowParsed.namespace){
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("can not save"),
+                        message: t("namespace and id readonly"),
+                    })
+                    flowYaml.value = YamlUtils.replaceIdAndNamespace(flowYaml.value, routeParams.id, routeParams.namespace);
+                    return;
+                }
+                store.dispatch("flow/saveFlow", {flow: flowYaml.value})
                     .then((response) => {
                         toast.saved(response.id);
                         store.dispatch("core/isUnsaved", false);

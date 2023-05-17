@@ -234,15 +234,13 @@
     };
 
     const regenerateGraph = () => {
-        if(!props.flowError) {
-            removeEdges(getEdges.value)
-            removeNodes(getNodes.value)
-            removeSelectedElements(getElements.value)
-            elements.value = []
-            nextTick(() => {
-                generateGraph();
-            })
-        }
+        removeEdges(getEdges.value)
+        removeNodes(getNodes.value)
+        removeSelectedElements(getElements.value)
+        elements.value = []
+        nextTick(() => {
+            generateGraph();
+        })
     }
 
     const toggleOrientation = () => {
@@ -257,7 +255,7 @@
 
     const generateGraph = () => {
         isLoading.value = true;
-        if (!props.flowGraph) {
+        if (!props.flowGraph || !flowHaveTasks()) {
             elements.value.push({
                 id: "start",
                 label: "",
@@ -591,10 +589,7 @@
         store.dispatch("core/isUnsaved", true);
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
-                if (!value[0].constraints) {
-                    // flowYaml need to be update before
-                    // loadGraphFromSource to avoid
-                    // generateGraph to be triggered with the old value
+                if (flowHaveTasks()) {
                     store.dispatch("flow/loadGraphFromSource", {
                         flow: event, config: {
                             validateStatus: (status) => {
@@ -602,6 +597,8 @@
                             }
                         }
                     })
+                } else {
+                    regenerateGraph();
                 }
 
                 return value;

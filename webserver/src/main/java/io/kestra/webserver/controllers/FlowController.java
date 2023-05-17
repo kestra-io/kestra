@@ -96,8 +96,7 @@ public class FlowController {
     public FlowGraph flowGraphSource(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
-        Flow flowParsed = taskDefaultService.injectDefaults(yamlFlowParser.parse(flow, Flow.class));
-        modelValidator.validate(flowParsed);
+        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
         return FlowGraph.of(flowParsed);
     }

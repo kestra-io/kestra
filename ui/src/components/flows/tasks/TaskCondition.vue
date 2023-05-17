@@ -4,7 +4,7 @@
         :disabled="true"
     >
         <template #append>
-            <el-button :icon="Eye" @click="this.isOpen = true" />
+            <el-button :icon="Eye" @click="isOpen = true" />
         </template>
     </el-input>
 

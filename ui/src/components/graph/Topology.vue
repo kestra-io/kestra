@@ -1180,7 +1180,7 @@
                     size="large"
                     @click="save"
                     v-if="isAllowedEdit"
-                    :type="flowError || !haveChange ? 'danger' : 'primary'"
+                    :type="flowError ? 'danger' : 'primary'"
                     :disabled="!haveChange"
                     class="edit-flow-save-button"
                 >

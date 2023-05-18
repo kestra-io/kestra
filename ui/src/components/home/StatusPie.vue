@@ -6,6 +6,7 @@
             :persistent="false"
             :hide-after="0"
             transition=""
+            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         >
             <template #content>
                 <span v-html="tooltipContent" />

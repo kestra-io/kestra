@@ -74,7 +74,7 @@
                 :persistent="false"
                 :hide-after="0"
                 transition=""
-                :visible="tooltipContent !== undefined"
+                :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
                 v-if="aggregatedMetric"
             >
                 <template #content>

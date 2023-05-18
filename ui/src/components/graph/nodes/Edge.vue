@@ -20,7 +20,8 @@
     const store = useStore();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
 
-    interface CustomEdgeProps<T = any> extends EdgeProps<T> {
+
+    interface CustomEdgeProps<T = any> extends /* @vue-ignore */ EdgeProps<T> {
         id: string
         sourceX: number
         sourceY: number

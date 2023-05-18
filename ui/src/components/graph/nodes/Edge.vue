@@ -16,6 +16,7 @@
     import YamlUtils from "../../../utils/yamlUtils.js";
     import {useStore} from "vuex";
     import ValidationError from "../../flows/ValidationError.vue";
+    import {Ref} from "@vue/reactivity";
 
     const store = useStore();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -46,7 +47,7 @@
     const taskYaml = ref("");
     const execution = store.getters["execution/execution"];
     const timer = ref(undefined);
-    const taskError = ref(store.getters["flow/taskError"])
+    const taskError: Ref<string> = ref(store.getters["flow/taskError"])
 
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
@@ -251,8 +252,11 @@
                 </el-form>
                 <template #footer>
                     <ValidationError link :error="taskError"/>
-                    <el-button :disabled="!taskHaveId() || taskError" :icon="ContentSave" @click="forwardTask"
-                               type="primary"
+                    <el-button
+                        :disabled="!taskHaveId() || taskError !== undefined"
+                        :icon="ContentSave"
+                        @click="forwardTask"
+                        type="primary"
                     >
                         {{ $t("save") }}
                     </el-button>

@@ -5,7 +5,7 @@
             :persistent="false"
             :hide-after="0"
             transition=""
-            :popper-class="tooltipContent === '' ? 'hidden' : 'tooltip-stats'"
+            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         >
             <template #content>
                 <span v-html="tooltipContent" />
@@ -171,8 +171,4 @@
         },
     });
 </script>
-<style>
-    .hidden {
-        display: none
-    }
-</style>
+

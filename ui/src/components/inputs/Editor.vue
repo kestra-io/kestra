@@ -357,6 +357,7 @@
 </script>
 
 <style lang="scss">
+    @import "../../styles/layout/root-dark.scss";
 
     .ks-editor {
         width: 100%;
@@ -439,14 +440,14 @@
 
     .custom-dark-vs-theme {
         .monaco-editor, .monaco-editor-background {
-            background-color: var(--input-bg);
-            --vscode-editor-background: var(--input-bg);
-            --vscode-breadcrumb-background: var(--input-bg);
-            --vscode-editorGutter-background: var(--input-bg);
+            background-color: $input-bg;
+            --vscode-editor-background: $input-bg;
+            --vscode-breadcrumb-background: $input-bg;
+            --vscode-editorGutter-background: $input-bg;
         }
 
         .monaco-editor .margin {
-            background-color: var(--input-bg);
+            background-color: $input-bg;
         }
     }
 

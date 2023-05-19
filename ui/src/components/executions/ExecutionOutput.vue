@@ -8,6 +8,7 @@
                     :persistent="false"
                     v-model="filter"
                     @input="onSearch"
+                    @clear="onClear"
                     :placeholder="$t('display output for specific task') + '...'"
                 >
                     <el-option
@@ -133,6 +134,9 @@
                     delete newRoute.query.search;
                     this.$router.push(newRoute);
                 }
+            },
+            onClear() {
+                this.filter = undefined;
             },
             onDebugExpression(taskRunId, expression) {
                 this.$http.post(`/api/v1/executions/${this.execution.id}/eval/${taskRunId}`, expression, {

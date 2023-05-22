@@ -15,20 +15,8 @@ import javax.validation.ConstraintViolationException;
 @Getter
 @NoArgsConstructor
 public class FileInput extends Input<URI> {
-    @Schema(title = "The file extension.")
-    String extension;
-
     @Override
     public void validate(URI input) throws ConstraintViolationException {
-        if (extension != null && !input.getPath().endsWith(extension)) {
-            throw new ConstraintViolationException("Invalid input '" + input + "', it must be a file with the extension '" + extension + "'",
-                Set.of(ManualConstraintViolation.of(
-                    "Invalid input",
-                    this,
-                    FileInput.class,
-                    getName(),
-                    input
-                )));
-        }
+        // no validation yet
     }
 }

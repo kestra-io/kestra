@@ -52,7 +52,6 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("validatedDate", "2023-01-02")
         .put("validatedDateTime", "2023-01-01T00:00:10Z")
         .put("validatedDuration", "PT15S")
-        .put("validatedFile", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
         .put("validatedFloat", "0.42")
         .put("validatedTime", "11:27:49")
         .build();
@@ -114,7 +113,6 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("validatedDate"), is(LocalDate.parse("2023-01-02")));
         assertThat(typeds.get("validatedDateTime"), is(Instant.parse("2023-01-01T00:00:10Z")));
         assertThat(typeds.get("validatedDuration"), is(Duration.parse("PT15S")));
-        assertThat(typeds.get("validatedFile"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/validatedFile/application.yml")));
         assertThat(typeds.get("validatedFloat"), is(0.42F));
         assertThat(typeds.get("validatedTime"), is(LocalTime.parse("11:27:49")));
     }
@@ -222,18 +220,6 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getMessage(), is("Invalid input 'PT30S', it must be less than 'PT20S'"));
-    }
-
-    @Test
-    void inputValidatedFileBadValue() throws URISyntaxException {
-        HashMap<String, String> map = new HashMap<>(inputs);
-        map.put("validatedFile", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("docs/index.hbs")).getPath());
-
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(map);
-        });
-
-        assertThat(e.getMessage(), is("Invalid input 'kestra:///io/kestra/tests/inputs/executions/test/inputs/validatedFile/index.hbs', it must be a file with the extension '.yml'"));
     }
 
     @Test

@@ -54,6 +54,7 @@
                             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                             level="TRACE"
                             @follow="forwardEvent('follow', $event)"
+                            :hide-others-on-select="true"
                         />
                     </td>
                 </tr>
@@ -101,7 +102,7 @@
             this.paint();
         },
         computed: {
-            ...mapState("execution", ["taskRun", "execution"]),
+            ...mapState("execution", ["execution", "taskRun"]),
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },

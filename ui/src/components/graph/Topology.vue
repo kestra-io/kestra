@@ -936,7 +936,14 @@
         let blockWidthPercent = (blockWidth / parentWidth) * 100;
 
         document.onmousemove = function onMouseMove(e) {
-            editorWidthPercentage.value = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100) + "%"
+            const percent = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100);
+            if(percent > 75 ){
+                editorWidthPercentage.value = 75 + "%";
+            } else if(percent < 25){
+                editorWidthPercentage.value = 25 + "%";
+            } else {
+                editorWidthPercentage.value = percent + "%";
+            }
         }
 
         document.onmouseup = () => {

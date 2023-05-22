@@ -15,7 +15,7 @@
                 </el-form-item>
                 <el-form-item>
                     <status-filter-buttons
-                        :value="$route.query.state"
+                        :value="typeof($route.query.state) === 'string' ? [$route.query.state] : $route.query.state"
                         @update:model-value="onDataTableValue('state', $event)"
                     />
                 </el-form-item>

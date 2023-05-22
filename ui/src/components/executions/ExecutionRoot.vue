@@ -185,6 +185,22 @@
                         });
                 }
             },
+            previousRouteQueryParams() {
+                return [...new URLSearchParams(this.$router.options.history.state.back?.split("?")[1])].reduce((finalQuery, current) => {
+                    const [key, value] = current;
+                    if (finalQuery.hasOwnProperty(key)) {
+                        const oldValue = finalQuery[key];
+                        if(Array.isArray(oldValue)) {
+                            oldValue.push(value);
+                        }else {
+                            finalQuery[key] = [oldValue, value];
+                        }
+                    } else {
+                        finalQuery[key] = value
+                    }
+                    return finalQuery;
+                }, {});
+            }
         },
         computed: {
             ...mapState("flow", ["flow", "revisions"]),
@@ -231,7 +247,8 @@
                                     namespace: ns,
                                     id: flowId,
                                     tab: "executions"
-                                }
+                                },
+                                query: this.previousRouteQueryParams()
                             }
                         }
                     ]

@@ -52,7 +52,7 @@ public class FlowableUtils {
     ) {
         // nothing
         if (currentTasks == null || currentTasks.size() == 0 || execution.getState().getCurrent() == State.Type.KILLING) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         // first one
@@ -64,13 +64,13 @@ public class FlowableUtils {
         // first created, leave
         Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
         if (lastCreated.isPresent()) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         // have running, leave
         Optional<TaskRun> lastRunning = execution.findLastRunning(currentTasks, parentTaskRun);
         if (lastRunning.isPresent()) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         // last success, find next
@@ -83,7 +83,7 @@ public class FlowableUtils {
             }
         }
 
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     public static Optional<State.Type> resolveState(
@@ -162,7 +162,7 @@ public class FlowableUtils {
                 .stream()
                 .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
             )
-            .collect(Collectors.toList());
+            .toList();
 
         // find all running and deal concurrency
         long runningCount = taskRuns
@@ -171,7 +171,7 @@ public class FlowableUtils {
             .count();
 
         if (concurrency > 0 && runningCount > concurrency) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         // first created, leave
@@ -189,7 +189,7 @@ public class FlowableUtils {
             return nextTaskRunStream.collect(Collectors.toList());
         }
 
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};

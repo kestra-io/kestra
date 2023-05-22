@@ -21,6 +21,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @SuperBuilder(toBuilder = true)
@@ -68,7 +69,7 @@ public class Worker extends Sequential implements DynamicTask {
             return super.resolveNexts(runContext, execution, parentTaskRun);
         }
 
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {

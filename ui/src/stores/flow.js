@@ -228,35 +228,35 @@ export default {
                 })
         },
         loadFlowMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
+            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTaskMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTasksWithMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
+            return this.$http.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setTasksWithMetrics", response.data)
                     return response.data
                 })
         },
         loadFlowAggregatedMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data
                 })
         },
         loadTaskAggregatedMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data

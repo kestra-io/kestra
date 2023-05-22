@@ -62,7 +62,7 @@
     }
 
     label {
-        displabey: flex;
+        display: flex;
         cursor: pointer;
         margin-left: 10px;
         line-height: 30px;
@@ -207,6 +207,7 @@ form.ks-horizontal {
 
     .cell {
         padding: 0 8px;
+        word-break: break-word;
     }
 
     .el-table__cell {

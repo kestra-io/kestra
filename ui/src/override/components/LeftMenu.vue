@@ -4,6 +4,7 @@
         :menu="menu"
         @update:collapsed="onToggleCollapse"
         :show-one-child="true"
+        :show-child="showChildren"
         width="268px"
         :collapsed="collapsed"
     >
@@ -69,6 +70,17 @@
                             r.class = "vsm--link_active"
                         }
 
+                        // special case for plugins, were parents have no href to set active
+                        // Could be adapted to all routes to have something more generic
+                        if(r.routes?.includes(this.$route.name)){
+                            r.class = "vsm--link_active"
+
+                            if(r.child){
+                                this.showChildren = true
+                                r.child = this.disabledCurrentRoute(r.child)
+                            }
+                        }
+
                         return r;
                     })
             },
@@ -84,9 +96,6 @@
                     },
                     {
                         href: "/flows",
-                        alias: [
-                            "/flows*"
-                        ],
                         title: this.$t("flows"),
                         icon: {
                             element: FileTreeOutline,
@@ -96,9 +105,6 @@
                     },
                     {
                         href: "/templates",
-                        alias: [
-                            "/templates*"
-                        ],
                         title: this.$t("templates"),
                         icon: {
                             element: ContentCopy,
@@ -107,9 +113,6 @@
                     },
                     {
                         href: "/executions",
-                        alias: [
-                            "/executions*"
-                        ],
                         title: this.$t("executions"),
                         icon: {
                             element: TimelineClockOutline,
@@ -118,7 +121,6 @@
                     },
                     {
                         href: "/taskruns",
-                        alias: ["/taskruns*"],
                         title: this.$t("taskruns"),
                         icon: {
                             element: TimelineTextOutline,
@@ -128,9 +130,6 @@
                     },
                     {
                         href: "/logs",
-                        alias: [
-                            "/logs*"
-                        ],
                         title: this.$t("logs"),
                         icon: {
                             element: NotebookOutline,
@@ -138,14 +137,12 @@
                         },
                     },
                     {
-                        alias: [
-                            "/plugins*"
-                        ],
                         title: this.$t("documentation.documentation"),
                         icon: {
                             element: BookMultipleOutline,
                             class: "menu-icon"
                         },
+                        routes: ["plugins/view"],
                         child: [
                             {
                                 href: "https://kestra.io/docs/",
@@ -159,6 +156,7 @@
                             {
                                 href: "/plugins",
                                 title: this.$t("plugins.names"),
+                                routes: ["plugins/view"],
                                 icon: {
                                     element: GoogleCirclesExtended,
                                     class: "menu-icon"
@@ -196,9 +194,6 @@
                     },
                     {
                         href: "/settings",
-                        alias: [
-                            "/settings*"
-                        ],
                         title: this.$t("settings"),
                         icon: {
                             element: CogOutline,
@@ -212,17 +207,19 @@
         watch: {
             menu: {
                 handler() {
-                        this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                            //empty icon name on mouseover
-                            e.setAttribute("title", "")
-                        });
+                    this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                        //empty icon name on mouseover
+                        e.setAttribute("title", "")
+                    });
+                    this.showChildren = false
                 },
                 flush: 'post'
             }
         },
         data() {
             return {
-                collapsed: localStorage.getItem("menuCollapsed") === "true"
+                collapsed: localStorage.getItem("menuCollapsed") === "true",
+                showChildren: false
             };
         },
         computed: {

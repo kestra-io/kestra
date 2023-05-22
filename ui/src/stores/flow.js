@@ -214,7 +214,7 @@ export default {
             return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
         },
         validateFlow({commit}, options) {
-            return this.$http.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
+            return axios.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
                     commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
                     return response.data
@@ -228,35 +228,35 @@ export default {
                 })
         },
         loadFlowMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
+            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTaskMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTasksWithMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
+            return this.$http.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setTasksWithMetrics", response.data)
                     return response.data
                 })
         },
         loadFlowAggregatedMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data
                 })
         },
         loadTaskAggregatedMetrics({commit}, options) {
-            return axios.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data

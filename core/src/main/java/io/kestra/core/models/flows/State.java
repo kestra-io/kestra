@@ -167,7 +167,7 @@ public class State {
         }
 
         public boolean isRunning() {
-            return this == Type.RUNNING ||this == Type.KILLING;
+            return this == Type.RUNNING || this == Type.KILLING;
         }
 
         public boolean isFailed() {

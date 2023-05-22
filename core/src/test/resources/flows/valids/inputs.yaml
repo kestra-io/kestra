@@ -72,10 +72,6 @@ inputs:
   min: PT10S
   max: PT20S
   required: false
-- name: validatedFile
-  type: FILE
-  extension: .yml
-  required: false
 - name: validatedFloat
   type: FLOAT
   min: 0.1

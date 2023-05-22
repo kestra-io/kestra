@@ -20,14 +20,14 @@
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
             switch (label) {
-                case "editorWorkerService":
-                    return new EditorWorker();
-                case "yaml":
-                    return new YamlWorker();
-                case 'json':
-                    return new JsonWorker();
-                default:
-                    throw new Error(`Unknown label ${label}`);
+            case "editorWorkerService":
+                return new EditorWorker();
+            case "yaml":
+                return new YamlWorker();
+            case "json":
+                return new JsonWorker();
+            default:
+                throw new Error(`Unknown label ${label}`);
             }
         },
     };
@@ -163,7 +163,7 @@
                     if (this.schemaType) {
                         options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}-${Utils.uid()}.yaml`))
                     } else {
-                        options["model"] = monaco.editor.createModel(this.value, this.language);
+                        options["model"] = monaco.editor.createModel(this.value.toString(), this.language);
                     }
 
                     monaco.editor.addKeybindingRule({

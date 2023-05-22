@@ -153,7 +153,21 @@
                 this.editorDocumentation = value;
                 this.$toast().saved();
 
-            }
+            },
+            exportFlows() {
+                return this.$store
+                    .dispatch("flow/exportFlowByQuery", {})
+                    .then(_ => {
+                        this.$toast().success(this.$t("flows exported"));
+                    })
+            },
+            exportTemplates() {
+                return this.$store
+                    .dispatch("template/exportTemplateByQuery", {})
+                    .then(_ => {
+                        this.$toast().success(this.$t("templates exported"));
+                    })
+            },
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
@@ -186,20 +200,6 @@
             },
             canReadTemplates() {
                 return this.user && this.user.isAllowed(permission.TEMPLATE, action.READ);
-            },
-            exportFlows() {
-                return this.$store
-                    .dispatch("flow/exportFlowByQuery", {})
-                    .then(_ => {
-                        this.$toast().success(this.$t("flows exported"));
-                    })
-            },
-            exportTemplates() {
-                return this.$store
-                    .dispatch("template/exportTemplateByQuery", {})
-                    .then(_ => {
-                        this.$toast().success(this.$t("templates exported"));
-                    })
             },
         }
     };

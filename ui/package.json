@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@vue-flow/controls": "^1.0.6",
-    "@vue-flow/core": "1.20.0",
+    "@vue-flow/core": "1.14.3",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.4.0",
     "bootstrap": "^5.2.3",

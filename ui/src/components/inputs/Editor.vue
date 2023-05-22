@@ -193,7 +193,6 @@
             }
         },
         created() {
-            this.$store.dispatch("plugin/list");
             this.editorDocumentation = localStorage.getItem("editorDocumentation") !== "false" && this.navbar;
         },
         methods: {

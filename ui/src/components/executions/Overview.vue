@@ -5,6 +5,7 @@
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
             <el-col :span="12" class="text-end">
+                <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />

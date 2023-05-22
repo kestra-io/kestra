@@ -124,60 +124,59 @@ public class ExecutionService {
         return finalTaskRunToRestart;
     }
 
-    public Execution replay(final Execution execution, String taskRunId, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || !(execution.getState().isTerminated() ))) {
-            throw new IllegalStateException("Execution must be terminated to be restarted, " +
-                "current state is '" + execution.getState().getCurrent() + "' !"
-            );
-        }
-
-        final Flow flow = flowRepositoryInterface.findByExecution(execution);
-        GraphCluster graphCluster = GraphService.of(flow, execution);
-
-        Set<String> taskRunToRestart = this.taskRunToRestart(
-            execution,
-            taskRun -> taskRun.getId().equals(taskRunId)
-        );
-
-        Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
+    public Execution replay(final Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
         final String newExecutionId = IdUtils.create();
+        List<TaskRun> newTaskRuns = new ArrayList<>();
+        if(taskRunId != null){
+            final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
-        List<TaskRun> newTaskRuns = execution
-            .getTaskRunList()
-            .stream()
-            .map(throwFunction(originalTaskRun -> this.mapTaskRun(
-                flow,
-                originalTaskRun,
-                mappingTaskRunId,
-                newExecutionId,
-                State.Type.RESTARTED,
-                taskRunToRestart.contains(originalTaskRun.getId()))
-            ))
-            .collect(Collectors.toList());
+            GraphCluster graphCluster = GraphService.of(flow, execution);
 
-        // remove all child for replay task id
-        Set<String> taskRunToRemove = GraphService.successors(graphCluster, List.of(taskRunId))
-            .stream()
-            .filter(task -> task instanceof AbstractGraphTask)
-            .map(task -> ((AbstractGraphTask) task))
-            .filter(task -> task.getTaskRun() != null)
-            .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
-            .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
-            .collect(Collectors.toSet());
+            Set<String> taskRunToRestart = this.taskRunToRestart(
+                execution,
+                taskRun -> taskRun.getId().equals(taskRunId)
+            );
 
-        taskRunToRemove
-            .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+            Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
-        // Worker task, we need to remove all child in order to be restarted
-        this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
-            .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+            newTaskRuns.addAll(
+                execution.getTaskRunList()
+                .stream()
+                .map(throwFunction(originalTaskRun -> this.mapTaskRun(
+                    flow,
+                    originalTaskRun,
+                    mappingTaskRunId,
+                    newExecutionId,
+                    State.Type.RESTARTED,
+                    taskRunToRestart.contains(originalTaskRun.getId()))
+                ))
+                .collect(Collectors.toList())
+            );
+
+            // remove all child for replay task id
+            Set<String> taskRunToRemove = GraphService.successors(graphCluster, List.of(taskRunId))
+                .stream()
+                .filter(task -> task instanceof AbstractGraphTask)
+                .map(task -> ((AbstractGraphTask) task))
+                .filter(task -> task.getTaskRun() != null)
+                .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
+                .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
+                .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+                .collect(Collectors.toSet());
+
+            taskRunToRemove
+                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+
+            // Worker task, we need to remove all child in order to be restarted
+            this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
+                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+        }
 
         // Build and launch new execution
         Execution newExecution = execution.childExecution(
             newExecutionId,
             newTaskRuns,
-            execution.withState(State.Type.RESTARTED).getState()
+            taskRunId == null ? new State() : execution.withState(State.Type.RESTARTED).getState()
         );
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;

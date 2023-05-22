@@ -68,7 +68,8 @@
                                             <restart
                                                 component="el-dropdown-item"
                                                 :key="`restart-${index}-${attempt.state.startDate}`"
-                                                :is-replay="true"
+                                                is-replay
+                                                tooltip-position="left"
                                                 :execution="execution"
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"

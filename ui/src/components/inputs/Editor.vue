@@ -33,7 +33,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
-                    :language="lang"
+                    :language="lang ?? 'undefined'"
                     :schema-type="schemaType"
                     class="position-relative"
                 />

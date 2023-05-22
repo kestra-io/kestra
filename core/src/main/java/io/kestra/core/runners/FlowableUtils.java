@@ -51,7 +51,7 @@ public class FlowableUtils {
         TaskRun parentTaskRun
     ) {
         // nothing
-        if (currentTasks == null || currentTasks.size() == 0) {
+        if (currentTasks == null || currentTasks.size() == 0 || execution.getState().getCurrent() == State.Type.KILLING) {
             return new ArrayList<>();
         }
 
@@ -142,6 +142,10 @@ public class FlowableUtils {
         TaskRun parentTaskRun,
         Integer concurrency
     ) {
+        if (execution.getState().getCurrent() == State.Type.KILLING) {
+            return Collections.emptyList();
+        }
+
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
             tasks,
             errors,

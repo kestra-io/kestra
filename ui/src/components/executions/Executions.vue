@@ -79,12 +79,12 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
+                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"/>
 
                     <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
                         <template #default="scope">
                             <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
-                                {{ scope.row.flowId }}
+                                {{ $filters.invisibleSpace(scope.row.flowId) }}
                             </router-link>
                         </template>
                     </el-table-column>

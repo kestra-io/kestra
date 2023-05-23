@@ -47,7 +47,7 @@
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
                                 >
-                                    {{ scope.row.id }}
+                                    {{ $filters.invisibleSpace(scope.row.id) }}
                                 </router-link>
                                 &nbsp;<markdown-tooltip
                                     :id="scope.row.namespace + '-' + scope.row.id"
@@ -63,7 +63,7 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
+                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
                         <el-table-column
                             prop="state"
@@ -104,19 +104,21 @@
 
         <bottom-line>
             <ul>
-                <ul v-if="flowsSelection.length !== 0 && canRead">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()">
-                        <el-button v-if="canRead" :icon="Download" size="large" @click="exportFlows()">
-                            {{ $t('export') }}
-                        </el-button>
-                        <el-button v-if="canDelete" @click="deleteFlows" size="large" :icon="TrashCan">
-                            {{ $t('delete') }}
-                        </el-button>
-                        <el-button v-if="canDisable" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
-                            {{ $t('disable') }}
-                        </el-button>
-                    </bottom-line-counter>
-                </ul>
+                <li>
+                    <ul v-if="flowsSelection.length !== 0 && canRead">
+                        <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()">
+                            <el-button v-if="canRead" :icon="Download" size="large" @click="exportFlows()">
+                                {{ $t('export') }}
+                            </el-button>
+                            <el-button v-if="canDelete" @click="deleteFlows" size="large" :icon="TrashCan">
+                                {{ $t('delete') }}
+                            </el-button>
+                            <el-button v-if="canDisable" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
+                                {{ $t('disable') }}
+                            </el-button>
+                        </bottom-line-counter>
+                    </ul>
+                </li>
                 <li class="spacer" />
                 <li>
                     <div class="el-input el-input-file el-input--large custom-upload">

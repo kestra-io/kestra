@@ -58,9 +58,9 @@
                             type="file"
                             @change="onFileChange(input, $event)"
                             autocomplete="off"
-                            :style="{display: typeof(this.inputs[input.name]) === 'string' && this.inputs[input.name].startsWith('kestra:///') ? 'none': ''}"
+                            :style="{display: typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///') ? 'none': ''}"
                         >
-                        <label v-if="typeof(this.inputs[input.name]) === 'string' && this.inputs[input.name].startsWith('kestra:///')"
+                        <label v-if="typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///')"
                                :for="input.name+'-file'">Kestra Internal Storage File</label>
                     </div>
                 </div>

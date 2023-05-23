@@ -310,7 +310,7 @@
                         "  # " + this.$t("onboarding-flow.inputsDetails2") + "\n" +
                         "  - name: csvUrl\n" +
                         "    type: STRING\n" +
-                        "    defaults: https://www.data.gouv.fr/fr/datasets/r/d33eabc9-e2fd-4787-83e5-a5fcfb5af66d",
+                        "    defaults: https://gist.githubusercontent.com/tchiotludo/2b7f28f4f507074e60150aedb028e074/raw/6b6348c4f912e79e3ffccaf944fd019bf51cba30/conso-elec-gaz-annuelle-par-naf-agregee-region.csv",
                     "# " + this.$t("onboarding-flow.tasks1") + "\n" +
                         "# " + this.$t("onboarding-flow.tasks2") + "\n" +
                         "# " + this.$t("onboarding-flow.tasks3") + "\n" +

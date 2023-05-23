@@ -228,8 +228,7 @@
         computed: {
             ...mapState("misc", ["configs"]),
             menu() {
-                this.$i18n?.locale;
-                if(this.configs) {
+                if (this.configs) {
                     return this.disabledCurrentRoute(this.generateMenu());
                 }
                 return [];

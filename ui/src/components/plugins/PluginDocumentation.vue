@@ -17,7 +17,10 @@
         components: {Markdown},
         computed: {
             ...mapState("plugin", ["editorPlugin"]),
-        }
+        },
+        created() {
+            this.$store.dispatch("plugin/list");
+        },
     }
 </script>
 

@@ -32,6 +32,7 @@
                         @selection-change="handleSelectionChange"
                     >
                         <el-table-column type="selection" v-if="(canRead)" />
+
                         <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <router-link
@@ -46,6 +47,8 @@
                                 />
                             </template>
                         </el-table-column>
+
+                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">

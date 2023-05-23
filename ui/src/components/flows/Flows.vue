@@ -47,7 +47,7 @@
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
                                 >
-                                    {{ $filters.invisibleSpace(scope.row.id, ".") }}
+                                    {{ $filters.invisibleSpace(scope.row.id) }}
                                 </router-link>
                                 &nbsp;<markdown-tooltip
                                     :id="scope.row.namespace + '-' + scope.row.id"
@@ -63,7 +63,7 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue, '.')" />
+                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
                         <el-table-column
                             prop="state"

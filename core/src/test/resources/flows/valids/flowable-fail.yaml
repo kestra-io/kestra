@@ -1,0 +1,13 @@
+id: bad-flowable
+namespace: io.kestra.tests
+
+tasks:
+  - id: flowable
+    type: io.kestra.core.tasks.test.BadSequential
+    tasks:
+      - id: log1
+        type: io.kestra.core.tasks.log.Log
+        message: Log 1
+      - id: log2
+        type: io.kestra.core.tasks.log.Log
+        message: Log 2

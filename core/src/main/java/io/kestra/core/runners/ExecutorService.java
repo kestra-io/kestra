@@ -148,9 +148,18 @@ public class ExecutorService {
             RunContext runContext = runContextFactory.of(flow, parent, execution, parentTaskRun);
 
             // first find the normal ended child tasks and send result
+            Optional<State.Type> state;
+            try {
+                state = flowableParent.resolveState(runContext, execution, parentTaskRun);
+            }
+            catch (Exception e) {
+                // This will lead to the next task being still executed but at least Kestra will not crash.
+                // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.
+                runContext.logger().error("Unable to resolve state from the Flowable task: " + e.getMessage(), e);
+                state = Optional.of(State.Type.FAILED);
+            }
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
-                flowableParent
-                    .resolveState(runContext, execution, parentTaskRun),
+                state,
                 parentTaskRun
             );
 

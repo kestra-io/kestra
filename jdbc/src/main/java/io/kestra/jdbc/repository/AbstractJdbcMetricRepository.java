@@ -20,7 +20,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -240,24 +239,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             case "max" -> DSL.max(field("metric_value", Double.class)).as("metric_value");
             default -> throw new IllegalArgumentException("Invalid aggregation: " + aggregation);
         };
-    }
-
-    private List<Field<?>> groupByFields(Long dayCount) {
-        Field<Integer> month = DSL.month(DSL.timestamp(field("timestamp", Date.class))).as("month");
-        Field<Integer> year = DSL.year(DSL.timestamp(field("timestamp", Date.class))).as("year");
-        Field<Integer> day = DSL.day(DSL.timestamp(field("timestamp", Date.class))).as("day");
-        Field<Integer> week = DSL.week(DSL.timestamp(field("timestamp", Date.class))).as("week");
-        Field<Integer> hour = DSL.hour(DSL.timestamp(field("timestamp", Date.class))).as("hour");
-
-        if (dayCount > 365) {
-            return List.of(year, month);
-        } else if (dayCount > 180) {
-            return List.of(year, week);
-        } else if (dayCount > 1) {
-            return List.of(year, month, day);
-        } else {
-            return List.of(year, month, day, hour);
-        }
     }
 
     private List<MetricAggregation> fillDate(List<MetricAggregation> result, ZonedDateTime startDate, ZonedDateTime endDate) {

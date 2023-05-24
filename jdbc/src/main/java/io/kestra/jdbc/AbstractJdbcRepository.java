@@ -131,7 +131,7 @@ public abstract class AbstractJdbcRepository<T> {
 
     }
 
-    public <R extends Record> Instant getDate(R record, String groupByType) {
+    public Instant getDate(Record record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
         Integer hour = fields.contains("hour") ?  record.get("hour", Integer.class): null;
         Integer day = fields.contains("day") ?  record.get("day", Integer.class): null;

@@ -18,8 +18,10 @@ abstract public class FileSerde {
     private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>(){};
 
     public static void write(OutputStream output, Object row) throws IOException {
-        output.write(MAPPER.writeValueAsBytes(row));
-        output.write("\n".getBytes());
+        if (row != null) { // avoid writing "null"
+            output.write(MAPPER.writeValueAsBytes(row));
+            output.write("\n".getBytes());
+        }
     }
 
     public static FlowableOnSubscribe<Object> reader(BufferedReader input) {

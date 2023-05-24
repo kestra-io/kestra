@@ -1,6 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.docs.Document;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -20,15 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public class PluginScanner {
@@ -146,6 +140,7 @@ public class PluginScanner {
                 try (var stream = Files.walk(root, 1)) {
                     stream
                         .skip(1) // first element is the root element
+                        .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
                         .forEach(guide -> {
                             var guideName = guide.getName(guide.getParent().getNameCount()).toString();
                             guides.add(guideName.substring(0, guideName.lastIndexOf('.')));

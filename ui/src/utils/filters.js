@@ -2,6 +2,9 @@ import Utils from "./utils";
 import {getCurrentInstance} from "vue";
 
 export default {
+    invisibleSpace: (value) => {
+        return value.replaceAll(".", "\u200B" + ".");
+    },
     humanizeDuration: (value, options) => {
         return Utils.humanDuration(value, options);
     },

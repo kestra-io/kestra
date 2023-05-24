@@ -4,7 +4,7 @@
             {{ $t('New execution') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
-            <template #title>
+            <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <flow-run @execution-trigger="closeModal" :redirect="true" />
@@ -42,7 +42,7 @@
             type: {
                 type: String,
                 default: "primary"
-            },
+            }
         },
         data() {
             return {

@@ -47,7 +47,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .where(this.defaultFilter());
 
                 if (namespace != null) {
-                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
 
                 if (flowId != null) {

@@ -20,7 +20,6 @@ import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.CronExpression;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -269,7 +268,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
         Execution execution = Execution.builder()
-            .id(IdUtils.create())
+            .id(runContext.getTriggerExecutionId())
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())

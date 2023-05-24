@@ -45,7 +45,7 @@
                                     <status :status="attempt.state.current" />
                                 </div>
 
-                                <el-dropdown trigger="click">
+                                <el-dropdown trigger="click" @visibleChange="onTaskSelect($event, currentTaskRun)">
                                     <el-button type="default">
                                         <DotsVertical title="" />
                                     </el-button>
@@ -68,7 +68,8 @@
                                             <restart
                                                 component="el-dropdown-item"
                                                 :key="`restart-${index}-${attempt.state.startDate}`"
-                                                :is-replay="true"
+                                                is-replay
+                                                tooltip-position="left"
                                                 :execution="execution"
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"
@@ -173,6 +174,10 @@
                 type: Array,
                 default: () => [],
             },
+            hideOthersOnSelect: {
+                type: Boolean,
+                default: false
+            }
         },
         data() {
             return {
@@ -217,6 +222,10 @@
                 this.$emit(type, event);
             },
             displayTaskRun(currentTaskRun) {
+                if(!this.hideOthersOnSelect){
+                    return true;
+                }
+
                 if (this.taskRun && this.taskRun.id !== currentTaskRun.id) {
                     return false;
                 }
@@ -224,7 +233,8 @@
                 if (this.task && this.task.id !== currentTaskRun.taskId) {
                     return false;
                 }
-                return  true;
+
+                return true;
             },
             toggleShowOutput(taskRun) {
                 this.showOutputs[taskRun.id] = !this.showOutputs[taskRun.id];
@@ -292,6 +302,11 @@
                         log.attemptNumber === attemptNumber
                     );
                 });
+            },
+            onTaskSelect(dropdownVisible, task){
+                if(dropdownVisible && this.taskRun?.id !== task.id) {
+                    this.$store.commit("execution/setTaskRun", task);
+                }
             }
         },
         beforeUnmount() {

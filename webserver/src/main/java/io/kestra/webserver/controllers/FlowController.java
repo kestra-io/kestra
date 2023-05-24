@@ -96,8 +96,7 @@ public class FlowController {
     public FlowGraph flowGraphSource(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
-        Flow flowParsed = taskDefaultService.injectDefaults(yamlFlowParser.parse(flow, Flow.class));
-        modelValidator.validate(flowParsed);
+        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
         return FlowGraph.of(flowParsed);
     }
@@ -111,14 +110,15 @@ public class FlowController {
     public Flow index(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "Include the source code") @QueryValue(defaultValue = "false") boolean source
+        @Parameter(description = "Include the source code") @QueryValue(defaultValue = "false") boolean source,
+        @Parameter(description = "Get latest revision by default") @Nullable @QueryValue Integer revision
     ) {
         return source ?
             flowRepository
-                .findByIdWithSource(namespace, id)
+                .findByIdWithSource(namespace, id, Optional.ofNullable(revision))
                 .orElse(null) :
             flowRepository
-                .findById(namespace, id)
+                .findById(namespace, id, Optional.ofNullable(revision))
                 .orElse(null);
     }
 

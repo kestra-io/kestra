@@ -17,12 +17,16 @@
         components: {Markdown},
         computed: {
             ...mapState("plugin", ["editorPlugin"]),
-        }
+        },
+        created() {
+            this.$store.dispatch("plugin/list");
+        },
     }
 </script>
 
 <style scoped lang="scss">
     .plugin-documentation-div {
+        width: 0;
     }
 
     ::-webkit-scrollbar {

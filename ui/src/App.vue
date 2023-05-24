@@ -42,8 +42,10 @@
             };
         },
         computed: {
+            ...mapState("auth", ["user"]),
             ...mapState("core", ["message", "error"]),
             ...mapGetters("core", ["guidedProperties"]),
+            ...mapState("flow", ["overallTotal"]),
             displayNavBar() {
                 if (this.$router) {
                     return this.$route.name !== "welcome";
@@ -96,8 +98,7 @@
             initGuidedTour() {
                 this.$store.dispatch("flow/findFlows", {limit: 1})
                     .then(flows => {
-                        this.$store.commit("flow/setOverallTotal", flows.total);
-                        if (flows.total === 0 && this.$route.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
+                        if (flows.total === 0 && this.$route.name === "home") {
                             this.$router.push({name: "welcome"});
                         }
                     });
@@ -105,8 +106,8 @@
         },
         watch: {
             $route(to) {
-                if (to.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
-                    this.redirectToWelcome && this.redirectToWelcome();
+                if (this.user && to.name === "home" && this.overallTotal === 0) {
+                    this.$router.push({name: "welcome"});
                 }
             }
         }

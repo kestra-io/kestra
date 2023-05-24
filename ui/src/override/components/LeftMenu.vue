@@ -1,9 +1,10 @@
 <template>
     <sidebar-menu
         id="side-menu"
-        :menu="disabledCurrentRoute(menu)"
+        :menu="menu"
         @update:collapsed="onToggleCollapse"
         :show-one-child="true"
+        :show-child="showChildren"
         width="268px"
         :collapsed="collapsed"
     >
@@ -27,8 +28,6 @@
 </template>
 
 <script>
-    import {shallowRef} from "vue"
-
     import {SidebarMenu} from "vue-sidebar-menu";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
@@ -71,6 +70,17 @@
                             r.class = "vsm--link_active"
                         }
 
+                        // special case for plugins, were parents have no href to set active
+                        // Could be adapted to all routes to have something more generic
+                        if(r.routes?.includes(this.$route.name)){
+                            r.class = "vsm--link_active"
+
+                            if(r.child){
+                                this.showChildren = true
+                                r.child = this.disabledCurrentRoute(r.child)
+                            }
+                        }
+
                         return r;
                     })
             },
@@ -80,80 +90,65 @@
                         href: "/",
                         title: this.$t("home"),
                         icon: {
-                            element: shallowRef(ViewDashboardVariantOutline),
+                            element: ViewDashboardVariantOutline,
                             class: "menu-icon",
                         },
                     },
                     {
                         href: "/flows",
-                        alias: [
-                            "/flows*"
-                        ],
                         title: this.$t("flows"),
                         icon: {
-                            element: shallowRef(FileTreeOutline),
+                            element: FileTreeOutline,
                             class: "menu-icon",
                         },
                         exact: false,
                     },
                     {
                         href: "/templates",
-                        alias: [
-                            "/templates*"
-                        ],
                         title: this.$t("templates"),
                         icon: {
-                            element: shallowRef(ContentCopy),
+                            element: ContentCopy,
                             class: "menu-icon",
                         },
                     },
                     {
                         href: "/executions",
-                        alias: [
-                            "/executions*"
-                        ],
                         title: this.$t("executions"),
                         icon: {
-                            element: shallowRef(TimelineClockOutline),
+                            element: TimelineClockOutline,
                             class: "menu-icon"
                         },
                     },
                     {
                         href: "/taskruns",
-                        alias: ["/taskruns*"],
                         title: this.$t("taskruns"),
                         icon: {
-                            element: shallowRef(TimelineTextOutline),
+                            element: TimelineTextOutline,
                             class: "menu-icon"
                         },
                         hidden: !(this.configs && this.configs.isTaskRunEnabled)
                     },
                     {
                         href: "/logs",
-                        alias: [
-                            "/logs*"
-                        ],
                         title: this.$t("logs"),
                         icon: {
-                            element: shallowRef(NotebookOutline),
+                            element: NotebookOutline,
                             class: "menu-icon"
                         },
                     },
                     {
-                        alias: [
-                            "/plugins*"
-                        ],
                         title: this.$t("documentation.documentation"),
                         icon: {
-                            element: shallowRef(BookMultipleOutline),
+                            element: BookMultipleOutline,
                             class: "menu-icon"
                         },
+                        routes: ["plugins/view"],
                         child: [
                             {
                                 href: "https://kestra.io/docs/",
                                 title: this.$t("documentation.developer"),
                                 icon: {
-                                    element: shallowRef(FileCodeOutline),
+                                    element: FileCodeOutline,
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -161,8 +156,9 @@
                             {
                                 href: "/plugins",
                                 title: this.$t("plugins.names"),
+                                routes: ["plugins/view"],
                                 icon: {
-                                    element: shallowRef(GoogleCirclesExtended),
+                                    element: GoogleCirclesExtended,
                                     class: "menu-icon"
                                 },
                             },
@@ -170,7 +166,7 @@
                                 href: "https://kestra.io/docs/flow-examples/",
                                 title: this.$t("documentation.examples"),
                                 icon: {
-                                    element: shallowRef(FileDocumentArrowRightOutline),
+                                    element: FileDocumentArrowRightOutline,
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -179,7 +175,7 @@
                                 href: "https://api.kestra.io/v1/communities/slack/redirect",
                                 title: "Slack",
                                 icon: {
-                                    element: shallowRef(Slack),
+                                    element: Slack,
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -188,7 +184,7 @@
                                 href: "https://github.com/kestra-io/kestra/issues",
                                 title: this.$t("documentation.github"),
                                 icon: {
-                                    element: shallowRef(Github),
+                                    element: Github,
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -198,12 +194,9 @@
                     },
                     {
                         href: "/settings",
-                        alias: [
-                            "/settings*"
-                        ],
                         title: this.$t("settings"),
                         icon: {
-                            element: shallowRef(CogOutline),
+                            element: CogOutline,
                             class: "menu-icon"
                         }
                     }
@@ -211,28 +204,32 @@
             }
 
         },
-        created() {
-            this.menu = this.disabledCurrentRoute(this.generateMenu());
-        },
         watch: {
-            $route() {
-                this.menu = this.disabledCurrentRoute(this.generateMenu());
+            menu: {
+                handler() {
+                    this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                        //empty icon name on mouseover
+                        e.setAttribute("title", "")
+                    });
+                    this.showChildren = false
+                },
+                flush: 'post'
             }
         },
         data() {
             return {
                 collapsed: localStorage.getItem("menuCollapsed") === "true",
-                menu: []
+                showChildren: false
             };
         },
-        mounted() {
-            this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                //empty icon name on mouseover
-                e.setAttribute("title","")
-            })
-        },
         computed: {
-            ...mapState("misc", ["configs"])
+            ...mapState("misc", ["configs"]),
+            menu() {
+                if (this.configs) {
+                    return this.disabledCurrentRoute(this.generateMenu());
+                }
+                return [];
+            }
         }
     };
 </script>

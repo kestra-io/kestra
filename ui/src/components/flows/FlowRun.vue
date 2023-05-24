@@ -53,11 +53,15 @@
                 <div class="el-input el-input-file">
                     <div class="el-input__wrapper" v-if="input.type === 'FILE'">
                         <input
+                            :id="input.name+'-file'"
                             class="el-input__inner"
                             type="file"
                             @change="onFileChange(input, $event)"
                             autocomplete="off"
+                            :style="{display: typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///') ? 'none': ''}"
                         >
+                        <label v-if="typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///')"
+                               :for="input.name+'-file'">Kestra Internal Storage File</label>
                     </div>
                 </div>
                 <editor
@@ -71,16 +75,28 @@
 
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
-            <el-form-item class="submit">
-                <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
-                    {{ $t('launch execution') }}
-                </el-button>
-            </el-form-item>
+            <div class="bottom-buttons">
+                <div class="left-align">
+                    <el-form-item>
+                        <el-button v-if="execution && execution.inputs" :icon="ContentCopy" @click="fillInputsFromExecution">
+                            {{ $t('prefill inputs') }}
+                        </el-button>
+                    </el-form-item>
+                </div>
+                <div class="right-align">
+                    <el-form-item class="submit">
+                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
+                            {{ $t('launch execution') }}
+                        </el-button>
+                    </el-form-item>
+                </div>
+            </div>
         </el-form>
     </div>
 </template>
 
 <script setup>
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Flash from "vue-material-design-icons/Flash.vue";
 </script>
 
@@ -98,21 +114,22 @@
                 default: true
             }
         },
-        emits: ["executionTrigger"],
         data() {
             return {
-                inputs: {},
+                inputs: {}
             };
         },
-        mounted() {
+        emits: ["executionTrigger"],
+        created() {
             for (const input of this.flow.inputs || []) {
                 this.inputs[input.name] = input.defaults;
 
-                if (input.type === "DATETIME" && input.defaults) {
-                    this.inputs[input.name] = new Date(input.defaults);
+                if(input.type === "BOOLEAN" && input.defaults){
+                    this.inputs[input.name] = (/true/i).test(input.defaults);
                 }
             }
-
+        },
+        mounted() {
             setTimeout(() => {
                 const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
                 if (input && !input.className.includes("mx-input")) {
@@ -135,8 +152,29 @@
         computed: {
             ...mapState("flow", ["flow"]),
             ...mapState("core", ["guidedProperties"]),
+            ...mapState("execution", ["execution"]),
         },
         methods: {
+            fillInputsFromExecution(){
+                const nonEmptyInputNames = Object.keys(this.execution.inputs);
+                this.inputs = Object.fromEntries(
+                    this.flow.inputs.filter(input => nonEmptyInputNames.includes(input.name))
+                        .map(input => {
+                            const inputName = input.name;
+                            const inputType = input.type;
+                            let inputValue = this.execution.inputs[inputName];
+                            if (inputType === 'DATE' || inputType === 'DATETIME') {
+                                inputValue = this.$moment(inputValue).toISOString()
+                            }else if (inputType === 'DURATION' || inputType === 'TIME') {
+                                inputValue = this.$moment().startOf("day").add(inputValue, "seconds").toString()
+                            }else if (inputType === 'JSON') {
+                                inputValue = JSON.stringify(inputValue).toString()
+                            }
+
+                            return [inputName, inputValue]
+                        })
+                );
+            },
             onSubmit(formRef) {
                 if (this.$tours["guidedTour"].isRunning.value) {
                     this.finishTour();
@@ -226,3 +264,26 @@
         }
     };
 </script>
+
+<style scoped lang="scss">
+.bottom-buttons {
+    margin-top: 36px;
+    display: flex;
+
+    > * {
+        flex: 1;
+
+        * {
+            margin: 0;
+        }
+    }
+
+    .left-align :deep(div) {
+        flex-direction: row
+    }
+
+    .right-align :deep(div) {
+        flex-direction: row-reverse;
+    }
+}
+</style>

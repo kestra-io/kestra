@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -392,7 +393,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(2));
+        assertThat(namespaces.size(), is(3));
     }
 
     @Test
@@ -495,7 +496,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Files.write(file.toPath(), zip);
 
         try (ZipFile zipFile = new ZipFile(file)) {
-            assertThat(zipFile.stream().count(), is(Helpers.FLOWS_COUNT));
+            assertThat(zipFile.stream().count(), is(Helpers.FLOWS_COUNT -1));
         }
 
         file.delete();
@@ -647,7 +648,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         return Flow.builder()
             .id(friendlyId)
             .namespace(namespace)
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name(inputName).build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name(inputName).build()))
             .tasks(Collections.singletonList(generateTask("test", "test")))
             .build();
     }

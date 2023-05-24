@@ -27,7 +27,7 @@ export default {
                         return h("span", {innerHTML: message});
                     }
                 },
-                confirm: function(message, callback) {
+                confirm: function(message, callback, callbackIfCancel = () => {}) {
                     ElMessageBox.confirm(
                         this._wrap(message || self.$t("toast confirm")),
                         self.$t("confirmation"),
@@ -37,9 +37,6 @@ export default {
                     )
                         .then(() => {
                             callback();
-                        })
-                        .catch(() => {
-
                         })
                 },
                 saved: function(name, title, options) {

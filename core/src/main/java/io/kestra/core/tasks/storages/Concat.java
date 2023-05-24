@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 

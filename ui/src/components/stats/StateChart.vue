@@ -1,12 +1,11 @@
 <template>
     <div :class="'executions-charts' + (global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
         <el-tooltip
-            popper-class="tooltip-stats"
             :placement="(global ? 'bottom' : 'left')"
             :persistent="false"
             :hide-after="0"
             transition=""
-            :visible="tooltipContent !== ''"
+            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         >
             <template #content>
                 <span v-html="tooltipContent" />
@@ -22,7 +21,6 @@
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip, chartClick, backgroundFromState} from "../../utils/charts.js";
-    import State from "../../utils/state";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({
@@ -71,7 +69,7 @@
 
             const options = computed(() => defaultConfig({
                 onClick: (e, elements) => {
-                    if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined ) {
+                    if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined) {
                         chartClick(
                             moment,
                             router,
@@ -173,3 +171,4 @@
         },
     });
 </script>
+

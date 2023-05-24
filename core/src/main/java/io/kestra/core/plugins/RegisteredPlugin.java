@@ -97,6 +97,14 @@ public class RegisteredPlugin {
         return result;
     }
 
+    public String path() {
+        return ObjectUtils.firstNonNull(
+            this.getManifest() != null ? this.getManifest().getMainAttributes().getValue("X-Kestra-Name") : null,
+            this.getExternalPlugin() != null ? FilenameUtils.getBaseName(this.getExternalPlugin().getLocation().getPath()) : null,
+            "Core"
+        );
+    }
+
     public String title() {
         return ObjectUtils.firstNonNull(
             this.getManifest() != null ? this.getManifest().getMainAttributes().getValue("X-Kestra-Title") : null,

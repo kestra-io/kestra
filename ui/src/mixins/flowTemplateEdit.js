@@ -177,9 +177,6 @@ export default {
                     });
             }
         },
-        onChange() {
-            this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
-        },
         save() {
             if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.saveFlow) {
                 this.$store.dispatch("api/events", {

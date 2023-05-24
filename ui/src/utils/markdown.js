@@ -2,6 +2,7 @@ import markdownIt from "markdown-it";
 import mark from "markdown-it-mark";
 import meta from "markdown-it-meta";
 import anchor from "markdown-it-anchor";
+import container from "markdown-it-container";
 
 export default class Markdown {
     static render(markdown, options) {
@@ -16,6 +17,8 @@ export default class Markdown {
                     placement: "before"
                 }) : undefined
             })
+            // if more alert types are used inside the task documentation, they need to be configured here also
+            .use(container, 'warning')
 
         md.set({
             html: true,

@@ -16,12 +16,15 @@ export default {
         task: undefined,
         search: undefined,
         total: 0,
-        overallTotal: 0,
+        overallTotal: undefined,
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,
         flowError: undefined,
-        taskError: undefined
+        taskError: undefined,
+        metrics: [],
+        aggregatedMetrics: undefined,
+        tasksWithMetrics: []
     },
 
     actions: {
@@ -33,6 +36,7 @@ export default {
             }).then(response => {
                 commit("setFlows", response.data.results)
                 commit("setTotal", response.data.total)
+                commit("setOverallTotal", response.data.total)
 
                 return response.data;
             })
@@ -52,6 +56,7 @@ export default {
         loadFlow({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}?source=true`,
                 {
+                    params: options,
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
@@ -69,6 +74,7 @@ export default {
                         commit("setFlow", response.data);
                     }
 
+                    commit("setOverallTotal", 1)
                     return response.data;
                 })
         },
@@ -150,7 +156,7 @@ export default {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow
-            if(!flowParsed.id || !flowParsed.namespace){
+            if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post("/api/v1/flows/graph", flowSource, {...config})
@@ -215,9 +221,44 @@ export default {
                 })
         },
         validateTask({commit}, options) {
-            return axios.post(`${apiRoot}flows/validate/task`, options.task, {...textYamlHeader, params: {section: options.section ? options.section : "task"}})
+            return axios.post(`${apiRoot}flows/validate/task`, options.task, {...textYamlHeader, params: {section: options.section ? options.section === "tasks" ? "task" : options.section : "task"}})
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
+                    return response.data
+                })
+        },
+        loadFlowMetrics({commit}, options) {
+            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
+                .then(response => {
+                    commit("setMetrics", response.data)
+                    return response.data
+                })
+        },
+        loadTaskMetrics({commit}, options) {
+            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+                .then(response => {
+                    commit("setMetrics", response.data)
+                    return response.data
+                })
+        },
+        loadTasksWithMetrics({commit}, options) {
+            return this.$http.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
+                .then(response => {
+                    commit("setTasksWithMetrics", response.data)
+                    return response.data
+                })
+        },
+        loadFlowAggregatedMetrics({commit}, options) {
+            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+                .then(response => {
+                    commit("setAggregatedMetric", response.data)
+                    return response.data
+                })
+        },
+        loadTaskAggregatedMetrics({commit}, options) {
+            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+                .then(response => {
+                    commit("setAggregatedMetric", response.data)
                     return response.data
                 })
         },
@@ -296,6 +337,15 @@ export default {
         setTaskError(state, taskError) {
             state.taskError = taskError
         },
+        setMetrics(state, metrics) {
+            state.metrics = metrics
+        },
+        setAggregatedMetric(state, aggregatedMetric) {
+            state.aggregatedMetric = aggregatedMetric
+        },
+        setTasksWithMetrics(state, tasksWithMetrics) {
+            state.tasksWithMetrics = tasksWithMetrics
+        }
     },
     getters: {
         flow(state) {

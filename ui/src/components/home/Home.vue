@@ -2,7 +2,7 @@
     <div class="home" v-loading="!dailyReady">
 
         <div v-if="displayCharts">
-            <collapse v-if="!flowId">
+            <collapse v-if="!flowId && !namespaceRestricted">
                 <el-form-item>
                     <namespace-select
                         :data-type="'flow'"
@@ -20,7 +20,7 @@
                 :big="true"
             />
 
-            <home-description v-if="namespace" class="mb-4" />
+            <home-description v-if="namespace" :description="description" class="mb-4" />
 
             <el-row :gutter="15" class="auto-height mb-4">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
@@ -147,6 +147,10 @@
                 type: String,
                 default: undefined
             },
+            description: {
+                type: String,
+                default: undefined
+            },
         },
         created() {
             this.loadStats();
@@ -167,7 +171,8 @@
                 yesterday: undefined,
                 executionCounts: undefined,
                 alls: undefined,
-                namespacesStats: undefined
+                namespacesStats: undefined,
+                namespaceRestricted: !!this.namespace
             };
         },
         methods: {

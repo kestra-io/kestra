@@ -19,6 +19,11 @@
             </el-breadcrumb>
         </div>
         <div class="side ms-auto ps-2">
+            <a v-if="version" :href="version.url"
+               target="_blank"
+               class="el-button el-button--small version is-text is-has-bg">
+                🎉 New release v{{ version.latest }}
+            </a>
             <a href="https://api.kestra.io/v1/communities/slack/redirect"
                target="_blank"
                class="el-button el-button--small is-text is-has-bg">
@@ -43,6 +48,7 @@
         },
         computed: {
             ...mapState("layout", ["topNavbar"]),
+            ...mapState("api", ["version"]),
             title() {
                 return this.topNavbar.title;
             },
@@ -125,6 +131,7 @@
                 }
             }
 
+
             .is-text {
                 font-weight: bold;
                 border: 1px solid var(--bs-border-color);
@@ -133,8 +140,13 @@
                 background-color: var(--bs-white) !important;
 
                 html.dark & {
-                    color: var(--bs-white);
+                    color: var(--bs-white) !important;
                     background-color: var(--bs-gray-500) !important;
+                }
+
+                &.version, html.dark &.version  {
+                    background: var(--el-color-primary) !important;
+                    border-color:  var(--el-color-primary-dark-2) !important;
                 }
             }
         }

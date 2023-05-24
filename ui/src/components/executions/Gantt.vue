@@ -31,7 +31,7 @@
                                 </span>
                             </template>
                             <div
-                                :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
+                                :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
                                 class="task-progress"
                                 @click="onTaskSelect(currentTaskRun.task)"
                             >
@@ -54,6 +54,7 @@
                             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                             level="TRACE"
                             @follow="forwardEvent('follow', $event)"
+                            :hide-others-on-select="true"
                         />
                     </td>
                 </tr>
@@ -101,7 +102,7 @@
             this.paint();
         },
         computed: {
-            ...mapState("execution", ["taskRun", "execution"]),
+            ...mapState("execution", ["execution", "taskRun"]),
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },

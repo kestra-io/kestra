@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -118,120 +119,126 @@ public class RunnerUtils {
                     return Optional.empty();
                 }
 
-                switch (input.getType()) {
-                    case STRING:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            current
-                        ));
-
-                    case INT:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Integer.valueOf(current)
-                        ));
-
-                    case FLOAT:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Float.valueOf(current)
-                        ));
-
-                    case BOOLEAN:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Boolean.valueOf(current)
-                        ));
-
-                    case DATETIME:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                Instant.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case DATE:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                LocalDate.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case TIME:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                LocalTime.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case DURATION:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                Duration.parse(current)
-                            ));
-                        } catch (DateTimeParseException e) {
-                            throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case FILE:
-                        try {
-                            URI uri = URI.create(current.replace(File.separator, "/"));
-
-                            if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
-                                return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                    input.getName(),
-                                    uri
-                                ));
-                            } else {
-                                return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                    input.getName(),
-                                    storageInterface.from(flow, execution, input, new File(current))
-                                ));
-                            }
-                        } catch (Exception e) {
-                            throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
-                        }
-
-                    case JSON:
-                        try {
-                            return Optional.of(new AbstractMap.SimpleEntry<>(
-                                input.getName(),
-                                JacksonMapper.toObject(current)
-                            ));
-                        } catch (JsonProcessingException e) {
-                            throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
-                        }
-
-                    case URI:
-                        Matcher matcher = URI_PATTERN.matcher(current);
-                        if (matcher.matches()) {
-                            return Optional.of(new AbstractMap.SimpleEntry<>(
-                                input.getName(),
-                                current
-                            ));
-                        } else {
-                            throw new MissingRequiredInput("Invalid URI format for '" + input.getName() + "' for '" + current + "'");
-                        }
-
-                    default:
-                        throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
-                }
+                var parsedInput = parseInput(flow, execution, input, current);
+                parsedInput.ifPresent(parsed -> input.validate(parsed.getValue()));
+                return parsedInput;
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return handleNestedInputs(results);
+    }
+
+    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, String current) {
+        switch (input.getType()) {
+            case STRING:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    current
+                ));
+
+            case INT:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    Integer.valueOf(current)
+                ));
+
+            case FLOAT:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    Float.valueOf(current)
+                ));
+
+            case BOOLEAN:
+                return Optional.of(new AbstractMap.SimpleEntry<>(
+                    input.getName(),
+                    Boolean.valueOf(current)
+                ));
+
+            case DATETIME:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        Instant.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case DATE:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        LocalDate.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case TIME:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        LocalTime.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case DURATION:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        Duration.parse(current)
+                    ));
+                } catch (DateTimeParseException e) {
+                    throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case FILE:
+                try {
+                    URI uri = URI.create(current.replace(File.separator, "/"));
+
+                    if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
+                        return Optional.of(new AbstractMap.SimpleEntry<>(
+                            input.getName(),
+                            uri
+                        ));
+                    } else {
+                        return Optional.of(new AbstractMap.SimpleEntry<>(
+                            input.getName(),
+                            storageInterface.from(flow, execution, input, new File(current))
+                        ));
+                    }
+                } catch (Exception e) {
+                    throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
+                }
+
+            case JSON:
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        JacksonMapper.toObject(current)
+                    ));
+                } catch (JsonProcessingException e) {
+                    throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+
+            case URI:
+                Matcher matcher = URI_PATTERN.matcher(current);
+                if (matcher.matches()) {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        current
+                    ));
+                } else {
+                    throw new MissingRequiredInput("Invalid URI format for '" + input.getName() + "' for '" + current + "'");
+                }
+
+            default:
+                throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -253,41 +260,49 @@ public class RunnerUtils {
     }
 
     public Execution runOne(String namespace, String flowId) throws TimeoutException {
-        return this.runOne(namespace, flowId, null, null, null);
+        return this.runOne(namespace, flowId, null, null, null, null);
     }
 
     public Execution runOne(String namespace, String flowId, Integer revision) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, null, null);
+        return this.runOne(namespace, flowId, revision, null, null, null);
     }
 
     public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, inputs, null);
+        return this.runOne(namespace, flowId, revision, inputs, null, null);
     }
 
     public Execution runOne(String namespace, String flowId, Duration duration) throws TimeoutException {
-        return this.runOne(namespace, flowId, null, null, duration);
+        return this.runOne(namespace, flowId, null, null, duration, null);
     }
 
     public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(namespace, flowId, revision, inputs, duration, null);
+    }
+
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
-            duration
-        );
+            duration,
+            labels);
     }
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
-        return this.runOne(flow, inputs, null);
+        return this.runOne(flow, inputs, null, null);
     }
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(flow, inputs, duration, null);
+    }
+
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
         if (duration == null) {
             duration = Duration.ofSeconds(15);
         }
 
-        Execution execution = this.newExecution(flow, inputs);
+        Execution execution = this.newExecution(flow, inputs, labels);
 
         return this.awaitExecution(isTerminatedExecution(execution, flow), () -> {
             this.executionQueue.emit(execution);
@@ -313,7 +328,7 @@ public class RunnerUtils {
             duration = Duration.ofSeconds(15);
         }
 
-        Execution execution = this.newExecution(flow, inputs);
+        Execution execution = this.newExecution(flow, inputs, null);
 
         return this.awaitExecution(isPausedExecution(execution), () -> {
             this.executionQueue.emit(execution);
@@ -362,7 +377,7 @@ public class RunnerUtils {
         return e -> e.getParentId() != null && e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
     }
 
-    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {
+    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Map<String, String> labels) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
             .namespace(flow.getNamespace())
@@ -373,6 +388,10 @@ public class RunnerUtils {
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));
+        }
+
+        if (labels != null) {
+            execution = execution.withLabels(labels);
         }
 
         return execution;

@@ -13,6 +13,7 @@ import Errors from "../components/errors/Errors.vue";
 import Home from "../components/home/Home.vue";
 import Welcome from "../components/onboarding/Welcome.vue";
 import FlowCreate from "../components/flows/FlowCreate.vue";
+import FlowMetrics from "../components/flows/FlowMetrics.vue";
 
 export default [
     //Flows
@@ -22,6 +23,7 @@ export default [
     {name: "flows/search", path: "/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/flows/new", component: FlowCreate},
     {name: "flows/update", path: "/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
+    {name: "flows/metrics", path: "/flows/metrics", component: FlowMetrics},
 
     //Executions
     {name: "executions/list", path: "/executions", component: Executions},

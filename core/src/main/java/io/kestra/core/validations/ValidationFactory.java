@@ -3,6 +3,7 @@ package io.kestra.core.validations;
 import com.cronutils.model.Cron;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.tasks.flows.Switch;
 import io.micronaut.context.annotation.Factory;
@@ -12,6 +13,8 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 
@@ -134,7 +137,7 @@ public class ValidationFactory {
                 .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
 
             if (duplicates.size() > 0) {
-                violations.add("Duplicate task id with name [" +   String.join(", ", duplicates) + "]");
+                violations.add("Duplicate task id with name [" + String.join(", ", duplicates) + "]");
             }
 
             if (violations.size() > 0) {
@@ -143,6 +146,24 @@ public class ValidationFactory {
             } else {
                 return true;
             }
+        };
+    }
+
+    @Singleton
+    ConstraintValidator<Regex, String> patternValidator() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            try {
+                Pattern.compile(value);
+            } catch(PatternSyntaxException e) {
+                context.messageTemplate("invalid pattern [" + value + "]");
+                return false;
+            }
+
+            return true;
         };
     }
 }

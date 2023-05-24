@@ -7,6 +7,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.convert.format.Format;
@@ -69,6 +70,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -123,7 +125,8 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
@@ -132,7 +135,8 @@ public class ExecutionController {
             flowId,
             startDate,
             endDate,
-            state
+            state,
+            RequestUtils.toMap(labels)
         ));
     }
 
@@ -310,7 +314,8 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         Integer count = executionRepository
             .find(
@@ -319,7 +324,8 @@ public class ExecutionController {
                 flowId,
                 startDate,
                 endDate,
-                state
+                state,
+                RequestUtils.toMap(labels)
             )
             .map(e -> {
                 executionRepository.delete(e);
@@ -430,6 +436,7 @@ public class ExecutionController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable @Body Map<String, String> inputs,
+        @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
@@ -445,7 +452,8 @@ public class ExecutionController {
 
         Execution current = runnerUtils.newExecution(
             find.get(),
-            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files)
+            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files),
+            RequestUtils.toMap(labels)
         );
 
         executionQueue.emit(current);
@@ -610,12 +618,12 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-                return HttpResponse.badRequest(BulkErrorResponse
-                        .builder()
-                        .message("invalid bulk restart")
-                        .invalids(invalids)
-                        .build()
-                    );
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk restart")
+                .invalids(invalids)
+                .build()
+            );
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
@@ -635,7 +643,8 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
         Integer count = executionRepository
             .find(
@@ -644,7 +653,8 @@ public class ExecutionController {
                 flowId,
                 startDate,
                 endDate,
-                state
+                state,
+                RequestUtils.toMap(labels)
             )
             .map(e -> {
                 Execution restart = executionService.restart(e, null);
@@ -779,11 +789,11 @@ public class ExecutionController {
 
         if (invalids.size() > 0) {
             return HttpResponse.badRequest(BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk kill")
-                    .invalids(invalids)
-                    .build()
-                );
+                .builder()
+                .message("invalid bulk kill")
+                .invalids(invalids)
+                .build()
+            );
         }
 
         executions.forEach(execution -> {
@@ -800,40 +810,30 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/by-query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
-    public HttpResponse<BulkResponse> killByQuery(
+    public HttpResponse<?> killByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
     ) {
-        Integer count = executionRepository
+        var ids = executionRepository
             .find(
                 query,
                 namespace,
                 flowId,
                 startDate,
                 endDate,
-                state
+                state,
+                RequestUtils.toMap(labels)
             )
-            .map(e -> {
-                if (!e.getState().isRunning()) {
-                    throw new IllegalStateException("Execution must be running to be killed, " +
-                        "current state is '" + e.getState().getCurrent() + "' !"
-                    );
-                }
-
-                killQueue.emit(ExecutionKilled
-                    .builder()
-                    .executionId(e.getId())
-                    .build());
-                return 1;
-            })
-            .reduce(Integer::sum)
+            .map(execution -> execution.getId())
+            .toList()
             .blockingGet();
 
-        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+        return killByIds(ids);
     }
 
     private boolean isStopFollow(Flow flow, Execution execution) {

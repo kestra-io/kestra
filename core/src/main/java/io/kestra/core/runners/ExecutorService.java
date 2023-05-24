@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,6 +64,9 @@ public class ExecutorService {
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
+            // if killing: move created tasks to killed as they are not already started
+            executor = this.handleCreatedKilling(executor);
+            // if all tasks are  killed or terminated, set the execution to killed
             executor = this.handleKilling(executor);
 
             // killing, so no more nexts
@@ -78,7 +82,6 @@ public class ExecutorService {
             executor = this.handleWorkerTask(executor);
 
             // search for worker task result
-            executor = this.handleChildWorkerCreatedKilling(executor);
             executor = this.handleChildWorkerTaskResult(executor);
 
             // search for flow task
@@ -140,8 +143,7 @@ public class ExecutorService {
     private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
         Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
-        if (parent instanceof FlowableTask) {
-            FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
+        if (parent instanceof FlowableTask<?> flowableParent) {
 
             RunContext runContext = runContextFactory.of(flow, parent, execution, parentTaskRun);
 
@@ -149,7 +151,6 @@ public class ExecutorService {
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
                 flowableParent
                     .resolveState(runContext, execution, parentTaskRun),
-                parent,
                 parentTaskRun
             );
 
@@ -163,12 +164,11 @@ public class ExecutorService {
                 if (parentTaskRun.getState().getCurrent() != State.Type.KILLING) {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLING),
-                        parent,
                         parentTaskRun
                     );
                 }
 
-                // Then wait for completion (KILLED or whatever) on child taks to KILLED the parennt one.
+                // Then wait for completion (KILLED or whatever) on child tasks to KILLED the parent one.
                 List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
                     flowableParent.childTasks(runContext, parentTaskRun),
                     FlowableUtils.resolveTasks(flowableParent.getErrors(), parentTaskRun)
@@ -179,7 +179,6 @@ public class ExecutorService {
                 if (taskRunByTasks.stream().filter(t -> t.getState().isTerminated()).count() == taskRunByTasks.size()) {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLED),
-                        parent,
                         parentTaskRun
                     );
                 }
@@ -191,7 +190,6 @@ public class ExecutorService {
 
     private Optional<WorkerTaskResult> childWorkerTaskTypeToWorkerTask(
         Optional<State.Type> findState,
-        Task task,
         TaskRun taskRun
     ) {
         return findState
@@ -212,8 +210,7 @@ public class ExecutorService {
     private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
 
-        if (parent instanceof FlowableTask) {
-            FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
+        if (parent instanceof FlowableTask<?> flowableParent) {
 
             List<NextTaskRun> nexts = flowableParent.resolveNexts(
                 runContextFactory.of(
@@ -235,7 +232,7 @@ public class ExecutorService {
             }
         }
 
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     private List<TaskRun> saveFlowableOutput(
@@ -332,9 +329,9 @@ public class ExecutorService {
             .getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getState().isRunning())
-            .collect(Collectors.toList());
+            .toList();
 
-        // Remove functionnal style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
+        // Remove functional style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
         ArrayList<TaskRun> result = new ArrayList<>();
 
         for (TaskRun taskRun : running) {
@@ -416,7 +413,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    private Executor handleChildWorkerCreatedKilling(Executor executor) throws InternalException {
+    private Executor handleCreatedKilling(Executor executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
         }
@@ -430,7 +427,6 @@ public class ExecutorService {
 
                 return childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
-                    task,
                     t
                 );
             }))

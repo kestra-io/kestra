@@ -7,18 +7,20 @@ export default {
     namespaced: true,
     state: {
         feeds: [],
+        version: undefined,
     },
 
     actions: {
         loadFeeds({commit}, options) {
-            return axios.get(API_URL + "/v1/feeds/latest", {
+            return axios.get(API_URL + "/v1/feeds", {
                 params: {
                     iid: options.iid,
                     uid: options.uid,
                     version: options.version
                 }
             }).then(response => {
-                commit("setFeeds", response.data)
+                commit("setFeeds", response.data.feeds)
+                commit("setVersion", response.data.version)
 
                 return response.data;
             })
@@ -45,6 +47,9 @@ export default {
     mutations: {
         setFeeds(state, feeds) {
             state.feeds = feeds
+        },
+        setVersion(state, version) {
+            state.version = version
         }
     }
 }

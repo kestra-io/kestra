@@ -1,5 +1,5 @@
 ---
-title: {{json shortName}}
+title: {{shortName}}
 editLink: false
 {{#if docDescription}}
 description: {{ json docDescription }}
@@ -29,9 +29,9 @@ icon: {{ icon }}
 
 {{~#*inline "type"~}}
 {{~#if $ref~}}
-[{{~ definitionName (substring $ref 8) ~}}](#{{~ lower (definitionName (substring $ref 8)) ~}})
+[=={{~ definitionName (substring $ref 8) ~}}==](#{{~ lower (definitionName (substring $ref 8)) ~}})
 {{~else~}}
-{{~ type ~}}
+=={{~ type ~}}==
 {{~/if}}
 {{~/inline~}}
 
@@ -41,22 +41,22 @@ icon: {{ icon }}
     {{~/if}}
 
     {{~#if type }}
-* **Type:** =={{> type }}==
+* **Type:** {{> type }}
     {{~else if $ref }}
-* **Type:** =={{> type }}==
+* **Type:** {{> type }}
     {{~else if anyOf }}
 * **Type:**
         {{~#each anyOf as | current |}}
-            =={{>type current}}==
+            {{>type current}}
         {{~/each~}}
     {{~else}}
 * **Type:** ==object==
     {{~/if~}}
     {{~#if items }}
-* **SubType:** =={{> type items }}==
+* **SubType:** {{> type items }}
     {{~/if~}}
     {{~#if additionalProperties }}
-* **SubType:** =={{ additionalProperties.type }}==
+* **SubType:** {{> type additionalProperties }}
     {{~/if~}}
 {{~/inline~}}
 

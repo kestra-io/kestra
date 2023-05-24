@@ -2,11 +2,13 @@ export default {
     namespaced: true,
     state: {
         plugin: undefined,
+        pluginAllProps: undefined,
         plugins: undefined,
         pluginSingleList: undefined,
         icons: undefined,
         pluginsDocumentation: {},
-        editorPlugin: undefined
+        editorPlugin: undefined,
+        inputSchema: undefined
     },
     actions: {
         list({commit}) {
@@ -21,9 +23,12 @@ export default {
                 throw new Error("missing required cls");
             }
 
-            return this.$http.get(`/api/v1/plugins/${options.cls}?all=true`, {}).then(response => {
-                commit("setPlugin", response.data)
-
+            return this.$http.get(`/api/v1/plugins/${options.cls}`, {params: options}).then(response => {
+                if(options.all === true) {
+                    commit("setPluginAllProps", response.data)
+                } else {
+                    commit("setPlugin", response.data)
+                }
                 return response.data;
             })
         },
@@ -34,11 +39,21 @@ export default {
                 return response.data;
             })
         },
+        loadInputSchema({commit}, options) {
+            return this.$http.get(`/api/v1/plugins/schemas/input/${options.cls}`, {}).then(response => {
+                commit("setInputSchema", response.data)
+
+                return response.data;
+            })
+        }
 
     },
     mutations: {
         setPlugin(state, plugin) {
             state.plugin = plugin
+        },
+        setPluginAllProps(state, pluginAllProps) {
+            state.pluginAllProps = pluginAllProps
         },
         setPlugins(state, plugins) {
             state.plugins = plugins
@@ -54,6 +69,9 @@ export default {
         },
         setEditorPlugin(state, editorPlugin) {
             state.editorPlugin = editorPlugin
+        },
+        setInputSchema(state, schema) {
+            state.inputSchema = schema
         }
     },
     getters: {

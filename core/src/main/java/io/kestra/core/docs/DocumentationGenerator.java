@@ -10,12 +10,14 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.core.runners.handlebars.helpers.OtherBooleansHelper;
 import io.kestra.core.runners.handlebars.helpers.DateHelper;
 import io.kestra.core.runners.handlebars.helpers.JsonHelper;
+import io.kestra.core.runners.handlebars.helpers.OtherBooleansHelper;
 import io.kestra.core.runners.handlebars.helpers.OtherStringsHelper;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Slugify;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -24,15 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -91,7 +90,7 @@ public class DocumentationGenerator {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
         if (plugin.getManifest() != null) {
-            builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
+            builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title").replace("plugin-", ""));
 
             if (plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description") != null) {
                 builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
@@ -128,6 +127,7 @@ public class DocumentationGenerator {
                 try (var stream = Files.walk(root, 1)) {
                     return stream
                         .skip(1) // first element is the root element
+                        .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
                         .map(throwFunction(path -> new Document(
                             pluginName + "/guides/" + path.getName(path.getParent().getNameCount()),
                             new String(Files.readAllBytes(path)),
@@ -204,13 +204,13 @@ public class DocumentationGenerator {
     }
 
     private static <T> String docPath(RegisteredPlugin registeredPlugin) {
-        String pluginName = Slugify.of(registeredPlugin.title());
+        String pluginName = Slugify.of(registeredPlugin.path());
 
-        return pluginName + "/README.md";
+        return pluginName + "/index.md";
     }
 
     private static <T> String docPath(RegisteredPlugin registeredPlugin, String type, ClassPluginDocumentation<T> classPluginDocumentation) {
-        String pluginName = Slugify.of(registeredPlugin.title());
+        String pluginName = Slugify.of(registeredPlugin.path());
 
         return pluginName + "/" + type + "/" +
             (classPluginDocumentation.getSubGroup() != null ? classPluginDocumentation.getSubGroup() + "/" : "") +
@@ -219,6 +219,10 @@ public class DocumentationGenerator {
 
     public static <T> String render(ClassPluginDocumentation<T> classPluginDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classPluginDocumentation));
+    }
+
+    public static <T> String render(ClassInputDocumentation classInputDocumentation) throws IOException {
+        return render("task", JacksonMapper.toMap(classInputDocumentation));
     }
 
     public static <T> String render(String templateName, Map<String, Object> vars) throws IOException {

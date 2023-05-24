@@ -1,6 +1,6 @@
 <template>
     <div>
-        <editor @on-save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
+        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete">
             <ul>
                 <li>
@@ -56,6 +56,9 @@
                         .dispatch("template/loadTemplate", this.$route.params)
                         .then(this.loadFile);
                 }
+            },
+            onChange() {
+                this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
             }
         }
     };

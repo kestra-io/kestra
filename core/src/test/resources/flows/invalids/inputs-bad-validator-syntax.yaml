@@ -1,0 +1,10 @@
+id: empty
+namespace: io.kestra.tests
+inputs:
+  - name: badValidatorSyntax
+    type: STRING
+    validator: \
+tasks:
+  - id: date
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{taskrun.startDate}}"

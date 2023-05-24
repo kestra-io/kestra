@@ -33,7 +33,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
-                    :language="lang"
+                    :language="lang ?? 'undefined'"
                     :schema-type="schemaType"
                     class="position-relative"
                 />
@@ -113,7 +113,8 @@
                     !this.input ? "" : "single-line",
                     !this.fullHeight ? "" : "full-height",
                     !this.original ? "" : "diff",
-                    "theme-" + this.themeComputed
+                    "theme-" + this.themeComputed,
+                    this.themeComputed === "dark" ? "custom-dark-vs-theme" : ""
                 ]
             },
             showPlaceholder() {
@@ -192,7 +193,6 @@
             }
         },
         created() {
-            this.$store.dispatch("plugin/list");
             this.editorDocumentation = localStorage.getItem("editorDocumentation") !== "false" && this.navbar;
         },
         methods: {
@@ -356,6 +356,7 @@
 </script>
 
 <style lang="scss">
+    @import "../../styles/layout/root-dark.scss";
 
     .ks-editor {
         width: 100%;
@@ -436,16 +437,16 @@
         }
     }
 
-    html.dark {
+    .custom-dark-vs-theme {
         .monaco-editor, .monaco-editor-background {
-            background-color: var(--input-bg);
-            --vscode-editor-background: var(--input-bg);
-            --vscode-breadcrumb-background: var(--input-bg);
-            --vscode-editorGutter-background: var(--input-bg);
+            background-color: $input-bg;
+            --vscode-editor-background: $input-bg;
+            --vscode-breadcrumb-background: $input-bg;
+            --vscode-editorGutter-background: $input-bg;
         }
 
         .monaco-editor .margin {
-            background-color: var(--input-bg);
+            background-color: $input-bg;
         }
     }
 

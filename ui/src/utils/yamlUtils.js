@@ -163,7 +163,7 @@ export default class YamlUtils {
     static getTaskType(source, position) {
         const lineCounter = new LineCounter();
         const yamlDoc = yaml.parseDocument(source, {lineCounter});
-        if (yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => e.key.value === "tasks")) {
+        if (yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks", "triggers", "errors"].includes(e.key.value))) {
             const cursorIndex = lineCounter.lineStarts[position.lineNumber - 1] + position.column;
             if (yamlDoc.contents) {
                 for (const item of yamlDoc.contents.items) {
@@ -179,14 +179,16 @@ export default class YamlUtils {
     static _getTaskType(element, cursorIndex, previousTaskType) {
         let taskType = previousTaskType
         for (const item of element.items) {
+            // Every -1 & +1 allows catching cursor
+            // that is just behind or just after a task
             if (item instanceof Pair) {
-                if (item.key.value === "type" && element.range[0] <= cursorIndex && element.range[1] >= cursorIndex) {
+                if (item.key.value === "type" && element.range[0]-1 <= cursorIndex && element.range[1]+1 >= cursorIndex) {
                     taskType = item.value.value
                 }
-                if ((item.value instanceof YAMLSeq || item.value instanceof YAMLMap) && item.value.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex) {
+                if ((item.value instanceof YAMLSeq || item.value instanceof YAMLMap) && item.value.range[0]-1 <= cursorIndex && item.value.range[1]+1 >= cursorIndex) {
                     taskType = this._getTaskType(item.value, cursorIndex, taskType)
                 }
-            } else if (item.range[0] <= cursorIndex && item.range[1] >= cursorIndex) {
+            } else if (item.range[0]-1 <= cursorIndex && item.range[1]+1 >= cursorIndex) {
                 if (item.items instanceof Array) {
                     taskType = this._getTaskType(item, cursorIndex)
                 }
@@ -398,6 +400,10 @@ export default class YamlUtils {
             }
         })
         return isChildrenOf;
+    }
+
+    static replaceIdAndNamespace(source, id, namespace) {
+        return source.replace(/^(id\s*:\s*(["']?))\S*/m, "$1"+id+"$2").replace(/^(namespace\s*:\s*(["']?))\S*/m, "$1"+namespace+"$2")
     }
 
     static updateMetadata(source, metadata) {

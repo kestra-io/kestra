@@ -3,16 +3,17 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.kestra.core.exceptions.MissingRequiredInput;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
-
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
+import javax.validation.ConstraintViolationException;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,6 +47,13 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("nested.string", "a string")
         .put("nested.more.int", "123")
         .put("nested.bool", "true")
+        .put("validatedString", "A123")
+        .put("validatedInt", "12")
+        .put("validatedDate", "2023-01-02")
+        .put("validatedDateTime", "2023-01-01T00:00:10Z")
+        .put("validatedDuration", "PT15S")
+        .put("validatedFloat", "0.42")
+        .put("validatedTime", "11:27:49")
         .build();
 
     @Inject
@@ -55,8 +63,12 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     private StorageInterface storageInterface;
 
     private Map<String, Object> typedInputs(Map<String, String> map) {
+        return typedInputs(map, flowRepository.findById("io.kestra.tests", "inputs").get());
+    }
+
+    private Map<String, Object> typedInputs(Map<String, String> map, Flow flow) {
         return runnerUtils.typedInputs(
-            flowRepository.findById("io.kestra.tests", "inputs").get(),
+            flow,
             Execution.builder()
                 .id("test")
                 .namespace("test")
@@ -74,71 +86,35 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void inputString() {
+    void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
+
         assertThat(typeds.get("string"), is("myString"));
-    }
-
-    @Test
-    void inputInt() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("int"), is(42));
-    }
-
-    @Test
-    void inputFloat() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("float"), is(42.42F));
-    }
-
-    @Test
-    void inputBool() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("bool"), is(false));
-    }
-
-    @Test
-    void inputInstant() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("instant"), is(Instant.parse("2019-10-06T18:27:49Z")));
-    }
-
-    @Test
-    void inputInstantDefaults() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("instantDefaults"), is(Instant.parse("2013-08-09T14:19:00Z")));
-    }
-
-    @Test
-    void inputDate() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("date"), is(LocalDate.parse("2019-10-06")));
-    }
-
-    @Test
-    void inputTime() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("time"), is(LocalTime.parse("18:27:49")));
-    }
-
-    @Test
-    void inputDuration() {
-        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
-    }
-
-    @Test
-    void inputFile() throws URISyntaxException, IOException {
-        Map<String, Object> typeds = typedInputs(inputs);
-        URI file = (URI) typeds.get("file");
-
-        assertThat(file, is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
-
-        InputStream inputStream = storageInterface.get(file);
+        assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(
-            CharStreams.toString(new InputStreamReader(inputStream)),
+            CharStreams.toString(new InputStreamReader(storageInterface.get((URI) typeds.get("file")))),
             is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
         );
+        assertThat(typeds.get("json"), is(Map.of("a", "b")));
+        assertThat(typeds.get("uri"), is("https://www.google.com"));
+        assertThat(((Map<String, Object>)typeds.get("nested")).get("string"), is("a string"));
+        assertThat(((Map<String, Object>)typeds.get("nested")).get("bool"), is(true));
+        assertThat(((Map<String, Object>)((Map<String, Object>)typeds.get("nested")).get("more")).get("int"), is(123));
+        assertThat(typeds.get("validatedString"), is("A123"));
+        assertThat(typeds.get("validatedInt"), is(12));
+        assertThat(typeds.get("validatedDate"), is(LocalDate.parse("2023-01-02")));
+        assertThat(typeds.get("validatedDateTime"), is(Instant.parse("2023-01-01T00:00:10Z")));
+        assertThat(typeds.get("validatedDuration"), is(Duration.parse("PT15S")));
+        assertThat(typeds.get("validatedFloat"), is(0.42F));
+        assertThat(typeds.get("validatedTime"), is(LocalTime.parse("11:27:49")));
     }
 
     @Test
@@ -159,15 +135,129 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void inputJson() {
-        Map<String, Object> typeds = typedInputs(inputs);
-        assertThat(typeds.get("json"), is(Map.of("a", "b")));
+    void inputValidatedStringBadValue() {
+        HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("validatedString", "foo");
+
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(map);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input 'foo', it must match the pattern 'A\\d+'"));
     }
 
     @Test
-    void inputUri() {
-        Map<String, Object> typeds = typedInputs(inputs);
-        assertThat(typeds.get("uri"), is("https://www.google.com"));
+    void inputValidatedIntegerBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedInt", "9");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '9', it must be more than '10'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedInt", "21");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '21', it must be less than '20'"));
+    }
+
+    @Test
+    void inputValidatedDateBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedDate", "2022-01-01");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '2022-01-01', it must be after '2023-01-01'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedDate", "2024-01-01");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '2024-01-01', it must be before '2023-12-31'"));
+    }
+
+    @Test
+    void inputValidatedDateTimeBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedDateTime", "2022-01-01T00:00:00Z");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '2022-01-01T00:00:00Z', it must be after '2023-01-01T00:00:00Z'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedDateTime", "2024-01-01T00:00:00Z");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '2024-01-01T00:00:00Z', it must be before '2023-12-31T23:59:59Z'"));
+    }
+
+    @Test
+    void inputValidatedDurationBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedDuration", "PT1S");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input 'PT1S', it must be more than 'PT10S'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedDuration", "PT30S");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input 'PT30S', it must be less than 'PT20S'"));
+    }
+
+    @Test
+    void inputValidatedFloatBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedFloat", "0.01");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '0.01', it must be more than '0.1'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedFloat", "1.01");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '1.01', it must be less than '0.5'"));
+    }
+
+    @Test
+    void inputValidatedTimeBadValue() {
+        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        mapMin.put("validatedTime", "00:00:01");
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMin);
+        });
+        assertThat(e.getMessage(), is("Invalid input '00:00:01', it must be after '01:00'"));
+
+        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        mapMax.put("validatedTime", "14:00:00");
+
+        e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(mapMax);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input '14:00', it must be before '11:59:59'"));
     }
 
     @Test
@@ -180,14 +270,5 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getMessage(), containsString("Invalid URI format"));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    void inputNested() {
-        Map<String, Object> typeds = typedInputs(inputs);
-        assertThat(((Map<String, Object>)typeds.get("nested")).get("string"), is("a string"));
-        assertThat(((Map<String, Object>)typeds.get("nested")).get("bool"), is(true));
-        assertThat(((Map<String, Object>)((Map<String, Object>)typeds.get("nested")).get("more")).get("int"), is(123));
     }
 }

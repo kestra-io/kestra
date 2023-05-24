@@ -101,13 +101,17 @@
     "start datetime": "Start datetime",
     "end datetime": "End datetime",
     "restart": "Restart",
+    "restart tooltip": "Restart the execution from the <code>{state}</code> task",
     "restarted": "Execution is restarted",
     "restart confirm": "Are you sure to restart execution <code>{id}</code>?",
     "restart change revision": "You can change the revision that will be used for the new execution.",
     "replay": "Replay",
+    "replay from task tooltip": "Create a similar execution starting from task <code>{taskId}</code>",
+    "replay from beginning tooltip": "Create a similar execution starting from the beginning",
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one?",
+    "prefill inputs": "Prefill",
     "current": "current",
     "change status": "Change status",
     "change status done": "Task status has been updated",
@@ -406,7 +410,28 @@
     "error in editor": "An error have been found in the editor",
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code> ?",
     "can not save": "Can not save",
-    "flow must have id and namespace": "Flow must have an id and a namespace."
+    "flow must have id and namespace": "Flow must have an id and a namespace.",
+    "namespace and id readonly": "Namespace and id are read-only. They were reinitialized to their initial value.",
+    "avg": "Average",
+    "sum": "Sum",
+    "min": "Min",
+    "max": "Max",
+    "metric": "Metric",
+    "aggregation": "Aggregation",
+    "metric choice": "Please choose a metric and an aggregation",
+    "of": "of",
+    "save draft": {
+      "prompt": {
+        "base": "The current Flow is not valid. Do you still want to save it as a draft ?",
+        "http_error": "Unable to validate the Flow due to an HTTP error. Do you want to save the current Flow as draft ?",
+        "creation": "You will retrieve it on your next Flow creation.",
+        "existing": "You will retrieve it on your next <code>{namespace}.{id}</code> Flow edition."
+      },
+      "retrieval": {
+        "creation": "A Flow creation draft was retrieved, do you want to resume its edition ?",
+        "existing": "A <code>{flowFullName}</code> Flow draft was retrieved, do you want to resume its edition ?"
+      }
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -510,13 +535,17 @@
     "start datetime": "Date de départ",
     "end datetime": "Date de fin",
     "restart": "Relancer",
+    "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restarted": "L'exécution est relancée",
     "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
     "restart change revision": "Vous pouvez changer la révision qui sera utilisé pour la nouvelle execution relancée.",
     "replay": "Rejouer",
+    "replay from task tooltip": "Créer une nouvelle exécution similaire démarrant de la tâche <code>{taskId}</code>",
+    "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "Execution est rejouée",
-    "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{-id}</code> et créer une nouvelle execution ?",
+    "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{id}</code> et créer une nouvelle execution ?",
+    "prefill inputs": "Pré-remplir",
     "current": "actuel",
     "change status": "Changer le statut",
     "change status done": "Le statut de la tâche a était mis à jour",
@@ -816,6 +845,27 @@
     "error in editor": "Une erreur a été trouvé dans l'éditeur",
     "delete task confirm": "Êtes-vous sûr de vouloir supprimer la tâche <code>{taskId}</code> ?",
     "can not save": "Impossible de sauvegarder",
-    "flow must have id and namespace": "Le flow doit avoir un id et un namespace."
+    "flow must have id and namespace": "Le flow doit avoir un id et un namespace.",
+    "namespace and id readonly": "Le namespace et l'id ne sont pas modifiables. Ils ont été réinitialisés à leur valeur initiale.",
+    "avg": "Moyenne",
+    "sum": "Somme",
+    "min": "Minimum",
+    "max": "Maximum",
+    "metric": "Métrique",
+    "aggregation": "Agrégation",
+    "metric choice": "Merci de sélectionner une métrique et une agrégation",
+    "of": "de",
+    "save draft": {
+      "prompt": {
+        "base": "Le Flow actuel est invalide. Voulez-vous le sauvegarder en tant que brouillon ?",
+        "http_error": "Impossible de valider le Flow en raison d'une erreur HTTP. Voulez-vous sauvegarder le Flow actuel en tant que brouillon ?",
+        "creation": "Vous le récupérerez à votre prochaine création de Flow.",
+        "existing": "Vous le récupérerez à votre prochaine édition du Flow <code>{namespace}.{id}</code>."
+      },
+      "retrieval": {
+        "creation": "Un brouillon de création de Flow existe, voulez-vous reprendre son édition ?",
+        "existing": "Un brouillon pour le Flow <code>{flowFullName}</code> existe, voulez-vous reprendre son édition?"
+      }
+    }
   }
 }

@@ -2,6 +2,7 @@ package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.validations.ModelValidator;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -112,18 +113,23 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].name")).findFirst().orElseThrow().getMessage(), containsString("must match"));
-        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].type")).findFirst().orElseThrow().getMessage(), is("must not be null"));
+        exception.getConstraintViolations().forEach(
+            c -> assertThat(c.getMessage(), anyOf(
+                is("Invalid type: null"),
+                containsString("missing type id property 'type' (for POJO property 'inputs')"))
+            )
+        );
     }
 
     @Test
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size(), is(17));
+        assertThat(flow.getInputs().size(), is(24));
         assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(6L));
-        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(11L));
+        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(18L));
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(1L));
+        assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
     }
 
     @Test
@@ -133,7 +139,7 @@ class YamlFlowParserTest {
             () -> this.parse("flows/invalids/inputs-bad-type.yaml")
         );
 
-        assertThat(exception.getMessage(), containsString("not one of the values accepted for Enum class"));
+        assertThat(exception.getMessage(), containsString("Invalid type: FOO"));
     }
 
     @Test
@@ -198,7 +204,19 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage(), containsString("Invalid type: io.kestra.core.tasks.debugs.MissingOne"));
+        assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage(), containsString("Invalid type: io.kestra.core.tasks.debugs.MissingOne"));
+    }
+
+    @Test
+    void invalidProperty() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/invalid-property.yaml")
+        );
+
+        assertThat(exception.getMessage(), is("Unrecognized field \"invalid\" (class io.kestra.core.tasks.debugs.Return), not marked as ignorable (7 known properties: \"timeout\", \"format\", \"retry\", \"type\", \"id\", \"description\", \"disabled\"])"));
+        assertThat(exception.getConstraintViolations().size(), is(1));
+        assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString(), is("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.core.tasks.debugs.Return[\"invalid\"]"));
     }
 
 

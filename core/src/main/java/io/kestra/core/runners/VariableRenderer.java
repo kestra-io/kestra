@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -31,6 +33,8 @@ import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
+    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
+
     private Handlebars handlebars;
     private final PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
@@ -93,8 +97,16 @@ public class VariableRenderer {
             return null;
         }
 
+        // pre-process raw tags
+        Matcher rawMatcher = RAW_PATTERN.matcher(inline);
+        Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
+        String currentTemplate = rawMatcher.replaceAll(result -> {
+            var uuid = UUID.randomUUID().toString();
+            replacers.put(uuid, result.group(1));
+            return uuid;
+        });
+
         boolean isSame = false;
-        String currentTemplate = inline;
         String current = "";
         PebbleTemplate compiledTemplate;
         while (!isSame) {
@@ -129,13 +141,15 @@ public class VariableRenderer {
             currentTemplate = current;
         }
 
+        // post-process raw tags
+        for(var entry: replacers.entrySet()) {
+            current = current.replace(entry.getKey(), entry.getValue());
+        }
         return current;
     }
 
     public IllegalVariableEvaluationException properPebbleException(PebbleException e) {
-        if (e instanceof AttributeNotFoundException) {
-            AttributeNotFoundException current = (AttributeNotFoundException) e;
-
+        if (e instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
                 "Missing variable: '" + current.getAttributeName() +
                     "' on '" + current.getFileName() +

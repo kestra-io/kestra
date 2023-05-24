@@ -8,7 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
-import java.util.List;
+import java.util.Map;
 
 @Singleton
 @H2RepositoryEnabled
@@ -19,7 +19,7 @@ public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findCondition(String query) {
-        return this.jdbcRepository.fullTextCondition(List.of("fulltext"), query);
+    protected Condition findCondition(String query, Map<String, String> labels) {
+        return H2ExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }
 }

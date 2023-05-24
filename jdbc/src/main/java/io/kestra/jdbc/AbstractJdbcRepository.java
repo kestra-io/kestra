@@ -3,6 +3,7 @@ package io.kestra.jdbc;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
@@ -14,11 +15,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -114,6 +120,43 @@ public abstract class AbstractJdbcRepository<T> {
         }
     }
 
+    public <R extends Record> MetricAggregation mapMetricAggregation(R record, String groupByType) {
+        Instant date = getDate(record, groupByType);
+        return MetricAggregation
+            .builder()
+            .name(record.get("metric_name", String.class))
+            .value(record.get("metric_value", Double.class))
+            .date(date)
+            .build();
+
+    }
+
+    public <R extends Record> Instant getDate(R record, String groupByType) {
+        List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
+        Integer hour = fields.contains("hour") ?  record.get("hour", Integer.class): null;
+        Integer day = fields.contains("day") ?  record.get("day", Integer.class): null;
+        Integer week = fields.contains("week") ?  record.get("week", Integer.class): null;
+        Integer month = fields.contains("month") ?  record.get("month", Integer.class): null;
+        Integer year = fields.contains("year") ?  record.get("year", Integer.class): null;
+
+        switch (groupByType) {
+            case "hour" -> {
+                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+            }
+            case "day" -> {
+                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+            }
+            case "week" -> {
+                LocalDate weekDate = LocalDate.ofYearDay(year, week * 7);
+                return weekDate.atStartOfDay().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant(ZonedDateTime.now().getOffset());
+            }
+            case "month" -> {
+                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+            }
+            default -> throw new IllegalArgumentException("Invalid groupByType: " + groupByType);
+        }
+    }
+
     public T deserialize(String record) {
         try {
             return JacksonMapper.ofJson().readValue(record, cls);
@@ -130,9 +173,11 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public <R extends Record> List<T> fetch(Select<R> select) {
-        return select
-            .fetch()
-            .map(this::map);
+        return select.fetch().map(this::map);
+    }
+
+    public List<MetricAggregation> fetchMetricStat(Select<Record> select, String groupByType) {
+        return select.fetch().map(e -> this.mapMetricAggregation(e, groupByType));
     }
 
     abstract public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper);

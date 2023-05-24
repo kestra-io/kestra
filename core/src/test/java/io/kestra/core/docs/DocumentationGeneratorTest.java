@@ -1,23 +1,25 @@
 package io.kestra.core.docs;
 
-import io.kestra.core.tasks.debugs.Echo;
-import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.flows.Flow;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.tasks.debugs.Echo;
+import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.tasks.flows.Flow;
 import io.kestra.core.tasks.scripts.Bash;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-
-import jakarta.inject.Inject;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -61,6 +63,29 @@ class DocumentationGeneratorTest {
 
         assertThat(render, containsString("Bash"));
         assertThat(render, containsString("**Required:** ✔️"));
+
+        assertThat(render, containsString("`exitOnFailed`"));
+
+        int propertiesIndex = render.indexOf("Properties");
+        int outputsIndex = render.indexOf("Outputs");
+        int definitionsIndex = render.indexOf("Definitions");
+
+        assertRequiredPropsAreFirst(render.substring(propertiesIndex, outputsIndex));
+        assertRequiredPropsAreFirst(render.substring(outputsIndex, definitionsIndex));
+
+        String definitionsDoc = render.substring(definitionsIndex);
+        Arrays.stream(definitionsDoc.split("[^#]### "))
+            // first is 'Definitions' header
+            .skip(1)
+                .forEach(DocumentationGeneratorTest::assertRequiredPropsAreFirst);
+    }
+
+    private static void assertRequiredPropsAreFirst(String propertiesDoc) {
+        int lastRequiredPropIndex = propertiesDoc.lastIndexOf("* **Required:** ✔️");
+        int firstOptionalPropIndex = propertiesDoc.indexOf("* **Required:** ❌");
+        if (lastRequiredPropIndex != -1 && firstOptionalPropIndex != -1) {
+            assertThat(lastRequiredPropIndex, lessThanOrEqualTo(firstOptionalPropIndex));
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

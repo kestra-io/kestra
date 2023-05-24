@@ -92,7 +92,7 @@ class PluginControllerTest {
             );
 
             assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.templates.ExampleTask"));
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(2));
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(5));
             assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
         });
     }
@@ -112,7 +112,7 @@ class PluginControllerTest {
             Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
             assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.templates.ExampleTask"));
-            assertThat(properties.size(), is(7));
+            assertThat(properties.size(), is(10));
             assertThat(properties.get("id").size(), is(4));
             assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
         });

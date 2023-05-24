@@ -13,11 +13,12 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-public class ClassPluginDocumentation<T> {
+public class ClassPluginDocumentation<T> extends ClassDocumentation {
     private Boolean deprecated;
     private String cls;
     private String icon;
     private String group;
+    private String pluginTitle;
     private String subGroup;
     private String shortName;
     private String docDescription;
@@ -35,9 +36,10 @@ public class ClassPluginDocumentation<T> {
     private ClassPluginDocumentation(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
         this.cls = cls.getName();
         this.group = plugin.group();
+        this.pluginTitle = plugin.title();
         this.icon = DocumentationGenerator.icon(plugin, cls);
 
-        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {
+        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length() && cls.getPackageName().charAt(this.group.length()) == '.') {
             this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
         }
 
@@ -116,63 +118,8 @@ public class ClassPluginDocumentation<T> {
         }
     }
 
-    private static Map<String, Object> flatten(Map<String, Object> map, List<String> required) {
-        map.remove("type");
-        return flatten(map, required, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> flatten(Map<String, Object> map, List<String> required, String parentName) {
-        Map<String, Object> result = new TreeMap<>();
-
-        for (Map.Entry<String, Object> current : map.entrySet()) {
-            Map<String, Object> finalValue = (Map<String, Object>) current.getValue();
-            if (required.contains(current.getKey())) {
-                finalValue.put("$required", true);
-            }
-
-            result.put(flattenKey(current.getKey(), parentName), finalValue);
-            if (current.getValue() instanceof Map) {
-                Map<String, Object> value = (Map<String, Object>) current.getValue();
-
-                if (value.containsKey("properties")) {
-                    result.putAll(flatten(properties(value), required(value), current.getKey()));
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private static String flattenKey(String current, String parent) {
-        return (parent != null ? parent + "." : "") + current;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> properties(Map<String, Object> props) {
-        Map<String, Object> properties = (Map<String, Object>) props.get("properties");
-
-        return properties != null ? properties : new HashMap<>();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> required(Map<String, Object> props) {
-        if (!props.containsKey("required")) {
-            return Collections.emptyList();
-        }
-
-        return (List<String>) props.get("required");
-    }
-
     public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
         return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, cls, baseCls);
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class ExampleDoc {
-        String title;
-        String task;
     }
 
     @AllArgsConstructor
@@ -184,3 +131,4 @@ public class ClassPluginDocumentation<T> {
         String description;
     }
 }
+

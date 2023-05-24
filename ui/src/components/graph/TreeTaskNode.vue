@@ -130,6 +130,7 @@
                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                     :level="logLevel"
                     @follow="forwardEvent('follow', $event)"
+                    :hide-others-on-select="true"
                 />
             </el-drawer>
         </template>

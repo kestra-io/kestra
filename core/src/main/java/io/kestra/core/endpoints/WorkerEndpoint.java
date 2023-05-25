@@ -30,11 +30,11 @@ public class WorkerEndpoint {
                 .sum()
             )
             .runnings(
-                worker.getWorkerThreadReferences()
+                worker.getWorkerThreadTasks()
                     .stream()
-                    .map(workerThread -> new WorkerEndpointWorkerTask(
-                        workerThread.getWorkerTask().getTaskRun(),
-                        workerThread.getWorkerTask().getTask())
+                    .map(workerTask -> new WorkerEndpointWorkerTask(
+                        workerTask.getTaskRun(),
+                        workerTask.getTask())
                     )
                     .collect(Collectors.toList())
             )

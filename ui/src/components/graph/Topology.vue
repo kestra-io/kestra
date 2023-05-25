@@ -1,5 +1,5 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed, h} from "vue";
     import {useStore} from "vuex"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
@@ -37,6 +37,7 @@
     import editor from "../inputs/Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
+    import {ElNotification, ElTable, ElTableColumn} from "element-plus";
 
     const {
         id,
@@ -573,15 +574,32 @@
         haveChange.value = false;
     }
 
-    const showDraftPopup = (draftReason) => {
-        toast.confirm(draftReason + " " + (props.isCreating ? t("save draft.prompt.creation") : t("save draft.prompt.existing", {
-                          namespace: flow.namespace,
-                          id: flow.id
-                      })),
-                      () => {
-                          persistEditorContent(false);
-                      }
-        );
+    const saveAsDraft = (errorMessage) => {
+        const errorToastDom = [h("span", {innerHTML: t("invalid flow")}),
+            h(
+            ElTable,
+            {
+                stripe: true,
+                tableLayout: "auto",
+                fixed: true,
+                data: [{errorMessage}],
+                class: ["mt-2"],
+                size: "small",
+            },
+            [
+                h(ElTableColumn, {prop: "errorMessage", label: "Message"})
+            ]
+        )];
+
+        ElNotification({
+            title: t("save draft.message"),
+            message: h("div",  errorToastDom),
+            type: "error",
+            duration: 0,
+            dangerouslyUseHTMLString: true,
+            customClass: "large"
+        });
+        persistEditorContent(false);
     }
 
     const onEdit = (event) => {
@@ -832,7 +850,7 @@
                 flowParsed = YamlUtils.parse(flowYaml.value);
             } catch (_) {}
             if (validation[0].constraints) {
-                showDraftPopup(t("save draft.prompt.base"));
+                saveAsDraft(validation[0].constraints);
                 return;
             }
 

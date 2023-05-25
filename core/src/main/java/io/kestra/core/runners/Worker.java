@@ -309,13 +309,23 @@ public class Worker implements Runnable, Closeable {
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
-        RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
-
         RunContext runContext = workerTask
             .getRunContext()
             .forWorker(this.applicationContext, workerTask);
 
         Logger logger = runContext.logger();
+
+        if(!(workerTask.getTask() instanceof RunnableTask)) {
+            // This should never happen but better to deal with it than crashing the Worker
+            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
+            List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
+            TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
+            logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
+                "': only runnable tasks can be executed by the worker but the task is of type " + workerTask.getTask().getClass());
+            return workerTask.withTaskRun(taskRun);
+        }
+
+        RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State().withState(State.Type.RUNNING));

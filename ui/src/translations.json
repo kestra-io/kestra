@@ -421,12 +421,7 @@
     "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
     "save draft": {
-      "prompt": {
-        "base": "The current Flow is not valid. Do you still want to save it as a draft ?",
-        "http_error": "Unable to validate the Flow due to an HTTP error. Do you want to save the current Flow as draft ?",
-        "creation": "You will retrieve it on your next Flow creation.",
-        "existing": "You will retrieve it on your next <code>{namespace}.{id}</code> Flow edition."
-      },
+      "message": "Draft saved",
       "retrieval": {
         "creation": "A Flow creation draft was retrieved, do you want to resume its edition ?",
         "existing": "A <code>{flowFullName}</code> Flow draft was retrieved, do you want to resume its edition ?"
@@ -856,12 +851,7 @@
     "metric choice": "Merci de sélectionner une métrique et une agrégation",
     "of": "de",
     "save draft": {
-      "prompt": {
-        "base": "Le Flow actuel est invalide. Voulez-vous le sauvegarder en tant que brouillon ?",
-        "http_error": "Impossible de valider le Flow en raison d'une erreur HTTP. Voulez-vous sauvegarder le Flow actuel en tant que brouillon ?",
-        "creation": "Vous le récupérerez à votre prochaine création de Flow.",
-        "existing": "Vous le récupérerez à votre prochaine édition du Flow <code>{namespace}.{id}</code>."
-      },
+      "message": "Brouillon sauvegardé",
       "retrieval": {
         "creation": "Un brouillon de création de Flow existe, voulez-vous reprendre son édition ?",
         "existing": "Un brouillon pour le Flow <code>{flowFullName}</code> existe, voulez-vous reprendre son édition?"

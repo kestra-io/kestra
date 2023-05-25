@@ -24,8 +24,8 @@ public class MemoryWorkerTaskQueue implements WorkerTaskQueueInterface {
     }
 
     @Override
-    public Runnable receive(Class<?> consumerGroup, Consumer<WorkerTask> consumer) {
-        return workerTaskQueue.receive(consumerGroup, consumer);
+    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<WorkerTask> consumer) {
+        return workerTaskQueue.receive(consumerGroup, queueType, consumer);
     }
 
     @Override

@@ -6,7 +6,7 @@ import java.io.Closeable;
 import java.util.function.Consumer;
 
 public interface WorkerTaskQueueInterface extends Closeable {
-    Runnable receive(Class<?> consumerGroup, Consumer<WorkerTask> consumer);
+    Runnable receive(String consumerGroup, Class<?> queueType, Consumer<WorkerTask> consumer);
 
     void pause();
 }

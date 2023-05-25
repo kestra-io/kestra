@@ -49,9 +49,27 @@ abstract public class JdbcQueueTest {
         assertThat(countDownLatch.getCount(), is(0L));
     }
 
+    @Test
+    void withGroup() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+
+        flowQueue.receive("consumer_group", flow -> {
+            if (flow.getNamespace().equals("io.kestra.f1")) {
+                flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+            }
+
+            countDownLatch.countDown();
+        });
+
+        flowQueue.emit("consumer_group", builder("io.kestra.f1"));
+
+        countDownLatch.await(5, TimeUnit.SECONDS);
+
+        assertThat(countDownLatch.getCount(), is(0L));
+    }
 
     @Test
-    void group() throws InterruptedException {
+    void withType() throws InterruptedException {
         // first one
         flowQueue.emit(builder("io.kestra.f1"));
 
@@ -72,6 +90,36 @@ abstract public class JdbcQueueTest {
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
         flowQueue.receive(Indexer.class, flow -> {
+            namespace.set(flow.getNamespace());
+            countDownLatch2.countDown();
+        });
+        countDownLatch2.await(5, TimeUnit.SECONDS);
+
+        assertThat(namespace.get(), is("io.kestra.f2"));
+    }
+
+    @Test
+    void withGroupAndType() throws InterruptedException {
+        // first one
+        flowQueue.emit("consumer_group", builder("io.kestra.f1"));
+
+        AtomicReference<String> namespace = new AtomicReference<>();
+
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        flowQueue.receive("consumer_group", Indexer.class, flow -> {
+            namespace.set(flow.getNamespace());
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(5, TimeUnit.SECONDS);
+
+        assertThat(namespace.get(), is("io.kestra.f1"));
+
+        // second one only
+        flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+
+        CountDownLatch countDownLatch2 = new CountDownLatch(1);
+        flowQueue.receive("consumer_group", Indexer.class, flow -> {
             namespace.set(flow.getNamespace());
             countDownLatch2.countDown();
         });

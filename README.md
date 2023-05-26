@@ -56,18 +56,18 @@ Thanks to the **declarative YAML interface** for defining orchestration logic, e
 1. `Flow` is the main component in Kestra. It's a container for your tasks and orchestration logic.
 2. `Namespace` is used to provide logical isolation, e.g., to separate development and production environments. Namespaces are like folders on your file system — they organize flows into logical categories and can be nested to provide a hierarchical structure.
 3. `Tasks` are atomic actions in a flow. By default, all tasks in the list will be executed sequentially, with additional customization options, a.o. to run tasks in parallel or allow a failure of specific tasks when needed.
-4. `Triggers` define when a flow should run. Kestra is event-driven, and flows are triggered based on events. Examples of such events include:
-    - a regular time-based **schedule**, 
-    - an **API** call (*webhook trigger*), 
-    - ad-hoc execution from the **UI**,
-    - **custom events**, including a new file arrival (*file detection event*), a new message in a message bus, query or flow completion, and more. 
-    - **Flow trigger** - flows can also be triggered from other flows using a [flow trigger](https://kestra.io/docs/developer-guide/triggers/flow) or a [subflow](https://kestra.io/docs/flow-examples/subflow), enabling highly modular workflows.
-5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, can be either required or optional, and allow additional [validation rules](https://kestra.io/docs/developer-guide/inputs#input-validation).
+4. `Triggers` define when a flow should run. In Kestra, flows are triggered based on events. Examples of such events include:
+    - a regular time-based **schedule**
+    - an **API** call (*webhook trigger*)
+    - ad-hoc execution from the **UI**
+    - a **flow trigger** - flows can be triggered from other flows using a [flow trigger](https://kestra.io/docs/developer-guide/triggers/flow) or a [subflow](https://kestra.io/docs/flow-examples/subflow), enabling highly modular workflows.
+    - **custom events**, including a new file arrival (*file detection event*), a new message in a message bus, query completion, and more.
+5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, and allow additional [validation rules](https://kestra.io/docs/developer-guide/inputs#input-validation).
 
 
 ## Extensible platform via plugins 
 
-Most tasks in Kestra are available as [plugins](https://kestra.io/plugins), but many type of tasks are available in the core library, including script tasks supporting various programming languages (Python, Node, Bash) and the ability to execute your business logic packaged in Docker containers. 
+Most tasks in Kestra are available as [plugins](https://kestra.io/plugins), but many type of tasks are available in the core library, including a.o. script tasks supporting various programming languages (e.g., Python, Node, Bash) and the ability to orchestrate your business logic packaged into Docker container images. 
 
 To create your own plugins, check the [plugin developer guide](https://kestra.io/docs/plugin-developer-guide).
 
@@ -77,16 +77,71 @@ Kestra provides a variety of tasks to handle both simple and complex business lo
 
 - retries
 - timeout
+- error handling
 - conditional branching
 - dynamic tasks
 - sequential and parallel tasks
-- configuring dependencies between tasks, flows and event triggers
+- skipping tasks or triggers when needed by setting the flag `disabled` to `true`.
+- configuring dependencies between tasks, flows and triggers
+- advanced scheduling and trigger conditions
+- backfills
+- documenting your flows, tasks and triggers by adding a markdown description to any component
+- adding labels to add additional metadata to your flows such as the flow owner or team:
+
+```yaml
+id: hello  
+namespace: prod
+description: Hi from `Kestra` and a **markdown** description.
+labels:
+  owner: john-doe
+  team: data-engineering
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.log.Log
+    message: Hello world!
+    description: a *very* important task
+    disabled: false
+    timeout: 10M
+    retry:
+      type: constant # type: string
+      interval: PT15M # type: Duration
+      maxDuration: PT1H # type: Duration
+      maxAttempt: 5 # type: int
+      warningOnRetry: true # type: boolean, default is false
+  - id: parallel
+    type: io.kestra.core.tasks.flows.Parallel
+    concurrent: 3
+    tasks:
+      - id: task1
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - 'echo "running {{task.id}}"'
+          - 'sleep 10'
+      - id: task2
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - 'echo "running {{task.id}}"'
+          - 'sleep 10'
+      - id: task3
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - 'echo "running {{task.id}}"'
+          - 'sleep 10'
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "*/15 * * * *"
+    backfill:
+      start: 2023-06-25T14:00:00Z
+```
+
 
 ## Built-in code editor
 
 You can write workflows directly from the UI. When writing your workflows, the UI provides:
-- autocompletion, 
-- embedded plugin documentation, 
+- autocompletion
+- syntax validation
+- embedded plugin documentation
 - topology view (view of your dependencies in a Directed Acyclic Graph) that get updated live as you modify and add new tasks.
 
 
@@ -119,10 +174,7 @@ docker-compose up
 ```
 
 
-![install.png](ui/src/assets/install.png)
-
-
-Open `http://localhost:8080` in your browser and create your hello-world flow.
+Open `http://localhost:8080` in your browser and create your first flow.
 
 
 ### Hello-World flow
@@ -144,9 +196,8 @@ For more information:
 - Read the [documentation](https://kestra.io/docs/) to understand how to:
   - [Develop your flows](https://kestra.io/docs/developer-guide/)
   - [Deploy Kestra](https://kestra.io/docs/administrator-guide/)
-  - Use the [Terraform provider](https://kestra.io/docs/terraform/)
+  - Use our [Terraform provider](https://kestra.io/docs/terraform/) to deploy your flows
   - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/).
-
 
 
 
@@ -265,8 +316,8 @@ This list is growing quickly and we welcome contributions.
 
 If you need help or have any questions, reach out using one of the following channels:
 
-- [GitHub discussions](https://github.com/kestra-io/kestra/discussions) 
-- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - join the community and get the latest updates
+- [GitHub discussions](https://github.com/kestra-io/kestra/discussions) - useful to start a conversation that is not a bug or feature request.
+- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - join the community and get the latest updates.
 - [Twitter](https://twitter.com/kestra_io) - to follow up with the latest updates.
 
 
@@ -277,9 +328,9 @@ See the [open issues](https://github.com/kestra-io/kestra/issues) for a list of 
 
 ## Contributing
 
-We love contributions, big or small. Check out [our guide](https://github.com/kestra-io/kestra/blob/develop/.github/CONTRIBUTING.md) on how to get started.
+We love contributions, big or small. Check out [our contributor guide](https://github.com/kestra-io/kestra/blob/develop/.github/CONTRIBUTING.md) for details on how to contribute to Kestra.
 
-See our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) for developing Kestra plugins.
+See our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) for details on developing and publishing Kestra plugins.
 
 
 ## License

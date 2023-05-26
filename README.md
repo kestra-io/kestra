@@ -48,7 +48,7 @@ Kestra is an open-source, **event-driven** orchestrator that simplifies data ope
 
 Thanks to the **declarative YAML interface** for defining orchestration logic, everyone who benefits from analytics can participate in the data pipeline creation process. The UI automatically adjusts the YAML definition any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is defined declaratively in code, even if some workflow components are modified in other ways.
 
-![Adding new tasks in the UI](ui/src/assets/gif.gif)
+![Adding new tasks in the UI](https://kestra.io/adding-tasks.gif)
 
 
 ## Key concepts

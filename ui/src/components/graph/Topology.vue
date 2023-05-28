@@ -109,6 +109,20 @@
         }
     })
 
+    const showTopologyStorageKey = "show-topology";
+
+    const initShowTopology = () => {
+        const defaultValue = (props.execution || props.isReadOnly) ? "topology" : "doc";
+        const storedValue = localStorage.getItem(showTopologyStorageKey);
+
+        if (storedValue) {
+            return storedValue;
+        }
+
+        localStorage.setItem(showTopologyStorageKey, defaultValue);
+        return defaultValue;
+    }
+
     const editorWidthStorageKey = "editor-width";
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
     const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
@@ -123,13 +137,18 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(props.execution || props.isReadOnly ? "topology" : "doc");
+    const showTopology = ref(initShowTopology());
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
     const taskError = ref(store.getters["flow/taskError"])
     const user = store.getters["auth/user"];
     const routeParams = router.currentRoute.value.params;
+
+    const persistShowTopology = (value) => {
+        showTopology.value = value;
+        localStorage.setItem(showTopologyStorageKey, value);
+    }
 
     const localStorageKey = computed(() => {
         return (props.isCreating ? "creation" : `${flow.namespace}.${flow.id}`) + "_draft";
@@ -453,7 +472,7 @@
                 && localStorage.getItem("tourDoneOrSkip") !== "true"
                 && props.total === 0) {
                 tours["guidedTour"].start();
-                showTopology.value = "source";
+                persistShowTopology("source");
             }
         }, 200)
         window.addEventListener("popstate", () => {
@@ -504,7 +523,7 @@
     });
 
     watch(() => props.isReadOnly, async () => {
-        showTopology.value = props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined");
+        persistShowTopology(props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined"));
     });
 
     watch(() => props.guidedProperties, () => {
@@ -791,7 +810,7 @@
     }
 
     const switchView = (event) => {
-        showTopology.value = event
+        persistShowTopology(event);
         if (["topology", "combined"].includes(showTopology.value)) {
             isHorizontal.value = showTopology.value === "combined" ? false : localStorage.getItem("topology-orientation") === "1";
             if (updatedFromEditor.value) {
@@ -966,7 +985,7 @@
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
-            @restartGuidedTour="() => showTopology = 'source'"
+            @restartGuidedTour="() => persistShowTopology('source')"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
         <div

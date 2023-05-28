@@ -489,6 +489,7 @@
         });
 
         window.removeEventListener("beforeunload", persistEditorWidth);
+        persistEditorWidth();
 
         // Will get redirected to login page
         if (!store.getters["auth/isLogged"] && haveChange.value) {

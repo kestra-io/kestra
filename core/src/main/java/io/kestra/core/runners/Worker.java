@@ -134,6 +134,9 @@ public class Worker implements Runnable, Closeable {
                             runContext.cleanup();
                         }
                     }
+                    else {
+                        throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
+                    }
                 });
             }
         );

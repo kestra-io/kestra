@@ -68,6 +68,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         SchedulerExecutionStateInterface executionStateSpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(5);
         Set<String> date = new HashSet<>();
+        Set<String> executionId = new HashSet<>();
 
         Flow flow = createScheduleFlow();
 
@@ -88,6 +89,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getInputs().get("def"), is("awesome"));
 
                 date.add((String) execution.getTrigger().getVariables().get("date"));
+                executionId.add(execution.getId());
+
                 queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
@@ -100,6 +103,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(date.size(), is(3));
+            assertThat(executionId.size(), is(3));
         }
     }
 }

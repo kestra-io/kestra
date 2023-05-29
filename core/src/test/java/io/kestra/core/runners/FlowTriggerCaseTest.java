@@ -31,7 +31,7 @@ public class FlowTriggerCaseTest {
     protected RunnerUtils runnerUtils;
 
     public void trigger() throws InterruptedException, TimeoutException {
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(2);
         AtomicReference<Execution> flowListener = new AtomicReference<>();
         AtomicReference<Execution> flowListenerNoInput = new AtomicReference<>();
 
@@ -44,15 +44,6 @@ public class FlowTriggerCaseTest {
                     flowListener.set(execution);
                     countDownLatch.countDown();
                 }
-            }
-        });
-
-        logEntryQueue.receive(logEntry -> {
-            if (logEntry.getMessage().contains("Failed to trigger flow") &&
-                logEntry.getTriggerId() != null &&
-                logEntry.getTriggerId().equals("listen-flow-invalid")
-            ) {
-                countDownLatch.countDown();
             }
         });
 

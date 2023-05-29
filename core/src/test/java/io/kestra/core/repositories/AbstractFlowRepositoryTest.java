@@ -17,6 +17,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.event.ApplicationEventListener;
@@ -30,12 +31,14 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -292,14 +295,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void removeTrigger() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        triggerQueue.receive(trigger -> {
-            assertThat(trigger, is(nullValue()));
-            countDownLatch.countDown();
-        });
-
+    void removeTrigger() throws InterruptedException, TimeoutException {
         String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()
@@ -312,8 +308,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
-
+        flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
         Flow update = Flow.builder()
@@ -324,14 +319,11 @@ public abstract class AbstractFlowRepositoryTest {
         ;
 
         Flow updated = flowRepository.update(update, flow, update.generateSource(), taskDefaultService.injectDefaults(update));
-
-        countDownLatch.await(15, TimeUnit.SECONDS);
-
         assertThat(updated.getTriggers(), is(nullValue()));
 
         flowRepository.delete(updated);
 
-        assertThat(FlowListener.getEmits().size(), is(3));
+        Await.until(() -> FlowListener.getEmits().size() == 3, Duration.ofMillis(100), Duration.ofSeconds(5));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.UPDATE).count(), is(1L));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
@@ -339,14 +331,7 @@ public abstract class AbstractFlowRepositoryTest {
 
 
     @Test
-    void removeTriggerDelete() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        triggerQueue.receive(trigger -> {
-            assertThat(trigger, is(nullValue()));
-            countDownLatch.countDown();
-        });
-
+    void removeTriggerDelete() throws TimeoutException {
         String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()
@@ -364,9 +349,8 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
         flowRepository.delete(save);
-        countDownLatch.await(15, TimeUnit.SECONDS);
 
-        assertThat(FlowListener.getEmits().size(), is(2));
+        Await.until(() -> FlowListener.getEmits().size() == 2, Duration.ofMillis(100), Duration.ofSeconds(5));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
     }

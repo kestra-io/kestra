@@ -32,7 +32,7 @@ class OverrideRetryInterceptorTest {
 
     @Singleton
     public static class TestRetry {
-        @Retryable(delay = "1s", multiplier = "2.0")
+        @Retryable(delay = "10ms", multiplier = "2.0")
         public String failedMethod() {
             throw new AlreadyBoundException();
         }

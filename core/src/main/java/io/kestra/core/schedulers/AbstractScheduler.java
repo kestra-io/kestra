@@ -506,6 +506,12 @@ public abstract class AbstractScheduler implements Scheduler {
                         flowWithTrigger.getConditionContext().getRunContext().logger()
                     ));
 
+                    // @TODO: mutability dirty that force creation of a new triggerExecutionId
+                    flowWithPollingTrigger.getConditionContext().getRunContext().forScheduler(
+                        flowWithPollingTrigger.getFlow(),
+                        flowWithTrigger.getTrigger()
+                    );
+
                     Optional<Execution> evaluate = flowWithPollingTrigger.getPollingTrigger().evaluate(
                         flowWithPollingTrigger.getConditionContext(),
                         flowWithPollingTrigger.getTriggerContext()

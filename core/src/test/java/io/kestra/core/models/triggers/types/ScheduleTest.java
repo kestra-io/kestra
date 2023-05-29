@@ -3,6 +3,7 @@ package io.kestra.core.models.triggers.types;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.DateTimeBetweenCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
@@ -32,10 +33,10 @@ class ScheduleTest {
 
     @Test
     void failed() throws Exception {
-        Schedule trigger = Schedule.builder().cron("1 1 1 1 1").build();
+        Schedule trigger = Schedule.builder().id("schedule").cron("1 1 1 1 1").build();
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             TriggerContext.builder()
                 .date(ZonedDateTime.now().withSecond(2))
                 .build()
@@ -68,7 +69,7 @@ class ScheduleTest {
     @Test
     @SuppressWarnings("unchecked")
     void success() throws Exception {
-        Schedule trigger = Schedule.builder().cron("0 0 1 * *").build();
+        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
             .withDayOfMonth(1)
@@ -79,7 +80,7 @@ class ScheduleTest {
             .minus(1, ChronoUnit.MONTHS);
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
@@ -95,7 +96,7 @@ class ScheduleTest {
     @SuppressWarnings("unchecked")
     @Test
     void everyMinute() throws Exception {
-        Schedule trigger = Schedule.builder().cron("* * * * *").build();
+        Schedule trigger = Schedule.builder().id("schedule").cron("* * * * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
             .minus(Duration.ofMinutes(1))
@@ -104,7 +105,7 @@ class ScheduleTest {
             .plus(Duration.ofMinutes(1));
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
@@ -120,17 +121,17 @@ class ScheduleTest {
 
     @Test
     void noBackfillNextDate() {
-        Schedule trigger = Schedule.builder().cron("0 0 * * *").build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.empty());
+        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
         assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
     }
 
     @Test
     void noBackfillNextDateContext() {
-        Schedule trigger = Schedule.builder().cron("0 0 * * *").timezone("Europe/Paris").build();
+        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").timezone("Europe/Paris").build();
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.of(triggerContext(date, trigger)));
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
@@ -140,10 +141,11 @@ class ScheduleTest {
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
 
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("0 0 * * *")
             .backfill(Schedule.ScheduleBackfill.builder().start(date).build())
             .build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.empty());
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
@@ -151,19 +153,20 @@ class ScheduleTest {
     @Test
     void backfillNextDateContext() {
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("0 0 * * *")
             .backfill(Schedule.ScheduleBackfill.builder().start(ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]")).build())
             .build();
         ZonedDateTime date = ZonedDateTime.parse("2020-03-01T00:00:00+01:00[Europe/Paris]");
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.of(triggerContext(date, trigger)));
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(next.format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
 
     @Test
     void emptyBackfillStartDate() {
-        Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.empty());
+        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
         assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
     }
@@ -171,7 +174,7 @@ class ScheduleTest {
     @Test
     @SuppressWarnings("unchecked")
     void backfillChangedFromCronExpression() throws Exception {
-        Schedule trigger = Schedule.builder().cron("30 0 1 * *").build();
+        Schedule trigger = Schedule.builder().id("schedule").cron("30 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
             .withDayOfMonth(1)
@@ -185,7 +188,7 @@ class ScheduleTest {
             .plusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
@@ -201,6 +204,7 @@ class ScheduleTest {
     @Test
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .scheduleConditions(List.of(
@@ -217,7 +221,7 @@ class ScheduleTest {
         ZonedDateTime next = ZonedDateTime.parse("2021-09-06T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
@@ -233,6 +237,7 @@ class ScheduleTest {
     @Test
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .scheduleConditions(List.of(
@@ -247,7 +252,7 @@ class ScheduleTest {
         ZonedDateTime previous = ZonedDateTime.parse("2021-07-26T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
@@ -263,6 +268,7 @@ class ScheduleTest {
     @Test
     void conditionsWithBackfill() throws Exception {
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .backfill(Schedule.ScheduleBackfill.builder()
@@ -286,7 +292,7 @@ class ScheduleTest {
 
         for (int i = 0; i < 4; i++) {
             Optional<Execution> evaluate = trigger.evaluate(
-                conditionContext(),
+                conditionContext(trigger),
                 triggerContext(date, trigger)
             );
 
@@ -306,6 +312,7 @@ class ScheduleTest {
     @Test
     void lateMaximumDelay() throws Exception {
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("* * * * *")
             .lateMaximumDelay(Duration.ofMinutes(5))
             .build();
@@ -316,7 +323,7 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS);
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             TriggerContext.builder()
                 .date(date)
                 .build()
@@ -332,6 +339,7 @@ class ScheduleTest {
     @Test
     void hourly() throws Exception {
         Schedule trigger = Schedule.builder()
+            .id("schedule")
             .cron("@hourly")
             .build();
 
@@ -339,7 +347,7 @@ class ScheduleTest {
 
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             TriggerContext.builder()
                 .date(date)
                 .build()
@@ -353,7 +361,7 @@ class ScheduleTest {
     @SuppressWarnings("unchecked")
     @Test
     void timezone() throws Exception {
-        Schedule trigger = Schedule.builder().cron("12 9 1 * *").timezone("America/New_York").build();
+        Schedule trigger = Schedule.builder().id("schedule").cron("12 9 1 * *").timezone("America/New_York").build();
 
         ZonedDateTime date = ZonedDateTime.now()
             .withZoneSameLocal(ZoneId.of("America/New_York"))
@@ -367,7 +375,7 @@ class ScheduleTest {
             .minus(1, ChronoUnit.MONTHS);
 
         Optional<Execution> evaluate = trigger.evaluate(
-            conditionContext(),
+            conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
@@ -381,14 +389,15 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
 
-    private ConditionContext conditionContext() {
+    private ConditionContext conditionContext(AbstractTrigger trigger) {
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.tests")
+            .build();
+
         return ConditionContext.builder()
-            .runContext(runContextFactory.of())
-            .flow(Flow.builder()
-                .id(IdUtils.create())
-                .namespace("io.kestra.tests")
-                .build()
-            )
+            .runContext(runContextFactory.of().forScheduler(flow, trigger))
+            .flow(flow)
             .build();
     }
 

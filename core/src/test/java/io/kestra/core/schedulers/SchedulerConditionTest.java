@@ -103,7 +103,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             });
 
             scheduler.run();
-            queueCount.await(1, TimeUnit.MINUTES);
+            queueCount.await(15, TimeUnit.SECONDS);
 
             assertThat(queueCount.getCount(), is(0L));
         }

@@ -183,11 +183,17 @@
         return flow ? YamlUtils.flowHaveTasks(flow) : false;
     }
 
-    const initYamlSource = () => {
+    const initYamlSource = async () => {
         flowYaml.value = flow ? flow.source : YamlUtils.stringify({
             id: props.flowId,
             namespace: props.namespace
         });
+
+        const validation = await store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+        const validationErrors = validation[0].constraints;
+        if(validationErrors){
+            errorToast(t("cannot create topology"), t("invalid flow"), validationErrors);
+        }
         generateGraph();
 
         if(!props.isReadOnly) {
@@ -257,133 +263,137 @@
 
     const generateGraph = () => {
         isLoading.value = true;
-        if (!props.flowGraph || !flowHaveTasks()) {
-            elements.value.push({
-                id: "start",
-                label: "",
-                type: "dot",
-                position: {x: 0, y: 0},
-                style: {
-                    width: "5px",
-                    height: "5px"
-                },
-                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                parentNode: undefined,
-                draggable: false,
-            })
-            elements.value.push({
-                id: "end",
-                label: "",
-                type: "dot",
-                position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
-                style: {
-                    width: "5px",
-                    height: "5px"
-                },
-                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                parentNode: undefined,
-                draggable: false,
-            })
-            elements.value.push({
-                id: "start|end",
-                source: "start",
-                target: "end",
-                type: "edge",
-                markerEnd: MarkerType.ArrowClosed,
-                data: {
-                    edge: {
-                        relation: {
-                            relationType: "SEQUENTIAL"
-                        }
+        try {
+            if (!props.flowGraph || !flowHaveTasks()) {
+                elements.value.push({
+                    id: "start",
+                    label: "",
+                    type: "dot",
+                    position: {x: 0, y: 0},
+                    style: {
+                        width: "5px",
+                        height: "5px"
                     },
-                    isFlowable: false,
-                    initTask: true,
+                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                    parentNode: undefined,
+                    draggable: false,
+                })
+                elements.value.push({
+                    id: "end",
+                    label: "",
+                    type: "dot",
+                    position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
+                    style: {
+                        width: "5px",
+                        height: "5px"
+                    },
+                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                    parentNode: undefined,
+                    draggable: false,
+                })
+                elements.value.push({
+                    id: "start|end",
+                    source: "start",
+                    target: "end",
+                    type: "edge",
+                    markerEnd: MarkerType.ArrowClosed,
+                    data: {
+                        edge: {
+                            relation: {
+                                relationType: "SEQUENTIAL"
+                            }
+                        },
+                        isFlowable: false,
+                        initTask: true,
+                    }
+                })
+                isLoading.value = false;
+                return;
+            }
+            if (props.flowGraph === undefined) {
+                isLoading.value = false;
+                return;
+            }
+            const dagreGraph = generateDagreGraph();
+            const clusters = {};
+            for (let cluster of (props.flowGraph.clusters || [])) {
+                for (let nodeUid of cluster.nodes) {
+                    clusters[nodeUid] = cluster.cluster;
                 }
-            })
-            isLoading.value = false;
-            return;
-        }
-        if (props.flowGraph === undefined) {
-            isLoading.value = false;
-            return;
-        }
-        const dagreGraph = generateDagreGraph();
-        const clusters = {};
-        for (let cluster of (props.flowGraph.clusters || [])) {
-            for (let nodeUid of cluster.nodes) {
-                clusters[nodeUid] = cluster.cluster;
+
+                const dagreNode = dagreGraph.node(cluster.cluster.uid)
+                const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
+
+                const clusterUid = cluster.cluster.uid;
+                elements.value.push({
+                    id: clusterUid,
+                    label: clusterUid,
+                    type: "cluster",
+                    parentNode: parentNode,
+                    position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
+                    style: {
+                        width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
+                        height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
+                    },
+                })
             }
 
-            const dagreNode = dagreGraph.node(cluster.cluster.uid)
-            const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
-
-            const clusterUid = cluster.cluster.uid;
-            elements.value.push({
-                id: clusterUid,
-                label: clusterUid,
-                type: "cluster",
-                parentNode: parentNode,
-                position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
-                style: {
-                    width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
-                    height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
-                },
-            })
-        }
-
-        for (const node of props.flowGraph.nodes) {
-            const dagreNode = dagreGraph.node(node.uid);
-            let nodeType = "task";
-            if (node.type.includes("GraphClusterEnd")) {
-                nodeType = "dot";
-            } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
-                nodeType = "dot";
-            } else if (node.type.includes("GraphClusterRoot")) {
-                nodeType = "dot";
-            } else if (node.type.includes("GraphTrigger")) {
-                nodeType = "trigger";
-            }
-            elements.value.push({
-                id: node.uid,
-                label: isTaskNode(node) ? node.task.id : "",
-                type: nodeType,
-                position: getNodePosition(dagreNode, clusters[node.uid] ? dagreGraph.node(clusters[node.uid].uid) : undefined),
-                style: {
-                    width: getNodeWidth(node) + "px",
-                    height: getNodeHeight(node) + "px"
-                },
-                sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
-                draggable: nodeType === "task" && !props.isReadOnly,
-                data: {
-                    node: node,
-                    namespace: props.namespace,
-                    flowId: props.flowId,
-                    revision: props.execution ? props.execution.flowRevision : undefined,
-                    isFlowable: isTaskNode(node) ? flowables().includes(node.task.id) : false
-                },
-            })
-        }
-
-        for (const edge of props.flowGraph.edges) {
-            elements.value.push({
-                id: edge.source + "|" + edge.target,
-                source: edge.source,
-                target: edge.target,
-                type: "edge",
-                markerEnd: MarkerType.ArrowClosed,
-                data: {
-                    edge: edge,
-                    haveAdd: complexEdgeHaveAdd(edge),
-                    isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
-                    nextTaskId: getNextTaskId(edge.target)
+            for (const node of props.flowGraph.nodes) {
+                const dagreNode = dagreGraph.node(node.uid);
+                let nodeType = "task";
+                if (node.type.includes("GraphClusterEnd")) {
+                    nodeType = "dot";
+                } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
+                    nodeType = "dot";
+                } else if (node.type.includes("GraphClusterRoot")) {
+                    nodeType = "dot";
+                } else if (node.type.includes("GraphTrigger")) {
+                    nodeType = "trigger";
                 }
-            })
+                elements.value.push({
+                    id: node.uid,
+                    label: isTaskNode(node) ? node.task.id : "",
+                    type: nodeType,
+                    position: getNodePosition(dagreNode, clusters[node.uid] ? dagreGraph.node(clusters[node.uid].uid) : undefined),
+                    style: {
+                        width: getNodeWidth(node) + "px",
+                        height: getNodeHeight(node) + "px"
+                    },
+                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                    parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
+                    draggable: nodeType === "task" && !props.isReadOnly,
+                    data: {
+                        node: node,
+                        namespace: props.namespace,
+                        flowId: props.flowId,
+                        revision: props.execution ? props.execution.flowRevision : undefined,
+                        isFlowable: isTaskNode(node) ? flowables().includes(node.task.id) : false
+                    },
+                })
+            }
+
+            for (const edge of props.flowGraph.edges) {
+                elements.value.push({
+                    id: edge.source + "|" + edge.target,
+                    source: edge.source,
+                    target: edge.target,
+                    type: "edge",
+                    markerEnd: MarkerType.ArrowClosed,
+                    data: {
+                        edge: edge,
+                        haveAdd: complexEdgeHaveAdd(edge),
+                        isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
+                        nextTaskId: getNextTaskId(edge.target)
+                    }
+                })
+            }
+        } catch (e) {}
+        finally {
+            isLoading.value = false;
         }
-        isLoading.value = false;
     }
 
     const getFirstTaskId = () => {
@@ -439,11 +449,11 @@
         }
     }
 
-    onMounted(() => {
+    onMounted(async () => {
         if (props.isCreating) {
             store.commit("flow/setFlowGraph", undefined);
         }
-        initYamlSource();
+        await initYamlSource();
         // Regenerate graph on window resize
         observeWidth();
         // Save on ctrl+s in topology
@@ -574,31 +584,35 @@
         haveChange.value = false;
     }
 
-    const saveAsDraft = (errorMessage) => {
-        const errorToastDom = [h("span", {innerHTML: t("invalid flow")}),
+    const errorToast = (title, message, detailedError) => {
+        const errorToastDom = [h("span", {innerHTML: message}),
             h(
-            ElTable,
-            {
-                stripe: true,
-                tableLayout: "auto",
-                fixed: true,
-                data: [{errorMessage}],
-                class: ["mt-2"],
-                size: "small",
-            },
-            [
-                h(ElTableColumn, {prop: "errorMessage", label: "Message"})
-            ]
-        )];
+                ElTable,
+                {
+                    stripe: true,
+                    tableLayout: "auto",
+                    fixed: true,
+                    data: [{detailedError}],
+                    class: ["mt-2"],
+                    size: "small",
+                },
+                [
+                    h(ElTableColumn, {prop: "detailedError", label: "Message"})
+                ]
+            )];
 
         ElNotification({
-            title: t("save draft.message"),
-            message: h("div",  errorToastDom),
+            title: title,
+            message: h("div", errorToastDom),
             type: "error",
             duration: 0,
             dangerouslyUseHTMLString: true,
             customClass: "large"
         });
+    }
+
+    const saveAsDraft = (errorMessage) => {
+        errorToast(t("save draft.message"), t("invalid flow"), errorMessage);
         persistEditorContent(false);
     }
 

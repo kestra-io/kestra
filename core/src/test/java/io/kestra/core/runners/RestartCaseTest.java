@@ -11,6 +11,8 @@ import io.kestra.core.services.ExecutionService;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -18,6 +20,7 @@ import jakarta.inject.Singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class RestartCaseTest {
@@ -138,7 +141,9 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution.getParentId(), nullValue());
         assertThat(finishedRestartedExecution.getTaskRunList().size(), is(5));
 
-        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size(), is(2));
+        Optional<TaskRun> taskRun = finishedRestartedExecution.findTaskRunsByTaskId("failStep").stream().findFirst();
+        assertTrue(taskRun.isPresent());
+        assertThat(taskRun.get().getAttempts().size(), is(2));
 
         assertThat(finishedRestartedExecution.getState().getCurrent(), is(State.Type.FAILED));
     }

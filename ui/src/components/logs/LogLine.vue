@@ -1,7 +1,7 @@
 <template>
     <div class="line font-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge log-level el-tag">{{ log.level.padEnd(9) }}</span>
-        <span class="header-badge">
+        <span :class="levelClass" class="header-badge log-level el-tag noselect">{{ log.level.padEnd(9) }}</span>
+        <span class="header-badge noselect">
             {{ $filters.date(log.timestamp, "iso") }}
         </span>
         <span v-for="(meta, x) in metaWithValue" :key="x">
@@ -162,5 +162,12 @@
         .message {
             padding: 0 calc(var(--spacer) / 2);
         }
+
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            user-select: none; /* Standard syntax */
+        }
+
     }
 </style>

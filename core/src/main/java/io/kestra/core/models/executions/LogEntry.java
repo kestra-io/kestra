@@ -1,19 +1,19 @@
 package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Value;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.micronaut.core.annotation.Nullable;
+import lombok.Builder;
+import lombok.Value;
 import org.slf4j.event.Level;
 
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import io.micronaut.core.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 @Value
 @Builder(toBuilder = true)
@@ -88,5 +88,9 @@ public class LogEntry implements DeletedInterface {
             .flowId(flow.getId())
             .triggerId(abstractTrigger.getId())
             .build();
+    }
+
+    public static String toPrettyString(LogEntry logEntry) {
+        return logEntry.getTimestamp().toString() + " " + logEntry.getLevel() + " " + logEntry.getMessage();
     }
 }

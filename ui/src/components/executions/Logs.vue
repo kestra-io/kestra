@@ -20,12 +20,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group>
-                    <el-button @click="copy">
-                        <kicon :tooltip="$t('copy logs')">
-                            <content-copy />
-                        </kicon>
-                    </el-button>
-                    <el-button :download="downloadName" :href="downloadContent">
+                    <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
                             <download />
                         </kicon>
@@ -34,7 +29,24 @@
             </el-form-item>
         </collapse>
 
-        <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filter" @follow="forwardEvent('follow', $event)" />
+        <log-list
+            v-if="execution.state.current === State.RUNNING"
+            :level="level"
+            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+            :filter="filter"
+            @follow="forwardEvent('follow', $event)"
+        />
+        <div v-else>
+            <log-list
+                v-for="taskRun in execution.taskRunList"
+                :key="taskRun.id"
+                :task-run-id="taskRun.id"
+                :level="level"
+                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                :filter="filter"
+                @follow="forwardEvent('follow', $event)"
+            />
+        </div>
     </div>
 </template>
 
@@ -42,12 +54,11 @@
     import LogList from "../logs/LogList.vue";
     import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import Kicon from "../Kicon.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import Collapse from "../layout/Collapse.vue";
-    import {Buffer} from "buffer";
+    import State from "../../utils/state";
 
     export default {
         components: {
@@ -55,7 +66,6 @@
             LogLevelSelector,
             Kicon,
             Download,
-            ContentCopy,
             Magnify,
             Collapse
         },
@@ -71,18 +81,37 @@
             this.filter = (this.$route.query.q || undefined);
         },
         computed: {
-            ...mapState("execution", ["execution", "taskRun", "logs"]),
-            downloadContent() {
-                return "data:text/plain;base64," + Buffer.from(this.contentAsText, "utf8").toString("base64");
+            State() {
+                return State
             },
+            ...mapState("execution", ["execution", "taskRun", "logs"]),
             contentAsText() {
-                return this.logs.map(l => `${l.timestamp} | ${l.level} | ${l.message}`).join("\n")
+                return this.logsList.map(l => `${l.timestamp} | ${l.level} | ${l.message}`).join("\n")
             },
             downloadName() {
                 return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
+            },
+            logsList() {
+                return this.logs.results || []
             }
         },
         methods: {
+            downloadContent() {
+                console.log(this.level)
+                this.$store.dispatch("execution/downloadLogs", {
+                    executionId: this.execution.id,
+                    params: {
+                        minLevel: this.level
+                    }
+                }).then((response) => {
+                    const url = window.URL.createObjectURL(new Blob([response]));
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", this.downloadName);
+                    document.body.appendChild(link);
+                    link.click();
+                });
+            },
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
@@ -92,7 +121,7 @@
             onChange() {
                 this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
             },
-            copy () {
+            copy() {
                 navigator.clipboard.writeText(this.contentAsText);
                 this.$toast().success(this.$t("copied"));
             },

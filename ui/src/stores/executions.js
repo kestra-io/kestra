@@ -6,7 +6,10 @@ export default {
         taskRun: undefined,
         task: undefined,
         total: 0,
-        logs: [],
+        logs: {
+            total: 0,
+            results: []
+        },
         metrics: [],
         metricsTotal: 0,
     },
@@ -112,7 +115,12 @@ export default {
             return this.$http.get(`/api/v1/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
-                commit("setLogs", response.data)
+                if(options.params.page !== 1) {
+                    commit("appendLogs", response.data)
+                } else {
+                    commit("setLogs", response.data)
+                }
+                return response.data;
             })
         },
         loadMetrics({commit}, options) {
@@ -121,6 +129,13 @@ export default {
             }).then(response => {
                 commit("setMetrics", response.data.results)
                 commit("setMetricsTotal", response.data.total)
+            })
+        },
+        downloadLogs(_, options) {
+            return this.$http.get(`api/v1/logs/${options.executionId}/download`, {
+                params: options.params
+            }).then(response => {
+                return response.data
             })
         }
     },
@@ -143,14 +158,21 @@ export default {
         setLogs(state, logs) {
             state.logs = logs
         },
+        resetLogs(state) {
+            state.logs = {results:[], total:0}
+        },
+        appendLogs(state, logs) {
+            state.logs.results = state.logs.results.concat(logs.results)
+        },
+        appendFollowedLogs(state, logs) {
+            state.logs.results.push(logs)
+            state.logs.total = state.logs.results.length
+        },
         setMetrics(state, metrics) {
             state.metrics = metrics
         },
         setMetricsTotal(state, metrics) {
             state.metricsTotal = metrics
-        },
-        appendLogs(state, logs) {
-            state.logs.push(logs);
         }
     },
     getters: {

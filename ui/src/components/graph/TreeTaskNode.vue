@@ -126,7 +126,10 @@
                     </el-form-item>
                 </collapse>
                 <log-list
-                    :task-id="task.id"
+                    v-for="taskRun in taskRuns"
+                    :key="taskRun.id"
+                    :execution="execution"
+                    :task-run-id="taskRun.id"
                     :filter="filter"
                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                     :level="logLevel"
@@ -254,9 +257,11 @@
             hash() {
                 return this.n.uid.hashCode();
             },
+            taskRunList(){
+                return this.execution && this.execution.taskRunList ? this.execution.taskRunList : []
+            },
             taskRuns() {
-                return (this.execution && this.execution.taskRunList ? this.execution.taskRunList : [])
-                    .filter(t => t.taskId === this.task.id)
+                return this.taskRunList.filter(t => t.taskId === this.task.id)
             },
             taskRunsFlowExecutionId() {
                 const task = this.taskRuns

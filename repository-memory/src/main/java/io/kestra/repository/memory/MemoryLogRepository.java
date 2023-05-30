@@ -28,6 +28,11 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
+    public ArrayListTotal<LogEntry> findByExecutionId(String id, Level minLevel, Pageable pageable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
         return logs
             .stream()
@@ -36,7 +41,17 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel, Pageable pageable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 

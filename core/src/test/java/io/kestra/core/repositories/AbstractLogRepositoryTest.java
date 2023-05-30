@@ -72,4 +72,46 @@ public abstract class AbstractLogRepositoryTest {
         list = logRepository.findByExecutionIdAndTaskId(save.getExecutionId(), save.getTaskId(), null);
         assertThat(list.size(), is(0));
     }
+
+    @Test
+    void Pageable() {
+        String executionId = "123";
+        LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
+        builder
+            .executionId(executionId);
+        for (int i = 0; i < 80; i++) {
+            logRepository.save(builder.build());
+        }
+
+        builder = logEntry(Level.INFO).executionId(executionId).taskId("taskId2").taskRunId("taskRunId2");
+        LogEntry logEntry2 = logRepository.save(builder.build());
+        for (int i = 0; i < 20; i++) {
+            logRepository.save(builder.build());
+        }
+
+        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(executionId, null, Pageable.from(1, 50));
+
+        assertThat(find.size(), is(50));
+        assertThat(find.getTotal(), is(101L));
+
+        find = logRepository.findByExecutionId(executionId, null, Pageable.from(3, 50));
+
+        assertThat(find.size(), is(1));
+        assertThat(find.getTotal(), is(101L));
+
+        find = logRepository.findByExecutionIdAndTaskId(executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
+
+        assertThat(find.size(), is(21));
+        assertThat(find.getTotal(), is(21L));
+
+        find = logRepository.findByExecutionIdAndTaskRunId(executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
+
+        assertThat(find.size(), is(10));
+        assertThat(find.getTotal(), is(21L));
+
+        find = logRepository.findByExecutionIdAndTaskRunId(executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
+
+        assertThat(find.size(), is(0));
+
+    }
 }

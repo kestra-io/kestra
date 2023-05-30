@@ -189,12 +189,17 @@
             namespace: props.namespace
         });
 
-        const validation = await store.dispatch("flow/validateFlow", {flow: flowYaml.value});
-        const validationErrors = validation[0].constraints;
-        if(validationErrors){
-            errorToast(t("cannot create topology"), t("invalid flow"), validationErrors);
+        if(!props.isCreating) {
+            const validation = await store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+            const validationErrors = validation[0].constraints;
+            if (validationErrors) {
+                singleErrorToast(t("cannot create topology"), t("invalid flow"), validationErrors);
+            }else {
+                generateGraph();
+            }
+        } else {
+            generateGraph();
         }
-        generateGraph();
 
         if(!props.isReadOnly) {
             let restoredLocalStorageKey;
@@ -584,35 +589,21 @@
         haveChange.value = false;
     }
 
-    const errorToast = (title, message, detailedError) => {
-        const errorToastDom = [h("span", {innerHTML: message}),
-            h(
-                ElTable,
-                {
-                    stripe: true,
-                    tableLayout: "auto",
-                    fixed: true,
-                    data: [{detailedError}],
-                    class: ["mt-2"],
-                    size: "small",
-                },
-                [
-                    h(ElTableColumn, {prop: "detailedError", label: "Message"})
-                ]
-            )];
-
-        ElNotification({
+    const singleErrorToast = (title, message, detailedError) => {
+        store.dispatch("core/showMessage", {
             title: title,
-            message: h("div", errorToastDom),
-            type: "error",
-            duration: 0,
-            dangerouslyUseHTMLString: true,
-            customClass: "large"
+            message: message,
+            content: {
+                _embedded: {
+                    errors: [{message: detailedError}]
+                }
+            },
+            variant: "error"
         });
     }
 
     const saveAsDraft = (errorMessage) => {
-        errorToast(t("save draft.message"), t("invalid flow"), errorMessage);
+        singleErrorToast(t("save draft.message"), t("invalid flow"), errorMessage);
         persistEditorContent(false);
     }
 

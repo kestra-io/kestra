@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.tasks.flows.Pause;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -66,6 +67,53 @@ class WorkerTest {
 
         Await.until(
             () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
+            Duration.ofMillis(100),
+            Duration.ofMinutes(1)
+        );
+
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+    }
+
+    @Test
+    void failOnWorkerTaskWithFlowable() throws TimeoutException {
+        Worker worker = new Worker(applicationContext, 8);
+        worker.run();
+
+        AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
+        workerTaskResultQueue.receive(workerTaskResult::set);
+
+        Pause pause = Pause.builder()
+            .type(Pause.class.getName())
+            .delay(Duration.ofSeconds(1))
+            .id("unit-test")
+            .build();
+
+        io.kestra.core.tasks.flows.Worker theWorkerTask = io.kestra.core.tasks.flows.Worker.builder()
+            .type(io.kestra.core.tasks.flows.Worker.class.getName())
+            .id("worker-unit-test")
+            .tasks(List.of(pause))
+            .build();
+
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unit-test")
+            .tasks(Collections.singletonList(theWorkerTask))
+            .build();
+
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
+        ResolvedTask resolvedTask = ResolvedTask.of(pause);
+
+        WorkerTask workerTask = WorkerTask.builder()
+            .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
+            .task(theWorkerTask)
+            .taskRun(TaskRun.of(execution, resolvedTask))
+            .build();
+
+        workerTaskQueue.emit(workerTask);
+
+        Await.until(
+            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isFailed(),
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

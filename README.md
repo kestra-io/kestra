@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Infinitely scalable open source orchestration & scheduling platform. <br>
+    Event-driven declarative orchestrator to simplify data operations <br>
 </h1>
 
 <div align="center">
@@ -38,128 +38,177 @@
 <p align="center"><img src="https://kestra.io/video.gif" alt="modern data orchestration and scheduling platform " width="640px" /></p>
 
 
-## Demo
+## Live Demo
 
-Play with our [demo app](https://demo.kestra.io)!
+Try Kestra using our [live demo](https://demo.kestra.io).
 
-## What is Kestra ?
-Kestra is an infinitely scalable orchestration and scheduling platform, creating, running, scheduling, and monitoring millions of complex pipelines.
+## What is Kestra
 
-- 🔀 **Any kind of workflow**: Workflows can start simple and progress to more complex systems with branching, parallel, dynamic tasks, flow dependencies
-- 🎓‍ **Easy to learn**: Flows are in simple, descriptive language defined in YAML—you don't need to be a developer to create a new flow.
-- 🔣 **Easy to extend**: Plugins are everywhere in Kestra, many are available from the Kestra core team, but you can create one easily.
-- 🆙 **Any triggers**: Kestra is event-based at heart—you can trigger an execution from API, schedule, detection, events
-- 💻 **A rich user interface**: The built-in web interface allows you to create, run, and monitor all your flows—no need to deploy your flows, just edit them.
-- ⏩ **Enjoy infinite scalability**: Kestra is built around top cloud native technologies—scale to millions of executions stress-free.
+Kestra is an open-source, **event-driven** orchestrator that simplifies data operations and improves collaboration between engineers and business users. By bringing **Infrastructure as Code** best practices to data pipelines, Kestra allows you to build reliable workflows and manage them with confidence.
 
-**Example flow:**
+Thanks to the **declarative YAML interface** for defining orchestration logic, everyone who benefits from analytics can participate in the data pipeline creation process. The UI automatically adjusts the YAML definition any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is defined declaratively in code, even if some workflow components are modified in other ways.
+
+![Adding new tasks in the UI](https://kestra.io/adding-tasks.gif)
+
+
+## Key concepts
+
+1. `Flow` is the main component in Kestra. It's a container for your tasks and orchestration logic.
+2. `Namespace` is used to provide logical isolation, e.g., to separate development and production environments. Namespaces are like folders on your file system — they organize flows into logical categories and can be nested to provide a hierarchical structure.
+3. `Tasks` are atomic actions in a flow. By default, all tasks in the list will be executed sequentially, with additional customization options, a.o. to run tasks in parallel or allow a failure of specific tasks when needed.
+4. `Triggers` define when a flow should run. In Kestra, flows are triggered based on events. Examples of such events include:
+    - a regular time-based **schedule**
+    - an **API** call (*webhook trigger*)
+    - ad-hoc execution from the **UI**
+    - a **flow trigger** - flows can be triggered from other flows using a [flow trigger](https://kestra.io/docs/developer-guide/triggers/flow) or a [subflow](https://kestra.io/docs/flow-examples/subflow), enabling highly modular workflows.
+    - **custom events**, including a new file arrival (*file detection event*), a new message in a message bus, query completion, and more.
+5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, and allow additional [validation rules](https://kestra.io/docs/developer-guide/inputs#input-validation).
+
+
+## Extensible platform via plugins 
+
+Most tasks in Kestra are available as [plugins](https://kestra.io/plugins), but many type of tasks are available in the core library, including a.o. script tasks supporting various programming languages (e.g., Python, Node, Bash) and the ability to orchestrate your business logic packaged into Docker container images. 
+
+To create your own plugins, check the [plugin developer guide](https://kestra.io/docs/plugin-developer-guide).
+
+## Rich orchestration capabilities
+
+Kestra provides a variety of tasks to handle both simple and complex business logic, including:
+
+- retries
+- timeout
+- error handling
+- conditional branching
+- dynamic tasks
+- sequential and parallel tasks
+- skipping tasks or triggers when needed by setting the flag `disabled` to `true`.
+- configuring dependencies between tasks, flows and triggers
+- advanced scheduling and trigger conditions
+- backfills
+- documenting your flows, tasks and triggers by adding a markdown description to any component
+- adding labels to add additional metadata to your flows such as the flow owner or team:
 
 ```yaml
-id: my-first-flow
-namespace: my.company.teams
-
-inputs:
-  - type: FILE
-    name: uploaded
-    description: A Csv file to be uploaded through API or UI
-
+id: hello  
+namespace: prod
+description: Hi from `Kestra` and a **markdown** description.
+labels:
+  owner: john-doe
+  team: data-engineering
 tasks:
-  - id: archive
-    type: io.kestra.plugin.gcp.gcs.Upload
-    description: Archive the file on Google Cloud Storage bucket
-    from: "{{ inputs.uploaded }}"
-    to: "gs://my_bucket/archives/{{ execution.id }}.csv"
-
-  - id: csvReader
-    type: io.kestra.plugin.serdes.csv.CsvReader
-    from: "{{ inputs.uploaded }}"
-
-  - id: fileTransform
-    type: io.kestra.plugin.scripts.nashorn.FileTransform
-    description: This task will anonymize the contactName with a custom nashorn script (javascript over jvm). This show that you able to handle custom transformation or remapping in the ETL way
-    from: "{{ outputs.csvReader.uri }}"
-    script: |
-      if (row['contactName']) {
-        row['contactName'] = "*".repeat(row['contactName'].length);
-      }
-
-  - id: avroWriter
-    type: io.kestra.plugin.serdes.avro.AvroWriter
-    description: This file will convert the file from Kestra internal storage to avro. Again, we handling ETL since the conversion is done by Kestra before loading the data in BigQuery. This allow you to have some control before loading and to reject wrong data as soon as possible.
-    from: "{{ outputs.fileTransform.uri }}"
-    schema: |
-      {
-        "type": "record",
-        "name": "Root",
-        "fields":
-          [
-            { "name": "contactTitle", "type": ["null", "string"] },
-            { "name": "postalCode", "type": ["null", "long"] },
-            { "name": "entityId", "type": ["null", "long"] },
-            { "name": "country", "type": ["null", "string"] },
-            { "name": "region", "type": ["null", "string"] },
-            { "name": "address", "type": ["null", "string"] },
-            { "name": "fax", "type": ["null", "string"] },
-            { "name": "email", "type": ["null", "string"] },
-            { "name": "mobile", "type": ["null", "string"] },
-            { "name": "companyName", "type": ["null", "string"] },
-            { "name": "contactName", "type": ["null", "string"] },
-            { "name": "phone", "type": ["null", "string"] },
-            { "name": "city", "type": ["null", "string"] }
-          ]
-      }
-
-  - id: load
-    type: io.kestra.plugin.gcp.bigquery.Load
-    description: Simply load the generated from avro task to BigQuery
-    avroOptions:
-      useAvroLogicalTypes: true
-    destinationTable: kestra-prd.demo.customer_copy
-    format: AVRO
-    from: "{{outputs.avroWriter.uri }}"
-    writeDisposition: WRITE_TRUNCATE
-
-  - id: aggregate
-    type: io.kestra.plugin.gcp.bigquery.Query
-    description: Aggregate some data from loaded files
-    createDisposition: CREATE_IF_NEEDED
-    destinationTable: kestra-prd.demo.agg
-    sql: |
-      SELECT k.categoryName, p.productName, c.companyName, s.orderDate, SUM(d.quantity) AS quantity, SUM(d.unitPrice * d.quantity * r.exchange) as totalEur
-      FROM `kestra-prd.demo.salesOrder` AS s
-      INNER JOIN `kestra-prd.demo.orderDetail` AS d ON s.entityId = d.orderId
-      INNER JOIN `kestra-prd.demo.customer` AS c ON c.entityId = s.customerId
-      INNER JOIN `kestra-prd.demo.product` AS p ON p.entityId = d.productId
-      INNER JOIN `kestra-prd.demo.category` AS k ON k.entityId = p.categoryId
-      INNER JOIN `kestra-prd.demo.rates` AS r ON r.date = DATE(s.orderDate) AND r.currency = "USD"
-      GROUP BY 1, 2, 3, 4
-    timePartitioningField: orderDate
-    writeDisposition: WRITE_TRUNCATE
+  - id: hello
+    type: io.kestra.core.tasks.log.Log
+    message: Hello world!
+    description: a *very* important task
+    disabled: false
+    timeout: 10M
+    retry:
+      type: constant # type: string
+      interval: PT15M # type: Duration
+      maxDuration: PT1H # type: Duration
+      maxAttempt: 5 # type: int
+      warningOnRetry: true # type: boolean, default is false
+  - id: parallel
+    type: io.kestra.core.tasks.flows.Parallel
+    concurrent: 3
+    tasks:
+      - id: task1
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - 'echo "running {{task.id}}"'
+          - 'sleep 10'
+      - id: task2
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - 'echo "running {{task.id}}"'
+          - 'sleep 10'
+      - id: task3
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - 'echo "running {{task.id}}"'
+          - 'sleep 10'
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "*/15 * * * *"
+    backfill:
+      start: 2023-06-25T14:00:00Z
 ```
+
+
+## Built-in code editor
+
+You can write workflows directly from the UI. When writing your workflows, the UI provides:
+- autocompletion
+- syntax validation
+- embedded plugin documentation
+- topology view (view of your dependencies in a Directed Acyclic Graph) that get updated live as you modify and add new tasks.
+
 
 ## Getting Started
 
-To get a local copy up and running, please follow these steps.
+To get a local copy up and running, follow the steps below.
 
 ### Prerequisites
 
-Make sure you have already installed:
+Make sure that Docker is installed and running on your system. The default installation requires the following:
 - [Docker](https://docs.docker.com/engine/install/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
+
 ### Launch Kestra
-- Download the compose file [here](https://github.com/kestra-io/kestra/blob/develop/docker-compose.yml) and save it with the name `docker-compose.yml`, for linux and macos, you can run `wget https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml`
-- Run `docker-compose up -d`
-- Open `http://localhost:8080` on your browser
-- Follow [this tutorial](https://kestra.io/docs/getting-started/) to create your first flow.
-- Read the [documentation](https://kestra.io/docs/) to understand how to
+
+Download the Docker Compose file:
+
+```sh
+curl -o docker-compose.yml https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
+```
+
+Alternatively, you can use `wget https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml`.
+
+
+Start Kestra:
+
+```sh
+docker-compose up
+```
+
+
+Open `http://localhost:8080` in your browser and create your first flow.
+
+
+### Hello-World flow
+
+Here is a simple example logging hello world message to the terminal:
+
+```yaml
+id: hello  
+namespace: prod
+tasks:
+  - id: hello-world
+    type: io.kestra.core.tasks.log.Log
+    message: Hello world!
+```
+
+For more information:
+
+- Follow the [getting started tutorial](https://kestra.io/docs/getting-started/).
+- Read the [documentation](https://kestra.io/docs/) to understand how to:
   - [Develop your flows](https://kestra.io/docs/developer-guide/)
   - [Deploy Kestra](https://kestra.io/docs/administrator-guide/)
-  - Use our [Terraform provider](https://kestra.io/docs/terraform/)
-  - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/)
+  - Use our [Terraform provider](https://kestra.io/docs/terraform/) to deploy your flows
+  - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/).
+
+
+
 
 ## Plugins
-Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [these steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin. Here are the official plugins that are available:
+Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [these steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin. 
+
+
+For a full list of plugins, check the [plugins page](https://kestra.io/plugins/).
+
+Here are some examples of the available plugins:
 
 <table>
     <tr>
@@ -261,26 +310,27 @@ Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find y
 
 
 
-This list is growing quickly as we are actively building more plugins, and we welcome contributions!
+This list is growing quickly and we welcome contributions.
 
 ## Community Support
 
-Join our community if you need help, want to chat, or have any other questions for us:
+If you need help or have any questions, reach out using one of the following channels:
 
-- [GitHub](https://github.com/kestra-io/kestra/discussions) - Discussion forums and updates from the Kestra team
-- [Twitter](https://twitter.com/kestra_io) - For all the latest Kestra news
-- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - Join the conversation! Get all the latest updates and chat with the devs
+- [GitHub discussions](https://github.com/kestra-io/kestra/discussions) - useful to start a conversation that is not a bug or feature request.
+- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - join the community and get the latest updates.
+- [Twitter](https://twitter.com/kestra_io) - to follow up with the latest updates.
 
 
 ## Roadmap
 
 See the [open issues](https://github.com/kestra-io/kestra/issues) for a list of proposed features (and known issues) or look at the [project board](https://github.com/orgs/kestra-io/projects/2).
 
-## Developing locally & Contributing
 
-We love contributions big or small, check out [our guide](https://github.com/kestra-io/kestra/blob/develop/.github/CONTRIBUTING.md) on how to get started.
+## Contributing
 
-See our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) for developing Kestra plugins.
+We love contributions, big or small. Check out [our contributor guide](https://github.com/kestra-io/kestra/blob/develop/.github/CONTRIBUTING.md) for details on how to contribute to Kestra.
+
+See our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) for details on developing and publishing Kestra plugins.
 
 
 ## License

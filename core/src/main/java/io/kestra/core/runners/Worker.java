@@ -40,6 +40,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,7 +63,6 @@ public class Worker implements Runnable, Closeable {
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
 
-    @Getter
     private final List<WorkerThread> workerThreadReferences = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
@@ -133,6 +133,9 @@ public class Worker implements Runnable, Closeable {
                         } finally {
                             runContext.cleanup();
                         }
+                    }
+                    else {
+                        throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
                     }
                 });
             }
@@ -266,7 +269,7 @@ public class Worker implements Runnable, Closeable {
         finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
 
         // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
-        // So we just tryed to failed the status of the worker task, in this case, no log can't be happend, just
+        // So we just tried to fail the status of the worker task, in this case, no log can't be happend, just
         // changing status must work in order to finish current task (except if we are near the upper bound size).
         try {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
@@ -309,13 +312,23 @@ public class Worker implements Runnable, Closeable {
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
-        RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
-
         RunContext runContext = workerTask
             .getRunContext()
             .forWorker(this.applicationContext, workerTask);
 
         Logger logger = runContext.logger();
+
+        if(!(workerTask.getTask() instanceof RunnableTask)) {
+            // This should never happen but better to deal with it than crashing the Worker
+            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
+            List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
+            TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
+            logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
+                "': only runnable tasks can be executed by the worker but the task is of type " + workerTask.getTask().getClass());
+            return workerTask.withTaskRun(taskRun);
+        }
+
+        RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State().withState(State.Type.RUNNING));
@@ -325,7 +338,6 @@ public class Worker implements Runnable, Closeable {
         metricRunningCount.incrementAndGet();
 
         WorkerThread workerThread = new WorkerThread(logger, workerTask, task, runContext, metricRegistry);
-        workerThread.start();
 
         // emit attempts
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask
@@ -341,6 +353,7 @@ public class Worker implements Runnable, Closeable {
             synchronized (this) {
                 workerThreadReferences.add(workerThread);
             }
+            workerThread.start();
             workerThread.join();
             state = workerThread.getTaskState();
         } catch (InterruptedException e) {
@@ -430,7 +443,7 @@ public class Worker implements Runnable, Closeable {
 
         Await.until(
             () -> {
-                if (this.executors.isTerminated() && this.getWorkerThreadReferences().size() == 0) {
+                if (this.executors.isTerminated() && this.workerThreadReferences.size() == 0) {
                     log.info("No more workers busy, shutting down!");
 
                     // we ensure that last produce message are send
@@ -445,7 +458,7 @@ public class Worker implements Runnable, Closeable {
 
                 log.warn(
                     "Waiting worker with still {} thread(s) running, waiting!",
-                    this.getWorkerThreadReferences().size()
+                    this.workerThreadReferences.size()
                 );
 
                 return false;
@@ -457,6 +470,10 @@ public class Worker implements Runnable, Closeable {
         executionKilledQueue.close();
         workerTaskResultQueue.close();
         metricEntryQueue.close();
+    }
+
+    public List<WorkerTask> getWorkerThreadTasks() {
+        return this.workerThreadReferences.stream().map(thread -> thread.workerTask).toList();
     }
 
     @Getter
@@ -528,7 +545,6 @@ public class Worker implements Runnable, Closeable {
             this.interrupt();
         }
 
-        @Synchronized
         private void exceptionHandler(Thread t, Throwable e) {
             if (!this.killed) {
                 logger.error(e.getMessage(), e);
@@ -536,4 +552,5 @@ public class Worker implements Runnable, Closeable {
             }
         }
     }
+
 }

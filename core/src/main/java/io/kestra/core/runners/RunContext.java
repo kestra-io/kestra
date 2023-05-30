@@ -82,15 +82,13 @@ public class RunContext {
     }
 
     /**
-     * Only used by {@link io.kestra.core.models.triggers.AbstractTrigger}
+     * Only used by {@link io.kestra.core.models.triggers.AbstractTrigger}, then scheduler must call {@link RunContext#forScheduler(Flow, AbstractTrigger)}
      *
      * @param applicationContext the current {@link ApplicationContext}
      */
     public RunContext(ApplicationContext applicationContext, Flow flow, AbstractTrigger trigger) {
         this.initBean(applicationContext);
 
-        this.triggerExecutionId = IdUtils.create();
-        this.storageOutputPrefix = this.storageInterface.outputPrefix(flow, trigger, triggerExecutionId);
         this.variables = this.variables(flow, null, null, null, trigger);
         this.initLogger(flow, trigger);
     }
@@ -165,7 +163,12 @@ public class RunContext {
         );
     }
 
+    @JsonIgnore
     public String getTriggerExecutionId() {
+        if (this.triggerExecutionId == null) {
+            throw new IllegalStateException("triggerExecutionId is not defined");
+        }
+
         return triggerExecutionId;
     }
 
@@ -361,6 +364,13 @@ public class RunContext {
         runContext.temporaryDirectory = this.temporaryDirectory;
 
         return runContext;
+    }
+
+    public RunContext forScheduler(Flow flow, AbstractTrigger trigger) {
+        this.triggerExecutionId = IdUtils.create();
+        this.storageOutputPrefix = this.storageInterface.outputPrefix(flow, trigger, triggerExecutionId);
+
+        return this;
     }
 
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {

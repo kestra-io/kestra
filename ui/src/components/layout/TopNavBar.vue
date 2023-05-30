@@ -147,6 +147,7 @@
                 &.version, html.dark &.version  {
                     background: var(--el-color-primary) !important;
                     border-color:  var(--el-color-primary-dark-2) !important;
+                    color: var(--bs-white) !important;
                 }
             }
         }

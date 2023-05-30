@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.SneakyThrows;

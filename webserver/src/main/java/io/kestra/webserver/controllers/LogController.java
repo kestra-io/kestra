@@ -70,7 +70,7 @@ public class LogController {
     public PagedResults<LogEntry> findByExecution(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "50") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(defaultValue = "timestamp:asc") List<String> sort,
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,

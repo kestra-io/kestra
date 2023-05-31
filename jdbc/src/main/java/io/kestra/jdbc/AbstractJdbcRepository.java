@@ -133,6 +133,7 @@ public abstract class AbstractJdbcRepository<T> {
 
     public Instant getDate(Record record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
+        Integer minute = fields.contains("minute") ?  record.get("minute", Integer.class): null;
         Integer hour = fields.contains("hour") ?  record.get("hour", Integer.class): null;
         Integer day = fields.contains("day") ?  record.get("day", Integer.class): null;
         Integer week = fields.contains("week") ?  record.get("week", Integer.class): null;
@@ -140,6 +141,9 @@ public abstract class AbstractJdbcRepository<T> {
         Integer year = fields.contains("year") ?  record.get("year", Integer.class): null;
 
         switch (groupByType) {
+            case "minute" -> {
+                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+            }
             case "hour" -> {
                 return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
             }

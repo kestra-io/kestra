@@ -137,6 +137,8 @@ export function backgroundFromState(state, alpha = 1) {
 
 export function getFormat(groupBy) {
     switch (groupBy) {
+        case "minute":
+            return "LT";
         case "hour":
             return "LLL";
         case "day":

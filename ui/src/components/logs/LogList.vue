@@ -11,8 +11,8 @@
                                 <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
-                                <div class="task-icon me-1" v-loading="this.tasksIcons[currentTaskRun.id] === undefined">
-                                    <task-icon :cls="tasksIcons[currentTaskRun.id]" v-if="this.tasksIcons[currentTaskRun.id]" only-icon />
+                                <div class="task-icon me-1">
+                                    <task-icon :cls="taskIcon(currentTaskRun.taskId)" v-if="taskIcon(currentTaskRun.taskId)" only-icon />
                                 </div>
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
@@ -133,6 +133,7 @@
     import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
     import TaskIcon from "../plugins/TaskIcon.vue";
+    import FlowUtils from "../../utils/flowUtils.js";
 
     export default {
         components: {
@@ -184,7 +185,6 @@
                 showOutputs: {},
                 showMetrics: {},
                 fullscreen: false,
-                tasksIcons: {}
             };
         },
         watch: {
@@ -201,21 +201,10 @@
             if (!this.fullScreenModal) {
                 this.loadLogs();
             }
-            if (this.execution){
-                for(let currentTaskRun of this.execution.taskRunList){
-                    this.$store.dispatch("flow/loadTask", {
-                        namespace: currentTaskRun.namespace,
-                        id: currentTaskRun.flowId,
-                        taskId: currentTaskRun.taskId,
-                        revision: currentTaskRun.revision
-                    }).then(value => {
-                        this.tasksIcons[currentTaskRun.id] = value ? value.type : null
-                    })
-                }
-            }
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
+            ...mapState("flow", ["flow"]),
         },
         methods: {
             forwardEvent(type, event) {
@@ -235,6 +224,10 @@
                 }
 
                 return true;
+            },
+            taskIcon(taskId) {
+                let findTaskById = FlowUtils.findTaskById(this.flow, taskId);
+                return findTaskById ? findTaskById.type : undefined;
             },
             toggleShowOutput(taskRun) {
                 this.showOutputs[taskRun.id] = !this.showOutputs[taskRun.id];

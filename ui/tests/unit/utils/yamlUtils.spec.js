@@ -1,7 +1,7 @@
 import {describe, it, expect} from "vitest"
 import YamlUtils from "../../../src/utils/yamlUtils";
 
-const flat = `
+export const flat = `
 id: flat
 namespace: io.kestra.tests
 
@@ -17,7 +17,7 @@ tasks:
       - 'echo "1-2"'
 `
 
-const flowable = `
+export const flowable = `
 id: flowable
 namespace: io.kestra.tests
 
@@ -49,7 +49,7 @@ tasks:
       - 'echo "end"'
 `
 
-const plugins = `
+export const plugins = `
 id: flowable
 namespace: io.kestra.tests
 

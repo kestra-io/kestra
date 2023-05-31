@@ -1,6 +1,7 @@
 import JsYaml from "js-yaml";
 import yaml, {Document, YAMLMap, isSeq, isMap, Pair, Scalar, YAMLSeq, LineCounter} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
+import {SECTIONS} from "./constants.js";
 
 const TOSTRING_OPTIONS = {lineWidth: 0};
 
@@ -331,7 +332,7 @@ export default class YamlUtils {
     }
 
     static deleteTask(source, taskId, section) {
-        const inSection = section === "tasks" ? ["tasks", "errors"] : ["triggers"];
+        const inSection = section === SECTIONS.TASK ? ["tasks", "errors"] : ["triggers"];
         const yamlDoc = yaml.parseDocument(source);
         yaml.visit(yamlDoc, {
             Pair(_, pair) {

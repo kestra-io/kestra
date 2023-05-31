@@ -89,6 +89,7 @@
                                                 :read-only="true"
                                                 component="el-dropdown-item"
                                                 :task-id="currentTaskRun.taskId"
+                                                :section="SECTIONS.TASK"
                                                 :flow-id="execution.flowId"
                                                 :namespace="execution.namespace"
                                                 :revision="execution.flowRevision"
@@ -117,6 +118,10 @@
         </div>
     </div>
 </template>
+
+<script setup>
+    import {SECTIONS} from "../../utils/constants.js";
+</script>
 
 <script>
     import {mapState} from "vuex";
@@ -235,16 +240,6 @@
                 }
 
                 return true;
-            },
-            toggleShowOutput(taskRun) {
-                this.showOutputs[taskRun.id] = !this.showOutputs[taskRun.id];
-                this.$forceUpdate();
-            },
-            toggleShowMetric(taskRun, index) {
-                this.showMetrics[taskRun.id + "-" + index] = !this.showMetrics[
-                    taskRun.id + "-" + index
-                ];
-                this.$forceUpdate();
             },
             loadLogs() {
                 let params = {minLevel: this.level};

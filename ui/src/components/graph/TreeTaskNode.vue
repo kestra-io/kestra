@@ -36,7 +36,7 @@
             >
                 <el-form label-position="top">
                     <task-editor
-                        section="tasks"
+                        :section="SECTIONS.TASK"
                         @update:model-value="onUpdateNewError( $event)"
                     />
                 </el-form>
@@ -78,7 +78,7 @@
                     <el-button
                         class="node-action"
                         size="small"
-                        @click="forwardEvent('delete', {id: this.task.id, section: 'tasks'})"
+                        @click="forwardEvent('delete', {id: this.task.id, section: SECTIONS.TASK})"
                         :icon="Delete"
                     />
                 </el-tooltip>
@@ -98,6 +98,7 @@
                     <task-edit
                         v-if="!this.isReadOnly && isAllowedEdit"
                         class="node-action"
+                        :section="SECTIONS.TASK"
                         :task="task"
                         :flow-id="flowId"
                         size="small"
@@ -136,6 +137,10 @@
         </template>
     </tree-node>
 </template>
+
+<script setup>
+    import {SECTIONS} from "../../utils/constants.js";
+</script>
 
 <script>
     import {mapState} from "vuex";

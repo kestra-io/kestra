@@ -40,7 +40,7 @@
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
-                        :schema-type="mapSectionWithSchema()"
+                        :schema-type="section.toLowerCase()"
                         :full-height="false"
                         :navbar="false"
                         lang="yaml"
@@ -121,7 +121,10 @@
             },
             section: {
                 type: String,
-                default: "tasks"
+                default: "TASK",
+                validator(value) {
+                    return ['TASK', 'TRIGGER'].includes(value)
+                }
             },
             emitOnly: {
                 type: Boolean,
@@ -144,16 +147,7 @@
 
                 return YamlUtils.extractTask(this.flow.source, taskId).toString();
             },
-            mapSectionWithSchema() {
-                switch (this.section) {
-                case "tasks":
-                    return "task";
-                case "triggers":
-                    return "trigger";
-                default:
-                    return "task";
-                }
-            },
+
             saveTask() {
                 let updatedSource;
                 try {
@@ -196,7 +190,7 @@
             onInput(value) {
                 clearTimeout(this.timer);
                 this.timer = setTimeout(() => {
-                    this.$store.dispatch("flow/validateTask", {task: value})
+                    this.$store.dispatch("flow/validateTask", {task: value, section: this.section})
                 }, 500);
             },
         },

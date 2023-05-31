@@ -17,6 +17,7 @@
     import {useStore} from "vuex";
     import ValidationError from "../../flows/ValidationError.vue";
     import {Ref} from "@vue/reactivity";
+    import {SECTIONS} from "../../../utils/constants.js";
 
     const store = useStore();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -246,7 +247,7 @@
             >
                 <el-form label-position="top">
                     <task-editor
-                        section="tasks"
+                        :section="SECTIONS.TASK"
                         @update:model-value="updateTask($event)"
                     />
                 </el-form>

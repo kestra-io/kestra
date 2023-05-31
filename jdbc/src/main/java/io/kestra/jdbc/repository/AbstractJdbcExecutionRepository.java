@@ -276,7 +276,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     private List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(Result<Record> records, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate).toDays());
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
         return fillDate(records
                 .stream()
@@ -311,7 +311,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(finalStartDate, finalEndDate).toDays(), "start_date"));
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(finalStartDate, finalEndDate), "start_date"));
         List<Field<?>> selectFields = new ArrayList<>(fields);
         selectFields.addAll(List.of(
             DSL.count().as("count"),
@@ -452,7 +452,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     private static List<DailyExecutionStatistics> fillDate(List<DailyExecutionStatistics> results, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate).toDays());
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
         if (groupByType.equals(DateUtils.GroupType.MONTH)) {
             return fillDate(results, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM", groupByType.val());
@@ -460,8 +460,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             return fillDate(results, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww", groupByType.val());
         } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
             return fillDate(results, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD", groupByType.val());
-        } else {
+        }  else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
             return fillDate(results, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH", groupByType.val());
+        } else {
+            return fillDate(results, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm", groupByType.val());
         }
     }
 

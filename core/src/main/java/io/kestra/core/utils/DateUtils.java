@@ -3,6 +3,7 @@ package io.kestra.core.utils;
 import io.kestra.core.exceptions.InternalException;
 
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetTime;
 import java.time.ZonedDateTime;
@@ -41,15 +42,17 @@ public class DateUtils {
         return currentDate;
     }
 
-    public static GroupType groupByType(Long dayCount) {
-        if (dayCount > 365) {
+    public static GroupType groupByType(Duration duration) {
+        if (duration.toDays() > GroupValue.MONTH.getValue()) {
             return GroupType.MONTH;
-        } else if (dayCount > 180) {
+        } else if (duration.toDays() > GroupValue.WEEK.getValue()) {
             return GroupType.WEEK;
-        } else if (dayCount > 1) {
+        } else if (duration.toDays() > GroupValue.DAY.getValue()) {
             return GroupType.DAY;
-        } else {
+        } else if (duration.toHours() > GroupValue.HOUR.getValue()){
             return GroupType.HOUR;
+        } else {
+            return GroupType.MINUTE;
         }
     }
 
@@ -57,10 +60,28 @@ public class DateUtils {
         MONTH,
         WEEK,
         DAY,
-        HOUR;
+        HOUR,
+        MINUTE;
 
         public String val() {
             return this.name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    public enum GroupValue {
+        MONTH(365),
+        WEEK(180),
+        DAY(1),
+        HOUR(6);
+
+        private final int value;
+
+        GroupValue(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
         }
     }
 }

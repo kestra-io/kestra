@@ -121,7 +121,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     endDate,
                     aggregation
                 ))
-            .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate).toDays()).val())
+            .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate)).val())
             .build();
     }
 
@@ -194,7 +194,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         ZonedDateTime endDate,
         String aggregation
     ) {
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate).toDays()));
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate)));
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -223,7 +223,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 var selectGroup = select.groupBy(dateFields);
 
                 List<MetricAggregation> result = this.jdbcRepository
-                    .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate).toDays()).val());
+                    .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate)).val());
 
                 List<MetricAggregation> fillResult = fillDate(result, startDate, endDate);
 
@@ -242,7 +242,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     private List<MetricAggregation> fillDate(List<MetricAggregation> result, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate).toDays());
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
         if (groupByType.equals(DateUtils.GroupType.MONTH)) {
             return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
@@ -250,8 +250,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
         } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
             return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
-        } else {
+        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
             return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");
+        } else {
+            return fillDate(result, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm");
         }
     }
 

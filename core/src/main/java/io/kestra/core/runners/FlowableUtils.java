@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.TaskDepend;
 import io.kestra.core.serializers.JacksonMapper;
 
 import java.util.*;
@@ -192,40 +193,37 @@ public class FlowableUtils {
         return Collections.emptyList();
     }
 
-    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
+    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
+    };
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
         List<Object> values;
 
-        if(value instanceof String) {
+        if (value instanceof String) {
             String renderValue = runContext.render((String) value);
             try {
                 values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
-        }
-        else if(value instanceof List) {
+        } else if (value instanceof List) {
             values = new ArrayList<>(((List<?>) value).size());
-            for(Object obj: (List<Object>) value) {
-                if(obj instanceof String){
+            for (Object obj : (List<Object>) value) {
+                if (obj instanceof String) {
                     values.add(runContext.render((String) obj));
                 }
                 else if(obj instanceof Map<?, ?>) {
                     //JSON or YAML map
                     values.add(runContext.render((Map) obj));
-                }
-                else {
+                } else {
                     throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
                 }
             }
-        }
-        else {
+        } else {
             throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
         }
-
 
         List<Object> distinctValue = values
             .stream()
@@ -245,10 +243,10 @@ public class FlowableUtils {
 
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
-        for (Object current: distinctValue) {
-            for( Task task: tasks) {
+        for (Object current : distinctValue) {
+            for (Task task : tasks) {
                 try {
-                    String resolvedValue = current instanceof String ? (String)current : MAPPER.writeValueAsString(current);
+                    String resolvedValue = current instanceof String ? (String) current : MAPPER.writeValueAsString(current);
 
                     result.add(ResolvedTask.builder()
                         .task(task)
@@ -273,5 +271,74 @@ public class FlowableUtils {
             (
                 resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue())
             );
+    }
+
+    public static List<NextTaskRun> resolveDagNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        List<TaskDepend> taskDependencies
+    ) {
+        if (execution.getState().getCurrent() == State.Type.KILLING) {
+            return Collections.emptyList();
+        }
+
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+            tasks,
+            errors,
+            parentTaskRun
+        );
+
+        // all tasks run
+        List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
+
+        // find all not created tasks
+        List<ResolvedTask> notFinds = currentTasks
+            .stream()
+            .filter(resolvedTask -> taskRuns
+                .stream()
+                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
+            )
+            .toList();
+
+        // find all running and deal concurrency
+        long runningCount = taskRuns
+            .stream()
+            .filter(taskRun -> taskRun.getState().isRunning())
+            .count();
+
+        if (concurrency > 0 && runningCount > concurrency) {
+            return Collections.emptyList();
+        }
+
+        Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
+
+        if (notFinds.size() > 0 && lastCreated.isEmpty()) {
+            Stream<NextTaskRun> nextTaskRunStream = notFinds
+                .stream()
+                .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
+
+            nextTaskRunStream = nextTaskRunStream.filter(nextTaskRun -> {
+                Task task = nextTaskRun.getTask();
+                List<String> taskDependIds = taskDependencies.stream().filter(taskDepend -> taskDepend
+                        .getTask()
+                        .getId()
+                        .equals(task.getId()))
+                    .findFirst().get().getDependsOn();
+
+                return taskDependIds == null || notFinds.stream().noneMatch(taskRun -> taskDependIds
+                    .contains(taskRun.getTask().getId()));
+            });
+
+            if (concurrency > 0) {
+                nextTaskRunStream = nextTaskRunStream.limit(concurrency - runningCount);
+            }
+
+            return nextTaskRunStream.collect(Collectors.toList());
+        }
+
+        return Collections.emptyList();
     }
 }

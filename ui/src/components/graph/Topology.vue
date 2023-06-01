@@ -111,10 +111,18 @@
 
     const showTopologyStorageKey = "show-topology";
 
-    const initShowTopology = () => {
-        const defaultValue = (props.execution || props.isReadOnly) ? "topology" : "doc";
-        const storedValue = localStorage.getItem(showTopologyStorageKey);
+    const loadShowTopology = () => {
+        return localStorage.getItem(showTopologyStorageKey);
+    }
 
+    const initShowTopology = () => {
+        const defaultValue = "doc";
+
+        if (props.execution || props.isReadOnly) {
+            return "topology";
+        }
+
+        const storedValue = loadShowTopology();
         if (storedValue) {
             return storedValue;
         }
@@ -519,12 +527,31 @@
         resizeObserver.observe(document.getElementById("el-col-vueflow"));
     }
 
+    const showTopologyOnReadOnly = () => {
+        const defaultValue = "combined";
+
+        if (props.isCreating) {
+            return "source";
+        }
+
+        if (props.execution || props.isReadOnly ) {
+            return "topology";
+        }
+
+        const storedValue = loadShowTopology();
+        if (storedValue) {
+            return storedValue;
+        }
+
+        return defaultValue;
+    }
+
     watch(() => props.flowGraph, async () => {
         regenerateGraph()
     });
 
     watch(() => props.isReadOnly, async () => {
-        persistShowTopology(props.isCreating ? "source" : (props.execution || props.isReadOnly ? "topology" : "combined"));
+        showTopology.value = showTopologyOnReadOnly();
     });
 
     watch(() => props.guidedProperties, () => {

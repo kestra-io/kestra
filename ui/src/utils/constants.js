@@ -1,4 +1,4 @@
 export const SECTIONS = {
-    TASK: "TASK",
-    TRIGGER: "TRIGGER",
+    TASK: "TASKS",
+    TRIGGER: "TRIGGERS",
 }

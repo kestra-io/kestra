@@ -477,10 +477,10 @@ public class FlowController {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
-            if (section == TaskValidationType.TASK) {
+            if (section == TaskValidationType.TASKS) {
                 Task taskParse = yamlFlowParser.parse(task, Task.class);
                 modelValidator.validate(taskParse);
-            } else if (section == TaskValidationType.TRIGGER) {
+            } else if (section == TaskValidationType.TRIGGERS) {
                 AbstractTrigger triggerParse = yamlFlowParser.parse(task, AbstractTrigger.class);
                 modelValidator.validate(triggerParse);
             }
@@ -491,8 +491,8 @@ public class FlowController {
     }
 
     public enum TaskValidationType  {
-        TASK,
-        TRIGGER
+        TASKS,
+        TRIGGERS
     }
 
     @ExecuteOn(TaskExecutors.IO)

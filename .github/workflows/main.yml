@@ -318,7 +318,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages_dir: core/src/main/resources/scripts/python
+          packages-dir: core/src/main/resources/scripts/python
 
   end:
     runs-on: ubuntu-latest
@@ -330,6 +330,17 @@ jobs:
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
+
+      # Update
+      - name: Update internal
+        uses: benc-uk/workflow-dispatch@v121
+        if: github.ref == 'refs/heads/develop'
+        with:
+          workflow: oss-build.yml
+          repo: kestra-io/infra
+          ref: master
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+
       # Slack
       - name: Slack notification
         uses: Gamesight/slack-workflow-status@master

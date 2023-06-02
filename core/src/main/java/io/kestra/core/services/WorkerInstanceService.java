@@ -16,20 +16,20 @@ import jakarta.inject.Singleton;
 @Slf4j
 public class WorkerInstanceService {
     public static List<WorkerInstance> removeEvictedPartitions(Stream<WorkerInstance> stream, WorkerInstance incoming) {
+        if (incoming.getPartitions().isEmpty()) {
+            return Collections.emptyList();
+        }
+
         // looking for WorkerInstance that of common partition
         List<WorkerInstance> changedInstance = stream
             .filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
-            .filter(r -> !Collections.disjoint(r.getPartitions(), incoming.getPartitions()))
-            .collect(Collectors.toList());
+            .filter(r -> !Collections.disjoint(r.getPartitions() == null ? Collections.emptyList() : r.getPartitions(), incoming.getPartitions()))
+            .toList();
 
         if (changedInstance.size() >= 1) {
             return changedInstance
                 .stream()
-                .map(evictedInstance -> {
-                    evictedInstance.getPartitions().removeAll(incoming.getPartitions());
-
-                    return evictedInstance;
-                })
+                .peek(evictedInstance -> evictedInstance.getPartitions().removeAll(incoming.getPartitions()))
                 .collect(Collectors.toList());
         }
 

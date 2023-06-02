@@ -103,7 +103,7 @@ public class FlowListeners implements FlowListenersInterface {
         }
     }
 
-    private synchronized void upsert(Flow flow) {
+    private void upsert(Flow flow) {
         synchronized (this) {
             this.remove(flow);
 
@@ -126,7 +126,7 @@ public class FlowListeners implements FlowListenersInterface {
     }
 
     @Override
-    public synchronized void listen(Consumer<List<Flow>> consumer) {
+    public void listen(Consumer<List<Flow>> consumer) {
         synchronized (this) {
             consumers.add(consumer);
             consumer.accept(new ArrayList<>(this.flows()));

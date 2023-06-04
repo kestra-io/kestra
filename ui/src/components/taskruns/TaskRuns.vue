@@ -39,6 +39,7 @@
                     :data="taskRunDaily"
                     :start-date="startDate"
                     :end-date="endDate"
+                    :type="stateGlobalChartTypes.TASKRUN"
                 />
             </template>
 
@@ -140,6 +141,7 @@
     import State from "../../utils/state";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
+    import {stateGlobalChartTypes} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -170,6 +172,9 @@
                 return {
                     title: this.$t("taskruns")
                 };
+            },
+            stateGlobalChartTypes() {
+                return stateGlobalChartTypes;
             },
             endDate() {
                 return this.$route.query.endDate ? this.$route.query.endDate : new Date();

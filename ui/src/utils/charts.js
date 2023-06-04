@@ -74,16 +74,16 @@ export function chartClick(moment, router, route, event) {
     const query = {};
 
     if (event.date) {
-        query.start = moment(event.date).toISOString(true);
-        query.end = moment(event.date).add(1, "d").toISOString(true);
+        query.startDate = moment(event.date).toISOString(true);
+        query.endDate = moment(event.date).add(1, "d").toISOString(true);
     }
 
     if (event.startDate) {
-        query.start = moment(event.startDate).toISOString(true);
+        query.startDate = moment(event.startDate).toISOString(true);
     }
 
     if (event.endDate) {
-        query.end = moment(event.endDate).toISOString(true);
+        query.endDate = moment(event.endDate).toISOString(true);
     }
 
     if (event.status) {

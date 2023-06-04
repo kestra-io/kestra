@@ -21,7 +21,7 @@
 <script>
     import StateChart from "./StateChart.vue";
     import Utils from "../../utils/utils";
-
+    import {stateGlobalChartTypes} from "../../utils/constants";
     export default {
         components: {
             StateChart
@@ -46,6 +46,10 @@
             endDate: {
                 type: String,
                 default: undefined
+            },
+            type: {
+                type: String,
+                default: stateGlobalChartTypes.EXECUTION
             }
         },
         computed: {
@@ -67,22 +71,7 @@
                 return 31;
             },
             header() {
-                if(this.startDate && this.endDate) {
-                    if (this.$moment(this.endDate).isSame(this.$moment(this.startDate), "milliseconds")) {
-                        return this.$t("date count", {
-                            date: this.$moment(this.endDate).format("LLLL"),
-                            count: this.formattedCount
-                        });
-                    }
-                    if (this.$moment(this.endDate).isBefore(this.$moment(), "day")) {
-                        return this.$t("date range count", {
-                            startDate: this.$moment(this.startDate).format("LLLL"),
-                            endDate: this.$moment(this.endDate).format("LLLL"),
-                            count: this.formattedCount
-                        });
-                    }
-                }
-                return this.$t("last X days count", {count: this.formattedCount, days: this.daysCount});
+                return this.formattedCount + " " + this.$t(this.type);
             }
         }
     };

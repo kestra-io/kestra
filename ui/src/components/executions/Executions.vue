@@ -81,7 +81,7 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"/>
+                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
                     <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
                         <template #default="scope">
@@ -239,10 +239,10 @@
                 };
             },
             endDate() {
-                return this.$route.query.end ? this.$route.query.end : new Date();
+                return this.$route.query.endDate ? this.$route.query.endDate : new Date();
             },
             startDate() {
-                return this.$route.query.start ? this.$route.query.start : this.$moment(this.endDate)
+                return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
             },
@@ -302,8 +302,8 @@
 
                     this.$store
                         .dispatch("stat/daily", this.loadQuery({
-                            startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
-                            endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
+                            startDate: this.$moment(this.startDate).toISOString(true),
+                            endDate: this.$moment(this.endDate).toISOString(true)
                         }, true))
                         .then(() => {
                             this.dailyReady = true;

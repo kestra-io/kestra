@@ -32,7 +32,7 @@
 
             <home-description v-if="namespace" :description="description" class="mb-4" />
 
-            <el-row :gutter="15" class="auto-height mb-4">
+            <el-row v-if="displayPieChart" :gutter="15" class="auto-height mb-4">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
                         v-if="dailyReady"
@@ -185,17 +185,17 @@
                 executionCounts: undefined,
                 alls: undefined,
                 namespacesStats: undefined,
-                namespaceRestricted: !!this.namespace,
-                endDate: this.$moment(new Date()).endOf("day").toISOString(true),
-                startDate: this.$moment(this.$moment(new Date()).endOf("day").toISOString(true))
-                    .add(-30, "days")
-                    .startOf("day")
-                    .toISOString(true)
+                namespaceRestricted: !!this.namespace
             };
         },
         methods: {
-            loadQuery(base) {
+            loadQuery(base, stats) {
                 let queryFilter = this.$route.query;
+
+                if (stats) {
+                    delete queryFilter["startDate"];
+                    delete queryFilter["endDate"];
+                }
 
                 if (this.selectedNamespace) {
                     queryFilter["namespace"] = this.selectedNamespace;
@@ -217,9 +217,9 @@
                 this.dailyReady = false;
                 this.$store
                     .dispatch("stat/daily", this.loadQuery({
-                        startDate: this.startDate,
-                        endDate: this.endDate
-                    }))
+                        startDate: this.$moment(this.startDate).toISOString(true),
+                        endDate: this.$moment(this.endDate).toISOString(true)
+                    }, true))
                     .then((daily) => {
                         let data = [...daily];
                         let sorted = data.sort((a, b) => {
@@ -235,8 +235,8 @@
                     this.dailyGroupByFlowReady = false;
                     this.$store
                         .dispatch("stat/dailyGroupByFlow", this.loadQuery({
-                            startDate: this.startDate,
-                            endDate: this.endDate,
+                            startDate: this.$moment(this.startDate).toISOString(true),
+                            endDate: this.$moment(this.endDate).toISOString(true),
                             namespaceOnly: true
                         }))
                         .then((daily) => {
@@ -268,21 +268,19 @@
                 });
             },
             onDateChange(dates) {
-                for (const [key, value] of Object.entries(dates)) {
-                    if (value === undefined || value === "" || value === null) {
-                        if (key === "startDate") {
-                            this.startDate = this.$moment(this.$moment(new Date()).endOf("day").toISOString(true))
-                                .add(-30, "days")
-                                .startOf("day")
-                                .toISOString(true)
-                        } else if (key === "endDate") {
-                            this.endDate = this.$moment(new Date()).endOf("day").toISOString(true)
-                        }
-                    } else {
-                        this[key] = value;
-                    }
+                if(dates.startDate && dates.endDate) {
+                    this.$router.push({
+                        query: {...this.$route.query, ...{startDate: dates.startDate, endDate: dates.endDate}}
+                    });
+                } else {
+                    this.$router.push({
+                        query: {...this.$route.query,
+                                ...{
+                                    startDate: null,
+                                    endDate: null
+                                }}
+                    });
                 }
-                this.loadStats();
             }
         },
         computed: {
@@ -295,8 +293,8 @@
             },
             defaultFilters() {
                 return {
-                    start: this.$moment(this.startDate).unix() * 1000,
-                    end: this.$moment(this.endDate).unix() * 1000 ,
+                    startDate: this.$moment(this.startDate).toISOString(true),
+                    endDate: this.$moment(this.endDate).toISOString(true)
                 }
             },
             displayCharts() {
@@ -318,25 +316,32 @@
             selectedNamespace() {
                 return this.namespace || this.$route.query.namespace;
             },
+            endDate() {
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment();
+            },
+            startDate() {
+                return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
+                    .add(-30, "days")
+                    .toDate();
+            },
             isAllowedTrigger() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
             todayTitle() {
-                if (this.$moment(this.today.date).isSame(this.$moment(), "day")) {
-                    return this.$t("homeDashboard.today");
-                }
-                return this.$moment(this.today.date).format(getFormat(this.today.groupBy))
+                return this.$t("homeDashboard.today");
             },
             yesterdayTitle() {
-                if (this.$moment(this.today.date).isSame(this.$moment(), "day")) {
-                    return this.$t("homeDashboard.yesterday");
-                }
-                return this.$moment(this.yesterday.date).format(getFormat(this.today.groupBy))
+                return this.$t("homeDashboard.yesterday");
             },
             lastDaysTitle() {
                 return this.$t("homeDashboard.lastXdays",
                                {days: this.$moment(this.yesterday.date)
                                    .diff(this.$moment(this.startDate), "days")});
+            },
+            displayPieChart() {
+                return this.$moment(this.endDate).isSame(this.$moment(), "day")
+                    && this.$moment(this.today?.date).isSame(this.$moment(), "day")
+                    && this.$moment(this.endDate).diff(this.$moment(this.startDate), "days") >= 3;
             }
         }
     };
@@ -348,10 +353,6 @@
             .el-card {
                 height: 100%;
             }
-        }
-
-        .date-range {
-            width: 30rem;
         }
 
         .new-execution-img {

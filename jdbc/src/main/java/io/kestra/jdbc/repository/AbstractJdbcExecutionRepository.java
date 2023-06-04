@@ -279,24 +279,23 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
         return fillDate(records
-                .stream()
-                .map(record ->
-                        ExecutionStatistics.builder()
-                            .date(this.jdbcRepository.getDate(record, groupByType.val()))
-                            .durationMax(record.get("duration_max", Long.class))
-                            .durationMin(record.get("duration_min", Long.class))
-                            .durationSum(record.get("duration_sum", Long.class))
-                            .stateCurrent(record.get("state_current", String.class))
-                            .count(record.get("count", Long.class))
-                            .build()
-                    )
-                .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
-                .entrySet()
-                .stream()
-                .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
-                .sorted(Comparator.comparing(DailyExecutionStatistics::getDate))
-                .collect(Collectors.toList())
-            , startDate, endDate);
+            .stream()
+            .map(record ->
+                ExecutionStatistics.builder()
+                    .date(this.jdbcRepository.getDate(record, groupByType.val()))
+                    .durationMax(record.get("duration_max", Long.class))
+                    .durationMin(record.get("duration_min", Long.class))
+                    .durationSum(record.get("duration_sum", Long.class))
+                    .stateCurrent(record.get("state_current", String.class))
+                    .count(record.get("count", Long.class))
+                    .build()
+            )
+            .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
+            .entrySet()
+            .stream()
+            .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
+            .sorted(Comparator.comparing(DailyExecutionStatistics::getDate))
+            .collect(Collectors.toList()), startDate, endDate);
     }
 
     private Results dailyStatisticsQuery(
@@ -335,10 +334,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 select = filteringQuery(select, namespace, flowId, flows, query, null);
 
-                List<Field<?>> groupFields = new ArrayList<>();
-                for (int i = 1; i <= fields.size(); i++) {
-                    groupFields.add(DSL.field(String.valueOf(i)));
-                }
+                List<Field<?>> groupFields = new ArrayList<>(fields);
+
                 groupFields.addAll(dateFields);
 
                 SelectHavingStep<?> finalQuery = select
@@ -478,7 +475,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<DailyExecutionStatistics> filledResult = new ArrayList<>();
         ZonedDateTime currentDate = startDate;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
-        while (currentDate.isBefore(endDate)) {
+        // Add one to the end date to include last intervals in the result
+        String formattedEndDate = endDate.plus(1, unit).format(formatter);
+        // Comparing date string formatted with only valuable part of the date
+        // allow to avoid cases where latest interval was not included in the result
+        // i.e if endDate is 18:15 and startDate 17:30, when reaching 18:30 it will not handle the 18th hours
+        while (!currentDate.format(formatter).equals(formattedEndDate)) {
             String finalCurrentDate = currentDate.format(formatter);
             DailyExecutionStatistics dailyExecutionStatistics = results
                 .stream()

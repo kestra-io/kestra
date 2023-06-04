@@ -921,7 +921,7 @@
                     warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
                         "<div class=\"el-alert__content\">\n" +
                         "<p class=\"el-alert__description\">\n" +
-                        this.$t("dependencies delete flow") +
+                        $t("dependencies delete flow") +
                         "<ul>\n" +
                         deps +
                         "</ul>\n" +

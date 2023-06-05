@@ -22,7 +22,7 @@
             <task-editor
                 ref="editor"
                 :model-value="taskYaml"
-                :section="SECTIONS.TASK"
+                :section="SECTIONS.TASKS"
                 @update:model-value="onInput"
             />
         </el-form>

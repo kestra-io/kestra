@@ -36,7 +36,7 @@
             >
                 <el-form label-position="top">
                     <task-editor
-                        :section="SECTIONS.TASK"
+                        :section="SECTIONS.TASKS"
                         @update:model-value="onUpdateNewError( $event)"
                     />
                 </el-form>
@@ -78,7 +78,7 @@
                     <el-button
                         class="node-action"
                         size="small"
-                        @click="forwardEvent('delete', {id: this.task.id, section: SECTIONS.TASK})"
+                        @click="forwardEvent('delete', {id: this.task.id, section: SECTIONS.TASKS})"
                         :icon="Delete"
                     />
                 </el-tooltip>
@@ -98,7 +98,7 @@
                     <task-edit
                         v-if="!this.isReadOnly && isAllowedEdit"
                         class="node-action"
-                        :section="SECTIONS.TASK"
+                        :section="SECTIONS.TASKS"
                         :task="task"
                         :flow-id="flowId"
                         size="small"

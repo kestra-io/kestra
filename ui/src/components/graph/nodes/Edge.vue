@@ -247,7 +247,7 @@
             >
                 <el-form label-position="top">
                     <task-editor
-                        :section="SECTIONS.TASK"
+                        :section="SECTIONS.TASKS"
                         @update:model-value="updateTask($event)"
                     />
                 </el-form>

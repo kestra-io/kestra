@@ -332,7 +332,7 @@ export default class YamlUtils {
     }
 
     static deleteTask(source, taskId, section) {
-        const inSection = section === SECTIONS.TASK ? ["tasks", "errors"] : ["triggers"];
+        const inSection = section === SECTIONS.TASKS ? ["tasks", "errors"] : ["triggers"];
         const yamlDoc = yaml.parseDocument(source);
         yaml.visit(yamlDoc, {
             Pair(_, pair) {

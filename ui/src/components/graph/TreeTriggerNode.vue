@@ -25,7 +25,7 @@
                     <el-button
                         class="node-action"
                         size="small"
-                        @click="forwardEvent('delete', {id: this.trigger.id, section: SECTIONS.TRIGGER})"
+                        @click="forwardEvent('delete', {id: this.trigger.id, section: SECTIONS.TRIGGERS})"
                         :icon="Delete"
                     />
                 </el-tooltip>
@@ -39,7 +39,7 @@
                     size="small"
                     :namespace="namespace"
                     :revision="revision"
-                    :section="SECTIONS.TRIGGER"
+                    :section="SECTIONS.TRIGGERS"
                     :emit-only="true"
                     @update:task="forwardEvent('edit', $event)"
                 />

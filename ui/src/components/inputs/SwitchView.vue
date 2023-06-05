@@ -5,10 +5,10 @@
             <el-button :type="buttonType('source')" @click="switchView('source')" :icon="FileDocumentEdit" />
         </el-tooltip>
         <el-tooltip :content="$t('source and doc')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType('doc')" @click="switchView('doc')" :icon="BookOpenPageVariantOutline" />
+            <el-button :type="buttonType('source-doc')" @click="switchView('source-doc')" :icon="BookOpenPageVariantOutline" />
         </el-tooltip>
         <el-tooltip :content="$t('source and topology')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType('combined')" @click="switchView('combined')" :icon="FileChart" />
+            <el-button :type="buttonType('source-topology')" @click="switchView('source-topology')" :icon="FileChart" />
         </el-tooltip>
         <el-tooltip :content="$t('topology')" transition="" :hide-after="0" :persistent="false">
             <el-button :type="buttonType('topology')" @click="switchView('topology')" :icon="Graph" />

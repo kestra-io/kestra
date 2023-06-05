@@ -60,12 +60,12 @@ public abstract class AbstractMetricRepositoryTest {
             "flow",
             null,
             counter.getName(),
-            ZonedDateTime.now().minusDays(190),
+            ZonedDateTime.now().minusWeeks(26),
             ZonedDateTime.now(),
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size(), is(28));
+        assertThat(aggregationResults.getAggregations().size(), is(27));
         assertThat(aggregationResults.getGroupBy(), is("week"));
 
     }

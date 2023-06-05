@@ -347,9 +347,9 @@ public class RunnerUtils {
         executionEmitter.run();
 
         if (duration == null) {
-            Await.until(() -> receive.get() != null);
+            Await.until(() -> receive.get() != null, Duration.ofMillis(10));
         } else {
-            Await.until(() -> receive.get() != null, null, duration);
+            Await.until(() -> receive.get() != null, Duration.ofMillis(10), duration);
         }
 
         cancel.run();

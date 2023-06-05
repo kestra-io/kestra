@@ -22,7 +22,7 @@
             <task-editor
                 ref="editor"
                 :model-value="taskYaml"
-                section="tasks"
+                :section="SECTIONS.TASK"
                 @update:model-value="onInput"
             />
         </el-form>
@@ -37,6 +37,7 @@
 <script setup>
     import Eye from "vue-material-design-icons/Eye.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import {SECTIONS} from "../../../utils/constants.js";
 </script>
 
 <script>

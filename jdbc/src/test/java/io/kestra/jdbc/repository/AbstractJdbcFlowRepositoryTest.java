@@ -11,11 +11,9 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,10 +97,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         assertThat(((FlowWithException) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
     }
 
-    @BeforeEach
-    protected void init() throws IOException, URISyntaxException {
+    @BeforeAll
+    protected void setup() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-        super.init();
     }
 }

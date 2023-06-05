@@ -335,7 +335,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 assertThat(createdChidExec.getId(), not(parentExecution.getId()));
             }),
-            Duration.ofSeconds(30000));
+            Duration.ofSeconds(30));
     }
 
     @Test

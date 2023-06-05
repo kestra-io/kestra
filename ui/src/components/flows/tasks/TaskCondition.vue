@@ -22,7 +22,7 @@
         <el-form label-position="top">
             <task-editor
                 ref="editor"
-                section="conditions"
+                :section="SECTIONS.TRIGGER"
                 :model-value="taskYaml"
                 @update:model-value="onInput"
             />
@@ -39,6 +39,7 @@
 <script setup>
     import Eye from "vue-material-design-icons/Eye.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import {SECTIONS} from "../../../utils/constants.js";
 </script>
 
 <script>

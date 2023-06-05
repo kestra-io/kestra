@@ -29,6 +29,7 @@
     import YamlUtils from "../../utils/yamlUtils";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {mapGetters} from "vuex";
+    import {SECTIONS} from "../../utils/constants.js";
 
     export default {
         computed: {
@@ -95,7 +96,7 @@
                     type: this.selectedTaskType
                 };
 
-                if (this.section !== "conditions") {
+                if (this.section !== SECTIONS.TRIGGER) {
                     value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : "";
                 }
 

@@ -28,6 +28,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.validation.ConstraintViolationException;
 
@@ -46,6 +45,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(transactional = false)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractFlowRepositoryTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;

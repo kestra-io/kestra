@@ -38,6 +38,7 @@
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import {ElNotification, ElTable, ElTableColumn} from "element-plus";
+    import {SECTIONS} from "../../utils/constants.js";
 
     const {
         id,
@@ -635,8 +636,8 @@
             t("delete task confirm", {taskId: flowParsed.id}),
             () => {
 
-                const section = event.section ? event.section : "tasks";
-                if (section === "tasks" && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
+                const section = event.section ? event.section : SECTIONS.TASK;
+                if (section === SECTIONS.TASK && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
                     store.dispatch("core/showMessage", {
                         variant: "error",
                         title: t("can not delete"),
@@ -661,7 +662,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
             task: event,
-            section: "trigger"
+            section: SECTIONS.TRIGGER
         }), 500);
         newTrigger.value = event;
     }
@@ -687,7 +688,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
             task: event,
-            section: "task"
+            section: SECTIONS.TASK
         }), 500);
 
         newError.value = event;
@@ -921,7 +922,7 @@
                     warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
                         "<div class=\"el-alert__content\">\n" +
                         "<p class=\"el-alert__description\">\n" +
-                        this.$t("dependencies delete flow") +
+                        $t("dependencies delete flow") +
                         "<ul>\n" +
                         deps +
                         "</ul>\n" +
@@ -1070,7 +1071,7 @@
         >
             <el-form label-position="top">
                 <task-editor
-                    section="tasks"
+                    :section="SECTIONS.TASK"
                     @update:model-value="onUpdateNewError($event)"
                 />
             </el-form>
@@ -1091,7 +1092,7 @@
         >
             <el-form label-position="top">
                 <task-editor
-                    section="triggers"
+                    :section="SECTIONS.TRIGGER"
                     @update:model-value="onUpdateNewTrigger($event)"
                 />
             </el-form>

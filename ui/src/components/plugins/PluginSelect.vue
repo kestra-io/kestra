@@ -21,7 +21,7 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true"/>
+            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" />
         </template>
     </el-select>
 </template>
@@ -29,6 +29,8 @@
 <script>
     import {mapState} from "vuex";
     import TaskIcon from "./TaskIcon.vue";
+    import {SECTIONS} from "../../utils/constants";
+
     export default {
         components: {
             TaskIcon
@@ -54,7 +56,7 @@
             taskModels() {
                 const taskModels = [];
                 for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin[this.section]);
+                    taskModels.push.apply(taskModels, plugin[this.section.toLowerCase()]);
                 }
                 return taskModels;
             },

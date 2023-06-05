@@ -40,6 +40,17 @@ class FlowTest {
     }
 
     @Test
+    void duplicateInputs() {
+        Flow flow = this.parse("flows/invalids/duplicate-inputs.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getConstraintViolations().size(), is(1));
+
+        assertThat(validate.get().getMessage(), containsString("Duplicate input with name [first_input]"));
+    }
+
+    @Test
     void duplicateParallel() {
         Flow flow = this.parse("flows/invalids/duplicate-parallel.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);

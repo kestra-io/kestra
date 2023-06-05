@@ -123,21 +123,35 @@ public class ValidationFactory {
             }
 
             List<String> violations = new ArrayList<>();
-            List<Task> allTasks = value.allTasksWithChilds();
 
-            // unique id
-            List<String> ids = allTasks
+            // task unique id
+            List<String> taskIds = value.allTasksWithChilds()
                 .stream()
                 .map(Task::getId)
-                .collect(Collectors.toList());
-
-            List<String> duplicates = ids
+                .toList();
+            List<String> taskDuplicates = taskIds
                 .stream()
                 .distinct()
-                .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
+                .filter(entry -> Collections.frequency(taskIds, entry) > 1)
+                .toList();
+            if (taskDuplicates.size() > 0) {
+                violations.add("Duplicate task id with name [" + String.join(", ", taskDuplicates) + "]");
+            }
 
-            if (duplicates.size() > 0) {
-                violations.add("Duplicate task id with name [" + String.join(", ", duplicates) + "]");
+            // input unique name
+            if (value.getInputs() != null) {
+                List<String> inputNames = value.getInputs()
+                    .stream()
+                    .map(Input::getName)
+                    .toList();
+                List<String> inputDuplicates = inputNames
+                    .stream()
+                    .distinct()
+                    .filter(entry -> Collections.frequency(inputNames, entry) > 1)
+                    .toList();
+                if (inputDuplicates.size() > 0) {
+                    violations.add("Duplicate input with name [" + String.join(", ", inputDuplicates) + "]");
+                }
             }
 
             if (violations.size() > 0) {

@@ -472,24 +472,27 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public ValidateConstraintViolation validateTask(
         @Parameter(description = "A list of flows") @Body String task,
-        @Parameter(description = "Type of task") @QueryValue(defaultValue = "task") String section
+        @Parameter(description = "Type of task") @QueryValue(defaultValue = "TASK") TaskValidationType section
     ) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
-            if (section.equals("task")) {
+            if (section == TaskValidationType.TASKS) {
                 Task taskParse = yamlFlowParser.parse(task, Task.class);
                 modelValidator.validate(taskParse);
-            } else if (section.equals("trigger")) {
+            } else if (section == TaskValidationType.TRIGGERS) {
                 AbstractTrigger triggerParse = yamlFlowParser.parse(task, AbstractTrigger.class);
                 modelValidator.validate(triggerParse);
-            } else {
-                throw new IllegalArgumentException("Invalid section, must be 'task' or 'trigger'");
             }
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
         }
         return validateConstraintViolationBuilder.build();
+    }
+
+    public enum TaskValidationType  {
+        TASKS,
+        TRIGGERS
     }
 
     @ExecuteOn(TaskExecutors.IO)

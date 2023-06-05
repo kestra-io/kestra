@@ -25,7 +25,7 @@
                     <el-button
                         class="node-action"
                         size="small"
-                        @click="forwardEvent('delete', {id: this.trigger.id, section: 'triggers'})"
+                        @click="forwardEvent('delete', {id: this.trigger.id, section: SECTIONS.TRIGGER})"
                         :icon="Delete"
                     />
                 </el-tooltip>
@@ -39,7 +39,7 @@
                     size="small"
                     :namespace="namespace"
                     :revision="revision"
-                    section="triggers"
+                    :section="SECTIONS.TRIGGER"
                     :emit-only="true"
                     @update:task="forwardEvent('edit', $event)"
                 />
@@ -47,6 +47,11 @@
         </template>
     </tree-node>
 </template>
+
+<script setup>
+    import {SECTIONS} from "../../utils/constants.js";
+</script>
+
 <script>
     import {mapState} from "vuex";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";

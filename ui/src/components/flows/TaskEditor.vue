@@ -96,7 +96,7 @@
                     type: this.selectedTaskType
                 };
 
-                if (this.section !== SECTIONS.TRIGGER) {
+                if (this.section !== SECTIONS.TRIGGERS) {
                     value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : "";
                 }
 

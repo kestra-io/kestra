@@ -22,7 +22,7 @@
         <el-form label-position="top">
             <task-editor
                 ref="editor"
-                :section="SECTIONS.TRIGGER"
+                :section="SECTIONS.TRIGGERS"
                 :model-value="taskYaml"
                 @update:model-value="onInput"
             />

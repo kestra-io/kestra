@@ -3,7 +3,7 @@
         :id="task.id"
         :type="task.type"
         :disabled="task.disabled"
-        :state="state"
+        :state="this.state"
     >
         <template #content>
             <div v-if="task.state" class="status-wrapper">
@@ -13,7 +13,7 @@
         <template #info>
             <span class="bottom">
                 <el-tag
-                    v-if="execution"
+                    v-if="this.execution"
                     type="info"
                     class="me-1"
                     size="small"
@@ -36,7 +36,7 @@
             >
                 <el-form label-position="top">
                     <task-editor
-                        :section="SECTIONS.TASK"
+                        :section="SECTIONS.TASKS"
                         @update:model-value="onUpdateNewError( $event)"
                     />
                 </el-form>
@@ -65,7 +65,7 @@
                     :flow-id="task.flowId"
                 />
 
-                <el-tooltip v-if="isFlowable && !execution && !isReadOnly && isAllowedEdit" content="Handle errors" transition="" :hide-after="0" :persistent="false">
+                <el-tooltip v-if="isFlowable && !this.execution && !isReadOnly && isAllowedEdit" content="Handle errors" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
@@ -74,19 +74,19 @@
                     />
                 </el-tooltip>
 
-                <el-tooltip v-if="!execution && !isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
+                <el-tooltip v-if="!this.execution && !isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
-                        @click="forwardEvent('delete', {id: task.id, section: SECTIONS.TASK})"
+                        @click="forwardEvent('delete', {id: this.task.id, section: SECTIONS.TASKS})"
                         :icon="Delete"
                     />
                 </el-tooltip>
 
-                <el-tooltip v-if="execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
+                <el-tooltip v-if="this.execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
                     <el-button
                         class="node-action"
-                        :disabled="taskRuns.length === 0"
+                        :disabled="this.taskRuns.length === 0"
                         size="small"
                         @click="onTaskSelect()"
                     >
@@ -96,9 +96,9 @@
 
                 <el-tooltip content="Edit task" :persistent="false" transition="" :hide-after="0">
                     <task-edit
-                        v-if="!isReadOnly && isAllowedEdit"
+                        v-if="!this.isReadOnly && isAllowedEdit"
                         class="node-action"
-                        :section="SECTIONS.TASK"
+                        :section="SECTIONS.TASKS"
                         :task="task"
                         :flow-id="flowId"
                         size="small"
@@ -127,7 +127,7 @@
                 </collapse>
                 <log-list
                     :task-id="task.id"
-                    :filter="filter"
+                    :filter="this.filter"
                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                     :level="logLevel"
                     @follow="forwardEvent('follow', $event)"

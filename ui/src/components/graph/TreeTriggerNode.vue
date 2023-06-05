@@ -21,17 +21,17 @@
                     />
                 </el-button>
 
-                <el-tooltip v-if="!execution && !isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
+                <el-tooltip v-if="!this.execution && !this.isReadOnly && isAllowedEdit" content="Delete" transition="" :hide-after="0" :persistent="false">
                     <el-button
                         class="node-action"
                         size="small"
-                        @click="forwardEvent('delete', {id: trigger.id, section: SECTIONS.TRIGGER})"
+                        @click="forwardEvent('delete', {id: this.trigger.id, section: SECTIONS.TRIGGERS})"
                         :icon="Delete"
                     />
                 </el-tooltip>
 
                 <task-edit
-                    v-if="!isReadOnly && isAllowedEdit"
+                    v-if="!this.isReadOnly && isAllowedEdit"
                     class="node-action"
                     :modal-id="`modal-source-${hash}`"
                     :task="trigger"
@@ -39,7 +39,7 @@
                     size="small"
                     :namespace="namespace"
                     :revision="revision"
-                    :section="SECTIONS.TRIGGER"
+                    :section="SECTIONS.TRIGGERS"
                     :emit-only="true"
                     @update:task="forwardEvent('edit', $event)"
                 />

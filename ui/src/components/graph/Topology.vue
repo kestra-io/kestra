@@ -636,8 +636,8 @@
             t("delete task confirm", {taskId: flowParsed.id}),
             () => {
 
-                const section = event.section ? event.section : SECTIONS.TASK;
-                if (section === SECTIONS.TASK && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
+                const section = event.section ? event.section : SECTIONS.TASKS;
+                if (section === SECTIONS.TASKS && flowParsed.tasks.length === 1 && flowParsed.tasks.map(e => e.id).includes(event.id)) {
                     store.dispatch("core/showMessage", {
                         variant: "error",
                         title: t("can not delete"),
@@ -662,7 +662,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
             task: event,
-            section: SECTIONS.TRIGGER
+            section: SECTIONS.TRIGGERS
         }), 500);
         newTrigger.value = event;
     }
@@ -688,7 +688,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
             task: event,
-            section: SECTIONS.TASK
+            section: SECTIONS.TASKS
         }), 500);
 
         newError.value = event;
@@ -1071,7 +1071,7 @@
         >
             <el-form label-position="top">
                 <task-editor
-                    :section="SECTIONS.TASK"
+                    :section="SECTIONS.TASKS"
                     @update:model-value="onUpdateNewError($event)"
                 />
             </el-form>
@@ -1092,7 +1092,7 @@
         >
             <el-form label-position="top">
                 <task-editor
-                    :section="SECTIONS.TRIGGER"
+                    :section="SECTIONS.TRIGGERS"
                     @update:model-value="onUpdateNewTrigger($event)"
                 />
             </el-form>

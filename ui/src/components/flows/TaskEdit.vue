@@ -90,6 +90,7 @@
     import Utils from "../../utils/utils";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
+    import {SECTIONS} from "../../utils/constants";
 
     export default {
         components: {Editor, TaskEditor, Markdown, ValidationError},
@@ -121,9 +122,9 @@
             },
             section: {
                 type: String,
-                default: "TASK",
+                default: SECTIONS.TASKS,
                 validator(value) {
-                    return ['TASK', 'TRIGGER'].includes(value)
+                    return [SECTIONS.TASKS, SECTIONS.TRIGGERS].includes(value)
                 }
             },
             emitOnly: {

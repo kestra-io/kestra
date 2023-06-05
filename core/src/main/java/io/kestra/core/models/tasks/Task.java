@@ -7,7 +7,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.flows.Worker;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Getter;
@@ -112,6 +112,6 @@ abstract public class Task {
 
     @JsonIgnore
     public boolean isSendToWorkerTask() {
-        return !(this instanceof FlowableTask) || this instanceof Worker;
+        return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
     }
 }

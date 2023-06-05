@@ -4,8 +4,10 @@ import com.cronutils.model.Cron;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.tasks.flows.Switch;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import jakarta.inject.Singleton;
@@ -16,7 +18,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
-import javax.validation.ConstraintViolation;
 
 @Factory
 public class ValidationFactory {
@@ -100,7 +101,6 @@ public class ValidationFactory {
     @Singleton
     ConstraintValidator<SwitchTaskValidation, Switch> switchTaskValidation() {
         return (value, annotationMetadata, context) -> {
-            Set<ConstraintViolation<?>> violations = new HashSet<>();
             if (value == null) {
                 return true;
             }
@@ -108,6 +108,22 @@ public class ValidationFactory {
             if ((value.getCases() == null || value.getCases().size() == 0) && (value.getDefaults() == null || value.getDefaults().size() == 0)) {
                 context.messageTemplate("No task defined, neither cases or default have any tasks");
 
+                return false;
+            }
+
+            return true;
+        };
+    }
+
+    @Singleton
+    ConstraintValidator<WorkingDirectoryTaskValidation, WorkingDirectory> workingDirectoryTaskValidation() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            if(value.getTasks().stream().anyMatch(task -> !(task instanceof RunnableTask<?>))) {
+                context.messageTemplate("Only runnable tasks are allowed as children of a WorkingDirectory task");
                 return false;
             }
 

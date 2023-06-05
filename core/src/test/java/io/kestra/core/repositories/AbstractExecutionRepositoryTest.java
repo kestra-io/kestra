@@ -319,10 +319,10 @@ public abstract class AbstractExecutionRepositoryTest {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     protected void executionsCount() throws InterruptedException {
-        for (int i = 0; i < 28; i++) {
+        for (int i = 0; i < 14; i++) {
             executionRepository.save(builder(
                 State.Type.SUCCESS,
-                i < 4 ? "first" : (i < 10 ? "second" : "third")
+                i < 2 ? "first" : (i < 5 ? "second" : "third")
             ).build());
         }
 
@@ -342,9 +342,9 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         assertThat(result.size(), is(4));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(4L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(6L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(18L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("missing")).findFirst().get().getCount(), is(0L));
     }
 }

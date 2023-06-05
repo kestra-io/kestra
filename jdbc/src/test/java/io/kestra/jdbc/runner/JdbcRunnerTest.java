@@ -14,8 +14,10 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -27,6 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 @MicronautTest(transactional = false)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
 public abstract class JdbcRunnerTest {
     @Inject
     private StandAloneRunner runner;
@@ -68,7 +71,7 @@ public abstract class JdbcRunnerTest {
     @Inject
     private PauseTest.Suite pauseTest;
 
-    @BeforeEach
+    @BeforeAll
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();

@@ -57,16 +57,27 @@ public abstract class Input<T> {
 
     @Introspected
     public enum Type {
-        STRING,
-        INT,
-        FLOAT,
-        BOOLEAN,
-        DATETIME,
-        DATE,
-        TIME,
-        DURATION,
-        FILE,
-        JSON,
-        URI;
+        STRING(StringInput.class.getName()),
+        INT(IntInput.class.getName()),
+        FLOAT(FloatInput.class.getName()),
+        BOOLEAN(StringInput.class.getName()),
+        DATETIME(DateTimeInput.class.getName()),
+        DATE(DateInput.class.getName()),
+        TIME(TimeInput.class.getName()),
+        DURATION(DurationInput.class.getName()),
+        FILE(FileInput.class.getName()),
+        JSON(JsonInput.class.getName()),
+        URI(URIInput.class.getName());
+
+        private final String clsName;
+
+        Type(String clsName) {
+            this.clsName = clsName;
+        }
+
+        @SuppressWarnings("unchecked")
+        public Class<? extends Input<?>> cls() throws ClassNotFoundException {
+            return (Class<? extends Input<?>>) Class.forName(this.clsName);
+        }
     }
 }

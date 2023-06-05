@@ -1,20 +1,27 @@
 package io.kestra.core.plugins;
 
 import com.github.jknack.handlebars.internal.lang3.ObjectUtils;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.apache.commons.io.FilenameUtils;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.storages.StorageInterface;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
+import lombok.*;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @AllArgsConstructor
 @Getter
@@ -29,7 +36,6 @@ public class RegisteredPlugin {
     private final List<Class<? extends Condition>> conditions;
     private final List<Class<?>> controllers;
     private final List<Class<? extends StorageInterface>> storages;
-
     private final List<String> guides;
 
     public boolean isValid() {
@@ -97,6 +103,14 @@ public class RegisteredPlugin {
         return result;
     }
 
+    public String name() {
+        return ObjectUtils.firstNonNull(
+            this.getManifest() == null ? "core" : null,
+            this.getManifest() != null ? this.getManifest().getMainAttributes().getValue("X-Kestra-Name") : null,
+            "core"
+        );
+    }
+
     public String path() {
         return ObjectUtils.firstNonNull(
             this.getManifest() != null ? this.getManifest().getMainAttributes().getValue("X-Kestra-Name") : null,
@@ -115,6 +129,69 @@ public class RegisteredPlugin {
 
     public String group() {
         return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Group");
+    }
+
+    public String description() {
+        return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Description");
+    }
+
+    public String longDescription() {
+        try (var is = this.getClassLoader().getResourceAsStream("doc/" + this.group() + ".md")) {
+            if(is != null) {
+                return IOUtils.toString(is, Charsets.UTF_8);
+            }
+        }
+        catch (Exception e) {
+            // silently fail
+        }
+
+        return null;
+    }
+
+    public Map<String, String> guides() throws IOException {
+        return this.guides
+            .stream()
+            .map(throwFunction(s -> new AbstractMap.SimpleEntry<>(
+                s,
+                IOUtils.toString(Objects.requireNonNull(this.getClassLoader().getResourceAsStream("doc/guides/" + s + ".md")), Charsets.UTF_8)
+            )))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    public String version() {
+        return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Version");
+    }
+
+    @SneakyThrows
+    public String icon(Class<?> cls) {
+        InputStream resourceAsStream = Stream
+            .of(
+                this.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg"),
+                this.getClassLoader().getResourceAsStream("icons/" + cls.getPackageName() + ".svg")
+            )
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+
+        if (resourceAsStream != null) {
+            return Base64.getEncoder().encodeToString(
+                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+            );
+        }
+
+        return null;
+    }
+
+    @SneakyThrows
+    public String icon(String iconName) {
+        InputStream resourceAsStream = this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
+        if (resourceAsStream != null) {
+            return Base64.getEncoder().encodeToString(
+                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+            );
+        }
+
+        return null;
     }
 
     @Override

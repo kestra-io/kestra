@@ -134,7 +134,7 @@ public class PluginScanner {
         }
 
         var guidesDirectory = classLoader.getResource("doc/guides");
-        if(guidesDirectory != null) {
+        if (guidesDirectory != null) {
             try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
                 var root = fileSystem.getPath("/doc/guides");
                 try (var stream = Files.walk(root, 1)) {
@@ -146,7 +146,7 @@ public class PluginScanner {
                             guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
                         });
                 }
-            } catch (IOException |  URISyntaxException e) {
+            } catch (IOException | URISyntaxException e) {
                 // silently fail
             }
         }

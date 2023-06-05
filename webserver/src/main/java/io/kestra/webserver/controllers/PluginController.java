@@ -22,14 +22,13 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
 @Controller("/api/v1/plugins/")
@@ -70,27 +69,32 @@ public class PluginController {
         }
     }
 
-    public enum SchemaType {
-        flow,
-        template,
-        task,
-        trigger
+    @Get(uri = "inputs")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = {"Plugins"},
+        summary = "Get all types for an inputs"
+    )
+    public List<InputType> inputs() throws ClassNotFoundException {
+        return Stream.of(Input.Type.values())
+            .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
+            .collect(Collectors.toList());
     }
 
-    @Get(uri = "schemas/input/{className}")
+    @Get(uri = "inputs/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
         summary = "Get all json schemas for a type",
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
-    public MutableHttpResponse<Doc> inputSchemas(
-        @Parameter(description = "The schema needed") @PathVariable String className
+    public MutableHttpResponse<DocumentationWithSchema> inputSchemas(
+        @Parameter(description = "The schema needed") @PathVariable Input.Type type
     ) throws ClassNotFoundException, IOException {
-        ClassInputDocumentation classInputDocumentation = this.inputDocumentation(className);
+        ClassInputDocumentation classInputDocumentation = this.inputDocumentation(type);
 
         return HttpResponse.ok()
-            .body(new Doc(
+            .body(new DocumentationWithSchema(
                 DocumentationGenerator.render(classInputDocumentation),
                 new Schema(
                     classInputDocumentation.getPropertiesSchema(),
@@ -101,16 +105,11 @@ public class PluginController {
             .header("Cache-Control", "public, max-age=3600");
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Cacheable("default")
-    protected ClassInputDocumentation inputDocumentation(String className) throws ClassNotFoundException {
-        Class<?> cls = Class.forName(className);
-        if (Input.class.isAssignableFrom(cls)) {
-            Class<? extends Input<?>> inputCls = (Class<? extends Input<?>>) cls;
-            return ClassInputDocumentation.of(jsonSchemaGenerator, inputCls);
-        } else {
-            throw new NoSuchElementException("Class Input '" + className + "' doesn't exists ");
-        }
+    protected ClassInputDocumentation inputDocumentation(Input.Type type) throws ClassNotFoundException {
+        Class<? extends Input<?>> inputCls = type.cls();
+
+        return ClassInputDocumentation.of(jsonSchemaGenerator, inputCls);
     }
 
     @Get
@@ -123,7 +122,6 @@ public class PluginController {
             .map(Plugin::of)
             .collect(Collectors.toList());
     }
-
 
     @Get(uri = "icons")
     @ExecuteOn(TaskExecutors.IO)
@@ -144,7 +142,7 @@ public class PluginController {
                     e.getName(),
                     new PluginIcon(
                         e.getSimpleName(),
-                        DocumentationGenerator.icon(plugin, e),
+                        plugin.icon(e),
                         FlowableTask.class.isAssignableFrom(e)
                     )
                 ))
@@ -156,7 +154,7 @@ public class PluginController {
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
-    public HttpResponse<Doc> pluginDocumentation(
+    public HttpResponse<DocumentationWithSchema> pluginDocumentation(
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
@@ -167,11 +165,9 @@ public class PluginController {
         );
 
         var doc = DocumentationGenerator.render(classPluginDocumentation);
-        doc = doc.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n");
-        doc = doc.replaceAll("\n::\n", "\n:::\n");
 
         return HttpResponse.ok()
-            .body(new Doc(
+            .body(new DocumentationWithSchema(
                 doc,
                 new Schema(
                     classPluginDocumentation.getPropertiesSchema(),
@@ -199,82 +195,5 @@ public class PluginController {
             .baseClass(className);
 
         return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
-    }
-
-    @NoArgsConstructor
-    @Data
-    public static class Plugin {
-        private Map<String, String> manifest;
-        private List<String> tasks;
-        private List<String> triggers;
-        private List<String> conditions;
-        private List<String> controllers;
-        private List<String> storages;
-
-        public static Plugin of(RegisteredPlugin registeredPlugin) {
-            Plugin plugin = new Plugin();
-
-            plugin.manifest = registeredPlugin
-                .getManifest()
-                .getMainAttributes()
-                .entrySet()
-                .stream()
-                .map(e -> new AbstractMap.SimpleEntry<>(
-                    e.getKey().toString(),
-                    e.getValue().toString()
-                ))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-            plugin.tasks = className(filter(registeredPlugin.getTasks()).toArray(Class[]::new));
-            plugin.triggers = className(filter(registeredPlugin.getTriggers()).toArray(Class[]::new));
-            plugin.conditions = className(filter(registeredPlugin.getConditions()).toArray(Class[]::new));
-            plugin.controllers = className(filter(registeredPlugin.getControllers()).toArray(Class[]::new));
-            plugin.storages = className(filter(registeredPlugin.getStorages()).toArray(Class[]::new));
-
-            return plugin;
-        }
-
-        /**
-         * we filter from documentation all legacy org.kestra code ...
-         * we do it only on docs to avoid remove backward compatibility everywhere (worker, executor...)
-         */
-        private static <T extends Class<?>> Stream<T> filter(List<T> list) {
-            return list
-                .stream()
-                .filter(s -> !s.getName().startsWith("org.kestra."));
-        }
-
-        @SuppressWarnings("rawtypes")
-        private static <T> List<String> className(Class[] classes) {
-            return Arrays.stream(classes)
-                .map(Class::getName)
-                .collect(Collectors.toList());
-        }
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    public static class Doc {
-        String markdown;
-        Schema schema;
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    public static class PluginIcon {
-        String name;
-        String icon;
-        Boolean flowable;
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    public static class Schema {
-        private Map<String, Object> properties;
-        private Map<String, Object> outputs;
-        private Map<String, Object> definitions;
     }
 }

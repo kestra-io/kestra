@@ -8,7 +8,8 @@ export default {
         icons: undefined,
         pluginsDocumentation: {},
         editorPlugin: undefined,
-        inputSchema: undefined
+        inputSchema: undefined,
+        inputsType: undefined
     },
     actions: {
         list({commit}) {
@@ -39,8 +40,15 @@ export default {
                 return response.data;
             })
         },
+        loadInputsType({commit}) {
+            return this.$http.get(`/api/v1/plugins/inputs`, {}).then(response => {
+                commit("setInputsType", response.data)
+
+                return response.data;
+            })
+        },
         loadInputSchema({commit}, options) {
-            return this.$http.get(`/api/v1/plugins/schemas/input/${options.cls}`, {}).then(response => {
+            return this.$http.get(`/api/v1/plugins/inputs/${options.type}`, {}).then(response => {
                 commit("setInputSchema", response.data)
 
                 return response.data;
@@ -70,6 +78,9 @@ export default {
         setEditorPlugin(state, editorPlugin) {
             state.editorPlugin = editorPlugin
         },
+        setInputsType(state, inputsType) {
+            state.inputsType = inputsType
+        },
         setInputSchema(state, schema) {
             state.inputSchema = schema
         }
@@ -77,7 +88,6 @@ export default {
     getters: {
         getPluginSingleList: state => state.pluginSingleList,
         getPluginsDocumentation: state => state.pluginsDocumentation,
-
     }
 }
 

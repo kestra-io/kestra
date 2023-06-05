@@ -2,13 +2,13 @@
     <div class="plugins-list">
         <el-collapse accordion>
             <template
-                :key="plugin.manifest['X-Kestra-Title']"
+                :key="plugin.title"
                 v-for="(plugin) in sortedPlugins(plugins)"
             >
                 <el-collapse-item
                     v-if="isVisible(plugin)"
-                    :name="plugin.manifest['X-Kestra-Title']"
-                    :title="plugin.manifest['X-Kestra-Title']"
+                    :name="plugin.title"
+                    :title="plugin.title"
                 >
                     <ul class="toc-h3">
                         <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
@@ -62,8 +62,8 @@
             sortedPlugins(plugins) {
                 return plugins
                     .sort((a, b) => {
-                        const nameA = (a.manifest && a.manifest["X-Kestra-Title"] ? a.manifest["X-Kestra-Title"].toLowerCase() : ""),
-                              nameB = (b.manifest && b.manifest["X-Kestra-Title"] ? b.manifest["X-Kestra-Title"].toLowerCase() : "");
+                        const nameA = (a.manifest && a.title ? a.title.toLowerCase() : ""),
+                              nameB = (b.manifest && b.title ? b.title.toLowerCase() : "");
 
                         return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
                     })

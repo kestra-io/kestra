@@ -20,14 +20,14 @@
             </template>
             <div>
                 <el-select
-                    :model-value="getCls(selectedInput.type)"
+                    :model-value="selectedInput.type"
                     @update:model-value="onChangeType"
                 >
                     <el-option
                         v-for="(input, index) in inputsType"
                         :key="index"
                         :label="input.type"
-                        :value="input.cls"
+                        :value="input.type"
                     />
                 </el-select>
                 <task-root
@@ -83,60 +83,20 @@
             }
         },
         computed: {
-            ...mapState("plugin", ["inputSchema"]),
+            ...mapState("plugin", ["inputSchema", "inputsType"]),
         },
         mounted() {
-            if (this.inputs && this.inputs.length > 0) this.newInputs = this.inputs;
+            if (this.inputs && this.inputs.length > 0) {
+                this.newInputs = this.inputs;
+            }
+
+            this.$store.dispatch("plugin/loadInputsType")
+                .then(_ => this.loading = false);
+
         },
         data() {
             return {
                 newInputs: [{type: "STRING"}],
-                inputsType: [
-                    {
-                        cls: "io.kestra.core.models.flows.input.StringInput",
-                        type: "STRING",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.IntInput",
-                        type: "INT",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.BooleanInput",
-                        type: "BOOLEAN",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.FloatInput",
-                        type: "FLOAT",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.DateTimeInput",
-                        type: "DATETIME",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.DateInput",
-                        type: "DATE",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.TimeInput",
-                        type: "TIME",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.DurationInput",
-                        type: "DURATION",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.FileInput",
-                        type: "FILE",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.JsonInput",
-                        type: "JSON",
-                    },
-                    {
-                        cls: "io.kestra.core.models.flows.input.URIInput",
-                        type: "URI",
-                    }
-                ],
                 selectedInput: undefined,
                 selectedIndex: undefined,
                 isEditOpen: false,
@@ -149,7 +109,7 @@
                 this.selectedInput = input;
                 this.selectedIndex = index;
                 this.isEditOpen = true;
-                this.loadSchema(this.getCls(input.type))
+                this.loadSchema(input.type)
             },
             getCls(type) {
                 return this.inputsType.find(e => e.type === type).cls
@@ -157,8 +117,8 @@
             getType(cls) {
                 return this.inputsType.find(e => e.cls === cls).type
             },
-            loadSchema(cls) {
-                this.$store.dispatch("plugin/loadInputSchema", {cls: cls})
+            loadSchema(type) {
+                this.$store.dispatch("plugin/loadInputSchema", {type: type})
                     .then(_ => this.loading = false);
             },
             update() {
@@ -184,7 +144,7 @@
             },
             onChangeType(value) {
                 this.loading = true;
-                this.selectedInput = {type: this.getType(value), name: this.newInputs[this.selectedIndex].name};
+                this.selectedInput = {type: value, name: this.newInputs[this.selectedIndex].name};
                 this.newInputs[this.selectedIndex] = this.selectedInput;
                 this.loadSchema(value)
             }

@@ -1,5 +1,9 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.docs.DocumentationWithSchema;
+import io.kestra.core.docs.InputType;
+import io.kestra.core.docs.Plugin;
+import io.kestra.core.docs.PluginIcon;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
@@ -20,29 +24,35 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
-            List<io.kestra.webserver.controllers.PluginController.Plugin> list = client.toBlocking().retrieve(
+            List<Plugin> list = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins"),
-                Argument.listOf(io.kestra.webserver.controllers.PluginController.Plugin.class)
+                Argument.listOf(Plugin.class)
             );
 
             assertThat(list.size(), is(2));
 
-            io.kestra.webserver.controllers.PluginController.Plugin template = list.stream()
-                .filter(plugin -> plugin.getManifest().get("X-Kestra-Title").equals("plugin-template-test"))
+            Plugin template = list.stream()
+                .filter(plugin -> plugin.getTitle().equals("plugin-template-test"))
                 .findFirst()
                 .orElseThrow();
+
+            assertThat(template.getTitle(), is("plugin-template-test"));
+            assertThat(template.getGroup(), is("io.kestra.plugin.templates"));
+            assertThat(template.getDescription(), is("Plugin template for Kestra"));
 
             assertThat(template.getTasks().size(), is(1));
             assertThat(template.getTasks().get(0), is("io.kestra.plugin.templates.ExampleTask"));
 
+            assertThat(template.getGuides().size(), is(2));
+            assertThat(template.getGuides().get(0), is("authentication"));
+
             // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
             list = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins"),
-                Argument.listOf(io.kestra.webserver.controllers.PluginController.Plugin.class)
+                Argument.listOf(Plugin.class)
             );
 
             assertThat(list.size(), is(2));
-
         });
     }
 
@@ -51,9 +61,9 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
-            Map<String, io.kestra.webserver.controllers.PluginController.PluginIcon> list = client.toBlocking().retrieve(
+            Map<String, PluginIcon> list = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/icons"),
-                Argument.mapOf(String.class, io.kestra.webserver.controllers.PluginController.PluginIcon.class)
+                Argument.mapOf(String.class, PluginIcon.class)
             );
 
             assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Bash.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
@@ -67,9 +77,9 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
-            io.kestra.webserver.controllers.PluginController.Doc doc = client.toBlocking().retrieve(
+            DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.scripts.Bash"),
-                io.kestra.webserver.controllers.PluginController.Doc.class
+                DocumentationWithSchema.class
             );
 
             assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.scripts.Bash"));
@@ -86,9 +96,9 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
-            io.kestra.webserver.controllers.PluginController.Doc doc = client.toBlocking().retrieve(
+            DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask"),
-                io.kestra.webserver.controllers.PluginController.Doc.class
+                DocumentationWithSchema.class
             );
 
             assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.templates.ExampleTask"));
@@ -104,9 +114,9 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
-            io.kestra.webserver.controllers.PluginController.Doc doc = client.toBlocking().retrieve(
+            DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask?all=true"),
-                io.kestra.webserver.controllers.PluginController.Doc.class
+                DocumentationWithSchema.class
             );
 
             Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
@@ -154,6 +164,34 @@ class PluginControllerTest {
             );
 
             assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.tasks.Task-2"));
+        });
+    }
+
+    @Test
+    void inputs() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            List<InputType> doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/inputs"),
+                Argument.listOf(InputType.class)
+            );
+
+            assertThat(doc.size(), is(11));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void input() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            DocumentationWithSchema doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/inputs/STRING"),
+                DocumentationWithSchema.class
+            );
+
+            assertThat(doc.getSchema().getProperties().size(), is(3));
+            assertThat(((Map<String, Object>)doc.getSchema().getProperties().get("properties")).size(), is(5));
         });
     }
 }

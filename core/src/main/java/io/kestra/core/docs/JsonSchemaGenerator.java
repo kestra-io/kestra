@@ -50,7 +50,7 @@ public class JsonSchemaGenerator {
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, cls, true);
+        this.build(builder,true);
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 
@@ -135,6 +135,7 @@ public class JsonSchemaGenerator {
         allOf.remove(1);
     }
 
+    @SuppressWarnings("unchecked")
     private static void fixCondition(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
         var condition = definitions.get("io.kestra.core.models.conditions.Condition-2");
@@ -171,7 +172,7 @@ public class JsonSchemaGenerator {
             .orElse(ImmutableMap.of());
     }
 
-    protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls, boolean draft7) {
+    protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7) {
         builder
 
             .with(new JavaxValidationModule(
@@ -261,7 +262,7 @@ public class JsonSchemaGenerator {
                         )
                         .collect(Collectors.toList());
 
-                    if (examples.size() > 0) {
+                    if (!examples.isEmpty()) {
                         collectedTypeAttributes.set("$examples", context.getGeneratorConfig().createArrayNode().addAll(examples));
                     }
 
@@ -275,7 +276,7 @@ public class JsonSchemaGenerator {
                         )
                         .collect(Collectors.toList());
 
-                    if (metrics.size() > 0) {
+                    if (!metrics.isEmpty()) {
                         collectedTypeAttributes.set("$metrics", context.getGeneratorConfig().createArrayNode().addAll(metrics));
                     }
                 }
@@ -421,7 +422,7 @@ public class JsonSchemaGenerator {
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, cls, false);
+        this.build(builder,false);
 
         // base is passed, we don't return base properties
         builder

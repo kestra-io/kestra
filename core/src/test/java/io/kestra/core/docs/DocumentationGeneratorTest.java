@@ -135,7 +135,7 @@ class DocumentationGeneratorTest {
     }
 
     @Test
-    void pluginDoc() throws IOException, URISyntaxException {
+    void pluginDoc() throws Exception {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin core = pluginScanner.scan();
 

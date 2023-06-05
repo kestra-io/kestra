@@ -6,6 +6,7 @@ import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -18,20 +19,17 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Slugify;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.SneakyThrows;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -66,7 +64,7 @@ public class DocumentationGenerator {
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
 
-    public List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException, URISyntaxException {
+    public List<Document> generate(RegisteredPlugin registeredPlugin) throws Exception {
         ArrayList<Document> result = new ArrayList<>();
 
         result.addAll(index(registeredPlugin));
@@ -81,29 +79,30 @@ public class DocumentationGenerator {
     }
 
     private static List<Document> index(RegisteredPlugin plugin) throws IOException {
-        PluginDocumentation pluginDocumentation = PluginDocumentation.of(plugin);
+        Map<SubGroup, Map<String, List<ClassPlugin>>> groupedClass = DocumentationGenerator.indexGroupedClass(plugin);
 
-        if (pluginDocumentation.getClassPlugins().size() == 0) {
+
+        if (groupedClass.isEmpty()) {
             return Collections.emptyList();
         }
 
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-        if (plugin.getManifest() != null) {
-            builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title").replace("plugin-", ""));
+        builder.put("title", plugin.title().replace("plugin-", ""));
 
-            if (plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description") != null) {
-                builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
-            }
-
-            var group = plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group");
-            builder.put("group", group);
-            longDescription(plugin, builder, group);
-            builder.put("classPlugins", pluginDocumentation.getClassPlugins());
+        if (plugin.description() != null) {
+            builder.put("description", plugin.description());
         }
 
-        if (pluginDocumentation.getIcon() != null) {
-            builder.put("icon", pluginDocumentation.getIcon());
+        if (plugin.longDescription() != null) {
+            builder.put("longDescription", plugin.longDescription());
+        }
+
+        builder.put("group", plugin.group());
+        builder.put("classPlugins", groupedClass);
+
+        if (plugin.icon("plugin-icon") != null) {
+            builder.put("icon", plugin.icon("plugin-icon"));
         }
 
         if(!plugin.getGuides().isEmpty()) {
@@ -113,45 +112,100 @@ public class DocumentationGenerator {
         return Collections.singletonList(new Document(
             docPath(plugin),
             render("index", builder.build()),
-            pluginDocumentation.getIcon()
+            plugin.icon("plugin-icon")
         ));
     }
 
-    private static List<Document> guides(RegisteredPlugin plugin) throws IOException, URISyntaxException {
+    private static Map<SubGroup, Map<String, List<ClassPlugin>>> indexGroupedClass(RegisteredPlugin plugin) {
+        return plugin.allClassGrouped()
+            .entrySet()
+            .stream()
+            .filter(r -> !r.getKey().equals("controllers") && !r.getKey().equals("storages"))
+            .flatMap(entry -> entry.getValue()
+                .stream()
+                .map(cls -> {
+                    ClassPlugin.ClassPluginBuilder builder = ClassPlugin.builder()
+                        .name(cls.getName())
+                        .simpleName(cls.getSimpleName())
+                        .type(entry.getKey());
+                    if (cls.getPackageName().startsWith(plugin.group())) {
+                        var pluginSubGroup = cls.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
+                        var subGroupName =  cls.getPackageName().length() > plugin.group().length() ?
+                            cls.getPackageName().substring(plugin.group().length() + 1) : "";
+                        var subGroupTitle = pluginSubGroup != null ? pluginSubGroup.title() : subGroupName;
+                        var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
+                        // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes
+                        var subgroupIsGroup = cls.getPackageName().length() <= plugin.group().length();
+                        var subGroupIcon = plugin.icon(cls.getPackageName());
+                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subGroupIcon, subgroupIsGroup);
+                        builder.subgroup(subgroup);
+                    } else {
+                        // should never occur
+                        builder.subgroup(new SubGroup(""));
+                    }
+
+                    return builder.build();
+                }))
+            .filter(Objects::nonNull)
+            .distinct()
+            .sorted(Comparator.comparing(ClassPlugin::getSubgroup)
+                .thenComparing(ClassPlugin::getType)
+                .thenComparing(ClassPlugin::getName)
+            )
+            .collect(Collectors.groupingBy(
+                ClassPlugin::getSubgroup,
+                Collectors.groupingBy(ClassPlugin::getType)
+            ));
+    }
+
+
+    @AllArgsConstructor
+    @Getter
+    @Builder
+    public static class ClassPlugin {
+        String name;
+        String simpleName;
+        SubGroup subgroup;
+        String group;
+        String type;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    @EqualsAndHashCode(of = "name")
+    public static class SubGroup implements Comparable<SubGroup>{
+        String name;
+        String title;
+        String description;
+        String icon;
+
+        boolean subgroupIsGroup;
+
+        SubGroup(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public int compareTo(SubGroup o) {
+            return name.compareTo(o.getName());
+        }
+    }
+
+    private static List<Document> guides(RegisteredPlugin plugin) throws Exception {
         String pluginName = Slugify.of(plugin.title());
 
-        var guides = plugin.getClassLoader().getResource("doc/guides");
-        if(guides != null) {
-            try (var fileSystem = FileSystems.newFileSystem(guides.toURI(), Collections.emptyMap())) {
-                var root = fileSystem.getPath("/doc/guides");
-                try (var stream = Files.walk(root, 1)) {
-                    return stream
-                        .skip(1) // first element is the root element
-                        .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
-                        .map(throwFunction(path -> new Document(
-                            pluginName + "/guides/" + path.getName(path.getParent().getNameCount()),
-                            new String(Files.readAllBytes(path)),
-                            null
-                            ))
-                        )
-                        .collect(Collectors.toList());
-                }
-            }
-        }
-
-        return Collections.emptyList();
+        return plugin
+            .guides()
+            .entrySet()
+            .stream()
+            .map(throwFunction(e -> new Document(
+                pluginName + "/guides/" + e.getKey()  + ".md",
+                e.getValue(),
+                null
+            )))
+            .collect(Collectors.toList());
     }
 
-    private static void longDescription(RegisteredPlugin plugin, ImmutableMap.Builder<String, Object> builder, String group) {
-        try (var is = plugin.getClassLoader().getResourceAsStream("doc/" + group + ".md")) {
-            if(is != null) {
-                builder.put("longDescription", IOUtils.toString(is, Charsets.UTF_8));
-            }
-        }
-        catch (Exception e) {
-            // silently fail
-        }
-    }
 
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
@@ -171,39 +225,7 @@ public class DocumentationGenerator {
             .collect(Collectors.toList());
     }
 
-    @SneakyThrows
-    public static String icon(RegisteredPlugin plugin, Class<?> cls ) {
-        InputStream resourceAsStream = Stream
-            .of(
-                plugin.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg"),
-                plugin.getClassLoader().getResourceAsStream("icons/" + cls.getPackageName() + ".svg")
-            )
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
-
-        if (resourceAsStream != null) {
-            return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-            );
-        }
-
-        return null;
-    }
-
-    @SneakyThrows
-    public static String icon(RegisteredPlugin plugin, String iconName) {
-        InputStream resourceAsStream = plugin.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
-        if (resourceAsStream != null) {
-            return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-            );
-        }
-
-        return null;
-    }
-
-    private static <T> String docPath(RegisteredPlugin registeredPlugin) {
+    private static String docPath(RegisteredPlugin registeredPlugin) {
         String pluginName = Slugify.of(registeredPlugin.path());
 
         return pluginName + "/index.md";
@@ -221,7 +243,7 @@ public class DocumentationGenerator {
         return render("task", JacksonMapper.toMap(classPluginDocumentation));
     }
 
-    public static <T> String render(ClassInputDocumentation classInputDocumentation) throws IOException {
+    public static <T> String render(AbstractClassDocumentation<T> classInputDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classInputDocumentation));
     }
 
@@ -237,6 +259,10 @@ public class DocumentationGenerator {
         // vuepress {{ }} evaluation
         Pattern pattern = Pattern.compile("`\\{\\{(.*?)\\}\\}`", Pattern.MULTILINE);
         renderer = pattern.matcher(renderer).replaceAll("<code v-pre>{{ $1 }}</code>");
+
+        // alert
+        renderer = renderer.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n");
+        renderer = renderer.replaceAll("\n::\n", "\n:::\n");
 
         return renderer;
     }

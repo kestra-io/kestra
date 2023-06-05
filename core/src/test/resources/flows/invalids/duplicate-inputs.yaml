@@ -1,0 +1,14 @@
+id: duplicate-inputs
+namespace: io.kestra.tests
+
+inputs:
+  - name: first_input
+    required: true
+    type: STRING
+  - name: first_input
+    required: true
+    type: STRING
+tasks:
+  - id: taskOne
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.first_input }}"

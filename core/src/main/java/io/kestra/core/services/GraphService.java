@@ -7,8 +7,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskDepend;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.tasks.flows.Dag;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -197,7 +197,7 @@ public class GraphService {
 
     public static void dag(
         GraphCluster graph,
-        List<TaskDepend> tasks,
+        List<Dag.DagTask> tasks,
         List<Task> errors,
         TaskRun parent,
         Execution execution
@@ -335,13 +335,13 @@ public class GraphService {
 
     private static void fillGraphDag(
         GraphCluster graph,
-        List<TaskDepend> tasks,
+        List<Dag.DagTask> tasks,
         TaskRun parent,
         Execution execution
     ) throws IllegalVariableEvaluationException {
         List<GraphTask> nodeTaskCreated = new ArrayList<>();
         List<String> nodeCreatedIds = new ArrayList<>();
-        Set<String> dependencies = tasks.stream().filter(taskDepend -> taskDepend.getDependsOn() != null).map(TaskDepend::getDependsOn).flatMap(Collection::stream).collect(Collectors.toSet());
+        Set<String> dependencies = tasks.stream().filter(taskDepend -> taskDepend.getDependsOn() != null).map(Dag.DagTask::getDependsOn).flatMap(Collection::stream).collect(Collectors.toSet());
         AbstractGraph previous;
 
         // we validate a GraphTask based on 3 nodes (root/ task / end)
@@ -352,11 +352,13 @@ public class GraphService {
         }
 
         while(nodeCreatedIds.size() < tasks.size()) {
-            Iterator<TaskDepend> iterator = tasks.stream().filter(taskDepend -> (taskDepend.getDependsOn() == null ||
-                new HashSet<>(nodeCreatedIds).containsAll(taskDepend.getDependsOn()))
-            && !nodeCreatedIds.contains(taskDepend.getTask().getId())).iterator();
+            Iterator<Dag.DagTask> iterator = tasks.stream().filter(taskDepend ->
+                // Check if the task has no dependencies OR all if its dependencies have been treated
+                (taskDepend.getDependsOn() == null || new HashSet<>(nodeCreatedIds).containsAll(taskDepend.getDependsOn()))
+                // AND if the task has not been treated yet
+                && !nodeCreatedIds.contains(taskDepend.getTask().getId())).iterator();
             while (iterator.hasNext()) {
-                TaskDepend currentTask = iterator.next();
+                Dag.DagTask currentTask = iterator.next();
                 for (TaskRun currentTaskRun : findTaskRuns(currentTask.getTask(), execution, parent)) {
                     AbstractGraph currentGraph;
                     List<String> parentValues = null;
@@ -439,7 +441,7 @@ public class GraphService {
     }
 
 
-    private static void generatePath(TaskDepend task, Map<String, TaskDepend> taskMap, List<TaskDepend> currentPath,
+    private static void generatePath(Dag.DagTask task, Map<String, Dag.DagTask> taskMap, List<Dag.DagTask> currentPath,
                                      List<List<Task>> allPaths, Set<String> visited) {
         currentPath.add(task);
         visited.add(task.getTask().getId());
@@ -449,7 +451,7 @@ public class GraphService {
 
             if(dependsOnIds != null) {
                 for (String dependencyId : dependsOnIds) {
-                    TaskDepend dependencyTask = taskMap.get(dependencyId);
+                    Dag.DagTask dependencyTask = taskMap.get(dependencyId);
                     if (!visited.contains(dependencyId)) {
                         generatePath(dependencyTask, taskMap, currentPath, allPaths, visited);
                     }
@@ -459,7 +461,7 @@ public class GraphService {
 
         if (task.getDependsOn() == null) {
             Collections.reverse(currentPath);
-            allPaths.add(currentPath.stream().map(TaskDepend::getTask).collect(Collectors.toList()));
+            allPaths.add(currentPath.stream().map(Dag.DagTask::getTask).collect(Collectors.toList()));
         }
 
         currentPath.remove(currentPath.size() - 1);

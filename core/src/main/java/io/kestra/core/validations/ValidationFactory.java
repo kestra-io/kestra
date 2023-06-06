@@ -6,7 +6,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskDepend;
 import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.tasks.flows.Switch;
@@ -134,11 +133,11 @@ public class ValidationFactory {
                 return false;
             }
 
-            List<TaskDepend> taskDepends = value.getTasks();
+            List<Dag.DagTask> taskDepends = value.getTasks();
 
             // Check for not existing taskId
             List<String> invalidDependencyIds = value.dagCheckNotExistTask(taskDepends);
-            if(invalidDependencyIds != null) {
+            if(invalidDependencyIds.size() > 0) {
                 String errorMessage = "Not existing task id in dependency: " + String.join(", ", invalidDependencyIds);
                 context.messageTemplate(errorMessage);
 
@@ -146,9 +145,9 @@ public class ValidationFactory {
             }
 
             // Check for cyclic dependencies
-            String cyclicDependency = value.dagCheckCyclicDependencies(taskDepends);
-            if(cyclicDependency != null) {
-                context.messageTemplate("Cyclic dependency detected: " + cyclicDependency);
+            ArrayList<String> cyclicDependency = value.dagCheckCyclicDependencies(taskDepends);
+            if(cyclicDependency.size() > 0) {
+                context.messageTemplate("Cyclic dependency detected: " + String.join(", ", cyclicDependency));
 
                 return false;
             }

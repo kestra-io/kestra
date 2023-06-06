@@ -2,6 +2,7 @@ package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlFlowParser;
@@ -34,8 +35,10 @@ public class DagTest extends AbstractMemoryRunnerTest {
             null
         );
 
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size(), is(7));
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("task1"));
-        assertThat(execution.getTaskRunList().get(5).getTaskId(), is("task5"));
+        assertThat(execution.getTaskRunList().get(6).getTaskId(), is("task5"));
     }
 
     @Test
@@ -46,7 +49,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks[0]: Cyclic dependency detected: task2"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: Cyclic dependency detected: task1, task2"));
     }
 
     @Test

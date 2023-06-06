@@ -10,8 +10,8 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskDepend;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.tasks.flows.Dag;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -279,7 +279,7 @@ public class FlowableUtils {
         List<ResolvedTask> errors,
         TaskRun parentTaskRun,
         Integer concurrency,
-        List<TaskDepend> taskDependencies
+        List<Dag.DagTask> taskDependencies
     ) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
@@ -328,8 +328,10 @@ public class FlowableUtils {
                         .equals(task.getId()))
                     .findFirst().get().getDependsOn();
 
-                return taskDependIds == null || notFinds.stream().noneMatch(taskRun -> taskDependIds
-                    .contains(taskRun.getTask().getId()));
+                // Check if have no dependencies OR all dependencies are terminated
+                return taskDependIds == null || new HashSet<>(taskRuns.stream().filter(
+                    taskRun -> taskRun.getState().isTerminated()
+                ).map(TaskRun::getTaskId).toList()).containsAll(taskDependIds);
             });
 
             if (concurrency > 0) {

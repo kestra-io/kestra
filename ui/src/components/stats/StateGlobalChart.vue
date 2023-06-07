@@ -1,5 +1,5 @@
 <template>
-    <el-card :header="$t('last 30 days count', {count: formattedCount})" shadow="never">
+    <el-card :header="header" shadow="never">
         <div class="state-global-charts" :class="{big: big}">
             <template v-if="hasData">
                 <state-chart
@@ -21,7 +21,7 @@
 <script>
     import StateChart from "./StateChart.vue";
     import Utils from "../../utils/utils";
-
+    import {stateGlobalChartTypes} from "../../utils/constants";
     export default {
         components: {
             StateChart
@@ -38,6 +38,18 @@
             big: {
                 type: Boolean,
                 default: false
+            },
+            startDate: {
+                type: String,
+                default: undefined
+            },
+            endDate: {
+                type: String,
+                default: undefined
+            },
+            type: {
+                type: String,
+                default: stateGlobalChartTypes.EXECUTIONS
             }
         },
         computed: {
@@ -51,6 +63,15 @@
             },
             hasData() {
                 return this.count > 0;
+            },
+            daysCount() {
+                if (this.startDate && this.endDate) {
+                    return this.$moment(this.endDate).diff(this.$moment(this.startDate), "days") + 1;
+                }
+                return 31;
+            },
+            header() {
+                return this.formattedCount + " " + this.$t(this.type);
             }
         }
     };

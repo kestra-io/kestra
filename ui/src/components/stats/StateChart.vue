@@ -20,7 +20,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
-    import {defaultConfig, tooltip, chartClick, backgroundFromState} from "../../utils/charts.js";
+    import {defaultConfig, tooltip, chartClick, backgroundFromState, getFormat} from "../../utils/charts.js";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({
@@ -142,7 +142,7 @@
                     }, Object.create(null))
 
                 return {
-                    labels: props.data.map(r => r.startDate),
+                    labels: props.data.map(r => moment(r.date).format(getFormat(r.groupBy))),
                     datasets: props.big || props.global || props.duration ?
                         [{
                             type: "line",

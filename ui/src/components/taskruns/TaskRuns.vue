@@ -37,6 +37,9 @@
                     class="mb-4"
                     :ready="dailyReady"
                     :data="taskRunDaily"
+                    :start-date="startDate"
+                    :end-date="endDate"
+                    :type="stateGlobalChartTypes.TASKRUNS"
                 />
             </template>
 
@@ -138,6 +141,7 @@
     import State from "../../utils/state";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
+    import {stateGlobalChartTypes} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -169,13 +173,15 @@
                     title: this.$t("taskruns")
                 };
             },
+            stateGlobalChartTypes() {
+                return stateGlobalChartTypes;
+            },
             endDate() {
-                return new Date();
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment(this.endDate).toISOString(true);
             },
             startDate() {
-                return this.$moment(this.endDate)
-                    .add(-30, "days")
-                    .toDate();
+                return  this.$route.query.startDate ?  this.$route.query.startDate : this.$moment(this.endDate)
+                    .add(-30, "days").toISOString(true);
             }
         },
         created() {
@@ -204,8 +210,8 @@
             loadData(callback) {
                 this.$store
                     .dispatch("stat/taskRunDaily", this.loadQuery({
-                        startDate: this.$moment(this.startDate).startOf("day").add(-1, "day").toISOString(true),
-                        endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
+                        startDate: this.startDate,
+                        endDate: this.endDate
                     }, true))
                     .then(() => {
                         this.dailyReady = true;

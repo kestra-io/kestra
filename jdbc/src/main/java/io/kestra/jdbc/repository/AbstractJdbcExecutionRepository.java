@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
+import io.kestra.core.models.executions.statistics.ExecutionStatistics;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -14,6 +15,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
+import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.context.ApplicationContext;
@@ -25,19 +27,21 @@ import io.reactivex.Flowable;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
-import java.time.LocalDate;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 @Singleton
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcIndexerInterface<Execution> {
@@ -252,7 +256,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         Results results = dailyStatisticsQuery(
             List.of(
-                DSL.date(field("start_date", Date.class)).as("start_date"),
                 field("state_current", String.class)
             ),
             query,
@@ -272,17 +275,27 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         );
     }
 
-    private static List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(Result<Record> records, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return fillMissingDate(
-            records.intoGroups(field("start_date", java.sql.Date.class)),
-            startDate,
-            endDate
-        )
+    private List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(Result<Record> records, ZonedDateTime startDate, ZonedDateTime endDate) {
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
+
+        return fillDate(records
+            .stream()
+            .map(record ->
+                ExecutionStatistics.builder()
+                    .date(this.jdbcRepository.getDate(record, groupByType.val()))
+                    .durationMax(record.get("duration_max", Long.class))
+                    .durationMin(record.get("duration_min", Long.class))
+                    .durationSum(record.get("duration_sum", Long.class))
+                    .stateCurrent(record.get("state_current", String.class))
+                    .count(record.get("count", Long.class))
+                    .build()
+            )
+            .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
             .entrySet()
             .stream()
-            .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue()))
-            .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
-            .collect(Collectors.toList());
+            .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
+            .sorted(Comparator.comparing(DailyExecutionStatistics::getDate))
+            .collect(Collectors.toList()), startDate, endDate);
     }
 
     private Results dailyStatisticsQuery(
@@ -297,6 +310,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(finalStartDate, finalEndDate), "start_date"));
         List<Field<?>> selectFields = new ArrayList<>(fields);
         selectFields.addAll(List.of(
             DSL.count().as("count"),
@@ -304,6 +318,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             DSL.max(field("state_duration", Long.class)).as("duration_max"),
             DSL.sum(field("state_duration", Long.class)).as("duration_sum")
         ));
+        selectFields.addAll(dateFields);
 
         return jdbcRepository
             .getDslContextWrapper()
@@ -319,14 +334,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 select = filteringQuery(select, namespace, flowId, flows, query, null);
 
-                List<Field<?>> groupFields = new ArrayList<>();
-                if (context.configuration().dialect() != SQLDialect.H2) {
-                    for (int i = 1; i <= fields.size(); i++) {
-                        groupFields.add(DSL.field(String.valueOf(i)));
-                    }
-                } else {
-                    groupFields = fields;
-                }
+                List<Field<?>> groupFields = new ArrayList<>(fields);
+
+                groupFields.addAll(dateFields);
 
                 SelectHavingStep<?> finalQuery = select
                     .groupBy(groupFields);
@@ -379,7 +389,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     ) {
         List<Field<?>> fields = new ArrayList<>();
 
-        fields.add(DSL.date(field("start_date", Date.class)).as("start_date"));
         fields.add(field("state_current", String.class));
         fields.add(field("namespace", String.class));
 
@@ -439,38 +448,71 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private static Map<java.sql.Date, Result<Record>> fillMissingDate(Map<java.sql.Date, Result<Record>> result, ZonedDateTime startDate, ZonedDateTime endDate) {
-        LocalDate compare = startDate.toLocalDate();
+    private static List<DailyExecutionStatistics> fillDate(List<DailyExecutionStatistics> results, ZonedDateTime startDate, ZonedDateTime endDate) {
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
-        while (compare.compareTo(endDate.toLocalDate()) < 0) {
-            java.sql.Date sqlDate = java.sql.Date.valueOf(compare);
-
-            if (!result.containsKey(sqlDate)) {
-                result.put(sqlDate, null);
-            }
-            compare = compare.plus(1, ChronoUnit.DAYS);
+        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
+            return fillDate(results, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM", groupByType.val());
+        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
+            return fillDate(results, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww", groupByType.val());
+        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
+            return fillDate(results, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD", groupByType.val());
+        }  else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
+            return fillDate(results, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH", groupByType.val());
+        } else {
+            return fillDate(results, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm", groupByType.val());
         }
-
-        return result;
     }
 
-    private static DailyExecutionStatistics dailyExecutionStatisticsMap(java.sql.Date date, @Nullable Result<Record> result) {
-        if (result == null) {
-            return DailyExecutionStatistics.builder()
-                .startDate(date.toLocalDate())
-                .duration(DailyExecutionStatistics.Duration.builder().build())
-                .build();
+    private static List<DailyExecutionStatistics> fillDate(
+        List<DailyExecutionStatistics> results,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        ChronoUnit unit,
+        String format,
+        String groupByType
+    ) {
+        List<DailyExecutionStatistics> filledResult = new ArrayList<>();
+        ZonedDateTime currentDate = startDate;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+
+        // Add one to the end date to include last intervals in the result
+        String formattedEndDate = endDate.plus(1, unit).format(formatter);
+
+        // Comparing date string formatted with only valuable part of the date
+        // allow to avoid cases where latest interval was not included in the result
+        // i.e if endDate is 18:15 and startDate 17:30, when reaching 18:30 it will not handle the 18th hours
+        while (!currentDate.format(formatter).equals(formattedEndDate)) {
+            String finalCurrentDate = currentDate.format(formatter);
+            DailyExecutionStatistics dailyExecutionStatistics = results
+                .stream()
+                .filter(e -> formatter.format(e.getDate()).equals(finalCurrentDate))
+                .findFirst()
+                .orElse(DailyExecutionStatistics.builder()
+                    .date(currentDate.toInstant())
+                    .groupBy(groupByType)
+                    .duration(DailyExecutionStatistics.Duration.builder().build())
+                    .build()
+                );
+
+            filledResult.add(dailyExecutionStatistics);
+            currentDate = currentDate.plus(1, unit);
         }
 
-        long durationSum = result.getValues("duration_sum", Long.class).stream().mapToLong(value -> value).sum();
-        long count = result.getValues("count", Long.class).stream().mapToLong(value -> value).sum();
+        return filledResult;
+    }
+
+    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics>  result, String groupByType) {
+        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value).sum();
+        long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
 
         DailyExecutionStatistics build = DailyExecutionStatistics.builder()
-            .startDate(date.toLocalDate())
+            .date(date)
+            .groupBy(groupByType)
             .duration(DailyExecutionStatistics.Duration.builder()
-                 .avg(Duration.ofMillis(durationSum / count))
-                .min(result.getValues("duration_min", Long.class).stream().min(Long::compare).map(Duration::ofMillis).orElse(null))
-                .max(result.getValues("duration_min", Long.class).stream().max(Long::compare).map(Duration::ofMillis).orElse(null))
+                .avg(Duration.ofMillis(durationSum / count))
+                .min(result.stream().map(ExecutionStatistics::getDurationMin).min(Long::compare).map(Duration::ofMillis).orElse(null))
+                .max(result.stream().map(ExecutionStatistics::getDurationMax).max(Long::compare).map(Duration::ofMillis).orElse(null))
                 .sum(Duration.ofMillis(durationSum))
                 .count(count)
                 .build()
@@ -479,8 +521,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         result.forEach(record -> build.getExecutionCounts()
             .compute(
-                State.Type.valueOf(record.get("state_current", String.class)),
-                (type, current) -> record.get("count", Integer.class).longValue()
+                State.Type.valueOf(record.getStateCurrent()),
+                (type, current) -> record.getCount()
             ));
 
         return build;

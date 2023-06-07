@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.InternalException;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.OffsetTime;
 import java.time.ZonedDateTime;
 import java.util.Locale;
 
@@ -17,6 +18,17 @@ public class DateUtils {
         }
         return currentDate;
     }
+
+    public static OffsetTime parseOffsetTime(String render) throws InternalException {
+        OffsetTime currentTime;
+        try {
+            currentTime = OffsetTime.parse(render);
+        } catch (DateTimeException e) {
+            throw new InternalException(e);
+        }
+        return currentTime;
+    }
+
 
     public static LocalDate parseLocalDate(String render) throws InternalException {
         LocalDate currentDate;

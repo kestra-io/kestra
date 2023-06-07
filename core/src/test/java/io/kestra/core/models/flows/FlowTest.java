@@ -75,7 +75,7 @@ class FlowTest {
 
 
     @Test
-    void taskInvalid() {
+    void switchTaskInvalid() {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
@@ -83,6 +83,17 @@ class FlowTest {
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
         assertThat(validate.get().getMessage(), containsString("tasks[0]: No task defined, neither cases or default have any tasks"));
+    }
+
+    @Test
+    void workingDirectoryTaskInvalid() {
+        Flow flow = this.parse("flows/invalids/workingdirectory-invalid.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getConstraintViolations().size(), is(1));
+
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: Only runnable tasks are allowed as children of a WorkingDirectory task"));
     }
 
     @Test

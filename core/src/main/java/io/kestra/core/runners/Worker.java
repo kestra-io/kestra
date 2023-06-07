@@ -9,6 +9,7 @@ import com.google.common.hash.Hashing;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
@@ -109,22 +110,21 @@ public class Worker implements Runnable, Closeable {
                 executors.execute(() -> {
                     if (workerTask.getTask() instanceof RunnableTask) {
                         this.run(workerTask, true);
-                    } else if (workerTask.getTask() instanceof io.kestra.core.tasks.flows.Worker) {
+                    } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
                         RunContext runContext = workerTask.getRunContext();
 
                         try {
-                            io.kestra.core.tasks.flows.Worker workerTasks = (io.kestra.core.tasks.flows.Worker) workerTask.getTask();
-
-                            for (Task currentTask : workerTasks.getTasks()) {
-                                WorkerTask currentWorkerTask = workerTasks.workerTask(
+                            for (Task currentTask : workingDirectory.getTasks()) {
+                                WorkerTask currentWorkerTask = workingDirectory.workerTask(
                                     workerTask.getTaskRun(),
                                     currentTask,
                                     runContext
                                 );
 
+                                // all tasks will be handled immediately by the worker
                                 WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
 
-                                if (workerTaskResult.getTaskRun().getState().isFailed() || workerTaskResult.getTaskRun().getState().isPaused()) {
+                                if (workerTaskResult.getTaskRun().getState().isFailed()) {
                                     break;
                                 }
 

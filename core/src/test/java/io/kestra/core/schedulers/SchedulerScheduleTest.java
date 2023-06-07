@@ -28,6 +28,9 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     protected SchedulerTriggerStateInterface triggerState;
 
     @Inject
+    protected SchedulerTriggerRunningInterface triggerRunning;
+
+    @Inject
     protected SchedulerExecutionStateInterface executionState;
 
     private static Flow createScheduleFlow() {
@@ -58,7 +61,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             applicationContext,
             flowListenersServiceSpy,
             executionStateSpy,
-            triggerState
+            triggerState,
+            triggerRunning
         );
     }
 

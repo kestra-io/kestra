@@ -19,7 +19,6 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.schedulers.AbstractScheduler;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
@@ -53,7 +52,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,6 +76,8 @@ public class Worker implements Runnable, Closeable {
 
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
+
+    private final Map<String, AtomicInteger> evaluateTriggerRunningCount = new ConcurrentHashMap<>();
 
     private final List<WorkerThread> workerThreadReferences = new ArrayList<>();
 
@@ -174,8 +174,12 @@ public class Worker implements Runnable, Closeable {
         this.workerTriggerQueue.receive(
             workerTrigger -> {
                 this.metricRegistry
-                    .timer(MetricRegistry.METRIC_WORKER_EVALUATE_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
+                    .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
                     .record(() -> {
+                        this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
+                            .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
+                        this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
+
                         try {
                             PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
                             RunContext runContext = workerTrigger.getConditionContext()
@@ -211,6 +215,7 @@ public class Worker implements Runnable, Closeable {
                                     .build()
                             );
                         }
+                        this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
                     }
                 );
             }

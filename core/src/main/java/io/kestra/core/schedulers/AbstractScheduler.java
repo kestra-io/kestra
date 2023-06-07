@@ -35,7 +35,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
@@ -60,16 +59,12 @@ public abstract class AbstractScheduler implements Scheduler {
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
 
-    // The evaluateRunningLock must be used when accessing evaluateRunning or evaluateRunningCount
-    private final Object evaluateRunningLock = new Object();
-    private final Map<String, ZonedDateTime> evaluateRunning = new ConcurrentHashMap<>();
-    private final Map<String, AtomicInteger> evaluateRunningCount = new ConcurrentHashMap<>();
+    protected SchedulerTriggerRunningInterface triggerRunning;
 
     // The triggerStateSavedLock must be used when accessing triggerStateSaved
     private final Object triggerStateSavedLock = new Object();
     private final Map<String, Trigger> triggerStateSaved = new ConcurrentHashMap<>();
     protected SchedulerTriggerStateInterface triggerState;
-
 
     // schedulable and schedulableNextDate must be volatile and their access synchronized as they are updated and read by different threads.
     @Getter
@@ -160,7 +155,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 // as the same trigger will be evaluated multiple-time which is not supported by the 'addToRunning' method
                 if (workerTriggerResult.getTrigger() instanceof PollingTriggerInterface &&
                     ((PollingTriggerInterface) workerTriggerResult.getTrigger()).getInterval() != null) {
-                    this.removeFromRunning(workerTriggerResult.getTriggerContext());
+                    triggerRunning.removeRunningTrigger(workerTriggerResult.getTriggerContext());
                 }
 
                 if (workerTriggerResult.getSuccess() && workerTriggerResult.getExecution().isPresent()) {
@@ -276,7 +271,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         // FIXME: previously, if no interval the trigger was executed immediately. I think only the Schedule trigger has no interval
                         // now that all triggers are sent to the worker, we need to do this to avoid issues with backfills
                         // as the same trigger will be evaluated multiple-time which is not supported by the 'addToRunning' method
-                        this.addToRunning(f.getTriggerContext(), now);
+                        triggerRunning.addRunningTrigger(f.getTriggerContext(), now);
                     }
                     try {
                         this.sendPollingTriggerToWorker(f);
@@ -292,27 +287,6 @@ public abstract class AbstractScheduler implements Scheduler {
             .filter(Objects::nonNull)
             .peek(this::log)
             .forEach(this::saveLastTriggerAndEmitExecution);
-    }
-
-    private void addToRunning(TriggerContext triggerContext, ZonedDateTime now) {
-        synchronized (evaluateRunningLock) {
-            // TODO see if we can move this to the time we first met a new trigger to avoid calling it at each trigger execution
-            this.evaluateRunningCount.computeIfAbsent(triggerContext.uid(), s -> metricRegistry
-                .gauge(MetricRegistry.SCHEDULER_EVALUATE_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(triggerContext)));
-
-            this.evaluateRunning.put(triggerContext.uid(), now);
-            this.evaluateRunningCount.get(triggerContext.uid()).addAndGet(1);
-        }
-    }
-
-
-    private void removeFromRunning(TriggerContext triggerContext) {
-        synchronized (evaluateRunningLock) {
-            if (this.evaluateRunning.remove(triggerContext.uid()) == null) {
-                throw new IllegalStateException("Can't remove trigger '" + triggerContext.uid() + "' from running");
-            }
-            this.evaluateRunningCount.get(triggerContext.uid()).addAndGet(-1);
-        }
     }
 
     private boolean isExecutionNotRunning(FlowWithPollingTrigger f, ZonedDateTime now) {
@@ -347,6 +321,7 @@ public abstract class AbstractScheduler implements Scheduler {
         // we need to have {@code lastTrigger.getExecutionId() == null} to be tell the execution is not running.
         // the scheduler will clean the execution from the trigger and we don't keep only terminated state as an end.
         if (log.isDebugEnabled()) {
+            //FIXME this seems wrong
             if (lastTrigger.getUpdatedDate() != null) {
                 metricRegistry
                     .timer(MetricRegistry.SCHEDULER_EXECUTION_RUNNING_DURATION, metricRegistry.tags(lastTrigger))
@@ -439,11 +414,11 @@ public abstract class AbstractScheduler implements Scheduler {
             return true;
         }
 
-        String key = flowWithPollingTrigger.getTriggerContext().uid();
-
-        if (this.evaluateRunning.containsKey(key)) {
+        if (this.triggerRunning.isTriggerRunning(flowWithPollingTrigger.getTriggerContext())) {
             return false;
         }
+
+        String key = flowWithPollingTrigger.getTriggerContext().uid();
 
         if (!this.lastEvaluate.containsKey(key)) {
             this.lastEvaluate.put(key, now);

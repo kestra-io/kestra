@@ -16,6 +16,7 @@ import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton
+//TODO maybe move it to the MemoryRunner ?
 public class DefaultScheduler extends AbstractScheduler {
     private final Map<String, Trigger> watchingTrigger = new ConcurrentHashMap<>();
 
@@ -24,10 +25,12 @@ public class DefaultScheduler extends AbstractScheduler {
         ApplicationContext applicationContext,
         FlowListenersInterface flowListeners,
         SchedulerExecutionStateInterface executionState,
-        SchedulerTriggerStateInterface triggerState
+        SchedulerTriggerStateInterface triggerState,
+        SchedulerTriggerRunningInterface triggerRunning
     ) {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
+        this.triggerRunning = triggerRunning;
         this.executionState = executionState;
         this.isReady = true;
     }

@@ -20,7 +20,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -122,7 +121,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     endDate,
                     aggregation
                 ))
-            .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate).toDays()).val())
+            .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate)).val())
             .build();
     }
 
@@ -195,7 +194,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         ZonedDateTime endDate,
         String aggregation
     ) {
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate).toDays()));
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate)));
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -224,7 +223,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 var selectGroup = select.groupBy(dateFields);
 
                 List<MetricAggregation> result = this.jdbcRepository
-                    .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate).toDays()).val());
+                    .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate)).val());
 
                 List<MetricAggregation> fillResult = fillDate(result, startDate, endDate);
 
@@ -242,26 +241,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         };
     }
 
-    private List<Field<?>> groupByFields(Long dayCount) {
-        Field<Integer> month = DSL.month(DSL.timestamp(field("timestamp", Date.class))).as("month");
-        Field<Integer> year = DSL.year(DSL.timestamp(field("timestamp", Date.class))).as("year");
-        Field<Integer> day = DSL.day(DSL.timestamp(field("timestamp", Date.class))).as("day");
-        Field<Integer> week = DSL.week(DSL.timestamp(field("timestamp", Date.class))).as("week");
-        Field<Integer> hour = DSL.hour(DSL.timestamp(field("timestamp", Date.class))).as("hour");
-
-        if (dayCount > 365) {
-            return List.of(year, month);
-        } else if (dayCount > 180) {
-            return List.of(year, week);
-        } else if (dayCount > 1) {
-            return List.of(year, month, day);
-        } else {
-            return List.of(year, month, day, hour);
-        }
-    }
-
     private List<MetricAggregation> fillDate(List<MetricAggregation> result, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate).toDays());
+        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
         if (groupByType.equals(DateUtils.GroupType.MONTH)) {
             return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
@@ -269,8 +250,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
         } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
             return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
-        } else {
+        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
             return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");
+        } else {
+            return fillDate(result, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm");
         }
     }
 

@@ -74,16 +74,16 @@ export function chartClick(moment, router, route, event) {
     const query = {};
 
     if (event.date) {
-        query.start = moment(event.date).toISOString(true);
-        query.end = moment(event.date).add(1, "d").toISOString(true);
+        query.startDate = moment(event.date).toISOString(true);
+        query.endDate = moment(event.date).add(1, "d").toISOString(true);
     }
 
     if (event.startDate) {
-        query.start = moment(event.startDate).toISOString(true);
+        query.startDate = moment(event.startDate).toISOString(true);
     }
 
     if (event.endDate) {
-        query.end = moment(event.endDate).toISOString(true);
+        query.endDate = moment(event.endDate).toISOString(true);
     }
 
     if (event.status) {
@@ -133,4 +133,19 @@ export function backgroundFromState(state, alpha = 1) {
 
     const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
     return `rgba(${r},${g},${b},${alpha})`;
+}
+
+export function getFormat(groupBy) {
+    switch (groupBy) {
+        case "minute":
+            return "LT";
+        case "hour":
+            return "LLL";
+        case "day":
+            return "l";
+        case "week":
+            return "DD.MM";
+        case "month":
+            return "MM.YYYY";
+    }
 }

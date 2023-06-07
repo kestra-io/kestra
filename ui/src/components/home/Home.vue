@@ -317,12 +317,11 @@
                 return this.namespace || this.$route.query.namespace;
             },
             endDate() {
-                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment();
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
             },
             startDate() {
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
-                    .add(-30, "days")
-                    .toDate();
+                    .add(-30, "days").toISOString(true);
             },
             isAllowedTrigger() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);

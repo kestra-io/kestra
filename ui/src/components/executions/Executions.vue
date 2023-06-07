@@ -239,12 +239,11 @@
                 };
             },
             endDate() {
-                return this.$route.query.endDate ? this.$route.query.endDate : new Date();
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
             },
             startDate() {
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
-                    .add(-30, "days")
-                    .toDate();
+                    .add(-30, "days").toISOString(true);
             },
             displayBottomBar() {
                 return (this.executionsSelection.length !== 0 && (this.canUpdate || this.canDelete)) ||

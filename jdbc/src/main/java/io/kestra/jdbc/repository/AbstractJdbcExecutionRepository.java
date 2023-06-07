@@ -475,8 +475,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<DailyExecutionStatistics> filledResult = new ArrayList<>();
         ZonedDateTime currentDate = startDate;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+
         // Add one to the end date to include last intervals in the result
         String formattedEndDate = endDate.plus(1, unit).format(formatter);
+
         // Comparing date string formatted with only valuable part of the date
         // allow to avoid cases where latest interval was not included in the result
         // i.e if endDate is 18:15 and startDate 17:30, when reaching 18:30 it will not handle the 18th hours
@@ -490,7 +492,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .date(currentDate.toInstant())
                     .groupBy(groupByType)
                     .duration(DailyExecutionStatistics.Duration.builder().build())
-                    .build());
+                    .build()
+                );
 
             filledResult.add(dailyExecutionStatistics);
             currentDate = currentDate.plus(1, unit);

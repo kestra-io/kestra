@@ -39,7 +39,7 @@
                     :data="taskRunDaily"
                     :start-date="startDate"
                     :end-date="endDate"
-                    :type="stateGlobalChartTypes.TASKRUN"
+                    :type="stateGlobalChartTypes.TASKRUNS"
                 />
             </template>
 
@@ -177,12 +177,11 @@
                 return stateGlobalChartTypes;
             },
             endDate() {
-                return this.$route.query.endDate ? this.$route.query.endDate : new Date();
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment(this.endDate).toISOString(true);
             },
             startDate() {
                 return  this.$route.query.startDate ?  this.$route.query.startDate : this.$moment(this.endDate)
-                    .add(-30, "days")
-                    .toDate();
+                    .add(-30, "days").toISOString(true);
             }
         },
         created() {

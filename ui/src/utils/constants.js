@@ -4,6 +4,6 @@ export const SECTIONS = {
 }
 
 export const stateGlobalChartTypes = {
-    EXECUTION: "executions",
-    TASKRUN: "taskruns"
+    EXECUTIONS: "executions",
+    TASKRUNS: "taskruns"
 }

@@ -44,13 +44,10 @@ public abstract class AbstractJdbcRepository {
             return List.of(year, week);
         } else if (duration.toDays() > DateUtils.GroupValue.DAY.getValue()) {
             return List.of(year, month, day);
-        } else if(duration.toHours() > DateUtils.GroupValue.HOUR.getValue()){
+        } else if (duration.toHours() > DateUtils.GroupValue.HOUR.getValue()) {
             return List.of(year, month, day, hour);
         } else {
             return List.of(year, month, day, hour, minute);
         }
     }
-
-
-
 }

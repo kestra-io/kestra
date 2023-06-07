@@ -49,7 +49,7 @@
             },
             type: {
                 type: String,
-                default: stateGlobalChartTypes.EXECUTION
+                default: stateGlobalChartTypes.EXECUTIONS
             }
         },
         computed: {

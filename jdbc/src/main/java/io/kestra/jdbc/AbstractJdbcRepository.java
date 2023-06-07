@@ -1,4 +1,4 @@
-package io.kestra.jdbc;
+    package io.kestra.jdbc;
 
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.google.common.collect.ImmutableMap;
@@ -131,14 +131,14 @@ public abstract class AbstractJdbcRepository<T> {
 
     }
 
-    public Instant getDate(Record record, String groupByType) {
+    public <R extends Record> Instant getDate(R record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
-        Integer minute = fields.contains("minute") ?  record.get("minute", Integer.class): null;
-        Integer hour = fields.contains("hour") ?  record.get("hour", Integer.class): null;
-        Integer day = fields.contains("day") ?  record.get("day", Integer.class): null;
-        Integer week = fields.contains("week") ?  record.get("week", Integer.class): null;
-        Integer month = fields.contains("month") ?  record.get("month", Integer.class): null;
-        Integer year = fields.contains("year") ?  record.get("year", Integer.class): null;
+        Integer minute = fields.contains("minute") ? record.get("minute", Integer.class) : null;
+        Integer hour = fields.contains("hour") ? record.get("hour", Integer.class) : null;
+        Integer day = fields.contains("day") ? record.get("day", Integer.class) : null;
+        Integer week = fields.contains("week") ? record.get("week", Integer.class) : null;
+        Integer month = fields.contains("month") ? record.get("month", Integer.class) : null;
+        Integer year = fields.contains("year") ? record.get("year", Integer.class) : null;
 
         switch (groupByType) {
             case "minute" -> {

@@ -26,5 +26,4 @@ public class ExecutionStatistics {
 
     @NotNull
     private Long durationSum;
-
 }

@@ -127,7 +127,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void findAll() {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
-        assertThat(flows.getTotal(), greaterThanOrEqualTo(Helpers.FLOWS_COUNT));
+        assertThat(flows.getTotal(), equalTo(Helpers.FLOWS_COUNT));
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")

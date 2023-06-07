@@ -14,7 +14,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.tasks.flows.Worker;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -298,7 +298,7 @@ public class ExecutionService {
             .filter(throwPredicate(s -> {
                 TaskRun taskRun = execution.findTaskRunByTaskRunId(s);
                 Task task = flow.findTaskByTaskId(taskRun.getTaskId());
-                return (task instanceof Worker);
+                return (task instanceof WorkingDirectory);
             }))
             .collect(Collectors.toSet());
 
@@ -348,7 +348,7 @@ public class ExecutionService {
         Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
 
         State alterState;
-        if (!task.isFlowable() || task instanceof Worker) {
+        if (!task.isFlowable() || task instanceof WorkingDirectory) {
             // The current task run is the reference task run, its default state will be newState
             alterState = originalTaskRun.withState(newStateType).getState();
         }

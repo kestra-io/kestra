@@ -9,6 +9,9 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,7 +22,20 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class Helpers {
-    public static long FLOWS_COUNT = 65;
+    public static final long FLOWS_COUNT =  countFlows();
+
+    private static int countFlows() {
+        int count = 0;
+        try (var in = Thread.currentThread().getContextClassLoader().getResourceAsStream("flows/valids/");
+             var br = new BufferedReader(new InputStreamReader(in))) {
+            while (br.readLine() != null) {
+                count++;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return count;
+    }
 
     public static ApplicationContext applicationContext() throws URISyntaxException {
         return applicationContext(

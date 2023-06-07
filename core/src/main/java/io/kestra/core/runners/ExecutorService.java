@@ -12,8 +12,8 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.tasks.flows.Worker;
 import io.kestra.core.tasks.flows.Pause;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -632,7 +632,7 @@ public class ExecutorService {
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
                 Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
-                if (parentTask instanceof Worker) {
+                if (parentTask instanceof WorkingDirectory) {
                     taskRuns.add(workerTaskResult.getTaskRun());
                 }
             }

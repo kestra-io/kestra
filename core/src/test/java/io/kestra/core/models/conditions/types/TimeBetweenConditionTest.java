@@ -25,8 +25,8 @@ class TimeBetweenConditionTest {
 
     static Stream<Arguments> source() {
         return Stream.of(
-            Arguments.of(OffsetTime.now().toString(), null, OffsetTime.parse("16:19:12.000000+02:00"), true),
-            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), null, OffsetTime.now(), false),
+            Arguments.of(OffsetTime.now().toString(), null, OffsetTime.now().minusSeconds(1).toString(), true),
+            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), null, OffsetTime.parse("17:19:12.000000+02:00").toString(), false),
             Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), OffsetTime.parse("16:20:12.000000+02:00"), OffsetTime.parse("16:18:12.000000+02:00"), true),
             Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), OffsetTime.parse("16:20:12.000000+02:00"), null, true),
             Arguments.of("{{ now(format='iso_offset_time') }}", OffsetTime.now().plusHours(1), OffsetTime.now().plusHours(-1), true),

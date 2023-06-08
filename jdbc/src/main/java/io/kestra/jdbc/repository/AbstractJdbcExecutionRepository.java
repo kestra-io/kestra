@@ -273,12 +273,18 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 .get(0)
                 .result(),
             startDate,
-            endDate
+            endDate,
+            groupBy
         );
     }
 
-    private List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(Result<Record> records, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
+    private List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(
+        Result<Record> records,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupType
+    ) {
+        DateUtils.GroupType groupByType = groupType != null ? groupType : DateUtils.groupByType(Duration.between(startDate, endDate));
 
         return fillDate(records
             .stream()
@@ -426,7 +432,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                                 dailyStatisticsQueryMapRecord(
                                     e.getValue(),
                                     startDate,
-                                    endDate
+                                    endDate,
+                                    null
                                 )
                         )
                     );
@@ -441,7 +448,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                                 dailyStatisticsQueryMapRecord(
                                     f.getValue(),
                                     startDate,
-                                    endDate
+                                    endDate,
+                                    null
                                 )
                             ))
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))

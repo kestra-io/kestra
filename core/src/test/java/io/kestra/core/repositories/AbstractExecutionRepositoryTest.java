@@ -277,6 +277,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
+            null,
             false
         );
 
@@ -304,6 +305,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
+            null,
             true
         );
 

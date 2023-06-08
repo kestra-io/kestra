@@ -248,6 +248,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
         boolean isTaskRun
     ) {
         if (isTaskRun) {
@@ -263,7 +264,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             flowId,
             null,
             startDate,
-            endDate
+            endDate,
+            groupBy
         );
 
         return dailyStatisticsQueryMapRecord(
@@ -305,12 +307,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy
     ) {
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(finalStartDate, finalEndDate), "start_date"));
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(finalStartDate, finalEndDate), "start_date", groupBy));
         List<Field<?>> selectFields = new ArrayList<>(fields);
         selectFields.addAll(List.of(
             DSL.count().as("count"),
@@ -403,7 +406,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             flowId,
             flows,
             startDate,
-            endDate
+            endDate,
+            null
         );
 
         return results

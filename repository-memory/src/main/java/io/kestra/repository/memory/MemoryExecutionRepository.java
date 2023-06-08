@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.DateUtils;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import io.reactivex.Flowable;
@@ -110,6 +111,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
         boolean isTaskRun
     ) {
         throw new UnsupportedOperationException();

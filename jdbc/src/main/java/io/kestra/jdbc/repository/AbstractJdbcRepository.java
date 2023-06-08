@@ -26,10 +26,10 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected List<Field<?>> groupByFields(Duration duration) {
-        return groupByFields(duration, null);
+        return groupByFields(duration, null, null);
     }
 
-    protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField) {
+    protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy) {
         String field = dateField != null ? dateField : "timestamp";
         Field<Integer> month = DSL.month(DSL.timestamp(field(field, Date.class))).as("month");
         Field<Integer> year = DSL.year(DSL.timestamp(field(field, Date.class))).as("year");
@@ -38,13 +38,13 @@ public abstract class AbstractJdbcRepository {
         Field<Integer> hour = DSL.hour(DSL.timestamp(field(field, Date.class))).as("hour");
         Field<Integer> minute = DSL.minute(DSL.timestamp(field(field, Date.class))).as("minute");
 
-        if (duration.toDays() > DateUtils.GroupValue.MONTH.getValue()) {
+        if (groupBy == DateUtils.GroupType.MONTH || duration.toDays() > DateUtils.GroupValue.MONTH.getValue()) {
             return List.of(year, month);
-        } else if (duration.toDays() > DateUtils.GroupValue.WEEK.getValue()) {
+        } else if (groupBy == DateUtils.GroupType.WEEK || duration.toDays() > DateUtils.GroupValue.WEEK.getValue()) {
             return List.of(year, week);
-        } else if (duration.toDays() > DateUtils.GroupValue.DAY.getValue()) {
+        } else if (groupBy == DateUtils.GroupType.DAY || duration.toDays() > DateUtils.GroupValue.DAY.getValue()) {
             return List.of(year, month, day);
-        } else if (duration.toHours() > DateUtils.GroupValue.HOUR.getValue()) {
+        } else if (groupBy == DateUtils.GroupType.HOUR || duration.toHours() > DateUtils.GroupValue.HOUR.getValue()) {
             return List.of(year, month, day, hour);
         } else {
             return List.of(year, month, day, hour, minute);

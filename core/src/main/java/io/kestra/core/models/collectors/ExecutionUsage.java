@@ -2,6 +2,7 @@ package io.kestra.core.models.collectors;
 
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.DateUtils;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
@@ -34,6 +35,7 @@ public class ExecutionUsage {
                 null,
                 startDate,
                 ZonedDateTime.now(),
+                DateUtils.GroupType.DAY,
                 true
             );
         } catch (UnsupportedOperationException ignored) {
@@ -47,6 +49,7 @@ public class ExecutionUsage {
                 null,
                 startDate,
                 ZonedDateTime.now(),
+                DateUtils.GroupType.DAY,
                 false
             ))
             .dailyTaskRunsCount(dailyTaskRunsCount)

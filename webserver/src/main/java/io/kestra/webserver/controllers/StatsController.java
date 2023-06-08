@@ -42,6 +42,7 @@ public class StatsController {
             flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            null,
             false
         );
     }
@@ -62,6 +63,7 @@ public class StatsController {
             flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            null,
             true
         );
     }

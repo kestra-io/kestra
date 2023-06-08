@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.utils.DateUtils;
 import io.micronaut.data.model.Pageable;
 import io.reactivex.Flowable;
 import lombok.Getter;
@@ -70,6 +71,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
         boolean isTaskRun
     );
 

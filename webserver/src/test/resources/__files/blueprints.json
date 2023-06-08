@@ -1,0 +1,30 @@
+{
+  "total": 2,
+  "results": [
+      {
+        "id": "1",
+        "title": "GCS Trigger",
+        "description": "GCS trigger flow",
+        "includedTasks": [
+          "io.kestra.core.tasks.flows.EachParallel",
+          "io.kestra.core.tasks.flows.Flow",
+          "io.kestra.plugin.gcp.gcs.Trigger"
+        ],
+        "tags": ["3", "2"],
+        "publishedAt": "2023-06-01T08:37:34.661Z"
+      },
+      {
+        "id": "2",
+        "title": "MySQL to BigQuery",
+        "description": "Simple MySQL to BigQuery flow",
+        "includedTasks": [
+          "io.kestra.plugin.jdbc.mysql.Query",
+          "io.kestra.plugin.serdes.json.JsonWriter",
+          "io.kestra.plugin.gcp.bigquery.Load",
+          "io.kestra.plugin.gcp.bigquery.Query"
+        ],
+        "tags": ["1", "3"],
+        "publishedAt": "2023-06-01T08:35:33.243Z"
+      }
+  ]
+}

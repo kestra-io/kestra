@@ -80,6 +80,8 @@
     "state": "State",
     "search term in message": "Search term in message",
     "search": "Search",
+    "search blueprint": "Search blueprint",
+    "all tags": "All tags",
     "source search": "Source search",
     "filter by log level": "Filter by log level",
     "selected": "Selected",
@@ -193,6 +195,17 @@
       "developer": "Developer Guide",
       "github": "GitHub Issues"
     },
+    "flow gallery": {
+      "title": "Flow gallery",
+      "header": {
+        "welcome": "Welcome to the flow gallery",
+        "catch phrase": {
+          "1": "First step is always the hardest.",
+          "2": "Explore blueprints to kickstart your next flow."
+        }
+      }
+    },
+    "use": "Use",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -410,6 +423,7 @@
     "switch-view": "Switch view",
     "source and topology": "Source and topology",
     "source and doc": "Source and documentation",
+    "source and blueprints": "Source and blueprints",
     "editor": "Editor",
     "error in editor": "An error have been found in the editor",
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code> ?",
@@ -513,6 +527,8 @@
     "state": "état",
     "search term in message": "Chercher dans le message",
     "search": "Chercher",
+    "search blueprint": "Chercher un blueprint",
+    "all tags": "Toutes catégories",
     "source search": "Recherche de code source",
     "filter by log level": "Filtrer par niveau de log",
     "selected": "Sélectionné",
@@ -627,6 +643,17 @@
       "developer": "Guide développeur",
       "github": "Bugs GitHub"
     },
+    "flow gallery": {
+      "title": "Galerie de flows",
+      "header": {
+        "welcome": "Bienvenue dans la galerie de flows",
+        "catch phrase": {
+          "1": "La première étape est toujours la plus difficile.",
+          "2": "Explorez les blueprints pour créer rapidement vos flows."
+        }
+      }
+    },
+    "use": "Utiliser",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -844,6 +871,7 @@
     "switch-view": "Changer de vue",
     "source and topology": "Source et topologie",
     "source and doc": "Source et documentation",
+    "source and blueprints": "Source et blueprints",
     "editor": "Éditeur",
     "error in editor": "Une erreur a été trouvé dans l'éditeur",
     "delete task confirm": "Êtes-vous sûr de vouloir supprimer la tâche <code>{taskId}</code> ?",

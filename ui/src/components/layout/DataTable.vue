@@ -6,6 +6,8 @@
             </collapse>
         </nav>
 
+        <el-divider v-if="divider"/>
+
         <el-container direction="vertical" v-loading="isLoading">
             <slot name="top" />
 
@@ -37,7 +39,8 @@
             total: {type: Number, required: true},
             max: {type: Number, required: false, default: undefined},
             size: {type: Number, default: 25},
-            page: {type: Number, default: 1}
+            page: {type: Number, default: 1},
+            divider: {type: Boolean, default: false}
         },
 
         methods: {

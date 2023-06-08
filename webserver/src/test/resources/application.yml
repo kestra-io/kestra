@@ -6,6 +6,7 @@ micronaut:
         mapping: /ui/**
 
 kestra:
+  api.address: http://localhost:8081
   repository:
     type: memory
   queue:

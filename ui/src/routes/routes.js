@@ -14,6 +14,8 @@ import Home from "../components/home/Home.vue";
 import Welcome from "../components/onboarding/Welcome.vue";
 import FlowCreate from "../components/flows/FlowCreate.vue";
 import FlowMetrics from "../components/flows/FlowMetrics.vue";
+import Blueprints from "../components/flows/blueprints/Blueprints.vue";
+import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 
 export default [
     //Flows
@@ -32,6 +34,10 @@ export default [
     //TaskRuns
     {name: "taskruns/list", path: "/taskruns", component: TaskRuns},
 
+    //Flow gallery
+    {name: "flow-gallery", path: "/flow-gallery", component: Blueprints, props: {topNavbar: false}},
+    {name: "flow-gallery/view", path: "/flow-gallery/:blueprintId", component: BlueprintDetail, props: true},
+
     //Documentation
     {name: "plugins/list", path: "/plugins", component: Plugin},
     {name: "plugins/view", path: "/plugins/:cls", component: Plugin},
@@ -41,7 +47,7 @@ export default [
     {name: "templates/create", path: "/templates/new", component: TemplateEdit},
     {name: "templates/update", path: "/templates/edit/:namespace/:id", component: TemplateEdit},
 
-    //Settings
+    //Logs
     {name: "logs/list", path: "/logs", component: LogsWrapper},
 
     //Settings

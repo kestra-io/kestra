@@ -1,6 +1,10 @@
 export default {
     props: {
-        preventRouteInfo : {
+        topNavbar: {
+            type: Boolean,
+            default: true
+        },
+        preventRouteInfo: {
             type: Boolean,
             default: false
         }
@@ -16,7 +20,7 @@ export default {
     methods: {
         handleBreadcrumb() {
             if (!this.preventRouteInfo) {
-                this.$store.commit("layout/setTopNavbar", this.routeInfo)
+                this.$store.commit("layout/setTopNavbar", this.topNavbar ? this.routeInfo : undefined);
 
                 let baseTitle;
 

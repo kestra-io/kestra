@@ -1,0 +1,31 @@
+id: gcs-wait-for-file-trigger-subflow
+namespace: io.kestra.demo.google
+
+description: |
+  This flow will wait for a file on a gcs bucket.
+
+  We check for new file every minute and once detected, we move it to a subfolder.
+
+  For each file found, we trigger a subflow that will handle process the downloaded files.
+
+  You can generate a file on the bucket using the flow `extract-bigquery-table-to-gcs`
+tasks:
+  - id: each
+    type: io.kestra.core.tasks.flows.EachParallel
+    tasks:
+      - id: subflow-etl-flow
+        type: io.kestra.core.tasks.flows.Flow
+        namespace: io.kestra.demo.google
+        inputs:
+          file: \"{{ taskrun.value | jq ('.uri') | first }}\"
+          filename: \"{{ taskrun.value | jq ('.name') | first }}\"
+        flowId: subflow-etl-flow
+        wait: true
+    concurrent: 8
+    value: \"{{ trigger.blobs }}\"
+triggers:
+  - id: watch
+    type: io.kestra.plugin.gcp.gcs.Trigger
+    action: MOVE
+    from: gs://demo-kestra-prd/demo-extract/
+    moveDirectory: gs://demo-kestra-prd/archive/demo-extract/

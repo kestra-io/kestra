@@ -2,7 +2,7 @@
     <el-input
         v-model="search"
         @input="onInput"
-        :placeholder="$t('search')"
+        :placeholder="$t(placeholder)"
     >
         <template #suffix>
             <magnify />
@@ -24,6 +24,15 @@
             router: {
                 type: Boolean,
                 default: true
+            },
+            placeholder: {
+                type: String,
+                required: false,
+                default: 'search'
+            },
+            embed: {
+                type: Boolean,
+                default: false
             }
         },
         watch: {
@@ -46,7 +55,7 @@
                 this.searchDebounce = debounce(300, () => {
                     this.$emit("search", this.search);
 
-                    if (this.router) {
+                    if (this.router && !this.embed) {
                         const query = {...this.$route.query, q: this.search, page: 1};
                         if (!this.search) {
                             delete query.q;

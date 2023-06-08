@@ -13,12 +13,16 @@
         <el-tooltip :content="$t('topology')" transition="" :hide-after="0" :persistent="false">
             <el-button :type="buttonType('topology')" @click="switchView('topology')" :icon="Graph" />
         </el-tooltip>
+        <el-tooltip :content="$t('source and blueprints')" transition="" :hide-after="0" :persistent="false">
+            <el-button :type="buttonType('source-blueprints')" @click="switchView('source-blueprints')" :icon="ImageSearch" />
+        </el-tooltip>
     </el-button-group>
 </template>
 
 <script setup>
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
     import Graph from "vue-material-design-icons/Graph.vue";
+    import ImageSearch from "vue-material-design-icons/ImageSearch.vue";
     import FileChart from "vue-material-design-icons/FileChart.vue";
     import BookOpenPageVariantOutline from "vue-material-design-icons/BookOpenPageVariantOutline.vue";
 </script>

@@ -66,6 +66,7 @@ flyway:
       ignore-migration-patterns: "*:missing"
 
 kestra:
+  api.address: https://api.kestra.io
   retries:
     attempts: 5
     multiplier: 2.0

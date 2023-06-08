@@ -25,5 +25,6 @@ dependencies {
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.0")
 }
 

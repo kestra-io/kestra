@@ -36,6 +36,7 @@
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import NotebookOutline from "vue-material-design-icons/NotebookOutline.vue";
+    import Ballot from "vue-material-design-icons/Ballot.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import FileCodeOutline from "vue-material-design-icons/FileCodeOutline.vue";
     import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
@@ -191,6 +192,14 @@
                             },
 
                         ]
+                    },
+                    {
+                        href: "/flow-gallery",
+                        title: this.$t("flow gallery.title"),
+                        icon: {
+                            element: Ballot,
+                            class: "menu-icon"
+                        },
                     },
                     {
                         href: "/settings",

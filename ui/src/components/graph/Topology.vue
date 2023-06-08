@@ -133,9 +133,12 @@
         return defaultValue;
     }
 
+    const isHorizontalDefault = () => {
+        return showTopology.value === "combined" ? false : localStorage.getItem("topology-orientation") === "1"
+    }
+
     const editorWidthStorageKey = "editor-width";
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
-    const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
     const elements = ref([])
     const haveChange = ref(false)
@@ -148,6 +151,7 @@
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
     const showTopology = ref(initShowTopology());
+    const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
     const timer = ref(null);
     const dragging = ref(false);
@@ -611,7 +615,7 @@
         const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
         const pluginsDocumentation = store.getters["plugin/getPluginsDocumentation"];
-        if (taskType && pluginSingleList.includes(taskType)) {
+        if (taskType && pluginSingleList && pluginSingleList.includes(taskType)) {
             if (!pluginsDocumentation[taskType]) {
                 store
                     .dispatch("plugin/load", {cls: taskType})
@@ -864,13 +868,13 @@
     const switchView = (event) => {
         persistShowTopology(event);
         if (["topology", "combined"].includes(showTopology.value)) {
-            isHorizontal.value = showTopology.value === "combined" ? false : localStorage.getItem("topology-orientation") === "1";
+            isHorizontal.value = isHorizontalDefault();
             if (updatedFromEditor.value) {
                 onEdit(flowYaml.value)
                 updatedFromEditor.value = false;
             }
         }
-        if (event == "source") {
+        if (event === "source" && window.document.getElementById("editor")) {
             window.document.getElementById("editor").style = null;
         }
     }

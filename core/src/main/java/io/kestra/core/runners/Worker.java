@@ -105,6 +105,7 @@ public class Worker implements Runnable, Closeable {
         });
 
         this.workerTaskQueue.receive(
+            null,
             Worker.class,
             workerTask -> {
                 executors.execute(() -> {

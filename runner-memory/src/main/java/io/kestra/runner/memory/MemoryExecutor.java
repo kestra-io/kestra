@@ -151,13 +151,13 @@ public class MemoryExecutor implements ExecutorInterface {
                     .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
                     .collect(Collectors.toList());
 
-                // WorkerTask not flowable to workerTask
+                // Send WorkerTask not flowable to the worker
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
                     .forEach(workerTaskQueue::emit);
 
-                // WorkerTask not flowable to workerTaskResult as Running
+                // Move WorkerTask flowable to RUNNING and send them directly to the workerTaskResult
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isFlowable())

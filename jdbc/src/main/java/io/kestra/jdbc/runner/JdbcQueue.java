@@ -3,7 +3,6 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
@@ -80,17 +79,20 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @SneakyThrows
-    protected Map<Field<Object>, Object> produceFields(String key, T message) {
-        return new HashMap<>(ImmutableMap
-            .of(
-                AbstractJdbcRepository.field("type"), this.cls.getName(),
-                AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create(),
-                AbstractJdbcRepository.field("value"), mapper.writeValueAsString(message)
-            )
-        );
+    protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) {
+        Map<Field<Object>, Object> fields = new HashMap<>();
+        fields.put(AbstractJdbcRepository.field("type"), this.cls.getName());
+        fields.put(AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create());
+        fields.put(AbstractJdbcRepository.field("value"), mapper.writeValueAsString(message));
+
+        if (consumerGroup != null) {
+            fields.put(AbstractJdbcRepository.field("consumer_group"), consumerGroup);
+        }
+
+        return fields;
     }
 
-    private void produce(String key, T message, Boolean skipIndexer) {
+    private void produce(String consumerGroup, String key, T message, Boolean skipIndexer) {
         if (log.isTraceEnabled()) {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
@@ -104,27 +106,27 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             context
                 .insertInto(table)
-                .set(this.produceFields(key, message))
+                .set(this.produceFields(consumerGroup, key, message))
                 .execute();
         });
     }
 
-    public void emitOnly(T message) {
-        this.produce(queueService.key(message), message, true);
+    public void emitOnly(String consumerGroup, T message) {
+        this.produce(consumerGroup, queueService.key(message), message, true);
     }
 
     @Override
-    public void emit(T message) {
-        this.produce(queueService.key(message), message, false);
+    public void emit(String consumerGroup, T message) {
+        this.produce(consumerGroup, queueService.key(message), message, false);
     }
 
     @Override
-    public void emitAsync(T message) throws QueueException {
-        this.emit(message);
+    public void emitAsync(String consumerGroup, T message) throws QueueException {
+        this.emit(consumerGroup, message);
     }
 
     @Override
-    public void delete(T message) throws QueueException {
+    public void delete(String consumerGroup, T message) throws QueueException {
         dslContextWrapper.transaction(configuration -> DSL
             .using(configuration)
             .delete(table)
@@ -133,21 +135,14 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         );
     }
 
-    public String consumerGroupName(Class<?> group) {
-        return CaseFormat.UPPER_CAMEL.to(
-            CaseFormat.LOWER_UNDERSCORE,
-            group.getSimpleName()
-        );
-    }
+    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset);
 
-    abstract protected Result<Record> receiveFetch(DSLContext ctx, Integer offset);
+    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType);
 
-    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup);
-
-    abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, List<Integer> offsets);
+    abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     @Override
-    public Runnable receive(Consumer<T> consumer) {
+    public Runnable receive(String consumerGroup, Consumer<T> consumer) {
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
@@ -167,7 +162,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, maxOffset.get());
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get());
 
                 if (result.size() > 0) {
                     List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
@@ -185,20 +180,21 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
-        String consumerGroupName = consumerGroupName(consumerGroup);
+    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<T> consumer) {
+        String queueName = queueName(queueType);
 
         return this.poll(() -> {
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, consumerGroupName);
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName);
 
                 if (result.size() > 0) {
 
                     this.updateGroupOffsets(
                         ctx,
-                        consumerGroupName,
+                        consumerGroup,
+                        queueName,
                         result.map(record -> record.get("offset", Integer.class))
                     );
                 }
@@ -210,6 +206,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             return fetch.size();
         });
+    }
+
+    private String queueName(Class<?> queueType) {
+        return CaseFormat.UPPER_CAMEL.to(
+            CaseFormat.LOWER_UNDERSCORE,
+            queueType.getSimpleName()
+        );
     }
 
     @SuppressWarnings("BusyWait")

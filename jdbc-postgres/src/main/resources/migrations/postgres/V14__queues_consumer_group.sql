@@ -1,0 +1,1 @@
+ALTER TABLE queues ADD COLUMN consumer_group VARCHAR(250);

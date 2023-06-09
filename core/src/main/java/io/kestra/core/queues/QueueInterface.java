@@ -4,15 +4,35 @@ import java.io.Closeable;
 import java.util.function.Consumer;
 
 public interface QueueInterface<T> extends Closeable {
-    void emit(T message) throws QueueException;
+    default void emit(T message) throws QueueException {
+        emit(null, message);
+    }
 
-    void emitAsync(T message) throws QueueException;
+    void emit(String consumerGroup, T message) throws QueueException;
 
-    void delete(T message) throws QueueException;
+    default void emitAsync(T message) throws QueueException {
+        emitAsync(null, message);
+    }
 
-    Runnable receive(Consumer<T> consumer);
+    void emitAsync(String consumerGroup, T message) throws QueueException;
 
-    Runnable receive(Class<?> consumerGroup, Consumer<T> consumer);
+    default void delete(T message) throws QueueException {
+        delete(null, message);
+    }
+
+    void delete(String consumerGroup, T message) throws QueueException;
+
+    default Runnable receive(Consumer<T> consumer) {
+        return receive((String) null, consumer);
+    }
+
+    Runnable receive(String consumerGroup, Consumer<T> consumer);
+
+    default Runnable receive(Class<?> queueType, Consumer<T> consumer) {
+        return receive(null, queueType, consumer);
+    }
+
+    Runnable receive(String consumerGroup, Class<?> queueType, Consumer<T> consumer);
 
     void pause();
 }

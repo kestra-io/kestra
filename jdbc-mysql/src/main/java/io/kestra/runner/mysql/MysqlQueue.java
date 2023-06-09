@@ -15,9 +15,8 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected Result<Record> receiveFetch(DSLContext ctx, Integer offset) {
-        SelectConditionStep<Record2<Object, Object>> select = ctx
-            .select(
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
+        var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
             )
@@ -26,6 +25,12 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         if (offset != 0) {
             select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
+        }
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 
         return select
@@ -37,8 +42,9 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             .get(0);
     }
 
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup) {
-        return ctx
+    @Override
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
+        var select = ctx
             .select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
@@ -48,9 +54,16 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
-                DSL.condition("NOT(FIND_IN_SET(?, consumers) > 0)", consumerGroup)
-            )))
-            .orderBy(AbstractJdbcRepository.field("offset").asc())
+                DSL.condition("NOT(FIND_IN_SET(?, consumers) > 0)", queueType)
+            )));
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        return select.orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
@@ -60,14 +73,21 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
     @SuppressWarnings("RedundantCast")
     @Override
-    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, List<Integer> offsets) {
-        ctx
+    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+        var update = ctx
             .update(DSL.table(table.getName()))
             .set(
                 AbstractJdbcRepository.field("consumers"),
-                DSL.field("CONCAT_WS(',', consumers, ?)", String.class, consumerGroup)
+                DSL.field("CONCAT_WS(',', consumers, ?)", String.class, queueType)
             )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)))
-            .execute();
+            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+
+        if (consumerGroup != null) {
+            update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            update = update.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        update.execute();
     }
 }

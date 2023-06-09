@@ -26,7 +26,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     private final QueueService queueService;
 
     private final Class<T> cls;
-    private final Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
+    private final Map<String, List<Consumer<T>>> queues = new ConcurrentHashMap<>();
 
     public MemoryQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
@@ -52,7 +52,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
 
-        this.consumers
+        this.queues
             .forEach((consumerGroup, consumers) -> {
                 poolExecutor.execute(() -> {
                     Consumer<T> consumer;
@@ -80,47 +80,47 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public void emit(T message) {
+    public void emit(String consumerGroup, T message) {
         this.produce(queueService.key(message), message);
     }
 
     @Override
-    public void emitAsync(T message) throws QueueException {
+    public void emitAsync(String consumerGroup, T message) throws QueueException {
         this.emit(message);
     }
 
     @Override
-    public void delete(T message) throws QueueException {
+    public void delete(String consumerGroup, T message) throws QueueException {
         this.produce(queueService.key(message), null);
     }
 
     @Override
-    public Runnable receive(Consumer<T> consumer) {
-        return this.receive(null, consumer);
+    public Runnable receive(String consumerGroup, Consumer<T> consumer) {
+        return this.receive(consumerGroup, null, consumer);
     }
 
     @Override
-    public synchronized Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
-        String consumerGroupName;
-        if (consumerGroup == null) {
-            consumerGroupName = UUID.randomUUID().toString();
+    public synchronized Runnable receive(String consumerGroup, Class<?> queueType, Consumer<T> consumer) {
+        String queueName;
+        if (queueType == null) {
+            queueName = UUID.randomUUID().toString();
         } else {
-            consumerGroupName = consumerGroup.getSimpleName();
+            queueName = queueType.getSimpleName();
         }
 
-        if (!this.consumers.containsKey(consumerGroupName)) {
-            this.consumers.put(consumerGroupName, Collections.synchronizedList(new ArrayList<>()));
+        if (!this.queues.containsKey(queueName)) {
+            this.queues.put(queueName, Collections.synchronizedList(new ArrayList<>()));
         }
 
-        this.consumers.get(consumerGroupName).add(consumer);
-        int index = this.consumers.get(consumerGroupName).size() - 1;
+        this.queues.get(queueName).add(consumer);
+        int index = this.queues.get(queueName).size() - 1;
 
         return () -> {
             synchronized (this) {
-                this.consumers.get(consumerGroupName).remove(index);
+                this.queues.get(queueName).remove(index);
 
-                if (this.consumers.get(consumerGroupName).size() == 0) {
-                    this.consumers.remove(consumerGroupName);
+                if (this.queues.get(queueName).size() == 0) {
+                    this.queues.remove(queueName);
                 }
             }
         };
@@ -132,7 +132,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     public int getSubscribersCount() {
-        return this.consumers
+        return this.queues
             .values()
             .stream()
             .map(List::size)

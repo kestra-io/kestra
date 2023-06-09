@@ -16,14 +16,19 @@ public class H2Queue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected Result<Record> receiveFetch(DSLContext ctx, Integer offset) {
-        SelectConditionStep<Record2<Object, Object>> select = ctx
-            .select(
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
+        var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
             .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()));
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
 
         if (offset != 0) {
             select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
@@ -37,9 +42,9 @@ public class H2Queue<T> extends JdbcQueue<T> {
             .get(0);
     }
 
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup) {
-        return ctx
-            .select(
+    @Override
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
+        var select =  ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
             )
@@ -47,9 +52,16 @@ public class H2Queue<T> extends JdbcQueue<T> {
             .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
-                DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", consumerGroup)
-            )))
-            .orderBy(AbstractJdbcRepository.field("offset").asc())
+                DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", queueType)
+            )));
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        return select.orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(configuration.getPollSize())
             .forUpdate()
             .fetchMany()
@@ -58,18 +70,24 @@ public class H2Queue<T> extends JdbcQueue<T> {
 
     @SuppressWarnings("RedundantCast")
     @Override
-    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, List<Integer> offsets) {
-        ctx
-            .update(DSL.table(table.getName()))
+    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+        var update = ctx.update(DSL.table(table.getName()))
             .set(
                 AbstractJdbcRepository.field("consumers"),
                 DSL.field(
                     "ARRAY_APPEND(COALESCE(\"consumers\", ARRAY[]), ?)",
                     SQLDataType.VARCHAR(50).getArrayType(),
-                    (Object) new String[]{consumerGroup}
+                    (Object) new String[]{queueType}
                 )
             )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)))
-            .execute();
+            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+
+        if (consumerGroup != null) {
+            update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            update = update.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        update.execute();
     }
 }

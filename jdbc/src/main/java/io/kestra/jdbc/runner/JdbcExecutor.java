@@ -409,7 +409,7 @@ public class JdbcExecutor implements ExecutorInterface {
         if (hasFailure) {
             this.executionQueue.emit(executor.getExecution());
         } else {
-            ((JdbcQueue<Execution>) this.executionQueue).emitOnly(executor.getExecution());
+            ((JdbcQueue<Execution>) this.executionQueue).emitOnly(null, executor.getExecution());
         }
 
         // delete if ended

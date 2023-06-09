@@ -19,8 +19,8 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
     @Override
     @SneakyThrows
-    protected Map<Field<Object>, Object> produceFields(String key, T message) {
-        Map<Field<Object>, Object> map = super.produceFields(key, message);
+    protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) {
+        Map<Field<Object>, Object> map = super.produceFields(consumerGroup, key, message);
 
         map.put(
             AbstractJdbcRepository.field("value"),
@@ -35,9 +35,9 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         return map;
     }
 
-    protected Result<Record> receiveFetch(DSLContext ctx, @NonNull Integer offset) {
-        SelectConditionStep<Record2<Object, Object>> select = ctx
-            .select(
+    @Override
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, @NonNull Integer offset) {
+        var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
             )
@@ -46,6 +46,12 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         if (offset != 0) {
             select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
+        }
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 
         return select
@@ -57,16 +63,23 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
             .get(0);
     }
 
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup) {
-        return ctx
-            .select(
+    @Override
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
+        var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
             .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
-            .and(AbstractJdbcRepository.field("consumer_" + consumerGroup, Boolean.class).isFalse())
-            .orderBy(AbstractJdbcRepository.field("offset").asc())
+            .and(AbstractJdbcRepository.field("consumer_" + queueType, Boolean.class).isFalse());
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        return select.orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
@@ -76,14 +89,20 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
     @SuppressWarnings("RedundantCast")
     @Override
-    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, List<Integer> offsets) {
-        ctx
-            .update(DSL.table(table.getName()))
+    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+        var update = ctx.update(DSL.table(table.getName()))
             .set(
-                AbstractJdbcRepository.field("consumer_" + consumerGroup),
+                AbstractJdbcRepository.field("consumer_" + queueType),
                 true
             )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)))
-            .execute();
+            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+
+        if (consumerGroup != null) {
+            update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            update = update.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        update.execute();
     }
 }

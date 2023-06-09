@@ -1,9 +1,9 @@
 package io.kestra.core.runners.pebble;
 
+import io.kestra.core.runners.pebble.filters.ReplaceFilter;
 import io.pebbletemplates.pebble.attributes.AttributeResolver;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.extension.Extension;
-import io.pebbletemplates.pebble.extension.core.MacroAndBlockRegistrantNodeVisitorFactory;
 import io.pebbletemplates.pebble.extension.core.NumberFormatFilter;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
 import io.pebbletemplates.pebble.operator.UnaryOperator;
@@ -25,9 +25,11 @@ public class ExtensionCustomizer extends io.pebbletemplates.pebble.extension.Ext
 
         list.remove("escape");
         list.remove("raw");
+        list.remove("replace");
+        list.remove("numberformat");
 
         list.put("numberFormat", new NumberFormatFilter());
-        list.remove("numberformat");
+        list.put("replace", new ReplaceFilter());
 
         return list;
     }

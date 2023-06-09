@@ -16,8 +16,7 @@ import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
@@ -110,6 +109,17 @@ class FlowTest {
         Task findUpdated = updated.findTaskByTaskId("1-2-2_return");
 
         assertThat(((Return) findUpdated).getFormat(), is("{{task.id}}"));
+    }
+
+    @Test
+    void workerGroup() {
+        Flow flow = this.parse("flows/invalids/worker-group.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getConstraintViolations().size(), is(1));
+
+        assertThat(validate.get().getMessage(), equalTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality"));
     }
 
     private Flow parse(String path) {

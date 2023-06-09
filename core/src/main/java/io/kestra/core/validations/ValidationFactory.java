@@ -10,6 +10,7 @@ import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -194,6 +195,19 @@ public class ValidationFactory {
             }
 
             return true;
+        };
+    }
+
+    @Singleton
+    @Named("workerGroupValidator")
+    ConstraintValidator<WorkerGroupValidation, Task.WorkerGroup> workerGroupValidator() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            context.messageTemplate("Worker Group is an Enterprise Edition functionality");
+            return false;
         };
     }
 }

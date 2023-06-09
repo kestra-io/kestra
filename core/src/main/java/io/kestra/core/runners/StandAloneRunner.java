@@ -49,7 +49,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
 
         poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
 
-        Worker worker = new Worker(applicationContext, workerThread);
+        Worker worker = new Worker(applicationContext, workerThread, null);
         applicationContext.registerSingleton(worker);
         poolExecutor.execute(worker);
 

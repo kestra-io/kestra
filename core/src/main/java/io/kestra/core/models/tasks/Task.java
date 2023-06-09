@@ -8,8 +8,11 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.flows.WorkingDirectory;
+import io.kestra.core.validations.WorkerGroupValidation;
 import io.micronaut.core.annotation.Introspected;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -49,6 +52,9 @@ abstract public class Task {
 
     @Builder.Default
     protected Boolean disabled = false;
+
+    @WorkerGroupValidation
+    private WorkerGroup workerGroup;
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {
@@ -113,5 +119,12 @@ abstract public class Task {
     @JsonIgnore
     public boolean isSendToWorkerTask() {
         return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WorkerGroup  {
+        private String key;
     }
 }

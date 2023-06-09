@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.tasks.flows.Pause;
+import io.kestra.core.models.tasks.Task;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @MicronautTest
 class WorkerTest {
@@ -57,7 +59,7 @@ class WorkerTest {
 
     @Test
     void success() throws TimeoutException {
-        Worker worker = new Worker(applicationContext, 8);
+        Worker worker = new Worker(applicationContext, 8, null);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -75,8 +77,14 @@ class WorkerTest {
     }
 
     @Test
+    void workerGroup() {
+        Worker worker = new Worker(applicationContext, 8, "toto");
+        assertThat(worker.getWorkerGroup(), nullValue());
+    }
+
+    @Test
     void failOnWorkerTaskWithFlowable() throws TimeoutException {
-        Worker worker = new Worker(applicationContext, 8);
+        Worker worker = new Worker(applicationContext, 8, null);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -126,7 +134,7 @@ class WorkerTest {
         List<LogEntry> logs = new ArrayList<>();
         workerTaskLogQueue.receive(logs::add);
 
-        Worker worker = new Worker(applicationContext, 8);
+        Worker worker = new Worker(applicationContext, 8, null);
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();

@@ -3,6 +3,7 @@ package io.kestra.runner.memory;
 import io.kestra.core.models.executions.MetricEntry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Prototype;
 import org.apache.commons.lang3.NotImplementedException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -110,7 +111,7 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     }
 
     @Override
-    @Singleton
+    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
     public WorkerTaskQueueInterface workerTaskQueue() {
         return new MemoryWorkerTaskQueue(applicationContext);
     }

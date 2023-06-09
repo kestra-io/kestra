@@ -10,8 +10,6 @@ import jakarta.inject.Singleton;
 
 import java.util.function.Consumer;
 
-@Singleton
-@MysqlQueueEnabled
 public class MysqlWorkerTaskQueue implements WorkerTaskQueueInterface {
     QueueInterface<WorkerTask> workerTaskQueue;
 

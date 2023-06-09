@@ -23,6 +23,9 @@ public class WorkerCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"-t", "--thread"}, description = "the max number of concurrent threads to launch")
     private int thread = Runtime.getRuntime().availableProcessors() * 2;
 
+    @CommandLine.Option(names = {"-g", "--worker-group"}, description = "the worker group key (EE only)")
+    private String workerGroupKey = null;
+
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(
@@ -34,12 +37,17 @@ public class WorkerCommand extends AbstractServerCommand {
     public Integer call() throws Exception {
         super.call();
 
-        Worker worker = new Worker(applicationContext, this.thread);
+        Worker worker = new Worker(applicationContext, this.thread, this.workerGroupKey);
         applicationContext.registerSingleton(worker);
 
         worker.run();
 
-        log.info("Workers started with {} thread(s)", this.thread);
+        if (this.workerGroupKey != null) {
+            log.info("Worker started with {} thread(s) in group '{}'", this.thread, this.workerGroupKey);
+        }
+        else {
+            log.info("Worker started with {} thread(s)", this.thread);
+        }
 
         this.shutdownHook(worker::close);
 

@@ -219,7 +219,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
-                    .forEach(workerTaskQueue::emit);
+                    .forEach(workerTask -> workerTaskQueue.emit(
+                        workerTask.getTask().getWorkerGroup() != null ? workerTask.getTask().getWorkerGroup().getKey() : null, workerTask));
 
                 // WorkerTask not flowable to workerTaskResult as Running
                 workerTasksDedup

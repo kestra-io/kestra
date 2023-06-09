@@ -10,7 +10,7 @@
     />
 </template>
 <script>
-    import Topology from "../graph/Topology.vue";
+    import Topology from "../inputs/EditorView.vue";
     import {mapState} from "vuex";
     export default {
         components: {

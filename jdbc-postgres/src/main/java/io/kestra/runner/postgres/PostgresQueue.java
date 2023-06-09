@@ -50,8 +50,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         if (consumerGroup != null) {
             select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
-        }
-        else {
+        } else {
             select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 
@@ -76,8 +75,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         if (consumerGroup != null) {
             select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
-        }
-        else {
+        } else {
             select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 
@@ -101,8 +99,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
-        }
-        else {
+        } else {
             update = update.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 

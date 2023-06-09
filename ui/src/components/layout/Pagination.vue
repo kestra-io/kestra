@@ -61,6 +61,7 @@
         },
         methods: {
             pageSizeChange(value) {
+                this.internalPage = 1;
                 this.internalSize = value;
                 this.$emit("page-changed", {
                     page: 1,

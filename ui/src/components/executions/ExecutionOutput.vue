@@ -55,7 +55,7 @@
         </el-drawer>
 
         <el-table
-            :data="outputs"
+            :data="outputsPaginated"
             ref="table"
             :default-sort="{prop: 'state.startDate', order: 'descending'}"
             stripe
@@ -86,6 +86,7 @@
                 </template>
             </el-table-column>
         </el-table>
+        <pagination :total="outputs.length" :page="page" :size="size" @page-changed="onPageChanged" />
     </div>
 </template>
 <script>
@@ -94,9 +95,11 @@
     import Utils from "../../utils/utils";
     import Editor from "../../components/inputs/Editor.vue";
     import Collapse from "../layout/Collapse.vue";
+    import Pagination from "../layout/Pagination.vue";
 
     export default {
         components: {
+            Pagination,
             VarValue,
             Editor,
             Collapse,
@@ -109,6 +112,8 @@
                 debugError: "",
                 debugStackTrace: "",
                 isModalOpen: false,
+                size: this.$route.query.size ? this.$route.query.size : 25,
+                page: this.$route.query.page ? this.$route.query.page : 1
             };
         },
         created() {
@@ -154,7 +159,19 @@
                     this.debugError = response.data.error;
                     this.debugStackTrace = response.data.stackTrace;
                 })
-            }
+            },
+            onPageChanged(item) {
+                this.size = item.size;
+                this.page = item.page;
+
+                this.$router.push({
+                    query: {
+                        ...this.$route.query,
+                        size: item.size,
+                        page: item.page
+                    }
+                });
+            },
         },
         computed: {
             ...mapState("execution", ["execution"]),
@@ -187,6 +204,9 @@
                     }
                 }
                 return outputs;
+            },
+            outputsPaginated() {
+                return this.outputs.slice((this.page-1)*this.size, this.page*this.size)
             }
         }
     };

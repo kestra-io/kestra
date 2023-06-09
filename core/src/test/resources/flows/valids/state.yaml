@@ -6,38 +6,91 @@ inputs:
     type: STRING
 
 tasks:
-  - id: state
-    type: io.kestra.core.tasks.states.Get
-    name: "{{ inputs.state }}"
-  - id: switch
-    type: io.kestra.core.tasks.flows.Switch
-    value: "{{ (outputs.state.data.value ?? 0) == 0 ? 'create' : ( outputs.state.data.value == 1 ? 'update' : 'delete') }}"
-    cases:
-      "create":
-        - id: create
-          type: io.kestra.core.tasks.states.Set
-          name: "{{ inputs.state }}"
-          data:
-            value: 1
-        - id: createGet
-          type: io.kestra.core.tasks.states.Get
-          name: "{{ inputs.state }}"
+  - id: if
+    type: io.kestra.core.tasks.flows.If
+    condition: "{{ inputs.state == 'each' }}"
+    then:
+      - id: delete1
+        type: io.kestra.core.tasks.states.Delete
+        name: "{{ inputs.state }}"
 
-      "update":
-        - id: update
-          type: io.kestra.core.tasks.states.Set
-          name: "{{ inputs.state }}"
-          data:
-            value: "{{ outputs.state.data.value + 1 }}"
-        - id: updateGet
-          type: io.kestra.core.tasks.states.Get
-          name: "{{ inputs.state }}"
+      - id: each1
+        type: io.kestra.core.tasks.flows.EachSequential
+        value: '["a", "b"]'
+        tasks:
+          - id: getEach1
+            type: io.kestra.core.tasks.states.Get
+            name: "{{ inputs.state }}"
+
+          - id: setEach1
+            type: io.kestra.core.tasks.states.Set
+            name: "{{ inputs.state }}"
+            data:
+              value: "{{ (currentEachOutput(outputs.getEach1).data.value ?? 'null') ~ '-' ~ taskrun.value }}"
+          - id: regetEach1
+            type: io.kestra.core.tasks.states.Get
+            name: "{{ inputs.state }}"
+
+      - id: delete2
+        type: io.kestra.core.tasks.states.Delete
+        name: "{{ inputs.state }}"
+
+      - id: each2
+        type: io.kestra.core.tasks.flows.EachSequential
+        value: '["a", "b"]'
+        tasks:
+          - id: getEach2
+            type: io.kestra.core.tasks.states.Get
+            taskrunValue: false
+            name: "{{ inputs.state }}"
+          - id: setEach2
+            type: io.kestra.core.tasks.states.Set
+            name: "{{ inputs.state }}"
+            taskrunValue: false
+            data:
+              value: "{{ (currentEachOutput(outputs.getEach2).data.value ?? 'null') ~ '-' ~ taskrun.value }}"
+          - id: regetEach2
+            type: io.kestra.core.tasks.states.Get
+            taskrunValue: false
+            name: "{{ inputs.state }}"
 
 
-      "delete":
-        - id: delete
-          type: io.kestra.core.tasks.states.Delete
-          name: "{{ inputs.state }}"
-        - id: deleteGet
-          type: io.kestra.core.tasks.states.Get
-          name: "{{ inputs.state }}"
+    else:
+    - id: state
+      type: io.kestra.core.tasks.states.Get
+      name: "{{ inputs.state }}"
+
+    - id: switch
+      type: io.kestra.core.tasks.flows.Switch
+      value: "{{ (outputs.state.data.value ?? 0) == 0 ? 'create' : ( outputs.state.data.value == 1 ? 'update' : 'delete') }}"
+      cases:
+        "create":
+          - id: create
+            type: io.kestra.core.tasks.states.Set
+            name: "{{ inputs.state }}"
+            data:
+              value: 1
+          - id: createGet
+            type: io.kestra.core.tasks.states.Get
+            name: "{{ inputs.state }}"
+
+        "update":
+          - id: update
+            type: io.kestra.core.tasks.states.Set
+            name: "{{ inputs.state }}"
+            data:
+              value: "{{ outputs.state.data.value + 1 }}"
+          - id: updateGet
+            type: io.kestra.core.tasks.states.Get
+            name: "{{ inputs.state }}"
+
+
+        "delete":
+          - id: delete
+            type: io.kestra.core.tasks.states.Delete
+            name: "{{ inputs.state }}"
+          - id: deleteGet
+            type: io.kestra.core.tasks.states.Get
+            name: "{{ inputs.state }}"
+
+

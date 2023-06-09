@@ -44,8 +44,17 @@ public abstract class AbstractState extends Task {
     @Builder.Default
     private final Boolean namespace = false;
 
+    @Schema(
+        title = "Isolate with `taskrun.value` the state",
+        description = "By default, the `taskrun.value` (during iteration with each) will isolated the state, setting to `false` will allow to use the same one for iteration."
+    )
+    @PluginProperty(dynamic = true)
+    @Builder.Default
+    private final Boolean taskrunValue = true;
+
+
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace);
+        InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue);
 
         return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
     }
@@ -65,13 +74,14 @@ public abstract class AbstractState extends Task {
             JacksonMapper.ofJson(false).writeValueAsBytes(merge),
             "tasks-states",
             runContext.render(this.name),
-            this.namespace
+            this.namespace,
+            this.taskrunValue
         );
 
         return Pair.of(uri, merge);
     }
 
     protected boolean delete(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        return runContext.deleteTaskStateFile("tasks-states", runContext.render(this.name), this.namespace);
+        return runContext.deleteTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue);
     }
 }

@@ -15,7 +15,7 @@
 </template>
 
 <script>
-    import Topology from "../graph/Topology.vue";
+    import Topology from "../inputs/EditorView.vue";
     import {mapGetters, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
 

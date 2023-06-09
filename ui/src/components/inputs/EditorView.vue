@@ -1,11 +1,9 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed, h} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance, onBeforeUnmount, computed} from "vue";
     import {useStore} from "vuex"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import dagre from "dagre"
-    import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
-    import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileEdit from "vue-material-design-icons/FileEdit.vue";
@@ -16,17 +14,17 @@
     import SplitCellsHorizontal from "../../assets/icons/SplitCellsHorizontal.vue"
     import SplitCellsVertical from "../../assets/icons/SplitCellsVertical.vue"
 
-    import BottomLine from "../../components/layout/BottomLine.vue";
-    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
-    import ValidationError from "../../components/flows/ValidationError.vue";
+    import BottomLine from "../layout/BottomLine.vue";
+    import TriggerFlow from "../flows/TriggerFlow.vue";
+    import ValidationError from "../flows/ValidationError.vue";
     import SwitchView from "./SwitchView.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import {cssVariable} from "../../utils/global"
-    import Cluster from "./nodes/Cluster.vue";
-    import Dot from "./nodes/Dot.vue"
-    import Task from "./nodes/Task.vue";
-    import Trigger from "./nodes/Trigger.vue";
-    import Edge from "./nodes/Edge.vue";
+    import Cluster from "../graph/nodes/Cluster.vue";
+    import Dot from "../graph/nodes/Dot.vue"
+    import Task from "../graph/nodes/Task.vue";
+    import Trigger from "../graph/nodes/Trigger.vue";
+    import Edge from "../graph/nodes/Edge.vue";
     import {linkedElements} from "../../utils/vueFlow";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -34,29 +32,24 @@
     import Utils from "../../utils/utils";
     import taskEditor from "../flows/TaskEditor.vue";
     import metadataEditor from "../flows/MetadataEditor.vue";
-    import editor from "../inputs/Editor.vue";
+    import editor from "./Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
-    import {ElNotification, ElTable, ElTableColumn} from "element-plus";
     import {SECTIONS} from "../../utils/constants.js";
 
     const {
         id,
-        toObject,
         getNodes,
         removeNodes,
         getEdges,
         removeEdges,
         fitView,
-        addSelectedElements,
-        removeSelectedNodes,
-        removeSelectedEdges,
         getElements,
         removeSelectedElements,
         onNodeDragStart,
         onNodeDragStop,
         onNodeDrag
-    } = useVueFlow()
+    } = useVueFlow({id: Math.random().toString()});
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
     const emit = defineEmits(["follow"])
@@ -111,32 +104,33 @@
         }
     })
 
-    const showTopologyStorageKey = "show-topology";
+    const viewTypeStorageKey = "view-type";
 
-    const loadShowTopology = () => {
-        return localStorage.getItem(showTopologyStorageKey);
+    const loadViewType = () => {
+        return localStorage.getItem(viewTypeStorageKey);
     }
 
-    const initShowTopology = () => {
-        const defaultValue = "doc";
+    const initViewType = () => {
+        const defaultValue = "source-doc";
 
         if (props.execution || props.isReadOnly) {
             return "topology";
         }
 
-        const storedValue = loadShowTopology();
+        const storedValue = loadViewType();
         if (storedValue) {
             return storedValue;
         }
 
-        localStorage.setItem(showTopologyStorageKey, defaultValue);
+        localStorage.setItem(viewTypeStorageKey, defaultValue);
         return defaultValue;
     }
 
     const isHorizontalDefault = () => {
-        return showTopology.value === "combined" ? false : localStorage.getItem("topology-orientation") === "1"
+        return viewType.value === "source-topology" ? false : localStorage.getItem("topology-orientation") === "1"
     }
 
+    const editorDomElement = ref(null);
     const editorWidthStorageKey = "editor-width";
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
     const isLoading = ref(false);
@@ -150,7 +144,7 @@
     const isNewErrorOpen = ref(false)
     const isEditMetadataOpen = ref(false)
     const metadata = ref(null);
-    const showTopology = ref(initShowTopology());
+    const viewType = ref(initViewType());
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
     const timer = ref(null);
@@ -159,9 +153,9 @@
     const user = store.getters["auth/user"];
     const routeParams = router.currentRoute.value.params;
 
-    const persistShowTopology = (value) => {
-        showTopology.value = value;
-        localStorage.setItem(showTopologyStorageKey, value);
+    const persistViewType = (value) => {
+        viewType.value = value;
+        localStorage.setItem(viewTypeStorageKey, value);
     }
 
     const localStorageKey = computed(() => {
@@ -427,7 +421,9 @@
                     }
                 })
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("Error while creating topology graph: " + e);
+        }
         finally {
             isLoading.value = false;
         }
@@ -446,7 +442,6 @@
             target = edge.target
         }
         return target
-
     }
 
     const complexEdgeHaveAdd = (edge) => {
@@ -501,7 +496,7 @@
                 && localStorage.getItem("tourDoneOrSkip") !== "true"
                 && props.total === 0) {
                 tours["guidedTour"].start();
-                persistShowTopology("source");
+                persistViewType("source");
             }
         }, 200)
         window.addEventListener("popstate", () => {
@@ -535,6 +530,7 @@
         });
     }
 
+    const vueFlow = ref(null);
     const observeWidth = () => {
         const resizeObserver = new ResizeObserver(function (entries) {
             clearTimeout(timer.value);
@@ -545,11 +541,11 @@
                 })
             }, 50);
         });
-        resizeObserver.observe(document.getElementById("el-col-vueflow"));
+        resizeObserver.observe(vueFlow.value);
     }
 
-    const showTopologyOnReadOnly = () => {
-        const defaultValue = "combined";
+    const viewTypeOnReadOnly = () => {
+        const defaultValue = "source-topology";
 
         if (props.isCreating) {
             return "source";
@@ -559,7 +555,7 @@
             return "topology";
         }
 
-        const storedValue = loadShowTopology();
+        const storedValue = loadViewType();
         if (storedValue) {
             return storedValue;
         }
@@ -572,7 +568,7 @@
     });
 
     watch(() => props.isReadOnly, async () => {
-        showTopology.value = showTopologyOnReadOnly();
+        viewType.value = viewTypeOnReadOnly();
     });
 
     watch(() => props.guidedProperties, () => {
@@ -866,16 +862,16 @@
     }
 
     const switchView = (event) => {
-        persistShowTopology(event);
-        if (["topology", "combined"].includes(showTopology.value)) {
-            isHorizontal.value = isHorizontalDefault();
+        persistViewType(event);
+        if (["topology", "source-topology"].includes(viewType.value)) {
+            isHorizontal.value = isHorizontalDefault();;
             if (updatedFromEditor.value) {
                 onEdit(flowYaml.value)
                 updatedFromEditor.value = false;
             }
         }
-        if (event === "source" && window.document.getElementById("editor")) {
-            window.document.getElementById("editor").style = null;
+        if (event === "source" && editorDomElement?.value?.$el) {
+            editorDomElement.value.$el.style = null;
         }
     }
 
@@ -973,7 +969,7 @@
                     warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
                         "<div class=\"el-alert__content\">\n" +
                         "<p class=\"el-alert__description\">\n" +
-                        $t("dependencies delete flow") +
+                        t("dependencies delete flow") +
                         "<ul>\n" +
                         deps +
                         "</ul>\n" +
@@ -1000,14 +996,12 @@
             });
     }
 
-    const combinedEditor = computed(() => ["doc","combined"].includes(showTopology.value));
+    const combinedEditor = computed(() => ["source-doc","source-topology"].includes(viewType.value));
 
     const dragEditor = (e) => {
-        let editorDomElement = document.getElementById("editor");
-
         let dragX = e.clientX;
-        let blockWidth = editorDomElement.offsetWidth;
-        let parentWidth = editorDomElement.parentNode.offsetWidth;
+        let blockWidth = editorDomElement.value.$el.offsetWidth;
+        let parentWidth = editorDomElement.value.$el.parentNode.offsetWidth;
         let blockWidthPercent = (blockWidth / parentWidth) * 100;
 
         document.onmousemove = function onMouseMove(e) {
@@ -1030,8 +1024,8 @@
 <template>
     <el-card shadow="never" v-loading="isLoading">
         <editor
-            id="editor"
-            v-if="['doc', 'combined', 'source'].includes(showTopology)"
+            ref="editorDomElement"
+            v-if="combinedEditor || viewType === 'source'"
             :class="combinedEditor ? 'editor-combined' : ''"
             :style="combinedEditor ? {width: editorWidthPercentage} : {}"
             @save="save"
@@ -1041,12 +1035,12 @@
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
-            @restartGuidedTour="() => persistShowTopology('source')"
+            @restartGuidedTour="() => persistViewType('source')"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
         <div
-            :class="showTopology === 'combined'? 'vueflow-combined' : showTopology === 'topology' ? 'vueflow': 'vueflow-hide'"
-            id="el-col-vueflow"
+            :class="viewType === 'source-topology' ? 'combined-right-view' : viewType === 'topology' ? 'vueflow': 'hide-view'"
+            ref="vueFlow"
         >
             <VueFlow
                 v-model="elements"
@@ -1101,7 +1095,7 @@
                 </template>
 
                 <Controls :show-interactive="false">
-                    <ControlButton @click="toggleOrientation" v-if="showTopology === 'topology'">
+                    <ControlButton @click="toggleOrientation" v-if="viewType === 'topology'">
                         <SplitCellsVertical :size="48" v-if="!isHorizontal" />
                         <SplitCellsHorizontal v-if="isHorizontal" />
                     </ControlButton>
@@ -1109,8 +1103,8 @@
             </VueFlow>
         </div>
         <PluginDocumentation
-            v-if="showTopology === 'doc'"
-            class="plugin-doc"
+            v-if="viewType === 'source-doc'"
+            class="plugin-doc combined-right-view"
         />
         <el-drawer
             v-if="isNewErrorOpen"
@@ -1186,7 +1180,7 @@
         </el-drawer>
         <SwitchView
             v-if="!isReadOnly"
-            :type="showTopology"
+            :type="viewType"
             class="to-topology-button"
             @switch-view="switchView"
         />
@@ -1306,17 +1300,17 @@
         width: 100%;
     }
 
-    .vueflow-combined {
+    .combined-right-view {
         flex-grow: 1;
+        position: relative;
     }
 
-    .vueflow-hide {
-        width: 0%;
+    .hide-view {
+        width: 0;
     }
 
     .plugin-doc {
         overflow-x: hidden;
-        flex-grow: 1;
         overflow-y: scroll;
         padding: calc(var(--spacer) * 1.5);
         background-color: var(--bs-gray-300);

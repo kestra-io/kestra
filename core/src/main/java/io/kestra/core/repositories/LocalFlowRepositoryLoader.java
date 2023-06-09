@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.services.TaskDefaultService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
 
@@ -33,6 +35,9 @@ public class LocalFlowRepositoryLoader {
 
     @Inject
     private ModelValidator modelValidator;
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
 
     public void load(URL basePath) throws IOException, URISyntaxException {
         URI uri = basePath.toURI();
@@ -60,26 +65,55 @@ public class LocalFlowRepositoryLoader {
         }
     }
 
+
     public void load(File basePath) throws IOException {
+        this.load(basePath, false);
+    }
+
+    public void load(File basePath, Boolean update) throws IOException {
         List<Path> list = Files.walk(basePath.toPath())
             .filter(YamlFlowParser::isValidExtension)
-            .collect(Collectors.toList());
+            .toList();
 
         for (Path file : list) {
             try {
+                String flowSource = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
                 Flow parse = yamlFlowParser.parse(file.toFile(), Flow.class);
-
                 modelValidator.validate(parse);
 
-                flowRepository.create(
-                    parse,
-                    Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset()),
-                    parse
-                );
-                log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
+                if (!update) {
+                    this.createFlow(flowSource, parse);
+                } else {
+                    Optional<Flow> find = flowRepository.findById(parse.getNamespace(), parse.getId());
+
+                    if (find.isEmpty()) {
+                        this.createFlow(flowSource, parse);
+                    } else {
+                        this.udpateFlow(flowSource, parse, find.get());
+                    }
+                }
             } catch (ConstraintViolationException e) {
                 log.debug("Unable to create flow {}", file, e);
             }
         }
+    }
+
+    private void createFlow(String flowSource, Flow parse) {
+        flowRepository.create(
+            parse,
+            flowSource,
+            parse
+        );
+        log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
+    }
+
+    private void udpateFlow(String flowSource, Flow parse, Flow previous) {
+        flowRepository.update(
+            parse,
+            previous,
+            flowSource,
+            parse
+        );
+        log.trace("Updated flow {}.{}", parse.getNamespace(), parse.getId());
     }
 }

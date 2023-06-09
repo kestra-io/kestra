@@ -46,7 +46,7 @@ public class StandAloneCommand extends AbstractServerCommand {
         if (flowPath != null) {
             try {
                 LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                localFlowRepositoryLoader.load(this.flowPath);
+                localFlowRepositoryLoader.load(this.flowPath, true);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }

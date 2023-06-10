@@ -661,7 +661,7 @@
         store.dispatch("core/isUnsaved", true);
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
-                if (flowHaveTasks()) {
+                if (flowHaveTasks() && ["topology", "source-topology"].includes(viewType.value)) {
                     store.dispatch("flow/loadGraphFromSource", {
                         flow: event, config: {
                             validateStatus: (status) => {
@@ -858,13 +858,13 @@
         flowYaml.value = event;
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(event), 500);
+        timer.value = setTimeout(() => onEdit(event), 500)
     }
 
     const switchView = (event) => {
         persistViewType(event);
         if (["topology", "source-topology"].includes(viewType.value)) {
-            isHorizontal.value = isHorizontalDefault();;
+            isHorizontal.value = isHorizontalDefault();
             if (updatedFromEditor.value) {
                 onEdit(flowYaml.value)
                 updatedFromEditor.value = false;
@@ -937,10 +937,6 @@
             haveChange.value = false;
         })
     };
-
-    const canExecute = () => {
-        return user.isAllowed(permission.EXECUTION, action.CREATE, namespace)
-    }
 
     const canDelete = () => {
         return (

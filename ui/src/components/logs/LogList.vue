@@ -22,7 +22,6 @@
                                 </div>
                                 <div
                                     class="task-icon me-1"
-
                                 >
                                     <task-icon
                                         :cls="taskIcon(currentTaskRun.taskId)"
@@ -167,6 +166,7 @@
     import TaskIcon from "../plugins/TaskIcon.vue";
     import _xor from "lodash/xor";
     import FlowUtils from "../../utils/flowUtils.js";
+    import moment from "moment";
 
     export default {
         components: {
@@ -225,7 +225,9 @@
                 append: false,
                 logsList: [],
                 threshold: 150,
-                showLogs: []
+                showLogs: [],
+                count: 0,
+                followLogs: []
             };
         },
         watch: {
@@ -239,6 +241,21 @@
                     this.closeSSE();
                 }
             },
+            logsList: function () {
+                if (this.sse) {
+                    this.currentTaskRuns.forEach(currentTaskRun => {
+                        if (this.$refs[currentTaskRun.id]) {
+                            // scroll to bottom
+                            const listElm = this.$refs[currentTaskRun.id][0]
+                            setTimeout(() => {
+                                if (this.followed) {
+                                    listElm.scrollTop = listElm.scrollHeight;
+                                }
+                            }, 100);
+                        }
+                    })
+                }
+            }
         },
         created() {
             if (!this.fullScreenModal) {
@@ -351,12 +368,19 @@
                             this.followed = true;
                             this.$store.commit("execution/resetLogs");
 
+                            this.timer = moment()
                             this.sse.onmessage = (event) => {
                                 if (event && event.lastEventId === "end") {
                                     self.closeSSE();
                                 }
                                 this.$store.commit("execution/appendFollowedLogs", JSON.parse(event.data));
-                                this.logsList = this.logsList.concat(JSON.parse(event.data));
+                                this.followLogs = this.followLogs.concat(JSON.parse(event.data));
+                                this.count++
+                                if(this.count > 100 || moment().diff(this.timer, "seconds") > 2){
+                                    this.count = 0;
+                                    this.timer = moment()
+                                    this.logsList = this.followLogs
+                                }
                             }
                         });
                 } else {
@@ -373,6 +397,7 @@
                 if (this.sse) {
                     this.sse.close();
                     this.sse = undefined;
+                    this.logsList = this.followLogs
                 }
             },
             attempts(taskRun) {

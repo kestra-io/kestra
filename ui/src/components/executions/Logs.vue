@@ -30,23 +30,22 @@
         </collapse>
 
         <log-list
-            v-if="execution.state.current === State.RUNNING"
+            v-show="execution.state.current === State.RUNNING"
             :level="level"
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             @follow="forwardEvent('follow', $event)"
         />
-        <div v-else>
-            <log-list
-                v-for="taskRun in execution.taskRunList"
-                :key="taskRun.id"
-                :task-run-id="taskRun.id"
-                :level="level"
-                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                :filter="filter"
-                @follow="forwardEvent('follow', $event)"
-            />
-        </div>
+        <log-list
+            v-show="execution.state.current !== State.RUNNING"
+            v-for="taskRun in execution.taskRunList"
+            :key="taskRun.id"
+            :task-run-id="taskRun.id"
+            :level="level"
+            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+            :filter="filter"
+            @follow="forwardEvent('follow', $event)"
+        />
     </div>
 </template>
 
@@ -85,19 +84,12 @@
                 return State
             },
             ...mapState("execution", ["execution", "taskRun", "logs"]),
-            contentAsText() {
-                return this.logsList.map(l => `${l.timestamp} | ${l.level} | ${l.message}`).join("\n")
-            },
             downloadName() {
                 return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
             },
-            logsList() {
-                return this.logs.results || []
-            }
         },
         methods: {
             downloadContent() {
-                console.log(this.level)
                 this.$store.dispatch("execution/downloadLogs", {
                     executionId: this.execution.id,
                     params: {
@@ -120,10 +112,6 @@
             },
             onChange() {
                 this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
-            },
-            copy() {
-                navigator.clipboard.writeText(this.contentAsText);
-                this.$toast().success(this.$t("copied"));
             },
         }
     };

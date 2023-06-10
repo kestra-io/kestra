@@ -43,7 +43,7 @@
     const props = defineProps({
         flowGraph: {
             type: Object,
-            required: false
+            required: true
         },
         flowId: {
             type: String,
@@ -592,7 +592,7 @@
 
 <style scoped lang="scss">
     .vueflow {
-        width: 100%;
-        height: 100%;
+        height: calc(100vh - 300px);
+        position: relative;
     }
 </style>

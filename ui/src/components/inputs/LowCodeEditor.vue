@@ -59,7 +59,7 @@
         },
         isReadOnly: {
             type: Boolean,
-            default: true
+            default: false
         },
         source: {
             type: String,
@@ -104,6 +104,10 @@
 
     watch(() => props.flowGraph, () => {
         regenerateGraph();
+    })
+
+    watch(() => props.source, () => {
+        console.log(props)
     })
 
     // Event listeners & Watchers
@@ -553,7 +557,7 @@
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
                     :is-read-only="isReadOnly"
-                    :is-allowed-edit="props.isAllowedEdit"
+                    :is-allowed-edit="isAllowedEdit"
                 />
             </template>
 
@@ -563,18 +567,18 @@
                     @edit="forwardEvent('on-edit', $event)"
                     @delete="onDelete"
                     :is-read-only="isReadOnly"
-                    :is-allowed-edit="props.isAllowedEdit"
+                    :is-allowed-edit="isAllowedEdit"
                 />
             </template>
 
             <template #edge-edge="props">
                 <Edge
                     v-bind="props"
-                    :yaml-source="props.source"
+                    :yaml-source="source"
                     :flowables-ids="flowables()"
                     @edit="onCreateNewTask"
                     :is-read-only="isReadOnly"
-                    :is-allowed-edit="props.isAllowedEdit"
+                    :is-allowed-edit="isAllowedEdit"
                 />
             </template>
 

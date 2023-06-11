@@ -11,6 +11,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
@@ -157,6 +158,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> serialization(HttpRequest<?> request, DeserializationException e) {
         return jsonError(request, e, HttpStatus.LOCKED, "Locked");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> httpClient(HttpRequest<?> request, HttpClientResponseException e) {
+        return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
     }
 
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {

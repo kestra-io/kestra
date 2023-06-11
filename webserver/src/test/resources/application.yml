@@ -5,8 +5,12 @@ micronaut:
         paths: classpath:ui
         mapping: /ui/**
 
+  http:
+    services:
+      api:
+        url: http://localhost:8081
+
 kestra:
-  api.address: http://localhost:8081
   repository:
     type: memory
   queue:

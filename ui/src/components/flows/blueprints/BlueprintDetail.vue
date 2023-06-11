@@ -1,46 +1,52 @@
 <template>
-    <div class="header">
-        <button class="back-button">
-            <el-icon size="medium" @click="goBack"><KeyboardBackspace/></el-icon>
-        </button>
-        <h4 class="blueprint-title">{{blueprint.title}}</h4>
-        <div class="ms-auto">
-            <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
-                <el-button size="large" v-if="!embed">
-                    {{ $t('use') }}
-                </el-button>
-            </router-link>
-        </div>
-    </div>
-
-    <div class="blueprint-container">
-        <div class="embedded-topology" v-if="flowGraph">
-            <topology
-                v-if="flowGraph"
-                :flow-id="parsedFlow.id"
-                :namespace="parsedFlow.namespace"
-                :flow-graph="flowGraph"
-                :flow="parsedFlow"
-                is-read-only
-                graph-only
-            />
-        </div>
-        <h5>Source code</h5>
-        <editor :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
-            <template #nav>
-                <div style="text-align: right">
-                    <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                        <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
-                    </el-tooltip>
+    <div v-loading="!blueprint">
+        <template v-if="blueprint">
+            <div class="header">
+                <button class="back-button">
+                    <el-icon size="medium" @click="goBack"><KeyboardBackspace/></el-icon>
+                </button>
+                <h4 class="blueprint-title">{{blueprint.title}}</h4>
+                <div class="ms-auto">
+                    <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
+                        <el-button size="large" v-if="!embed">
+                            {{ $t('use') }}
+                        </el-button>
+                    </router-link>
                 </div>
-            </template>
-        </editor>
-        <h5>About this blueprint</h5>
-        <p>{{blueprint.description}}</p>
-        <h5>Plugins</h5>
-        <div class="plugins-container">
-            <task-icon :cls="task" v-for="task in [...new Set(blueprint.includedTasks)]" />
-        </div>
+            </div>
+
+            <div class="blueprint-container">
+                <div class="embedded-topology" v-if="flowGraph">
+                    <topology
+                        v-if="flowGraph"
+                        :flow-id="parsedFlow.id"
+                        :namespace="parsedFlow.namespace"
+                        :flow-graph="flowGraph"
+                        :flow="parsedFlow"
+                        is-read-only
+                        graph-only
+                    />
+                </div>
+                <h5>Source code</h5>
+                <editor :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
+                    <template #nav>
+                        <div style="text-align: right">
+                            <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                                <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
+                            </el-tooltip>
+                        </div>
+                    </template>
+                </editor>
+                <template v-if="blueprint.description">
+                    <h5>About this blueprint</h5>
+                    <p>{{ blueprint.description }}</p>
+                </template>
+                <h5>Plugins</h5>
+                <div class="plugins-container">
+                    <task-icon :cls="task" v-for="task in [...new Set(blueprint.includedTasks)]" />
+                </div>
+            </div>
+        </template>
     </div>
 </template>
 <script setup>
@@ -66,7 +72,7 @@
         },
         props: {
             blueprintId: {
-                type: Number
+                type: String
             },
             embed: {
                 type: Boolean,
@@ -117,6 +123,7 @@
 
     .header {
         display: flex;
+
         > * {
             margin-top: auto;
             margin-bottom: auto;
@@ -144,12 +151,12 @@
             margin: calc(2 * var(--spacer)) 0 $spacer 0;
         }
 
-        .embedded-topology{
+        .embedded-topology {
             max-height: 50%;
             height: 30vh;
-            margin: $spacer;
+            margin: $spacer 0;
 
-            :deep(.el-card, .el-card *){
+            :deep(.el-card, .el-card *) {
                 height: 100%;
             }
         }

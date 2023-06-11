@@ -26,6 +26,11 @@ micronaut:
     default:
       maximum-weight: 10485760
 
+  http:
+    services:
+      api:
+        url: https://api.kestra.io
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false
@@ -66,7 +71,6 @@ flyway:
       ignore-migration-patterns: "*:missing"
 
 kestra:
-  api.address: https://api.kestra.io
   retries:
     attempts: 5
     multiplier: 2.0

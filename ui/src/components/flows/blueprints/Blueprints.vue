@@ -4,7 +4,7 @@
         <h4 class="catch-phrase">{{$t("flow gallery.header.catch phrase.1")}}</h4>
         <h4 class="catch-phrase">{{$t("flow gallery.header.catch phrase.2")}}</h4>
         <el-form-item class="search-wrapper">
-            <search-field placeholder="search blueprint" @search="s => titleFilter = s"/>
+            <search-field placeholder="search blueprint" @search="s => q = s"/>
         </el-form-item>
     </nav>
     <div class="main-container" v-bind="$attrs" v-if="tags && ready">
@@ -12,22 +12,22 @@
         <data-table v-else class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
                 <el-form-item v-if="embed">
-                    <search-field embed placeholder="search blueprint" @search="s => titleFilter = s"/>
+                    <search-field embed placeholder="search blueprint" @search="s => q = s"/>
                 </el-form-item>
                 <br/>
-                <el-checkbox-group v-model="selectedTags" class="tags-selection">
-                    <label class="el-checkbox-button hoverable" :class="{'is-checked': selectedTags.length === 0}" @click="allTagsClick">
+                <el-radio-group v-model="selectedTags" class="tags-selection">
+                    <label class="el-checkbox-button hoverable" :class="{'is-checked': selectedTags === undefined}" @click="q = undefined">
                         <span class="el-checkbox-button__inner">
                             {{ $t("all tags") }}
                         </span>
                     </label>
-                    <el-checkbox-button v-for="tag in Object.values(tags)"
+                    <el-radio-button v-for="tag in Object.values(tags)"
                                         :key="tag.id"
                                         :label="tag.id"
                                         class="hoverable">
                         {{ tag.name }}
-                    </el-checkbox-button>
-                </el-checkbox-group>
+                    </el-radio-button>
+                </el-radio-group>
             </template>
             <template #table>
                 <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
@@ -70,7 +70,7 @@
         },
         async created() {
             await this.loadTags();
-            this.selectedTags = this.$route?.query?.selectedTags ?? [];
+            this.selectedTags = this.$route?.query?.selectedTags ?? undefined;
         },
         props: {
             embed: {
@@ -79,13 +79,6 @@
             }
         },
         methods: {
-            allTagsClick(){
-                if(this.selectedTags.length === 0) {
-                    return;
-                }
-
-                this.selectedTags = [];
-            },
             async copy(blueprintId) {
                 await navigator.clipboard.writeText(
                     (await this.$http.get(`/api/v1/blueprints/${blueprintId}/flow`)).data
@@ -101,20 +94,7 @@
                     this.$router.push({name: "flow-gallery/view", params: {blueprintId}})
                 }
             },
-            onPageChanged(item) {
-                this.internalPageSize = item.size;
-                this.internalPageNumber = item.page;
 
-                if (!this.embed) {
-                    this.$router.push({query: {
-                            ...this.$route.query,
-                            size: item.size,
-                            page: item.page,
-                        }});
-                } else {
-                    this.load(this.onDataLoaded);
-                }
-            },
             async loadTags(){
                 return this.$http
                     .get(`/api/v1/blueprints/tags`)
@@ -123,19 +103,42 @@
                     })
             },
             loadData(callback){
+                const query = {}
+
+                if (this.$route.query.page || this.internalPageNumber) {
+                    query.page = parseInt(this.$route.query.page || this.internalPageNumber);
+                }
+
+
+                if (this.$route.query.size || this.internalPageSize) {
+                    query.size = parseInt(this.$route.query.size || this.internalPageSize);
+                }
+
+                if (this.$route.query.q || this.q) {
+                    query.q = this.$route.query.q || this.q;
+                }
+
+
+                if (this.$route.query.tagIds || this.selectedTags) {
+                    query.tagIds = this.$route.query.tagIds || this.selectedTags;
+                }
+
                 this.$http
-                    .get(this.blueprintsCurrentPageUrl)
+                    .get("/api/v1/blueprints", {
+                        params: query
+                    })
                     .then(response => {
                         const blueprintsResponse = response.data;
                         this.total = blueprintsResponse.total;
                         this.blueprints = blueprintsResponse.results;
-                    }).finally(callback);
+                    })
+                    .finally(callback);
             }
         },
         data() {
             return {
-                titleFilter: "",
-                selectedTags: [],
+                q: undefined,
+                selectedTags: undefined,
                 tags: undefined,
                 blueprints: undefined,
                 total: 0,
@@ -146,13 +149,6 @@
             }
         },
         computed: {
-            blueprintsCurrentPageUrl(){
-                return "/api/v1/blueprints?" +
-                    "page=" + parseInt(this.$route.query.page || this.internalPageNumber) +
-                    "&pageSize=" + parseInt(this.$route.query.size || this.internalPageSize) +
-                    ((this.titleFilter === "") ? "" : "&titleContains=" + this.titleFilter) +
-                    this.selectedTags.map(selectedTag => "&tagIds="+selectedTag).join("")
-            },
             routeInfo() {
                 return {
                     title: this.$t("flow gallery.title")
@@ -160,7 +156,7 @@
             }
         },
         watch: {
-            titleFilter(){
+            q(){
                 this.load(this.onDataLoaded);
             },
             selectedTags(newSelectedTags){
@@ -186,7 +182,7 @@
         margin: calc(-7 * var(--spacer)) $neg-offset-from-menu 0 $neg-offset-from-menu;
         background: linear-gradient(140deg, #9535D0 3.03%, #6A22BB 5.45%, #461A97 11.72%, #36188D 21.59%, #321974 35.13%, #25185C 46.92%, #24155B 63.48%, #25155B 75.13%, #450F95 90.68%, #4F39B3 94.9%, #893FE5 97.9%);
         text-align: center;
-        padding-top: calc(6 * var(--spacer));
+        padding-top: calc(7 * var(--spacer));
         padding-bottom: $spacer;
 
         .welcome {

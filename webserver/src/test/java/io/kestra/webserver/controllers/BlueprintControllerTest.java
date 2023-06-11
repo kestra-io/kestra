@@ -36,7 +36,7 @@ class BlueprintControllerTest {
         );
 
         PagedResults<BlueprintController.BlueprintItem> blueprintsWithTotal = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints?page=1&pageSize=5&titleContains=someTitle&sort=title:asc&tagIds=3&tagIds=2"),
+            HttpRequest.GET("/api/v1/blueprints?page=1&size=5&q=someTitle&sort=title:asc&tagIds=3"),
             Argument.of(PagedResults.class, BlueprintController.BlueprintItem.class)
         );
 
@@ -52,7 +52,7 @@ class BlueprintControllerTest {
         assertThat(blueprints.get(1).getId(), is("2"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&pageSize=5&titleContains=someTitle&sort=title:asc&tagIds=3&tagIds=2")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&size=5&q=someTitle&sort=title%3Aasc&tagIds=3")));
     }
 
     @Test

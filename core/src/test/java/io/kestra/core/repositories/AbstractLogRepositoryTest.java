@@ -66,6 +66,10 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
 
+        list = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(save.getExecutionId(), save.getTaskRunId(), null, 0);
+        assertThat(list.size(), is(1));
+        assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
+
         Integer countDeleted = logRepository.purge(Execution.builder().id(save.getExecutionId()).build());
         assertThat(countDeleted, is(1));
 
@@ -105,6 +109,11 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.getTotal(), is(21L));
 
         find = logRepository.findByExecutionIdAndTaskRunId(executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
+
+        assertThat(find.size(), is(10));
+        assertThat(find.getTotal(), is(21L));
+
+        find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
 
         assertThat(find.size(), is(10));
         assertThat(find.getTotal(), is(21L));

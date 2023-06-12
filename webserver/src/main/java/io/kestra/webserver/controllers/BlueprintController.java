@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
@@ -59,6 +60,16 @@ public class BlueprintController {
         HttpRequest<?> httpRequest
     ) throws URISyntaxException {
         return fastForwardToKestraApi(httpRequest, "/v1/blueprints/" + id + "/flow", Argument.of(String.class));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(value = "{id}/graph")
+    @Operation(tags = {"blueprints"}, summary = "Get a blueprint graph")
+    public FlowGraph blueprintGraph(
+        @Parameter(description = "The blueprint id") String id,
+        HttpRequest<?> httpRequest
+    ) throws URISyntaxException {
+        return fastForwardToKestraApi(httpRequest, "/v1/blueprints/" + id + "/graph", Argument.of(FlowGraph.class));
     }
 
     @ExecuteOn(TaskExecutors.IO)

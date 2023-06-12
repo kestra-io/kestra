@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -71,8 +72,29 @@ class BlueprintControllerTest {
         assertThat(blueprintFlow, not(emptyOrNullString()));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/flow"
-        )));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/flow")));
+    }
+
+    @Test
+    void blueprintGraph(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(urlMatching("/v1/blueprints/id_1/graph.*"))
+            .willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBodyFile("blueprint-graph.json"))
+        );
+
+        FlowGraph graph = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/blueprints/id_1/graph"),
+            FlowGraph.class
+        );
+
+        assertThat(graph.getNodes().size(), is(12));
+        assertThat(graph.getNodes().stream().filter(abstractGraph -> abstractGraph.getUid().equals("3mTDtNoUxYIFaQtgjEg28_root")).count(), is(1L));
+        assertThat(graph.getEdges().size(), is(16));
+        assertThat(graph.getClusters().size(), is(1));
+
+        WireMock wireMock = wmRuntimeInfo.getWireMock();
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/graph")));
     }
 
     @Test

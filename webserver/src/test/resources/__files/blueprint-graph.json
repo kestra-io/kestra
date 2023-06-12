@@ -1,0 +1,276 @@
+{
+  "nodes": [
+    {
+      "uid": "3mTDtNoUxYIFaQtgjEg28_root",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    },
+    {
+      "uid": "6WHnRl7QU00yId20oOHRij_end",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    },
+    {
+      "uid": "5x6iuFNKu1PDdTkxcg3VUU_root",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    },
+    {
+      "uid": "6sRV3YPL3kJomokhY3Vcky_end",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    },
+    {
+      "uid": "parent",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "parent",
+        "type": "io.kestra.core.tasks.flows.Parallel",
+        "tasks": [
+          {
+            "id": "t1",
+            "type": "io.kestra.core.tasks.scripts.Bash",
+            "commands": [
+              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+            ]
+          },
+          {
+            "id": "t2",
+            "type": "io.kestra.core.tasks.scripts.Bash",
+            "commands": [
+              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+            ]
+          },
+          {
+            "id": "t3",
+            "type": "io.kestra.core.tasks.scripts.Bash",
+            "commands": [
+              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+            ]
+          },
+          {
+            "id": "t4",
+            "type": "io.kestra.core.tasks.scripts.Bash",
+            "commands": [
+              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+            ]
+          },
+          {
+            "id": "t5",
+            "type": "io.kestra.core.tasks.scripts.Bash",
+            "commands": [
+              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+            ]
+          },
+          {
+            "id": "t6",
+            "type": "io.kestra.core.tasks.scripts.Bash",
+            "commands": [
+              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+            ]
+          }
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "t1",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "t1",
+        "type": "io.kestra.core.tasks.scripts.Bash",
+        "commands": [
+          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "t2",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "t2",
+        "type": "io.kestra.core.tasks.scripts.Bash",
+        "commands": [
+          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "t3",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "t3",
+        "type": "io.kestra.core.tasks.scripts.Bash",
+        "commands": [
+          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "t4",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "t4",
+        "type": "io.kestra.core.tasks.scripts.Bash",
+        "commands": [
+          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "t5",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "t5",
+        "type": "io.kestra.core.tasks.scripts.Bash",
+        "commands": [
+          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "t6",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "t6",
+        "type": "io.kestra.core.tasks.scripts.Bash",
+        "commands": [
+          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
+        ]
+      },
+      "relationType": "PARALLEL"
+    },
+    {
+      "uid": "last",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "last",
+        "type": "io.kestra.core.tasks.debugs.Return",
+        "format": "{{task.id}} > {{taskrun.startDate}}"
+      },
+      "relationType": "SEQUENTIAL"
+    }
+  ],
+  "edges": [
+    {
+      "source": "6sRV3YPL3kJomokhY3Vcky_end",
+      "target": "last",
+      "relation": {
+        "relationType": "SEQUENTIAL"
+      }
+    },
+    {
+      "source": "last",
+      "target": "6WHnRl7QU00yId20oOHRij_end",
+      "relation": {}
+    },
+    {
+      "source": "3mTDtNoUxYIFaQtgjEg28_root",
+      "target": "5x6iuFNKu1PDdTkxcg3VUU_root",
+      "relation": {}
+    },
+    {
+      "source": "parent",
+      "target": "t6",
+      "relation": {
+        "relationType": "PARALLEL"
+      }
+    },
+    {
+      "source": "parent",
+      "target": "t1",
+      "relation": {
+        "relationType": "PARALLEL"
+      }
+    },
+    {
+      "source": "t4",
+      "target": "6sRV3YPL3kJomokhY3Vcky_end",
+      "relation": {}
+    },
+    {
+      "source": "t3",
+      "target": "6sRV3YPL3kJomokhY3Vcky_end",
+      "relation": {}
+    },
+    {
+      "source": "t1",
+      "target": "6sRV3YPL3kJomokhY3Vcky_end",
+      "relation": {}
+    },
+    {
+      "source": "t5",
+      "target": "6sRV3YPL3kJomokhY3Vcky_end",
+      "relation": {}
+    },
+    {
+      "source": "t6",
+      "target": "6sRV3YPL3kJomokhY3Vcky_end",
+      "relation": {}
+    },
+    {
+      "source": "5x6iuFNKu1PDdTkxcg3VUU_root",
+      "target": "parent",
+      "relation": {}
+    },
+    {
+      "source": "t2",
+      "target": "6sRV3YPL3kJomokhY3Vcky_end",
+      "relation": {}
+    },
+    {
+      "source": "parent",
+      "target": "t4",
+      "relation": {
+        "relationType": "PARALLEL"
+      }
+    },
+    {
+      "source": "parent",
+      "target": "t3",
+      "relation": {
+        "relationType": "PARALLEL"
+      }
+    },
+    {
+      "source": "parent",
+      "target": "t5",
+      "relation": {
+        "relationType": "PARALLEL"
+      }
+    },
+    {
+      "source": "parent",
+      "target": "t2",
+      "relation": {
+        "relationType": "PARALLEL"
+      }
+    }
+  ],
+  "clusters": [
+    {
+      "cluster": {
+        "uid": "cluster_parent",
+        "type": "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType": "PARALLEL"
+      },
+      "nodes": [
+        "5x6iuFNKu1PDdTkxcg3VUU_root",
+        "6sRV3YPL3kJomokhY3Vcky_end",
+        "parent",
+        "t1",
+        "t2",
+        "t3",
+        "t4",
+        "t5",
+        "t6"
+      ],
+      "start": "5x6iuFNKu1PDdTkxcg3VUU_root",
+      "end": "6sRV3YPL3kJomokhY3Vcky_end"
+    }
+  ],
+  "flowables": [
+    "parent"
+  ]
+}

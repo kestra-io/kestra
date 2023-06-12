@@ -102,14 +102,13 @@
         },
         async created() {
             this.blueprint = (await this.$http.get(`/api/v1/blueprints/${this.blueprintId}`)).data
+
             try {
-                this.flowGraph = await this.$store.dispatch("flow/getGraphFromSourceResponse", {
-                    flow: this.blueprint.flow, config: {
-                        validateStatus: (status) => {
-                            return status === 200;
-                        }
-                    }
-                });
+                this.flowGraph = (await this.$http.get(`/api/v1/blueprints/${this.blueprintId}/graph`, {
+                  validateStatus: (status) => {
+                    return status === 200;
+                  }
+                })).data;
             } catch (e) {
                 console.error("Unable to create the blueprint's topology : " + e);
             }

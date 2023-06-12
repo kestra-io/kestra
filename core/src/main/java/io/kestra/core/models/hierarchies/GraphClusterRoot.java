@@ -1,17 +1,11 @@
 package io.kestra.core.models.hierarchies;
 
+import io.kestra.core.utils.IdUtils;
 import lombok.Getter;
-
 
 @Getter
 public class GraphClusterRoot extends AbstractGraph {
     public GraphClusterRoot() {
-        super();
-    }
-
-    public String getUid() {
-        String uid = super.getUid();
-
-        return (!uid.equals("") ? uid + "_" : "") + this.uid + "_root";
+        super(IdUtils.create() + "_root");
     }
 }

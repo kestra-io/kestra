@@ -80,7 +80,7 @@
     "state": "State",
     "search term in message": "Search term in message",
     "search": "Search",
-    "search blueprint": "Search blueprint",
+    "search blueprint": "Search blueprints",
     "all tags": "All tags",
     "source search": "Source search",
     "filter by log level": "Filter by log level",
@@ -198,10 +198,10 @@
     "flow gallery": {
       "title": "Flow gallery",
       "header": {
-        "welcome": "Welcome to the flow gallery",
+        "welcome": "Welcome to the flow gallery!",
         "catch phrase": {
-          "1": "First step is always the hardest.",
-          "2": "Explore blueprints to kickstart your next flow."
+          "1": "The first step is always the hardest.",
+          "2": "Explore blueprints to kick-start your next flow."
         }
       }
     },

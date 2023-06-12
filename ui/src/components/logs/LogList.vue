@@ -15,8 +15,8 @@
                                     {{ $t("attempt") }} {{ taskAttempt(index) + 1 }}
                                 </div>
                                 <div>
-                                    <el-button type="default" @click="() => toggleShowLogs(currentTaskRun.id)">
-                                        <ChevronUp v-if="showLogs.includes(currentTaskRun.id)" />
+                                    <el-button type="default" @click="() => toggleShowLogs(`${currentTaskRun.id}-${taskAttempt(index)}`)">
+                                        <ChevronUp v-if="showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
                                         <ChevronDown v-else />
                                     </el-button>
                                 </div>
@@ -121,9 +121,9 @@
                                 </el-dropdown>
                             </div>
                         </div>
-                        <div :ref="currentTaskRun.id" class="log-lines" :class="showLogs ? '' : 'hide-logs' ">
+                        <div :ref="`${currentTaskRun.id}-${taskAttempt(index)}`" class="log-lines" :class="showLogs ? '' : 'hide-logs' ">
                             <template
-                                v-for="(log, i) in findLogs(currentTaskRun.id, index)"
+                                v-for="(log, i) in logsList"
                                 :key="`${currentTaskRun.id}-${index}-${i}`"
                             >
                                 <log-line
@@ -269,19 +269,22 @@
         },
         mounted() {
             this.currentTaskRuns.forEach(currentTaskRun => {
-                if(this.$refs[currentTaskRun.id]) {
-                    const listElm = this.$refs[currentTaskRun.id][0]
-                    listElm.addEventListener("scroll", () => {
-                        if (
-                            listElm.scrollTop + listElm.clientHeight >=
-                            listElm.scrollHeight - this.threshold
-                            && !this.followed
-                            && this.logsTotal > this.logsList.length
-                        ) {
-                            this.page++;
-                            this.loadLogs();
-                        }
-                    });
+                for (const attempt in this.attempts(currentTaskRun)) {
+                    const ref = `${currentTaskRun.id}-${this.taskAttempt(attempt)}`
+                    if(this.$refs[ref]) {
+                        const listElm = this.$refs[ref][0]
+                        listElm.addEventListener("scroll", () => {
+                            if (
+                                listElm.scrollTop + listElm.clientHeight >=
+                                listElm.scrollHeight - this.threshold
+                                && !this.followed
+                                && this.logsTotal > this.logsList.length
+                            ) {
+                                this.page++;
+                                this.loadLogs();
+                            }
+                        });
+                    }
                 }
             })
         },
@@ -411,9 +414,6 @@
                 return this.attempt ? [taskRun.attempts[this.attempt]] : taskRun.attempts || [{
                     state: taskRun.state
                 }];
-            },
-            findLogs(taskRunId, attemptNumber) {
-                return this.logsList
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {

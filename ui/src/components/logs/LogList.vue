@@ -123,7 +123,7 @@
                         </div>
                         <div :ref="`${currentTaskRun.id}-${taskAttempt(index)}`" class="log-lines" :class="showLogs ? '' : 'hide-logs' ">
                             <template
-                                v-for="(log, i) in logsList"
+                                v-for="(log, i) in logsList.filter((logline) => logline.taskRunId === currentTaskRun.id)"
                                 :key="`${currentTaskRun.id}-${index}-${i}`"
                             >
                                 <log-line
@@ -245,21 +245,6 @@
                 if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED) {
                     this.closeSSE();
                 }
-            },
-            logsList: function () {
-                if (this.sse) {
-                    this.currentTaskRuns.forEach(currentTaskRun => {
-                        if (this.$refs[currentTaskRun.id]) {
-                            // scroll to bottom
-                            const listElm = this.$refs[currentTaskRun.id][0]
-                            setTimeout(() => {
-                                if (this.followed) {
-                                    listElm.scrollTop = listElm.scrollHeight;
-                                }
-                            }, 100);
-                        }
-                    })
-                }
             }
         },
         created() {
@@ -300,7 +285,7 @@
             params() {
                 let params = {minLevel: this.level};
 
-                params.sort = "timestamp:asc"
+                params.sort = "timestamp:desc"
                 params.page = this.page;
 
                 params.append = this.append
@@ -385,10 +370,11 @@
                                 this.$store.commit("execution/appendFollowedLogs", JSON.parse(event.data));
                                 this.followLogs = this.followLogs.concat(JSON.parse(event.data));
                                 this.count++
-                                if(this.count > 100 || moment().diff(this.timer, "seconds") > 2){
+                                if(this.count > 100 || moment().diff(this.timer, "seconds") > 1){
                                     this.count = 0;
                                     this.timer = moment()
-                                    this.logsList = this.followLogs
+                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs));
+                                    this.logsList.reverse()
                                 }
                             }
                         });

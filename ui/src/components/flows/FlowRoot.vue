@@ -39,6 +39,7 @@
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
+    import FlowEditor from "./FlowEditor.vue";
 
     export default {
         mixins: [RouteContext],
@@ -119,7 +120,7 @@
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
                         name: "editor",
-                        component: Topology,
+                        component: FlowEditor,
                         title: this.$t("editor"),
                     });
                 }

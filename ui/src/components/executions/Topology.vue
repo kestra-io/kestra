@@ -1,23 +1,26 @@
 <template>
-    <topology
-        :key="execution.id"
-        v-if="execution && flowGraph"
-        :flow-id="execution.flowId"
-        :namespace="execution.namespace"
-        :flow-graph="flowGraph"
-        :execution="execution"
-        @follow="forwardEvent('follow', $event)"
-    />
+    <el-card>
+        <low-code-editor
+            :key="execution.id"
+            v-if="execution && flowGraph"
+            :flow-id="execution.flowId"
+            :namespace="execution.namespace"
+            :flow-graph="flowGraph"
+            :source="flow.source"
+            :execution="execution"
+            @follow="forwardEvent('follow', $event)"
+        />
+    </el-card>
 </template>
 <script>
-    import Topology from "../inputs/EditorView.vue";
+    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {mapState} from "vuex";
     export default {
         components: {
-            Topology
+            LowCodeEditor
         },
         computed: {
-            ...mapState("flow", ["flowGraph"]),
+            ...mapState("flow", ["flow","flowGraph"]),
             ...mapState("execution", ["execution"])
         },
         props: {

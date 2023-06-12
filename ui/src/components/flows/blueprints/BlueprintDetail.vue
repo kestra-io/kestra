@@ -20,16 +20,18 @@
             </div>
 
             <div class="blueprint-container">
-                <el-card class="embedded-topology" v-if="flowGraph">
-                    <low-code-editor
-                        v-if="flowGraph"
-                        :flow-id="parsedFlow.id"
-                        :namespace="parsedFlow.namespace"
-                        :flow-graph="flowGraph"
-                        :source="blueprint.flow"
-                        is-read-only
-                        graph-only
-                    />
+                <el-card>
+                    <div class="embedded-topology" v-if="flowGraph">
+                        <low-code-editor
+                            v-if="flowGraph"
+                            :flow-id="parsedFlow.id"
+                            :namespace="parsedFlow.namespace"
+                            :flow-graph="flowGraph"
+                            :source="blueprint.flow"
+                            is-read-only
+                            graph-only
+                        />
+                    </div>
                 </el-card>
                 <h5>Source code</h5>
                 <editor :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
@@ -157,12 +159,10 @@
 
         .embedded-topology {
             max-height: 50%;
-            height: 500px;
+            height: 30vh;
+            width: 100%;
             margin: $spacer 0;
 
-            :deep(.el-card, .el-card *) {
-                height: 100%;
-            }
         }
 
         .plugins-container {

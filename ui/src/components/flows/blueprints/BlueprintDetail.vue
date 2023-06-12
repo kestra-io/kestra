@@ -3,9 +3,13 @@
         <template v-if="blueprint">
             <div class="header">
                 <button class="back-button">
-                    <el-icon size="medium" @click="goBack"><KeyboardBackspace/></el-icon>
+                    <el-icon size="medium" @click="goBack">
+                        <KeyboardBackspace />
+                    </el-icon>
                 </button>
-                <h4 class="blueprint-title">{{blueprint.title}}</h4>
+                <h4 class="blueprint-title">
+                    {{ blueprint.title }}
+                </h4>
                 <div class="ms-auto">
                     <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
                         <el-button size="large" v-if="!embed">
@@ -16,17 +20,17 @@
             </div>
 
             <div class="blueprint-container">
-                <div class="embedded-topology" v-if="flowGraph">
-                    <topology
+                <el-card class="embedded-topology" v-if="flowGraph">
+                    <low-code-editor
                         v-if="flowGraph"
                         :flow-id="parsedFlow.id"
                         :namespace="parsedFlow.namespace"
                         :flow-graph="flowGraph"
-                        :flow="parsedFlow"
+                        :source="blueprint.flow"
                         is-read-only
                         graph-only
                     />
-                </div>
+                </el-card>
                 <h5>Source code</h5>
                 <editor :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
                     <template #nav>
@@ -52,7 +56,7 @@
 <script setup>
     import KeyboardBackspace from "vue-material-design-icons/KeyboardBackspace.vue";
     import Editor from "../../inputs/Editor.vue";
-    import Topology from "../../inputs/EditorView.vue";
+    import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from "../../plugins/TaskIcon.vue";
 </script>
 <script>
@@ -82,7 +86,7 @@
         methods: {
             goBack() {
                 if(this.embed) {
-                    this.$emit('back');
+                    this.$emit("back");
                 }else {
                     this.$router.push({name: "flow-gallery"})
                 }
@@ -91,7 +95,7 @@
                 navigator.clipboard.writeText(text);
             },
             asAutoRestoreDraft() {
-                localStorage.setItem('autoRestore-creation_draft', this.blueprint.flow);
+                localStorage.setItem("autoRestore-creation_draft", this.blueprint.flow);
             }
         },
         async created() {
@@ -153,7 +157,7 @@
 
         .embedded-topology {
             max-height: 50%;
-            height: 30vh;
+            height: 500px;
             margin: $spacer 0;
 
             :deep(.el-card, .el-card *) {

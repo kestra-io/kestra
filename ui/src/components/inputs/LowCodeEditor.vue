@@ -106,10 +106,6 @@
         regenerateGraph();
     })
 
-    watch(() => props.source, () => {
-        console.log(props)
-    })
-
     // Event listeners & Watchers
     const observeWidth = () => {
         const resizeObserver = new ResizeObserver(function () {
@@ -596,7 +592,8 @@
 
 <style scoped lang="scss">
     .vueflow {
-        height: calc(100vh - 300px);
+        height: 100%;
+        width: 100%;
         position: relative;
     }
 </style>

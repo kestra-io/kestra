@@ -4,6 +4,7 @@
         :flow-id="flow.id"
         :namespace="flow.namespace"
         :flow-graph="flowGraph"
+        :flow="flow"
         :is-read-only="isReadOnly"
         :flow-error="flowError"
     />

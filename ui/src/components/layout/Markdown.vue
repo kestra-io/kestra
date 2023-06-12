@@ -47,6 +47,30 @@
 
 <style lang="scss">
     .markdown {
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            color: var(--bs-body-color);
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid var(--bs-gray-600);
+        }
+
+        th,
+        td {
+            padding: 0.5em;
+        }
+
+        th {
+            background-color: var(--card-bg);
+            text-align: left;
+        }
+
+
         font-size: var(--font-size-sm);
 
         a.header-anchor {

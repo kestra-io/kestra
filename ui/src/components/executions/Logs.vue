@@ -30,22 +30,24 @@
         </collapse>
 
         <log-list
-            v-show="execution.state.current === State.RUNNING"
+            v-if="execution.state.current === State.RUNNING"
             :level="level"
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             @follow="forwardEvent('follow', $event)"
         />
-        <log-list
-            v-show="execution.state.current !== State.RUNNING"
-            v-for="taskRun in execution.taskRunList"
-            :key="taskRun.id"
-            :task-run-id="taskRun.id"
-            :level="level"
-            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-            :filter="filter"
-            @follow="forwardEvent('follow', $event)"
-        />
+        <div v-else-if="execution.state.current !== State.RUNNING">
+            <log-list
+                v-for="taskRun in taskRunList"
+                :key="taskRun.id"
+                :task-run-id="taskRun.id"
+                :attempt="taskRun.attempt"
+                :level="level"
+                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                :filter="filter"
+                @follow="forwardEvent('follow', $event)"
+            />
+        </div>
     </div>
 </template>
 
@@ -87,6 +89,18 @@
             downloadName() {
                 return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
             },
+            taskRunList() {
+                const fullList = [];
+                for (const taskRun of this.execution.taskRunList) {
+                    for (const attempt in taskRun.attempts) {
+                        fullList.push({
+                            ...taskRun,
+                            attempt: attempt,
+                        })
+                    }
+                }
+                return fullList
+            }
         },
         methods: {
             downloadContent() {

@@ -74,11 +74,15 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
-        @Parameter(description = "The task id") @Nullable @QueryValue String taskId
+        @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
         if (taskId != null) {
             return PagedResults.of(logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel, PageableUtils.from(page, size, sort)));
         } else if (taskRunId != null) {
+            if (attempt != null) {
+                return PagedResults.of(logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, taskRunId, minLevel, attempt, PageableUtils.from(page, size, sort)));
+            }
             return PagedResults.of(logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel, PageableUtils.from(page, size, sort)));
         } else {
             return PagedResults.of(logRepository.findByExecutionId(executionId, minLevel, PageableUtils.from(page, size, sort)));

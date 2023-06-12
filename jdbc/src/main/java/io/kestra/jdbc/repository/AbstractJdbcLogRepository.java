@@ -129,6 +129,27 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt) {
+        return this.query(
+            field("execution_id").eq(executionId)
+                .and(field("taskrun_id").eq(taskRunId))
+                .and(field("attempt_number").eq(attempt)),
+            minLevel
+        );
+    }
+
+    @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+        return this.query(
+            field("execution_id").eq(executionId)
+                .and(field("taskrun_id").eq(taskRunId))
+                .and(field("attempt_number").eq(attempt)),
+            minLevel,
+            pageable
+        );
+    }
+
+    @Override
     public LogEntry save(LogEntry log) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(log);
         this.jdbcRepository.persist(log, fields);

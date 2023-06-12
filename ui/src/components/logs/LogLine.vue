@@ -73,6 +73,10 @@
                             meta["router"] = {name: "flows/update", params: {namespace: this.log["namespace"], id: this.log[key]}};
                         }
 
+                        if (key === "attemptNumber") {
+                            meta.value = meta.value + 1;
+                        }
+
                         metaWithValue.push(meta);
                     }
                 }

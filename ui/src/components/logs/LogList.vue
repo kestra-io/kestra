@@ -12,7 +12,7 @@
                         <div>
                             <div class="attempt-header">
                                 <div class="attempt-number">
-                                    {{ $t("attempt") }} {{ index + 1 }}
+                                    {{ $t("attempt") }} {{ taskAttempt(index) + 1 }}
                                 </div>
                                 <div>
                                     <el-button type="default" @click="() => toggleShowLogs(currentTaskRun.id)">
@@ -213,6 +213,10 @@
             hideOthersOnSelect: {
                 type: Boolean,
                 default: false
+            },
+            attempt: {
+                type: Number,
+                default: undefined
             }
         },
         data() {
@@ -227,7 +231,8 @@
                 threshold: 150,
                 showLogs: [],
                 count: 0,
-                followLogs: []
+                followLogs: [],
+                logsTotal: 0
             };
         },
         watch: {
@@ -283,9 +288,6 @@
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
             ...mapState("flow", ["flow"]),
-            logsTotal() {
-                return this.logs.total || 0
-            },
             currentTaskRuns() {
                 return this.execution.taskRunList.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
             },
@@ -302,6 +304,10 @@
 
                 if (this.taskRunId) {
                     params.taskRunId = this.taskRunId;
+
+                    if (this.attempt) {
+                        params.attempt = this.attempt;
+                    }
                 }
 
                 if (this.taskId) {
@@ -389,6 +395,7 @@
                         params: params,
                     }).then(r => {
                         this.logsList = this.logsList.concat(r.results)
+                        this.logsTotal = r.total
                     });
                     this.closeSSE();
                 }
@@ -401,17 +408,12 @@
                 }
             },
             attempts(taskRun) {
-                return taskRun.attempts || [{
+                return this.attempt ? [taskRun.attempts[this.attempt]] : taskRun.attempts || [{
                     state: taskRun.state
                 }];
             },
             findLogs(taskRunId, attemptNumber) {
-                return (this.logsList || []).filter((log) => {
-                    return (
-                        log.taskRunId === taskRunId &&
-                        log.attemptNumber === attemptNumber
-                    );
-                });
+                return this.logsList
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {
@@ -422,6 +424,9 @@
                 const listElm = this.$refs[currentTaskRunId][0]
                 listElm.classList.toggle("hide-logs")
                 this.showLogs = _xor(this.showLogs, [currentTaskRunId])
+            },
+            taskAttempt(index) {
+                return parseInt(this.attempt || index)
             }
         },
         beforeUnmount() {

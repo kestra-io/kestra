@@ -22,6 +22,10 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel, Pageable pageable);
 
+    List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt);
+
+    ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable);
+
     ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
@@ -31,6 +35,7 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
     );
+
 
     LogEntry save(LogEntry log);
 

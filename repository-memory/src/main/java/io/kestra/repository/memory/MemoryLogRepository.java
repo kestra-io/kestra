@@ -56,6 +56,16 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,

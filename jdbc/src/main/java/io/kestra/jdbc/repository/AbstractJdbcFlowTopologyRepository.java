@@ -53,6 +53,29 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
             });
     }
 
+    @Override
+    public List<FlowTopology> findByNamespace(String namespace) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                List<Condition> ors = new ArrayList<>();
+                ors.add(
+                    DSL.and(
+                        field("destination_namespace").eq(namespace),
+                        field("source_namespace").eq(namespace)
+                    )
+                );
+
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(DSL.or(ors));
+
+                return this.jdbcRepository.fetch(from);
+            });
+    }
+
     public void save(Flow flow, List<FlowTopology> flowTopologies) {
         jdbcRepository
             .getDslContextWrapper()

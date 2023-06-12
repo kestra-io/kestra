@@ -96,13 +96,18 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
-        @Parameter(description = "The task id") @Nullable @QueryValue String taskId
+        @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
         List<LogEntry> logEntries;
         if (taskId != null) {
             logEntries = logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
         } else if (taskRunId != null) {
-            logEntries = logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
+            if (attempt != null) {
+                logEntries = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, taskRunId, minLevel, attempt);
+            } else {
+                logEntries = logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
+            }
         } else {
             logEntries = logRepository.findByExecutionId(executionId, minLevel);
         }

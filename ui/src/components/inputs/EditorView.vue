@@ -14,6 +14,7 @@
     import BottomLine from "../layout/BottomLine.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import ValidationError from "../flows/ValidationError.vue";
+    import Blueprints from "../flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
@@ -30,7 +31,6 @@
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
     const emit = defineEmits(["follow"])
-    const flow = store.getters["flow/flow"];
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
@@ -45,6 +45,11 @@
         },
         flowId: {
             type: String,
+            required: false,
+            default: undefined
+        },
+        flow: {
+            type: Object,
             required: false,
             default: undefined
         },
@@ -64,6 +69,10 @@
         isReadOnly: {
             type: Boolean,
             default: true
+        },
+        graphOnly: {
+            type: Boolean,
+            default: false
         },
         sourceCopy: {
             type: String,
@@ -137,7 +146,7 @@
     }
 
     const localStorageKey = computed(() => {
-        return (props.isCreating ? "creation" : `${flow.namespace}.${flow.id}`) + "_draft";
+        return (props.isCreating ? "creation" : `${props.flow.namespace}.${props.flow.id}`) + "_draft";
     })
 
     const autoRestorelocalStorageKey = computed(() => {
@@ -154,12 +163,12 @@
     }
 
     const initYamlSource = async () => {
-        flowYaml.value = flow ? flow.source : YamlUtils.stringify({
+        flowYaml.value = props.flow ? props.flow.source : YamlUtils.stringify({
             id: props.flowId,
             namespace: props.namespace
         });
 
-        if(!props.isCreating) {
+        if(!props.isCreating && !props.isReadOnly) {
             const validation = await store.dispatch("flow/validateFlow", {flow: flowYaml.value});
             const validationErrors = validation[0].constraints;
             if (validationErrors) {
@@ -178,7 +187,7 @@
                 if(restoredLocalStorageKey === autoRestorelocalStorageKey.value){
                     onEdit(sourceFromLocalStorage);
                 }else {
-                    toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${flow.namespace}.${flow.id}`}), () => {
+                    toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${props.flow.namespace}.${props.flow.id}`}), () => {
                         onEdit(sourceFromLocalStorage);
                     })
                 }
@@ -585,7 +594,7 @@
             });
     }
 
-    const combinedEditor = computed(() => ["source-doc","source-topology"].includes(viewType.value));
+    const combinedEditor = computed(() => ["source-doc","source-topology","source-blueprints"].includes(viewType.value));
 
     const dragEditor = (e) => {
         let dragX = e.clientX;
@@ -627,6 +636,7 @@
             @restartGuidedTour="() => persistViewType('source')"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
+        <Blueprints v-if="viewType === 'source-blueprints'" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info/>
         <div
             :class="viewType === 'source-topology' ? 'combined-right-view' : viewType === 'topology' ? 'vueflow': 'hide-view'"
         >
@@ -647,7 +657,7 @@
         </div>
         <PluginDocumentation
             v-if="viewType === 'source-doc'"
-            class="plugin-doc combined-right-view"
+            class="plugin-doc combined-right-view enhance-readability"
         />
         <el-drawer
             v-if="isNewErrorOpen"
@@ -728,7 +738,7 @@
             @switch-view="switchView"
         />
     </el-card>
-    <bottom-line>
+    <bottom-line v-if="!graphOnly">
         <ul>
             <li v-if="(isAllowedEdit || canDelete) && !isReadOnly">
                 <el-dropdown>
@@ -830,7 +840,7 @@
     .to-topology-button {
         position: absolute;
         top: 30px;
-        right: 30px;
+        right: 45px;
     }
 
     .editor-combined {
@@ -843,9 +853,32 @@
         width: 100%;
     }
 
-    .combined-right-view {
-        flex-grow: 1;
+    html.dark .el-card :deep(.enhance-readability) {
+        background-color: var(--bs-gray-500);
+    }
+
+    :deep(.combined-right-view), .combined-right-view {
+        flex: 1;
         position: relative;
+        overflow-y: auto;
+
+        &.enhance-readability {
+            padding: calc(var(--spacer) * 1.5);
+            background-color: var(--bs-gray-100);
+        }
+
+        &::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        &::-webkit-scrollbar-track {
+            -webkit-border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            -webkit-border-radius: 10px;
+            background: var(--bs-primary);
+        }
     }
 
     .hide-view {
@@ -854,13 +887,6 @@
 
     .plugin-doc {
         overflow-x: hidden;
-        overflow-y: scroll;
-        padding: calc(var(--spacer) * 1.5);
-        background-color: var(--bs-gray-300);
-
-        html.dark & {
-            background-color: var(--bs-gray-500);
-        }
     }
 
     .dropdown-menu {
@@ -870,7 +896,7 @@
     }
 
     .slider {
-        width: calc(1rem/3);
+        flex: 0 0 calc(1rem/3);
         border-radius: 0.25rem;
         margin: 0 0.25rem;
         background-color: var(--bs-secondary);

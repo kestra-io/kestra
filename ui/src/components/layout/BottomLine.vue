@@ -11,7 +11,7 @@
         position: fixed;
         bottom: 0;
         right: 0;
-        left: 0px;
+        left: 0;
         border-radius: 0;
         border-top: 1px solid var(--bs-border-color);
         z-index: 90;

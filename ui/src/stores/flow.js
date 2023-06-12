@@ -178,6 +178,16 @@ export default {
                     return response;
                 })
         },
+        getGraphFromSourceResponse({commit}, options) {
+            const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
+            const flowParsed = YamlUtils.parse(options.flow);
+            let flowSource = options.flow
+            if (!flowParsed.id || !flowParsed.namespace) {
+                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+            }
+            return this.$http.post("/api/v1/flows/graph", flowSource, {...config})
+                .then(response => response.data)
+        },
         loadRevisions({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
                 commit("setRevisions", response.data)

@@ -36,14 +36,17 @@ main {
     transition: all 0.3s ease;
 
     &.menu-collapsed {
-        padding-left: 80px;
+        #{--offset-from-menu}: 15px;
+        padding-left: calc(var(--menu-collapsed-width) + var(--offset-from-menu));
     }
 
     &.menu-not-collapsed {
-        padding-left: calc(var(--menu-width) + var(--spacer));
+        #{--offset-from-menu}: var(--spacer);
+        padding-left: calc(var(--menu-width) + var(--offset-from-menu));
 
         @include mixin.res(lg) {
-            padding-left: calc(var(--menu-width) + (var(--spacer) * 4));
+            #{--offset-from-menu}: calc(var(--spacer) * 4);
+            padding-left: calc(var(--menu-width) + var(--offset-from-menu));
             padding-right: calc(var(--spacer) * 4);
         }
     }

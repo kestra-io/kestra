@@ -419,7 +419,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             FileMetas.class
         ).blockingFirst();
 
-        assertThat(metas.getSize(), equalTo(288L));
+        assertThat(metas.getSize(), equalTo(356L));
 
         String newExecutionId = IdUtils.create();
 

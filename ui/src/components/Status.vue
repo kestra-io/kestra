@@ -10,9 +10,6 @@
     import State from "../utils/state";
 
     export default {
-        components: {
-
-        },
         props: {
             status: {
                 type: String,

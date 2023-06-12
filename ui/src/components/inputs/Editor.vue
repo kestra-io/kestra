@@ -1,25 +1,27 @@
 <template>
     <div class="ks-editor edit-flow-editor">
         <nav v-if="original === undefined && navbar" class="top-nav">
-            <div>
-                <el-button-group>
-                    <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
-                        <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
-                    </el-tooltip>
-                    <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
-                        <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
-                    </el-tooltip>
-                    <el-tooltip
-                        v-if="schemaType === 'flow' && creating"
-                        :content="$t('Reset guided tour')"
-                        :persistent="false"
-                        transition=""
-                        :hide-after="0"
-                    >
-                        <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
-                    </el-tooltip>
-                </el-button-group>
-            </div>
+            <slot name="nav">
+                <div>
+                    <el-button-group>
+                        <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
+                            <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
+                        </el-tooltip>
+                        <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
+                            <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
+                        </el-tooltip>
+                        <el-tooltip
+                            v-if="schemaType === 'flow' && creating"
+                            :content="$t('Reset guided tour')"
+                            :persistent="false"
+                            transition=""
+                            :hide-after="0"
+                        >
+                            <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
+                        </el-tooltip>
+                    </el-button-group>
+                </div>
+            </slot>
         </nav>
 
         <div class="editor-container" ref="container" :class="containerClass">
@@ -54,7 +56,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapGetters} from "vuex";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
 
@@ -312,7 +314,7 @@
                     });
                 }
 
-                this.editor.onDidChangeCursorPosition(e => {
+                this.editor.onDidChangeCursorPosition(() => {
                     let position = this.editor.getPosition();
                     let model = this.editor.getModel();
                     clearTimeout(this.lastTimeout);
@@ -362,7 +364,7 @@
         width: 100%;
 
         .top-nav {
-            background-color: var(--bs-gray-300);
+            background-color: var(--bs-gray-100);
             padding: calc(var(--spacer) / 2);
             border-radius: var(--bs-border-radius-lg);
             border-bottom-left-radius: 0;

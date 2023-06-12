@@ -8,7 +8,7 @@
                 {{ tooltipEnd }}
             </code>
         </template>
-        <div class="wrapper" v-if="icon" :class="classes">
+        <div v-bind="$attrs" class="wrapper" v-if="icon" :class="classes">
             <div class="icon" :style="styles" :alt="cls" />
             <div v-if="!onlyIcon" class="hover">
                 {{ name }}

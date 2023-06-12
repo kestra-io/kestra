@@ -37,7 +37,7 @@
             total: {type: Number, required: true},
             max: {type: Number, required: false, default: undefined},
             size: {type: Number, default: 25},
-            page: {type: Number, default: 1}
+            page: {type: Number, default: 1},
         },
 
         methods: {

@@ -1,6 +1,6 @@
 <template>
-    <nav v-if="topNavbar">
-        <div class="top-title">
+    <nav>
+        <div class="top-title" v-if="topNavbar">
             <h1 class="text-truncate">
                 {{ title }}
             </h1>

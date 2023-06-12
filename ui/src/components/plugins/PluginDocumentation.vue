@@ -28,17 +28,4 @@
     .plugin-documentation-div {
         width: 0;
     }
-
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-track {
-        -webkit-border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        -webkit-border-radius: 10px;
-        background: var(--bs-primary);
-    }
 </style>

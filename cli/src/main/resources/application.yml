@@ -26,6 +26,11 @@ micronaut:
     default:
       maximum-weight: 10485760
 
+  http:
+    services:
+      api:
+        url: https://api.kestra.io
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false

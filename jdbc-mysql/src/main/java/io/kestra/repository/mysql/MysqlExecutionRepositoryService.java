@@ -16,7 +16,7 @@ public abstract class MysqlExecutionRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "id"), query));
+            conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "flow_id", "id"), query));
         }
 
         if (labels != null) {

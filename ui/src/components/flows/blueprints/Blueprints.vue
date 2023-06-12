@@ -1,30 +1,40 @@
 <template>
     <nav v-if="!embed" class="header">
-        <h4 class="text-uppercase welcome">{{$t("flow gallery.header.welcome")}}</h4>
-        <h4 class="catch-phrase">{{$t("flow gallery.header.catch phrase.1")}}</h4>
-        <h4 class="catch-phrase">{{$t("flow gallery.header.catch phrase.2")}}</h4>
+        <h4 class="text-uppercase welcome">
+            {{ $t("flow gallery.header.welcome") }}
+        </h4>
+        <h4 class="catch-phrase">
+            {{ $t("flow gallery.header.catch phrase.1") }}
+        </h4>
+        <h4 class="catch-phrase">
+            {{ $t("flow gallery.header.catch phrase.2") }}
+        </h4>
         <el-form-item class="search-wrapper">
-            <search-field placeholder="search blueprint" @search="s => q = s"/>
+            <search-field placeholder="search blueprint" @search="s => q = s" />
         </el-form-item>
     </nav>
     <div class="main-container" v-bind="$attrs" v-if="tags && ready">
-        <blueprint-detail :embed="embed" v-if="selectedBlueprintId" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined"/>
+        <blueprint-detail :embed="embed" v-if="selectedBlueprintId" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined" />
         <data-table v-else class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
                 <el-form-item v-if="embed">
-                    <search-field embed placeholder="search blueprint" @search="s => q = s"/>
+                    <search-field embed placeholder="search blueprint" @search="s => q = s" />
                 </el-form-item>
-                <br/>
+                <br>
                 <el-radio-group v-model="selectedTags" class="tags-selection">
-                    <label class="el-checkbox-button hoverable" :class="{'is-checked': selectedTags === undefined}" @click="q = undefined">
-                        <span class="el-checkbox-button__inner">
-                            {{ $t("all tags") }}
-                        </span>
-                    </label>
-                    <el-radio-button v-for="tag in Object.values(tags)"
-                                        :key="tag.id"
-                                        :label="tag.id"
-                                        class="hoverable">
+                    <el-radio-button
+                        :key="0"
+                        :label="0"
+                        class="hoverable"
+                    >
+                        {{ $t("all tags") }}
+                    </el-radio-button>
+                    <el-radio-button
+                        v-for="tag in Object.values(tags)"
+                        :key="tag.id"
+                        :label="tag.id"
+                        class="hoverable"
+                    >
                         {{ tag.name }}
                     </el-radio-button>
                 </el-radio-group>
@@ -32,10 +42,14 @@
             <template #table>
                 <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
                     <div class="side">
-                        <div class="title">{{ blueprint.title }}</div>
-                        <div class="tags text-uppercase">{{ dotSeparatedTags(blueprint.tags) }}</div>
+                        <div class="title">
+                            {{ blueprint.title }}
+                        </div>
+                        <div class="tags text-uppercase">
+                            {{ dotSeparatedTags(blueprint.tags) }}
+                        </div>
                         <div class="tasks-container">
-                            <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]"/>
+                            <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]" />
                         </div>
                     </div>
                     <div class="side ms-auto hoverable">
@@ -70,7 +84,7 @@
         },
         async created() {
             await this.loadTags();
-            this.selectedTags = this.$route?.query?.selectedTags ?? undefined;
+            this.selectedTags = this.$route?.query?.selectedTags ?? 0;
         },
         props: {
             embed: {
@@ -94,10 +108,9 @@
                     this.$router.push({name: "flow-gallery/view", params: {blueprintId}})
                 }
             },
-
             async loadTags(){
                 return this.$http
-                    .get(`/api/v1/blueprints/tags`)
+                    .get("/api/v1/blueprints/tags")
                     .then(response => {
                         this.tags = Object.fromEntries(response.data.map(tag => [tag.id, tag]));
                     })
@@ -138,7 +151,7 @@
         data() {
             return {
                 q: undefined,
-                selectedTags: undefined,
+                selectedTags: 0,
                 tags: undefined,
                 blueprints: undefined,
                 total: 0,
@@ -161,10 +174,16 @@
             },
             selectedTags(newSelectedTags){
                 if (!this.embed) {
-                    this.$router.push({query: {
+                    if(newSelectedTags === 0) {
+                        newSelectedTags = undefined;
+                        this.$router.push({query: {
                             ...this.$route.query,
-                            selectedTags: newSelectedTags
                         }});
+                    }
+                    this.$router.push({query: {
+                        ...this.$route.query,
+                        selectedTags: newSelectedTags
+                    }});
                 } else {
                     this.load(this.onDataLoaded);
                 }

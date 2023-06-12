@@ -38,6 +38,8 @@
                         {{ tag.name }}
                     </el-radio-button>
                 </el-radio-group>
+
+                <el-divider />
             </template>
             <template #table>
                 <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">

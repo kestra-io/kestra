@@ -23,7 +23,7 @@ public class WorkerCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"-t", "--thread"}, description = "the max number of concurrent threads to launch")
     private int thread = Runtime.getRuntime().availableProcessors() * 2;
 
-    @CommandLine.Option(names = {"-g", "--worker-group"}, description = "the worker group key (EE only)")
+    @CommandLine.Option(names = {"-g", "--worker-group"}, description = "the worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")
     private String workerGroupKey = null;
 
     @SuppressWarnings("unused")
@@ -36,6 +36,10 @@ public class WorkerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
+
+        if (!this.workerGroupKey.matches("[a-zA-Z0-9_-]+")) {
+            throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
+        }
 
         Worker worker = new Worker(applicationContext, this.thread, this.workerGroupKey);
         applicationContext.registerSingleton(worker);

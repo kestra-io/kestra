@@ -121,6 +121,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Named(QueueFactoryInterface.FLOW_NAMED)
     private QueueInterface<Flow> flowQueue;
 
+    @Inject
+    private WorkerGroupService workerGroupService;
+
     @SneakyThrows
     @Override
     public void run() {
@@ -219,8 +222,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
-                    .forEach(workerTask -> workerTaskQueue.emit(
-                        workerTask.getTask().getWorkerGroup() != null ? workerTask.getTask().getWorkerGroup().getKey() : null, workerTask));
+                    .forEach(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromTask(workerTask), workerTask));
 
                 // WorkerTask not flowable to workerTaskResult as Running
                 workerTasksDedup

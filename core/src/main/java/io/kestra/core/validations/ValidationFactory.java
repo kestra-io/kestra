@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.annotation.Factory;
@@ -18,7 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 @Factory
 public class ValidationFactory {
@@ -200,7 +200,7 @@ public class ValidationFactory {
 
     @Singleton
     @Named("workerGroupValidator")
-    ConstraintValidator<WorkerGroupValidation, Task.WorkerGroup> workerGroupValidator() {
+    ConstraintValidator<WorkerGroupValidation, WorkerGroup> workerGroupValidator() {
         return (value, annotationMetadata, context) -> {
             if (value == null) {
                 return true;

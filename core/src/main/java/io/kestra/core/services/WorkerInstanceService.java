@@ -17,22 +17,11 @@ import jakarta.inject.Singleton;
 public class WorkerInstanceService {
     public static List<WorkerInstance> removeEvictedPartitions(Stream<WorkerInstance> stream, WorkerInstance incoming) {
         // looking for WorkerInstance that of common partition
-        List<WorkerInstance> changedInstance = stream
-            .filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
+        return stream.filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
+            .filter(r -> (r.getWorkerGroup() == null && incoming.getWorkerGroup() == null)
+                || (r.getWorkerGroup() != null && r.getWorkerGroup().equals(incoming.getWorkerGroup())))
             .filter(r -> !Collections.disjoint(r.getPartitions(), incoming.getPartitions()))
-            .collect(Collectors.toList());
-
-        if (changedInstance.size() >= 1) {
-            return changedInstance
-                .stream()
-                .map(evictedInstance -> {
-                    evictedInstance.getPartitions().removeAll(incoming.getPartitions());
-
-                    return evictedInstance;
-                })
-                .collect(Collectors.toList());
-        }
-
-        return Collections.emptyList();
+            .peek(evictedInstance -> evictedInstance.getPartitions().removeAll(incoming.getPartitions()))
+            .toList();
     }
 }

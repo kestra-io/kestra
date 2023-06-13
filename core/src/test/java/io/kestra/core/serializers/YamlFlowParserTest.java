@@ -1,18 +1,20 @@
 package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.validations.ModelValidator;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.triggers.types.Schedule;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
+import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -23,10 +25,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
-
-import jakarta.inject.Inject;
-
-import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -239,6 +237,17 @@ class YamlFlowParserTest {
         assertThat(valid.isPresent(), is(true));
         assertThat(valid.get().getConstraintViolations().size(), is(8));
         assertThat(new ArrayList<>(valid.get().getConstraintViolations()).stream().filter(r -> r.getMessage().contains("must not be empty")).count(), is(3L));
+    }
+
+    @Test
+    void duplicateKey() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/duplicate-key.yaml")
+        );
+
+        assertThat(exception.getConstraintViolations().size(), is(1));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("Duplicate field 'variables.tf'"));
     }
 
     private Flow parse(String path) {

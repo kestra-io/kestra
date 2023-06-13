@@ -14,3 +14,6 @@ ALTER COLUMN "type" ENUM(
         'io.kestra.core.runners.WorkerTrigger',
         'io.kestra.core.runners.WorkerTriggerResult'
     ) NOT NULL;
+
+-- trigger logs have no execution id
+alter table logs alter column "execution_id" set null;

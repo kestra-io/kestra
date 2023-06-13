@@ -14,3 +14,6 @@ ALTER TABLE queues MODIFY COLUMN `type`
     'io.kestra.core.runners.WorkerTrigger',
     'io.kestra.core.runners.WorkerTriggerResult'
     ) NOT NULL;
+
+-- trigger logs have no execution id
+ALTER TABLE logs MODIFY COLUMN execution_id varchar(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED NULL;

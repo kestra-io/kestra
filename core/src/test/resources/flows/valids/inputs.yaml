@@ -99,3 +99,9 @@ tasks:
 - id: file
   type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.file}}"
+- id: json
+  type: io.kestra.core.tasks.debugs.Return
+  format: "{{inputs.json}}"
+- id: jsonOutput
+  type: io.kestra.core.tasks.debugs.Return
+  format: "{{outputs.json.value}}"

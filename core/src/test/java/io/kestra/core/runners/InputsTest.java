@@ -127,7 +127,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(5));
+        assertThat(execution.getTaskRunList(), hasSize(7));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(
             (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
@@ -271,5 +271,36 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getMessage(), containsString("Invalid URI format"));
+    }
+
+    @Test
+    void inputEmptyJson() {
+        HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("json", "{}");
+
+        Map<String, Object> typeds = typedInputs(map);
+
+        assertThat(typeds.get("json"), instanceOf(Map.class));
+        assertThat(((Map<?, ?>) typeds.get("json")).size(), is(0));
+    }
+
+    @Test
+    void inputEmptyJsonFlow() throws TimeoutException {
+        HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("json", "{}");
+
+        Execution execution = runnerUtils.runOne(
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, map)
+        );
+
+        assertThat(execution.getTaskRunList(), hasSize(7));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        assertThat(execution.getInputs().get("json"), instanceOf(Map.class));
+        assertThat(((Map<?, ?>) execution.getInputs().get("json")).size(), is(0));
+        assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").get(0).getOutputs().get("value"), is("{}"));
     }
 }

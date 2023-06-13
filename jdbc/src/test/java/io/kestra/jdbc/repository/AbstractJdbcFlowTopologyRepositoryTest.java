@@ -73,6 +73,46 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest  extends AbstractFl
 
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getDestination().getId(), is("flow-c"));
+
+        flowTopologyRepository.save(
+            flow,
+            List.of(
+                FlowTopology.builder()
+                    .relation(FlowRelation.FLOW_TASK)
+                    .source(FlowNode.builder()
+                        .id("flow-a")
+                        .namespace("io.kestra.tests")
+                        .uid("flow-a")
+                        .build()
+                    )
+                    .destination(FlowNode.builder()
+                        .id("flow-b")
+                        .namespace("io.kestra.tests")
+                        .uid("flow-b")
+                        .build()
+                    )
+                    .build(),
+                FlowTopology.builder()
+                    .relation(FlowRelation.FLOW_TASK)
+                    .source(FlowNode.builder()
+                        .id("flow-a")
+                        .namespace("io.kestra.tests")
+                        .uid("flow-a")
+                        .build()
+                    )
+                    .destination(FlowNode.builder()
+                        .id("flow-c")
+                        .namespace("io.kestra.tests")
+                        .uid("flow-c")
+                        .build()
+                    )
+                    .build()
+            )
+        );
+
+        list = flowTopologyRepository.findByNamespace("io.kestra.tests");
+
+        assertThat(list.size(), is(2));
     }
 
     @BeforeEach

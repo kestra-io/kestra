@@ -1,13 +1,15 @@
 <template>
     <el-card>
-        <LowCodeEditor
-            v-if="flow"
-            :flow-id="flow.id"
-            :namespace="flow.namespace"
-            :flow-graph="flowGraph"
-            :source="flow.source"
-            :is-read-only="isReadOnly"
-        />
+        <div class="vueflow">
+            <LowCodeEditor
+                v-if="flow"
+                :flow-id="flow.id"
+                :namespace="flow.namespace"
+                :flow-graph="flowGraph"
+                :source="flow.source"
+                :is-read-only="isReadOnly"
+            />
+        </div>
     </el-card>
 </template>
 <script>
@@ -36,8 +38,19 @@
         },
     };
 </script>
-<style scoped>
-    el-card {
+<style scoped lang="scss">
+    .el-card {
+        height: calc(100vh - 300px);
+        position: relative;
+
+        :deep(.el-card__body) {
+            height: 100%;
+            display: flex;
+        }
+    }
+
+    .vueflow {
         height: 100%;
+        width: 100%;
     }
 </style>

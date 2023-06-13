@@ -1,15 +1,17 @@
 <template>
     <el-card>
-        <low-code-editor
-            :key="execution.id"
-            v-if="execution && flowGraph"
-            :flow-id="execution.flowId"
-            :namespace="execution.namespace"
-            :flow-graph="flowGraph"
-            :source="flow.source"
-            :execution="execution"
-            @follow="forwardEvent('follow', $event)"
-        />
+        <div class="vueflow">
+            <low-code-editor
+                :key="execution.id"
+                v-if="execution && flowGraph"
+                :flow-id="execution.flowId"
+                :namespace="execution.namespace"
+                :flow-graph="flowGraph"
+                :source="flow.source"
+                :execution="execution"
+                @follow="forwardEvent('follow', $event)"
+            />
+        </div>
     </el-card>
 </template>
 <script>
@@ -62,3 +64,19 @@
         }
     };
 </script>
+<style scoped lang="scss">
+    .el-card {
+        height: calc(100vh - 300px);
+        position: relative;
+
+        :deep(.el-card__body) {
+            height: 100%;
+            display: flex;
+        }
+    }
+
+    .vueflow {
+        height: 100%;
+        width: 100%;
+    }
+</style>

@@ -12,6 +12,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -500,7 +501,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void resumePaused() throws TimeoutException {
+    void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
@@ -511,6 +512,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
 
         // check that the execution is no more paused
+        Thread.sleep(100);
         Execution execution = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
@@ -518,7 +520,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void killPaused() throws TimeoutException {
+    void killPaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
@@ -529,6 +531,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
 
         // check that the execution is no more paused
+        Thread.sleep(100);
         Execution execution = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);

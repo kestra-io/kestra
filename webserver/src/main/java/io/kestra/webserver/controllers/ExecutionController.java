@@ -738,12 +738,31 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Kill an execution")
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+    @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public HttpResponse<?> kill(
         @Parameter(description = "The execution id") @PathVariable String executionId
-    ) {
-        Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isPresent() && execution.get().getState().isTerminated()) {
+    ) throws InternalException {
+        Optional<Execution> maybeExecution = executionRepository.findById(executionId);
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        var execution = maybeExecution.get();
+        if (execution.getState().isTerminated()) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
+        }
+
+        if (execution.getState().isPaused()) {
+            // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it
+            // An edge case can exist where the execution is resumed automatically before we resume it with a killing
+            var runningTaskRun = execution.findFirstByState(State.Type.PAUSED).map(taskRun ->
+                taskRun.withState(State.Type.KILLING)
+            );
+            runningTaskRun.ifPresent(throwConsumer(taskRun -> {
+                var unpausedExecution = execution.withTaskRun(taskRun).withState(State.Type.KILLING);
+                executionQueue.emit(unpausedExecution);
+            }));
+            return HttpResponse.noContent();
         }
 
         killQueue.emit(ExecutionKilled

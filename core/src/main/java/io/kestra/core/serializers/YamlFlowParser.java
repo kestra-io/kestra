@@ -1,5 +1,6 @@
 package io.kestra.core.serializers;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
@@ -13,19 +14,20 @@ import jakarta.inject.Singleton;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
+import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
-import javax.validation.ConstraintViolationException;
 
 @Singleton
 public class YamlFlowParser {
     public static final String CONTEXT_FLOW_DIRECTORY = "flowDirectory";
 
     private static final ObjectMapper mapper = JacksonMapper.ofYaml()
+        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
         .registerModule(new SimpleModule("HandleBarDeserializer")
             .addDeserializer(String.class, new HandleBarDeserializer())

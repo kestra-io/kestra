@@ -27,6 +27,12 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <label-filter
+                        :value="asArrayProp($route.query.labels)"
+                        @update:model-value="onDataTableValue('labels', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" />
                 </el-form-item>
             </template>
@@ -173,6 +179,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import LabelFilter from "../labels/LabelFilter.vue";
     import DateRange from "../layout/DateRange.vue";
     import RefreshButton from "../layout/RefreshButton.vue"
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
@@ -199,6 +206,7 @@
             DataTable,
             SearchField,
             NamespaceSelect,
+            LabelFilter,
             DateRange,
             RefreshButton,
             StatusFilterButtons,
@@ -418,6 +426,9 @@
                     tab: "editor"
                 }})
             },
+            asArrayProp(unknownValue) {
+                return (!Array.isArray(unknownValue) && unknownValue !== undefined) ? [unknownValue] : unknownValue;
+            }
         }
     };
 </script>

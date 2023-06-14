@@ -195,10 +195,10 @@
       "developer": "Developer Guide",
       "github": "GitHub Issues"
     },
-    "flow gallery": {
-      "title": "Flow gallery",
+    "blueprints": {
+      "title": "Blueprints",
       "header": {
-        "welcome": "Welcome to the flow gallery!",
+        "welcome": "Welcome to the blueprints gallery!",
         "catch phrase": {
           "1": "The first step is always the hardest.",
           "2": "Explore blueprints to kick-start your next flow."
@@ -643,7 +643,7 @@
       "developer": "Guide développeur",
       "github": "Bugs GitHub"
     },
-    "flow gallery": {
+    "blueprints": {
       "title": "Galerie de flows",
       "header": {
         "welcome": "Bienvenue dans la galerie de flows",

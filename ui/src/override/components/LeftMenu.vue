@@ -194,8 +194,8 @@
                         ]
                     },
                     {
-                        href: "/flow-gallery",
-                        title: this.$t("flow gallery.title"),
+                        href: "/blueprints",
+                        title: this.$t("blueprints.title"),
                         icon: {
                             element: Ballot,
                             class: "menu-icon"

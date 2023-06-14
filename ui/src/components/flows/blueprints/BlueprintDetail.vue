@@ -90,7 +90,7 @@
                 if(this.embed) {
                     this.$emit("back");
                 }else {
-                    this.$router.push({name: "flow-gallery"})
+                    this.$router.push({name: "blueprints"})
                 }
             },
             copy(text) {

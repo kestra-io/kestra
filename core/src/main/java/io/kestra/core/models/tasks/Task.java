@@ -8,7 +8,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.flows.WorkingDirectory;
-import io.kestra.core.validations.WorkerGroupValidation;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,6 +50,7 @@ abstract public class Task {
     @Builder.Default
     protected Boolean disabled = false;
 
+    @Valid
     private WorkerGroup workerGroup;
 
     public Optional<Task> findById(String id) {

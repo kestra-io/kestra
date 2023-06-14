@@ -22,6 +22,5 @@ public class WorkerInstance {
     private String workerGroup;
 
     @Builder.Default
-    @NotNull
     private List<Integer> partitions = new ArrayList<>();
 }

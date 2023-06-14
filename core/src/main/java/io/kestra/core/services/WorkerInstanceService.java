@@ -17,11 +17,22 @@ import jakarta.inject.Singleton;
 public class WorkerInstanceService {
     public static List<WorkerInstance> removeEvictedPartitions(Stream<WorkerInstance> stream, WorkerInstance incoming) {
         // looking for WorkerInstance that of common partition
-        return stream.filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
-            .filter(r -> (r.getWorkerGroup() == null && incoming.getWorkerGroup() == null)
-                || (r.getWorkerGroup() != null && r.getWorkerGroup().equals(incoming.getWorkerGroup())))
-            .filter(r -> !Collections.disjoint(r.getPartitions(), incoming.getPartitions()))
-            .peek(evictedInstance -> evictedInstance.getPartitions().removeAll(incoming.getPartitions()))
+        List<WorkerInstance> changedInstance = stream
+            .filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
+            .filter(r -> (r.getWorkerGroup() == null && incoming.getWorkerGroup() == null) ||
+                (r.getWorkerGroup() != null && r.getWorkerGroup().equals(incoming.getWorkerGroup()))
+            )
+            .filter(r -> !Collections.disjoint(r.getPartitions() == null ? List.of() : r.getPartitions(), incoming.getPartitions() == null ? List.of() : incoming.getPartitions()))
             .toList();
+
+        if (!changedInstance.isEmpty()) {
+            return changedInstance
+                .stream()
+                .filter(r -> r.getPartitions() != null)
+                .peek(evictedInstance -> evictedInstance.getPartitions().removeAll(incoming.getPartitions()))
+                .collect(Collectors.toList());
+        }
+
+        return Collections.emptyList();
     }
 }

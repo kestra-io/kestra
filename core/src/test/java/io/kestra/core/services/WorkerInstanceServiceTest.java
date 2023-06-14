@@ -149,6 +149,24 @@ class WorkerInstanceServiceTest {
         assertThat(workerInstance.size(), is(0));
     }
 
+
+    @Test
+    void nullCheks() {
+        WorkerInstance first = WorkerInstance
+            .builder()
+            .partitions(null)
+            .workerUuid(UUID.randomUUID())
+            .hostname("unit-test")
+            .build();
+
+        List<WorkerInstance> workerInstance = WorkerInstanceService.removeEvictedPartitions(
+            Stream.of(first),
+            workerInstance(Arrays.asList(1, 2, 3), "workerGroup")
+        );
+
+        assertThat(workerInstance.size(), is(0));
+    }
+
     private WorkerInstance workerInstance(List<Integer> partitions) {
         return workerInstance(partitions, null, null);
     }

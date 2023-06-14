@@ -45,7 +45,7 @@
                 </editor>
                 <template v-if="blueprint.description">
                     <h5>About this blueprint</h5>
-                    <p>{{ blueprint.description }}</p>
+                    <markdown :source="blueprint.description"/>
                 </template>
                 <h5>Plugins</h5>
                 <div class="plugins-container">
@@ -65,8 +65,11 @@
     import YamlUtils from "../../../utils/yamlUtils";
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import Markdown from "../../layout/Markdown.vue";
+
 
     export default {
+        components: {Markdown},
         data() {
             return {
                 flowGraph: undefined,

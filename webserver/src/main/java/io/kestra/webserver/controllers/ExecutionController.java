@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -72,6 +73,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
@@ -750,6 +752,34 @@ public class ExecutionController {
             .build()
         );
 
+        return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/{executionId}/resume", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
+    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the executions is not paused")
+    public HttpResponse<?> resume(
+        @Parameter(description = "The execution id") @PathVariable String executionId
+    ) throws InternalException {
+        Optional<Execution> maybeExecution = executionRepository.findById(executionId);
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        var execution = maybeExecution.get();
+        if (!execution.getState().isPaused()) {
+            throw new IllegalStateException("Execution is not paused, can't resume it");
+        }
+
+        var runningTaskRun = execution.findFirstByState(State.Type.PAUSED).map(taskRun ->
+            taskRun.withState(State.Type.RUNNING)
+        );
+        runningTaskRun.ifPresent(throwConsumer(taskRun -> {
+            var unpausedExecution = execution.withTaskRun(taskRun).withState(State.Type.RUNNING);
+            executionQueue.emit(unpausedExecution);
+        }));
         return HttpResponse.noContent();
     }
 

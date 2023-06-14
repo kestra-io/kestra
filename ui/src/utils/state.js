@@ -129,6 +129,10 @@ export default class State {
         return STATE[state] && STATE[state].isKillable;
     }
 
+    static isPaused(state) {
+        return STATE[state] && STATE[state] === STATE.PAUSED;
+    }
+
     static isFailed(state) {
         return STATE[state] && STATE[state].isFailed;
     }

@@ -7,6 +7,7 @@
             <el-col :span="12" class="text-end">
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <resume :execution="execution" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />
             </el-col>
@@ -62,6 +63,7 @@
     import Status from "../Status.vue";
     import Vars from "./Vars.vue";
     import Restart from "./Restart.vue";
+    import Resume from "./Resume.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -74,6 +76,7 @@
             Status,
             Restart,
             Vars,
+            Resume,
             Kill,
             DateAgo,
             Crud

@@ -34,9 +34,6 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     protected SchedulerTriggerStateInterface triggerState;
 
     @Inject
-    protected SchedulerTriggerRunningInterface triggerRunning;
-
-    @Inject
     protected SchedulerExecutionStateInterface executionState;
 
     private static Flow createScheduleFlow() {
@@ -96,8 +93,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             applicationContext,
             flowListenersServiceSpy,
             executionRepositorySpy,
-            triggerState,
-            triggerRunning
+            triggerState
         )) {
             // wait for execution
             executionQueue.receive(SchedulerConditionTest.class, execution -> {

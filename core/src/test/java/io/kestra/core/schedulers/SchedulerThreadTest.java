@@ -30,9 +30,6 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     protected SchedulerTriggerStateInterface triggerState;
 
     @Inject
-    protected SchedulerTriggerRunningInterface triggerRunning;
-
-    @Inject
     protected SchedulerExecutionStateInterface executionState;
 
     public static Flow createThreadFlow() {
@@ -76,8 +73,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             applicationContext,
             flowListenersServiceSpy,
             schedulerExecutionStateSpy,
-            triggerState,
-            triggerRunning
+            triggerState
         )) {
             AtomicReference<Execution> last = new AtomicReference<>();
 

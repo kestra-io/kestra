@@ -172,52 +172,55 @@ public class Worker implements Runnable, Closeable {
         );
 
         this.workerTriggerQueue.receive(
+            Worker.class,
             workerTrigger -> {
-                this.metricRegistry
-                    .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
-                    .record(() -> {
-                        this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                            .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
-                        this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
+                executors.execute(() -> {
+                    this.metricRegistry
+                        .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
+                        .record(() -> {
+                            this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
+                                .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
+                            this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
-                        try {
-                            PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
-                            RunContext runContext = workerTrigger.getConditionContext()
-                                .getRunContext()
-                                .forWorker(this.applicationContext, workerTrigger);
-                            Optional<Execution> evaluate = pollingTrigger.evaluate(
-                                workerTrigger.getConditionContext().withRunContext(runContext),
-                                workerTrigger.getTriggerContext()
-                            );
-                            if (log.isDebugEnabled() && evaluate.isEmpty()) {
-                                log.trace("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
-                                    workerTrigger.getFlow().getNamespace(),
-                                    workerTrigger.getFlow().getId(),
-                                    workerTrigger.getTriggerContext().getDate()
+                            try {
+                                PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
+                                RunContext runContext = workerTrigger.getConditionContext()
+                                    .getRunContext()
+                                    .forWorker(this.applicationContext, workerTrigger);
+                                Optional<Execution> evaluate = pollingTrigger.evaluate(
+                                    workerTrigger.getConditionContext().withRunContext(runContext),
+                                    workerTrigger.getTriggerContext()
+                                );
+                                if (log.isDebugEnabled() && evaluate.isEmpty()) {
+                                    log.debug("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
+                                        workerTrigger.getFlow().getNamespace(),
+                                        workerTrigger.getFlow().getId(),
+                                        workerTrigger.getTriggerContext().getDate()
+                                    );
+                                }
+                                workerTrigger.getConditionContext().getRunContext().cleanup();
+
+                                this.workerTriggerResultQueue.emit(
+                                    WorkerTriggerResult.builder()
+                                        .execution(evaluate)
+                                        .triggerContext(workerTrigger.getTriggerContext())
+                                        .trigger(workerTrigger.getTrigger())
+                                        .build()
+                                );
+                            } catch (Exception e) {
+                                logError(workerTrigger, e);
+                                this.workerTriggerResultQueue.emit(
+                                    WorkerTriggerResult.builder()
+                                        .success(false)
+                                        .triggerContext(workerTrigger.getTriggerContext())
+                                        .trigger(workerTrigger.getTrigger())
+                                        .build()
                                 );
                             }
-                            workerTrigger.getConditionContext().getRunContext().cleanup();
-
-                            this.workerTriggerResultQueue.emit(
-                                WorkerTriggerResult.builder()
-                                    .execution(evaluate)
-                                    .triggerContext(workerTrigger.getTriggerContext())
-                                    .trigger(workerTrigger.getTrigger())
-                                    .build()
-                            );
-                        } catch (Exception e) {
-                            logError(workerTrigger, e);
-                            this.workerTriggerResultQueue.emit(
-                                WorkerTriggerResult.builder()
-                                    .success(false)
-                                    .triggerContext(workerTrigger.getTriggerContext())
-                                    .trigger(workerTrigger.getTrigger())
-                                    .build()
-                            );
+                            this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
                         }
-                        this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
-                    }
-                );
+                    );
+                });
             }
         );
     }
@@ -648,31 +651,6 @@ public class Worker implements Runnable, Closeable {
                 logger.error(e.getMessage(), e);
                 taskState = io.kestra.core.models.flows.State.Type.FAILED;
             }
-        }
-    }
-
-    @SuperBuilder(toBuilder = true)
-    @Getter
-    @NoArgsConstructor
-    private static class FlowWithPollingTrigger {
-        private Flow flow;
-        private AbstractTrigger trigger;
-        private PollingTriggerInterface pollingTrigger;
-        private TriggerContext triggerContext;
-        private ConditionContext conditionContext;
-
-        public FlowWithPollingTrigger from(Flow flow) throws InternalException {
-            AbstractTrigger abstractTrigger = flow.getTriggers()
-                .stream()
-                .filter(a -> a.getId().equals(this.trigger.getId()))
-                .findFirst()
-                .orElseThrow(() -> new InternalException("Couldn't find the trigger '" + this.trigger.getId() + "' on flow '" + flow.uid() + "'"));
-
-            return this.toBuilder()
-                .flow(flow)
-                .trigger(abstractTrigger)
-                .pollingTrigger((PollingTriggerInterface) abstractTrigger)
-                .build();
         }
     }
 }

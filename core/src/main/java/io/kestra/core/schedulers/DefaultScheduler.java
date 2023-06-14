@@ -25,12 +25,10 @@ public class DefaultScheduler extends AbstractScheduler {
         ApplicationContext applicationContext,
         FlowListenersInterface flowListeners,
         SchedulerExecutionStateInterface executionState,
-        SchedulerTriggerStateInterface triggerState,
-        SchedulerTriggerRunningInterface triggerRunning
+        SchedulerTriggerStateInterface triggerState
     ) {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
-        this.triggerRunning = triggerRunning;
         this.executionState = executionState;
         this.isReady = true;
     }

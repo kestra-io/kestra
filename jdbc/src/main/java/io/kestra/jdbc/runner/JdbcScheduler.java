@@ -36,7 +36,6 @@ public class JdbcScheduler extends AbstractScheduler {
         executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         triggerRepository = applicationContext.getBean(AbstractJdbcTriggerRepository.class);
         triggerState = applicationContext.getBean(SchedulerTriggerStateInterface.class);
-        triggerRunning = applicationContext.getBean(SchedulerTriggerRunningInterface.class);
         executionState = applicationContext.getBean(SchedulerExecutionState.class);
 
         this.isReady = true;

@@ -46,7 +46,6 @@ public class MetricRegistry {
     public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
     public final static String SCHEDULER_TRIGGER_DELAY_DURATION = "scheduler.trigger.delay.duration";
     public final static String SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
-    public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
     public final static String SCHEDULER_EXECUTION_RUNNING_DURATION = "scheduler.execution.running.duration";
     public final static String SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
 

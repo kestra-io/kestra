@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.DefaultTimeZone;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -26,43 +28,32 @@ class JacksonMapperTest {
     }
 
     @Test
+    @DefaultTimeZone("Europe/Athens")
     void json() throws IOException {
-        TimeZone timeZone = TimeZone.getDefault();
-        try {
-            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
+        ObjectMapper mapper = JacksonMapper
+            .ofJson()
+            .copy()
+            .setTimeZone(TimeZone.getDefault());
 
-            ObjectMapper mapper = JacksonMapper.ofJson();
+        Pojo original = pojo();
 
-            Pojo original = pojo();
+        String s = mapper.writeValueAsString(original);
+        Pojo deserialize = mapper.readValue(s, Pojo.class);
 
-            String s = mapper.writeValueAsString(original);
-            Pojo deserialize = mapper.readValue(s, Pojo.class);
-
-            test(original, deserialize);
-        }
-        finally {
-            TimeZone.setDefault(timeZone);
-        }
+        test(original, deserialize);
     }
 
     @Test
+    @DefaultTimeZone("Europe/Athens")
     void ion() throws IOException {
-        TimeZone timeZone = TimeZone.getDefault();
-        try {
-            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
+        ObjectMapper mapper = JacksonMapper.ofIon();
 
-            ObjectMapper mapper = JacksonMapper.ofIon();
+        Pojo original = pojo();
 
-            Pojo original = pojo();
-
-            String s = mapper.writeValueAsString(original);
-            assertThat(s, containsString("nullable:null"));
-            Pojo deserialize = mapper.readValue(s, Pojo.class);
-            test(original, deserialize);
-        }
-        finally {
-            TimeZone.setDefault(timeZone);
-        }
+        String s = mapper.writeValueAsString(original);
+        assertThat(s, containsString("nullable:null"));
+        Pojo deserialize = mapper.readValue(s, Pojo.class);
+        test(original, deserialize);
     }
 
     void test(Pojo original, Pojo deserialize) {

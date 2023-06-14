@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.Duration;
 import java.util.List;
@@ -29,7 +30,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         suite.run(runnerUtils);
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 10, suspendForMs = 10)
     void delay() throws Exception {
         suite.runDelay(runnerUtils);
     }
@@ -67,7 +68,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             execution = runnerUtils.awaitExecution(
                 e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> executionQueue.emit(restarted),
-                Duration.ofSeconds(120)
+                Duration.ofSeconds(5)
             );
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -82,7 +83,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             execution = runnerUtils.awaitExecution(
                 e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> {},
-                Duration.ofSeconds(30)
+                Duration.ofSeconds(5)
             );
 
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
@@ -100,7 +101,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             execution = runnerUtils.awaitExecution(
                 e -> e.getState().getCurrent() == State.Type.FAILED,
                 () -> {},
-                Duration.ofSeconds(30)
+                Duration.ofSeconds(5)
             );
 
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));

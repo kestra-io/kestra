@@ -34,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -338,7 +339,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             Duration.ofSeconds(30));
     }
 
-    @Test
+    @RetryingTest(5)
     void restartFromLastFailed() throws TimeoutException, InterruptedException {
         final String flowId = "restart_last_failed";
 

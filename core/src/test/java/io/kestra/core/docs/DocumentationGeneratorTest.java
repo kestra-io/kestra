@@ -121,12 +121,12 @@ class DocumentationGeneratorTest {
         assertThat(render, containsString("* **Default:** `false`"));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
     @Test
     void echo() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class<Log> bash = scan.findClass(Log.class.getName()).orElseThrow();
+        Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
 
         ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
 

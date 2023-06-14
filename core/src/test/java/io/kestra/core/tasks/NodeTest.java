@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import jakarta.inject.Inject;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -146,7 +147,7 @@ class NodeTest {
         assertThat(run.getVars().get("extract"), is("test param value"));
     }
 
-    @Test
+    @RetryingTest(5)
     void outputs() throws Exception {
         RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
         Map<String, String> files = new HashMap<>();

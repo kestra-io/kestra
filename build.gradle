@@ -8,7 +8,6 @@ plugins {
 
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
-    id 'org.gradle.test-retry' version '1.5.2'
 
     // helper
     id "com.github.ben-manes.versions" version "0.46.0"
@@ -135,7 +134,6 @@ allprojects {
  **********************************************************************************************************************/
 subprojects {
     apply plugin: "com.adarshr.test-logger"
-    apply plugin: "org.gradle.test-retry"
 
     sourceCompatibility = 17
     targetCompatibility = 17
@@ -154,6 +152,7 @@ subprojects {
         testImplementation "io.micronaut.test:micronaut-test-junit5"
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
         testImplementation "org.junit.jupiter:junit-jupiter-params"
+        testImplementation "org.junit-pioneer:junit-pioneer:2.0.1"
 
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -165,10 +164,6 @@ subprojects {
         useJUnitPlatform()
 
         maxHeapSize = "4048m"
-
-        retry {
-            maxRetries = 5
-        }
 
         // configure en_US default locale for tests
         systemProperty 'user.language', 'en'

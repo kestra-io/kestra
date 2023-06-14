@@ -10,8 +10,6 @@ import jakarta.inject.Singleton;
 
 import java.util.function.Consumer;
 
-@Singleton
-@PostgresQueueEnabled
 public class PostgresWorkerTaskQueue implements WorkerTaskQueueInterface {
     QueueInterface<WorkerTask> workerTaskQueue;
 

@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.tasks.flows.WorkingDirectory;
+import io.kestra.core.services.WorkerGroupService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
@@ -66,8 +67,11 @@ public class Worker implements Runnable, Closeable {
 
     private final List<WorkerThread> workerThreadReferences = new ArrayList<>();
 
+    @Getter
+    private final String workerGroup;
+
     @SuppressWarnings("unchecked")
-    public Worker(ApplicationContext applicationContext, int thread) {
+    public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
         this.applicationContext = applicationContext;
         this.workerTaskQueue = applicationContext.getBean(WorkerTaskQueueInterface.class);
         this.workerTaskResultQueue = (QueueInterface<WorkerTaskResult>) applicationContext.getBean(
@@ -86,6 +90,9 @@ public class Worker implements Runnable, Closeable {
 
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.executors = executorsUtils.maxCachedThreadPool(thread,"worker");
+
+        WorkerGroupService workerGroupService = applicationContext.getBean(WorkerGroupService.class);
+        this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
     }
 
     @Override
@@ -105,7 +112,7 @@ public class Worker implements Runnable, Closeable {
         });
 
         this.workerTaskQueue.receive(
-            null,
+            this.workerGroup,
             Worker.class,
             workerTask -> {
                 executors.execute(() -> {

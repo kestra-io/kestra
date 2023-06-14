@@ -10,8 +10,6 @@ import io.kestra.core.runners.WorkerTask;
 import java.util.function.Consumer;
 import jakarta.inject.Singleton;
 
-@Singleton
-@MemoryQueueEnabled
 public class MemoryWorkerTaskQueue implements WorkerTaskQueueInterface {
     QueueInterface<WorkerTask> workerTaskQueue;
 

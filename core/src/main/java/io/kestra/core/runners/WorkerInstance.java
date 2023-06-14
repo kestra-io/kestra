@@ -19,7 +19,8 @@ public class WorkerInstance {
     @NotNull
     private String hostname;
 
+    private String workerGroup;
+
     @Builder.Default
-    @NotNull
     private List<Integer> partitions = new ArrayList<>();
 }

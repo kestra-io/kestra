@@ -13,6 +13,7 @@ import io.kestra.core.queues.WorkerTaskQueueInterface;
 import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Prototype;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -109,7 +110,7 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     }
 
     @Override
-    @Singleton
+    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
     public WorkerTaskQueueInterface workerTaskQueue() {
         return new PostgresWorkerTaskQueue(applicationContext);
     }

@@ -50,6 +50,9 @@ abstract public class Task {
     @Builder.Default
     protected Boolean disabled = false;
 
+    @Valid
+    private WorkerGroup workerGroup;
+
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {
             return Optional.of(this);
@@ -114,4 +117,5 @@ abstract public class Task {
     public boolean isSendToWorkerTask() {
         return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
     }
+
 }

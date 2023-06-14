@@ -10,8 +10,6 @@ import jakarta.inject.Singleton;
 
 import java.util.function.Consumer;
 
-@Singleton
-@H2QueueEnabled
 public class H2WorkerTaskQueue implements WorkerTaskQueueInterface {
     QueueInterface<WorkerTask> workerTaskQueue;
 

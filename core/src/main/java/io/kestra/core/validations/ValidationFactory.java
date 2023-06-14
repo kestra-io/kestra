@@ -6,10 +6,12 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -17,7 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 @Factory
 public class ValidationFactory {
@@ -194,6 +195,19 @@ public class ValidationFactory {
             }
 
             return true;
+        };
+    }
+
+    @Singleton
+    @Named("workerGroupValidator")
+    ConstraintValidator<WorkerGroupValidation, WorkerGroup> workerGroupValidator() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            context.messageTemplate("Worker Group is an Enterprise Edition functionality");
+            return false;
         };
     }
 }

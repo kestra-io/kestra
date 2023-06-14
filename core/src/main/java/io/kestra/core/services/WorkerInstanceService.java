@@ -19,17 +19,17 @@ public class WorkerInstanceService {
         // looking for WorkerInstance that of common partition
         List<WorkerInstance> changedInstance = stream
             .filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
-            .filter(r -> !Collections.disjoint(r.getPartitions(), incoming.getPartitions()))
-            .collect(Collectors.toList());
+            .filter(r -> (r.getWorkerGroup() == null && incoming.getWorkerGroup() == null) ||
+                (r.getWorkerGroup() != null && r.getWorkerGroup().equals(incoming.getWorkerGroup()))
+            )
+            .filter(r -> !Collections.disjoint(r.getPartitions() == null ? List.of() : r.getPartitions(), incoming.getPartitions() == null ? List.of() : incoming.getPartitions()))
+            .toList();
 
-        if (changedInstance.size() >= 1) {
+        if (!changedInstance.isEmpty()) {
             return changedInstance
                 .stream()
-                .map(evictedInstance -> {
-                    evictedInstance.getPartitions().removeAll(incoming.getPartitions());
-
-                    return evictedInstance;
-                })
+                .filter(r -> r.getPartitions() != null)
+                .peek(evictedInstance -> evictedInstance.getPartitions().removeAll(incoming.getPartitions()))
                 .collect(Collectors.toList());
         }
 

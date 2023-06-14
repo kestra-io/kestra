@@ -6,6 +6,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Flow;
+import io.kestra.core.tasks.log.Log;
 import io.kestra.core.tasks.scripts.Bash;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -120,11 +121,12 @@ class DocumentationGeneratorTest {
         assertThat(render, containsString("* **Default:** `false`"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void echo() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
+        Class<Log> bash = scan.findClass(Log.class.getName()).orElseThrow();
 
         ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
 

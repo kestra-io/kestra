@@ -28,6 +28,7 @@ class BlueprintControllerTest {
     @Client("/")
     HttpClient client;
 
+    @SuppressWarnings("unchecked")
     @Test
     void blueprints(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints.*"))

@@ -66,6 +66,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     @PluginProperty
     private Level level = Level.INFO;
 
+    @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();

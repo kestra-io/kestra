@@ -96,6 +96,7 @@ public class RunnerUtils {
         return this.typedInputs(flow, execution, merged);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in) {
         if (flow.getInputs() == null) {
             return ImmutableMap.of();

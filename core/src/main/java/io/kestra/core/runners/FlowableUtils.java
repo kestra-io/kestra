@@ -51,13 +51,13 @@ public class FlowableUtils {
         TaskRun parentTaskRun
     ) {
         // nothing
-        if (currentTasks == null || currentTasks.size() == 0 || execution.getState().getCurrent() == State.Type.KILLING) {
+        if (currentTasks == null || currentTasks.isEmpty() || execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
         }
 
         // first one
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
-        if (taskRuns.size() == 0) {
+        if (taskRuns.isEmpty()) {
             return Collections.singletonList(currentTasks.get(0).toNextTaskRun(execution));
         }
 
@@ -104,7 +104,7 @@ public class FlowableUtils {
             );
 
             return Optional.of(State.Type.FAILED);
-        } else if (currentTasks.size() > 0) {
+        } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analysed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
                 return Optional.of(execution.guessFinalState(tasks, parentTaskRun));
@@ -177,7 +177,7 @@ public class FlowableUtils {
         // first created, leave
         Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
 
-        if (notFinds.size() > 0 && lastCreated.isEmpty()) {
+        if (!notFinds.isEmpty() && lastCreated.isEmpty()) {
             Stream<NextTaskRun> nextTaskRunStream = notFinds
                 .stream()
                 .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
@@ -195,6 +195,7 @@ public class FlowableUtils {
     private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
         List<Object> values;
 
@@ -212,7 +213,7 @@ public class FlowableUtils {
                 if(obj instanceof String){
                     values.add(runContext.render((String) obj));
                 }
-                else if(obj instanceof Map) {
+                else if(obj instanceof Map<?, ?>) {
                     //JSON or YAML map
                     values.add(runContext.render((Map) obj));
                 }
@@ -229,8 +230,7 @@ public class FlowableUtils {
         List<Object> distinctValue = values
             .stream()
             .distinct()
-            .collect(Collectors.toList());
-
+            .toList();
 
         long nullCount = distinctValue
             .stream()

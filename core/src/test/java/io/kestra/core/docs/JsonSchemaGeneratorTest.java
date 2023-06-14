@@ -1,27 +1,27 @@
 package io.kestra.core.docs;
 
+import io.kestra.core.Helpers;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginScanner;
+import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.Helpers;
+import io.kestra.core.tasks.log.Log;
+import io.kestra.core.tasks.scripts.Bash;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.inject.Inject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.plugins.PluginScanner;
-import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.core.tasks.scripts.Bash;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -101,7 +101,7 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-            var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+            var task = definitions.get("io.kestra.core.models.tasks.Task-2");
             var allOf = (List<Object>) task.get("allOf");
 
             assertThat(allOf.size(), is(1));
@@ -117,7 +117,7 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(AbstractTrigger.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-            var task = (Map<String, Object>) definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
+            var task = definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
             var allOf = (List<Object>) task.get("allOf");
 
             assertThat(allOf.size(), is(1));
@@ -167,8 +167,7 @@ class JsonSchemaGeneratorTest {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
-            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Echo.class);
-            System.out.println(returnSchema);
+            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Log.class);
             var definitions = (Map<String, Map<String, Object>>) returnSchema.get("definitions");
             var returnTask = definitions.get("io.kestra.core.tasks.debugs.Echo-1");
             var deprecated = (String) returnTask.get("$deprecated");

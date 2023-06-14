@@ -76,6 +76,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @PluginProperty
     private Level level = Level.INFO;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         String executionId = this.executionId != null ? runContext.render(this.executionId) : (String) new HashMap<>((Map<String, Object>) runContext.getVariables().get("execution")).get("id");

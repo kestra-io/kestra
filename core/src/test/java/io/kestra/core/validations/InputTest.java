@@ -17,7 +17,7 @@ class InputTest {
 
     @Test
     void inputValidation() {
-        final Input validInput = StringInput.builder()
+        final StringInput validInput = StringInput.builder()
             .name("test")
             .type(Input.Type.STRING)
             .validator("[A-Z]+")

@@ -472,7 +472,7 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public ValidateConstraintViolation validateTask(
         @Parameter(description = "A list of flows") @Body String task,
-        @Parameter(description = "Type of task") @QueryValue(defaultValue = "TASK") TaskValidationType section
+        @Parameter(description = "Type of task") TaskValidationType section
     ) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 

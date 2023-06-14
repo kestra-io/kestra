@@ -3,7 +3,7 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.tasks.flows.Pause;
-import io.kestra.core.models.tasks.Task;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @MicronautTest
-class WorkerTest {
+class WorkingDirectoryTest {
     @Inject
     ApplicationContext applicationContext;
 
@@ -96,8 +96,8 @@ class WorkerTest {
             .id("unit-test")
             .build();
 
-        io.kestra.core.tasks.flows.Worker theWorkerTask = io.kestra.core.tasks.flows.Worker.builder()
-            .type(io.kestra.core.tasks.flows.Worker.class.getName())
+        WorkingDirectory theWorkerTask = WorkingDirectory.builder()
+            .type(WorkingDirectory.class.getName())
             .id("worker-unit-test")
             .tasks(List.of(pause))
             .build();

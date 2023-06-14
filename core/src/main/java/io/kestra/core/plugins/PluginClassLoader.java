@@ -35,6 +35,7 @@ public class PluginClassLoader extends URLClassLoader {
 
     private final ClassLoader systemClassLoader;
 
+    @SuppressWarnings("removal")
     public static PluginClassLoader of(final URL pluginLocation, final URL[] urls, final ClassLoader parent) {
         return AccessController.doPrivileged(
             (PrivilegedAction<PluginClassLoader>) () -> new PluginClassLoader(pluginLocation, urls, parent)

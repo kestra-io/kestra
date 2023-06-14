@@ -85,6 +85,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);

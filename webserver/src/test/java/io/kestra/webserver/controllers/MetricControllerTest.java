@@ -30,6 +30,7 @@ class MetricControllerTest extends AbstractMemoryRunnerTest {
     @Inject
     MemoryMetricRepository memoryMetricRepository;
 
+    @SuppressWarnings("unchecked")
     @Test
     void findByExecution() {
         Execution result = triggerExecution(TESTS_FLOW_NS, "minimal", null, true);

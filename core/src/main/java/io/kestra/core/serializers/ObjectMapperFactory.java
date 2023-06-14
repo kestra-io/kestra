@@ -58,6 +58,7 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
     @Inject
     protected KeyDeserializer[] keyDeserializers = new KeyDeserializer[0];
 
+    @SuppressWarnings("deprecation")
     @Singleton
     @Secondary
     @Named("json")

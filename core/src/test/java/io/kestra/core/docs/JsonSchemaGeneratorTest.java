@@ -11,6 +11,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.log.Log;
 import io.kestra.core.tasks.scripts.Bash;
@@ -161,13 +162,13 @@ class JsonSchemaGeneratorTest {
         });
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
     @Test
     void echoTask() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
-            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Log.class);
+            Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Echo.class);
             var definitions = (Map<String, Map<String, Object>>) returnSchema.get("definitions");
             var returnTask = definitions.get("io.kestra.core.tasks.debugs.Echo-1");
             var deprecated = (String) returnTask.get("$deprecated");

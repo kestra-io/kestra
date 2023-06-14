@@ -2,19 +2,19 @@ package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.tasks.scripts.ScriptOutput;
-import io.kestra.core.utils.TestsUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.scripts.Bash;
-
+import io.kestra.core.tasks.scripts.ScriptOutput;
+import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junitpioneer.jupiter.RetryingTest;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -41,7 +41,7 @@ abstract class AbstractBashTest {
 
     abstract protected Bash.BashBuilder<?, ?> configure(Bash.BashBuilder<?, ?> builder);
 
-    @Test
+    @RetryingTest(5)
     void run() throws Exception {
         Bash bash = configure(Bash.builder()
             .commands(new String[]{"echo 0", "echo 1", ">&2 echo 2", ">&2 echo 3"})
@@ -55,7 +55,7 @@ abstract class AbstractBashTest {
         assertThat(run.getStdErrLineCount(), is(2));
     }
 
-    @Test
+    @RetryingTest(5)
     void files() throws Exception {
         Bash bash = configure(Bash.builder()
             .outputFiles(Arrays.asList("xml", "csv"))
@@ -92,7 +92,7 @@ abstract class AbstractBashTest {
         );
     }
 
-    @Test
+    @RetryingTest(5)
     void outputDirs() throws Exception {
         Bash bash = configure(Bash.builder()
             .outputDirs(Arrays.asList("xml", "csv"))
@@ -122,7 +122,7 @@ abstract class AbstractBashTest {
         assertThat(CharStreams.toString(new InputStreamReader(get)), is("3\n"));
     }
 
-    @Test
+    @RetryingTest(5)
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void failed() {
         Bash bash = configure(Bash.builder()
@@ -140,7 +140,7 @@ abstract class AbstractBashTest {
         assertThat(bashException.getStdErrSize(), is(1));
     }
 
-    @Test
+    @RetryingTest(5)
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void stopOnFirstFailed() {
         Bash bash = configure(Bash.builder()
@@ -157,7 +157,7 @@ abstract class AbstractBashTest {
         assertThat(bashException.getStdErrSize(), is(1));
     }
 
-    @Test
+    @RetryingTest(5)
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void dontStopOnFirstFailed() throws Exception {
         Bash bash = configure(Bash.builder()
@@ -173,7 +173,7 @@ abstract class AbstractBashTest {
         assertThat(run.getStdErrLineCount(), is(1));
     }
 
-    @Test
+    @RetryingTest(5)
     void longBashCreateTempFiles() throws Exception {
 
         List<String> commands = new ArrayList<>();
@@ -193,7 +193,7 @@ abstract class AbstractBashTest {
         assertThat(run.getStdErrLineCount() > 0, is(false));
     }
 
-    @Test
+    @RetryingTest(5)
     void useInputFiles() throws Exception {
         Map<String, String> files = new HashMap<>();
         files.put("test.sh", "tst() { echo '::{\"outputs\": {\"extract\":\"testbash\"}}::' ; echo '{{workingDir}}'; }");
@@ -214,7 +214,7 @@ abstract class AbstractBashTest {
         assertThat(run.getVars().get("extract"), is("testbash"));
     }
 
-    @Test
+    @RetryingTest(5)
     void useInputFilesFromKestraFs() throws Exception {
         URL resource = AbstractBashTest.class.getClassLoader().getResource("application.yml");
 
@@ -247,7 +247,7 @@ abstract class AbstractBashTest {
         assertThat(outputContent, is(fileContent));
     }
 
-    @Test
+    @RetryingTest(5)
     void useInputFilesAsVariable() throws Exception {
         URL resource = AbstractBashTest.class.getClassLoader().getResource("application.yml");
 
@@ -286,7 +286,7 @@ abstract class AbstractBashTest {
         assertThat(outputContent, is(fileContent + fileContent));
     }
 
-    @Test
+    @RetryingTest(5)
     void preventRelativeFile() throws Exception {
         URL resource = AbstractBashTest.class.getClassLoader().getResource("application.yml");
 

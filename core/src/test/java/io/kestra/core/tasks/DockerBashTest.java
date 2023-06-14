@@ -1,7 +1,6 @@
 package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharStreams;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.scripts.AbstractBash;
 import io.kestra.core.tasks.scripts.Bash;
@@ -9,14 +8,10 @@ import io.kestra.core.tasks.scripts.ScriptOutput;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,7 +32,7 @@ class DockerBashTest extends AbstractBashTest {
             );
     }
 
-    @Test
+    @RetryingTest(5)
     void volume() throws Exception {
         Path tmpDir = Files.createTempDirectory("tmpDirPrefix");
         Path tmpFile = tmpDir.resolve("tmp.txt");

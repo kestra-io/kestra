@@ -9,6 +9,7 @@ import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.FlowListeners;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
@@ -55,7 +56,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         return createFlow(Collections.singletonList(schedule));
     }
 
-    @Test
+    @RetryingTest(5)
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

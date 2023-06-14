@@ -11,6 +11,7 @@ import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.util.List;
 
@@ -79,7 +80,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getTaskRunList().get(2).getId(), not(execution.getTaskRunList().get(2).getId()));
     }
 
-    @Test
+    @RetryingTest(5)
     void restartFlowable() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

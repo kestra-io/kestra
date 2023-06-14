@@ -1,0 +1,13 @@
+id: duplicate-key
+namespace: io.kestra.tests
+
+tasks:
+  - id: bad-task
+    type: "io.kestra.core.tasks.scripts.Bash"
+    inputFiles:
+      variables.tf: |
+        test
+      variables.tf: |
+        test
+    commands:
+      - ls

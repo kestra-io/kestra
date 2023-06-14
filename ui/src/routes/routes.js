@@ -34,9 +34,9 @@ export default [
     //TaskRuns
     {name: "taskruns/list", path: "/taskruns", component: TaskRuns},
 
-    //Flow gallery
-    {name: "flow-gallery", path: "/flow-gallery", component: Blueprints, props: {topNavbar: false}},
-    {name: "flow-gallery/view", path: "/flow-gallery/:blueprintId", component: BlueprintDetail, props: true},
+    //Blueprints
+    {name: "blueprints", path: "/blueprints", component: Blueprints, props: {topNavbar: false}},
+    {name: "blueprints/view", path: "/blueprints/:blueprintId", component: BlueprintDetail, props: true},
 
     //Documentation
     {name: "plugins/list", path: "/plugins", component: Plugin},

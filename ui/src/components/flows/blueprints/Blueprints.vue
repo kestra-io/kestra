@@ -1,13 +1,13 @@
 <template>
     <nav v-if="!embed" class="header">
         <h4 class="text-uppercase welcome">
-            {{ $t("flow gallery.header.welcome") }}
+            {{ $t("blueprints.header.welcome") }}
         </h4>
         <h4 class="catch-phrase">
-            {{ $t("flow gallery.header.catch phrase.1") }}
+            {{ $t("blueprints.header.catch phrase.1") }}
         </h4>
         <h4 class="catch-phrase">
-            {{ $t("flow gallery.header.catch phrase.2") }}
+            {{ $t("blueprints.header.catch phrase.2") }}
         </h4>
         <el-form-item class="search-wrapper">
             <search-field placeholder="search blueprint" @search="s => q = s" />
@@ -107,7 +107,7 @@
                 if (this.embed) {
                     this.selectedBlueprintId = blueprintId;
                 } else {
-                    this.$router.push({name: "flow-gallery/view", params: {blueprintId}})
+                    this.$router.push({name: "blueprints/view", params: {blueprintId}})
                 }
             },
             async loadTags(){
@@ -166,7 +166,7 @@
         computed: {
             routeInfo() {
                 return {
-                    title: this.$t("flow gallery.title")
+                    title: this.$t("blueprints.title")
                 };
             }
         },

@@ -172,7 +172,9 @@
         },
         watch: {
             q(){
-                this.load(this.onDataLoaded);
+                if(this.embed) {
+                    this.load(this.onDataLoaded);
+                }
             },
             selectedTags(newSelectedTags){
                 if (!this.embed) {

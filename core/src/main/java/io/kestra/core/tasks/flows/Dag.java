@@ -42,7 +42,6 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     private final Integer concurrent = Runtime.getRuntime().availableProcessors() * 2;
 
     @NotEmpty
-    @PluginProperty(dynamic = true)
     private List<DagTask> tasks;
 
     @Valid

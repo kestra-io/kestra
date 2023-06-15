@@ -39,7 +39,7 @@ export default {
             }
 
             if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
-                if (property.$ref.includes("Task")) {
+                if (property.$ref.includes("tasks.Task")) {
                     return "task"
                 }
 

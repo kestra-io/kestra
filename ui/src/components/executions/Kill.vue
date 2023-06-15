@@ -1,5 +1,13 @@
 <template>
-    <status status="KILLING" :title="$t('kill')" v-if="enabled" @click="kill" class="me-1" />
+    <component
+        :is="component"
+        :icon="StopCircleOutline"
+        @click="kill"
+        v-if="enabled"
+        class="me-1"
+    >
+        {{ $t('kill') }}
+    </component>
 </template>
 <script>
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
@@ -7,15 +15,17 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import State from "../../utils/state";
-    import Status from "../Status.vue";
 
     export default {
-        components: {StopCircleOutline, Status},
         props: {
             execution: {
                 type: Object,
                 required: true
-            }
+            },
+            component: {
+                type: String,
+                default: "el-button"
+            },
         },
         methods: {
             kill() {
@@ -33,6 +43,9 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            StopCircleOutline() {
+                return StopCircleOutline
+            },
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
                     return false;

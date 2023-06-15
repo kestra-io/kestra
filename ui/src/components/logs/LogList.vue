@@ -16,7 +16,7 @@
                                 </div>
                                 <div>
                                     <el-button type="default" @click="() => toggleShowLogs(`${currentTaskRun.id}-${taskAttempt(index)}`)">
-                                        <ChevronUp v-if="showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
+                                        <ChevronUp v-if="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
                                         <ChevronDown v-else />
                                     </el-button>
                                 </div>
@@ -86,7 +86,6 @@
                                                 is-replay
                                                 tooltip-position="left"
                                                 :execution="execution"
-                                                show
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"
                                                 @follow="forwardEvent('follow', $event)"
@@ -127,7 +126,8 @@
                             key-field="index"
                             class="log-lines"
                             :ref="`${currentTaskRun.id}-${taskAttempt(index)}`"
-                            :class="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`) ? '' : 'hide-logs'"
+                            :class="showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`) ? '' : 'hide-logs'"
+                            @resize="scrollToBottomFailedTask"
                         >
                             <template #default="{item, index, active}">
                                 <DynamicScrollerItem
@@ -259,9 +259,18 @@
                 }
             }
         },
-        created() {
+        mounted() {
             if (!this.fullScreenModal) {
                 this.loadLogs();
+            }
+            if (this.execution.state.current === State.FAILED || this.execution.state.current === State.RUNNING) {
+                this.currentTaskRuns.forEach((taskRun) => {
+                    if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
+                        const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
+                        this.showLogs.push(`${taskRun.id}-${attemptNumber}`)
+                        this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
+                    }
+                });
             }
         },
         computed: {
@@ -308,6 +317,18 @@
             }
         },
         methods: {
+            scrollToBottomFailedTask() {
+                if (this.execution.state.current === State.FAILED || this.execution.state.current === State.RUNNING) {
+                    this.currentTaskRuns.forEach((taskRun) => {
+                        if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
+                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
+                            if( this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
+                                this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
+                            }
+                        }
+                    });
+                }
+            },
             downloadContent(currentTaskRunId) {
                 const params = this.params
                 this.$store.dispatch("execution/downloadLogs", {
@@ -370,10 +391,11 @@
                                 }
                                 this.$store.commit("execution/appendFollowedLogs", JSON.parse(event.data));
                                 this.followLogs = this.followLogs.concat(JSON.parse(event.data));
-                                if(moment().diff(this.timer, "seconds") > 1){
+                                if(moment().diff(this.timer, "seconds") > 0.5){
                                     this.timer = moment()
-                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs)).slice(0,this.count*this.size);
+                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs))
                                     this.count++;
+                                    this.scrollToBottomFailedTask();
                                 }
                             }
                         });

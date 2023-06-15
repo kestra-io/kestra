@@ -11,10 +11,10 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
+import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 @Singleton
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
@@ -83,11 +83,29 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
+    public ArrayListTotal<LogEntry> findByExecutionId(String id, Level minLevel, Pageable pageable) {
+        return this.query(
+            field("execution_id").eq(id),
+            minLevel,
+            pageable
+        );
+    }
+
+    @Override
     public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
         return this.query(
             field("execution_id").eq(executionId)
                 .and(field("task_id").eq(taskId)),
             minLevel
+        );
+    }
+    @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel, Pageable pageable) {
+        return this.query(
+            field("execution_id").eq(executionId)
+                .and(field("task_id").eq(taskId)),
+            minLevel,
+            pageable
         );
     }
 
@@ -97,6 +115,37 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId)),
             minLevel
+        );
+    }
+
+    @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel, Pageable pageable) {
+        return this.query(
+            field("execution_id").eq(executionId)
+                .and(field("taskrun_id").eq(taskRunId)),
+            minLevel,
+            pageable
+        );
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt) {
+        return this.query(
+            field("execution_id").eq(executionId)
+                .and(field("taskrun_id").eq(taskRunId))
+                .and(field("attempt_number").eq(attempt)),
+            minLevel
+        );
+    }
+
+    @Override
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+        return this.query(
+            field("execution_id").eq(executionId)
+                .and(field("taskrun_id").eq(taskRunId))
+                .and(field("attempt_number").eq(attempt)),
+            minLevel,
+            pageable
         );
     }
 
@@ -127,6 +176,29 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         this.jdbcRepository.persist(logEntry, dslContext, fields);
 
         return logEntry;
+    }
+
+    private ArrayListTotal<LogEntry> query(Condition condition, Level minLevel, Pageable pageable) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(field("value"))
+                    .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter());
+
+                select = select.and(condition);
+
+                if (minLevel != null) {
+                    select.and(minLevel(minLevel));
+                }
+
+                return this.jdbcRepository.fetchPage(context, select, pageable
+                );
+            });
     }
 
     private List<LogEntry> query(Condition condition, Level minLevel) {

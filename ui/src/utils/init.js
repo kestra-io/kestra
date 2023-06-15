@@ -23,6 +23,7 @@ import {
 import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
 import {MatrixController, MatrixElement} from "chartjs-chart-matrix";
 import Vue3Tour from "vue3-tour"
+import VueVirtualScroller from "vue-virtual-scroller";
 
 import Toast from "./toast";
 import filters from "./filters";
@@ -112,6 +113,7 @@ export default (app, routes, stores, translations) => {
     app.use(VueSidebarMenu);
     app.use(Toast)
     app.use(Vue3Tour)
+    app.use(VueVirtualScroller)
 
     // filters
     app.config.globalProperties.$filters = filters;

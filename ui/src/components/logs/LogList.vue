@@ -1,18 +1,33 @@
 <template>
     <div v-if="execution" class="log-wrapper">
-        <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
+        <div v-for="currentTaskRun in currentTaskRuns" :key="currentTaskRun.id">
             <template
                 v-if="displayTaskRun(currentTaskRun)"
             >
                 <div class="bg-light attempt-wrapper">
-                    <template v-for="(attempt, index) in attempts(currentTaskRun)" :key="`attempt-${index}-${currentTaskRun.id}`">
+                    <template
+                        v-for="(attempt, index) in attempts(currentTaskRun)"
+                        :key="`attempt-${index}-${currentTaskRun.id}`"
+                    >
                         <div>
                             <div class="attempt-header">
-                                <div class="attempt-number me-1">
-                                    {{ $t("attempt") }} {{ index + 1 }}
+                                <div class="attempt-number">
+                                    {{ $t("attempt") }} {{ taskAttempt(index) + 1 }}
                                 </div>
-                                <div class="task-icon me-1">
-                                    <task-icon :cls="taskIcon(currentTaskRun.taskId)" v-if="taskIcon(currentTaskRun.taskId)" only-icon />
+                                <div v-if="!hideOthersOnSelect">
+                                    <el-button type="default" @click="() => toggleShowLogs(`${currentTaskRun.id}-${taskAttempt(index)}`)">
+                                        <ChevronUp v-if="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
+                                        <ChevronDown v-else />
+                                    </el-button>
+                                </div>
+                                <div
+                                    class="task-icon me-1"
+                                >
+                                    <task-icon
+                                        :cls="taskIcon(currentTaskRun.taskId)"
+                                        v-if="taskIcon(currentTaskRun.taskId)"
+                                        only-icon
+                                    />
                                 </div>
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
@@ -84,7 +99,6 @@
                                                 :attempt-index="index"
                                                 @follow="forwardEvent('follow', $event)"
                                             />
-
                                             <task-edit
                                                 :read-only="true"
                                                 component="el-dropdown-item"
@@ -94,24 +108,42 @@
                                                 :namespace="execution.namespace"
                                                 :revision="execution.flowRevision"
                                             />
+                                            <component
+                                                :is="'el-dropdown-item'"
+                                                :icon="Download"
+                                                @click="downloadContent(currentTaskRun.id)"
+                                            >
+                                                {{ $t("download") }}
+                                            </component>
                                         </el-dropdown-menu>
                                     </template>
                                 </el-dropdown>
                             </div>
                         </div>
-
-                        <template
-                            v-for="(log, i) in findLogs(currentTaskRun.id, index)"
-                            :key="`${currentTaskRun.id}-${index}-${i}`"
+                        <DynamicScroller
+                            :items="indexedLogsList.filter((logline) => logline.taskRunId === currentTaskRun.id)"
+                            :min-item-size="50"
+                            key-field="index"
+                            class="log-lines"
+                            :ref="`${currentTaskRun.id}-${taskAttempt(index)}`"
+                            :class="hideOthersOnSelect || showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`) ? '' : 'hide-logs'"
+                            @resize="scrollToBottomFailedTask"
                         >
-                            <log-line
-                                :level="level"
-                                :filter="filter"
-                                :log="log"
-                                :exclude-metas="excludeMetas"
-                                :name="`${currentTaskRun.id}-${index}-${i}`"
-                            />
-                        </template>
+                            <template #default="{item, index, active}">
+                                <DynamicScrollerItem
+                                    :item="item"
+                                    :active="active"
+                                    :size-dependencies="[item.message, item.image]"
+                                    :data-index="index"
+                                >
+                                    <log-line
+                                        :level="level"
+                                        :log="item"
+                                        :exclude-metas="excludeMetas"
+                                    />
+                                </DynamicScrollerItem>
+                            </template>
+                        </DynamicScroller>
                     </template>
                 </div>
             </template>
@@ -132,13 +164,20 @@
     import Outputs from "../executions/Outputs.vue";
     import Clock from "vue-material-design-icons/Clock.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import Download from "vue-material-design-icons/Download.vue";
     import State from "../../utils/state";
     import Status from "../Status.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
     import TaskIcon from "../plugins/TaskIcon.vue";
+    import _xor from "lodash/xor";
     import FlowUtils from "../../utils/flowUtils.js";
+    import moment from "moment";
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+
 
     export default {
         components: {
@@ -149,11 +188,13 @@
             Metrics,
             Outputs,
             DotsVertical,
+            ChevronDown,
+            ChevronUp,
             Status,
             SubFlowLink,
             TaskEdit,
             Duration,
-            TaskIcon
+            TaskIcon,
         },
         props: {
             level: {
@@ -183,6 +224,10 @@
             hideOthersOnSelect: {
                 type: Boolean,
                 default: false
+            },
+            attempt: {
+                type: Number,
+                default: undefined
             }
         },
         data() {
@@ -190,33 +235,122 @@
                 showOutputs: {},
                 showMetrics: {},
                 fullscreen: false,
+                page: 1,
+                size: 100,
+                followed: false,
+                append: false,
+                logsList: [],
+                threshold: 200,
+                showLogs: [],
+                count: 0,
+                followLogs: [],
+                logsTotal: 0
             };
         },
         watch: {
             level: function () {
+                this.page = 1;
+                this.logsList = [];
                 this.loadLogs();
             },
-            execution: function() {
-                if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED ) {
+            execution: function () {
+                if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED) {
                     this.closeSSE();
                 }
-            },
+            }
         },
-        created() {
+        mounted() {
             if (!this.fullScreenModal) {
                 this.loadLogs();
+            }
+            if (this.execution.state.current === State.FAILED || this.execution.state.current === State.RUNNING) {
+                this.currentTaskRuns.forEach((taskRun) => {
+                    if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
+                        const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
+                        this.showLogs.push(`${taskRun.id}-${attemptNumber}`)
+                        this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
+                    }
+                });
             }
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
             ...mapState("flow", ["flow"]),
+            currentTaskRuns() {
+                return this.execution.taskRunList.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
+            },
+            Download() {
+                return Download
+            },
+            params() {
+                let params = {minLevel: this.level};
+
+                params.sort = "timestamp:asc"
+                params.page = this.page;
+                params.size = this.size;
+
+                params.append = this.append
+
+                if (this.taskRunId) {
+                    params.taskRunId = this.taskRunId;
+
+                    if (this.attempt) {
+                        params.attempt = this.attempt;
+                    }
+                }
+
+                if (this.taskId) {
+                    params.taskId = this.taskId;
+                }
+
+                return params
+            },
+            indexedLogsList(){
+                return this.logsList
+                    .filter(e => this.filter === "" || (
+                        e.message &&
+                        e.message.toLowerCase().includes(this.filter)
+                    ))
+                    .map((e, index) => {
+                        return {...e, index: index}
+                    })
+            }
         },
         methods: {
+            scrollToBottomFailedTask() {
+                if (this.execution.state.current === State.FAILED || this.execution.state.current === State.RUNNING) {
+                    this.currentTaskRuns.forEach((taskRun) => {
+                        if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
+                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
+                            if (this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
+                                this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
+                            }
+                        }
+                    });
+                }
+            },
+            downloadContent(currentTaskRunId) {
+                const params = this.params
+                this.$store.dispatch("execution/downloadLogs", {
+                    executionId: this.execution.id,
+                    params: params
+                }).then((response) => {
+                    const url = window.URL.createObjectURL(new Blob([response]));
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", this.downloadName(currentTaskRunId));
+                    document.body.appendChild(link);
+                    link.click();
+                });
+            },
+            downloadName(currentTaskRunId) {
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}-${currentTaskRunId}.log`
+            },
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
             displayTaskRun(currentTaskRun) {
-                if(!this.hideOthersOnSelect){
+                if (!this.hideOthersOnSelect) {
                     return true;
                 }
 
@@ -235,17 +369,10 @@
                 return findTaskById ? findTaskById.type : undefined;
             },
             loadLogs() {
-                let params = {minLevel: this.level};
-
-                if (this.taskRunId) {
-                    params.taskRunId = this.taskRunId;
-                }
-
-                if (this.taskId) {
-                    params.taskId = this.taskId;
-                }
+                const params = this.params
 
                 if (this.execution && this.execution.state.current === State.RUNNING) {
+                    this.append = true
                     this.$store
                         .dispatch("execution/followLogs", {
                             id: this.$route.params.id,
@@ -254,20 +381,31 @@
                         .then((sse) => {
                             const self = this;
                             this.sse = sse;
-                            this.$store.commit("execution/setLogs", []);
+                            this.followed = true;
+                            this.$store.commit("execution/resetLogs");
 
+                            this.timer = moment()
                             this.sse.onmessage = (event) => {
                                 if (event && event.lastEventId === "end") {
                                     self.closeSSE();
                                 }
-
-                                this.$store.commit("execution/appendLogs", JSON.parse(event.data));
+                                this.$store.commit("execution/appendFollowedLogs", JSON.parse(event.data));
+                                this.followLogs = this.followLogs.concat(JSON.parse(event.data));
+                                if(moment().diff(this.timer, "seconds") > 0.5){
+                                    this.timer = moment()
+                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs))
+                                    this.count++;
+                                    this.scrollToBottomFailedTask();
+                                }
                             }
                         });
                 } else {
                     this.$store.dispatch("execution/loadLogs", {
                         executionId: this.$route.params.id,
                         params: params,
+                    }).then(r => {
+                        this.logsList = r
+                        this.logsTotal = r.total
                     });
                     this.closeSSE();
                 }
@@ -276,25 +414,24 @@
                 if (this.sse) {
                     this.sse.close();
                     this.sse = undefined;
+                    this.logsList = this.followLogs
                 }
             },
             attempts(taskRun) {
-                return taskRun.attempts || [{
+                return this.attempt ? [taskRun.attempts[this.attempt]] : taskRun.attempts || [{
                     state: taskRun.state
                 }];
             },
-            findLogs(taskRunId, attemptNumber) {
-                return (this.logs || []).filter((log) => {
-                    return (
-                        log.taskRunId === taskRunId &&
-                        log.attemptNumber === attemptNumber
-                    );
-                });
-            },
-            onTaskSelect(dropdownVisible, task){
-                if(dropdownVisible && this.taskRun?.id !== task.id) {
+            onTaskSelect(dropdownVisible, task) {
+                if (dropdownVisible && this.taskRun?.id !== task.id) {
                     this.$store.commit("execution/setTaskRun", task);
                 }
+            },
+            toggleShowLogs(currentTaskRunId) {
+                this.showLogs = _xor(this.showLogs, [currentTaskRunId])
+            },
+            taskAttempt(index) {
+                return this.attempt || index
             }
         },
         beforeUnmount() {
@@ -396,6 +533,37 @@
             padding: 10px;
             margin-top: 5px;
             margin-bottom: 20px;
+        }
+
+        .log-lines {
+            max-height: 50vh;
+            overflow-y: scroll;
+            transition: max-height 0.2s ease-out;
+
+
+            &::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            &:hover::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: var(--bs-gray-500);
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: var(--bs-primary);
+            }
+        }
+
+        .hide-logs {
+            max-height: 0;
+        }
+
+        button {
+            border: none
         }
     }
 </style>

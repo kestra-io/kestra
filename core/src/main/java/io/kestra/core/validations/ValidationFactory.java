@@ -121,13 +121,11 @@ public class ValidationFactory {
     @Singleton
     ConstraintValidator<DagTaskValidation, Dag> dagTaskValidation() {
         return (value, annotationMetadata, context) -> {
-            Set<ConstraintViolation<?>> violations = new HashSet<>();
             if (value == null) {
-
                 return true;
             }
 
-            if (value.getTasks() == null || value.getTasks().size() == 0) {
+            if (value.getTasks() == null || value.getTasks().isEmpty()) {
                 context.messageTemplate("No task defined");
 
                 return false;
@@ -137,7 +135,7 @@ public class ValidationFactory {
 
             // Check for not existing taskId
             List<String> invalidDependencyIds = value.dagCheckNotExistTask(taskDepends);
-            if(invalidDependencyIds.size() > 0) {
+            if (!invalidDependencyIds.isEmpty()) {
                 String errorMessage = "Not existing task id in dependency: " + String.join(", ", invalidDependencyIds);
                 context.messageTemplate(errorMessage);
 
@@ -146,7 +144,7 @@ public class ValidationFactory {
 
             // Check for cyclic dependencies
             ArrayList<String> cyclicDependency = value.dagCheckCyclicDependencies(taskDepends);
-            if(cyclicDependency.size() > 0) {
+            if (!cyclicDependency.isEmpty()) {
                 context.messageTemplate("Cyclic dependency detected: " + String.join(", ", cyclicDependency));
 
                 return false;

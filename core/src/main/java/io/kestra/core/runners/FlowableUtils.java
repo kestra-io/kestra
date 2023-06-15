@@ -14,6 +14,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.flows.Dag;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -135,13 +137,68 @@ public class FlowableUtils {
             .collect(Collectors.toList());
     }
 
-
     public static List<NextTaskRun> resolveParallelNexts(
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
         TaskRun parentTaskRun,
         Integer concurrency
+    ) {
+        return resolveParallelNexts(
+            execution,
+            tasks, errors,
+            parentTaskRun,
+            concurrency,
+            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
+        );
+    }
+
+    public static List<NextTaskRun> resolveDagNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        List<Dag.DagTask> taskDependencies
+    ) {
+        return resolveParallelNexts(
+            execution,
+            tasks, errors,
+            parentTaskRun,
+            concurrency,
+            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
+                .filter(nextTaskRun -> {
+                    Task task = nextTaskRun.getTask();
+                    List<String> taskDependIds = taskDependencies
+                        .stream()
+                        .filter(taskDepend -> taskDepend
+                            .getTask()
+                            .getId()
+                            .equals(task.getId())
+                        )
+                        .findFirst()
+                        .get()
+                        .getDependsOn();
+
+                    // Check if have no dependencies OR all dependencies are terminated
+                    return taskDependIds == null ||
+                        new HashSet<>(taskRuns
+                            .stream()
+                            .filter(taskRun -> taskRun.getState().isTerminated())
+                            .map(TaskRun::getTaskId).toList()
+                        )
+                            .containsAll(taskDependIds);
+                })
+        );
+    }
+
+    public static List<NextTaskRun> resolveParallelNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction
     ) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
@@ -183,9 +240,12 @@ public class FlowableUtils {
                 .stream()
                 .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
 
+            nextTaskRunStream = nextTaskRunFunction.apply(nextTaskRunStream, taskRuns);
+
             if (concurrency > 0) {
                 nextTaskRunStream = nextTaskRunStream.limit(concurrency - runningCount);
             }
+
 
             return nextTaskRunStream.collect(Collectors.toList());
         }
@@ -271,76 +331,5 @@ public class FlowableUtils {
             (
                 resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue())
             );
-    }
-
-    public static List<NextTaskRun> resolveDagNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        TaskRun parentTaskRun,
-        Integer concurrency,
-        List<Dag.DagTask> taskDependencies
-    ) {
-        if (execution.getState().getCurrent() == State.Type.KILLING) {
-            return Collections.emptyList();
-        }
-
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
-            tasks,
-            errors,
-            parentTaskRun
-        );
-
-        // all tasks run
-        List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
-
-        // find all not created tasks
-        List<ResolvedTask> notFinds = currentTasks
-            .stream()
-            .filter(resolvedTask -> taskRuns
-                .stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
-            )
-            .toList();
-
-        // find all running and deal concurrency
-        long runningCount = taskRuns
-            .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
-            .count();
-
-        if (concurrency > 0 && runningCount > concurrency) {
-            return Collections.emptyList();
-        }
-
-        Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
-
-        if (notFinds.size() > 0 && lastCreated.isEmpty()) {
-            Stream<NextTaskRun> nextTaskRunStream = notFinds
-                .stream()
-                .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
-
-            nextTaskRunStream = nextTaskRunStream.filter(nextTaskRun -> {
-                Task task = nextTaskRun.getTask();
-                List<String> taskDependIds = taskDependencies.stream().filter(taskDepend -> taskDepend
-                        .getTask()
-                        .getId()
-                        .equals(task.getId()))
-                    .findFirst().get().getDependsOn();
-
-                // Check if have no dependencies OR all dependencies are terminated
-                return taskDependIds == null || new HashSet<>(taskRuns.stream().filter(
-                    taskRun -> taskRun.getState().isTerminated()
-                ).map(TaskRun::getTaskId).toList()).containsAll(taskDependIds);
-            });
-
-            if (concurrency > 0) {
-                nextTaskRunStream = nextTaskRunStream.limit(concurrency - runningCount);
-            }
-
-            return nextTaskRunStream.collect(Collectors.toList());
-        }
-
-        return Collections.emptyList();
     }
 }

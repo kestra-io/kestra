@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.is;
 public class DagTest extends AbstractMemoryRunnerTest {
     @Inject
     YamlFlowParser yamlFlowParser = new YamlFlowParser();
+
     @Inject
     ModelValidator modelValidator;
 
@@ -62,7 +63,6 @@ public class DagTest extends AbstractMemoryRunnerTest {
 
         assertThat(validate.get().getMessage(), containsString("tasks[0]: Not existing task id in dependency: taskX"));
     }
-
 
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);

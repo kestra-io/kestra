@@ -45,7 +45,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
     )
     @PluginProperty
-    private final Integer concurrent = Runtime.getRuntime().availableProcessors() * 2;
+    private final Integer concurrent = 0;
 
     @NotEmpty
     private List<DagTask> tasks;
@@ -58,9 +58,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
 
-        if(this.dagCheckNotExistTask(this.tasks).size() > 0 || this.dagCheckCyclicDependencies(this.tasks).size() > 0) {
-            throw new IllegalVariableEvaluationException("Infinite loop detected in Dag tasks");
-        }
+        this.controlTask();
 
         GraphService.dag(
             subGraph,
@@ -71,6 +69,18 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
         );
 
         return subGraph;
+    }
+
+    private void controlTask() throws IllegalVariableEvaluationException {
+        List<String> dagCheckNotExistTasks = this.dagCheckNotExistTask(this.tasks);
+        if (!dagCheckNotExistTasks.isEmpty()) {
+            throw new IllegalVariableEvaluationException("Some task doesn't exists on task '" + this.id + "': " +  String.join(", ", dagCheckNotExistTasks));
+        }
+
+        ArrayList<String> cyclicDependenciesTasks = this.dagCheckCyclicDependencies(this.tasks);
+        if (!cyclicDependenciesTasks.isEmpty()) {
+            throw new IllegalVariableEvaluationException("Infinite loop detected on task '" + this.id + "': " + String.join(", ", cyclicDependenciesTasks));
+        }
     }
 
     @Override
@@ -90,10 +100,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-
-        if(this.dagCheckNotExistTask(this.tasks).size() > 0 || this.dagCheckCyclicDependencies(this.tasks).size() > 0) {
-            throw new IllegalVariableEvaluationException("Infinite loop detected in Dag tasks");
-        }
+        this.controlTask();
 
         return FlowableUtils.resolveDagNexts(
             execution,
@@ -105,7 +112,6 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
         );
     }
 
-
     public List<String> dagCheckNotExistTask(List<DagTask> taskDepends) {
         List<String> dependenciesIds = taskDepends
             .stream()
@@ -114,7 +120,8 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
             .flatMap(Collection::stream)
             .toList();
 
-        List<String> tasksIds = taskDepends.stream()
+        List<String> tasksIds = taskDepends
+            .stream()
             .map(taskDepend -> taskDepend.getTask().getId())
             .toList();
 
@@ -139,18 +146,20 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
     private ArrayList<String> nestedDependencies(DagTask taskDepend, List<DagTask> tasks, List<String> visited) {
         final ArrayList<String> localVisited = new ArrayList<>(visited);
-        if(taskDepend.getDependsOn() != null) {
+        if (taskDepend.getDependsOn() != null) {
             taskDepend.getDependsOn()
                 .stream()
                 .filter(depend -> !localVisited.contains(depend))
                 .forEach(depend -> {
                     localVisited.add(depend);
-                    Optional<DagTask> task = tasks.stream()
+                    Optional<DagTask> task = tasks
+                        .stream()
                         .filter(t -> t.getTask().getId().equals(depend))
                         .findFirst();
-                    if(task.isPresent()){
+
+                    if (task.isPresent()) {
                         localVisited.addAll(this.nestedDependencies(task.get(), tasks, localVisited));
-                    };
+                    }
                 });
         }
         return localVisited;
@@ -168,6 +177,5 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
         @PluginProperty
         private List<String> dependsOn;
-
     }
 }

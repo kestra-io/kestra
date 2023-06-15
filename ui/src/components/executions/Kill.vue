@@ -9,8 +9,13 @@
         {{ $t('kill') }}
     </component>
 </template>
-<script>
+
+<script setup>
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+</script>
+
+<script>
+
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -43,9 +48,6 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            StopCircleOutline() {
-                return StopCircleOutline
-            },
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
                     return false;

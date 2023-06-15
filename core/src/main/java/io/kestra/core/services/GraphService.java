@@ -8,6 +8,7 @@ import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.tasks.flows.Dag;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -194,6 +195,21 @@ public class GraphService {
         }
     }
 
+    public static void dag(
+        GraphCluster graph,
+        List<Dag.DagTask> tasks,
+        List<Task> errors,
+        TaskRun parent,
+        Execution execution
+    ) throws IllegalVariableEvaluationException {
+        fillGraphDag(graph, tasks, parent, execution);
+
+        // error cases
+        if (errors != null && errors.size() > 0) {
+            fillGraph(graph, errors, RelationType.ERROR, parent, execution, null);
+        }
+    }
+
     private static void iterate(
         GraphCluster graph,
         List<Task> tasks,
@@ -253,7 +269,7 @@ public class GraphService {
                     parentValues = execution.findChildsValues(currentTaskRun, true);
                 }
 
-                // detect kind
+                // detect kids
                 if (currentTask instanceof FlowableTask) {
                     FlowableTask<?> flowableTask = ((FlowableTask<?>) currentTask);
                     currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
@@ -315,6 +331,143 @@ public class GraphService {
             }
         }
     }
+
+
+    private static void fillGraphDag(
+        GraphCluster graph,
+        List<Dag.DagTask> tasks,
+        TaskRun parent,
+        Execution execution
+    ) throws IllegalVariableEvaluationException {
+        List<GraphTask> nodeTaskCreated = new ArrayList<>();
+        List<String> nodeCreatedIds = new ArrayList<>();
+        Set<String> dependencies = tasks.stream().filter(taskDepend -> taskDepend.getDependsOn() != null).map(Dag.DagTask::getDependsOn).flatMap(Collection::stream).collect(Collectors.toSet());
+        AbstractGraph previous;
+
+        // we validate a GraphTask based on 3 nodes (root/ task / end)
+        if (graph.getGraph().nodes().size() >= 3 && new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask) {
+            previous = new ArrayList<>(graph.getGraph().nodes()).get(2);
+        } else {
+            previous = graph.getRoot();
+        }
+
+        while(nodeCreatedIds.size() < tasks.size()) {
+            Iterator<Dag.DagTask> iterator = tasks.stream().filter(taskDepend ->
+                // Check if the task has no dependencies OR all if its dependencies have been treated
+                (taskDepend.getDependsOn() == null || new HashSet<>(nodeCreatedIds).containsAll(taskDepend.getDependsOn()))
+                // AND if the task has not been treated yet
+                && !nodeCreatedIds.contains(taskDepend.getTask().getId())).iterator();
+            while (iterator.hasNext()) {
+                Dag.DagTask currentTask = iterator.next();
+                for (TaskRun currentTaskRun : findTaskRuns(currentTask.getTask(), execution, parent)) {
+                    AbstractGraph currentGraph;
+                    List<String> parentValues = null;
+
+                    RelationType newRelation = RelationType.PARALLEL;
+
+                    Relation relation = new Relation(
+                        newRelation,
+                        currentTaskRun == null ? null : currentTaskRun.getValue()
+                    );
+
+                    if (execution != null && currentTaskRun != null) {
+                        parentValues = execution.findChildsValues(currentTaskRun, true);
+                    }
+
+                    // detect kids
+                    if (currentTask.getTask() instanceof FlowableTask<?> flowableTask) {
+                        currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
+                    } else {
+                        currentGraph = new GraphTask(currentTask.getTask(), currentTaskRun, parentValues, RelationType.SEQUENTIAL);
+                    }
+
+                    // add the node
+                    graph.getGraph().addNode(currentGraph);
+
+                    // link to previous one
+                    if(currentTask.getDependsOn() == null) {
+                        graph.getGraph().addEdge(
+                            previous,
+                            currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                            relation
+                        );
+                    } else {
+                        for (String dependsOn : currentTask.getDependsOn()) {
+                            GraphTask previousNode = nodeTaskCreated.stream().filter(node -> node.getTask().getId().equals(dependsOn)).findFirst().orElse(null);
+                            if(previousNode!= null && !previousNode.getTask().isFlowable()) {
+                                graph.getGraph().addEdge(
+                                    previousNode,
+                                    currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                                    relation
+                                );
+                            } else {
+                                graph.getGraph()
+                                    .nodes()
+                                    .stream()
+                                    .filter(node -> node.getUid().equals("cluster_" + dependsOn))
+                                    .findFirst()
+                                    .ifPresent(previousClusterNodeEnd -> graph.getGraph().addEdge(
+                                        ((GraphCluster) previousClusterNodeEnd).getEnd(),
+                                        currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                                        relation
+                                ));
+                            }
+                        }
+                    }
+                    // link to last one if task isn't a dependency
+                    if (!dependencies.contains(currentTask.getTask().getId())) {
+                        if(currentTask.getTask() instanceof FlowableTask<?> flowableTask) {
+                            graph.getGraph().addEdge(
+                                ((GraphCluster) currentGraph).getEnd(),
+                                graph.getEnd(),
+                                new Relation()
+                            );
+                        } else {
+                            graph.getGraph().addEdge(
+                                currentGraph,
+                                graph.getEnd(),
+                                new Relation()
+                            );
+                        }
+                    }
+
+                    if(currentGraph instanceof GraphTask) {
+                        nodeTaskCreated.add((GraphTask) currentGraph);
+                    }
+                    nodeCreatedIds.add(currentTask.getTask().getId());
+                }
+            }
+        }
+    }
+
+
+    private static void generatePath(Dag.DagTask task, Map<String, Dag.DagTask> taskMap, List<Dag.DagTask> currentPath,
+                                     List<List<Task>> allPaths, Set<String> visited) {
+        currentPath.add(task);
+        visited.add(task.getTask().getId());
+
+        if (taskMap.containsKey(task.getTask().getId())) {
+            List<String> dependsOnIds = task.getDependsOn();
+
+            if(dependsOnIds != null) {
+                for (String dependencyId : dependsOnIds) {
+                    Dag.DagTask dependencyTask = taskMap.get(dependencyId);
+                    if (!visited.contains(dependencyId)) {
+                        generatePath(dependencyTask, taskMap, currentPath, allPaths, visited);
+                    }
+                }
+            }
+        }
+
+        if (task.getDependsOn() == null) {
+            Collections.reverse(currentPath);
+            allPaths.add(currentPath.stream().map(Dag.DagTask::getTask).collect(Collectors.toList()));
+        }
+
+        currentPath.remove(currentPath.size() - 1);
+        visited.remove(task.getTask().getId());
+    }
+
 
     private static boolean isAllLinkToEnd(RelationType relationType) {
         return relationType == RelationType.PARALLEL || relationType == RelationType.CHOICE;

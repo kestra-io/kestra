@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
@@ -14,6 +15,7 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import javax.validation.ConstraintViolation;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -108,6 +110,42 @@ public class ValidationFactory {
 
             if ((value.getCases() == null || value.getCases().size() == 0) && (value.getDefaults() == null || value.getDefaults().size() == 0)) {
                 context.messageTemplate("No task defined, neither cases or default have any tasks");
+
+                return false;
+            }
+
+            return true;
+        };
+    }
+
+    @Singleton
+    ConstraintValidator<DagTaskValidation, Dag> dagTaskValidation() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            if (value.getTasks() == null || value.getTasks().isEmpty()) {
+                context.messageTemplate("No task defined");
+
+                return false;
+            }
+
+            List<Dag.DagTask> taskDepends = value.getTasks();
+
+            // Check for not existing taskId
+            List<String> invalidDependencyIds = value.dagCheckNotExistTask(taskDepends);
+            if (!invalidDependencyIds.isEmpty()) {
+                String errorMessage = "Not existing task id in dependency: " + String.join(", ", invalidDependencyIds);
+                context.messageTemplate(errorMessage);
+
+                return false;
+            }
+
+            // Check for cyclic dependencies
+            ArrayList<String> cyclicDependency = value.dagCheckCyclicDependencies(taskDepends);
+            if (!cyclicDependency.isEmpty()) {
+                context.messageTemplate("Cyclic dependency detected: " + String.join(", ", cyclicDependency));
 
                 return false;
             }

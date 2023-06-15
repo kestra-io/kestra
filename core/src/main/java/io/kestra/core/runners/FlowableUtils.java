@@ -11,8 +11,11 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.tasks.flows.Dag;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -134,13 +137,68 @@ public class FlowableUtils {
             .collect(Collectors.toList());
     }
 
-
     public static List<NextTaskRun> resolveParallelNexts(
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
         TaskRun parentTaskRun,
         Integer concurrency
+    ) {
+        return resolveParallelNexts(
+            execution,
+            tasks, errors,
+            parentTaskRun,
+            concurrency,
+            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
+        );
+    }
+
+    public static List<NextTaskRun> resolveDagNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        List<Dag.DagTask> taskDependencies
+    ) {
+        return resolveParallelNexts(
+            execution,
+            tasks, errors,
+            parentTaskRun,
+            concurrency,
+            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
+                .filter(nextTaskRun -> {
+                    Task task = nextTaskRun.getTask();
+                    List<String> taskDependIds = taskDependencies
+                        .stream()
+                        .filter(taskDepend -> taskDepend
+                            .getTask()
+                            .getId()
+                            .equals(task.getId())
+                        )
+                        .findFirst()
+                        .get()
+                        .getDependsOn();
+
+                    // Check if have no dependencies OR all dependencies are terminated
+                    return taskDependIds == null ||
+                        new HashSet<>(taskRuns
+                            .stream()
+                            .filter(taskRun -> taskRun.getState().isTerminated())
+                            .map(TaskRun::getTaskId).toList()
+                        )
+                            .containsAll(taskDependIds);
+                })
+        );
+    }
+
+    public static List<NextTaskRun> resolveParallelNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction
     ) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
@@ -182,9 +240,12 @@ public class FlowableUtils {
                 .stream()
                 .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
 
+            nextTaskRunStream = nextTaskRunFunction.apply(nextTaskRunStream, taskRuns);
+
             if (concurrency > 0) {
                 nextTaskRunStream = nextTaskRunStream.limit(concurrency - runningCount);
             }
+
 
             return nextTaskRunStream.collect(Collectors.toList());
         }
@@ -192,40 +253,37 @@ public class FlowableUtils {
         return Collections.emptyList();
     }
 
-    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
+    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
+    };
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
         List<Object> values;
 
-        if(value instanceof String) {
+        if (value instanceof String) {
             String renderValue = runContext.render((String) value);
             try {
                 values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
-        }
-        else if(value instanceof List) {
+        } else if (value instanceof List) {
             values = new ArrayList<>(((List<?>) value).size());
-            for(Object obj: (List<Object>) value) {
-                if(obj instanceof String){
+            for (Object obj : (List<Object>) value) {
+                if (obj instanceof String) {
                     values.add(runContext.render((String) obj));
                 }
                 else if(obj instanceof Map<?, ?>) {
                     //JSON or YAML map
                     values.add(runContext.render((Map) obj));
-                }
-                else {
+                } else {
                     throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
                 }
             }
-        }
-        else {
+        } else {
             throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
         }
-
 
         List<Object> distinctValue = values
             .stream()
@@ -245,10 +303,10 @@ public class FlowableUtils {
 
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
-        for (Object current: distinctValue) {
-            for( Task task: tasks) {
+        for (Object current : distinctValue) {
+            for (Task task : tasks) {
                 try {
-                    String resolvedValue = current instanceof String ? (String)current : MAPPER.writeValueAsString(current);
+                    String resolvedValue = current instanceof String ? (String) current : MAPPER.writeValueAsString(current);
 
                     result.add(ResolvedTask.builder()
                         .task(task)

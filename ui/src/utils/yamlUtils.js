@@ -403,6 +403,19 @@ export default class YamlUtils {
         return isChildrenOf;
     }
 
+    static getChildrenTasks(source, taskId) {
+        const yamlDoc = yaml.parseDocument(YamlUtils.extractTask(source, taskId));
+        const children = [];
+        yaml.visit(yamlDoc, {
+            Map(_, map) {
+                if (map.get("id") !== taskId) {
+                    children.push(map.get("id"));
+                }
+            }
+        })
+        return children;
+    }
+
     static replaceIdAndNamespace(source, id, namespace) {
         return source.replace(/^(id\s*:\s*(["']?))\S*/m, "$1"+id+"$2").replace(/^(namespace\s*:\s*(["']?))\S*/m, "$1"+namespace+"$2")
     }

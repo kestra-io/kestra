@@ -209,7 +209,7 @@
 
     <EdgeLabelRenderer style="z-index: 10">
         <div
-            v-if="getEdgeLabel(props.data.edge.relation) !== ''"
+            v-if="getEdgeLabel(props.data.edge.relation) !== '' && !props.data.disabled"
             @mouseover="onMouseOver"
             @mouseleave="onMouseLeave"
             :style="{

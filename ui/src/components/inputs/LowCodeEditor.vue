@@ -449,6 +449,8 @@
                 })
             }
 
+            let disabledLowCode = [];
+
             for (const node of props.flowGraph.nodes) {
                 const dagreNode = dagreGraph.node(node.uid);
                 let nodeType = "task";
@@ -461,6 +463,15 @@
                 } else if (node.type.includes("GraphTrigger")) {
                     nodeType = "trigger";
                 }
+                // Disable interaction for Dag task
+                // because our low code editor can not handle it for now
+                if (isTaskNode(node) && node.task.type === "io.kestra.core.tasks.flows.Dag") {
+                    disabledLowCode.push(node.task.id);
+                    YamlUtils.getChildrenTasks(props.source, node.task.id).forEach(child => {
+                        disabledLowCode.push(child);
+                    })
+                }
+
                 elements.value.push({
                     id: node.uid,
                     label: isTaskNode(node) ? node.task.id : "",
@@ -473,7 +484,7 @@
                     sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
                     targetPosition: isHorizontal.value ? Position.Left : Position.Top,
                     parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
-                    draggable: nodeType === "task" && !props.isReadOnly,
+                    draggable: nodeType === "task" && !props.isReadOnly && isTaskNode(node) ? !disabledLowCode.includes(node.task.id) : false,
                     data: {
                         node: node,
                         namespace: props.namespace,
@@ -495,7 +506,8 @@
                         edge: edge,
                         haveAdd: complexEdgeHaveAdd(edge),
                         isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
-                        nextTaskId: getNextTaskId(edge.target)
+                        nextTaskId: getNextTaskId(edge.target),
+                        disabled: disabledLowCode.includes(edge.source)
                     }
                 })
             }

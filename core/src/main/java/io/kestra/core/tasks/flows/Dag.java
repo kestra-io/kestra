@@ -30,6 +30,12 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @DagTaskValidation
+@Schema(
+    title = "Create a directed acyclic graph (DAG) flow without bothering with the graph structure.",
+    description = "List your tasks and their dependencies, and Kestra will figure out the rest.\n" +
+        "Task can only depends on task from the DAG tasks.\n" +
+        "For technical reasons, low-code interaction with this Task is disabled for now."
+)
 public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank

@@ -91,7 +91,7 @@ jobs:
           python3 -m pip install virtualenv
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-          ./gradlew check jacoco --parallel --no-daemon
+          ./gradlew check jacoco --no-daemon --priority=normal
 
       # Codecov
       - uses: codecov/codecov-action@v3
@@ -101,7 +101,7 @@ jobs:
 
       # Shadow Jar
       - name: Build jars
-        run: ./gradlew executableJar --no-daemon
+        run: ./gradlew executableJar --no-daemon --priority=normal
 
       # Upload artifacts
       - name: Upload jar
@@ -260,7 +260,7 @@ jobs:
           echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
           echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
           echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
-          ./gradlew publishToSonatype --parallel --no-daemon
+          ./gradlew publishToSonatype --no-daemon --priority=normal
 
       # Release
       - name: Release package to Maven Central
@@ -276,7 +276,7 @@ jobs:
           echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
           echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
           echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
-          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon --priority=normal
 
   pip:
     name: Publish to Pip

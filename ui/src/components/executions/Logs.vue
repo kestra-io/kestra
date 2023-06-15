@@ -95,7 +95,7 @@
                     for (const attempt in taskRun.attempts) {
                         fullList.push({
                             ...taskRun,
-                            attempt: attempt,
+                            attempt: parseInt(attempt),
                         })
                     }
                 }

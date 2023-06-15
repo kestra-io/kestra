@@ -51,6 +51,7 @@
                     "thread",
                     "taskRunId",
                     "level",
+                    "index"
                 ];
                 excludes.push.apply(excludes, this.excludeMetas);
                 for (const key in this.log) {

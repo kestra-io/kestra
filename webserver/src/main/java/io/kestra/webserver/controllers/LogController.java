@@ -67,10 +67,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
-    public PagedResults<LogEntry> findByExecution(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "50") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(defaultValue = "timestamp:asc") List<String> sort,
+    public List<LogEntry> findByExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -78,14 +75,14 @@ public class LogController {
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
         if (taskId != null) {
-            return PagedResults.of(logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel, PageableUtils.from(page, size, sort)));
+            return logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
         } else if (taskRunId != null) {
             if (attempt != null) {
-                return PagedResults.of(logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, taskRunId, minLevel, attempt, PageableUtils.from(page, size, sort)));
+                return logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, taskRunId, minLevel, attempt);
             }
-            return PagedResults.of(logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel, PageableUtils.from(page, size, sort)));
+            return logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
         } else {
-            return PagedResults.of(logRepository.findByExecutionId(executionId, minLevel, PageableUtils.from(page, size, sort)));
+            return logRepository.findByExecutionId(executionId, minLevel);
         }
     }
 

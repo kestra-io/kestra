@@ -121,20 +121,29 @@
                                 </el-dropdown>
                             </div>
                         </div>
-                        <div :ref="`${currentTaskRun.id}-${taskAttempt(index)}`" class="log-lines" :class="showLogs ? '' : 'hide-logs' ">
-                            <template
-                                v-for="(log, i) in logsList.filter((logline) => logline.taskRunId === currentTaskRun.id)"
-                                :key="`${currentTaskRun.id}-${index}-${i}`"
-                            >
-                                <log-line
-                                    :level="level"
-                                    :filter="filter"
-                                    :log="log"
-                                    :exclude-metas="excludeMetas"
-                                    :name="`${currentTaskRun.id}-${index}-${i}`"
-                                />
+                        <DynamicScroller
+                            :items="indexedLogsList.filter((logline) => logline.taskRunId === currentTaskRun.id)"
+                            :min-item-size="50"
+                            key-field="index"
+                            class="log-lines"
+                            :ref="`${currentTaskRun.id}-${taskAttempt(index)}`"
+                            :class="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`) ? '' : 'hide-logs'"
+                        >
+                            <template #default="{item, index, active}">
+                                <DynamicScrollerItem
+                                    :item="item"
+                                    :active="active"
+                                    :size-dependencies="[item.message, item.image]"
+                                    :data-index="index"
+                                >
+                                    <log-line
+                                        :level="level"
+                                        :log="item"
+                                        :exclude-metas="excludeMetas"
+                                    />
+                                </DynamicScrollerItem>
                             </template>
-                        </div>
+                        </DynamicScroller>
                     </template>
                 </div>
             </template>
@@ -167,6 +176,8 @@
     import _xor from "lodash/xor";
     import FlowUtils from "../../utils/flowUtils.js";
     import moment from "moment";
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+
 
     export default {
         components: {
@@ -183,7 +194,7 @@
             SubFlowLink,
             TaskEdit,
             Duration,
-            TaskIcon
+            TaskIcon,
         },
         props: {
             level: {
@@ -225,10 +236,11 @@
                 showMetrics: {},
                 fullscreen: false,
                 page: 1,
+                size: 100,
                 followed: false,
                 append: false,
                 logsList: [],
-                threshold: 150,
+                threshold: 200,
                 showLogs: [],
                 count: 0,
                 followLogs: [],
@@ -252,27 +264,6 @@
                 this.loadLogs();
             }
         },
-        mounted() {
-            this.currentTaskRuns.forEach(currentTaskRun => {
-                for (const attempt in this.attempts(currentTaskRun)) {
-                    const ref = `${currentTaskRun.id}-${this.taskAttempt(attempt)}`
-                    if(this.$refs[ref]) {
-                        const listElm = this.$refs[ref][0]
-                        listElm.addEventListener("scroll", () => {
-                            if (
-                                listElm.scrollTop + listElm.clientHeight >=
-                                listElm.scrollHeight - this.threshold
-                                && !this.followed
-                                && this.logsTotal > this.logsList.length
-                            ) {
-                                this.page++;
-                                this.loadLogs();
-                            }
-                        });
-                    }
-                }
-            })
-        },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
             ...mapState("flow", ["flow"]),
@@ -285,8 +276,9 @@
             params() {
                 let params = {minLevel: this.level};
 
-                params.sort = "timestamp:desc"
+                params.sort = "timestamp:asc"
                 params.page = this.page;
+                params.size = this.size;
 
                 params.append = this.append
 
@@ -303,6 +295,16 @@
                 }
 
                 return params
+            },
+            indexedLogsList(){
+                return this.logsList
+                    .filter(e => this.filter === "" || (
+                        e.message &&
+                        e.message.toLowerCase().includes(this.filter)
+                    ))
+                    .map((e, index) => {
+                        return {...e, index: index}
+                    })
             }
         },
         methods: {
@@ -346,7 +348,6 @@
                 return findTaskById ? findTaskById.type : undefined;
             },
             loadLogs() {
-
                 const params = this.params
 
                 if (this.execution && this.execution.state.current === State.RUNNING) {
@@ -369,12 +370,10 @@
                                 }
                                 this.$store.commit("execution/appendFollowedLogs", JSON.parse(event.data));
                                 this.followLogs = this.followLogs.concat(JSON.parse(event.data));
-                                this.count++
-                                if(this.count > 100 || moment().diff(this.timer, "seconds") > 1){
-                                    this.count = 0;
+                                if(moment().diff(this.timer, "seconds") > 1){
                                     this.timer = moment()
-                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs));
-                                    this.logsList.reverse()
+                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs)).slice(0,this.count*this.size);
+                                    this.count++;
                                 }
                             }
                         });
@@ -383,7 +382,7 @@
                         executionId: this.$route.params.id,
                         params: params,
                     }).then(r => {
-                        this.logsList = this.logsList.concat(r.results)
+                        this.logsList = r
                         this.logsTotal = r.total
                     });
                     this.closeSSE();
@@ -407,12 +406,10 @@
                 }
             },
             toggleShowLogs(currentTaskRunId) {
-                const listElm = this.$refs[currentTaskRunId][0]
-                listElm.classList.toggle("hide-logs")
                 this.showLogs = _xor(this.showLogs, [currentTaskRunId])
             },
             taskAttempt(index) {
-                return parseInt(this.attempt || index)
+                return this.attempt || index
             }
         },
         beforeUnmount() {

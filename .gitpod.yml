@@ -1,6 +1,6 @@
 
 tasks:
-  - init: ./gradlew build
+  - init: ./gradlew build --priority=normal
 
 
 vscode:

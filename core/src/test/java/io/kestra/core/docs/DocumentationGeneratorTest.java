@@ -103,8 +103,8 @@ class DocumentationGeneratorTest {
         assertThat(render, containsString("Debugging task that return"));
         assertThat(render, containsString("is mostly useful"));
         assertThat(render, containsString("## Metrics"));
-        assertThat(render, containsString("### `length`\n" + "        * **Type:** ==counter== "));
-        assertThat(render, containsString("### `duration`\n" + "        * **Type:** ==timer== "));
+        assertThat(render, containsString("### `length`\n" + "* **Type:** ==counter== "));
+        assertThat(render, containsString("### `duration`\n" + "* **Type:** ==timer== "));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

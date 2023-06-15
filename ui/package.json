@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path ../.gitignore"
   },
   "dependencies": {
-    "@vue-flow/controls": "1.0.6",
+    "@vue-flow/controls": "1.1.0",
     "@vue-flow/core": "1.14.3",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.4.0",

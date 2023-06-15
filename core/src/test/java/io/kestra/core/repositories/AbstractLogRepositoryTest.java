@@ -81,8 +81,8 @@ public abstract class AbstractLogRepositoryTest {
     void Pageable() {
         String executionId = "123";
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
-        builder
-            .executionId(executionId);
+        builder.executionId(executionId);
+
         for (int i = 0; i < 80; i++) {
             logRepository.save(builder.build());
         }
@@ -121,6 +121,5 @@ public abstract class AbstractLogRepositoryTest {
         find = logRepository.findByExecutionIdAndTaskRunId(executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
 
         assertThat(find.size(), is(0));
-
     }
 }

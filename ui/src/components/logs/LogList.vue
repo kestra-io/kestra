@@ -14,7 +14,7 @@
                                 <div class="attempt-number">
                                     {{ $t("attempt") }} {{ taskAttempt(index) + 1 }}
                                 </div>
-                                <div>
+                                <div v-if="!hideOthersOnSelect">
                                     <el-button type="default" @click="() => toggleShowLogs(`${currentTaskRun.id}-${taskAttempt(index)}`)">
                                         <ChevronUp v-if="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
                                         <ChevronDown v-else />
@@ -126,7 +126,7 @@
                             key-field="index"
                             class="log-lines"
                             :ref="`${currentTaskRun.id}-${taskAttempt(index)}`"
-                            :class="showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`) ? '' : 'hide-logs'"
+                            :class="hideOthersOnSelect || showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`) ? '' : 'hide-logs'"
                             @resize="scrollToBottomFailedTask"
                         >
                             <template #default="{item, index, active}">
@@ -322,7 +322,7 @@
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
-                            if( this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
+                            if (this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
                                 this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
                             }
                         }
@@ -538,7 +538,24 @@
         .log-lines {
             max-height: 50vh;
             overflow-y: scroll;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.2s ease-out;
+
+
+            &::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            &:hover::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: var(--bs-gray-500);
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: var(--bs-primary);
+            }
         }
 
         .hide-logs {

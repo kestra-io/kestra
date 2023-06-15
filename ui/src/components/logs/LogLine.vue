@@ -169,9 +169,7 @@
         }
 
         .noselect {
-            -webkit-touch-callout: none; /* iOS Safari */
-            -webkit-user-select: none; /* Safari */
-            user-select: none; /* Standard syntax */
+            user-select: none;
         }
 
     }

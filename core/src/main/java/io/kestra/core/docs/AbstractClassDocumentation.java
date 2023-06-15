@@ -37,6 +37,9 @@ public abstract class AbstractClassDocumentation<T> {
         this.defs = this.getDefs()
             .entrySet()
             .stream()
+            // Remove the Task entry as it only contains a reference that is filtered in the doc template,
+            // which prevent the Definitions section to be empty if no other def exist.
+            .filter(entry -> !entry.getKey().equals("io.kestra.core.models.tasks.Task"))
             .map(entry -> {
                 Map<String, Object> value = (Map<String, Object>) entry.getValue();
                 value.put("properties", flatten(properties(value), required(value)));

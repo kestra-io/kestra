@@ -46,6 +46,9 @@ class ClassPluginDocumentationTest {
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("pattern"), is(".*"));
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("description"), containsString("of this input"));
 
+            // definitions
+            assertThat(doc.getDefs().size(), is(5));
+
             // enum
             Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties")).get("childEnum");
             assertThat(((List<String>) enumProperties.get("enum")).size(), is(2));

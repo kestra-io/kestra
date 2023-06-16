@@ -47,11 +47,13 @@
         },
         flowId: {
             type: String,
-            required: false
+            required: false,
+            default: undefined
         },
         namespace: {
             type: String,
-            required: false
+            required: false,
+            default: undefined
         },
         execution: {
             type: Object,

@@ -1,37 +1,12 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.*;
-import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.inject.Inject;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
 @Controller("/api")
@@ -40,7 +15,7 @@ public class ApiController {
     protected String basePath;
 
     protected String getBasePath() {
-        return basePath.replaceAll("/$","");
+        return basePath.replaceAll("/$", "");
     }
 
     protected String getSwaggerFilename() {

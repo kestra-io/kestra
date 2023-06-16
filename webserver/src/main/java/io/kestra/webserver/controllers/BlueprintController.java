@@ -24,14 +24,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 @Validated
-@Controller("/api/v1/blueprints")
+@Controller("/api/v1/blueprints/community")
 public class BlueprintController {
     @Inject
     @Client("api")
@@ -44,7 +43,7 @@ public class BlueprintController {
     public PagedResults<BlueprintItem> blueprints(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") Optional<String> q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
-        @Parameter(description = "A tags filter") @Nullable @QueryValue(value = "tagIds") Optional<List<Integer>> tagIds,
+        @Parameter(description = "A tags filter") @Nullable @QueryValue(value = "tags") Optional<List<String>> tags,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") Integer page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") Integer size,
         HttpRequest<?> httpRequest
@@ -84,7 +83,7 @@ public class BlueprintController {
 
     @SuppressWarnings("unchecked")
     @ExecuteOn(TaskExecutors.IO)
-    @Get("/tags")
+    @Get("tags")
     @Operation(tags = {"Blueprint Tags"}, summary = "List all blueprint tags")
     public List<BlueprintTagItem> blueprintTags(
         HttpRequest<?> httpRequest

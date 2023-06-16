@@ -73,10 +73,10 @@
 
                         // special case for plugins, were parents have no href to set active
                         // Could be adapted to all routes to have something more generic
-                        if(r.routes?.includes(this.$route.name)){
+                        if (r.routes?.includes(this.$route.name)) {
                             r.class = "vsm--link_active"
 
-                            if(r.child){
+                            if (r.child) {
                                 this.showChildren = true
                                 r.child = this.disabledCurrentRoute(r.child)
                             }
@@ -138,6 +138,14 @@
                         },
                     },
                     {
+                        href: "/blueprints",
+                        title: this.$t("blueprints.title"),
+                        icon: {
+                            element: Ballot,
+                            class: "menu-icon"
+                        },
+                    },
+                    {
                         title: this.$t("documentation.documentation"),
                         icon: {
                             element: BookMultipleOutline,
@@ -194,14 +202,6 @@
                         ]
                     },
                     {
-                        href: "/blueprints",
-                        title: this.$t("blueprints.title"),
-                        icon: {
-                            element: Ballot,
-                            class: "menu-icon"
-                        },
-                    },
-                    {
                         href: "/settings",
                         title: this.$t("settings"),
                         icon: {
@@ -253,6 +253,7 @@
             padding: 35px 0;
             height: 133px;
             position: relative;
+
             a {
                 transition: 0.2s all;
                 position: absolute;
@@ -297,6 +298,7 @@
             padding-bottom: 15px;
             height: 30px !important;
             width: 30px !important;
+
             svg {
                 position: relative;
                 margin-top: 13px;
@@ -313,6 +315,7 @@
                 padding: 0;
             }
         }
+
         .vsm--link {
             padding: 0.3rem 0.5rem;
             margin-bottom: 0.3rem;
@@ -343,6 +346,7 @@
 
         .vsm--dropdown {
             background-color: var(--bs-gray-100);
+
             .vsm--title {
                 top: 3px;
             }
@@ -363,7 +367,7 @@
 
 
         .vsm--mobile-bg {
-            border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0 ;
+            border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
         }
 
         &.vsm_collapsed {

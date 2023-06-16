@@ -1,5 +1,5 @@
 <template>
-    <div :class="'executions-charts' + (global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
+    <div :class="'executions-charts' + (global ? (big ? ' big' : '') : ' mini')" v-if="dataReady">
         <el-tooltip
             :placement="(global ? 'bottom' : 'left')"
             :persistent="false"
@@ -90,7 +90,7 @@
                             tooltipContent.value = content;
                         },
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 if (context.dataset.yAxisID === "yB" && context.raw !== 0) {
                                     return context.dataset.label + ": " + Utils.humanDuration(context.raw);
                                 } else if (context.formattedValue !== "0") {

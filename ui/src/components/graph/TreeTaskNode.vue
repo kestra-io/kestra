@@ -86,7 +86,7 @@
                 <el-tooltip v-if="execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
                     <el-button
                         class="node-action"
-                        :disabled="this.taskRuns.length === 0"
+                        :disabled="taskRuns.length === 0"
                         size="small"
                         @click="onTaskSelect()"
                     >
@@ -179,7 +179,7 @@
             TreeNode,
             taskEditor
         },
-        emits: ["follow", "edit", "delete","addFlowableError"],
+        emits: ["follow", "edit", "delete", "addFlowableError"],
         props: {
             n: {
                 type: Object,
@@ -224,10 +224,10 @@
             onLevelChange(level) {
                 this.logLevel = level;
             },
-            onUpdateNewError(event){
+            onUpdateNewError(event) {
                 this.newError = event;
             },
-            onSaveNewError(){
+            onSaveNewError() {
                 this.forwardEvent("addFlowableError", {taskId: this.task.id, error: this.newError})
                 this.isNewErrorOpen = false;
             }
@@ -257,7 +257,7 @@
             hash() {
                 return this.n.uid.hashCode();
             },
-            taskRunList(){
+            taskRunList() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList : []
             },
             taskRuns() {
@@ -271,7 +271,7 @@
             },
             state() {
                 if (!this.taskRuns) {
-                    return  null;
+                    return null;
                 }
 
                 if (this.taskRuns.length === 1) {
@@ -310,7 +310,7 @@
 
                 const max = Math.max(...this.taskRuns
                     .filter(value => value.state.histories && value.state.histories.length > 0)
-                    .map(value => new Date(value.state.histories[value.state.histories.length -1].date).getTime()));
+                    .map(value => new Date(value.state.histories[value.state.histories.length - 1].date).getTime()));
 
                 const duration = this.taskRuns
                     .reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0);

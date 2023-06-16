@@ -1,10 +1,10 @@
 <template>
     <div class="errors">
         <div class="img" />
-        <h2>{{ $t("errors." + this.code + ".title") }}</h2>
+        <h2>{{ $t("errors." + code + ".title") }}</h2>
 
         <p>
-            <span v-html="$t('errors.' + this.code + '.content')" />
+            <span v-html="$t('errors.' + code + '.content')" />
         </p>
     </div>
 </template>
@@ -15,7 +15,7 @@
     export default {
         mixins: [RouteContext],
         props: {
-            code : {
+            code: {
                 type: Number,
                 required: true
             }
@@ -45,6 +45,7 @@
 
         width: 100%;
         text-align: center;
+
         .img {
             display: inline-block;
             background: url("../../assets/errors/sorry.svg") no-repeat;

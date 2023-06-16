@@ -9,10 +9,10 @@
                 :disabled="tab.disabled"
             >
                 <template #label>
-                    <router-link :to="to(tab)">
+                    <component :is="embedActiveTab ? 'a' : 'router-link'" @click.native="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
                         {{ tab.title }}
                         <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                    </router-link>
+                    </component>
                 </template>
             </el-tab-pane>
         </el-tabs>
@@ -27,9 +27,6 @@
 
 <script>
     export default {
-        components: {
-
-        },
         props: {
             tabs: {
                 type: Array,
@@ -39,9 +36,22 @@
                 type: String,
                 default: ""
             },
-
+            /**
+             * The active embedded tab. If this component is not embedded, keep it undefined.
+             */
+            embedActiveTab: {
+                type: String,
+                required: false,
+                default: undefined
+            }
         },
-        emits: ["changed"],
+        emits: [
+            /**
+             * Especially useful when embedded since you need to handle the embedActiveTab prop change on the parent component.
+             * @property {Object} newTab the new active tab
+             */
+            "changed"
+        ],
         data() {
             return {
                 activeName: undefined,
@@ -61,6 +71,9 @@
             this.setActiveName();
         },
         methods: {
+            embeddedTabChange(tab) {
+                this.$emit('changed', tab);
+            },
             setActiveName() {
                 this.activeName = this.activeTab.name || "default";
             },
@@ -71,14 +84,18 @@
                 if (this.activeTab === tab) {
                     return this.$route;
                 } else {
-                    return {name: this.routeName || this.$route.name, params: {...this.$route.params, ...{tab: tab.name}}, query: {...(tab.query || {})}};
+                    return {
+                        name: this.routeName || this.$route.name,
+                        params: {...this.$route.params, ...{tab: tab.name}},
+                        query: {...(tab.query || {})}
+                    };
                 }
             },
         },
         computed: {
             activeTab() {
                 return this.tabs
-                    .filter(tab => this.$route.params.tab === tab.name)[0] || this.tabs[0];
+                    .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];
             },
         }
     };

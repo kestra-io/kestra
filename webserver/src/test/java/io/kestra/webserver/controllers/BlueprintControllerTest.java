@@ -38,7 +38,7 @@ class BlueprintControllerTest {
         );
 
         PagedResults<BlueprintController.BlueprintItem> blueprintsWithTotal = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints?page=1&size=5&q=someTitle&sort=title:asc&tagIds=3"),
+            HttpRequest.GET("/api/v1/blueprints/community?page=1&size=5&q=someTitle&sort=title:asc&tags=3"),
             Argument.of(PagedResults.class, BlueprintController.BlueprintItem.class)
         );
 
@@ -54,7 +54,7 @@ class BlueprintControllerTest {
         assertThat(blueprints.get(1).getId(), is("2"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&size=5&q=someTitle&sort=title%3Aasc&tagIds=3")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3")));
     }
 
     @Test
@@ -66,7 +66,7 @@ class BlueprintControllerTest {
         );
 
         String blueprintFlow = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints/id_1/flow"),
+            HttpRequest.GET("/api/v1/blueprints/community/id_1/flow"),
             String.class
         );
 
@@ -85,7 +85,7 @@ class BlueprintControllerTest {
         );
 
         FlowGraph graph = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints/id_1/graph"),
+            HttpRequest.GET("/api/v1/blueprints/community/id_1/graph"),
             FlowGraph.class
         );
 
@@ -107,7 +107,7 @@ class BlueprintControllerTest {
         );
 
         BlueprintController.BlueprintItemWithFlow blueprint = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints/id_1"),
+            HttpRequest.GET("/api/v1/blueprints/community/id_1"),
             BlueprintController.BlueprintItemWithFlow.class
         );
 
@@ -133,7 +133,7 @@ class BlueprintControllerTest {
         );
 
         List<BlueprintController.BlueprintTagItem> blueprintTags = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints/tags"),
+            HttpRequest.GET("/api/v1/blueprints/community/tags"),
             Argument.of(List.class, BlueprintController.BlueprintTagItem.class)
         );
 

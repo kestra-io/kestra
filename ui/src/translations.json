@@ -440,7 +440,8 @@
         "creation": "A Flow creation draft was retrieved, do you want to resume its edition ?",
         "existing": "A <code>{flowFullName}</code> Flow draft was retrieved, do you want to resume its edition ?"
       }
-    }
+    },
+    "title": "Title"
   },
   "fr": {
     "id": "Identifiant",
@@ -640,9 +641,9 @@
       "github": "Bugs GitHub"
     },
     "blueprints": {
-      "title": "Galerie de flows",
+      "title": "Blueprints",
       "header": {
-        "welcome": "Bienvenue dans la galerie de flows",
+        "welcome": "Bienvenue dans la galerie de blueprints !",
         "catch phrase": {
           "1": "La première étape est toujours la plus difficile.",
           "2": "Explorez les blueprints pour créer rapidement vos flows."
@@ -885,6 +886,7 @@
         "creation": "Un brouillon de création de Flow existe, voulez-vous reprendre son édition ?",
         "existing": "Un brouillon pour le Flow <code>{flowFullName}</code> existe, voulez-vous reprendre son édition?"
       }
-    }
+    },
+    "title": "Titre"
   }
 }

@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -76,6 +77,7 @@ import java.util.stream.Collectors;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Slf4j
 @Validated
 @Controller("/api/v1/")
 public class ExecutionController {
@@ -753,15 +755,9 @@ public class ExecutionController {
         }
 
         if (execution.getState().isPaused()) {
-            // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it
-            // An edge case can exist where the execution is resumed automatically before we resume it with a killing
-            var runningTaskRun = execution.findFirstByState(State.Type.PAUSED).map(taskRun ->
-                taskRun.withState(State.Type.KILLING)
-            );
-            runningTaskRun.ifPresent(throwConsumer(taskRun -> {
-                var unpausedExecution = execution.withTaskRun(taskRun).withState(State.Type.KILLING);
-                executionQueue.emit(unpausedExecution);
-            }));
+            // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
+            // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
+            this.executionService.resume(execution, State.Type.KILLING);
             return HttpResponse.noContent();
         }
 
@@ -792,13 +788,8 @@ public class ExecutionController {
             throw new IllegalStateException("Execution is not paused, can't resume it");
         }
 
-        var runningTaskRun = execution.findFirstByState(State.Type.PAUSED).map(taskRun ->
-            taskRun.withState(State.Type.RUNNING)
-        );
-        runningTaskRun.ifPresent(throwConsumer(taskRun -> {
-            var unpausedExecution = execution.withTaskRun(taskRun).withState(State.Type.RUNNING);
-            executionQueue.emit(unpausedExecution);
-        }));
+        this.executionService.resume(execution, State.Type.RUNNING);
+
         return HttpResponse.noContent();
     }
 
@@ -846,11 +837,21 @@ public class ExecutionController {
         }
 
         executions.forEach(execution -> {
-            killQueue.emit(ExecutionKilled
-                .builder()
-                .executionId(execution.getId())
-                .build()
-            );
+            if (execution.getState().isPaused()) {
+                // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
+                // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
+                try {
+                    this.executionService.resume(execution, State.Type.KILLING);
+                } catch (InternalException e) {
+                    log.warn("Unable to kill the paused execution {}, ignoring it", execution.getId(), e);
+                }
+            } else {
+                killQueue.emit(ExecutionKilled
+                    .builder()
+                    .executionId(execution.getId())
+                    .build()
+                );
+            }
         });
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());

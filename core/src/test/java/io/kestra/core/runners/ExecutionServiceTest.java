@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -275,5 +277,29 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories(), hasSize(4));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void resumePausedToRunning() throws TimeoutException, InternalException {
+        Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause");
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+
+        Execution resume = executionService.resume(execution, State.Type.RUNNING).get();
+
+        assertThat(resume.getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(resume.getState().getHistories(), hasSize(4));
+    }
+
+    @Test
+    void resumePausedToKilling() throws TimeoutException, InternalException {
+        Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause");
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+
+        Execution resume = executionService.resume(execution, State.Type.KILLING).get();
+
+        assertThat(resume.getState().getCurrent(), is(State.Type.KILLING));
+        assertThat(resume.getState().getHistories(), hasSize(4));
     }
 }

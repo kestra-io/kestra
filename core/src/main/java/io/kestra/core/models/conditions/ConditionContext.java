@@ -22,6 +22,7 @@ public class ConditionContext {
 
     private Execution execution;
 
+    @With
     @NotNull
     private RunContext runContext;
 

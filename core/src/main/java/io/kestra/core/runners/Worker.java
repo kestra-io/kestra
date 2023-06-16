@@ -3,18 +3,29 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.schedulers.AbstractScheduler;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Synchronized;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.Timeout;
@@ -55,6 +66,9 @@ public class Worker implements Runnable, Closeable {
     private final ApplicationContext applicationContext;
     private final WorkerTaskQueueInterface workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    private final QueueInterface<WorkerTrigger> workerTriggerQueue;
+    private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final QueueInterface<MetricEntry> metricEntryQueue;
     private final MetricRegistry metricRegistry;
@@ -77,6 +91,14 @@ public class Worker implements Runnable, Closeable {
         this.workerTaskResultQueue = (QueueInterface<WorkerTaskResult>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
+        );
+        this.workerTriggerQueue = (QueueInterface<WorkerTrigger>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGER_NAMED)
+        );
+        this.workerTriggerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
         );
         this.executionKilledQueue = (QueueInterface<ExecutionKilled>) applicationContext.getBean(
             QueueInterface.class,
@@ -146,6 +168,51 @@ public class Worker implements Runnable, Closeable {
                         throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
                     }
                 });
+            }
+        );
+
+        this.workerTriggerQueue.receive(
+            workerTrigger -> {
+                this.metricRegistry
+                    .timer(MetricRegistry.METRIC_WORKER_EVALUATE_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
+                    .record(() -> {
+                        try {
+                            PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
+                            RunContext runContext = workerTrigger.getConditionContext()
+                                .getRunContext()
+                                .forWorker(this.applicationContext, workerTrigger);
+                            Optional<Execution> evaluate = pollingTrigger.evaluate(
+                                workerTrigger.getConditionContext().withRunContext(runContext),
+                                workerTrigger.getTriggerContext()
+                            );
+                            if (log.isDebugEnabled() && evaluate.isEmpty()) {
+                                log.trace("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
+                                    workerTrigger.getFlow().getNamespace(),
+                                    workerTrigger.getFlow().getId(),
+                                    workerTrigger.getTriggerContext().getDate()
+                                );
+                            }
+                            workerTrigger.getConditionContext().getRunContext().cleanup();
+
+                            this.workerTriggerResultQueue.emit(
+                                WorkerTriggerResult.builder()
+                                    .execution(evaluate)
+                                    .triggerContext(workerTrigger.getTriggerContext())
+                                    .trigger(workerTrigger.getTrigger())
+                                    .build()
+                            );
+                        } catch (Exception e) {
+                            logError(workerTrigger, e);
+                            this.workerTriggerResultQueue.emit(
+                                WorkerTriggerResult.builder()
+                                    .success(false)
+                                    .triggerContext(workerTrigger.getTriggerContext())
+                                    .trigger(workerTrigger.getTrigger())
+                                    .build()
+                            );
+                        }
+                    }
+                );
             }
         );
     }
@@ -317,6 +384,24 @@ public class Worker implements Runnable, Closeable {
             workerTask.getTaskRun().getState().getCurrent(),
             workerTask.getTaskRun().getState().humanDuration()
         );
+    }
+
+    private void  logError(WorkerTrigger workerTrigger, Throwable e) {
+        Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
+
+        logger.warn(
+            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
+            workerTrigger.getFlow().getNamespace(),
+            workerTrigger.getFlow().getId(),
+            workerTrigger.getTriggerContext().getTriggerId(),
+            workerTrigger.getTriggerContext().getDate(),
+            e.getMessage(),
+            e
+        );
+
+        if (logger.isTraceEnabled()) {
+            logger.trace(Throwables.getStackTraceAsString(e));
+        }
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
@@ -561,4 +646,28 @@ public class Worker implements Runnable, Closeable {
         }
     }
 
+    @SuperBuilder(toBuilder = true)
+    @Getter
+    @NoArgsConstructor
+    private static class FlowWithPollingTrigger {
+        private Flow flow;
+        private AbstractTrigger trigger;
+        private PollingTriggerInterface pollingTrigger;
+        private TriggerContext triggerContext;
+        private ConditionContext conditionContext;
+
+        public FlowWithPollingTrigger from(Flow flow) throws InternalException {
+            AbstractTrigger abstractTrigger = flow.getTriggers()
+                .stream()
+                .filter(a -> a.getId().equals(this.trigger.getId()))
+                .findFirst()
+                .orElseThrow(() -> new InternalException("Couldn't find the trigger '" + this.trigger.getId() + "' on flow '" + flow.uid() + "'"));
+
+            return this.toBuilder()
+                .flow(flow)
+                .trigger(abstractTrigger)
+                .pollingTrigger((PollingTriggerInterface) abstractTrigger)
+                .build();
+        }
+    }
 }

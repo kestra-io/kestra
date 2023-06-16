@@ -55,6 +55,20 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
+    @Named(QueueFactoryInterface.WORKERTRIGGER_NAMED)
+    public QueueInterface<WorkerTrigger> workerTrigger() {
+        return new MysqlQueue<>(WorkerTrigger.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
+    public QueueInterface<WorkerTriggerResult> workerTriggerResult() {
+        return new MysqlQueue<>(WorkerTriggerResult.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     public QueueInterface<LogEntry> logEntry() {
         return new MysqlQueue<>(LogEntry.class, applicationContext);

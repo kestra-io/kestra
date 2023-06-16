@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -82,6 +83,10 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
             .when(executionRepositorySpy)
             .findById(any());
+
+        // start the worker as it execute polling triggers
+        Worker worker = new Worker(applicationContext, 8, null);
+        worker.run();
 
         // scheduler
         try (AbstractScheduler scheduler = new DefaultScheduler(

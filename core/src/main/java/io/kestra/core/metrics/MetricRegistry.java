@@ -23,6 +23,7 @@ public class MetricRegistry {
     public final static String METRIC_WORKER_TIMEOUT_COUNT = "worker.timeout.count";
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
     public final static String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
+    public final static String METRIC_WORKER_EVALUATE_DURATION = "worker.evaluate.duration";
 
     public final static String EXECUTOR_TASKRUN_NEXT_COUNT = "executor.taskrun.next.count";
     public final static String EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";

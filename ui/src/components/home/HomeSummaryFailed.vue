@@ -9,7 +9,7 @@
             :restore-url="false"
             :statuses="['FAILED', 'KILLED', 'WARNING']"
             :embed="true"
-            :hidden="['id', 'state.endDate', 'triggers', 'selection']"
+            :hidden="['id', 'state.endDate', 'triggers', 'selection', 'labels']"
         />
     </el-card>
 </template>

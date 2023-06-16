@@ -2,7 +2,7 @@
     <el-card>
         <div class="vueflow">
             <LowCodeEditor
-                v-if="flow"
+                v-if="flow && flowGraph"
                 :flow-id="flow.id"
                 :namespace="flow.namespace"
                 :flow-graph="flowGraph"

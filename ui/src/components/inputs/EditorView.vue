@@ -366,11 +366,15 @@
     }
 
     const generateGraph = () => {
-        lowCodeEditorRef.value.generateGraph();
+        if (props.flowGraph) {
+            lowCodeEditorRef.value.generateGraph();
+        }
     }
 
     const regenerateGraph = () => {
-        lowCodeEditorRef.value.regenerateGraph();
+        if (props.flowGraph) {
+            lowCodeEditorRef.value.regenerateGraph();
+        }
     }
 
     const loadingState = (value) => {
@@ -636,11 +640,12 @@
             @restartGuidedTour="() => persistViewType('source')"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <Blueprints v-if="viewType === 'source-blueprints'" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info/>
+        <Blueprints v-if="viewType === 'source-blueprints'" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
         <div
             :class="viewType === 'source-topology' ? 'combined-right-view' : viewType === 'topology' ? 'vueflow': 'hide-view'"
         >
             <LowCodeEditor
+                v-if="flowGraph"
                 ref="lowCodeEditorRef"
                 @follow="forwardEvent('follow', $event)"
                 @on-edit="onEdit"

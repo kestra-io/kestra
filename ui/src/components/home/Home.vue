@@ -208,7 +208,17 @@
                 return _merge(base, queryFilter)
             },
             haveExecutions() {
-                this.$store.dispatch("execution/findExecutions", {limit: 1})
+                let params = {
+                    size: 1
+                };
+                if (this.selectedNamespace) {
+                    params["namespace"] = this.selectedNamespace;
+                }
+
+                if (this.flowId) {
+                    params["flowId"] = this.flowId;
+                }
+                this.$store.dispatch("execution/findExecutions", params )
                     .then(executions => {
                         this.executionCounts = executions.total;
                     });
@@ -301,13 +311,13 @@
                 if (this.executionCounts > 0) {
                     return true
                 }
-
                 // not flow home
                 if (!this.flowId) {
                     if (!this.$route.query.namespace && this.executionCounts === 0) {
                         return false;
                     }
-                } else if (this.executionCounts === 0) {
+                }
+                if (this.executionCounts === 0) {
                     return false;
                 }
 

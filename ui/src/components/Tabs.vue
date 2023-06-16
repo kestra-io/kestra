@@ -51,13 +51,13 @@
             $route() {
                 this.setActiveName();
             },
-            activeName() {
+            activeTab() {
                 this.$nextTick(() => {
                     this.setActiveName();
                 });
             }
         },
-        created() {
+        mounted() {
             this.setActiveName();
         },
         methods: {

@@ -16,7 +16,7 @@
             v-if="inputVisible"
             ref="input"
             v-model="inputValue"
-            placeholder="Label as 'key:value'"
+            :placeholder="$t('label filter placeholder')"
             @keyup.enter="handleInputConfirm"
             @blur="handleInputConfirm"
         >
@@ -26,7 +26,7 @@
         </el-input>
 
         <el-button v-else @click="showInput">
-            <plus /> Label
+            <plus /> {{ $t('label') }}
         </el-button>
     </div>
   </template>

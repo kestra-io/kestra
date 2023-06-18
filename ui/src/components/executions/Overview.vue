@@ -30,7 +30,7 @@
                         <duration :histories="scope.row.value" />
                     </span>
                     <span v-else-if="scope.row.key === $t('labels')">
-                        <labels :labels="scope.row.value" :filterEnabled="false" />
+                        <labels :labels="scope.row.value" :filter-enabled="false" />
                     </span>
                     <span v-else>
                         <span v-if="scope.row.key === $t('revision')">

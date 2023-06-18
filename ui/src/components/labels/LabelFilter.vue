@@ -67,6 +67,13 @@
                 labels: this.value.slice()
             }
         },
+        watch: {
+            value: {
+                handler (newValue, _) {
+                    this.labels = newValue.slice();
+                }
+            }
+        },
         methods: {
             handleClose(tag) {
                 this.labels.splice(this.labels.indexOf(tag), 1);
@@ -90,6 +97,6 @@
                 this.inputVisible = false;
                 this.inputValue = "";
             }
-      }
+        }
     };
 </script>

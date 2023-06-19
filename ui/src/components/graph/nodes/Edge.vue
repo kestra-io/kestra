@@ -106,11 +106,11 @@
 
     const path = computed(() => getSmoothStepPath(props))
 
-    const onMouseOver = (edge) => {
+    const onMouseOver = () => {
         isHover.value = true;
     }
 
-    const onMouseLeave = (edge) => {
+    const onMouseLeave = () => {
         isHover.value = false;
     }
 
@@ -118,7 +118,7 @@
         taskYaml.value = task;
         clearTimeout(timer.value);
         timer.value = setTimeout(() => {
-            store.dispatch("flow/validateTask", {task: task})
+            store.dispatch("flow/validateTask", {task: task, section: SECTIONS.TASKS})
         }, 500);
     }
 
@@ -142,7 +142,7 @@
     }
 
     const taskHaveId = () => {
-        return taskYaml.value.length > 0 ? YamlUtils.parse(taskYaml.value).id ? true : false : false;
+        return taskYaml.value.length > 0 ? !!YamlUtils.parse(taskYaml.value).id : false;
     }
 
     const checkTaskExist = () => {

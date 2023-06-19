@@ -20,9 +20,9 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import YamlUtils from "../../utils/yamlUtils";
-    import taskEditor from "../flows/TaskEditor.vue";
-    import metadataEditor from "../flows/MetadataEditor.vue";
-    import editor from "./Editor.vue";
+    import TaskEditor from "../flows/TaskEditor.vue";
+    import MetadataEditor from "../flows/MetadataEditor.vue";
+    import Editor from "./Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import {SECTIONS} from "../../utils/constants.js";
@@ -163,22 +163,9 @@
     }
 
     const initYamlSource = async () => {
-        flowYaml.value = props.flow ? props.flow.source : YamlUtils.stringify({
-            id: props.flowId,
-            namespace: props.namespace
-        });
+        flowYaml.value = props.flow.source;
 
-        if(!props.isCreating && !props.isReadOnly) {
-            const validation = await store.dispatch("flow/validateFlow", {flow: flowYaml.value});
-            const validationErrors = validation[0].constraints;
-            if (validationErrors) {
-                singleErrorToast(t("cannot create topology"), t("invalid flow"), validationErrors);
-            }else {
-                generateGraph();
-            }
-        } else {
-            generateGraph();
-        }
+        await generateGraph();
 
         if(!props.isReadOnly) {
             let restoredLocalStorageKey;
@@ -204,9 +191,6 @@
     }
 
     onMounted(async () => {
-        if (props.isCreating) {
-            store.commit("flow/setFlowGraph", undefined);
-        }
         await initYamlSource();
         // Save on ctrl+s in topology
         document.addEventListener("keydown", save);
@@ -343,6 +327,16 @@
         persistEditorContent(false);
     }
 
+    const fetchGraph = async (yaml) => {
+        await store.dispatch("flow/loadGraphFromSource", {
+            flow: yaml, config: {
+                validateStatus: (status) => {
+                    return status === 200 || status === 422;
+                }
+            }
+        })
+    }
+
     const onEdit = (event) => {
         flowYaml.value = event;
         haveChange.value = true;
@@ -350,30 +344,17 @@
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
                 if (flowHaveTasks() && ["topology", "source-topology"].includes(viewType.value)) {
-                    store.dispatch("flow/loadGraphFromSource", {
-                        flow: event, config: {
-                            validateStatus: (status) => {
-                                return status === 200 || status === 422;
-                            }
-                        }
-                    })
-                } else {
-                    regenerateGraph();
+                    generateGraph()
                 }
 
                 return value;
             });
     }
 
-    const generateGraph = () => {
+    const generateGraph = async () => {
+        await fetchGraph(flowYaml.value);
         if (props.flowGraph) {
             lowCodeEditorRef.value.generateGraph();
-        }
-    }
-
-    const regenerateGraph = () => {
-        if (props.flowGraph) {
-            lowCodeEditorRef.value.regenerateGraph();
         }
     }
 
@@ -821,7 +802,7 @@
                     @click="save"
                     v-if="isAllowedEdit"
                     :type="flowError ? 'danger' : 'primary'"
-                    :disabled="!haveChange"
+                    :disabled="!haveChange && !isCreating"
                     class="edit-flow-save-button"
                 >
                     {{ $t("save") }}

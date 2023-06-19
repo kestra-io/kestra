@@ -106,16 +106,6 @@ export default (callback, store, router) => {
                 (window.location.search ?? "")}`
             }
 
-            if (errorResponse.response.status === 401 &&
-                store.getters["auth/isLogged"] &&
-                !store.getters["auth/user"].hasAnyPermission() &&
-                router.currentRoute.name !== "errors/401"
-            ) {
-                router.push({name: "errors/401"});
-
-                return Promise.reject(errorResponse);
-            }
-
             // Authentication expired
             if (errorResponse.response.status === 401 &&
                 store.getters["auth/isLogged"]) {

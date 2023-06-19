@@ -149,19 +149,11 @@ public class RetryUtils {
         private RetryPolicy<T> toPolicy(AbstractRetry abstractRetry) {
             RetryPolicy<T> retryPolicy = abstractRetry.toPolicy();
             Logger currentLogger = this.logger != null ? this.logger : log;
-            String method = "";
 
-            if (Thread.currentThread().getStackTrace().length > 4) {
-                method = " [class '" + Thread.currentThread().getStackTrace()[3].getClassName() + "'" +
-                    ", method '" + Thread.currentThread().getStackTrace()[3].getMethodName() + "'" +
-                    " on line '" + Thread.currentThread().getStackTrace()[3].getLineNumber() + "']";
-            }
-
-            String finalMethod = method;
             retryPolicy
                 .onFailure(event -> currentLogger.warn(
                     "Stop retry{}, elapsed {} and {} attempts",
-                    finalMethod,
+                    finalMethod(),
                     event.getElapsedTime().truncatedTo(ChronoUnit.SECONDS),
                     event.getAttemptCount(),
                     event.getFailure()
@@ -169,13 +161,22 @@ public class RetryUtils {
                 .onRetry(event -> {
                     currentLogger.info(
                         "Retrying{}, elapsed {} and {} attempts",
-                        finalMethod,
+                        finalMethod(),
                         event.getElapsedTime().truncatedTo(ChronoUnit.SECONDS),
                         event.getAttemptCount()
                     );
                 });
 
             return retryPolicy;
+        }
+
+        private Object finalMethod() {
+            if (Thread.currentThread().getStackTrace().length > 4) {
+                return " [class '" + Thread.currentThread().getStackTrace()[3].getClassName() + "'" +
+                    ", method '" + Thread.currentThread().getStackTrace()[3].getMethodName() + "'" +
+                    " on line '" + Thread.currentThread().getStackTrace()[3].getLineNumber() + "']";
+            }
+            return "";
         }
     }
 

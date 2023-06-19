@@ -12,9 +12,18 @@ import org.jooq.impl.DSL;
 import java.util.List;
 import java.util.Map;
 
+import static org.jooq.impl.DSL.*;
+
 public class PostgresQueue<T> extends JdbcQueue<T> {
+    private boolean disableSeqScan = false;
+
     public PostgresQueue(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
+
+        var maybeDisableSeScan = applicationContext.getProperty("kestra.queue.postgres.disable-seq-scan", Boolean.class);
+        if (maybeDisableSeScan.isPresent() && maybeDisableSeScan.get()) {
+            disableSeqScan = true;
+        }
     }
 
     @Override
@@ -65,6 +74,10 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
     @Override
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
+        if (disableSeqScan) {
+            ctx.setLocal(name("enable_seqscan"), val("off")).execute();
+        }
+
         var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")

@@ -1,22 +1,36 @@
 <template>
     <div v-loading="!blueprint">
         <template v-if="blueprint">
-            <div class="header">
-                <button class="back-button">
-                    <el-icon size="medium" @click="goBack">
-                        <KeyboardBackspace />
-                    </el-icon>
-                </button>
-                <h4 class="blueprint-title">
-                    {{ blueprint.title }}
-                </h4>
-                <div class="ms-auto">
-                    <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
-                        <el-button size="large" v-if="!embed">
-                            {{ $t('use') }}
-                        </el-button>
-                    </router-link>
+            <div class="header-wrapper">
+                <div class="header d-flex">
+                    <button class="back-button align-self-center">
+                        <el-icon size="medium" @click="goBack">
+                            <KeyboardBackspace />
+                        </el-icon>
+                    </button>
+                    <h4 class="blueprint-title align-self-center">
+                        {{ blueprint.title }}
+                    </h4>
+                    <div class="ms-auto align-self-center">
+                        <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
+                            <el-button size="large" v-if="!embed">
+                                {{ $t('use') }}
+                            </el-button>
+                        </router-link>
+                    </div>
                 </div>
+                <el-breadcrumb v-if="!embed">
+                    <el-breadcrumb-item>
+                        <router-link :to="{name: 'home'}">
+                            <home-outline /> {{ $t('home') }}
+                        </router-link>
+                    </el-breadcrumb-item>
+                    <el-breadcrumb-item>
+                        <router-link :to="{name: 'blueprints', params: $route.params}">
+                            {{ $t('blueprints.title') }}
+                        </router-link>
+                    </el-breadcrumb-item>
+                </el-breadcrumb>
             </div>
 
             <div class="blueprint-container">
@@ -60,6 +74,7 @@
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from "../../plugins/TaskIcon.vue";
+    import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
 </script>
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
@@ -129,25 +144,27 @@
 <style scoped lang="scss">
     @import "../../../styles/variable";
 
-    .header {
-        display: flex;
+    .header-wrapper {
+        margin-bottom: $spacer;
 
-        > * {
-            margin-top: auto;
-            margin-bottom: auto;
-        }
+        .header {
+            margin-bottom: calc(var(--spacer) * 0.5);
 
-        .back-button {
-            cursor: pointer;
-            padding: $spacer;
-            height: calc(1em + (var(--spacer) * 2));
-            width: calc(1em + (var(--spacer) * 2));
-            border: none;
-            background: none;
-        }
+            > * {
+                margin: 0;
+            }
 
-        .blueprint-title {
-            font-weight: bold;
+            .back-button {
+                cursor: pointer;
+                height: calc(1em + (var(--spacer) * 2));
+                width: calc(1em + (var(--spacer) * 2));
+                border: none;
+                background: none;
+            }
+
+            .blueprint-title {
+                font-weight: bold;
+            }
         }
     }
 

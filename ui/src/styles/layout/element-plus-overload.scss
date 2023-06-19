@@ -641,3 +641,39 @@ form.ks-horizontal {
         border-bottom-color: var(--bs-border-color);
     }
 }
+
+.el-breadcrumb {
+    display: flex !important;
+
+    a {
+        font-weight: normal !important;
+        color: var(--bs-gray-500) !important;
+        white-space: nowrap !important;
+    }
+
+    .el-breadcrumb__separator {
+        color: var(--bs-gray-500) !important;
+    }
+
+    .el-breadcrumb__item {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        float: none !important;
+    }
+
+    .material-design-icon {
+        height: 0.75rem !important;
+        width: 0.75rem !important;
+        margin-right: calc(var(--spacer) / 2) !important;
+    }
+
+    a {
+        cursor: pointer !important;
+    }
+
+    html.dark & {
+        a, .el-breadcrumb__separator {
+            color: var(--bs-gray-700) !important;
+        }
+    }
+}

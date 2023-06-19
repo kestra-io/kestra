@@ -190,7 +190,7 @@
         },
         methods: {
             loadQuery(base, stats) {
-                let queryFilter = this.$route.query;
+                let queryFilter = _cloneDeep(this.$route.query);
 
                 if (stats) {
                     delete queryFilter["startDate"];
@@ -273,9 +273,17 @@
                 }
             },
             onNamespaceSelect(namespace) {
-                this.$router.push({
-                    query: {...this.$route.query, namespace}
-                });
+                if(namespace !== ""){
+                    this.$router.push({
+                        query: {...this.$route.query, namespace}
+                    });
+                } else {
+                    let query = _cloneDeep(this.$route.query);
+                    delete query["namespace"];
+                    this.$router.push({
+                        query: {...query}
+                    });
+                }
             },
             onDateChange(dates) {
                 if(dates.startDate && dates.endDate) {
@@ -283,12 +291,11 @@
                         query: {...this.$route.query, ...{startDate: dates.startDate, endDate: dates.endDate}}
                     });
                 } else {
+                    let query = _cloneDeep(this.$route.query);
+                    delete query["startDate"];
+                    delete query["endDate"];
                     this.$router.push({
-                        query: {...this.$route.query,
-                                ...{
-                                    startDate: null,
-                                    endDate: null
-                                }}
+                        query: {...query}
                     });
                 }
             }

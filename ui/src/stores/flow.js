@@ -217,6 +217,12 @@ export default {
         disableFlowByQuery(_, options) {
             return this.$http.post("/api/v1/flows/disable/by-query", options, {params: options})
         },
+        enableFlowByIds(_, options) {
+            return this.$http.post("/api/v1/flows/enable/by-ids", options.ids)
+        },
+        enableFlowByQuery(_, options) {
+            return this.$http.post("/api/v1/flows/enable/by-query", options, {params: options})
+        },
         deleteFlowByIds(_, options) {
             return this.$http.delete("/api/v1/flows/delete/by-ids", {data: options.ids})
         },

@@ -105,7 +105,7 @@
     })
 
     watch(() => props.flowGraph, () => {
-        regenerateGraph();
+        generateGraph();
     })
 
     // Event listeners & Watchers
@@ -113,7 +113,7 @@
         const resizeObserver = new ResizeObserver(function () {
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
-                regenerateGraph();
+                generateGraph();
                 nextTick(() => {
                     fitView()
                 })
@@ -258,7 +258,7 @@
             localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
         );
         isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
-        regenerateGraph();
+        generateGraph();
         fitView();
     };
 
@@ -370,171 +370,170 @@
         return target
     }
 
-    const generateGraph = () => {
-        emit("loading", true);
-        try {
-            if (!props.flowGraph || !flowHaveTasks()) {
-                elements.value.push({
-                    id: "start",
-                    label: "",
-                    type: "dot",
-                    position: {x: 0, y: 0},
-                    style: {
-                        width: "5px",
-                        height: "5px"
-                    },
-                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                    parentNode: undefined,
-                    draggable: false,
-                })
-                elements.value.push({
-                    id: "end",
-                    label: "",
-                    type: "dot",
-                    position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
-                    style: {
-                        width: "5px",
-                        height: "5px"
-                    },
-                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                    parentNode: undefined,
-                    draggable: false,
-                })
-                elements.value.push({
-                    id: "start|end",
-                    source: "start",
-                    target: "end",
-                    type: "edge",
-                    markerEnd: MarkerType.ArrowClosed,
-                    data: {
-                        edge: {
-                            relation: {
-                                relationType: "SEQUENTIAL"
-                            }
-                        },
-                        isFlowable: false,
-                        initTask: true,
-                    }
-                })
-
-                emit("loading", false);
-                return;
-            }
-            if (props.flowGraph === undefined) {
-
-                emit("loading", false);
-                return;
-            }
-            const dagreGraph = generateDagreGraph();
-            const clusters = {};
-            for (let cluster of (props.flowGraph.clusters || [])) {
-                for (let nodeUid of cluster.nodes) {
-                    clusters[nodeUid] = cluster.cluster;
-                }
-
-                const dagreNode = dagreGraph.node(cluster.cluster.uid)
-                const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
-
-                const clusterUid = cluster.cluster.uid;
-                elements.value.push({
-                    id: clusterUid,
-                    label: clusterUid,
-                    type: "cluster",
-                    parentNode: parentNode,
-                    position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
-                    style: {
-                        width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
-                        height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
-                    },
-                })
-            }
-
-            let disabledLowCode = [];
-
-            for (const node of props.flowGraph.nodes) {
-                const dagreNode = dagreGraph.node(node.uid);
-                let nodeType = "task";
-                if (node.type.includes("GraphClusterEnd")) {
-                    nodeType = "dot";
-                } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
-                    nodeType = "dot";
-                } else if (node.type.includes("GraphClusterRoot")) {
-                    nodeType = "dot";
-                } else if (node.type.includes("GraphTrigger")) {
-                    nodeType = "trigger";
-                }
-                // Disable interaction for Dag task
-                // because our low code editor can not handle it for now
-                if (isTaskNode(node) && node.task.type === "io.kestra.core.tasks.flows.Dag") {
-                    disabledLowCode.push(node.task.id);
-                    YamlUtils.getChildrenTasks(props.source, node.task.id).forEach(child => {
-                        disabledLowCode.push(child);
-                    })
-                }
-
-                elements.value.push({
-                    id: node.uid,
-                    label: isTaskNode(node) ? node.task.id : "",
-                    type: nodeType,
-                    position: getNodePosition(dagreNode, clusters[node.uid] ? dagreGraph.node(clusters[node.uid].uid) : undefined),
-                    style: {
-                        width: getNodeWidth(node) + "px",
-                        height: getNodeHeight(node) + "px"
-                    },
-                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                    parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
-                    draggable: nodeType === "task" && !props.isReadOnly && isTaskNode(node) ? !disabledLowCode.includes(node.task.id) : false,
-                    data: {
-                        node: node,
-                        namespace: props.namespace,
-                        flowId: props.flowId,
-                        revision: props.execution ? props.execution.flowRevision : undefined,
-                        isFlowable: isTaskNode(node) ? flowables().includes(node.task.id) : false
-                    },
-                })
-            }
-
-            for (const edge of props.flowGraph.edges) {
-                elements.value.push({
-                    id: edge.source + "|" + edge.target,
-                    source: edge.source,
-                    target: edge.target,
-                    type: "edge",
-                    markerEnd: MarkerType.ArrowClosed,
-                    data: {
-                        edge: edge,
-                        haveAdd: complexEdgeHaveAdd(edge),
-                        isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
-                        nextTaskId: getNextTaskId(edge.target),
-                        disabled: disabledLowCode.includes(edge.source)
-                    }
-                })
-            }
-        } catch (e) {
-            console.error("Error while creating topology graph: " + e);
-        }
-        finally {
-            emit("loading", false);
-        }
-    }
-
-    const regenerateGraph = () => {
+    const cleanGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
         removeSelectedElements(getElements.value)
         elements.value = []
+    }
+
+    const generateGraph = () => {
+        cleanGraph();
+
         nextTick(() => {
-            generateGraph();
+            emit("loading", true);
+            try {
+                if (!props.flowGraph || !flowHaveTasks()) {
+                    elements.value.push({
+                        id: "start",
+                        label: "",
+                        type: "dot",
+                        position: {x: 0, y: 0},
+                        style: {
+                            width: "5px",
+                            height: "5px"
+                        },
+                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                        parentNode: undefined,
+                        draggable: false,
+                    })
+                    elements.value.push({
+                        id: "end",
+                        label: "",
+                        type: "dot",
+                        position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
+                        style: {
+                            width: "5px",
+                            height: "5px"
+                        },
+                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                        parentNode: undefined,
+                        draggable: false,
+                    })
+                    elements.value.push({
+                        id: "start|end",
+                        source: "start",
+                        target: "end",
+                        type: "edge",
+                        markerEnd: MarkerType.ArrowClosed,
+                        data: {
+                            edge: {
+                                relation: {
+                                    relationType: "SEQUENTIAL"
+                                }
+                            },
+                            isFlowable: false,
+                            initTask: true,
+                        }
+                    })
+
+                    emit("loading", false);
+                    return;
+                }
+                if (props.flowGraph === undefined) {
+                    emit("loading", false);
+                    return;
+                }
+                const dagreGraph = generateDagreGraph();
+                const clusters = {};
+                for (let cluster of (props.flowGraph.clusters || [])) {
+                    for (let nodeUid of cluster.nodes) {
+                        clusters[nodeUid] = cluster.cluster;
+                    }
+
+                    const dagreNode = dagreGraph.node(cluster.cluster.uid)
+                    const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
+
+                    const clusterUid = cluster.cluster.uid;
+                    elements.value.push({
+                        id: clusterUid,
+                        label: clusterUid,
+                        type: "cluster",
+                        parentNode: parentNode,
+                        position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
+                        style: {
+                            width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
+                            height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
+                        },
+                    })
+                }
+
+                let disabledLowCode = [];
+
+                for (const node of props.flowGraph.nodes) {
+                    const dagreNode = dagreGraph.node(node.uid);
+                    let nodeType = "task";
+                    if (node.type.includes("GraphClusterEnd")) {
+                        nodeType = "dot";
+                    } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
+                        nodeType = "dot";
+                    } else if (node.type.includes("GraphClusterRoot")) {
+                        nodeType = "dot";
+                    } else if (node.type.includes("GraphTrigger")) {
+                        nodeType = "trigger";
+                    }
+                    // Disable interaction for Dag task
+                    // because our low code editor can not handle it for now
+                    if (isTaskNode(node) && node.task.type === "io.kestra.core.tasks.flows.Dag") {
+                        disabledLowCode.push(node.task.id);
+                        YamlUtils.getChildrenTasks(props.source, node.task.id).forEach(child => {
+                            disabledLowCode.push(child);
+                        })
+                    }
+
+                    elements.value.push({
+                        id: node.uid,
+                        label: isTaskNode(node) ? node.task.id : "",
+                        type: nodeType,
+                        position: getNodePosition(dagreNode, clusters[node.uid] ? dagreGraph.node(clusters[node.uid].uid) : undefined),
+                        style: {
+                            width: getNodeWidth(node) + "px",
+                            height: getNodeHeight(node) + "px"
+                        },
+                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                        parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
+                        draggable: nodeType === "task" && !props.isReadOnly && isTaskNode(node) ? !disabledLowCode.includes(node.task.id) : false,
+                        data: {
+                            node: node,
+                            namespace: props.namespace,
+                            flowId: props.flowId,
+                            revision: props.execution ? props.execution.flowRevision : undefined,
+                            isFlowable: isTaskNode(node) ? flowables().includes(node.task.id) : false
+                        },
+                    })
+                }
+
+                for (const edge of props.flowGraph.edges) {
+                    elements.value.push({
+                        id: edge.source + "|" + edge.target,
+                        source: edge.source,
+                        target: edge.target,
+                        type: "edge",
+                        markerEnd: MarkerType.ArrowClosed,
+                        data: {
+                            edge: edge,
+                            haveAdd: complexEdgeHaveAdd(edge),
+                            isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
+                            nextTaskId: getNextTaskId(edge.target),
+                            disabled: disabledLowCode.includes(edge.source)
+                        }
+                    })
+                }
+            } catch (e) {
+                console.error("Error while creating topology graph: " + e);
+            }
+            finally {
+                emit("loading", false);
+            }
         })
     }
 
     // Expose method to be triggered by parents
     defineExpose({
-        generateGraph,
-        regenerateGraph
+        generateGraph
     })
 </script>
 

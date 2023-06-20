@@ -17,6 +17,12 @@
                             @update:model-value="onDataTableValue('namespace', $event)"
                         />
                     </el-form-item>
+                    <el-form-item>
+                        <label-filter
+                            :model-value="$route.query.labels"
+                            @update:model-value="onDataTableValue('labels', $event)"
+                        />
+                    </el-form-item>
                 </template>
 
                 <template #top>
@@ -185,6 +191,8 @@
     import Labels from "../layout/Labels.vue"
     import BottomLineCounter from "../layout/BottomLineCounter.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
+    import LabelFilter from "../labels/LabelFilter.vue";
+
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
@@ -200,7 +208,8 @@
             Kicon,
             Labels,
             BottomLineCounter,
-            Upload
+            Upload,
+            LabelFilter
         },
         data() {
             return {

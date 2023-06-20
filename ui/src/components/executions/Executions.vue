@@ -27,6 +27,12 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <label-filter
+                        :model-value="$route.query.labels"
+                        @update:model-value="onDataTableValue('labels', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" />
                 </el-form-item>
             </template>
@@ -83,17 +89,17 @@
 
                     <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
-                    <el-table-column v-if="!hidden.includes('labels')" :label="$t('labels')">
-                        <template #default="scope">
-                            <labels :labels="scope.row.labels" />
-                        </template>
-                    </el-table-column>
-
                     <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
                         <template #default="scope">
                             <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
                                 {{ $filters.invisibleSpace(scope.row.flowId) }}
                             </router-link>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column v-if="!hidden.includes('labels')" :label="$t('labels')">
+                        <template #default="scope">
+                            <labels :labels="scope.row.labels" />
                         </template>
                     </el-table-column>
 
@@ -173,6 +179,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import LabelFilter from "../labels/LabelFilter.vue";
     import DateRange from "../layout/DateRange.vue";
     import RefreshButton from "../layout/RefreshButton.vue"
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
@@ -199,6 +206,7 @@
             DataTable,
             SearchField,
             NamespaceSelect,
+            LabelFilter,
             DateRange,
             RefreshButton,
             StatusFilterButtons,

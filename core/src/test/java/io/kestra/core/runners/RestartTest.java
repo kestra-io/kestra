@@ -1,9 +1,7 @@
 package io.kestra.core.runners;
 
-import org.junit.jupiter.api.Test;
-
 import jakarta.inject.Inject;
-import org.junitpioneer.jupiter.RetryingTest;
+import org.junit.jupiter.api.Test;
 
 public class RestartTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -14,12 +12,12 @@ public class RestartTest extends AbstractMemoryRunnerTest {
         restartCaseTest.restartFailedThenSuccess();
     }
 
-    @RetryingTest(5)
+    @Test
     void restartFailedThenFailureWithGlobalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithGlobalErrors();
     }
 
-    @RetryingTest(5)
+    @Test
     void restartFailedThenFailureWithLocalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithLocalErrors();
     }

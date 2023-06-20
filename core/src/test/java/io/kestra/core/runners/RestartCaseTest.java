@@ -87,7 +87,7 @@ public class RestartCaseTest {
 
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getState().getCurrent() == State.Type.FAILED,
+            execution -> execution.getState().getCurrent() == State.Type.FAILED && execution.getTaskRunList().get(0).getAttempts().size() == 2,
             throwRunnable(() -> {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);
@@ -122,7 +122,7 @@ public class RestartCaseTest {
 
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getState().getCurrent() == State.Type.FAILED,
+            execution -> execution.getState().getCurrent() == State.Type.FAILED && execution.findTaskRunsByTaskId("failStep").stream().findFirst().get().getAttempts().size() == 2,
             throwRunnable(() -> {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);

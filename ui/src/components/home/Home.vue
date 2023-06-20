@@ -112,6 +112,7 @@
                     </router-link>
                 </el-row>
             </el-card>
+            <home-trigger v-if="flow?.triggers" :triggers="flow.triggers" class="mb-4" />
             <onboarding-bottom v-if="!flowId" />
         </div>
     </div>

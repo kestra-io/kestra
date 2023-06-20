@@ -39,3 +39,8 @@
         }
     };
 </script>
+<style lang="scss">
+    .el-card {
+        margin-top: var(--spacer);
+    }
+</style>

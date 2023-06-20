@@ -302,7 +302,7 @@
                     "# " + this.$t("onboarding-flow.onboardComment1") + "\n" +
                         "# " + this.$t("onboarding-flow.onboardComment2") + "\n" +
                         "id: welcomeKestra" + "\n" +
-                        "namespace: demo" + "\n" +
+                        "namespace: io.kestra.tour\n" +
                         "description: Welcome to Kestra!" + "\n",
                     "# " + this.$t("onboarding-flow.inputs") + "\n" +
                         "inputs:" + "\n" +

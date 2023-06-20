@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.services.WorkerGroupService;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
 import lombok.Synchronized;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
+@Introspected
 public class Worker implements Runnable, Closeable {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 

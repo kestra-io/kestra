@@ -191,13 +191,18 @@ public class Worker implements Runnable, Closeable {
                                     workerTrigger.getConditionContext().withRunContext(runContext),
                                     workerTrigger.getTriggerContext()
                                 );
-                                if (log.isDebugEnabled() && evaluate.isEmpty()) {
-                                    log.debug("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
+
+                                if (log.isDebugEnabled()) {
+                                    log.debug(
+                                        "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
                                         workerTrigger.getFlow().getNamespace(),
                                         workerTrigger.getFlow().getId(),
-                                        workerTrigger.getTriggerContext().getDate()
+                                        workerTrigger.getTrigger().getId(),
+                                        workerTrigger.getTrigger().getType(),
+                                        evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
                                     );
                                 }
+
                                 workerTrigger.getConditionContext().getRunContext().cleanup();
 
                                 this.workerTriggerResultQueue.emit(
@@ -217,6 +222,7 @@ public class Worker implements Runnable, Closeable {
                                         .build()
                                 );
                             }
+
                             this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
                         }
                     );

@@ -12,7 +12,6 @@ import javax.validation.constraints.NotNull;
 @Data
 @Builder
 public class WorkerTrigger {
-
     @NotNull
     private AbstractTrigger trigger;
 

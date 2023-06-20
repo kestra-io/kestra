@@ -74,42 +74,6 @@
                     color: var(--bs-white);
                 }
             }
-
-            :deep(.el-breadcrumb) {
-                display: flex;
-
-                a {
-                    font-weight: normal;
-                    color: var(--bs-gray-500);
-                    white-space: nowrap;
-                }
-
-                .el-breadcrumb__separator {
-                    color: var(--bs-gray-500);
-                }
-
-                .el-breadcrumb__item {
-                    display: flex;
-                    flex-wrap: nowrap;
-                    float: none;
-                }
-
-                .material-design-icon {
-                    height: 0.75rem;
-                    width: 0.75rem;
-                    margin-right: calc(var(--spacer) / 2);
-                }
-
-                a {
-                    cursor: pointer !important;
-                }
-
-                html.dark & {
-                    a, .el-breadcrumb__separator {
-                        color: var(--bs-gray-700);
-                    }
-                }
-            }
         }
 
         .side {

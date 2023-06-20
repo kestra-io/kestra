@@ -29,6 +29,9 @@
                     <span v-else-if="scope.row.duration">
                         <duration :histories="scope.row.value" />
                     </span>
+                    <span v-else-if="scope.row.key === $t('labels')">
+                        <labels :labels="scope.row.value" :filter-enabled="false" />
+                    </span>
                     <span v-else>
                         <span v-if="scope.row.key === $t('revision')">
                             <router-link
@@ -67,6 +70,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
+    import Labels from "../layout/Labels.vue"
 
     export default {
         components: {
@@ -76,6 +80,7 @@
             Vars,
             Kill,
             DateAgo,
+            Labels,
             Crud
         },
         emits: ["follow"],
@@ -120,6 +125,7 @@
                         key: this.$t("revision"),
                         value: this.execution.flowRevision
                     },
+                    {key: this.$t("labels"), value: this.execution.labels},
                     {key: this.$t("created date"), value: this.execution.state.histories[0].date, date: true},
                     {key: this.$t("updated date"), value: this.stop(), date: true},
                     {key: this.$t("duration"), value: this.execution.state.histories, duration: true},

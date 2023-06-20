@@ -83,6 +83,12 @@
 
                     <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
+                    <el-table-column v-if="!hidden.includes('labels')" :label="$t('labels')">
+                        <template #default="scope">
+                            <labels :labels="scope.row.labels" />
+                        </template>
+                    </el-table-column>
+
                     <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
                         <template #default="scope">
                             <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
@@ -174,6 +180,7 @@
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
+    import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
     import Id from "../Id.vue";
@@ -199,6 +206,7 @@
             TriggerAvatar,
             DateAgo,
             Kicon,
+            Labels,
             Id,
             BottomLine,
             BottomLineCounter,

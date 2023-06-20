@@ -4,7 +4,7 @@
         <el-tag
             v-for="(value, key) in labels"
             :key="key"
-            :type="checked(key) ? 'primary' : ''"
+            :type="checked(key) ? 'info' : ''"
             class="me-1 labels"
             size="small"
             disable-transitions
@@ -73,6 +73,10 @@
     :deep(.el-tag) {
         & a, span {
             color: var(--bs-white);
+        }
+
+        &.el-tag--info {
+            background: var(--bs-primary);
         }
     }
 </style>

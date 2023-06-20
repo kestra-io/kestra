@@ -321,9 +321,7 @@
                     if (this.logsToOpen.includes(taskRun.state.current)) {
                         const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
                         this.showLogs.push(`${taskRun.id}-${attemptNumber}`)
-                        if(this.$refs[`${taskRun.id}-${attemptNumber}`]) {
-                            this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
-                        }
+                        this?.$refs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
                     }
                 });
             },
@@ -331,11 +329,9 @@
                 if (this.logsToOpen.includes(this.execution.state.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
-                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : this.attempt ? this.attempt : 0
+                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.attempt ?? 0)
                             if (this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
-                                if(this.$refs[`${taskRun.id}-${attemptNumber}`]) {
-                                    this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
-                                }
+                                this?.$refs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
                             }
                         }
                     });
@@ -437,7 +433,7 @@
                 }
             },
             attempts(taskRun) {
-                return this.execution.state.current === State.RUNNING ?  taskRun.attempts : [taskRun.attempts[this.attempt]] ;
+                return this.execution.state.current === State.RUNNING ? taskRun.attempts : [taskRun.attempts[this.attempt]] ;
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {

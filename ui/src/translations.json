@@ -336,15 +336,15 @@
       },
       "step6": {
         "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log <code>The flow starts</code>."
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log \"Hey there, Kestra user\""
       },
       "step7": {
-        "title": "Download a file",
-        "content": "Sometimes, you want to download a file from a remote server. This can be done by using the Download task. This task will download the file into Kestra's internal storage."
+        "title": "Run Bash command",
+        "content": "Sometimes, you want to run specific scripts, Python, Node, Bash, etc. Here we run a bash command to display a message."
       },
       "step8": {
-        "title": "Use Python to do analytics",
-        "content": "Maybe this file contains some interesting data? Let's use Python and Pandas to do some analytics on it! This task uses the output of the previous task via the <code>outputs.downloadData.uri</code> variable and defines an output named <code>sumOfConsumption</code> thanks to the Kestra Python library."
+        "title": "Schedule",
+        "content": "To schedule a flow we add a 'trigger'. Here we schedule the Flow every minute."
       },
       "step9": {
         "title": "Save your flow",
@@ -363,23 +363,17 @@
       "onboardComment1": "Flow declaration with a mandatory unique identifier, a namespace, and an optional description.",
       "onboardComment2": "Flow identifier are unique inside a namespace.",
       "inputs": "Flow inputs: each input has a name, a type, and an optional default value.",
-      "inputsDetails1": "We define one input of name 'csvUrl' with as default value the URL of the test data file.",
-      "inputsDetails2": "This test data is from the France Open Data portal and contains french electricity consumptions in CSV.",
+      "inputsDetails1": "We define one input of name 'user' with a default value 'Data Engineer'",
       "tasks1": "List of tasks that will be executed one after the other.",
       "tasks2": "Each task must have an identifier unique for the flow and a type.",
       "tasks3": "Depending on the type of the task, you may have to pass additional attributes.",
       "taskLog1": "This is one of the simplest task: it echos a message in the log, like the 'echo' command.",
       "taskLog2": "The message is passed thanks to the 'format' attribute.",
-      "taskDL": "This task will download the CSV, it will be sent to Kestra's internal storage and available from the task output.",
-      "taskDLUri1": "Here we use a variable from an input: {'{{'} and {'}}'} are separator of a Pebble expression in which we can access variables.",
-      "taskDLUri2": "All inputs are available from the 'inputs' variable using there name.",
-      "taskPython": "This task will analyse the CSV data using a Python script with the Pandas library.",
-      "taskPythonCSV1": "Here we define a file named 'data.csv' that will be available in the Python task working directory.",
-      "taskPythonCSV2": "This file is fetched from the internal storage by using the 'uri' output of the 'downloadData' task.",
-      "taskPythonMain1": "'main.py' is the Python script that will be executed.",
-      "taskPythonMain2": "It uses Pandas to read the CSV file, compute the sum of the 'conso' column, ",
-      "taskPythonMain3": "and set it as task output thanks to the Kestra Python library.",
-      "taskPythonRequirements": "As the script require the Pandas library, we must list it in the requirements."
+      "taskLog3": "We use the variable from the 'inputs' : {'{{'} and {'}}'} are separator of a Pebble expression in which we can access variables.",
+      "taskBash1": "This task runs a bash command.",
+      "taskBash2": "Here we just 'echo' a message, using again the input variable.",
+      "triggers": "To trigger the Flow we use the 'triggers' property.",
+      "triggerSchedule1": "Here we use the 'schedule' trigger to run the flow every minute."
     },
     "Skip tour": "Skip tour",
     "Next step": "Next step",
@@ -784,15 +778,15 @@
       },
       "step6": {
         "title": "Afficher des informations",
-        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flow est déclenché et affichera <code>The flow starts</code>."
+        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flow est déclenché et affichera <code>Hey there, Kestra user</code>."
       },
       "step7": {
-        "title": "Télécharger un fichier",
-        "content": "Parfois, vous voudrez télécharger un fichier depuis un serveur distant. Ceci peut être fait grâce à la tâche 'Download'. Cette tâche téléchargera le fichier dans le stockage interne de Kestra."
+        "title": "Exécuter une commande bash",
+        "content": "Parfois, vous souhaiterez exécuter des scripts spécifiques, Python, Node, Bash, etc. Ici, nous lançons une commande bash pour afficher un message."
       },
       "step8": {
-        "title": "Python pour l'analytique",
-        "content": "Peut-être que ce fichier contient des données intéressantes ? Utilisons Python et Pandas pour faire quelques analyses dessus! Cette tâche utilise la sortie de la tâche précédente via la variable <code>>outputs.downloadData.uri</code> et définit une nouvelle sortie nommée <code>sumOfConsumption</code> grâce à la librairie Python de Kestra."
+        "title": "Programmer",
+        "content": "Pour planifier un flux, nous ajoutons un \"déclencheur\". Ici, nous programmons le flux toutes les minutes."
       },
       "step9": {
         "title": "Sauvegarde de votre flow",
@@ -818,16 +812,11 @@
       "tasks3": "En fonction du type de tâche, vous devrez peut-être passer des attributs supplémentaires.",
       "taskLog1": "Il s'agit de l'une des tâches les plus simples : elle affiche un message dans le journal, comme la commande 'echo'.",
       "taskLog2": "Le message est transmis grâce à l'attribut 'format'.",
-      "taskDL": "Cette tâche permettra de télécharger le CSV, qui sera envoyé vers le stockage interne de Kestra et disponible à partir de la sortie de la tâche.",
-      "taskDLUri1": "Ici, nous utilisons une variable d'entrée : {'{{'} et {'}}'} sont les séparateurs d'une expression Pebble dans laquelle nous pouvons accéder aux variables.",
-      "taskDLUri2": "Toutes les entrées sont disponibles à partir de la variable 'inputs' en utilisant leur nom.",
-      "taskPython": "Cette tâche analysera les données CSV à l'aide d'un script Python avec la librairie Pandas.",
-      "taskPythonCSV1": "Ici, nous définissons un fichier nommé 'data.csv' qui sera disponible dans le répertoire de travail de la tâche Python.",
-      "taskPythonCSV2": "Ce fichier est récupéré depuis le stockage interne en utilisant la sortie 'uri' de la tâche 'downloadData'.",
-      "taskPythonMain1": "'main.py' est le script Python qui sera exécuté.",
-      "taskPythonMain2": "Il utilise Pandas pour lire le fichier CSV, calculer la somme de la colonne 'conso',",
-      "taskPythonMain3": "et la définir en tant que sortie de tâche grâce à la librairie Python de Kestra.",
-      "taskPythonRequirements": "Comme le script nécessite la librairie Pandas, nous devons la lister dans les requirements."
+      "taskLog3": "Nous utiliserons la variable de 'inputs' : {'{{'} et {'}}'} sont des séparateurs d'une expression Pebble dans laquelle nous pouvons accéder à des variables.",
+      "taskBash1": "Cette tâche exécute une commande bash.",
+      "taskBash2": "Ici, nous nous contentons d'afficher un message, en utilisant à nouveau la variable d'entrée.",
+      "triggers": "Pour déclencher le flux, nous utilisons la propriété \"triggers\".",
+      "triggerSchedule1": "Ici, nous utilisons le déclencheur \"schedule\" pour exécuter le flux toutes les minutes."
     },
     "Skip tour": "Passer",
     "Next step": "Étape suivante",

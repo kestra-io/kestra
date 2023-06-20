@@ -301,51 +301,39 @@
                 flowParts: [
                     "# " + this.$t("onboarding-flow.onboardComment1") + "\n" +
                         "# " + this.$t("onboarding-flow.onboardComment2") + "\n" +
-                        "id: kestra-tour\n" +
+                        "id: welcomeKestra" + "\n" +
                         "namespace: io.kestra.tour\n" +
-                        "description: Kestra guided tour",
+                        "description: Welcome to Kestra!" + "\n",
                     "# " + this.$t("onboarding-flow.inputs") + "\n" +
-                        "inputs:\n" +
+                        "inputs:" + "\n" +
                         "  # " + this.$t("onboarding-flow.inputsDetails1") + "\n" +
-                        "  # " + this.$t("onboarding-flow.inputsDetails2") + "\n" +
-                        "  - name: csvUrl\n" +
-                        "    type: STRING\n" +
-                        "    defaults: https://gist.githubusercontent.com/tchiotludo/2b7f28f4f507074e60150aedb028e074/raw/6b6348c4f912e79e3ffccaf944fd019bf51cba30/conso-elec-gaz-annuelle-par-naf-agregee-region.csv",
+                        "- name: user" + "\n" +
+                        "  type: STRING" + "\n" +
+                        "  defaults: Kestra user" + "\n",
                     "# " + this.$t("onboarding-flow.tasks1") + "\n" +
                         "# " + this.$t("onboarding-flow.tasks2") + "\n" +
                         "# " + this.$t("onboarding-flow.tasks3") + "\n" +
                         "tasks:",
                     "  # " + this.$t("onboarding-flow.taskLog1") + "\n" +
                         "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
-                        "  - id: log\n" +
-                        "    type: io.kestra.core.tasks.log.Log\n" +
-                        "    message: The flow starts",
-                    "  # " + this.$t("onboarding-flow.taskDL") + "\n" +
-                        "  - id: downloadData\n" +
-                        "    type: io.kestra.plugin.fs.http.Download\n" +
-                        "    # " + this.$t("onboarding-flow.taskDLUri1") + "\n" +
-                        "    # " + this.$t("onboarding-flow.taskDLUri2") + "\n" +
-                        "    uri: \"{{inputs.csvUrl}}\"",
-                    "  # " + this.$t("onboarding-flow.taskPython") + "\n" +
-                        "  - id: analyseData\n" +
-                        "    type: io.kestra.core.tasks.scripts.Python\n" +
-                        "    inputFiles:\n" +
-                        "      # " + this.$t("onboarding-flow.taskPythonCSV1") + "\n" +
-                        "      # " + this.$t("onboarding-flow.taskPythonCSV2") + "\n" +
-                        "      data.csv: \"{{outputs.downloadData.uri}}\"\n" +
-                        "      # " + this.$t("onboarding-flow.taskPythonMain1") + "\n" +
-                        "      # " + this.$t("onboarding-flow.taskPythonMain2") + "\n" +
-                        "      # " + this.$t("onboarding-flow.taskPythonMain3") + "\n" +
-                        "      main.py: |\n" +
-                        "        import pandas as pd\n" +
-                        "        from kestra import Kestra\n" +
-                        "        data = pd.read_csv(\"data.csv\", sep=\";\")\n" +
-                        "        data.info()\n" +
-                        "        sumOfConsumption = data['conso'].sum()\n" +
-                        "        Kestra.outputs({'sumOfConsumption': int(sumOfConsumption)})\n" +
-                        "    # " + this.$t("onboarding-flow.taskPythonRequirements") + "\n" +
-                        "    requirements:\n" +
-                        "      - pandas"
+                        "  # " + this.$t("onboarding-flow.taskLog3") + "\n" +
+                        "- id: hello" + "\n" +
+                        "  type: io.kestra.core.tasks.log.Log" + "\n" +
+                        "  message: Hey there, {{ inputs.user }}!" + "\n",
+                    "  # " + this.$t("onboarding-flow.taskBash1") + "\n" +
+                        "  # " + this.$t("onboarding-flow.taskBash2") + "\n" +
+                        "- id: goodbye" + "\n" +
+                        "  type: io.kestra.core.tasks.scripts.Bash" + "\n" +
+                        "  commands:" + "\n" +
+                        "  - echo See you soon, {{ inputs.user }}!" + "\n",
+                    " # " + this.$t("onboarding-flow.triggers") + "\n" +
+                        "triggers:" + "\n" +
+                        "  # " + this.$t("onboarding-flow.triggerSchedule1") + "\n" +
+                        "    - id: everyMinute" + "\n" +
+                        "      type: io.kestra.core.models.triggers.types.Schedule" + "\n" +
+                        "      cron: \"*/1 * * * *\"" + "\n" +
+                        "      inputs:" + "\n" +
+                        "        name: Kestra master user" + "\n"
                 ]
             }
         },

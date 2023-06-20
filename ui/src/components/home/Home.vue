@@ -32,9 +32,7 @@
 
             <home-description v-if="namespace" :description="description" class="mb-4" />
 
-            <div v-if="flow && flow.triggers">
-                <home-trigger :triggers="flow.triggers" class="mb-4" />
-            </div>
+            <home-trigger v-if="flow?.triggers" :triggers="flow.triggers" class="mb-4" />
 
             <el-row v-if="displayPieChart" :gutter="15" class="auto-height mb-4">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
@@ -313,7 +311,7 @@
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
             ...mapState("auth", ["user"]),
             flowId() {
-                return this.flow.id
+                return this.flow?.id
             },
             routeInfo() {
                 return {

@@ -1,17 +1,13 @@
 <template>
     <el-card :header="$t('triggers')">
-        <div>
-            <div>
-                <el-table :data="triggers" stripe table-layout="auto">
-                    <el-table-column v-for="prop in columns" :key="prop" :prop="prop" :label="getLabel(prop)" />
-                    <el-table-column :label="$t('description')">
-                        <template #default="scope">
-                            <Markdown :source="scope.row.description" />
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-        </div>
+        <el-table :data="triggers" stripe table-layout="auto">
+            <el-table-column v-for="prop in columns" :key="prop" :prop="prop" :label="getLabel(prop)" />
+            <el-table-column :label="$t('description')">
+                <template #default="scope">
+                    <Markdown :source="scope.row.description" />
+                </template>
+            </el-table-column>
+        </el-table>
     </el-card>
 </template>
 

@@ -176,8 +176,8 @@
             };
         },
         methods: {
-            loadQuery(base) {
-                let queryFilter = this.$route.query;
+            loadQuery(base, stats) {
+                let queryFilter = _cloneDeep(this.$route.query);
 
                 if (this.selectedNamespace) {
                     queryFilter["namespace"] = this.selectedNamespace;
@@ -243,10 +243,32 @@
                 }
             },
             onNamespaceSelect(namespace) {
-                this.$router.push({
-                    query: {...this.$route.query, namespace}
-                });
+                if(namespace !== ""){
+                    this.$router.push({
+                        query: {...this.$route.query, namespace}
+                    });
+                } else {
+                    let query = _cloneDeep(this.$route.query);
+                    delete query["namespace"];
+                    this.$router.push({
+                        query: {...query}
+                    });
+                }
             },
+            onDateChange(dates) {
+                if(dates.startDate && dates.endDate) {
+                    this.$router.push({
+                        query: {...this.$route.query, ...{startDate: dates.startDate, endDate: dates.endDate}}
+                    });
+                } else {
+                    let query = _cloneDeep(this.$route.query);
+                    delete query["startDate"];
+                    delete query["endDate"];
+                    this.$router.push({
+                        query: {...query}
+                    });
+                }
+            }
         },
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),

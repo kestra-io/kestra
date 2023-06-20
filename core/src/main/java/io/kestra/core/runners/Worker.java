@@ -3,19 +3,29 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Synchronized;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.Timeout;
@@ -43,7 +53,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,6 +66,9 @@ public class Worker implements Runnable, Closeable {
     private final ApplicationContext applicationContext;
     private final WorkerTaskQueueInterface workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    private final QueueInterface<WorkerTrigger> workerTriggerQueue;
+    private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final QueueInterface<MetricEntry> metricEntryQueue;
     private final MetricRegistry metricRegistry;
@@ -66,6 +78,8 @@ public class Worker implements Runnable, Closeable {
 
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
+
+    private final Map<String, AtomicInteger> evaluateTriggerRunningCount = new ConcurrentHashMap<>();
 
     private final List<WorkerThread> workerThreadReferences = new ArrayList<>();
 
@@ -79,6 +93,14 @@ public class Worker implements Runnable, Closeable {
         this.workerTaskResultQueue = (QueueInterface<WorkerTaskResult>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
+        );
+        this.workerTriggerQueue = (QueueInterface<WorkerTrigger>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGER_NAMED)
+        );
+        this.workerTriggerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
         );
         this.executionKilledQueue = (QueueInterface<ExecutionKilled>) applicationContext.getBean(
             QueueInterface.class,
@@ -147,6 +169,65 @@ public class Worker implements Runnable, Closeable {
                     else {
                         throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
                     }
+                });
+            }
+        );
+
+        this.workerTriggerQueue.receive(
+            Worker.class,
+            workerTrigger -> {
+                executors.execute(() -> {
+                    this.metricRegistry
+                        .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
+                        .record(() -> {
+                            this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
+                                .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
+                            this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
+
+                            try {
+                                PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
+                                RunContext runContext = workerTrigger.getConditionContext()
+                                    .getRunContext()
+                                    .forWorker(this.applicationContext, workerTrigger);
+                                Optional<Execution> evaluate = pollingTrigger.evaluate(
+                                    workerTrigger.getConditionContext().withRunContext(runContext),
+                                    workerTrigger.getTriggerContext()
+                                );
+
+                                if (log.isDebugEnabled()) {
+                                    log.debug(
+                                        "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
+                                        workerTrigger.getFlow().getNamespace(),
+                                        workerTrigger.getFlow().getId(),
+                                        workerTrigger.getTrigger().getId(),
+                                        workerTrigger.getTrigger().getType(),
+                                        evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                                    );
+                                }
+
+                                workerTrigger.getConditionContext().getRunContext().cleanup();
+
+                                this.workerTriggerResultQueue.emit(
+                                    WorkerTriggerResult.builder()
+                                        .execution(evaluate)
+                                        .triggerContext(workerTrigger.getTriggerContext())
+                                        .trigger(workerTrigger.getTrigger())
+                                        .build()
+                                );
+                            } catch (Exception e) {
+                                logError(workerTrigger, e);
+                                this.workerTriggerResultQueue.emit(
+                                    WorkerTriggerResult.builder()
+                                        .success(false)
+                                        .triggerContext(workerTrigger.getTriggerContext())
+                                        .trigger(workerTrigger.getTrigger())
+                                        .build()
+                                );
+                            }
+
+                            this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
+                        }
+                    );
                 });
             }
         );
@@ -319,6 +400,24 @@ public class Worker implements Runnable, Closeable {
             workerTask.getTaskRun().getState().getCurrent(),
             workerTask.getTaskRun().getState().humanDuration()
         );
+    }
+
+    private void  logError(WorkerTrigger workerTrigger, Throwable e) {
+        Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
+
+        logger.warn(
+            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
+            workerTrigger.getFlow().getNamespace(),
+            workerTrigger.getFlow().getId(),
+            workerTrigger.getTriggerContext().getTriggerId(),
+            workerTrigger.getTriggerContext().getDate(),
+            e.getMessage(),
+            e
+        );
+
+        if (logger.isTraceEnabled()) {
+            logger.trace(Throwables.getStackTraceAsString(e));
+        }
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
@@ -562,5 +661,4 @@ public class Worker implements Runnable, Closeable {
             }
         }
     }
-
 }

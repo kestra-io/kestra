@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -21,6 +22,9 @@ public class Trigger extends TriggerContext {
 
     @Nullable
     private Instant updatedDate;
+
+    @Nullable
+    private ZonedDateTime evaluateRunningDate; // this is used as an evaluation lock to avoid duplicate evaluation
 
     public String uid() {
         return uid(this);
@@ -50,6 +54,9 @@ public class Trigger extends TriggerContext {
         ));
     }
 
+    /**
+     * Create a new Trigger with no execution information and no evaluation lock.
+     */
     public static Trigger of(Flow flow, AbstractTrigger abstractTrigger) {
         return Trigger.builder()
             .namespace(flow.getNamespace())
@@ -59,6 +66,24 @@ public class Trigger extends TriggerContext {
             .build();
     }
 
+    /**
+     * Create a new Trigger with no execution information and no evaluation lock.
+     */
+    public static Trigger of(TriggerContext triggerContext) {
+        return Trigger.builder()
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .triggerId(triggerContext.getTriggerId())
+            .date(triggerContext.getDate())
+            .build();
+    }
+
+    /**
+     * Create a new Trigger with execution information.
+     *
+     * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
+     */
     public static Trigger of(TriggerContext triggerContext, Execution execution) {
         return Trigger.builder()
             .namespace(triggerContext.getNamespace())
@@ -67,6 +92,23 @@ public class Trigger extends TriggerContext {
             .triggerId(triggerContext.getTriggerId())
             .date(triggerContext.getDate())
             .executionId(execution.getId())
+            .updatedDate(Instant.now())
+            .build();
+    }
+
+    /**
+     * Create a new Trigger with an evaluate running date.
+     *
+     * This is used to lock the trigger evaluation.
+     */
+    public static Trigger of(TriggerContext triggerContext, ZonedDateTime evaluateRunningDate) {
+        return Trigger.builder()
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .triggerId(triggerContext.getTriggerId())
+            .date(triggerContext.getDate())
+            .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
             .build();
     }

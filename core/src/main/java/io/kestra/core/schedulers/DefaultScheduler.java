@@ -16,6 +16,7 @@ import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton
+//TODO maybe move it to the MemoryRunner ?
 public class DefaultScheduler extends AbstractScheduler {
     private final Map<String, Trigger> watchingTrigger = new ConcurrentHashMap<>();
 
@@ -35,8 +36,6 @@ public class DefaultScheduler extends AbstractScheduler {
     @SuppressWarnings("unchecked")
     @Override
     public void run() {
-        flowListeners.run();
-
         QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
 

@@ -7,6 +7,7 @@ import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
+import javax.annotation.PostConstruct;
 
 @Singleton
 @JdbcRunnerEnabled
@@ -15,6 +16,18 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     public JdbcSchedulerTriggerState(TriggerRepositoryInterface triggerRepository) {
         this.triggerRepository = triggerRepository;
+    }
+
+    @PostConstruct
+    public void initTriggerEvaluateRunning() {
+        // trigger evaluateRunning lock can exist when launching the scheduler, we clear it.
+        // it's possible since the scheduler on jdbc must be a single node
+        this.triggerRepository.findAll().forEach(trigger -> {
+            if (trigger.getEvaluateRunningDate() != null) {
+                var unlocked = trigger.toBuilder().evaluateRunningDate(null).build();
+                this.triggerRepository.save(unlocked);
+            }
+        });
     }
 
     @Override

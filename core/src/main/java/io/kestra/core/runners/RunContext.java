@@ -391,6 +391,14 @@ public class RunContext {
         return this;
     }
 
+    public RunContext forWorker(ApplicationContext applicationContext, WorkerTrigger workerTrigger) {
+        this.initBean(applicationContext);
+        this.initLogger(workerTrigger.getFlow(), workerTrigger.getTrigger());
+
+        // Mutability hack to update the triggerExecutionId for each evaluation on the worker
+        return forScheduler(workerTrigger.getFlow(), workerTrigger.getTrigger());
+    }
+
     public String render(String inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }

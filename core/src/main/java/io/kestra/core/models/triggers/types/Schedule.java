@@ -206,6 +206,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
     }
 
+    @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();

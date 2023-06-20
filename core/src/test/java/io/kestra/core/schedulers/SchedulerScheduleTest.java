@@ -5,6 +5,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -80,6 +81,10 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
             .when(executionStateSpy)
             .findById(any());
+
+        // start the worker as it execute polling triggers
+        Worker worker = new Worker(applicationContext, 8, null);
+        worker.run();
 
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionStateSpy)) {

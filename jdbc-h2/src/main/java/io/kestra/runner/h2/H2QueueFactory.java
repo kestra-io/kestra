@@ -55,6 +55,20 @@ public class H2QueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
+    @Named(QueueFactoryInterface.WORKERTRIGGER_NAMED)
+    public QueueInterface<WorkerTrigger> workerTrigger() {
+        return new H2Queue<>(WorkerTrigger.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
+    public QueueInterface<WorkerTriggerResult> workerTriggerResult() {
+        return new H2Queue<>(WorkerTriggerResult.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     public QueueInterface<LogEntry> logEntry() {
         return new H2Queue<>(LogEntry.class, applicationContext);

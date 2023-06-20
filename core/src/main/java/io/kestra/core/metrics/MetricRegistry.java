@@ -23,6 +23,8 @@ public class MetricRegistry {
     public final static String METRIC_WORKER_TIMEOUT_COUNT = "worker.timeout.count";
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
     public final static String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
+    public final static String METRIC_WORKER_EVALUATE_TRIGGER_DURATION = "worker.evaluate.trigger.duration";
+    public final static String METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT = "worker.evaluate.trigger.running.count";
 
     public final static String EXECUTOR_TASKRUN_NEXT_COUNT = "executor.taskrun.next.count";
     public final static String EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
@@ -43,9 +45,7 @@ public class MetricRegistry {
     public final static String SCHEDULER_LOOP_COUNT = "scheduler.loop.count";
     public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
     public final static String SCHEDULER_TRIGGER_DELAY_DURATION = "scheduler.trigger.delay.duration";
-    public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
     public final static String SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
-    public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
     public final static String SCHEDULER_EXECUTION_RUNNING_DURATION = "scheduler.execution.running.duration";
     public final static String SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
 

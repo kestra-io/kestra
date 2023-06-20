@@ -39,7 +39,7 @@
                 {{ $t('cancel') }}
             </el-button>
             <el-button @click="restartLastRevision()">
-                {{ $t('replay latest revision') }}
+                {{ $t( replayOrRestart + ' latest revision') }}
             </el-button>
             <el-button type="primary" @click="restart()">
                 {{ $t('ok') }}
@@ -49,7 +49,9 @@
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
 
         <el-form>
-            <p  class="text-muted">{{ $t("restart change revision") }}</p>
+            <p class="text-muted">
+                {{ $t("restart change revision") }}
+            </p>
             <el-form-item :label="$t('revisions')">
                 <el-select v-model="revisionsSelected">
                     <el-option

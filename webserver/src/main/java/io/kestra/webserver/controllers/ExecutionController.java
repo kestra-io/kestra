@@ -404,11 +404,12 @@ public class ExecutionController {
             return null;
         }
 
-        if (find.get().isDisabled()) {
+        var flow = find.get();
+        if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute disabled flow");
         }
 
-        Optional<Webhook> webhook = (find.get().getTriggers() == null ? new ArrayList<AbstractTrigger>() : find.get()
+        Optional<Webhook> webhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
             .getTriggers())
             .stream()
             .filter(o -> o instanceof Webhook)
@@ -420,16 +421,20 @@ public class ExecutionController {
             return null;
         }
 
-        Optional<Execution> execution = webhook.get().evaluate(request, find.get());
+        Optional<Execution> execution = webhook.get().evaluate(request, flow);
 
         if (execution.isEmpty()) {
             return null;
         }
 
-        executionQueue.emit(execution.get());
-        eventPublisher.publishEvent(new CrudEvent<>(execution.get(), CrudEventType.CREATE));
+        var result = execution.get();
+        if (flow.getLabels() != null) {
+            result = result.withLabels(flow.getLabels());
+        }
+        executionQueue.emit(result);
+        eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
 
-        return execution.get();
+        return result;
     }
 
     @ExecuteOn(TaskExecutors.IO)

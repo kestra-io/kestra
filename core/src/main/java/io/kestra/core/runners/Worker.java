@@ -205,6 +205,16 @@ public class Worker implements Runnable, Closeable {
                                     );
                                 }
 
+                                var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
+                                if (flowLabels != null) {
+                                    evaluate = evaluate.map( execution -> {
+                                            Map<String, String> executionLabels = execution.getLabels() != null ? execution.getLabels() : new HashMap<>();
+                                            executionLabels.putAll(flowLabels);
+                                            return execution.withLabels(executionLabels);
+                                        }
+                                    );
+                                }
+
                                 workerTrigger.getConditionContext().getRunContext().cleanup();
 
                                 this.workerTriggerResultQueue.emit(

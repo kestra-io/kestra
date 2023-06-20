@@ -91,6 +91,8 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("date"), date), is(date));
         assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
+        assertThat(evaluate.get().getLabels().get("flow-label-1"), is("flow-label-1"));
+        assertThat(evaluate.get().getLabels().get("flow-label-2"), is("flow-label-2"));
     }
 
     @SuppressWarnings("unchecked")
@@ -393,6 +395,11 @@ class ScheduleTest {
         Flow flow = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.tests")
+            .labels(
+                Map.of(
+                    "flow-label-1", "flow-label-1",
+                    "flow-label-2", "flow-label-2")
+            )
             .build();
 
         TriggerContext triggerContext = TriggerContext.builder()

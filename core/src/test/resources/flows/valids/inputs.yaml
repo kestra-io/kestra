@@ -1,5 +1,8 @@
 id: inputs
 namespace: io.kestra.tests
+labels:
+  flow-label-1: flow-label-1
+  flow-label-2: flow-label-2
 
 inputs:
 - name: string

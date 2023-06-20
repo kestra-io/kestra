@@ -391,8 +391,15 @@ public class RunnerUtils {
             execution = execution.withInputs(inputs.apply(flow, execution));
         }
 
+        Map<String, String> executionLabels = new HashMap<>();
+        if (flow.getLabels() != null) {
+            executionLabels.putAll(flow.getLabels());
+        }
         if (labels != null) {
-            execution = execution.withLabels(labels);
+            executionLabels.putAll(labels);
+        }
+        if (!executionLabels.isEmpty()) {
+            execution = execution.withLabels(executionLabels);
         }
 
         return execution;

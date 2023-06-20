@@ -273,6 +273,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())
+            .labels(conditionContext.getFlow().getLabels())
             .state(new State())
             .trigger(executionTrigger)
             // keep to avoid breaking compatibility

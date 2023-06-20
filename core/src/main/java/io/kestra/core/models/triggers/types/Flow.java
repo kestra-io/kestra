@@ -85,6 +85,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
+            .labels(flow.getLabels())
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,

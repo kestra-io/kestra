@@ -643,32 +643,29 @@ form.ks-horizontal {
 }
 
 .el-breadcrumb {
-    display: flex !important;
+    display: flex;
 
     a {
-        font-weight: normal !important;
+        font-weight: normal;
         color: var(--bs-gray-500) !important;
-        white-space: nowrap !important;
+        white-space: nowrap;
+        cursor: pointer !important;
     }
 
     .el-breadcrumb__separator {
-        color: var(--bs-gray-500) !important;
+        color: var(--bs-gray-500);
     }
 
     .el-breadcrumb__item {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        float: none !important;
+        display: flex;
+        flex-wrap: nowrap;
+        float: none;
     }
 
     .material-design-icon {
-        height: 0.75rem !important;
-        width: 0.75rem !important;
-        margin-right: calc(var(--spacer) / 2) !important;
-    }
-
-    a {
-        cursor: pointer !important;
+        height: 0.75rem;
+        width: 0.75rem;
+        margin-right: calc(var(--spacer) / 2);
     }
 
     html.dark & {

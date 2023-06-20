@@ -1,42 +1,29 @@
 <template>
-    <div>
-        <el-tag
+    <el-select
+        :model-value="labels"
+        @update:model-value="onInput"
+        multiple
+        filterable
+        allow-create
+        clearable
+        collapse-tags
+        default-first-option
+        :persistent="false"
+        :reserve-keyword="false"
+        @focus="hover = true"
+        @blur="hover = false"
+        :placeholder="hover ? $t('label filter placeholder') : $t('labels')"
+    >
+        <el-option
             v-for="label in labels"
             :key="label"
-            closable
-            class="me-1 labels"
-            size="small"
-            disable-transitions
-            @close="handleClose(label)"
-        >
-            {{ label }}
-        </el-tag>
-
-        <el-input
-            v-if="inputVisible"
-            ref="input"
-            v-model="inputValue"
-            :placeholder="$t('label filter placeholder')"
-            @keyup.enter="handleInputConfirm"
-            @blur="handleInputConfirm"
-        >
-            <template #suffix>
-                <tag-outline />
-            </template>
-        </el-input>
-
-        <el-button v-else @click="showInput">
-            <plus /> {{ $t('label') }}
-        </el-button>
-    </div>
-  </template>
+            :label="label"
+            :value="label"
+        />
+    </el-select>
+</template>
 
 <script>
-    import { nextTick } from "vue";
-    import { ElInput } from "element-plus";
-    import TagOutline from "vue-material-design-icons/TagOutline.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-
     const isValidLabel = (label) => {
         return label.match(".+:.+") !== null;
     };
@@ -46,13 +33,9 @@
     };
 
     export default {
-        components: {
-            TagOutline,
-            Plus
-        },
         props: {
-            value: {
-                type: Array,
+            modelValue: {
+                type: [Array, String],
                 default: [],
                 validator(value) {
                     return isValidLabels(value);
@@ -60,43 +43,31 @@
             }
         },
         emits: ["update:modelValue"],
+        created() {
+            this.labels = this.asArrayProp(this.modelValue);
+        },
         data() {
             return {
-                inputVisible: false,
-                inputValue: "",
-                labels: this.value.slice()
+                hover: false,
+                inputValue: undefined,
+                labels: [],
             }
         },
         watch: {
-            value: {
+            modelValue: {
                 handler (newValue, _) {
-                    this.labels = newValue.slice();
+                    this.labels = this.asArrayProp(newValue);
                 }
             }
         },
         methods: {
-            handleClose(tag) {
-                this.labels.splice(this.labels.indexOf(tag), 1);
-                this.$emit("update:modelValue", this.labels);
+            asArrayProp(unknownValue) {
+                return (!Array.isArray(unknownValue) && unknownValue !== undefined) ? [unknownValue] : unknownValue;
             },
-            showInput() {
-                this.inputVisible = true;
-                nextTick(() => {
-                    this.$refs.input.focus();
-                })
+            onInput(value) {
+                this.labels = value;
+                this.$emit("update:modelValue", value)
             },
-            handleInputConfirm() {
-                if (this.inputValue) {
-                    if (isValidLabel(this.inputValue)) {
-                        this.labels.push(this.inputValue);
-                        this.$emit("update:modelValue", this.labels);
-                    } else {
-                        return;
-                    }
-                }
-                this.inputVisible = false;
-                this.inputValue = "";
-            }
         }
     };
 </script>

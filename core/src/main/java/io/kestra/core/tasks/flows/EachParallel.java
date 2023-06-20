@@ -93,10 +93,12 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks",
-        description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
+        defaultValue = "nbProcessor * 2",
+        description = "Default to two times the available number of processors.\n" +
+            "If the value is `0`, no limit exist and all the tasks will start at the same time"
     )
     @PluginProperty
-    private final Integer concurrent = 0;
+    private final Integer concurrent = Runtime.getRuntime().availableProcessors() * 2;
 
     @NotNull
     @NotBlank

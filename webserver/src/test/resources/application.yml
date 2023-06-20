@@ -19,7 +19,11 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
-
+  anonymous-usage-report:
+    enabled: true
+    uri: https://api.kestra.io/v1/reports/usages
+    initial-delay: 5m
+    fixed-delay: 1h
   server:
     access-log:
       enabled: false

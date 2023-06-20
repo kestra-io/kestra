@@ -114,7 +114,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
         @Nullable DateUtils.GroupType groupBy,
         boolean isTaskRun
     ) {
-        throw new UnsupportedOperationException();
+        return Collections.emptyList();
     }
 
     @Override

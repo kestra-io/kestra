@@ -1,7 +1,9 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.http.HttpResponse;
@@ -16,6 +18,8 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.validation.Valid;
+
 @Slf4j
 @Controller
 public class MiscController {
@@ -27,6 +31,9 @@ public class MiscController {
 
     @Inject
     InstanceService instanceService;
+
+    @Inject
+    CollectorService collectorService;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
@@ -48,6 +55,13 @@ public class MiscController {
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .build();
+    }
+
+    @Get("/api/v1/execution-usage")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Misc"}, summary = "Get execution usage information")
+    public ExecutionUsage executionUsage() {
+        return ExecutionUsage.of(executionRepository);
     }
 
     @Value

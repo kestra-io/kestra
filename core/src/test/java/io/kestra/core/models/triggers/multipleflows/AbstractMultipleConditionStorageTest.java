@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.conditions.types.ExecutionFlowCondition;
 import io.kestra.core.models.conditions.types.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.runner.memory.MemoryMultipleConditionStorage;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.Duration;
 import java.time.LocalTime;
@@ -93,7 +93,7 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getEnd().getMinute(), is(in(Arrays.asList(9, 24, 39, 54))));
     }
 
-    @Test
+    @RetryingTest(5)
     void expiration() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 

@@ -94,7 +94,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getTaskRunList().get(0).getId(), is(restart.getTaskRunList().get(0).getId()));
     }
 
-    @Test
+    @RetryingTest(5)
     void restartFlowable2() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

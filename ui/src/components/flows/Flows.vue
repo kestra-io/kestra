@@ -113,10 +113,10 @@
                             <el-button v-if="canDelete" @click="deleteFlows" size="large" :icon="TrashCan">
                                 {{ $t('delete') }}
                             </el-button>
-                            <el-button v-if="canDisable" @click="enableFlows" size="large" :icon="FileDocumentCheckOutline">
+                            <el-button v-if="canUpdate" @click="enableFlows" size="large" :icon="FileDocumentCheckOutline">
                                 {{ $t('enable') }}
                             </el-button>
-                            <el-button v-if="canDisable" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
+                            <el-button v-if="canUpdate" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
                                 {{ $t('disable') }}
                             </el-button>
                         </bottom-line-counter>
@@ -236,7 +236,7 @@
                     .toDate();
             },
             canCheck() {
-                return this.canRead || this.canDelete || this.canDisable;
+                return this.canRead || this.canDelete || this.canUpdate;
             },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ, this.$route.query.namespace);
@@ -244,7 +244,7 @@
             canDelete() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.DELETE, this.$route.query.namespace);
             },
-            canDisable() {
+            canUpdate() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
             },
         },

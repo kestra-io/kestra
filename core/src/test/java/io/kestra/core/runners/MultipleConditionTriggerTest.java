@@ -14,4 +14,9 @@ public class MultipleConditionTriggerTest extends AbstractMemoryRunnerTest {
     void trigger() throws Exception {
         runnerCaseTest.trigger();
     }
+
+    @Test
+    void triggerFailed() throws Exception {
+        runnerCaseTest.failed();
+    }
 }

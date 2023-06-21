@@ -1,0 +1,28 @@
+id: trigger-multiplecondition-failed
+namespace: io.kestra.tests
+
+tasks:
+  - id: only-listener
+    type: io.kestra.core.tasks.debugs.Return
+    format: "childs"
+
+triggers:
+  - id: multiple-listen-flow
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS
+      - id: multiple
+        type: io.kestra.core.models.conditions.types.MultipleCondition
+        window: P1D
+        windowAdvance: P0D
+        conditions:
+          flow-a:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: io.kestra.tests
+            flowId: trigger-multiplecondition-flow-b
+          flow-b:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: io.kestra.tests
+            flowId: trigger-multiplecondition-flow-c

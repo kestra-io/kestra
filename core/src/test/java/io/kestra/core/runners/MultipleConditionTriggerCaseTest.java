@@ -84,4 +84,38 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getTrigger().getVariables().get("namespace"), is("io.kestra.tests"));
         assertThat(triggerExecution.getTrigger().getVariables().get("flowId"), is("trigger-multiplecondition-flow-b"));
     }
+
+    public void failed() throws InterruptedException, TimeoutException {
+        CountDownLatch countDownLatch = new CountDownLatch(3);
+        ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
+
+        executionQueue.receive(execution -> {
+            synchronized (ended) {
+                if (execution.getState().getCurrent().isTerminated()) {
+                    if (!ended.containsKey(execution.getId())) {
+                        ended.put(execution.getId(), execution);
+                        countDownLatch.countDown();
+                    }
+                }
+            }
+        });
+
+        // first one
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // wait a little to be sure that the trigger is not launching execution
+        countDownLatch.await(1, TimeUnit.SECONDS);
+        assertThat(ended.size(), is(1));
+
+        // second one
+        execution = runnerUtils.runOne("io.kestra.tests", "trigger-multiplecondition-flow-c", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
+        // trigger was not done
+        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertThat(ended.size(), is(2));
+    }
 }

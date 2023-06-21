@@ -20,7 +20,4 @@ public class WorkerTrigger {
 
     @NotNull
     private ConditionContext conditionContext;
-
-    @NotNull
-    private Flow flow;
 }

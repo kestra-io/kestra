@@ -512,7 +512,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
             // @TODO: mutability dirty that force creation of a new triggerExecutionId
             flowWithPollingTrigger.getConditionContext().getRunContext().forScheduler(
-                flowWithPollingTrigger.getFlow(),
+                flowWithPollingTrigger.getTriggerContext(),
                 flowWithTrigger.getTrigger()
             );
 
@@ -583,7 +583,6 @@ public abstract class AbstractScheduler implements Scheduler {
         this.workerTriggerQueue.emit(WorkerTrigger
             .builder()
             .trigger(flowWithTriggerWithDefault.trigger)
-            .flow(flowWithTriggerWithDefault.flow)
             .triggerContext(flowWithTriggerWithDefault.triggerContext)
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
             .build()

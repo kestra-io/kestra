@@ -14,6 +14,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
@@ -82,7 +83,7 @@ public class RunContext {
     }
 
     /**
-     * Only used by {@link io.kestra.core.models.triggers.AbstractTrigger}, then scheduler must call {@link RunContext#forScheduler(Flow, AbstractTrigger)}
+     * Only used by {@link io.kestra.core.models.triggers.AbstractTrigger}, then scheduler must call {@link RunContext#forScheduler(TriggerContext, AbstractTrigger)}
      *
      * @param applicationContext the current {@link ApplicationContext}
      */
@@ -149,6 +150,17 @@ public class RunContext {
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
             LogEntry.of(execution)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initLogger(TriggerContext triggerContext, AbstractTrigger trigger) {
+        this.runContextLogger = new RunContextLogger(
+            applicationContext.findBean(
+                QueueInterface.class,
+                Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+            ).orElseThrow(),
+            LogEntry.of(triggerContext, trigger)
         );
     }
 
@@ -366,9 +378,9 @@ public class RunContext {
         return runContext;
     }
 
-    public RunContext forScheduler(Flow flow, AbstractTrigger trigger) {
+    public RunContext forScheduler(TriggerContext triggerContext, AbstractTrigger trigger) {
         this.triggerExecutionId = IdUtils.create();
-        this.storageOutputPrefix = this.storageInterface.outputPrefix(flow, trigger, triggerExecutionId);
+        this.storageOutputPrefix = this.storageInterface.outputPrefix(triggerContext, trigger, triggerExecutionId);
 
         return this;
     }
@@ -393,10 +405,10 @@ public class RunContext {
 
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTrigger workerTrigger) {
         this.initBean(applicationContext);
-        this.initLogger(workerTrigger.getFlow(), workerTrigger.getTrigger());
+        this.initLogger(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
 
         // Mutability hack to update the triggerExecutionId for each evaluation on the worker
-        return forScheduler(workerTrigger.getFlow(), workerTrigger.getTrigger());
+        return forScheduler(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
     }
 
     public String render(String inline) throws IllegalVariableEvaluationException {

@@ -395,8 +395,14 @@ class ScheduleTest {
             .namespace("io.kestra.tests")
             .build();
 
+        TriggerContext triggerContext = TriggerContext.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(trigger.getId())
+            .build();
+
         return ConditionContext.builder()
-            .runContext(runContextFactory.of().forScheduler(flow, trigger))
+            .runContext(runContextFactory.of().forScheduler(triggerContext, trigger))
             .flow(flow)
             .build();
     }

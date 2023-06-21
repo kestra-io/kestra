@@ -197,8 +197,8 @@ public class Worker implements Runnable, Closeable {
                                 if (log.isDebugEnabled()) {
                                     log.debug(
                                         "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
-                                        workerTrigger.getFlow().getNamespace(),
-                                        workerTrigger.getFlow().getId(),
+                                        workerTrigger.getTriggerContext().getNamespace(),
+                                        workerTrigger.getTriggerContext().getFlowId(),
                                         workerTrigger.getTrigger().getId(),
                                         workerTrigger.getTrigger().getType(),
                                         evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
@@ -407,8 +407,8 @@ public class Worker implements Runnable, Closeable {
 
         logger.warn(
             "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
-            workerTrigger.getFlow().getNamespace(),
-            workerTrigger.getFlow().getId(),
+            workerTrigger.getTriggerContext().getNamespace(),
+            workerTrigger.getTriggerContext().getFlowId(),
             workerTrigger.getTriggerContext().getTriggerId(),
             workerTrigger.getTriggerContext().getDate(),
             e.getMessage(),

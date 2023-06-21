@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.micronaut.core.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
@@ -86,6 +87,14 @@ public class LogEntry implements DeletedInterface {
         return LogEntry.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
+            .triggerId(abstractTrigger.getId())
+            .build();
+    }
+
+    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
+        return LogEntry.builder()
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
             .triggerId(abstractTrigger.getId())
             .build();
     }

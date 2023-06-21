@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.utils.Slugify;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
@@ -178,13 +179,13 @@ public interface StorageInterface {
         }
     }
 
-    default URI outputPrefix(Flow flow, AbstractTrigger trigger, String triggerExecutionId) {
+    default URI outputPrefix(TriggerContext triggerContext, AbstractTrigger trigger, String triggerExecutionId) {
         try {
             return new URI("/" + String.join(
                 "/",
                 Arrays.asList(
-                    flow.getNamespace().replace(".", "/"),
-                    Slugify.of(flow.getId()),
+                    triggerContext.getNamespace().replace(".", "/"),
+                    Slugify.of(triggerContext.getFlowId()),
                     "executions",
                     triggerExecutionId,
                     "trigger",

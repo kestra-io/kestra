@@ -112,7 +112,7 @@ abstract public class TestsUtils {
 
         return new AbstractMap.SimpleEntry<>(
             ConditionContext.builder()
-                .runContext(runContextFactory.of(flow, trigger).forScheduler(flow, trigger))
+                .runContext(runContextFactory.of(flow, trigger).forScheduler(triggerContext, trigger))
                 .flow(flow)
                 .build(),
             triggerContext

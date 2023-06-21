@@ -133,7 +133,6 @@
     import action from "../../models/action";
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import DateRange from "../layout/DateRange.vue";
-    import {getFormat} from "../../utils/charts";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -173,6 +172,10 @@
                 if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
                     this.loadStats();
                 }
+            },
+            flowId() {
+                this.loadStats();
+                this.haveExecutions();
             }
         },
         data() {

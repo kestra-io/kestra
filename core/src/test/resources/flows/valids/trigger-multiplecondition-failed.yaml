@@ -21,7 +21,7 @@ triggers:
           flow-a:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
             namespace: io.kestra.tests
-            flowId: trigger-multiplecondition-flow-b
+            flowId: trigger-multiplecondition-flow-d
           flow-b:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
             namespace: io.kestra.tests

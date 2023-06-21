@@ -41,7 +41,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
         save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null, null);
-        assertThat((long) save.size(), is(3L));
+        assertThat((long) save.size(), is(6L));
 
         save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, Map.of("country", "FR"));
         assertThat(save.size(), is(1));
@@ -56,7 +56,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
     void findSourceCode() {
         List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.core.models.conditions.types.MultipleCondition", null);
 
-        assertThat((long) search.size(), is(1L));
+        assertThat((long) search.size(), is(2L));
 
         SearchResult<Flow> flow = search
             .stream()

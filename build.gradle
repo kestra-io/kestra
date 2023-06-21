@@ -10,7 +10,7 @@ plugins {
     id 'com.adarshr.test-logger' version '3.2.0'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.46.0"
+    id "com.github.ben-manes.versions" version "0.47.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '6.0.0' apply false
@@ -122,8 +122,8 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '31.1-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.11.0'
+        api group: 'com.google.guava', name: 'guava', version: '32.0.1-jre'
+        api group: 'commons-io', name: 'commons-io', version: '2.13.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
         api "io.swagger.core.v3:swagger-annotations"
     }

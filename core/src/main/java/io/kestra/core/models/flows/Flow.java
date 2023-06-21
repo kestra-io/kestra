@@ -1,7 +1,6 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
@@ -23,13 +22,13 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -51,11 +50,11 @@ public class Flow implements DeletedInterface {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9._-]+")
+    @Pattern(regexp = "[a-zA-Z0-9._-]+")
     String id;
 
     @NotNull
-    @Pattern(regexp="[a-z0-9._-]+")
+    @Pattern(regexp = "[a-z0-9._-]+")
     String namespace;
 
     @With
@@ -141,12 +140,21 @@ public class Flow implements DeletedInterface {
         ));
     }
 
+    public Stream<String> allTypes() {
+        return Stream.of(
+                Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
+                allTasks().map(Task::getType),
+                Optional.ofNullable(taskDefaults).orElse(Collections.emptyList()).stream().map(TaskDefault::getType)
+            ).reduce(Stream::concat).orElse(Stream.empty())
+            .distinct();
+    }
+
     public Stream<Task> allTasks() {
         return Stream.of(
-            this.tasks != null ? this.tasks : new ArrayList<Task>(),
-            this.errors != null ? this.errors : new ArrayList<Task>(),
-            this.listenersTasks()
-        )
+                this.tasks != null ? this.tasks : new ArrayList<Task>(),
+                this.errors != null ? this.errors : new ArrayList<Task>(),
+                this.listenersTasks()
+            )
             .flatMap(Collection::stream);
     }
 

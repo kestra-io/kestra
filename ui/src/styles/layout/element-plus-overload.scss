@@ -44,6 +44,7 @@
 .el-input-file {
     .el-input__wrapper {
         padding-left: 0;
+
         input {
             line-height: 1.5;
         }
@@ -165,6 +166,7 @@ form.ks-horizontal {
 
     .submit {
         text-align: right;
+
         .el-form-item__content {
             max-width: 100%;
             flex: 0 0 100%;
@@ -225,6 +227,7 @@ form.ks-horizontal {
 
     th {
         white-space: nowrap;
+
         div.cell {
             word-break: normal;
             white-space: nowrap;
@@ -233,6 +236,7 @@ form.ks-horizontal {
 
     th.row-action, td.row-action {
         width: 24px;
+
         .cell {
             white-space: nowrap;
         }
@@ -294,9 +298,10 @@ form.ks-horizontal {
     .el-tabs__item {
         padding: 0;
         transition: all 0.3s ease;
+
         > * {
             padding: var(--spacer) calc(var(--spacer) * 1.5);
-            color: var(--bs-gray-700);
+            color: var(--bs-gray-700) !important;
         }
 
         &.is-active > * {
@@ -346,7 +351,7 @@ form.ks-horizontal {
     border: 1px solid var(--bs-border-color);
 
     &.full-screen {
-        max-width:80%;
+        max-width: 80%;
         height: 80%;
 
         .el-message-box__content {
@@ -381,6 +386,7 @@ form.ks-horizontal {
         color: var(--bs-gray-100);
         background: var(--bs-gray-900);
         border: 1px solid var(--bs-border-color);
+
         .el-popper__arrow::before {
             border: 1px solid var(--bs-border-color);
             background-color: var(--bs-gray-900);
@@ -622,6 +628,7 @@ form.ks-horizontal {
         html.dark & {
             background-color: var(--bs-gray-200);
         }
+
         margin-right: 0;
     }
 

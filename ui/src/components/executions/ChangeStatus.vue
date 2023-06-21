@@ -16,7 +16,7 @@
                 <p v-html="$t('change status confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
-                    Current status is : <status size="small" class="me-1" :status="this.taskRun.state.current" />
+                    Current status is : <status size="small" class="me-1" :status="taskRun.state.current" />
                 </p>
 
                 <el-select
@@ -39,7 +39,7 @@
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
-                        <li v-for="(text, i) in $t('change status hint')[this.selectedStatus]" :key="i">
+                        <li v-for="(text, i) in $t('change status hint')[selectedStatus]" :key="i">
                             {{ text }}
                         </li>
                     </ul>
@@ -117,7 +117,16 @@
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
-                            this.$router.push({name: "executions/update", params: {...{namespace: execution.namespace, flowId: execution.flowId, id: execution.id}, ...{tab: "gantt"}}});
+                            this.$router.push({
+                                name: "executions/update",
+                                params: {
+                                    ...{
+                                        namespace: execution.namespace,
+                                        flowId: execution.flowId,
+                                        id: execution.id
+                                    }, ...{tab: "gantt"}
+                                }
+                            });
                         }
 
                         this.$toast().success(this.$t("change status done"));
@@ -131,15 +140,15 @@
             },
             states() {
                 return (this.taskRun.state.current === "PAUSED" ?
-                    [
-                        State.FAILED,
-                        State.RUNNING,
-                    ] :
-                    [
-                        State.FAILED,
-                        State.SUCCESS,
-                        State.WARNING,
-                    ]
+                        [
+                            State.FAILED,
+                            State.RUNNING,
+                        ] :
+                        [
+                            State.FAILED,
+                            State.SUCCESS,
+                            State.WARNING,
+                        ]
                 )
                     .filter(value => value !== this.taskRun.state.current)
                     .map(value => {
@@ -159,7 +168,7 @@
                     return false;
                 }
 
-                if(this.taskRun.state.current === "PAUSED") {
+                if (this.taskRun.state.current === "PAUSED") {
                     return true;
                 }
 
@@ -181,11 +190,10 @@
 </script>
 
 <style lang="scss">
-
-.alert-status-change  {
-    ul {
-        margin-bottom: 0;
-        padding-left: 10px;
+    .alert-status-change {
+        ul {
+            margin-bottom: 0;
+            padding-left: 10px;
+        }
     }
-}
 </style>

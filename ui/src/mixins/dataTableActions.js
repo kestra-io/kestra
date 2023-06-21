@@ -1,5 +1,6 @@
 import _merge from "lodash/merge";
 import _cloneDeep from "lodash/cloneDeep";
+import _isEqual from "lodash/isEqual";
 
 export default {
     created() {
@@ -38,7 +39,7 @@ export default {
     },
     watch: {
         $route(newValue, oldValue) {
-            if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
+            if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
                 this.load(this.onDataLoaded);
             }
         }

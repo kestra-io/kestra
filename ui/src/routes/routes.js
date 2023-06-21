@@ -14,7 +14,7 @@ import Home from "../components/home/Home.vue";
 import Welcome from "../components/onboarding/Welcome.vue";
 import FlowCreate from "../components/flows/FlowCreate.vue";
 import FlowMetrics from "../components/flows/FlowMetrics.vue";
-import Blueprints from "../components/flows/blueprints/Blueprints.vue";
+import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 
 export default [

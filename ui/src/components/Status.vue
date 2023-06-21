@@ -1,5 +1,5 @@
 <template>
-    <el-button @click="$emit('click', $event)" class="status" :icon="icon" :size="this.size" :class="cls">
+    <el-button @click="$emit('click', $event)" class="status" :icon="icon" :size="size" :class="cls">
         <template v-if="label">
             {{ title || $filters.cap($filters.lower(status)) }}
         </template>

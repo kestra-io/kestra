@@ -1,5 +1,5 @@
 <script setup>
-    import {ref, onMounted, watch, getCurrentInstance, onBeforeUnmount, computed} from "vue";
+    import {computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex"
 
     // Icons
@@ -14,7 +14,7 @@
     import BottomLine from "../layout/BottomLine.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import ValidationError from "../flows/ValidationError.vue";
-    import Blueprints from "../flows/blueprints/Blueprints.vue";
+    import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
@@ -150,7 +150,7 @@
     })
 
     const autoRestorelocalStorageKey = computed(() => {
-        return "autoRestore-"+localStorageKey.value;
+        return "autoRestore-" + localStorageKey.value;
     })
 
     watch(() => store.getters["flow/taskError"], async () => {
@@ -167,13 +167,13 @@
 
         await generateGraph();
 
-        if(!props.isReadOnly) {
+        if (!props.isReadOnly) {
             let restoredLocalStorageKey;
             const sourceFromLocalStorage = localStorage.getItem((restoredLocalStorageKey = autoRestorelocalStorageKey.value)) ?? localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
             if (sourceFromLocalStorage !== null) {
-                if(restoredLocalStorageKey === autoRestorelocalStorageKey.value){
+                if (restoredLocalStorageKey === autoRestorelocalStorageKey.value) {
                     onEdit(sourceFromLocalStorage);
-                }else {
+                } else {
                     toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${props.flow.namespace}.${props.flow.id}`}), () => {
                         onEdit(sourceFromLocalStorage);
                     })
@@ -242,7 +242,7 @@
             return "source";
         }
 
-        if (props.execution || props.isReadOnly ) {
+        if (props.execution || props.isReadOnly) {
             return "topology";
         }
 
@@ -300,7 +300,7 @@
     };
 
     const persistEditorContent = (autoRestore) => {
-        if(autoRestore && localStorage.getItem(localStorageKey.value)) {
+        if (autoRestore && localStorage.getItem(localStorageKey.value)) {
             return;
         }
 
@@ -504,8 +504,8 @@
                             params: {id: flowParsed.id, namespace: flowParsed.namespace, tab: "editor"}
                         });
                     })
-            }else {
-                if(routeParams.id !== flowParsed.id || routeParams.namespace !== flowParsed.namespace){
+            } else {
+                if (routeParams.id !== flowParsed.id || routeParams.namespace !== flowParsed.namespace) {
                     store.dispatch("core/showMessage", {
                         variant: "error",
                         title: t("can not save"),
@@ -579,7 +579,7 @@
             });
     }
 
-    const combinedEditor = computed(() => ["source-doc","source-topology","source-blueprints"].includes(viewType.value));
+    const combinedEditor = computed(() => ["source-doc", "source-topology", "source-blueprints"].includes(viewType.value));
 
     const dragEditor = (e) => {
         let dragX = e.clientX;
@@ -589,9 +589,9 @@
 
         document.onmousemove = function onMouseMove(e) {
             const percent = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100);
-            if(percent > 75 ){
+            if (percent > 75) {
                 editorWidthPercentage.value = 75 + "%";
-            } else if(percent < 25){
+            } else if (percent < 25) {
                 editorWidthPercentage.value = 25 + "%";
             } else {
                 editorWidthPercentage.value = percent + "%";
@@ -882,7 +882,7 @@
     }
 
     .slider {
-        flex: 0 0 calc(1rem/3);
+        flex: 0 0 calc(1rem / 3);
         border-radius: 0.25rem;
         margin: 0 0.25rem;
         background-color: var(--bs-secondary);

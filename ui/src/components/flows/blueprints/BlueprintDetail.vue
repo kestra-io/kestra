@@ -13,7 +13,7 @@
                     </h4>
                     <div class="ms-auto align-self-center">
                         <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
-                            <el-button size="large" v-if="!embed">
+                            <el-button size="large" type="primary" v-if="!embed">
                                 {{ $t('use') }}
                             </el-button>
                         </router-link>
@@ -47,7 +47,7 @@
                         />
                     </div>
                 </el-card>
-                <h5>Source code</h5>
+                <h5>{{ $t("source") }}</h5>
                 <editor :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
                     <template #nav>
                         <div style="text-align: right">
@@ -59,7 +59,7 @@
                 </editor>
                 <template v-if="blueprint.description">
                     <h5>About this blueprint</h5>
-                    <markdown :source="blueprint.description"/>
+                    <markdown :source="blueprint.description" />
                 </template>
                 <h5>Plugins</h5>
                 <div class="plugins-container">
@@ -101,14 +101,18 @@
             embed: {
                 type: Boolean,
                 default: false
+            },
+            tab: {
+                type: String,
+                default: "community"
             }
         },
         methods: {
             goBack() {
-                if(this.embed) {
+                if (this.embed) {
                     this.$emit("back");
-                }else {
-                    this.$router.push({name: "blueprints"})
+                } else {
+                    this.$router.push({name: "blueprints", params: this.$route.params})
                 }
             },
             copy(text) {
@@ -119,14 +123,24 @@
             }
         },
         async created() {
-            this.blueprint = (await this.$http.get(`/api/v1/blueprints/${this.blueprintId}`)).data
+            this.blueprint = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}`)).data
 
             try {
-                this.flowGraph = (await this.$http.get(`/api/v1/blueprints/${this.blueprintId}/graph`, {
-                  validateStatus: (status) => {
-                    return status === 200;
-                  }
-                })).data;
+                if (this.blueprintBaseUri.endsWith("community")) {
+                    this.flowGraph = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}/graph`, {
+                        validateStatus: (status) => {
+                            return status === 200;
+                        }
+                    })).data;
+                } else {
+                    this.flowGraph = await this.$store.dispatch("flow/getGraphFromSourceResponse", {
+                        flow: this.blueprint.flow, config: {
+                            validateStatus: (status) => {
+                                return status === 200;
+                            }
+                        }
+                    });
+                }
             } catch (e) {
                 console.error("Unable to create the blueprint's topology : " + e);
             }
@@ -137,6 +151,9 @@
                     ...YamlUtils.parse(this.blueprint.flow),
                     source: this.blueprint.flow
                 }
+            },
+            blueprintBaseUri() {
+                return "/api/v1/blueprints/" + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
             }
         }
     };
@@ -164,6 +181,8 @@
 
             .blueprint-title {
                 font-weight: bold;
+                text-overflow: ellipsis;
+                overflow: hidden;
             }
         }
     }

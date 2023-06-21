@@ -21,11 +21,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 abstract public class TestsUtils {
@@ -53,6 +54,33 @@ abstract public class TestsUtils {
             .stream()
             .filter(r -> r.getTaskRunId() != null && r.getTaskRunId().equals(taskRun.getId()))
             .collect(Collectors.toList());
+    }
+
+    public static List<LogEntry> awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher) {
+        return awaitLog(logs, logMatcher, (Predicate<Integer>) null);
+    }
+
+    public static List<LogEntry> awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Integer exactCount) {
+        return awaitLog(logs, logMatcher, exactCount::equals);
+    }
+
+    public static List<LogEntry> awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
+        AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
+        try {
+            Await.until(() -> {
+                matchingLogs.set(logs.stream().filter(logMatcher).collect(Collectors.toList()));
+                if(countMatcher == null){
+                    return !matchingLogs.get().isEmpty();
+                }
+
+                int matchingLogsCount = matchingLogs.get().size();
+                return countMatcher.test(matchingLogsCount);
+            }, Duration.ofMillis(10), Duration.ofMillis(500));
+        } catch (TimeoutException e) {
+            throw new AssertionError(e);
+        }
+
+        return matchingLogs.get();
     }
 
     public static Flow mockFlow() {

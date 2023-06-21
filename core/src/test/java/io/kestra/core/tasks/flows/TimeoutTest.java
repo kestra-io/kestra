@@ -11,6 +11,7 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,6 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Timeout")).count(), is(2L));
+        TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
     }
 }

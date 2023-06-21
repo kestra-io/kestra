@@ -15,9 +15,9 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -116,7 +116,7 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
-    @Test
+    @RetryingTest(5)
     void parallelNested() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
 

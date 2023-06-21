@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +46,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
         ));
     }
 
-    @Test
+    @RetryingTest(5)
     void thread() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

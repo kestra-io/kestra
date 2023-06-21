@@ -148,6 +148,7 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
 
         return Output.builder()
             .results(count)
+            .total(count.stream().mapToLong(value -> value.count).sum())
             .build();
     }
 
@@ -155,6 +156,7 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private final List<Result> results;
+        private final Long total;
     }
 
     @Builder

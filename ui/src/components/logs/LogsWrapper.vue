@@ -123,7 +123,8 @@
                     .dispatch("log/findLogs", this.loadQuery({
                         page: this.$route.query.page || this.internalPageNumber,
                         size: this.$route.query.size || this.internalPageSize,
-                        minLevel: this.selectedLogLevel
+                        minLevel: this.selectedLogLevel,
+                        sort: "timestamp:desc"
                     }))
                     .finally(() => {
                         this.isLoading = false

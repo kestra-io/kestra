@@ -107,64 +107,67 @@
                 border-bottom-right-radius: $border-radius;
             }
 
-            > :deep(.el-card__body) {
+            .blueprint-link {
                 display: flex;
-            }
+                color: inherit;
+                text-decoration: inherit;
+                width: 100%;
 
-            .side {
-                margin: auto 0;
+                .side {
+                    margin: auto 0;
 
-                &:first-child {
-                    overflow: hidden;
-
-                    & > * {
+                    &:first-child {
                         overflow: hidden;
-                        text-overflow: ellipsis;
+
+                        & > * {
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
                     }
-                }
 
-                &.buttons {
-                    white-space: nowrap;
-                }
-
-                .title {
-                    font-weight: bold;
-                    font-size: $small-font-size;
-                }
-
-                .tags {
-                    font-family: $font-family-monospace;
-                    font-weight: bold;
-                    font-size: $sub-sup-font-size;
-                    margin-bottom: calc(var(--spacer) / 2);
-                    color: $primary;
-
-                    html.dark & {
-                        color: $pink;
+                    &.buttons {
+                        white-space: nowrap;
                     }
-                }
 
-                .tasks-container {
-                    $plugin-icon-size: calc(var(--font-size-base) + 0.4rem);
+                    .title {
+                        font-weight: bold;
+                        font-size: $small-font-size;
+                    }
 
-                    display: flex;
-                    flex-wrap: wrap;
-                    flex-direction: column;
-                    gap: calc(var(--spacer) / 4);
-                    width: fit-content;
-                    height: $plugin-icon-size;
-
-                    :deep(> *) {
-                        width: $plugin-icon-size;
-                        padding: 0.2rem;
-                        border-radius: $border-radius;
+                    .tags {
+                        font-family: $font-family-monospace;
+                        font-weight: bold;
+                        font-size: $sub-sup-font-size;
+                        margin-bottom: calc(var(--spacer) / 2);
+                        color: $primary;
 
                         html.dark & {
-                            background-color: var(--bs-gray-900);
+                            color: $pink;
                         }
+                    }
 
-                        & * {
-                            margin-top: 0;
+                    .tasks-container {
+                        $plugin-icon-size: calc(var(--font-size-base) + 0.4rem);
+
+                        display: flex;
+                        flex-wrap: wrap;
+                        flex-direction: column;
+                        gap: calc(var(--spacer) / 4);
+                        width: fit-content;
+                        height: $plugin-icon-size;
+
+                        :deep(> *) {
+                            width: $plugin-icon-size;
+                            padding: 0.2rem;
+                            border-radius: $border-radius;
+
+                            html.dark & {
+                                background-color: var(--bs-gray-900);
+                            }
+
+                            & * {
+                                margin-top: 0;
+                            }
                         }
                     }
                 }

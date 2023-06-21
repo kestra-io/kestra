@@ -41,24 +41,26 @@
             </template>
             <template #table>
                 <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
-                    <div class="side">
-                        <div class="title">
-                            {{ blueprint.title }}
+                    <component class="blueprint-link" :is="embed ? 'div' : 'router-link'" :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
+                        <div class="side">
+                            <div class="title">
+                                {{ blueprint.title }}
+                            </div>
+                            <div class="tags text-uppercase">
+                                {{ tagsToString(blueprint.tags) }}
+                            </div>
+                            <div class="tasks-container">
+                                <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]" />
+                            </div>
                         </div>
-                        <div class="tags text-uppercase">
-                            {{ tagsToString(blueprint.tags) }}
+                        <div class="side buttons ms-auto">
+                            <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                                <el-button class="hoverable" @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
+                                    {{ $t('copy') }}
+                                </el-button>
+                            </el-tooltip>
                         </div>
-                        <div class="tasks-container">
-                            <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]" />
-                        </div>
-                    </div>
-                    <div class="side buttons ms-auto">
-                        <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                            <el-button class="hoverable" @click.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
-                                {{ $t('copy') }}
-                            </el-button>
-                        </el-tooltip>
-                    </div>
+                    </component>
                 </el-card>
             </template>
         </data-table>
@@ -67,6 +69,7 @@
 <script>
     import RouteContext from "../../../../mixins/routeContext";
     import DataTableActions from "../../../../mixins/dataTableActions";
+    import RestoreUrl from "../../../../mixins/restoreUrl";
     import SearchField from "../../../../components/layout/SearchField.vue";
     import DataTable from "../../../../components/layout/DataTable.vue";
     import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
@@ -75,7 +78,7 @@
     import TaskIcon from "../../../../components/plugins/TaskIcon.vue";
 
     export default {
-        mixins: [DataTableActions, RouteContext],
+        mixins: [DataTableActions, RouteContext, RestoreUrl],
         inheritAttrs: false,
         components: {
             TaskIcon,
@@ -104,8 +107,6 @@
             goToDetail(blueprintId) {
                 if (this.embed) {
                     this.selectedBlueprintId = blueprintId;
-                } else {
-                    this.$router.push({name: "blueprints/view", params: {blueprintId}})
                 }
             },
             loadTags(beforeLoadBlueprintBaseUri) {

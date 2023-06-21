@@ -88,7 +88,6 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Fail extends Task implements RunnableTask<VoidOutput> {
-
     @PluginProperty(dynamic = true)
     @Schema(
         title = "Optional condition, must coerce to a boolean.",
@@ -107,12 +106,11 @@ public class Fail extends Task implements RunnableTask<VoidOutput> {
             String rendered = runContext.render(condition);
             if (TruthUtils.isTruthy(rendered)) {
                 runContext.logger().error(runContext.render(errorMessage));
-                throw new RuntimeException("Fail on a condition");
+                throw new Exception("Fail on a condition");
             }
             return null;
         }
 
-        runContext.logger().error(runContext.render(errorMessage));
-        throw new RuntimeException("Fail always");
+        throw new Exception(runContext.render(errorMessage));
     }
 }

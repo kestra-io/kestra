@@ -294,7 +294,7 @@ public class ExecutionService {
      *
      * @param execution the execution to resume
      * @param newState  should be RUNNING or KILLING, other states may lead to undefined behaviour
-     * @return Optional<Execution> with the execution in the new state, or and empty Optional if the execution is not paused.
+     * @return the execution in the new state.
      * @throws InternalException if the state of the execution cannot be updated
      */
     public Execution resume(Execution execution, State.Type newState) throws InternalException {

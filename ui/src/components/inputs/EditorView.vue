@@ -621,7 +621,7 @@
             @restartGuidedTour="() => persistViewType('source')"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <Blueprints v-if="viewType === 'source-blueprints'" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
+        <Blueprints :class="{'d-none': viewType !== 'source-blueprints'}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
         <div
             :class="viewType === 'source-topology' ? 'combined-right-view' : viewType === 'topology' ? 'vueflow': 'hide-view'"
         >

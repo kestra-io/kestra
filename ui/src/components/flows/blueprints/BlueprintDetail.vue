@@ -42,15 +42,15 @@
                             :namespace="parsedFlow.namespace"
                             :flow-graph="flowGraph"
                             :source="blueprint.flow"
+                            :view-type="embed ? 'source-blueprints' : 'blueprints'"
                             is-read-only
-                            graph-only
                         />
                     </div>
                 </el-card>
                 <h5>{{ $t("source") }}</h5>
-                <editor :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
+                <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
                     <template #nav>
-                        <div style="text-align: right">
+                        <div class="position-absolute copy-wrapper">
                             <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
                                 <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
                             </el-tooltip>
@@ -112,7 +112,7 @@
                 if (this.embed) {
                     this.$emit("back");
                 } else {
-                    this.$router.push({name: "blueprints", params: this.$route.params})
+                    this.$router.push({name: "blueprints"})
                 }
             },
             copy(text) {
@@ -185,6 +185,12 @@
                 overflow: hidden;
             }
         }
+    }
+
+    .copy-wrapper {
+        right: $spacer;
+        top: $spacer;
+        z-index: 1
     }
 
     .blueprint-container {

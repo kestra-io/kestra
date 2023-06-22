@@ -592,7 +592,7 @@
             </template>
 
             <Controls :show-interactive="false">
-                <ControlButton @click="toggleOrientation" v-if="viewType === 'topology'">
+                <ControlButton @click="toggleOrientation" v-if="['topology', 'blueprints'].includes(viewType)">
                     <SplitCellsVertical :size="48" v-if="!isHorizontal" />
                     <SplitCellsHorizontal v-if="isHorizontal" />
                 </ControlButton>

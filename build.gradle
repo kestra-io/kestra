@@ -349,6 +349,7 @@ subprojects {
         options {
             locale = 'en_US'
             encoding = 'UTF-8'
+            addStringOption("Xdoclint:none", "-quiet")
         }
     }
 

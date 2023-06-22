@@ -91,7 +91,7 @@ jobs:
           python3 -m pip install virtualenv
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-          ./gradlew check jacoco --no-daemon --priority=normal
+          ./gradlew check jacoco javadoc --no-daemon --priority=normal
 
       # Codecov
       - uses: codecov/codecov-action@v3

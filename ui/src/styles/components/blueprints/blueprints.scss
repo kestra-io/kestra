@@ -151,7 +151,7 @@
 
                         display: flex;
                         flex-wrap: wrap;
-                        flex-direction: column;
+                        flex-direction: row;
                         gap: calc(var(--spacer) / 4);
                         width: fit-content;
                         height: $plugin-icon-size;

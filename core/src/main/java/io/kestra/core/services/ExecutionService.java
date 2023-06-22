@@ -1,5 +1,7 @@
 package io.kestra.core.services;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -9,6 +11,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -16,9 +20,10 @@ import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,13 +37,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
+import static io.kestra.core.utils.Rethrow.*;
 
 @Singleton
 public class ExecutionService {
-    @Inject
-    private ApplicationContext applicationContext;
 
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
@@ -54,6 +56,13 @@ public class ExecutionService {
 
     @Inject
     private MetricRepositoryInterface metricRepository;
+
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
         if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
@@ -277,6 +286,33 @@ public class ExecutionService {
         }
 
         return PurgeResult.builder().build();
+    }
+
+    /**
+     * Resume a paused execution to a new state.
+     * The execution must be paused or this call will be a no-op.
+     *
+     * @param execution the execution to resume
+     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behaviour
+     * @return Optional<Execution> with the execution in the new state, or and empty Optional if the execution is not paused.
+     * @throws InternalException if the state of the execution cannot be updated
+     */
+    public Execution resume(Execution execution, State.Type newState) throws InternalException {
+        var runningTaskRun = execution
+            .findFirstByState(State.Type.PAUSED)
+            .map(taskRun ->
+                taskRun.withState(newState)
+            )
+            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
+
+        var unpausedExecution = execution
+            .withTaskRun(runningTaskRun)
+            .withState(newState);
+
+        this.executionQueue.emit(unpausedExecution);
+        this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
+
+        return unpausedExecution;
     }
 
     @Getter

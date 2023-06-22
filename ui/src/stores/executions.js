@@ -71,6 +71,9 @@ export default {
         queryKill(_, options) {
             return this.$http.delete("/api/v1/executions/kill/by-query", {params: options});
         },
+        resume(_, options) {
+            return this.$http.post(`/api/v1/executions/${options.id}/resume`);
+        },
         loadExecution({commit}, options) {
             return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)

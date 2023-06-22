@@ -16,6 +16,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
@@ -496,5 +497,43 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         );
         assertThat(execution.getTrigger().getVariables().get("body"), is("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"));
 
+    }
+
+    @Test
+    void resumePaused() throws TimeoutException, InterruptedException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
+        assertThat(pausedExecution.getState().isPaused(), is(true));
+
+        // resume the execution
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/executions/" + pausedExecution.getId() + "/resume", null));
+        assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        // check that the execution is no more paused
+        Thread.sleep(100);
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
+            Execution.class);
+        assertThat(execution.getState().isPaused(), is(false));
+    }
+
+    @Test
+    void killPaused() throws TimeoutException, InterruptedException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
+        assertThat(pausedExecution.getState().isPaused(), is(true));
+
+        // resume the execution
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/executions/" + pausedExecution.getId() + "/kill"));
+        assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        // check that the execution is no more paused
+        Thread.sleep(100);
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
+            Execution.class);
+        assertThat(execution.getState().isPaused(), is(false));
     }
 }

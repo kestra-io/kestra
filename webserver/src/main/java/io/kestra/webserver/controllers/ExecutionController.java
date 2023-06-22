@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -31,6 +32,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -72,8 +74,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Slf4j
 @Validated
 @Controller("/api/v1/")
 public class ExecutionController {
@@ -736,12 +740,25 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Kill an execution")
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+    @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public HttpResponse<?> kill(
         @Parameter(description = "The execution id") @PathVariable String executionId
-    ) {
-        Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isPresent() && execution.get().getState().isTerminated()) {
+    ) throws InternalException {
+        Optional<Execution> maybeExecution = executionRepository.findById(executionId);
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        var execution = maybeExecution.get();
+        if (execution.getState().isTerminated()) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
+        }
+
+        if (execution.getState().isPaused()) {
+            // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
+            // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
+            this.executionService.resume(execution, State.Type.KILLING);
+            return HttpResponse.noContent();
         }
 
         killQueue.emit(ExecutionKilled
@@ -749,6 +766,29 @@ public class ExecutionController {
             .executionId(executionId)
             .build()
         );
+
+        return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/{executionId}/resume", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
+    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the executions is not paused")
+    public HttpResponse<?> resume(
+        @Parameter(description = "The execution id") @PathVariable String executionId
+    ) throws InternalException {
+        Optional<Execution> maybeExecution = executionRepository.findById(executionId);
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        var execution = maybeExecution.get();
+        if (!execution.getState().isPaused()) {
+            throw new IllegalStateException("Execution is not paused, can't resume it");
+        }
+
+        this.executionService.resume(execution, State.Type.RUNNING);
 
         return HttpResponse.noContent();
     }
@@ -797,11 +837,21 @@ public class ExecutionController {
         }
 
         executions.forEach(execution -> {
-            killQueue.emit(ExecutionKilled
-                .builder()
-                .executionId(execution.getId())
-                .build()
-            );
+            if (execution.getState().isPaused()) {
+                // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
+                // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
+                try {
+                    this.executionService.resume(execution, State.Type.KILLING);
+                } catch (InternalException e) {
+                    log.warn("Unable to kill the paused execution {}, ignoring it", execution.getId(), e);
+                }
+            } else {
+                killQueue.emit(ExecutionKilled
+                    .builder()
+                    .executionId(execution.getId())
+                    .build()
+                );
+            }
         });
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());

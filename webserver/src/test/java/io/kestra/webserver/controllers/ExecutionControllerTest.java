@@ -125,6 +125,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getLabels().get("a"), is("label-1"));
         assertThat(result.getLabels().get("b"), is("label-2"));
+        assertThat(result.getLabels().get("flow-label-1"), is("flow-label-1"));
+        assertThat(result.getLabels().get("flow-label-2"), is("flow-label-2"));
     }
 
     @Test
@@ -456,6 +458,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b"), is(true));
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name"), is(List.of("john")));
         assertThat(((Map<String, List<Integer>>) execution.getTrigger().getVariables().get("parameters")).get("age"), containsInAnyOrder("12", "13"));
+        assertThat(execution.getLabels().get("flow-label-1"), is("flow-label-1"));
+        assertThat(execution.getLabels().get("flow-label-2"), is("flow-label-2"));
 
         execution = client.toBlocking().retrieve(
             HttpRequest

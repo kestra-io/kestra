@@ -17,15 +17,14 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -61,6 +60,11 @@ abstract public class AbstractSchedulerTest {
                     .build()
             ))
             .revision(1)
+            .labels(
+                Map.of(
+                    "flow-label-1", "flow-label-1",
+                    "flow-label-2", "flow-label-2")
+            )
             .triggers(triggers)
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")

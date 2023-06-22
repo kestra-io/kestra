@@ -94,6 +94,8 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
             assertThat(last.get().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getVariables().get("counter"), is(3));
+            assertThat(last.get().getLabels().get("flow-label-1"), is("flow-label-1"));
+            assertThat(last.get().getLabels().get("flow-label-2"), is("flow-label-2"));
             AbstractSchedulerTest.COUNTER = 0;
         }
     }

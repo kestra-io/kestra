@@ -222,7 +222,7 @@ public class FlowService {
         return source.replaceFirst("(?m)^revision: \\d+\n?","");
     }
 
-    public static String injectDisabledTrue(String source, Boolean disabled) {
+    public static String injectDisabled(String source, Boolean disabled) {
         String regex = disabled ? "^disabled\\s*:\\s*false\\s*" : "^disabled\\s*:\\s*true\\s*";
 
         Pattern p = Pattern.compile(regex, Pattern.MULTILINE);

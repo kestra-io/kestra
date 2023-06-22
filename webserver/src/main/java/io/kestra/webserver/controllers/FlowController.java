@@ -694,7 +694,7 @@ public class FlowController {
             .peek(flow -> {
                 FlowWithSource flowUpdated = flow.toBuilder()
                     .disabled(disable)
-                    .source(FlowService.injectDisabledTrue(flow.getSource(), disable))
+                    .source(FlowService.injectDisabled(flow.getSource(), disable))
                     .build();
 
                 flowRepository.update(
@@ -715,7 +715,7 @@ public class FlowController {
             .peek(flow -> {
                 FlowWithSource flowUpdated = flow.toBuilder()
                     .disabled(disable)
-                    .source(FlowService.injectDisabledTrue(flow.getSource(), disable))
+                    .source(FlowService.injectDisabled(flow.getSource(), disable))
                     .build();
 
                 flowRepository.update(

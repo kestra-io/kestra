@@ -297,16 +297,22 @@ public class ExecutionService {
      * @return Optional<Execution> with the execution in the new state, or and empty Optional if the execution is not paused.
      * @throws InternalException if the state of the execution cannot be updated
      */
-    public Optional<Execution> resume(Execution execution, State.Type newState) throws InternalException {
-        var runningTaskRun = execution.findFirstByState(State.Type.PAUSED).map(taskRun ->
-            taskRun.withState(newState)
-        );
-        return runningTaskRun.map(throwFunction(taskRun -> {
-            var unpausedExecution = execution.withTaskRun(taskRun).withState(newState);
-            this.executionQueue.emit(unpausedExecution);
-            this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
-            return unpausedExecution;
-        }));
+    public Execution resume(Execution execution, State.Type newState) throws InternalException {
+        var runningTaskRun = execution
+            .findFirstByState(State.Type.PAUSED)
+            .map(taskRun ->
+                taskRun.withState(newState)
+            )
+            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
+
+        var unpausedExecution = execution
+            .withTaskRun(runningTaskRun)
+            .withState(newState);
+
+        this.executionQueue.emit(unpausedExecution);
+        this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
+
+        return unpausedExecution;
     }
 
     @Getter

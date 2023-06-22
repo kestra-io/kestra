@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -285,10 +286,15 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 
-        Execution resume = executionService.resume(execution, State.Type.RUNNING).get();
+        Execution resume = executionService.resume(execution, State.Type.RUNNING);
 
         assertThat(resume.getState().getCurrent(), is(State.Type.RUNNING));
         assertThat(resume.getState().getHistories(), hasSize(4));
+
+        IllegalArgumentException e = assertThrows(
+            IllegalArgumentException.class,
+            () -> executionService.resume(resume, State.Type.RUNNING)
+        );
     }
 
     @Test
@@ -297,7 +303,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 
-        Execution resume = executionService.resume(execution, State.Type.KILLING).get();
+        Execution resume = executionService.resume(execution, State.Type.KILLING);
 
         assertThat(resume.getState().getCurrent(), is(State.Type.KILLING));
         assertThat(resume.getState().getHistories(), hasSize(4));

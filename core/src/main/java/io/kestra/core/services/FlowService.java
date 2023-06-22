@@ -222,13 +222,15 @@ public class FlowService {
         return source.replaceFirst("(?m)^revision: \\d+\n?","");
     }
 
-    public static String injectDisabledTrue(String source) {
-        Pattern p = Pattern.compile("^disabled\\s*:\\s*false\\s*", Pattern.MULTILINE);
+    public static String injectDisabled(String source, Boolean disabled) {
+        String regex = disabled ? "^disabled\\s*:\\s*false\\s*" : "^disabled\\s*:\\s*true\\s*";
+
+        Pattern p = Pattern.compile(regex, Pattern.MULTILINE);
         if (p.matcher(source).find()) {
-            return p.matcher(source).replaceAll("disabled: true\n");
+            return p.matcher(source).replaceAll(String.format("disabled: %s\n", disabled));
         }
 
-        return source + "\ndisabled: true";
+        return source + String.format("\ndisabled: %s", disabled);
     }
 
     public static String generateSource(Flow flow, @Nullable String source) {

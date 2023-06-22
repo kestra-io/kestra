@@ -555,7 +555,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void disableFlowsByIds() {
+    void disableEnableFlowsByIds() {
         List<IdWithNamespace> ids = List.of(
             new IdWithNamespace("io.kestra.tests", "each-object"),
             new IdWithNamespace("io.kestra.tests", "webhook"),
@@ -575,10 +575,24 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(eachObject.isDisabled(), is(true));
         assertThat(webhook.isDisabled(), is(true));
         assertThat(taskFlow.isDisabled(), is(true));
+
+        response = client
+            .toBlocking()
+            .exchange(POST("/api/v1/flows/enable/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(3));
+
+        eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/each-object"), String.class));
+        webhook = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/webhook"), String.class));
+        taskFlow = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/task-flow"), String.class));
+
+        assertThat(eachObject.isDisabled(), is(false));
+        assertThat(webhook.isDisabled(), is(false));
+        assertThat(taskFlow.isDisabled(), is(false));
     }
 
     @Test
-    void disableFlowsByQuery() throws InterruptedException {
+    void disableEnableFlowsByQuery() throws InterruptedException {
         Flow flow = generateFlow("toDisable","io.kestra.unittest.disabled", "a");
         client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
 
@@ -591,6 +605,16 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Flow toDisable = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDisable"), String.class));
 
         assertThat(toDisable.isDisabled(), is(true));
+
+        response = client
+            .toBlocking()
+            .exchange(POST("/api/v1/flows/enable/by-query?namespace=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(1));
+
+        toDisable = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDisable"), String.class));
+
+        assertThat(toDisable.isDisabled(), is(false));
     }
 
     @Test

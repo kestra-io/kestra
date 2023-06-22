@@ -593,26 +593,8 @@ public class FlowController {
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) {
-        List<FlowWithSource> list = flowRepository
-            .findWithSource(query, namespace, RequestUtils.toMap(labels))
-            .stream()
-            .filter(flowWithSource -> !flowWithSource.isDisabled())
-            .peek(flow -> {
-                FlowWithSource flowUpdated = flow.toBuilder()
-                    .disabled(true)
-                    .source(FlowService.injectDisabledTrue(flow.getSource()))
-                    .build();
 
-                flowRepository.update(
-                    flowUpdated,
-                    flow,
-                    flowUpdated.getSource(),
-                    taskDefaultService.injectDefaults(flowUpdated)
-                );
-            })
-            .collect(Collectors.toList());
-
-        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, namespace, labels, true).size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -624,27 +606,38 @@ public class FlowController {
     public HttpResponse<BulkResponse> disableByIds(
         @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
     ) {
-        List<FlowWithSource> list = ids
-            .stream()
-            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
-            .filter(flowWithSource -> !flowWithSource.isDisabled())
-            .peek(flow -> {
-                FlowWithSource flowUpdated = flow.toBuilder()
-                    .disabled(true)
-                    .source(FlowService.injectDisabledTrue(flow.getSource()))
-                    .build();
 
-                flowRepository.update(
-                    flowUpdated,
-                    flow,
-                    flowUpdated.getSource(),
-                    taskDefaultService.injectDefaults(flowUpdated)
-                );
-            })
-            .collect(Collectors.toList());
-
-        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByIds(ids, true).size()).build());
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/enable/by-query")
+    @Operation(
+        tags = {"Flows"},
+        summary = "Enable flows returned by the query parameters."
+    )
+    public HttpResponse<BulkResponse> enableByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+    ) {
+
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, namespace, labels, false).size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/enable/by-ids")
+    @Operation(
+        tags = {"Flows"},
+        summary = "Enable flows by their IDs."
+    )
+    public HttpResponse<BulkResponse> enableByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
+    ) {
+
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByIds(ids, false).size()).build());
+    }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/import", consumes = MediaType.MULTIPART_FORM_DATA)
@@ -691,5 +684,47 @@ public class FlowController {
                 previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
                 () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
             );
+    }
+
+    protected List<FlowWithSource> setFlowsDisableByIds(List<IdWithNamespace> ids, boolean disable) {
+        return ids
+            .stream()
+            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .filter(flowWithSource -> disable != flowWithSource.isDisabled())
+            .peek(flow -> {
+                FlowWithSource flowUpdated = flow.toBuilder()
+                    .disabled(disable)
+                    .source(FlowService.injectDisabled(flow.getSource(), disable))
+                    .build();
+
+                flowRepository.update(
+                    flowUpdated,
+                    flow,
+                    flowUpdated.getSource(),
+                    taskDefaultService.injectDefaults(flowUpdated)
+                );
+            })
+            .toList();
+    }
+
+    protected List<FlowWithSource> setFlowsDisableByQuery(String query, String namespace,List<String> labels, boolean disable) {
+        return flowRepository
+            .findWithSource(query, namespace, RequestUtils.toMap(labels))
+            .stream()
+            .filter(flowWithSource -> disable != flowWithSource.isDisabled())
+            .peek(flow -> {
+                FlowWithSource flowUpdated = flow.toBuilder()
+                    .disabled(disable)
+                    .source(FlowService.injectDisabled(flow.getSource(), disable))
+                    .build();
+
+                flowRepository.update(
+                    flowUpdated,
+                    flow,
+                    flowUpdated.getSource(),
+                    taskDefaultService.injectDefaults(flowUpdated)
+                );
+            })
+            .toList();
     }
 }

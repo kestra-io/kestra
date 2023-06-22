@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -8,11 +9,16 @@ import lombok.Getter;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Singleton
 public class RunContextCache {
+    // List of env variables that should be redacted from the execution run context variables to avoid information disclosure.
+    @Value("${kestra.variables.redacted-env-vars:KESTRA_PLUGINS_PATH,KESTRA_CONFIGURATION_PATH,KESTRA_CONFIGURATION}")
+    private List<String> redactedEnvVar;
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -40,7 +46,7 @@ public class RunContextCache {
         return result
             .entrySet()
             .stream()
-            .filter(e -> e.getKey().startsWith(envPrefix))
+            .filter(e -> !redactedEnvVar.contains(e.getKey()) && e.getKey().startsWith(envPrefix))
             .map(e -> new AbstractMap.SimpleEntry<>(
                 e.getKey().substring(envPrefix.length()).toLowerCase(),
                 e.getValue()

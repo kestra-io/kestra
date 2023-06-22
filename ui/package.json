@@ -62,7 +62,7 @@
     "monaco-editor": "^0.39.0",
     "monaco-yaml": "4.0.0-alpha.0",
     "prettier": "^2.8.8",
-    "sass": "^1.63.5",
+    "sass": "^1.63.6",
     "vite": "^4.3.9",
     "vitest": "^0.32.2"
   }

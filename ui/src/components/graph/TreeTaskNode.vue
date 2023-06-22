@@ -312,8 +312,8 @@
                     .filter(value => value.state.histories && value.state.histories.length > 0)
                     .map(value => new Date(value.state.histories[value.state.histories.length - 1].date).getTime()));
 
-                const duration = this.taskRuns
-                    .reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0);
+                const duration = Math.max(...this.taskRuns
+                    .map((taskRun) => this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0));
 
                 return [
                     {date: this.$moment(max).subtract(duration, "second"), state: "CREATED"},

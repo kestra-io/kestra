@@ -3,21 +3,21 @@ package io.kestra.core.models.flows;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.tasks.debugs.Return;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
+import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 class FlowTest {
@@ -120,6 +120,14 @@ class FlowTest {
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
         assertThat(validate.get().getMessage(), equalTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality"));
+    }
+
+    @Test
+    void allTasksWithChildsAndTriggerIds() {
+        Flow flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
+        List<String> all = flow.allTasksWithChildsAndTriggerIds();
+
+        assertThat(all.size(), is(3));
     }
 
     private Flow parse(String path) {

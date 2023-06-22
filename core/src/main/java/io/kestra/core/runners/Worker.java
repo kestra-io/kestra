@@ -60,7 +60,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Introspected
-public class Worker implements Runnable, Closeable {
+public class Worker implements Runnable, AutoCloseable {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     private final ApplicationContext applicationContext;
@@ -74,7 +74,7 @@ public class Worker implements Runnable, Closeable {
     private final MetricRegistry metricRegistry;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
-    private final ExecutorService executors;
+    protected final ExecutorService executors;
 
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
@@ -85,6 +85,8 @@ public class Worker implements Runnable, Closeable {
 
     @Getter
     private final String workerGroup;
+
+    protected final List<Runnable> subscriptionCancels = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
@@ -121,7 +123,7 @@ public class Worker implements Runnable, Closeable {
 
     @Override
     public void run() {
-        this.executionKilledQueue.receive(executionKilled -> {
+        subscriptionCancels.add(this.executionKilledQueue.receive(executionKilled -> {
             if (executionKilled != null) {
                 // @FIXME: the hashset will never expire killed execution
                 killedExecution.add(executionKilled.getExecutionId());
@@ -133,9 +135,9 @@ public class Worker implements Runnable, Closeable {
                         .forEach(WorkerThread::kill);
                 }
             }
-        });
+        }));
 
-        this.workerTaskQueue.receive(
+        subscriptionCancels.add(this.workerTaskQueue.receive(
             this.workerGroup,
             Worker.class,
             workerTask -> {
@@ -171,9 +173,9 @@ public class Worker implements Runnable, Closeable {
                     }
                 });
             }
-        );
+        ));
 
-        this.workerTriggerQueue.receive(
+        subscriptionCancels.add(this.workerTriggerQueue.receive(
             Worker.class,
             workerTrigger -> {
                 executors.execute(() -> {
@@ -240,7 +242,7 @@ public class Worker implements Runnable, Closeable {
                     );
                 });
             }
-        );
+        ));
     }
 
     private static ZonedDateTime now() {
@@ -545,7 +547,7 @@ public class Worker implements Runnable, Closeable {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
         workerTaskQueue.pause();
         executionKilledQueue.pause();
         new Thread(

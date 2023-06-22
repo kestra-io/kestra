@@ -121,7 +121,7 @@
                             </div>
                         </div>
                         <DynamicScroller
-                            :items="indexedLogsList.filter((logline) => logline.taskRunId === currentTaskRun.id)"
+                            :items="indexedLogsList.filter((logline) => logline.taskRunId === currentTaskRun.id && logline.attemptNumber === taskAttempt(index))"
                             :min-item-size="50"
                             key-field="index"
                             class="log-lines"
@@ -242,9 +242,11 @@
                 logsList: [],
                 threshold: 200,
                 showLogs: [],
-                count: 0,
                 followLogs: [],
-                logsTotal: 0
+                logsTotal: 0,
+                timer: undefined,
+                timeout: undefined,
+                logsToOpen: [State.FAILED, State.CREATED, State.RUNNING]
             };
         },
         watch: {
@@ -257,20 +259,17 @@
                 if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED) {
                     this.closeSSE();
                 }
+            },
+            currentTaskRuns: function () {
+                this.openTaskRun();
             }
         },
         mounted() {
             if (!this.fullScreenModal) {
                 this.loadLogs();
             }
-            if (this.execution.state.current === State.FAILED || this.execution.state.current === State.RUNNING) {
-                this.currentTaskRuns.forEach((taskRun) => {
-                    if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
-                        const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
-                        this.showLogs.push(`${taskRun.id}-${attemptNumber}`)
-                        this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
-                    }
-                });
+            if (this.logsToOpen.includes(this.execution.state.current)) {
+                this.openTaskRun();
             }
         },
         computed: {
@@ -317,13 +316,22 @@
             }
         },
         methods: {
+            openTaskRun(){
+                this.currentTaskRuns.forEach((taskRun) => {
+                    if (this.logsToOpen.includes(taskRun.state.current)) {
+                        const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
+                        this.showLogs.push(`${taskRun.id}-${attemptNumber}`)
+                        this?.$refs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
+                    }
+                });
+            },
             scrollToBottomFailedTask() {
-                if (this.execution.state.current === State.FAILED || this.execution.state.current === State.RUNNING) {
+                if (this.logsToOpen.includes(this.execution.state.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
-                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
+                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.attempt ?? 0)
                             if (this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
-                                this.$refs[`${taskRun.id}-${attemptNumber}`][0].scrollToBottom();
+                                this?.$refs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
                             }
                         }
                     });
@@ -391,10 +399,17 @@
                                 }
                                 this.$store.commit("execution/appendFollowedLogs", JSON.parse(event.data));
                                 this.followLogs = this.followLogs.concat(JSON.parse(event.data));
-                                if(moment().diff(this.timer, "seconds") > 0.5){
+
+                                clearTimeout(this.timeout);
+                                this.timeout = setTimeout(() => {
                                     this.timer = moment()
-                                    this.logsList =  JSON.parse(JSON.stringify(this.followLogs))
-                                    this.count++;
+                                    this.logsList = JSON.parse(JSON.stringify(this.followLogs))
+                                    this.scrollToBottomFailedTask();
+                                }, 100);
+                                if(moment().diff(this.timer, "seconds") > 0.5){
+                                    clearTimeout(this.timeout);
+                                    this.timer = moment()
+                                    this.logsList = JSON.parse(JSON.stringify(this.followLogs))
                                     this.scrollToBottomFailedTask();
                                 }
                             }
@@ -418,9 +433,7 @@
                 }
             },
             attempts(taskRun) {
-                return this.attempt ? [taskRun.attempts[this.attempt]] : taskRun.attempts || [{
-                    state: taskRun.state
-                }];
+                return this.execution.state.current === State.RUNNING ? taskRun.attempts : [taskRun.attempts[this.attempt]] ;
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {

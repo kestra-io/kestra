@@ -277,7 +277,7 @@
                             this.dispatchEvent(this.$tours["guidedTour"].currentStep._value, "created")
                             setTimeout(() => {
                                 resolve(true);
-                            }, 300);
+                            }, 500);
                         }),
                     },
                     {
@@ -294,7 +294,7 @@
                             localStorage.setItem("tourDoneOrSkip", "true");
                             setTimeout(() => {
                                 resolve(true);
-                            }, 300);
+                            }, 500);
                         }),
                     }
                 ],

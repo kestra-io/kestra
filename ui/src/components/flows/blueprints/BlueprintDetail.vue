@@ -164,6 +164,10 @@
     .header-wrapper {
         margin-bottom: $spacer;
 
+        .el-card & {
+            margin-top: 2.5rem;
+        }
+
         .header {
             margin-bottom: calc(var(--spacer) * 0.5);
 

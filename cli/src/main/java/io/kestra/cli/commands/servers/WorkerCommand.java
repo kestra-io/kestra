@@ -37,7 +37,7 @@ public class WorkerCommand extends AbstractServerCommand {
     public Integer call() throws Exception {
         super.call();
 
-        if (!this.workerGroupKey.matches("[a-zA-Z0-9_-]+")) {
+        if (this.workerGroupKey != null && !this.workerGroupKey.matches("[a-zA-Z0-9_-]+")) {
             throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
         }
 

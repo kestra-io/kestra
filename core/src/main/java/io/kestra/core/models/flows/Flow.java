@@ -181,6 +181,21 @@ public class Flow implements DeletedInterface {
         }
     }
 
+    public List<String> allTriggerIds() {
+        return this.triggers != null ? this.triggers.stream()
+            .map(AbstractTrigger::getId)
+            .collect(Collectors.toList()) : new ArrayList<>();
+    }
+
+    public List<String> allTasksWithChildsAndTriggerIds() {
+        return Stream.concat(
+            this.allTasksWithChilds().stream()
+                .map(Task::getId),
+            this.allTriggerIds().stream()
+        )
+            .collect(Collectors.toList());
+    }
+
     public List<Task> allErrorsWithChilds() {
         var allErrors = allTasksWithChilds().stream()
             .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)

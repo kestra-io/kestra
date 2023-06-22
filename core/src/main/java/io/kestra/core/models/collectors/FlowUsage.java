@@ -28,24 +28,38 @@ public class FlowUsage {
         List<Flow> allFlows = flowRepository.findAll();
 
         return FlowUsage.builder()
-            .count(allFlows.size())
-            .namespacesCount(allFlows
-                .stream()
-                .map(Flow::getNamespace)
-                .distinct()
-                .count()
-            )
-            .taskTypeCount(allFlows
-                .stream()
-                .flatMap(f -> f.allTasks().map(Task::getType))
-                .collect(Collectors.groupingBy(f -> f, Collectors.counting()))
-            )
-            .triggerTypeCount(allFlows
-                .stream()
-                .flatMap(f -> f.getTriggers() != null ? f.getTriggers().stream().map(AbstractTrigger::getType) : Stream.empty())
-                .collect(Collectors.groupingBy(f -> f, Collectors.counting()))
-            )
+            .count(count(allFlows))
+            .namespacesCount(namespacesCount(allFlows))
+            .taskTypeCount(taskTypeCount(allFlows))
+            .triggerTypeCount(triggerTypeCount(allFlows))
             .build();
     }
+
+    protected static int count(List<Flow> allFlows) {
+        return allFlows.size();
+    }
+
+    protected static long namespacesCount(List<Flow> allFlows) {
+        return allFlows
+            .stream()
+            .map(Flow::getNamespace)
+            .distinct()
+            .count();
+    }
+
+    protected static Map<String, Long> taskTypeCount(List<Flow> allFlows) {
+        return allFlows
+            .stream()
+            .flatMap(f -> f.allTasks().map(Task::getType))
+            .collect(Collectors.groupingBy(f -> f, Collectors.counting()));
+    }
+
+    protected static Map<String, Long> triggerTypeCount(List<Flow> allFlows) {
+        return allFlows
+            .stream()
+            .flatMap(f -> f.getTriggers() != null ? f.getTriggers().stream().map(AbstractTrigger::getType) : Stream.empty())
+            .collect(Collectors.groupingBy(f -> f, Collectors.counting()));
+    }
+
 
 }

@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
@@ -29,9 +30,14 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     protected SchedulerTriggerStateInterface triggerState;
 
     public static Flow createThreadFlow() {
+        return createThreadFlow(null);
+    }
+
+    public static Flow createThreadFlow(String workerGroup) {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
+            .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup))
             .build();
 
         return createFlow(Collections.singletonList(schedule), List.of(

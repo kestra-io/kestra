@@ -22,6 +22,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
@@ -57,6 +58,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
     private final TaskDefaultService taskDefaultService;
+    private final WorkerGroupService workerGroupService;
     protected Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -89,6 +91,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
+        this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
     }
 
     @Override
@@ -577,13 +580,13 @@ public abstract class AbstractScheduler implements Scheduler {
             );
         }
 
-        this.workerTaskQueue.emit(WorkerTrigger
+        var workerTrigger = WorkerTrigger
             .builder()
             .trigger(flowWithTriggerWithDefault.trigger)
             .triggerContext(flowWithTriggerWithDefault.triggerContext)
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
-            .build()
-        );
+            .build();
+        this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger), workerTrigger);
     }
 
     @Override

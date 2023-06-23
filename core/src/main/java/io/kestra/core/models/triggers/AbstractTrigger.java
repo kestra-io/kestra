@@ -3,6 +3,7 @@ package io.kestra.core.models.triggers;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -46,4 +47,7 @@ abstract public class AbstractTrigger {
     @NotNull
     @Builder.Default
     private boolean disabled = false;
+
+    @Valid
+    private WorkerGroup workerGroup;
 }

@@ -62,7 +62,9 @@ public class Worker implements Runnable, AutoCloseable {
     private final MetricRegistry metricRegistry;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
-    protected final ExecutorService executors;
+
+    // package private to allow its usage within tests
+    final ExecutorService executors;
 
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();

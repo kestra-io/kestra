@@ -261,6 +261,7 @@
     "label": "Label",
     "labels": "Labels",
     "label filter placeholder": "Label as 'key:value'",
+    "execution labels": "Execution labels",
     "feeds": {
       "title": "What's new at Kestra"
     },
@@ -713,6 +714,7 @@
     "label": "Label",
     "labels": "Labels",
     "label filter placeholder": "Label as 'key:value'",
+    "execution labels": "Labels d'exécution",
     "feeds": {
       "title": "Quoi de neuf sur Kestra"
     },

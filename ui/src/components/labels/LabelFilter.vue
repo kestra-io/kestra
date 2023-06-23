@@ -6,7 +6,7 @@
         filterable
         allow-create
         clearable
-        collapse-tags
+        :collapse-tags="collapseTags"
         default-first-option
         :persistent="false"
         :reserve-keyword="false"

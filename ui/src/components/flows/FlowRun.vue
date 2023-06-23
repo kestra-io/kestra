@@ -4,7 +4,8 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
-        <el-form label-position="top" :model="inputs" ref="form">
+
+        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent>
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
@@ -60,8 +61,10 @@
                             autocomplete="off"
                             :style="{display: typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///') ? 'none': ''}"
                         >
-                        <label v-if="typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///')"
-                               :for="input.name+'-file'">Kestra Internal Storage File</label>
+                        <label
+                            v-if="typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///')"
+                            :for="input.name+'-file'"
+                        >Kestra Internal Storage File</label>
                     </div>
                 </div>
                 <editor
@@ -75,6 +78,13 @@
 
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
+            <el-form-item
+                :label="$t('execution labels')"
+            >
+                <label-filter
+                    v-model:model-value="executionLabels"
+                />
+            </el-form-item>
             <div class="bottom-buttons">
                 <div class="left-align">
                     <el-form-item>
@@ -85,7 +95,7 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
+                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled || haveBadLabels">
                             {{ $t('launch execution') }}
                         </el-button>
                     </el-form-item>
@@ -104,10 +114,11 @@
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
+    import LabelFilter from "../../components/labels/LabelFilter.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
-        components: {Editor},
+        components: {Editor, LabelFilter},
         props: {
             redirect: {
                 type: Boolean,
@@ -116,7 +127,10 @@
         },
         data() {
             return {
-                inputs: {}
+                inputs: {},
+                inputNewLabel: "",
+                executionLabels: [],
+                inputVisible: false
             };
         },
         emits: ["executionTrigger"],
@@ -153,8 +167,14 @@
             ...mapState("flow", ["flow"]),
             ...mapState("core", ["guidedProperties"]),
             ...mapState("execution", ["execution"]),
+            haveBadLabels() {
+                return this.executionLabels.some(label => label.split(":").length !== 2)
+            }
         },
         methods: {
+            isBadLabel(tag) {
+                return tag.split(":").length !== 2
+            },
             fillInputsFromExecution(){
                 const nonEmptyInputNames = Object.keys(this.execution.inputs);
                 this.inputs = Object.fromEntries(
@@ -163,11 +183,11 @@
                             const inputName = input.name;
                             const inputType = input.type;
                             let inputValue = this.execution.inputs[inputName];
-                            if (inputType === 'DATE' || inputType === 'DATETIME') {
+                            if (inputType === "DATE" || inputType === "DATETIME") {
                                 inputValue = this.$moment(inputValue).toISOString()
-                            }else if (inputType === 'DURATION' || inputType === 'TIME') {
+                            }else if (inputType === "DURATION" || inputType === "TIME") {
                                 inputValue = this.$moment().startOf("day").add(inputValue, "seconds").toString()
-                            }else if (inputType === 'JSON') {
+                            }else if (inputType === "JSON") {
                                 inputValue = JSON.stringify(inputValue).toString()
                             }
 
@@ -188,7 +208,8 @@
                         executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             id: this.flow.id,
-                            namespace: this.flow.namespace
+                            namespace: this.flow.namespace,
+                            labels: this.executionLabels
                         })
                         this.$emit("executionTrigger");
                     });
@@ -250,6 +271,19 @@
                 }
 
                 return true;
+            },
+            handleClose(label) {
+                this.executionLabels.splice(this.executionLabels.indexOf(label), 1)
+            },
+            showInput() {
+                this.inputVisible = true;
+            },
+            handleInputConfirm() {
+                if (this.inputNewLabel) {
+                    this.executionLabels.push(this.inputNewLabel)
+                }
+                this.inputVisible = false
+                this.inputNewLabel = ""
             }
         },
         watch: {
@@ -285,5 +319,6 @@
     .right-align :deep(div) {
         flex-direction: row-reverse;
     }
+
 }
 </style>

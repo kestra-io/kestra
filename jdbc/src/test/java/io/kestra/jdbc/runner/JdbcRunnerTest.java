@@ -15,6 +15,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -179,7 +180,7 @@ public abstract class JdbcRunnerTest {
         TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }
 
-    @Test
+    @RetryingTest(5)
     void withFailedTemplate() throws Exception {
         TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }

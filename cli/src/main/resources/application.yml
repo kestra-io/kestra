@@ -57,17 +57,19 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/postgres
-      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
+      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
       ignore-migration-patterns: "*:missing,*:future"
     mysql:
       enabled: true
       locations:
         - classpath:migrations/mysql
+      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
+      ignore-migration-patterns: "*:missing,*:future"
     h2:
       enabled: true
       locations:
         - classpath:migrations/h2
-      # We must ignore missing migrations as a V8 wrong migration was created and replaced by the V11
+      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
       ignore-migration-patterns: "*:missing,*:future"
 
 kestra:

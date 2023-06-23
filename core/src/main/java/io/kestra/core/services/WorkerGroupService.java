@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTask;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ public class WorkerGroupService {
         return null;
     }
 
-    public String resolveGroupFromTask(WorkerTask workerTask) {
+    public String resolveGroupFromJob(WorkerJob workerJob) {
         // Worker Group is an EE functionality, setting a worker group in a task is not possible (validation error),
         // and even if possible it will be a no-op.
         return null;

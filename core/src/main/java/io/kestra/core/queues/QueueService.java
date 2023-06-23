@@ -54,6 +54,8 @@ public class QueueService {
             return null;
         } else if (object.getClass() == WorkerTrigger.class) {
             return ((WorkerTrigger) object).getTriggerContext().uid();
+        } else if (object.getClass() == WorkerTriggerRunning.class) {
+            return ((WorkerTriggerRunning) object).getTriggerContext().uid();
         } else if (object.getClass() == WorkerTriggerResult.class) {
             return ((WorkerTriggerResult) object).getTriggerContext().uid();
         } else {

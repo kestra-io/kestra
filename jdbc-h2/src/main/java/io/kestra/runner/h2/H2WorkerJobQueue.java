@@ -1,0 +1,37 @@
+package io.kestra.runner.h2;
+
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.WorkerJobQueueInterface;
+import io.kestra.core.runners.WorkerJob;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
+
+import java.util.function.Consumer;
+
+public class H2WorkerJobQueue implements WorkerJobQueueInterface {
+    QueueInterface<WorkerJob> workerTaskQueue;
+
+    @SuppressWarnings("unchecked")
+    public H2WorkerJobQueue(ApplicationContext applicationContext) {
+        this.workerTaskQueue = (QueueInterface<WorkerJob>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED)
+        );
+    }
+
+    @Override
+    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<WorkerJob> consumer) {
+        return workerTaskQueue.receive(consumerGroup, queueType, consumer);
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void close() {
+
+    }
+}

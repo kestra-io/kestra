@@ -19,7 +19,7 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.WorkerTaskQueueInterface;
+import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.flows.WorkingDirectory;
@@ -52,10 +52,9 @@ public class Worker implements Runnable, AutoCloseable {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     private final ApplicationContext applicationContext;
-    private final WorkerTaskQueueInterface workerTaskQueue;
+    private final WorkerJobQueueInterface workerJobQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
-    private final QueueInterface<WorkerTrigger> workerTriggerQueue;
     private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final QueueInterface<MetricEntry> metricEntryQueue;
@@ -79,14 +78,10 @@ public class Worker implements Runnable, AutoCloseable {
     @SuppressWarnings("unchecked")
     public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
         this.applicationContext = applicationContext;
-        this.workerTaskQueue = applicationContext.getBean(WorkerTaskQueueInterface.class);
+        this.workerJobQueue = applicationContext.getBean(WorkerJobQueueInterface.class);
         this.workerTaskResultQueue = (QueueInterface<WorkerTaskResult>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-        );
-        this.workerTriggerQueue = (QueueInterface<WorkerTrigger>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGER_NAMED)
         );
         this.workerTriggerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
             QueueInterface.class,
@@ -125,111 +120,116 @@ public class Worker implements Runnable, AutoCloseable {
             }
         });
 
-        this.workerTaskQueue.receive(
+        this.workerJobQueue.receive(
             this.workerGroup,
             Worker.class,
             workerTask -> {
                 executors.execute(() -> {
-                    if (workerTask.getTask() instanceof RunnableTask) {
-                        this.run(workerTask, true);
-                    } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
-                        RunContext runContext = workerTask.getRunContext();
-
-                        try {
-                            for (Task currentTask : workingDirectory.getTasks()) {
-                                WorkerTask currentWorkerTask = workingDirectory.workerTask(
-                                    workerTask.getTaskRun(),
-                                    currentTask,
-                                    runContext
-                                );
-
-                                // all tasks will be handled immediately by the worker
-                                WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
-
-                                if (workerTaskResult.getTaskRun().getState().isFailed()) {
-                                    break;
-                                }
-
-                                runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
-                            }
-                        } finally {
-                            runContext.cleanup();
-                        }
-                    } else {
-                        throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
+                    if (workerTask instanceof WorkerTask task) {
+                        handleTask(task);
+                    }
+                    else if (workerTask instanceof WorkerTrigger trigger) {
+                        handleTrigger(trigger);
                     }
                 });
             }
         );
+    }
 
-        this.workerTriggerQueue.receive(
-            Worker.class,
-            workerTrigger -> {
-                executors.execute(() -> {
-                    this.metricRegistry
-                        .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
-                        .record(() -> {
-                            this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                                .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
-                            this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
+    private void handleTask(WorkerTask workerTask) {
+        if (workerTask.getTask() instanceof RunnableTask) {
+            this.run(workerTask, true);
+        } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
+            RunContext runContext = workerTask.getRunContext();
 
-                            try {
-                                PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
-                                RunContext runContext = workerTrigger.getConditionContext()
-                                    .getRunContext()
-                                    .forWorker(this.applicationContext, workerTrigger);
-                                Optional<Execution> evaluate = pollingTrigger.evaluate(
-                                    workerTrigger.getConditionContext().withRunContext(runContext),
-                                    workerTrigger.getTriggerContext()
-                                );
-
-                                if (log.isDebugEnabled()) {
-                                    log.debug(
-                                        "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
-                                        workerTrigger.getTriggerContext().getNamespace(),
-                                        workerTrigger.getTriggerContext().getFlowId(),
-                                        workerTrigger.getTrigger().getId(),
-                                        workerTrigger.getTrigger().getType(),
-                                        evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
-                                    );
-                                }
-
-                                var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
-                                if (flowLabels != null) {
-                                    evaluate = evaluate.map( execution -> {
-                                            Map<String, String> executionLabels = execution.getLabels() != null ? execution.getLabels() : new HashMap<>();
-                                            executionLabels.putAll(flowLabels);
-                                            return execution.withLabels(executionLabels);
-                                        }
-                                    );
-                                }
-
-                                workerTrigger.getConditionContext().getRunContext().cleanup();
-
-                                this.workerTriggerResultQueue.emit(
-                                    WorkerTriggerResult.builder()
-                                        .execution(evaluate)
-                                        .triggerContext(workerTrigger.getTriggerContext())
-                                        .trigger(workerTrigger.getTrigger())
-                                        .build()
-                                );
-                            } catch (Exception e) {
-                                logError(workerTrigger, e);
-                                this.workerTriggerResultQueue.emit(
-                                    WorkerTriggerResult.builder()
-                                        .success(false)
-                                        .triggerContext(workerTrigger.getTriggerContext())
-                                        .trigger(workerTrigger.getTrigger())
-                                        .build()
-                                );
-                            }
-
-                            this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
-                        }
+            try {
+                for (Task currentTask : workingDirectory.getTasks()) {
+                    WorkerTask currentWorkerTask = workingDirectory.workerTask(
+                        workerTask.getTaskRun(),
+                        currentTask,
+                        runContext
                     );
-                });
+
+                    // all tasks will be handled immediately by the worker
+                    WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
+
+                    if (workerTaskResult.getTaskRun().getState().isFailed()) {
+                        break;
+                    }
+
+                    runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
+                }
+            } finally {
+                runContext.cleanup();
             }
-        );
+        }
+        else {
+            throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
+        }
+    }
+
+    private void handleTrigger(WorkerTrigger workerTrigger) {
+        this.metricRegistry
+            .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
+            .record(() -> {
+                    this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
+                        .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
+                    this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
+
+                    try {
+                        PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
+                        RunContext runContext = workerTrigger.getConditionContext()
+                            .getRunContext()
+                            .forWorker(this.applicationContext, workerTrigger);
+                        Optional<Execution> evaluate = pollingTrigger.evaluate(
+                            workerTrigger.getConditionContext().withRunContext(runContext),
+                            workerTrigger.getTriggerContext()
+                        );
+
+                        if (log.isDebugEnabled()) {
+                            log.debug(
+                                "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
+                                workerTrigger.getTriggerContext().getNamespace(),
+                                workerTrigger.getTriggerContext().getFlowId(),
+                                workerTrigger.getTrigger().getId(),
+                                workerTrigger.getTrigger().getType(),
+                                evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                            );
+                        }
+
+                        var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
+                        if (flowLabels != null) {
+                            evaluate = evaluate.map( execution -> {
+                                    Map<String, String> executionLabels = execution.getLabels() != null ? execution.getLabels() : new HashMap<>();
+                                    executionLabels.putAll(flowLabels);
+                                    return execution.withLabels(executionLabels);
+                                }
+                            );
+                        }
+
+                        workerTrigger.getConditionContext().getRunContext().cleanup();
+
+                        this.workerTriggerResultQueue.emit(
+                            WorkerTriggerResult.builder()
+                                .execution(evaluate)
+                                .triggerContext(workerTrigger.getTriggerContext())
+                                .trigger(workerTrigger.getTrigger())
+                                .build()
+                        );
+                    } catch (Exception e) {
+                        logError(workerTrigger, e);
+                        this.workerTriggerResultQueue.emit(
+                            WorkerTriggerResult.builder()
+                                .success(false)
+                                .triggerContext(workerTrigger.getTriggerContext())
+                                .trigger(workerTrigger.getTrigger())
+                                .build()
+                        );
+                    }
+
+                    this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
+                }
+            );
     }
 
     private static ZonedDateTime now() {
@@ -535,7 +535,7 @@ public class Worker implements Runnable, AutoCloseable {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void close() throws Exception {
-        workerTaskQueue.pause();
+        workerJobQueue.pause();
         executionKilledQueue.pause();
         new Thread(
             () -> {
@@ -574,7 +574,7 @@ public class Worker implements Runnable, AutoCloseable {
             Duration.ofSeconds(1)
         );
 
-        workerTaskQueue.close();
+        workerJobQueue.close();
         executionKilledQueue.close();
         workerTaskResultQueue.close();
         metricEntryQueue.close();
@@ -616,7 +616,7 @@ public class Worker implements Runnable, AutoCloseable {
                 if (workerTask.getTask().getTimeout() != null) {
                     Failsafe
                         .with(Timeout
-                            .<WorkerTask>of(workerTask.getTask().getTimeout())
+                            .of(workerTask.getTask().getTimeout())
                             .withInterrupt(true)
                             .onFailure(event -> metricRegistry
                                 .counter(

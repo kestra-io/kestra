@@ -39,8 +39,8 @@ class WorkingDirectoryTest {
     ApplicationContext applicationContext;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
-    QueueInterface<WorkerTask> workerTaskQueue;
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    QueueInterface<WorkerJob> workerTaskQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)

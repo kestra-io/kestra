@@ -4,7 +4,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Await;
 
@@ -22,7 +22,7 @@ public class MemoryRunner extends StandAloneRunner {
         // @FIXME: Ugly hack to wait that all threads is created and ready to listen
         Await.until(
             () -> ((MemoryQueue<Execution>) this.executionQueue).getSubscribersCount() == 1 + 1 + 1 && // executorThreads + indexerThread + schedulerThread &&
-                ((MemoryQueue<WorkerTask>) this.workerTaskQueue).getSubscribersCount() == 1 &&
+                ((MemoryQueue<WorkerJob>) this.workerTaskQueue).getSubscribersCount() == 1 &&
                 ((MemoryQueue<WorkerTaskResult>) this.workerTaskResultQueue).getSubscribersCount() == 1, // executorThreads,
             null,
             Duration.ofSeconds(5)

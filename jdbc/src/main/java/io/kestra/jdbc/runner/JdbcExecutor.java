@@ -59,8 +59,8 @@ public class JdbcExecutor implements ExecutorInterface {
     private QueueInterface<Execution> executionQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
-    private QueueInterface<WorkerTask> workerTaskQueue;
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    private QueueInterface<WorkerJob> workerTaskQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -216,13 +216,13 @@ public class JdbcExecutor implements ExecutorInterface {
                     .getWorkerTasks()
                     .stream()
                     .filter(workerTask -> this.deduplicateWorkerTask(execution, executorState, workerTask.getTaskRun()))
-                    .collect(Collectors.toList());
+                    .toList();
 
                 // WorkerTask not flowable to workerTask
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
-                    .forEach(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromTask(workerTask), workerTask));
+                    .forEach(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask));
 
                 // WorkerTask not flowable to workerTaskResult as Running
                 workerTasksDedup

@@ -12,9 +12,8 @@ import io.kestra.core.models.templates.Template;
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
     String EXECUTOR_NAMED = "executorQueue";
-    String WORKERTASK_NAMED = "workerTaskQueue";
+    String WORKERJOB_NAMED = "workerJobQueue";
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
-    String WORKERTRIGGER_NAMED = "workerTriggerQueue";
     String WORKERTRIGGERRESULT_NAMED = "workerTriggerResultQueue";
     String FLOW_NAMED = "flowQueue";
     String TEMPLATE_NAMED = "templateQueue";
@@ -22,18 +21,16 @@ public interface QueueFactoryInterface {
     String METRIC_QUEUE = "workerTaskMetricQueue";
     String KILL_NAMED = "executionKilledQueue";
     String WORKERINSTANCE_NAMED = "workerInstanceQueue";
-    String WORKERTASKRUNNING_NAMED = "workerTaskRuninngQueue";
+    String WORKERJOBRUNNING_NAMED = "workerJobRunningQueue";
     String TRIGGER_NAMED = "triggerQueue";
 
     QueueInterface<Execution> execution();
 
     QueueInterface<Executor> executor();
 
-    QueueInterface<WorkerTask> workerTask();
+    QueueInterface<WorkerJob> workerJob();
 
     QueueInterface<WorkerTaskResult> workerTaskResult();
-
-    QueueInterface<WorkerTrigger> workerTrigger();
 
     QueueInterface<WorkerTriggerResult> workerTriggerResult();
 
@@ -49,10 +46,10 @@ public interface QueueFactoryInterface {
 
     QueueInterface<WorkerInstance> workerInstance();
 
-    QueueInterface<WorkerTaskRunning> workerTaskRunning();
+    QueueInterface<WorkerJobRunning> workerJobRunning();
 
     QueueInterface<Trigger> trigger();
 
-    WorkerTaskQueueInterface workerTaskQueue();
+    WorkerJobQueueInterface workerJobQueue();
 
 }

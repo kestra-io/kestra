@@ -76,7 +76,7 @@ export default (callback, store, router) => {
         response => {
             return response
         }, errorResponse => {
-            if (errorResponse.code && errorResponse.code === "ECONNABORTED") {
+            if (errorResponse.code && (errorResponse.code === "ECONNABORTED" || errorResponse.code === "ERR_BAD_RESPONSE")) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse,
                     content: errorResponse,

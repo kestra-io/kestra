@@ -1,59 +1,61 @@
 <template>
-    <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
-        <template #navbar>
-            <div class="d-flex sub-nav">
-                <slot name="nav" />
-                <el-form-item>
-                    <search-field :embed="embed" placeholder="search blueprint" @search="s => q = s" />
-                </el-form-item>
-            </div>
-            <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">
-                <el-radio-button
-                    :key="0"
-                    :label="0"
-                    class="hoverable"
-                >
-                    {{ $t("all tags") }}
-                </el-radio-button>
-                <el-radio-button
-                    v-for="tag in Object.values(tags)"
-                    :key="tag.id"
-                    :label="tag.id"
-                    class="hoverable"
-                >
-                    {{ tag.name }}
-                </el-radio-button>
-            </el-radio-group>
+    <div>
+        <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+            <template #navbar>
+                <div class="d-flex sub-nav">
+                    <slot name="nav" />
+                    <el-form-item>
+                        <search-field :embed="embed" placeholder="search blueprint" @search="s => q = s" />
+                    </el-form-item>
+                </div>
+                <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">
+                    <el-radio-button
+                        :key="0"
+                        :label="0"
+                        class="hoverable"
+                    >
+                        {{ $t("all tags") }}
+                    </el-radio-button>
+                    <el-radio-button
+                        v-for="tag in Object.values(tags)"
+                        :key="tag.id"
+                        :label="tag.id"
+                        class="hoverable"
+                    >
+                        {{ tag.name }}
+                    </el-radio-button>
+                </el-radio-group>
 
-            <el-divider />
-        </template>
-        <template #table>
-            <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
-                <component class="blueprint-link" :is="embed ? 'div' : 'router-link'" :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
-                    <div class="side">
-                        <div class="title">
-                            {{ blueprint.title }}
+                <el-divider />
+            </template>
+            <template #table>
+                <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
+                    <component class="blueprint-link" :is="embed ? 'div' : 'router-link'" :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
+                        <div class="side">
+                            <div class="title">
+                                {{ blueprint.title }}
+                            </div>
+                            <div class="tags text-uppercase">
+                                {{ tagsToString(blueprint.tags) }}
+                            </div>
+                            <div class="tasks-container">
+                                <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]" />
+                            </div>
                         </div>
-                        <div class="tags text-uppercase">
-                            {{ tagsToString(blueprint.tags) }}
+                        <div class="side buttons ms-auto">
+                            <slot name="buttons" :blueprint="blueprint" />
+                            <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                                <el-button class="hoverable" @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
+                                    {{ $t('copy') }}
+                                </el-button>
+                            </el-tooltip>
                         </div>
-                        <div class="tasks-container">
-                            <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]" />
-                        </div>
-                    </div>
-                    <div class="side buttons ms-auto">
-                        <slot name="buttons" :blueprint="blueprint" />
-                        <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                            <el-button class="hoverable" @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
-                                {{ $t('copy') }}
-                            </el-button>
-                        </el-tooltip>
-                    </div>
-                </component>
-            </el-card>
-        </template>
-    </data-table>
-    <slot name="bottom-bar" />
+                    </component>
+                </el-card>
+            </template>
+        </data-table>
+        <slot name="bottom-bar" />
+    </div>
 </template>
 
 <script>
@@ -63,9 +65,10 @@
     import DataTableActions from "../../../../mixins/dataTableActions";
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import RestoreUrl from "../../../../mixins/restoreUrl";
 
     export default {
-        mixins: [DataTableActions],
+        mixins: [RestoreUrl, DataTableActions],
         components: {TaskIcon, DataTable, SearchField},
         emits: ["goToDetail"],
         props: {
@@ -85,7 +88,7 @@
         data() {
             return {
                 q: undefined,
-                selectedTag: 0,
+                selectedTag: this.initSelectedTag(),
                 tags: undefined,
                 blueprints: undefined,
                 total: 0,
@@ -95,6 +98,9 @@
             }
         },
         methods: {
+            initSelectedTag() {
+                return this.$route?.query?.selectedTag ?? 0
+            },
             async copy(blueprintId) {
                 await navigator.clipboard.writeText(
                     (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data
@@ -135,8 +141,8 @@
                 }
 
 
-                if (this.$route.query.tags || this.selectedTag) {
-                    query.tags = this.$route.query.tags || this.selectedTag;
+                if (this.$route.query.selectedTag || this.selectedTag) {
+                    query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
                 return this.$http
@@ -178,6 +184,11 @@
             }
         },
         watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name) {
+                    this.selectedTag = this.initSelectedTag();
+                }
+            },
             q() {
                 if (this.embed) {
                     this.load(this.onDataLoaded);
@@ -264,7 +275,7 @@
 
 
                 // Embedded tabs looks weird without cancelling the margin (this brings a top-left tabs with bottom-right search)
-                > :nth-child(1){
+                > :nth-child(1) {
                     margin-top: calc(-1.5 * var(--spacer));
                 }
             }
@@ -374,8 +385,8 @@
             flex: 1;
 
             :deep(span) {
-                border: 1px solid var(--bs--gray-300);
-                border-radius: $border-radius;
+                border: none !important;
+                border-radius: $border-radius !important;
                 width: 100%;
                 font-weight: bold;
                 box-shadow: none;

@@ -97,7 +97,7 @@ class ClassPluginDocumentationTest {
 
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, Schedule.class, null);
 
-            assertThat(doc.getDefs().size(), is(3));
+            assertThat(doc.getDefs().size(), is(4));
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.conditions.ScheduleCondition")).get("type"), is("object"));
             assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.conditions.ScheduleCondition")).get("properties")).size(), is(0));

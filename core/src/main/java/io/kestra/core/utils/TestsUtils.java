@@ -76,9 +76,7 @@ abstract public class TestsUtils {
                 int matchingLogsCount = matchingLogs.get().size();
                 return countMatcher.test(matchingLogsCount);
             }, Duration.ofMillis(10), Duration.ofMillis(500));
-        } catch (TimeoutException e) {
-            throw new AssertionError(e);
-        }
+        } catch (TimeoutException e) {}
 
         return matchingLogs.get();
     }

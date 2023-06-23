@@ -72,7 +72,8 @@ public class TaskDefaultsCaseTest {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        TestsUtils.awaitLog(logs, log -> log.getMessage().contains("Unrecognized field \"invalid\""));
+        List<LogEntry> matchingLogs = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("Unrecognized field \"invalid\""));
+        assertThat(matchingLogs, not(empty()));
     }
 
     @SuperBuilder

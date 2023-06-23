@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 class TimeoutTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -58,6 +58,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
+        List<LogEntry> matchingLogs = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
+        assertThat(matchingLogs.size(), is(2));
     }
 }

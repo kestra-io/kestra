@@ -7,40 +7,6 @@
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent>
             <el-form-item
-                :label="$t('execution labels')"
-            >
-                <el-tooltip
-                    v-for="label in executionLabels"
-                    :key="label"
-                    :content="$t('invalid label format')"
-                    placement="top"
-                    :disabled="!isBadLabel(label)"
-                >
-                    <el-tag
-                        class="white-text mx-1"
-                        :type="isBadLabel(label) ? 'error' : 'primary'"
-                        closable
-                        :disable-transitions="false"
-                        @close="handleClose(label)"
-                    >
-                        {{ label }}
-                    </el-tag>
-                </el-tooltip>
-                <el-input
-                    v-if="inputVisible"
-                    ref="InputRef"
-                    v-model="inputNewLabel"
-                    class="ml-1 w-20"
-                    size="small"
-                    @keyup.enter="handleInputConfirm"
-                    @blur="handleInputConfirm"
-                    :placeholder="$t('label filter placeholder')"
-                />
-                <el-button v-else class="button-new-tag ml-1" size="small" @click="showInput">
-                    + {{ $t('new label') }}
-                </el-button>
-            </el-form-item>
-            <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
                 :label="input.name"
@@ -112,6 +78,13 @@
 
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
+            <el-form-item
+                :label="$t('execution labels')"
+            >
+                <label-filter
+                    v-model:model-value="executionLabels"
+                />
+            </el-form-item>
             <div class="bottom-buttons">
                 <div class="left-align">
                     <el-form-item>
@@ -141,10 +114,11 @@
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
+    import LabelFilter from "../../components/labels/LabelFilter.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
-        components: {Editor},
+        components: {Editor, LabelFilter},
         props: {
             redirect: {
                 type: Boolean,
@@ -346,9 +320,5 @@
         flex-direction: row-reverse;
     }
 
-}
-
-.white-text {
-    color: var(--bs-white);
 }
 </style>

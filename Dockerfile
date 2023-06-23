@@ -5,6 +5,7 @@ ARG APT_PACKAGES=""
 
 WORKDIR /app
 COPY docker /
+COPY build/executable/kestra-* /app/kestra
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \

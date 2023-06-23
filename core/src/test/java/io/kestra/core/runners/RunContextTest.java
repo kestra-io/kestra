@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.flows.State;
@@ -12,6 +11,8 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
@@ -26,13 +27,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.number.OrderingComparison.greaterThan;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest extends AbstractMemoryRunnerTest {
@@ -55,36 +52,35 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Test
     void logs() throws TimeoutException {
         List<LogEntry> logs = new ArrayList<>();
-        List<LogEntry> filters;
+        LogEntry matchingLog;
         workerTaskLogQueue.receive(logs::add);
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "logs");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
 
-        filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(0));
-        assertThat(filters, hasSize(1));
-        assertThat(filters.get(0).getLevel(), is(Level.TRACE));
-        assertThat(filters.get(0).getMessage(), is("first t1"));
+        matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(0).getId()));
+        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog.getLevel(), is(Level.TRACE));
+        assertThat(matchingLog.getMessage(), is("first t1"));
 
-        filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(1));
-        assertThat(filters, hasSize(1));
-        assertThat(filters.get(0).getLevel(), is(Level.WARN));
-        assertThat(filters.get(0).getMessage(), is("second io.kestra.core.tasks.log.Log"));
+        matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(1).getId()));
+        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog.getLevel(), is(Level.WARN));
+        assertThat(matchingLog.getMessage(), is("second io.kestra.core.tasks.log.Log"));
 
-
-        filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(2));
-        assertThat(filters, hasSize(1));
-        assertThat(filters.get(0).getLevel(), is(Level.ERROR));
-        assertThat(filters.get(0).getMessage(), is("third logs"));
+        matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(2).getId()));
+        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog.getLevel(), is(Level.ERROR));
+        assertThat(matchingLog.getMessage(), is("third logs"));
     }
 
     @Test
-    void inputsLarge() throws TimeoutException, InterruptedException {
+    void inputsLarge() throws TimeoutException {
         List<LogEntry> logs = new ArrayList<>();
         workerTaskLogQueue.receive(logs::add);
 
-        char[] chars = new char[1024*11];
+        char[] chars = new char[1024 * 11];
         Arrays.fill(chars, 'a');
 
         Map<String, String> inputs = new HashMap<>(InputsTest.inputs);
@@ -101,12 +97,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
 
-        List<LogEntry> logEntries = logs.stream()
-            .filter(logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()))
-            .sorted(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()))
-            .collect(Collectors.toList());
+        List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 1);
+        logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
-        Thread.sleep(100);
         assertThat(logEntries.get(0).getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
     }
 
@@ -150,7 +143,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         p.destroy();
 
         URI uri = runContext.putTempFile(path.toFile());
-        assertThat(storageInterface.size(uri), is(size+1));
+        assertThat(storageInterface.size(uri), is(size + 1));
     }
 
     @Test

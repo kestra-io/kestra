@@ -11,6 +11,7 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 class TimeoutTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -57,6 +58,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Timeout")).count(), is(2L));
+        List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
+        assertThat(matchingLogs.size(), is(2));
     }
 }

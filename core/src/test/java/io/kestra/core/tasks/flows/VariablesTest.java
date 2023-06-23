@@ -11,6 +11,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import jakarta.inject.Inject;
@@ -46,11 +47,14 @@ class VariablesTest extends AbstractMemoryRunnerTest {
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "variables-invalid");
 
-        List<LogEntry> filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(1));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(filters.stream().filter(logEntry -> logEntry.getMessage().contains("Missing variable: 'inputs' on '{{inputs.invalid}}'")).count(), greaterThan(0L));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry ->
+            Objects.equals(logEntry.getTaskRunId(), execution.getTaskRunList().get(1).getId()) &&
+                logEntry.getMessage().contains("Missing variable: 'inputs' on '{{inputs.invalid}}'")
+        );
+        assertThat(matchingLog, notNullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

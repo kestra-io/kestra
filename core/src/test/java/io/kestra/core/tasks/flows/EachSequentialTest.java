@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import io.kestra.core.utils.TestsUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
@@ -95,7 +96,8 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]")).count(), greaterThan(0L));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
+        assertThat(matchingLog, notNullValue());
     }
 
     @Test

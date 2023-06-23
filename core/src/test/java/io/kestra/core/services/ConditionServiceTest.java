@@ -85,9 +85,7 @@ class ConditionServiceTest {
 
         conditionService.valid(flow, conditions, conditionContext);
 
-        Thread.sleep( 250);
-
-        assertThat(logs.stream().filter(logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.ConditionServiceTest")).count(), greaterThan(0L));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getFlowId().equals("exception")).count(), greaterThan(0L));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.ConditionServiceTest") && logEntry.getFlowId().equals("exception"));
+        assertThat(matchingLog, notNullValue());
     }
 }

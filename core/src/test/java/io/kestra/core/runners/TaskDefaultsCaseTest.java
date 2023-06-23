@@ -13,6 +13,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.TestsUtils;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,7 +72,8 @@ public class TaskDefaultsCaseTest {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Unrecognized field \"invalid\"")).count(), greaterThan(0L));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("Unrecognized field \"invalid\""));
+        assertThat(matchingLog, notNullValue());
     }
 
     @SuperBuilder

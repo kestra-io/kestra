@@ -2,16 +2,12 @@ package io.kestra.core.schedulers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.TaskDefault;
-import io.kestra.core.models.flows.input.StringInput;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -19,12 +15,19 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -37,11 +40,11 @@ abstract public class AbstractSchedulerTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
-    protected  static Flow createFlow(List<AbstractTrigger> triggers) {
+    protected static Flow createFlow(List<AbstractTrigger> triggers) {
         return createFlow(triggers, null);
     }
 
-    protected  static Flow createFlow(List<AbstractTrigger> triggers, List<TaskDefault> list) {
+    protected static Flow createFlow(List<AbstractTrigger> triggers, List<TaskDefault> list) {
         Flow.FlowBuilder<?, ?> flow = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")

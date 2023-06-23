@@ -12,6 +12,7 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.tasks.log.Log;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 public class TemplateTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -65,7 +65,8 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("myString")).findFirst().orElseThrow().getLevel(), is(Level.ERROR));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
+        assertThat(matchingLog, notNullValue());
     }
 
     @Test
@@ -84,7 +85,8 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("Can't find flow template 'io.kestra.tests.invalid'")).findFirst().orElseThrow().getLevel(), is(Level.ERROR));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
+        assertThat(matchingLog, notNullValue());
     }
 
     @Test

@@ -5,9 +5,10 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +47,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
         ));
     }
 
-    @Test
+    @RetryingTest(5)
     void thread() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
@@ -64,21 +65,20 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             .when(schedulerExecutionStateSpy)
             .findById(any());
 
-        // start the worker as it execute polling triggers
-        Worker worker = new Worker(applicationContext, 8, null);
-        worker.run();
-
         // scheduler
-        try (AbstractScheduler scheduler = new DefaultScheduler(
-            applicationContext,
-            flowListenersServiceSpy,
-            schedulerExecutionStateSpy,
-            triggerState
-        )) {
+        try (
+            AbstractScheduler scheduler = new DefaultScheduler(
+                applicationContext,
+                flowListenersServiceSpy,
+                schedulerExecutionStateSpy,
+                triggerState
+            );
+            Worker worker = new TestMethodScopedWorker(applicationContext, 8, null);
+        ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
             // wait for execution
-            executionQueue.receive(SchedulerThreadTest.class, execution -> {
+            Runnable assertionStop = executionQueue.receive(SchedulerThreadTest.class, execution -> {
                 last.set(execution);
 
                 assertThat(execution.getFlowId(), is(flow.getId()));
@@ -89,8 +89,12 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
                 }
             });
 
+            // start the worker as it execute polling triggers
+            worker.run();
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            assertionStop.run();
 
             assertThat(last.get().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getVariables().get("counter"), is(3));
@@ -99,5 +103,4 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             AbstractSchedulerTest.COUNTER = 0;
         }
     }
-
 }

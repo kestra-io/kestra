@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.flows.State;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
@@ -19,6 +20,9 @@ import javax.validation.constraints.NotNull;
 public class Trigger extends TriggerContext {
     @NotNull
     private String executionId;
+
+    @Nullable
+    private State.Type executionCurrentState;
 
     @Nullable
     private Instant updatedDate;
@@ -92,6 +96,24 @@ public class Trigger extends TriggerContext {
             .triggerId(triggerContext.getTriggerId())
             .date(triggerContext.getDate())
             .executionId(execution.getId())
+            .updatedDate(Instant.now())
+            .build();
+    }
+
+    /**
+     * Create a new Trigger with execution information.
+     *
+     * This is used to update the trigger with the execution information, it will also erase the trigger date.
+     */
+    public static Trigger of(Execution execution, ZonedDateTime date) {
+        return Trigger.builder()
+            .namespace(execution.getNamespace())
+            .flowId(execution.getFlowId())
+            .flowRevision(execution.getFlowRevision())
+            .triggerId(execution.getTrigger().getId())
+            .date(date)
+            .executionId(execution.getId())
+            .executionCurrentState(execution.getState().getCurrent())
             .updatedDate(Instant.now())
             .build();
     }

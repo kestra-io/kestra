@@ -13,14 +13,12 @@ import org.junitpioneer.jupiter.RetryingTest;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
@@ -29,9 +27,6 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
-
-    @Inject
-    protected SchedulerExecutionStateInterface executionState;
 
     public static Flow createThreadFlow() {
         UnitTest schedule = UnitTest.builder()
@@ -51,7 +46,6 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     void thread() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        SchedulerExecutionStateInterface schedulerExecutionStateSpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(2);
 
         Flow flow = createThreadFlow();
@@ -60,17 +54,11 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             .when(flowListenersServiceSpy)
             .flows();
 
-        // mock the backfill execution is ended
-        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
-            .when(schedulerExecutionStateSpy)
-            .findById(any());
-
         // scheduler
         try (
             AbstractScheduler scheduler = new DefaultScheduler(
                 applicationContext,
                 flowListenersServiceSpy,
-                schedulerExecutionStateSpy,
                 triggerState
             );
             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null);

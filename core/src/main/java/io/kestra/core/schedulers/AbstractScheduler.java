@@ -56,7 +56,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
     private final TaskDefaultService taskDefaultService;
-    protected SchedulerExecutionStateInterface executionState;
     protected Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -334,10 +333,8 @@ public abstract class AbstractScheduler implements Scheduler {
             return true;
         }
 
-        Optional<Execution> execution = executionState.findById(lastTrigger.getExecutionId());
-
-        // executionState hasn't received the execution, we skip
-        if (execution.isEmpty()) {
+        // The execution is not yet started, we skip
+        if (lastTrigger.getExecutionCurrentState() == null) {
             if (lastTrigger.getUpdatedDate() != null) {
                 metricRegistry
                     .timer(MetricRegistry.SCHEDULER_EXECUTION_MISSING_DURATION, metricRegistry.tags(lastTrigger))
@@ -364,10 +361,6 @@ public abstract class AbstractScheduler implements Scheduler {
                 .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
         }
 
-        // TODO if we set the state in the trigger after it has been started we can avoid getting the execution and
-        // check that if an executionId but no state, this means the execution is not started
-        // we need to have {@code lastTrigger.getExecutionId() == null} to be tell the execution is not running.
-        // the scheduler will clean the execution from the trigger and we don't keep only terminated state as an end.
         if (log.isDebugEnabled()) {
             log.debug(
                 "[namespace: {}] [flow: {}] [trigger: {}] Execution '{}' is still '{}', updated at '{}'",
@@ -375,7 +368,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 lastTrigger.getFlowId(),
                 lastTrigger.getTriggerId(),
                 lastTrigger.getExecutionId(),
-                execution.get().getState().getCurrent(),
+                lastTrigger.getExecutionCurrentState(),
                 lastTrigger.getUpdatedDate()
             );
         }

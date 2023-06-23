@@ -65,8 +65,8 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        List<LogEntry> matchingLogs = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
-        assertThat(matchingLogs, not(empty()));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
+        assertThat(matchingLog, notNullValue());
     }
 
     @Test
@@ -85,8 +85,8 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        List<LogEntry> matchingLogs = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
-        assertThat(matchingLogs, not(empty()));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
+        assertThat(matchingLog, notNullValue());
     }
 
     @Test

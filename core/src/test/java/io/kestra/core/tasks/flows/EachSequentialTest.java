@@ -96,8 +96,8 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        List<LogEntry> matchingLogs = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
-        assertThat(matchingLogs, not(empty()));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
+        assertThat(matchingLog, notNullValue());
     }
 
     @Test

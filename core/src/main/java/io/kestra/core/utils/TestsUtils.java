@@ -56,15 +56,16 @@ abstract public class TestsUtils {
             .collect(Collectors.toList());
     }
 
-    public static List<LogEntry> awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher) {
-        return awaitLog(logs, logMatcher, (Predicate<Integer>) null);
+    public static LogEntry awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher) {
+        List<LogEntry> matchingLogs = awaitLogs(logs, logMatcher, (Predicate<Integer>) null);
+        return matchingLogs.isEmpty() ? null : matchingLogs.get(0);
     }
 
-    public static List<LogEntry> awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Integer exactCount) {
-        return awaitLog(logs, logMatcher, exactCount::equals);
+    public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Integer exactCount) {
+        return awaitLogs(logs, logMatcher, exactCount::equals);
     }
 
-    public static List<LogEntry> awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
+    public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
         AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
         try {
             Await.until(() -> {

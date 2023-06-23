@@ -58,7 +58,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        List<LogEntry> matchingLogs = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
+        List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
         assertThat(matchingLogs.size(), is(2));
     }
 }

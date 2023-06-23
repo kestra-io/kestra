@@ -16,11 +16,9 @@
 <script>
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
-    import {executeTask} from "../../utils/submitTask"
     import Flash from "vue-material-design-icons/Flash.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
-    import action from "../../models/action";
 
     export default {
         components: {
@@ -76,20 +74,7 @@
                     this.$tours["guidedTour"].nextStep();
                     return;
                 }
-
-                if (!this.flow.inputs || this.flow.inputs.length === 0) {
-                    this.$toast().confirm(
-                        this.$t("execute flow now ?"),
-                        () => executeTask(this, this.flow, {}, {
-                            id: this.flowId,
-                            namespace: this.namespace,
-                            redirect: true
-                        }),
-                        () => this.isOpen = false
-                    )
-                } else {
-                    this.isOpen = !this.isOpen
-                }
+                this.isOpen = !this.isOpen
             },
 
             closeModal() {

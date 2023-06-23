@@ -94,6 +94,9 @@ export default {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"
+                },
+                params: {
+                    labels: options.labels ?? []
                 }
             })
         },

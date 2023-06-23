@@ -11,7 +11,6 @@ public class TestMethodScopedWorker extends Worker {
 
     @Override
     public void close() throws InterruptedException {
-        this.subscriptionCancels.forEach(Runnable::run);
         this.executors.shutdown();
         this.executors.awaitTermination(60, TimeUnit.SECONDS);
     }

@@ -7,46 +7,34 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.tasks.flows.WorkingDirectory;
-import io.kestra.core.services.WorkerGroupService;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.Introspected;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Synchronized;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.Timeout;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerTaskQueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import lombok.Getter;
+import lombok.Synchronized;
+import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.Timeout;
 import org.slf4j.Logger;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -86,8 +74,6 @@ public class Worker implements Runnable, AutoCloseable {
     @Getter
     private final String workerGroup;
 
-    protected final List<Runnable> subscriptionCancels = new ArrayList<>();
-
     @SuppressWarnings("unchecked")
     public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
         this.applicationContext = applicationContext;
@@ -115,7 +101,7 @@ public class Worker implements Runnable, AutoCloseable {
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
-        this.executors = executorsUtils.maxCachedThreadPool(thread,"worker");
+        this.executors = executorsUtils.maxCachedThreadPool(thread, "worker");
 
         WorkerGroupService workerGroupService = applicationContext.getBean(WorkerGroupService.class);
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
@@ -123,7 +109,7 @@ public class Worker implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
-        subscriptionCancels.add(this.executionKilledQueue.receive(executionKilled -> {
+        this.executionKilledQueue.receive(executionKilled -> {
             if (executionKilled != null) {
                 // @FIXME: the hashset will never expire killed execution
                 killedExecution.add(executionKilled.getExecutionId());
@@ -135,9 +121,9 @@ public class Worker implements Runnable, AutoCloseable {
                         .forEach(WorkerThread::kill);
                 }
             }
-        }));
+        });
 
-        subscriptionCancels.add(this.workerTaskQueue.receive(
+        this.workerTaskQueue.receive(
             this.workerGroup,
             Worker.class,
             workerTask -> {
@@ -167,15 +153,14 @@ public class Worker implements Runnable, AutoCloseable {
                         } finally {
                             runContext.cleanup();
                         }
-                    }
-                    else {
+                    } else {
                         throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
                     }
                 });
             }
-        ));
+        );
 
-        subscriptionCancels.add(this.workerTriggerQueue.receive(
+        this.workerTriggerQueue.receive(
             Worker.class,
             workerTrigger -> {
                 executors.execute(() -> {
@@ -242,7 +227,7 @@ public class Worker implements Runnable, AutoCloseable {
                     );
                 });
             }
-        ));
+        );
     }
 
     private static ZonedDateTime now() {
@@ -414,7 +399,7 @@ public class Worker implements Runnable, AutoCloseable {
         );
     }
 
-    private void  logError(WorkerTrigger workerTrigger, Throwable e) {
+    private void logError(WorkerTrigger workerTrigger, Throwable e) {
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
 
         logger.warn(
@@ -439,7 +424,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         Logger logger = runContext.logger();
 
-        if(!(workerTask.getTask() instanceof RunnableTask)) {
+        if (!(workerTask.getTask() instanceof RunnableTask)) {
             // This should never happen but better to deal with it than crashing the Worker
             TaskRunAttempt attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
@@ -552,13 +537,13 @@ public class Worker implements Runnable, AutoCloseable {
         executionKilledQueue.pause();
         new Thread(
             () -> {
-            try {
-                this.executors.shutdown();
-                this.executors.awaitTermination(5, TimeUnit.MINUTES);
-            } catch (InterruptedException e) {
-                log.error("Failed to shutdown workers executors", e);
-            }
-        },
+                try {
+                    this.executors.shutdown();
+                    this.executors.awaitTermination(5, TimeUnit.MINUTES);
+                } catch (InterruptedException e) {
+                    log.error("Failed to shutdown workers executors", e);
+                }
+            },
             "worker-shutdown"
         ).start();
 

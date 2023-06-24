@@ -49,8 +49,7 @@
         emits: ["page-changed"],
         data() {
             return {
-                internalSize: parseInt(this.$route.query.size || this.size),
-                internalPage: parseInt(this.$route.query.page || this.page),
+                ...this.initState(),
                 pageOptions: [
                     {value: 10, text: `10 ${this.$t("Per page")}`},
                     {value: 25, text: `25 ${this.$t("Per page")}`},
@@ -60,6 +59,12 @@
             };
         },
         methods: {
+            initState() {
+                return {
+                    internalSize: parseInt(this.$route.query.size || this.size),
+                    internalPage: parseInt(this.$route.query.page || this.page)
+                }
+            },
             pageSizeChange(value) {
                 this.internalPage = 1;
                 this.internalSize = value;
@@ -76,6 +81,13 @@
                 });
             },
         },
+        watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name) {
+                    Object.assign(this, this.initState());
+                }
+            },
+        }
     };
 </script>
 <style scoped lang="scss">

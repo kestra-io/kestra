@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -84,15 +85,18 @@ class BlueprintControllerTest {
                 .withBodyFile("blueprint-graph.json"))
         );
 
-        FlowGraph graph = client.toBlocking().retrieve(
+        Map<String, Object> graph = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/blueprints/community/id_1/graph"),
-            FlowGraph.class
+            Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat(graph.getNodes().size(), is(12));
-        assertThat(graph.getNodes().stream().filter(abstractGraph -> abstractGraph.getUid().equals("3mTDtNoUxYIFaQtgjEg28_root")).count(), is(1L));
-        assertThat(graph.getEdges().size(), is(16));
-        assertThat(graph.getClusters().size(), is(1));
+        List<Map<String, Object>> nodes = (List<Map<String, Object>>) graph.get("nodes");
+        List<Map<String, Object>> edges = (List<Map<String, Object>>) graph.get("edges");
+        List<Map<String, Object>> clusters = (List<Map<String, Object>>) graph.get("clusters");
+        assertThat(nodes.size(), is(12));
+        assertThat(nodes.stream().filter(abstractGraph -> abstractGraph.get("uid").equals("3mTDtNoUxYIFaQtgjEg28_root")).count(), is(1L));
+        assertThat(edges.size(), is(16));
+        assertThat(clusters.size(), is(1));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/graph")));

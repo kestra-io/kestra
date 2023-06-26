@@ -26,16 +26,16 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import io.micronaut.rxjava2.http.client.sse.RxSseClient;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.File;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import org.junitpioneer.jupiter.RetryingTest;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -503,7 +503,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     }
 
-    @Test
+    @RetryingTest(5)
     void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");

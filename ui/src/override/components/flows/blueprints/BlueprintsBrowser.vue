@@ -27,23 +27,32 @@
                 </el-radio-group>
             </template>
             <template #table>
-                <el-card class="blueprint-card" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
-                    <component class="blueprint-link" :is="embed ? 'div' : 'router-link'" :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
-                        <div class="side">
-                            <div class="title">
-                                {{ blueprint.title }}
-                            </div>
-                            <div class="tags text-uppercase">
-                                {{ tagsToString(blueprint.tags) }}
+                <el-alert type="info" v-if="!blueprints || blueprints.length  === 0" :closable="false">
+                    {{ $t('no result') }}
+                </el-alert>
+                <el-card class="blueprint-card" :class="{'embed': embed}" v-for="blueprint in blueprints"
+                         @click="goToDetail(blueprint.id)">
+                    <component class="blueprint-link" :is="embed ? 'div' : 'router-link'"
+                               :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
+                        <div class="left">
+                            <div>
+                                <div class="title">
+                                    {{ blueprint.title }}
+                                </div>
+                                <div class="tags text-uppercase">
+                                    {{ tagsToString(blueprint.tags) }}
+                                </div>
                             </div>
                             <div class="tasks-container">
-                                <task-icon :cls="task" only-icon v-for="task in [...new Set(blueprint.includedTasks)]" />
+                                <task-icon :cls="task" only-icon
+                                           v-for="task in [...new Set(blueprint.includedTasks)]" />
                             </div>
                         </div>
                         <div class="side buttons ms-auto">
                             <slot name="buttons" :blueprint="blueprint" />
                             <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                <el-button @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
+                                <el-button @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy"
+                                           size="large" text bg>
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
@@ -219,6 +228,7 @@
     };
 </script>
 <style scoped lang="scss">
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "../../../../styles/variable";
 
     .sub-nav {
@@ -255,18 +265,9 @@
 
         .blueprint-card {
             cursor: pointer;
-            margin: calc(var(--spacer) / 16) 0;
+            margin: 0 0 1px 0;
             border-radius: 0;
-
-            &:first-child {
-                border-top-left-radius: $border-radius;
-                border-top-right-radius: $border-radius;
-            }
-
-            &:nth-last-child(1 of .blueprint-card) {
-                border-bottom-left-radius: $border-radius;
-                border-bottom-right-radius: $border-radius;
-            }
+            border: 0;
 
             .blueprint-link {
                 display: flex;
@@ -274,22 +275,7 @@
                 text-decoration: inherit;
                 width: 100%;
 
-                .side {
-                    margin: auto 0;
-
-                    &:first-child {
-                        overflow: hidden;
-
-                        & > * {
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                        }
-                    }
-
-                    &.buttons {
-                        white-space: nowrap;
-                    }
-
+                .left {
                     .title {
                         font-weight: bold;
                         font-size: $small-font-size;
@@ -307,16 +293,10 @@
                         }
                     }
 
-                    html.dark & :deep(.el-button) {
-                        background-color: var(--bs-gray-300);
-                    }
-
 
                     .tasks-container {
                         $plugin-icon-size: calc(var(--font-size-base) + 0.4rem);
                         display: flex;
-                        flex-wrap: wrap;
-                        flex-direction: row;
                         gap: calc(var(--spacer) / 4);
                         width: fit-content;
                         height: $plugin-icon-size;
@@ -336,6 +316,49 @@
                         }
                     }
                 }
+
+
+                .side {
+                    &.buttons {
+                        white-space: nowrap;
+                    }
+
+
+                    html.dark & :deep(.el-button) {
+                        background-color: var(--bs-gray-300);
+                    }
+
+                }
+            }
+
+            @include res(lg) {
+                &:not(.embed) .blueprint-link .left {
+                    display: flex;
+                    width: 100%;
+
+                    > :first-child {
+                        flex-grow: 1;
+                    }
+
+                    .tags {
+                        margin-bottom: 0;
+                    }
+
+                    .tasks-container {
+                        margin: 0 $spacer;
+                        height: 2.5rem;
+
+                        :deep(.wrapper) {
+                            width: 2.5rem;
+                            padding: 8px;
+                        }
+                    }
+                }
+            }
+
+
+            html.dark &.embed {
+                background-color: var(--bs-gray-600);
             }
         }
     }
@@ -363,7 +386,7 @@
         }
 
         html.dark & :deep(:not(.is-active) span) {
-          background: var(--bs-gray-100);
+            background: var(--bs-gray-100);
         }
     }
 </style>

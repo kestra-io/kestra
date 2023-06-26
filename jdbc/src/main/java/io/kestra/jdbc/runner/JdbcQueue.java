@@ -83,7 +83,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Map<Field<Object>, Object> fields = new HashMap<>();
         fields.put(AbstractJdbcRepository.field("type"), this.cls.getName());
         fields.put(AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create());
-        fields.put(AbstractJdbcRepository.field("value"), mapper.writeValueAsString(message));
+        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(mapper.writeValueAsString(message)));
 
         if (consumerGroup != null) {
             fields.put(AbstractJdbcRepository.field("consumer_group"), consumerGroup);

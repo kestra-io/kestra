@@ -16,8 +16,8 @@
                                 </div>
                                 <div v-if="!hideOthersOnSelect">
                                     <el-button type="default" @click="() => toggleShowLogs(`${currentTaskRun.id}-${taskAttempt(index)}`)">
-                                        <ChevronUp v-if="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
-                                        <ChevronDown v-else />
+                                        <ChevronDown v-if="!showLogs.includes(`${currentTaskRun.id}-${taskAttempt(index)}`)" />
+                                        <ChevronUp v-else />
                                     </el-button>
                                 </div>
                                 <div

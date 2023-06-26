@@ -25,11 +25,9 @@
                         {{ tag.name }}
                     </el-radio-button>
                 </el-radio-group>
-
-                <el-divider />
             </template>
             <template #table>
-                <el-card class="blueprint-card hoverable" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
+                <el-card class="blueprint-card" v-for="blueprint in blueprints" @click="goToDetail(blueprint.id)">
                     <component class="blueprint-link" :is="embed ? 'div' : 'router-link'" :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
                         <div class="side">
                             <div class="title">
@@ -45,7 +43,7 @@
                         <div class="side buttons ms-auto">
                             <slot name="buttons" :blueprint="blueprint" />
                             <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                <el-button class="hoverable" @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
+                                <el-button @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy" size="large" text bg>
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
@@ -223,41 +221,6 @@
 <style scoped lang="scss">
     @import "../../../../styles/variable";
 
-    .hoverable {
-        &.el-checkbox-button:not(.is-checked) span, &.el-card, & button.hoverable, & :slotted(button.hoverable) {
-            color: $black !important;
-            background-color: $white;
-
-            &:hover {
-                background-color: var(--bs-gray-300);
-            }
-
-            html.dark & {
-                color: $white !important;
-                background-color: rgba(255, 255, 255, 0.1);
-
-                &:hover {
-                    background-color: rgba(255, 255, 255, 0.15)
-                }
-            }
-        }
-
-        & button.hoverable:hover {
-            color: $white !important;
-            background-color: $tertiary
-        }
-
-
-        &.el-checkbox-button.is-checked span {
-            color: $white !important;
-            background-color: $primary;
-
-            html.dark & {
-                background-color: $primary;
-            }
-        }
-    }
-
     .sub-nav {
         margin: 0 0 $spacer;
 
@@ -344,9 +307,13 @@
                         }
                     }
 
+                    html.dark & :deep(.el-button) {
+                        background-color: var(--bs-gray-300);
+                    }
+
+
                     .tasks-container {
                         $plugin-icon-size: calc(var(--font-size-base) + 0.4rem);
-
                         display: flex;
                         flex-wrap: wrap;
                         flex-direction: row;
@@ -360,7 +327,7 @@
                             border-radius: $border-radius;
 
                             html.dark & {
-                                background-color: var(--bs-gray-900);
+                                background-color: var(--bs-white);
                             }
 
                             & * {
@@ -382,17 +349,21 @@
 
         & > * {
             max-width: 50%;
-            flex: 1;
 
             :deep(span) {
-                border: none !important;
                 border-radius: $border-radius !important;
+                border: 1px solid var(--bs-border-color);
+                background: var(--bs-white);
                 width: 100%;
                 font-weight: bold;
                 box-shadow: none;
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
+        }
+
+        html.dark & :deep(:not(.is-active) span) {
+          background: var(--bs-gray-100);
         }
     }
 </style>

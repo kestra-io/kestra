@@ -86,7 +86,8 @@
 
     // Init variables functions
     const isHorizontalDefault = () => {
-        return props.viewType === "source-topology" ? false : localStorage.getItem("topology-orientation") === "1"
+        return props.viewType === "source-topology" ? false :
+            (props.viewType.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
     }
 
 
@@ -592,7 +593,7 @@
             </template>
 
             <Controls :show-interactive="false">
-                <ControlButton @click="toggleOrientation" v-if="['topology', 'blueprints'].includes(viewType)">
+                <ControlButton @click="toggleOrientation" v-if="['topology'].includes(viewType)">
                     <SplitCellsVertical :size="48" v-if="!isHorizontal" />
                     <SplitCellsHorizontal v-if="isHorizontal" />
                 </ControlButton>

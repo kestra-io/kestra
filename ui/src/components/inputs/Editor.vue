@@ -364,7 +364,7 @@
         width: 100%;
 
         .top-nav {
-            background-color: var(--bs-gray-100);
+            background-color: var(--bs-white);
             padding: calc(var(--spacer) / 2);
             border-radius: var(--bs-border-radius-lg);
             border-bottom-left-radius: 0;

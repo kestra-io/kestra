@@ -5,12 +5,12 @@
                 <div class="header d-flex">
                     <button class="back-button align-self-center">
                         <el-icon size="medium" @click="goBack">
-                            <KeyboardBackspace />
+                            <ArrowLeft />
                         </el-icon>
                     </button>
-                    <h4 class="blueprint-title align-self-center">
+                    <h2 class="blueprint-title align-self-center">
                         {{ blueprint.title }}
-                    </h4>
+                    </h2>
                     <div class="ms-auto align-self-center">
                         <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
                             <el-button size="large" type="primary" v-if="!embed">
@@ -47,30 +47,42 @@
                         />
                     </div>
                 </el-card>
-                <h5>{{ $t("source") }}</h5>
-                <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
-                    <template #nav>
-                        <div class="position-absolute copy-wrapper">
-                            <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
-                            </el-tooltip>
+                <el-row :gutter="30">
+                    <el-col :md="24" :lg="embed ? 24 : 18">
+                        <h4>{{ $t("source") }}</h4>
+                        <el-card>
+                            <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
+                                <template #nav>
+                                    <div class="position-absolute copy-wrapper">
+                                        <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                                            <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
+                                        </el-tooltip>
+                                    </div>
+                                </template>
+                            </editor>
+                        </el-card>
+                        <template v-if="blueprint.description">
+                            <h4>About this blueprint</h4>
+                            <markdown :source="blueprint.description" />
+                        </template>
+                    </el-col>
+                    <el-col :md="24" :lg="embed ? 24 : 6">
+                        <h4>Plugins</h4>
+                        <div class="plugins-container">
+                            <div v-for="task in [...new Set(blueprint.includedTasks)]">
+                                <task-icon :cls="task" />
+                            </div>
                         </div>
-                    </template>
-                </editor>
-                <template v-if="blueprint.description">
-                    <h5>About this blueprint</h5>
-                    <markdown :source="blueprint.description" />
-                </template>
-                <h5>Plugins</h5>
-                <div class="plugins-container">
-                    <task-icon :cls="task" v-for="task in [...new Set(blueprint.includedTasks)]" />
-                </div>
+                    </el-col>
+                </el-row>
+
+
             </div>
         </template>
     </div>
 </template>
 <script setup>
-    import KeyboardBackspace from "vue-material-design-icons/KeyboardBackspace.vue";
+    import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from "../../plugins/TaskIcon.vue";
@@ -162,7 +174,7 @@
     @import "../../../styles/variable";
 
     .header-wrapper {
-        margin-bottom: $spacer;
+        margin-bottom: calc($spacer * 2);
 
         .el-card & {
             margin-top: 2.5rem;
@@ -176,11 +188,16 @@
             }
 
             .back-button {
+                padding-left: 0;
+                padding-right: calc($spacer * 1.5);
                 cursor: pointer;
-                height: calc(1em + (var(--spacer) * 2));
-                width: calc(1em + (var(--spacer) * 2));
                 border: none;
                 background: none;
+                display: flex;
+                align-items: center;
+                :deep(.material-design-icon) {
+                    font-size: $h4-font-size;
+                }
             }
 
             .blueprint-title {
@@ -200,31 +217,53 @@
     .blueprint-container {
         height: 100%;
 
-        h5 {
+        :deep(.el-card) {
+            .el-card__body {
+                padding: 0;
+            }
+        }
+
+        h4 {
+            margin-top: calc($spacer * 2);
             font-weight: bold;
-            margin: calc(2 * var(--spacer)) 0 $spacer 0;
         }
 
         .embedded-topology {
             max-height: 50%;
             height: 30vh;
             width: 100%;
-            margin: $spacer 0;
-
         }
 
         .plugins-container {
             display: flex;
             flex-wrap: wrap;
-            flex-direction: row;
-            justify-content: left;
-            gap: $spacer;
-            height: 5rem;
+            > div {
+                background: var(--card-bg);
+                border-radius: var(--bs-border-radius);
+                min-width : 100px;
+                width: 100px;
+                height : 100px;
+                padding: $spacer;
+                margin-right: $spacer;
+                margin-bottom: $spacer;
+                display: flex;
+                flex-wrap: wrap;
+                border: 1px solid var(--bs-border-color);
 
-            > :deep(*) {
-                position: relative;
-                background-color: $white;
-                width: 5rem;
+                :deep(.wrapper) {
+                    .icon {
+                        height: 70%;
+                        margin: 0;
+                    }
+
+                    .hover {
+                        position: static;
+                        background: none;
+                        border-top: 0;
+                        font-size: var(--font-size-sm);
+                    }
+
+                }
             }
         }
     }

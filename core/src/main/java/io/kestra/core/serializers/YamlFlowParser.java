@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 @Singleton
@@ -39,6 +40,18 @@ public class YamlFlowParser {
 
     public <T> T parse(String input, Class<T> cls) {
         return readFlow(mapper, input, cls, type(cls));
+    }
+
+    public <T> T parse(Map<String, Object> input, Class<T> cls) {
+        try {
+            return mapper.convertValue(input, cls);
+        } catch (IllegalArgumentException e) {
+            if(e.getCause() instanceof JsonProcessingException jsonProcessingException) {
+                jsonProcessingExceptionHandler(input, type(cls), jsonProcessingException);
+            }
+
+            throw e;
+        }
     }
 
     private static <T> String type(Class<T> cls) {
@@ -78,59 +91,66 @@ public class YamlFlowParser {
         try {
             return mapper.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
-            if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
-                throw constraintViolationException;
-            }
-            else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
-                // This error is thrown when a non-existing task is used
-                throw new ConstraintViolationException(
-                    "Invalid type: " + invalidTypeIdException.getTypeId(),
-                    Set.of(
-                        ManualConstraintViolation.of(
-                            "Invalid type: " + invalidTypeIdException.getTypeId(),
-                            input,
-                            String.class,
-                            invalidTypeIdException.getPathReference(),
-                            null
-                        ),
-                        ManualConstraintViolation.of(
-                            e.getMessage(),
-                            input,
-                            String.class,
-                            invalidTypeIdException.getPathReference(),
-                            null
-                        )
+            jsonProcessingExceptionHandler(input, resource, e);
+        }
+
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void jsonProcessingExceptionHandler(T target, String resource, JsonProcessingException e) throws ConstraintViolationException {
+        if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
+            throw constraintViolationException;
+        }
+        else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
+            // This error is thrown when a non-existing task is used
+            throw new ConstraintViolationException(
+                "Invalid type: " + invalidTypeIdException.getTypeId(),
+                Set.of(
+                    ManualConstraintViolation.of(
+                        "Invalid type: " + invalidTypeIdException.getTypeId(),
+                        target,
+                        (Class<T>) target.getClass(),
+                        invalidTypeIdException.getPathReference(),
+                        null
+                    ),
+                    ManualConstraintViolation.of(
+                        e.getMessage(),
+                        target,
+                        (Class<T>) target.getClass(),
+                        invalidTypeIdException.getPathReference(),
+                        null
                     )
-                );
-            }
-            else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
-                var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
-                throw new ConstraintViolationException(
-                    message,
-                    Collections.singleton(
-                        ManualConstraintViolation.of(
-                            e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
-                            input,
-                            String.class,
-                            unrecognizedPropertyException.getPathReference(),
-                            null
-                        )
-                    ));
-            }
-            else {
-                throw new ConstraintViolationException(
-                    "Illegal "+ resource +" yaml: " + e.getMessage(),
-                    Collections.singleton(
-                        ManualConstraintViolation.of(
-                            e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
-                            input,
-                            String.class,
-                            "flow",
-                            null
-                        )
+                )
+            );
+        }
+        else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
+            var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
+            throw new ConstraintViolationException(
+                message,
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
+                        target,
+                        (Class<T>) target.getClass(),
+                        unrecognizedPropertyException.getPathReference(),
+                        null
                     )
-                );
-            }
+                ));
+        }
+        else {
+            throw new ConstraintViolationException(
+                "Illegal "+ resource +" yaml: " + e.getMessage(),
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
+                        target,
+                        (Class<T>) target.getClass(),
+                        "flow",
+                        null
+                    )
+                )
+            );
         }
     }
 }

@@ -12,34 +12,44 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.GraphService;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.TestsUtils;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Singleton
 public class TaskDefaultsCaseTest {
     @Inject
     private RunnerUtils runnerUtils;
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -74,6 +84,13 @@ public class TaskDefaultsCaseTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
         LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("Unrecognized field \"invalid\""));
         assertThat(matchingLog, notNullValue());
+
+        ConstraintViolationException constraintViolationException = assertThrows(ConstraintViolationException.class, () -> taskDefaultService.injectDefaults(flowRepository
+            .findById("io.kestra.tests", "invalid-task-defaults", Optional.empty())
+            .orElseThrow()));
+
+        assertThat(constraintViolationException.getConstraintViolations().size(), is(1));
+        assertThat(constraintViolationException.getMessage(), containsString("Unrecognized field \"invalid\""));
     }
 
     @SuperBuilder
@@ -117,7 +134,7 @@ public class TaskDefaultsCaseTest {
         }
 
         @Override
-        public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
             return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
         }
 

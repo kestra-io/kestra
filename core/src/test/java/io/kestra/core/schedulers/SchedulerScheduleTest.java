@@ -4,8 +4,10 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.ZonedDateTime;
@@ -70,14 +72,11 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .when(flowListenersServiceSpy)
             .flows();
 
-        // start the worker as it execute polling triggers
-        Worker worker = new Worker(applicationContext, 8, null);
-        worker.run();
-
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
             // wait for execution
-            executionQueue.receive(execution -> {
+            Runnable assertionStop = executionQueue.receive(execution -> {
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
                 assertThat(execution.getInputs().get("def"), is("awesome"));
 
@@ -91,8 +90,11 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
+            worker.run();
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            assertionStop.run();
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(date.size(), is(3));

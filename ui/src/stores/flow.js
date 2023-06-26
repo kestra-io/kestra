@@ -159,7 +159,7 @@ export default {
             if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return this.$http.post("/api/v1/flows/graph", flowSource, {...config})
+            return axios.post("/api/v1/flows/graph", flowSource, {...config})
                 .then(response => {
                     if (response.status === 422) {
                         return response;

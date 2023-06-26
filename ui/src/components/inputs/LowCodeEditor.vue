@@ -87,7 +87,7 @@
     // Init variables functions
     const isHorizontalDefault = () => {
         return props.viewType === "source-topology" ? false :
-            (props.viewType.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
+            (props.viewType?.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
     }
 
 

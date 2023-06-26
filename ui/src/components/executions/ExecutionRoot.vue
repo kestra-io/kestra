@@ -1,10 +1,17 @@
 <template>
     <div>
         <div v-if="ready">
-            <tabs :route-name="$route.param && $route.param.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
+            <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
         </div>
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
+                <li>
+                    <a :href="`/api/v1/executions/${execution.id}`" :download="`execution_${execution.id}.json`">
+                        <el-button :icon="Download" size="large" type="default">
+                            {{ $t('dump') }}
+                        </el-button>
+                    </a>
+                </li>
                 <li>
                     <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteExecution">
                         {{ $t('delete') }}
@@ -28,6 +35,7 @@
 </template>
 
 <script setup>
+    import Download from "vue-material-design-icons/Download.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
 </script>

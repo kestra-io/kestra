@@ -450,6 +450,7 @@
       }
     },
     "title": "Title",
+    "dump": "Dump",
     "expand error": "Expand only failed task",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
@@ -909,6 +910,7 @@
       }
     },
     "title": "Titre",
+    "dump": "Télécharger",
     "expand error": "Afficher uniquement les erreurs",
     "expand all": "Afficher tout",
     "collapse all": "Masquer tout",

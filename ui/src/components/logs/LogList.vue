@@ -225,7 +225,7 @@
                 type: Boolean,
                 default: false
             },
-            attempt: {
+            attemptNumber: {
                 type: Number,
                 default: undefined
             }
@@ -293,8 +293,8 @@
                 if (this.taskRunId) {
                     params.taskRunId = this.taskRunId;
 
-                    if (this.attempt) {
-                        params.attempt = this.attempt;
+                    if (this.attemptNumber) {
+                        params.attempt = this.attemptNumber;
                     }
                 }
 
@@ -329,7 +329,7 @@
                 if (this.logsToOpen.includes(this.execution.state.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
-                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.attempt ?? 0)
+                            const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.attemptNumber ?? 0)
                             if (this.showLogs.includes(`${taskRun.id}-${attemptNumber}`)) {
                                 this?.$refs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
                             }
@@ -433,7 +433,7 @@
                 }
             },
             attempts(taskRun) {
-                return this.execution.state.current === State.RUNNING ? taskRun.attempts : [taskRun.attempts[this.attempt]] ;
+                return this.execution.state.current === State.RUNNING || !this.attemptNumber ? taskRun.attempts : [taskRun.attempts[this.attemptNumber]] ;
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {
@@ -444,7 +444,7 @@
                 this.showLogs = _xor(this.showLogs, [currentTaskRunId])
             },
             taskAttempt(index) {
-                return this.attempt || index
+                return this.attemptNumber || index
             }
         },
         beforeUnmount() {

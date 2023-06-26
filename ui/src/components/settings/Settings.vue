@@ -54,10 +54,6 @@
                     {{ $t('export all templates') }}
                 </el-button>
             </el-form-item>
-
-            <el-form-item :label="$t('show documentation')">
-                <el-checkbox :label="$t('show task documentation in editor')" :model-value="editorDocumentation" @update:model-value="onEditorDocumentation" />
-            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -90,7 +86,6 @@
                 editorTheme: undefined,
                 autofoldTextEditor: undefined,
                 guidedTour: undefined,
-                editorDocumentation: undefined
             };
         },
         created() {
@@ -103,7 +98,6 @@
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
-            this.editorDocumentation = localStorage.getItem("editorDocumentation") !== "false";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -147,12 +141,6 @@
                 localStorage.setItem("autofoldTextEditor", value);
                 this.autofoldTextEditor = value;
                 this.$toast().saved();
-            },
-            onEditorDocumentation(value){
-                localStorage.setItem("editorDocumentation", value);
-                this.editorDocumentation = value;
-                this.$toast().saved();
-
             },
             exportFlows() {
                 return this.$store

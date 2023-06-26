@@ -41,7 +41,7 @@
                 v-for="taskRun in taskRunList"
                 :key="taskRun.id"
                 :task-run-id="taskRun.id"
-                :attempt="taskRun.attempt"
+                :attempt-number="taskRun.attempt"
                 :level="level"
                 :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                 :filter="filter"

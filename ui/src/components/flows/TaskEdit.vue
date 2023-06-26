@@ -30,6 +30,17 @@
             </template>
 
             <el-tabs v-if="taskYaml" v-model="activeTabs">
+                <el-tab-pane name="form">
+                    <template #label>
+                        <span>{{ $t('form') }}</span>
+                    </template>
+                    <task-editor
+                        ref="editor"
+                        v-model="taskYaml"
+                        :section="section"
+                        @update:model-value="onInput"
+                    />
+                </el-tab-pane>
                 <el-tab-pane name="source">
                     <template #label>
                         <span>{{ $t('source') }}</span>
@@ -44,20 +55,6 @@
                         :full-height="false"
                         :navbar="false"
                         lang="yaml"
-                        @update:model-value="onInput"
-                    />
-                </el-tab-pane>
-                <el-tab-pane name="form">
-                    <template #label>
-                        <span>
-                            {{ $t('form') }}
-                            <el-badge type="primary" value="Alpha" />
-                        </span>
-                    </template>
-                    <task-editor
-                        ref="editor"
-                        v-model="taskYaml"
-                        :section="section"
                         @update:model-value="onInput"
                     />
                 </el-tab-pane>
@@ -200,7 +197,7 @@
                 uuid: Utils.uid(),
                 taskYaml: undefined,
                 isModalOpen: false,
-                activeTabs: "source",
+                activeTabs: "form",
             };
         },
         created() {

@@ -10,6 +10,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import org.slf4j.Logger;
@@ -27,6 +28,9 @@ public class TaskDefaultService {
     @Nullable
     @Inject
     protected TaskGlobalDefaultConfiguration globalDefault;
+
+    @Inject
+    protected YamlFlowParser yamlFlowParser;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -116,7 +120,7 @@ public class TaskDefaultService {
             flowAsMap.put("taskDefaults", taskDefaults);
         }
 
-        return JacksonMapper.toMap(flowAsMap, Flow.class);
+        return yamlFlowParser.parse(flowAsMap, Flow.class);
     }
 
     private static Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {

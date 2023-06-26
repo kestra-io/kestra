@@ -27,6 +27,7 @@ import lombok.extern.jackson.Jacksonized;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Validated
@@ -64,11 +65,11 @@ public class BlueprintController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "{id}/graph")
     @Operation(tags = {"blueprints"}, summary = "Get a blueprint graph")
-    public FlowGraph blueprintGraph(
+    public Map<String, Object> blueprintGraph(
         @Parameter(description = "The blueprint id") String id,
         HttpRequest<?> httpRequest
     ) throws URISyntaxException {
-        return fastForwardToKestraApi(httpRequest, "/v1/blueprints/" + id + "/graph", Argument.of(FlowGraph.class));
+        return fastForwardToKestraApi(httpRequest, "/v1/blueprints/" + id + "/graph", Argument.mapOf(String.class, Object.class));
     }
 
     @ExecuteOn(TaskExecutors.IO)

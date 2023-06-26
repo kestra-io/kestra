@@ -19,6 +19,11 @@
                 />
             </el-form-item>
             <el-form-item>
+                <el-button @click="handleLogDisplay()">
+                    {{ logDisplayButtonText }}
+                </el-button>
+            </el-form-item>
+            <el-form-item>
                 <el-button-group>
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
@@ -35,6 +40,7 @@
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             @follow="forwardEvent('follow', $event)"
+            :logs-to-open-parent="logsToOpen"
         />
         <div v-else-if="execution.state.current !== State.RUNNING">
             <log-list
@@ -46,6 +52,7 @@
                 :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                 :filter="filter"
                 @follow="forwardEvent('follow', $event)"
+                :logs-to-open-parent="logsToOpen"
             />
         </div>
     </div>
@@ -60,6 +67,7 @@
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import Collapse from "../layout/Collapse.vue";
     import State from "../../utils/state";
+    import {logDisplayTypes} from "../../utils/constants";
 
     export default {
         components: {
@@ -74,7 +82,8 @@
             return {
                 fullscreen: false,
                 level: undefined,
-                filter: undefined
+                filter: undefined,
+                logsToOpen: undefined
             };
         },
         created() {
@@ -100,7 +109,15 @@
                     }
                 }
                 return fullList
-            }
+            },
+            logDisplayButtonText() {
+                if (this.logsToOpen) {
+                    return this.logsToOpen.length !== 0 ? this.$t("collapse all") : this.$t("expand all")
+                } else {
+                    const logDisplay =  localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
+                    return logDisplay === logDisplayTypes.HIDDEN ? this.$t("expand all") : this.$t("collapse all")
+                }
+            },
         },
         methods: {
             downloadContent() {
@@ -127,6 +144,18 @@
             onChange() {
                 this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
             },
+            handleLogDisplay() {
+                const logDisplay =  localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
+                if (this.logsToOpen) {
+                    this.logsToOpen.length === 0 ? this.logsToOpen = State.arrayAllStates().map(s => s.name) : this.logsToOpen = []
+                    return;
+                }
+                if (logDisplay === logDisplayTypes.HIDDEN ) {
+                    this.logsToOpen = State.arrayAllStates().map(s => s.name)
+                } else {
+                    this.logsToOpen = []
+                }
+            }
         }
     };
 </script>

@@ -1,7 +1,11 @@
 package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
-import lombok.*;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
@@ -42,7 +46,11 @@ public abstract class AbstractClassDocumentation<T> {
             .filter(entry -> !entry.getKey().equals("io.kestra.core.models.tasks.Task"))
             .map(entry -> {
                 Map<String, Object> value = (Map<String, Object>) entry.getValue();
-                value.put("properties", flatten(properties(value), required(value)));
+                try {
+                    value.put("properties", flatten(properties(value), required(value), AbstractRetry.class.isAssignableFrom(Class.forName(entry.getKey()))));
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
 
                 return new AbstractMap.SimpleEntry<>(
                     entry.getKey(),
@@ -80,7 +88,14 @@ public abstract class AbstractClassDocumentation<T> {
 
     protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required) {
         map.remove("type");
-        return flatten(map, required, null);
+        return flatten(map, required, (String) null);
+    }
+
+    protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required, Boolean keepType) {
+        if (!keepType) {
+            map.remove("type");
+        }
+        return flatten(map, required, (String) null);
     }
 
     @SuppressWarnings("unchecked")

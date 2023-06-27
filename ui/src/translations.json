@@ -453,7 +453,8 @@
     "expand error": "Expand only failed task",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
-    "log expand setting": "Log default display"
+    "log expand setting": "Log default display",
+    "slack support": "Ask help on our Slack"
   },
   "fr": {
     "id": "Identifiant",
@@ -911,6 +912,7 @@
     "expand error": "Afficher uniquement les erreurs",
     "expand all": "Afficher tout",
     "collapse all": "Masquer tout",
-    "log expand setting": "Affichage par défaut des journaux"
+    "log expand setting": "Affichage par défaut des journaux",
+    "slack support": "Demandez de l'aide sur notre Slack"
   }
 }

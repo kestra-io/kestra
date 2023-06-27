@@ -16,7 +16,7 @@
   <a href="https://hub.docker.com/r/kestra/kestra"><img src="https://img.shields.io/docker/pulls/kestra/kestra.svg?style=flat-square" alt="Docker pull" /></a>
   <a href="https://artifacthub.io/packages/helm/kestra/kestra"><img src="https://img.shields.io/badge/Artifact%20Hub-kestra-417598?style=flat-square&logo=artifacthub" alt="Artifact Hub" /></a>
   <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?style=flat-square" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
-  <a href="https://api.kestra.io/v1/communities/slack/redirect"><img src="https://img.shields.io/badge/Slack-chat-400d40?style=flat-square&logo=slack" alt="Slack"></a>
+  <a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-chat-400d40?style=flat-square&logo=slack" alt="Slack"></a>
   <a href="https://github.com/kestra-io/kestra/discussions"><img src="https://img.shields.io/github/discussions/kestra-io/kestra?style=flat-square" alt="Github discussions"></a>
   <a href="https://twitter.com/kestra_io"><img src="https://img.shields.io/twitter/follow/kestra_io?style=flat-square" alt="Twitter" /></a>
   <a href="https://app.codecov.io/gh/kestra-io/kestra"><img src="https://img.shields.io/codecov/c/github/kestra-io/kestra?style=flat-square&token=It6L7BTaWK" alt="Code Cov" /></a>
@@ -29,7 +29,7 @@
     <a href="https://kestra.io/"><b>Website</b></a> •
     <a href="https://twitter.com/kestra_io"><b>Twitter</b></a> •
     <a href="https://www.linkedin.com/company/kestra/"><b>Linked In</b></a> •
-    <a href="https://api.kestra.io/v1/communities/slack/redirect"><b>Slack</b></a> •
+    <a href="https://kestra.io/slack"><b>Slack</b></a> •
     <a href="https://kestra.io/docs/"><b>Documentation</b></a>
 </p>
 
@@ -65,9 +65,9 @@ Thanks to the **declarative YAML interface** for defining orchestration logic, e
 5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, and allow additional [validation rules](https://kestra.io/docs/developer-guide/inputs#input-validation).
 
 
-## Extensible platform via plugins 
+## Extensible platform via plugins
 
-Most tasks in Kestra are available as [plugins](https://kestra.io/plugins), but many type of tasks are available in the core library, including a.o. script tasks supporting various programming languages (e.g., Python, Node, Bash) and the ability to orchestrate your business logic packaged into Docker container images. 
+Most tasks in Kestra are available as [plugins](https://kestra.io/plugins), but many type of tasks are available in the core library, including a.o. script tasks supporting various programming languages (e.g., Python, Node, Bash) and the ability to orchestrate your business logic packaged into Docker container images.
 
 To create your own plugins, check the [plugin developer guide](https://kestra.io/docs/plugin-developer-guide).
 
@@ -89,7 +89,7 @@ Kestra provides a variety of tasks to handle both simple and complex business lo
 - adding labels to add additional metadata to your flows such as the flow owner or team:
 
 ```yaml
-id: hello  
+id: hello
 namespace: prod
 description: Hi from `Kestra` and a **markdown** description.
 labels:
@@ -182,7 +182,7 @@ Open `http://localhost:8080` in your browser and create your first flow.
 Here is a simple example logging hello world message to the terminal:
 
 ```yaml
-id: hello  
+id: hello
 namespace: prod
 tasks:
   - id: hello-world
@@ -203,7 +203,7 @@ For more information:
 
 
 ## Plugins
-Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [these steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin. 
+Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [these steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin.
 
 
 For a full list of plugins, check the [plugins page](https://kestra.io/plugins/).
@@ -317,7 +317,7 @@ This list is growing quickly and we welcome contributions.
 If you need help or have any questions, reach out using one of the following channels:
 
 - [GitHub discussions](https://github.com/kestra-io/kestra/discussions) - useful to start a conversation that is not a bug or feature request.
-- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - join the community and get the latest updates.
+- [Slack](https://kestra.io/slack) - join the community and get the latest updates.
 - [Twitter](https://twitter.com/kestra_io) - to follow up with the latest updates.
 
 

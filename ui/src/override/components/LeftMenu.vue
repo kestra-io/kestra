@@ -181,7 +181,7 @@
                                 external: true
                             },
                             {
-                                href: "https://api.kestra.io/v1/communities/slack/redirect",
+                                href: "https://kestra.io/slack",
                                 title: "Slack",
                                 icon: {
                                     element: Slack,

@@ -114,10 +114,6 @@ public class ExecutionController {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
-
-    @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     @Inject
@@ -810,11 +806,7 @@ public class ExecutionController {
             return HttpResponse.noContent();
         }
 
-        killQueue.emit(ExecutionKilled
-            .builder()
-            .executionId(executionId)
-            .build()
-        );
+        executionQueue.emit(execution.withState(State.Type.KILLING));
 
         return HttpResponse.noContent();
     }
@@ -895,11 +887,7 @@ public class ExecutionController {
                     log.warn("Unable to kill the paused execution {}, ignoring it", execution.getId(), e);
                 }
             } else {
-                killQueue.emit(ExecutionKilled
-                    .builder()
-                    .executionId(execution.getId())
-                    .build()
-                );
+                executionQueue.emit(execution.withState(State.Type.KILLING));
             }
         });
 

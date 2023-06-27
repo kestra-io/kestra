@@ -48,7 +48,7 @@
                         title: this.$t("need help?"),
                         content: this.$t("need help? content"),
                         imgClass: "help",
-                        link: "https://api.kestra.io/v1/communities/slack/redirect"
+                        link: "https://kestra.io/slack"
                     }
                 ]
             }

@@ -24,7 +24,7 @@
                class="el-button el-button--small version is-text is-has-bg">
                 🎉 New release v{{ version.latest }}
             </a>
-            <a href="https://api.kestra.io/v1/communities/slack/redirect"
+            <a href="https://kestra.io/slack"
                target="_blank"
                class="el-button el-button--small is-text is-has-bg">
                 Live chat

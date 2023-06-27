@@ -24,6 +24,25 @@
         font-size: var(--bs-body-font-size);
         line-height: var(--bs-body-font-size);
     }
+
+    &.is-text {
+        font-weight: bold;
+        border: 1px solid var(--bs-border-color);
+        height: 32px;
+        line-height: 32px;
+        background-color: var(--bs-white) !important;
+
+        html.dark & {
+            color: var(--bs-white) !important;
+            background-color: var(--bs-gray-500) !important;
+        }
+
+        &.version, html.dark &.version  {
+            background: var(--el-color-primary) !important;
+            border-color:  var(--el-color-primary-dark-2) !important;
+            color: var(--bs-white) !important;
+        }
+    }
 }
 
 .el-input-group__append, .el-input-group__prepend {

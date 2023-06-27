@@ -454,7 +454,7 @@
     "expand all": "Expand all",
     "collapse all": "Collapse all",
     "log expand setting": "Log default display",
-    "slack support": "Slack support"
+    "slack support": "Ask help on our Slack"
   },
   "fr": {
     "id": "Identifiant",
@@ -913,6 +913,6 @@
     "expand all": "Afficher tout",
     "collapse all": "Masquer tout",
     "log expand setting": "Affichage par défaut des journaux",
-    "slack support": "Support Slack"
+    "slack support": "Demandez de l'aide sur notre Slack"
   }
 }

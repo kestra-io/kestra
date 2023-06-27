@@ -326,14 +326,14 @@
                     return this.logsToOpenParent
                 }
                 switch(localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT){
-                case logDisplayTypes.ERROR:
-                    return [State.FAILED, State.RUNNING, State.PAUSED]
-                case logDisplayTypes.ALL:
-                    return State.arrayAllStates().map(s => s.name)
-                case logDisplayTypes.HIDDEN:
-                    return []
-                default:
-                    return State.arrayAllStates().map(s => s.name)
+                    case logDisplayTypes.ERROR:
+                        return [State.FAILED, State.RUNNING, State.PAUSED]
+                    case logDisplayTypes.ALL:
+                        return State.arrayAllStates().map(s => s.name)
+                    case logDisplayTypes.HIDDEN:
+                        return []
+                    default:
+                        return State.arrayAllStates().map(s => s.name)
                 }
             },
         },

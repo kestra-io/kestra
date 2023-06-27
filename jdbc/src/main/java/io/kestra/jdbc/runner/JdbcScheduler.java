@@ -4,8 +4,10 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.*;
+import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
@@ -24,6 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 public class JdbcScheduler extends AbstractScheduler {
     private final QueueInterface<Execution> executionQueue;
     private final TriggerRepositoryInterface triggerRepository;
+    private final ConditionService conditionService;
+
+    private final FlowRepositoryInterface flowRepository;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -36,7 +41,8 @@ public class JdbcScheduler extends AbstractScheduler {
         executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         triggerRepository = applicationContext.getBean(AbstractJdbcTriggerRepository.class);
         triggerState = applicationContext.getBean(SchedulerTriggerStateInterface.class);
-        executionState = applicationContext.getBean(SchedulerExecutionState.class);
+        conditionService = applicationContext.getBean(ConditionService.class);
+        flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
 
         this.isReady = true;
     }
@@ -45,19 +51,23 @@ public class JdbcScheduler extends AbstractScheduler {
     public void run() {
         super.run();
 
-        // reset scheduler trigger at end
         executionQueue.receive(
             Scheduler.class,
             execution -> {
-                if (
-                    execution.getTrigger() != null && (
-                        execution.isDeleted() ||
-                            execution.getState().getCurrent().isTerminated()
-                    )
-                ) {
-                    triggerRepository
-                        .findByExecution(execution)
-                        .ifPresent(trigger -> triggerRepository.save(trigger.resetExecution()));
+                if (execution.getTrigger() != null) {
+                    var flow = flowRepository.findById(execution.getNamespace(), execution.getFlowId()).orElse(null);
+                    if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
+                        // reset scheduler trigger at end
+                        triggerRepository
+                            .findByExecution(execution)
+                            .ifPresent(trigger -> triggerRepository.save(trigger.resetExecution()));
+                    } else {
+                        // update execution state on each state change so the scheduler knows the execution is running
+                        triggerRepository
+                            .findByExecution(execution)
+                            .filter(trigger -> execution.getState().getCurrent() != trigger.getExecutionCurrentState())
+                            .ifPresent(trigger -> triggerRepository.save(Trigger.of(execution, trigger.getDate())));
+                    }
                 }
             }
         );

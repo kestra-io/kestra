@@ -24,12 +24,10 @@ public class DefaultScheduler extends AbstractScheduler {
     public DefaultScheduler(
         ApplicationContext applicationContext,
         FlowListenersInterface flowListeners,
-        SchedulerExecutionStateInterface executionState,
         SchedulerTriggerStateInterface triggerState
     ) {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
-        this.executionState = executionState;
         this.isReady = true;
     }
 
@@ -44,6 +42,9 @@ public class DefaultScheduler extends AbstractScheduler {
                 Trigger trigger = watchingTrigger.get(execution.getId());
                 triggerQueue.emit(trigger.resetExecution());
                 triggerState.save(trigger.resetExecution());
+            } else if (this.watchingTrigger.containsKey(execution.getId())) {
+                Trigger trigger = watchingTrigger.get(execution.getId());
+                triggerState.save(Trigger.of(execution, trigger.getDate()));
             }
         });
 

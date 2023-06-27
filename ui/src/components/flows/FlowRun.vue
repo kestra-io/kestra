@@ -82,8 +82,8 @@
             <el-form-item
                 :label="$t('execution labels')"
             >
-                <label-filter
-                    v-model:model-value="executionLabels"
+                <label-input
+                    v-model:labels="executionLabels"
                 />
             </el-form-item>
             <div class="bottom-buttons">
@@ -99,6 +99,9 @@
                         <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled || haveBadLabels">
                             {{ $t('launch execution') }}
                         </el-button>
+                        <el-text v-if="haveBadLabels" type="danger" size="small">
+                            {{ $t('wrong labels') }}
+                        </el-text>
                     </el-form-item>
                 </div>
             </div>
@@ -115,11 +118,11 @@
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
-    import LabelFilter from "../../components/labels/LabelFilter.vue";
+    import LabelInput from "../../components/labels/LabelInput.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
-        components: {Editor, LabelFilter},
+        components: {Editor, LabelInput},
         props: {
             redirect: {
                 type: Boolean,
@@ -169,13 +172,10 @@
             ...mapState("core", ["guidedProperties"]),
             ...mapState("execution", ["execution"]),
             haveBadLabels() {
-                return this.executionLabels.some(label => label.split(":").length !== 2)
+                return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             }
         },
         methods: {
-            isBadLabel(tag) {
-                return tag.split(":").length !== 2
-            },
             fillInputsFromExecution(){
                 const nonEmptyInputNames = Object.keys(this.execution.inputs);
                 this.inputs = Object.fromEntries(
@@ -211,6 +211,8 @@
                             id: this.flow.id,
                             namespace: this.flow.namespace,
                             labels: this.executionLabels
+                                .filter(label => label.key && label.value)
+                                .map(label => `${label.key}:${label.value}`)
                         })
                         this.$emit("executionTrigger");
                     });
@@ -273,19 +275,6 @@
 
                 return true;
             },
-            handleClose(label) {
-                this.executionLabels.splice(this.executionLabels.indexOf(label), 1)
-            },
-            showInput() {
-                this.inputVisible = true;
-            },
-            handleInputConfirm() {
-                if (this.inputNewLabel) {
-                    this.executionLabels.push(this.inputNewLabel)
-                }
-                this.inputVisible = false
-                this.inputNewLabel = ""
-            }
         },
         watch: {
             guidedProperties: {

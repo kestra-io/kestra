@@ -449,7 +449,11 @@
         "existing": "A <code>{flowFullName}</code> Flow draft was retrieved, do you want to resume its edition ?"
       }
     },
-    "title": "Title"
+    "title": "Title",
+    "expand error": "Expand only failed task",
+    "expand all": "Expand all",
+    "collapse all": "Collapse all",
+    "log expand setting": "Log default display"
   },
   "fr": {
     "id": "Identifiant",
@@ -903,6 +907,10 @@
         "existing": "Un brouillon pour le Flow <code>{flowFullName}</code> existe, voulez-vous reprendre son édition?"
       }
     },
-    "title": "Titre"
+    "title": "Titre",
+    "expand error": "Afficher uniquement les erreurs",
+    "expand all": "Afficher tout",
+    "collapse all": "Masquer tout",
+    "log expand setting": "Affichage par défaut des journaux"
   }
 }

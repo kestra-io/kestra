@@ -177,6 +177,7 @@
     import FlowUtils from "../../utils/flowUtils.js";
     import moment from "moment";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+    import {logDisplayTypes} from "../../utils/constants";
 
 
     export default {
@@ -228,6 +229,10 @@
             attemptNumber: {
                 type: Number,
                 default: undefined
+            },
+            logsToOpenParent: {
+                type: Array,
+                default: undefined
             }
         },
         data() {
@@ -245,8 +250,7 @@
                 followLogs: [],
                 logsTotal: 0,
                 timer: undefined,
-                timeout: undefined,
-                logsToOpen: [State.FAILED, State.CREATED, State.RUNNING]
+                timeout: undefined
             };
         },
         watch: {
@@ -261,7 +265,10 @@
                 }
             },
             currentTaskRuns: function () {
-                this.openTaskRun();
+                this.openTaskRun(this.logsToOpen);
+            },
+            logsToOpenParent: function () {
+                this.openTaskRun(this.logsToOpenParent);
             }
         },
         mounted() {
@@ -269,7 +276,7 @@
                 this.loadLogs();
             }
             if (this.logsToOpen.includes(this.execution.state.current)) {
-                this.openTaskRun();
+                this.openTaskRun(this.logsToOpen);
             }
         },
         computed: {
@@ -313,12 +320,31 @@
                     .map((e, index) => {
                         return {...e, index: index}
                     })
-            }
+            },
+            logsToOpen() {
+                if (this.logsToOpenParent) {
+                    return this.logsToOpenParent
+                }
+                switch(localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT){
+                    case logDisplayTypes.ERROR:
+                        return [State.FAILED, State.RUNNING, State.PAUSED]
+                    case logDisplayTypes.ALL:
+                        return State.arrayAllStates().map(s => s.name)
+                    case logDisplayTypes.HIDDEN:
+                        return []
+                    default:
+                        return State.arrayAllStates().map(s => s.name)
+                }
+            },
         },
         methods: {
-            openTaskRun(){
+            openTaskRun(logsToOpen){
                 this.currentTaskRuns.forEach((taskRun) => {
-                    if (this.logsToOpen.includes(taskRun.state.current)) {
+                    if (logsToOpen.length === 0) {
+                        this.showLogs = []
+                        return;
+                    }
+                    if (logsToOpen.includes(taskRun.state.current)) {
                         const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : 0
                         this.showLogs.push(`${taskRun.id}-${attemptNumber}`)
                         this?.$refs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();

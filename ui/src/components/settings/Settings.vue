@@ -55,8 +55,15 @@
                 </el-button>
             </el-form-item>
 
-            <el-form-item :label="$t('show documentation')">
-                <el-checkbox :label="$t('show task documentation in editor')" :model-value="editorDocumentation" @update:model-value="onEditorDocumentation" />
+            <el-form-item :label="$t('log expand setting')">
+                <el-select :model-value="logDisplay" @update:model-value="onLogDisplayChange">
+                    <el-option
+                        v-for="item in logDisplayOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    />
+                </el-select>
             </el-form-item>
         </el-form>
     </div>
@@ -74,6 +81,7 @@
     import {mapGetters, mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {logDisplayTypes} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext],
@@ -90,7 +98,7 @@
                 editorTheme: undefined,
                 autofoldTextEditor: undefined,
                 guidedTour: undefined,
-                editorDocumentation: undefined
+                logDisplay: undefined
             };
         },
         created() {
@@ -103,7 +111,7 @@
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
-            this.editorDocumentation = localStorage.getItem("editorDocumentation") !== "false";
+            this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
         },
         methods: {
             onNamespaceSelect(value) {
@@ -148,12 +156,6 @@
                 this.autofoldTextEditor = value;
                 this.$toast().saved();
             },
-            onEditorDocumentation(value){
-                localStorage.setItem("editorDocumentation", value);
-                this.editorDocumentation = value;
-                this.$toast().saved();
-
-            },
             exportFlows() {
                 return this.$store
                     .dispatch("flow/exportFlowByQuery", {})
@@ -168,6 +170,11 @@
                         this.$toast().success(this.$t("templates exported"));
                     })
             },
+            onLogDisplayChange(value) {
+                localStorage.setItem("logDisplay", value);
+                this.logDisplay = value;
+                this.$toast().saved();
+            }
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
@@ -200,6 +207,13 @@
             },
             canReadTemplates() {
                 return this.user && this.user.isAllowed(permission.TEMPLATE, action.READ);
+            },
+            logDisplayOptions() {
+                return  [
+                    {value: logDisplayTypes.ERROR, text: this.$t("expand error")},
+                    {value: logDisplayTypes.ALL, text: this.$t("expand all")},
+                    {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")}
+                ]
             },
         }
     };

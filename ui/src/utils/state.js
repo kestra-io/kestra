@@ -147,6 +147,10 @@ export default class State {
         });
     }
 
+    static arrayAllStates() {
+        return Object.values(STATE);
+    }
+
     static colorClass() {
         return _mapValues(STATE, state => state.colorClass);
     }

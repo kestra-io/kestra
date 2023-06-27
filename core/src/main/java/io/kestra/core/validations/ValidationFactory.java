@@ -15,7 +15,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import javax.validation.ConstraintViolation;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -192,6 +191,16 @@ public class ValidationFactory {
             if (taskDuplicates.size() > 0) {
                 violations.add("Duplicate task id with name [" + String.join(", ", taskDuplicates) + "]");
             }
+
+            value.allTasksWithChilds()
+                .stream()
+                .forEach(
+                    task -> {
+                        if (task instanceof io.kestra.core.tasks.flows.Flow && ((io.kestra.core.tasks.flows.Flow) task).getFlowId().equals(value.getId())) {
+                            violations.add("Recursive call to flow [" + value.getId() + "]");
+                        }
+                    }
+                );
 
             // input unique name
             if (value.getInputs() != null) {

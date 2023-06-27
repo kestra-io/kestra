@@ -87,11 +87,11 @@
 
             },
             onInput(value) {
+                this.taskObject = value;
                 this.$emit("update:modelValue", YamlUtils.stringify(value));
             },
             onTaskTypeSelect() {
                 this.load();
-                this.taskObject.type = this.selectedTaskType;
                 const value = {
                     type: this.selectedTaskType
                 };

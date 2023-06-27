@@ -24,7 +24,7 @@
                class="el-button el-button--small version is-text is-has-bg">
                 🎉 New release v{{ version.latest }}
             </a>
-            <a href="https://api.kestra.io/v1/communities/slack/redirect"
+            <a href="https://kestra.io/slack"
                target="_blank"
                class="el-button el-button--small is-text is-has-bg">
                 Live chat
@@ -92,26 +92,6 @@
 
                 .material-design-icon {
                     font-size: var(--font-size-lg);
-                }
-            }
-
-
-            .is-text {
-                font-weight: bold;
-                border: 1px solid var(--bs-border-color);
-                height: 32px;
-                line-height: 32px;
-                background-color: var(--bs-white) !important;
-
-                html.dark & {
-                    color: var(--bs-white) !important;
-                    background-color: var(--bs-gray-500) !important;
-                }
-
-                &.version, html.dark &.version  {
-                    background: var(--el-color-primary) !important;
-                    border-color:  var(--el-color-primary-dark-2) !important;
-                    color: var(--bs-white) !important;
                 }
             }
         }

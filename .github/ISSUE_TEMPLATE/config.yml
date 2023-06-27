@@ -3,5 +3,5 @@ contact_links:
     url: https://github.com/kestra-io/kestra/discussions
     about: Ask questions about Kestra on Github
   - name: Chat
-    url: https://api.kestra.io/v1/communities/slack/redirect
+    url: https://kestra.io/slack
     about: Chat with us on Slack.

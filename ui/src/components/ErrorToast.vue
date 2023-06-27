@@ -1,5 +1,6 @@
 <script>
     import {ElNotification, ElTable, ElTableColumn} from "element-plus";
+    import Slack from "vue-material-design-icons/Slack.vue";
     import {pageFromRoute} from "../utils/eventsRouter";
     import {h} from "vue"
 
@@ -68,6 +69,11 @@
                 this.$store.dispatch("api/events", error);
 
                 const children = [
+                    h("a", {
+                        href: "https://kestra.io/slack",
+                        class: "position-absolute slack-on-error el-button el-button--small is-text is-has-bg",
+                        target: "_blank"
+                    }, [h(Slack), h("span", {innerText: this.$t("slack support")})]),
                     h("span", {innerHTML: this.text})
                 ];
 
@@ -95,7 +101,7 @@
                     type: "error",
                     duration: 0,
                     dangerouslyUseHTMLString: true,
-                    customClass: children.length > 1 ? "large" : ""
+                    customClass: "error-notification" + (children.length > 1 ? " large" : "")
                 });
             });
 
@@ -104,3 +110,17 @@
     };
 </script>
 
+<style lang="scss">
+    .error-notification {
+        .el-notification__title {
+            max-width: calc(100% - 15ch);
+        }
+
+        .slack-on-error {
+            top: calc(18px + 0.5rem);
+            right: calc(15px + 2rem);
+            transform: translateY(-50%);
+            gap: calc(var(--spacer) / 2);
+        }
+    }
+</style>

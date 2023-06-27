@@ -50,12 +50,15 @@
                         </div>
                         <div class="side buttons ms-auto">
                             <slot name="buttons" :blueprint="blueprint" />
-                            <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                            <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000">
                                 <el-button @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy"
                                            size="large" text bg>
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
+                            <el-button v-else size="large" text bg @click="blueprintToEditor(blueprint.id)">
+                                {{ $t('use') }}
+                            </el-button>
                         </div>
                     </component>
                 </el-card>
@@ -112,6 +115,10 @@
                 await navigator.clipboard.writeText(
                     (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data
                 );
+            },
+            async blueprintToEditor(blueprintId) {
+                localStorage.setItem("autoRestore-creation_draft", (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data);
+                this.$router.push({name: 'flows/create'});
             },
             tagsToString(blueprintTags) {
                 return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")

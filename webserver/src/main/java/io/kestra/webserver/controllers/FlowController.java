@@ -446,7 +446,7 @@ public class FlowController {
     ) {
         AtomicInteger index = new AtomicInteger(0);
         return Stream
-            .of(flows.split("---"))
+            .of(flows.split("\\n+---\\n*?"))
             .map(flow -> {
                 ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
                 validateConstraintViolationBuilder.index(index.getAndIncrement());

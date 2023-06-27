@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.debugs.Return;
@@ -30,6 +31,7 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import jakarta.inject.Inject;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,10 +42,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipFile;
 
 import static io.micronaut.http.HttpRequest.*;
@@ -662,6 +661,30 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void validateFlows() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/validateMultipleValidFlows.yaml");
+        String flow = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
+
+        List<ValidateConstraintViolation> body = response.body();
+        assertThat(body.size(), is(2));
+        assertThat(body, everyItem(
+            Matchers.hasProperty("constraints", is(nullValue()))
+        ));
+
+        resource = TestsUtils.class.getClassLoader().getResource("flows/validateMultipleInvalidFlows.yaml");
+        flow = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+        assertThat(body.size(), is(2));
+        assertThat(body.get(0).getConstraints(), containsString("Unrecognized field \"unknownProp\""));
+        assertThat(body.get(1).getConstraints(), containsString("Invalid type: io.kestra.core.tasks.debugs.UnknownTask"));
     }
 
     private Flow generateFlow(String namespace, String inputName) {

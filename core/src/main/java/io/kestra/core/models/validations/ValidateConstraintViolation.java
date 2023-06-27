@@ -1,5 +1,6 @@
 package io.kestra.core.models.validations;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,14 +32,17 @@ public class ValidateConstraintViolation {
 
     private String constraints;
 
+    @JsonIgnore
     public String getIdentity(){
         return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(index);
     }
 
+    @JsonIgnore
     public String getIdentity(Path directory) throws IOException {
         return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(Files.walk(directory).collect(Collectors.toList()).get(index));
     }
 
+    @JsonIgnore
     public String getFlowId(){
         return namespace+"."+flow;
     }

@@ -62,7 +62,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(8));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(execution.getTaskRunList().get(7).getOutputs().get("value"), is(execution.getTaskRunList().get(5).getId()));
+            assertThat(execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), is(execution.findTaskRunsByTaskId("first").get(0).getId()));
         }
     }
 }

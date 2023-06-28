@@ -9,7 +9,7 @@
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
-                :label="input.name"
+                :label="input.type === 'BOOLEAN' ? undefined : input.name"
                 :required="input.required !== false"
                 :prop="input.name"
             >
@@ -30,11 +30,12 @@
                     v-model="inputs[input.name]"
                     :step="0.001"
                 />
-                <el-checkbox
+                <el-switch
                     v-if="input.type === 'BOOLEAN'"
                     v-model="inputs[input.name]"
-                    value="true"
-                    unchecked-value="false"
+                    active-value="true"
+                    :active-text="input.name"
+                    inactive-value="false"
                 />
                 <el-date-picker
                     v-if="input.type === 'DATETIME'"
@@ -300,25 +301,28 @@
 </script>
 
 <style scoped lang="scss">
-.bottom-buttons {
-    margin-top: 36px;
-    display: flex;
+    .bottom-buttons {
+        margin-top: 36px;
+        display: flex;
 
-    > * {
-        flex: 1;
+        > * {
+            flex: 1;
 
-        * {
-            margin: 0;
+            * {
+                margin: 0;
+            }
+        }
+
+        .left-align :deep(div) {
+            flex-direction: row
+        }
+
+        .right-align :deep(div) {
+            flex-direction: row-reverse;
         }
     }
 
-    .left-align :deep(div) {
-        flex-direction: row
+    :deep(.el-switch__label) {
+        color: var(--el-text-color-regular);
     }
-
-    .right-align :deep(div) {
-        flex-direction: row-reverse;
-    }
-
-}
 </style>

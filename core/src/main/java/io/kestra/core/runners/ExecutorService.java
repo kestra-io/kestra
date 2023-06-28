@@ -656,13 +656,23 @@ public class ExecutorService {
         );
     }
 
-    public void log(Logger log, Boolean in, WorkerTask value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getTaskRun().toStringState()
-        );
+    public void log(Logger log, Boolean in, WorkerJob value) {
+        if (value instanceof WorkerTask workerTask) {
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                workerTask.getClass().getSimpleName(),
+                workerTask.getTaskRun().toStringState()
+            );
+        }
+        else if (value instanceof WorkerTrigger workerTrigger){
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                workerTrigger.getClass().getSimpleName(),
+                workerTrigger.getTriggerContext().uid()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, WorkerTaskResult value) {

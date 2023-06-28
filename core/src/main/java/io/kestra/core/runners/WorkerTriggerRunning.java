@@ -6,12 +6,15 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 
 @Data
-@Builder
-public class WorkerTrigger extends WorkerJob {
+@SuperBuilder
+@NoArgsConstructor
+public class WorkerTriggerRunning extends WorkerJobRunning {
     public static final String TYPE = "trigger";
 
     @NotNull
@@ -30,5 +33,15 @@ public class WorkerTrigger extends WorkerJob {
     @Override
     public String uid() {
         return triggerContext.uid();
+    }
+
+    public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance, int partition) {
+        return WorkerTriggerRunning.builder()
+            .trigger(workerTrigger.getTrigger())
+            .triggerContext(workerTrigger.getTriggerContext())
+            .conditionContext(workerTrigger.getConditionContext())
+            .workerInstance(workerInstance)
+            .partition(partition)
+            .build();
     }
 }

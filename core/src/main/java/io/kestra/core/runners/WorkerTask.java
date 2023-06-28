@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import lombok.Builder;
@@ -12,7 +13,13 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
-public class WorkerTask {
+public class WorkerTask extends WorkerJob {
+    public static final String TYPE = "task";
+
+    @NotNull
+    @JsonInclude
+    private final String type = TYPE;
+
     @NotNull
     @With
     private TaskRun taskRun;
@@ -28,5 +35,10 @@ public class WorkerTask {
             "flow." + this.getTaskRun().getFlowId() + "." +
                 this.getTask().getId()
         );
+    }
+
+    @Override
+    public String uid() {
+        return this.taskRun.getTaskId();
     }
 }

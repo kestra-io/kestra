@@ -51,8 +51,8 @@ public class MemoryExecutor implements ExecutorInterface {
     private QueueInterface<Execution> executionQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
-    private QueueInterface<WorkerTask> workerTaskQueue;
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    private QueueInterface<WorkerJob> workerTaskQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)

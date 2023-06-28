@@ -15,6 +15,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.services.ConditionService;
@@ -49,7 +50,7 @@ public abstract class AbstractScheduler implements Scheduler {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
     private final QueueInterface<Trigger> triggerQueue;
-    private final QueueInterface<WorkerTrigger> workerTriggerQueue;
+    private final QueueInterface<WorkerJob> workerTaskQueue;
     private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
@@ -81,7 +82,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.applicationContext = applicationContext;
         this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
-        this.workerTriggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGER_NAMED));
+        this.workerTaskQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
@@ -576,7 +577,7 @@ public abstract class AbstractScheduler implements Scheduler {
             );
         }
 
-        this.workerTriggerQueue.emit(WorkerTrigger
+        this.workerTaskQueue.emit(WorkerTrigger
             .builder()
             .trigger(flowWithTriggerWithDefault.trigger)
             .triggerContext(flowWithTriggerWithDefault.triggerContext)

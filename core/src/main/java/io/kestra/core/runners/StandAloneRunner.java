@@ -29,8 +29,8 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
-    protected QueueInterface<WorkerTask> workerTaskQueue;
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    protected QueueInterface<WorkerJob> workerTaskQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)

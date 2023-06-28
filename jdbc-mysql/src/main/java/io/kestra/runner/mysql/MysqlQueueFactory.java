@@ -9,7 +9,7 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.WorkerTaskQueueInterface;
+import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
@@ -41,9 +41,9 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
-    public QueueInterface<WorkerTask> workerTask() {
-        return new MysqlQueue<>(WorkerTask.class, applicationContext);
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    public QueueInterface<WorkerJob> workerJob() {
+        return new MysqlQueue<>(WorkerJob.class, applicationContext);
     }
 
     @Override
@@ -51,13 +51,6 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     public QueueInterface<WorkerTaskResult> workerTaskResult() {
         return new MysqlQueue<>(WorkerTaskResult.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.WORKERTRIGGER_NAMED)
-    public QueueInterface<WorkerTrigger> workerTrigger() {
-        return new MysqlQueue<>(WorkerTrigger.class, applicationContext);
     }
 
     @Override
@@ -111,9 +104,9 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.WORKERTASKRUNNING_NAMED)
-    public QueueInterface<WorkerTaskRunning> workerTaskRunning() {
-        return new MysqlQueue<>(WorkerTaskRunning.class, applicationContext);
+    @Named(QueueFactoryInterface.WORKERJOBRUNNING_NAMED)
+    public QueueInterface<WorkerJobRunning> workerJobRunning() {
+        return new MysqlQueue<>(WorkerJobRunning.class, applicationContext);
     }
 
     @Override
@@ -125,7 +118,7 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
-    public WorkerTaskQueueInterface workerTaskQueue() {
-        return new MysqlWorkerTaskQueue(applicationContext);
+    public WorkerJobQueueInterface workerJobQueue() {
+        return new MysqlWorkerJobQueue(applicationContext);
     }
 }

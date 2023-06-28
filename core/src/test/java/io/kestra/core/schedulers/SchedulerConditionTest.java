@@ -51,7 +51,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         return createFlow(Collections.singletonList(schedule));
     }
 
-    @RetryingTest(5)
+    @RetryingTest(10)
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

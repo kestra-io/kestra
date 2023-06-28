@@ -184,7 +184,7 @@ public abstract class AbstractScheduler implements Scheduler {
             .filter(flow -> !flow.isDisabled())
             .flatMap(flow -> flow.getTriggers()
                 .stream()
-                .filter(abstractTrigger -> !abstractTrigger.isDisabled())
+                .filter(abstractTrigger -> !abstractTrigger.isDisabled() && abstractTrigger instanceof PollingTriggerInterface)
                 .map(trigger -> {
                     RunContext runContext = runContextFactory.of(flow, trigger);
 
@@ -196,8 +196,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     );
                 })
             )
-            .filter(flowWithTrigger -> flowWithTrigger.getTrigger() instanceof PollingTriggerInterface)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private void handle() {
@@ -408,8 +407,8 @@ public abstract class AbstractScheduler implements Scheduler {
             executionWithTrigger.getExecution().getNamespace(),
             executionWithTrigger.getExecution().getFlowId(),
             executionWithTrigger.getTriggerContext().getTriggerId(),
-            executionWithTrigger.getTriggerContext().getDate(),
             executionWithTrigger.getExecution().getId(),
+            executionWithTrigger.getTriggerContext().getDate(),
             now
         );
     }

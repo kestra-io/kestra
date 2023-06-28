@@ -42,7 +42,7 @@ public class DefaultScheduler extends AbstractScheduler {
                 Trigger trigger = watchingTrigger.get(execution.getId());
                 triggerQueue.emit(trigger.resetExecution());
                 triggerState.save(trigger.resetExecution());
-            } else if (this.watchingTrigger.containsKey(execution.getId())) {
+            } else if (this.watchingTrigger.containsKey(execution.getId()) && execution.getTrigger() != null) {
                 Trigger trigger = watchingTrigger.get(execution.getId());
                 triggerState.save(Trigger.of(execution, trigger.getDate()));
             }

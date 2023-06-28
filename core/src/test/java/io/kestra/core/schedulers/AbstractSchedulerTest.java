@@ -3,6 +3,7 @@ package io.kestra.core.schedulers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
@@ -110,10 +111,15 @@ abstract public class AbstractSchedulerTest {
                     .flowId(context.getFlowId())
                     .flowRevision(context.getFlowRevision())
                     .state(new State())
-                    .variables(ImmutableMap.of(
-                        "counter", COUNTER,
-                        "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
-                    ))
+                    .trigger(ExecutionTrigger.builder()
+                        .id(this.getId())
+                        .type(this.getType())
+                        .variables(ImmutableMap.of(
+                            "counter", COUNTER,
+                            "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
+                        ))
+                        .build()
+                    )
                     .build();
 
                 return Optional.of(execution);

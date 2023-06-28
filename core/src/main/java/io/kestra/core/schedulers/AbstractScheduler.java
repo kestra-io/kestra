@@ -383,7 +383,10 @@ public abstract class AbstractScheduler implements Scheduler {
 
         ZonedDateTime now = now();
 
-        if (executionWithTrigger.getExecution().getTrigger() != null) {
+        if (executionWithTrigger.getExecution().getTrigger() != null &&
+            executionWithTrigger.getExecution().getTrigger().getVariables() != null &&
+            executionWithTrigger.getExecution().getTrigger().getVariables().containsKey("next")
+        ) {
             Object nextVariable = executionWithTrigger.getExecution().getTrigger().getVariables().get("next");
 
             ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;

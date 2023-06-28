@@ -341,6 +341,7 @@
         flowYaml.value = event;
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
+        clearTimeout(timer.value)
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
                 if (flowHaveTasks() && ["topology", "source-topology"].includes(viewType.value)) {
@@ -412,7 +413,6 @@
         onEdit(YamlUtils.insertError(source, newError.value));
         newError.value = null;
         isNewErrorOpen.value = false;
-        haveChange.value = true;
     }
 
     const getFlowMetadata = () => {

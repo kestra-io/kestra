@@ -73,11 +73,11 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId(), is(pair.getLeft().getId()));
 
         assertThat(window.getStart().toLocalTime().getHour(), is(ZonedDateTime.now().minusHours(4).getHour()));
-        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().minusHours(4).toLocalDate()));
 
         assertThat(window.getEnd().toLocalTime().getHour(), is(ZonedDateTime.now().minusHours(4).getHour()));
         assertThat(window.getEnd().toLocalTime().getMinute(), is(59));
-        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().minusHours(4).toLocalDate()));
     }
 
     @Test

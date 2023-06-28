@@ -37,7 +37,6 @@ public class ValidateConstraintViolation {
         return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(index);
     }
 
-    @JsonIgnore
     public String getIdentity(Path directory) throws IOException {
         return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(Files.walk(directory).collect(Collectors.toList()).get(index));
     }

@@ -9,6 +9,8 @@ import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -16,7 +18,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @MemoryQueueEnabled
 public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterface {
-    private final Map<String, Trigger> triggers = new HashMap<>();
+    private final Map<String, Trigger> triggers = new ConcurrentHashMap<>();
 
     @Inject
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
@@ -24,9 +26,7 @@ public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterfa
 
     @Override
     public Optional<Trigger> findLast(TriggerContext context) {
-        return triggers.containsKey(context.uid()) ?
-            Optional.of(triggers.get(context.uid())) :
-            Optional.empty();
+        return Optional.ofNullable(triggers.get(context.uid()));
     }
 
     @Override

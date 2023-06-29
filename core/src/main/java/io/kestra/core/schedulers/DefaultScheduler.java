@@ -4,11 +4,15 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import jakarta.inject.Inject;
@@ -20,6 +24,10 @@ import jakarta.inject.Singleton;
 public class DefaultScheduler extends AbstractScheduler {
     private final Map<String, Trigger> watchingTrigger = new ConcurrentHashMap<>();
 
+    private final ConditionService conditionService;
+
+    private final FlowRepositoryInterface flowRepository;
+
     @Inject
     public DefaultScheduler(
         ApplicationContext applicationContext,
@@ -29,6 +37,9 @@ public class DefaultScheduler extends AbstractScheduler {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
         this.isReady = true;
+
+        this.conditionService = applicationContext.getBean(ConditionService.class);
+        this.flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -38,13 +49,15 @@ public class DefaultScheduler extends AbstractScheduler {
         QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
 
         executionQueue.receive(execution -> {
-            if (execution.getState().getCurrent().isTerminated() && this.watchingTrigger.containsKey(execution.getId())) {
-                Trigger trigger = watchingTrigger.get(execution.getId());
-                triggerQueue.emit(trigger.resetExecution());
-                triggerState.save(trigger.resetExecution());
-            } else if (this.watchingTrigger.containsKey(execution.getId()) && execution.getTrigger() != null) {
-                Trigger trigger = watchingTrigger.get(execution.getId());
-                triggerState.save(Trigger.of(execution, trigger.getDate()));
+            if (execution.getTrigger() != null) {
+                Trigger trigger = Await.until(()  -> watchingTrigger.get(execution.getId()), Duration.ofSeconds(5));
+                var flow = flowRepository.findById(execution.getNamespace(), execution.getFlowId()).orElse(null);
+                if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
+                    triggerState.save(trigger.resetExecution());
+                    watchingTrigger.remove(execution.getId());
+                } else {
+                    triggerState.save(Trigger.of(execution, trigger.getDate()));
+                }
             }
         });
 

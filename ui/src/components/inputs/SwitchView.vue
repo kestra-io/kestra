@@ -1,6 +1,5 @@
 <template>
     <el-button-group size="small">
-        <ValidationError :error="flowError" />
         <el-tooltip :content="$t('source')" transition="" :hide-after="0" :persistent="false">
             <el-button :type="buttonType('source')" @click="switchView('source')" :icon="FileDocumentEdit" />
         </el-tooltip>
@@ -28,7 +27,6 @@
 </script>
 
 <script>
-    import {mapGetters} from "vuex";
     import ValidationError from "../flows/ValidationError.vue";
 
     export default {
@@ -38,9 +36,6 @@
             type: {
                 type: String
             }
-        },
-        computed: {
-            ...mapGetters("flow", ["flowError"]),
         },
         methods: {
             switchView(view) {

@@ -619,7 +619,11 @@
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
             @restartGuidedTour="() => persistViewType('source')"
-        />
+        >
+            <template #extends-navbar>
+                <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" />
+            </template>
+        </editor>
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
         <Blueprints :class="{'d-none': viewType !== 'source-blueprints'}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
         <div

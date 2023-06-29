@@ -393,6 +393,8 @@ form.ks-horizontal {
 
 // popper
 .el-popper {
+    border-radius: $border-radius-lg;
+
     &.is-light {
         border: 1px solid var(--bs-border-color);
 

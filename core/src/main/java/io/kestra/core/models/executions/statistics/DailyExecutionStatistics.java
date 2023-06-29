@@ -15,7 +15,7 @@ import java.util.Map;
 @Builder
 public class DailyExecutionStatistics {
     @NotNull
-    protected Instant date;
+    protected Instant startDate;
 
     @NotNull
     private Duration duration;

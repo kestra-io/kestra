@@ -14,8 +14,8 @@ public abstract class AbstractServiceNamespaceUpdateCommand extends AbstractApiC
     @CommandLine.Parameters(index = "1", description = "the directory containing files for current namespace")
     public Path directory;
 
-    @CommandLine.Option(names = {"--no-delete"}, description = "if missing should not be deleted")
-    public boolean noDelete = false ;
+    @CommandLine.Option(names = {"--delete"}, negatable = true, description = "if missing should be deleted")
+    public boolean delete = false;
 
     @Builder
     @Value

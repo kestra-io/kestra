@@ -16,10 +16,11 @@ import static org.hamcrest.core.Is.is;
 
 class FlowNamespaceUpdateCommandTest {
     @Test
-    void run()  {
+    void runWithDelete()  {
         URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
+        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/flowsSubFolder");
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
 
@@ -31,12 +32,28 @@ class FlowNamespaceUpdateCommandTest {
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
+                "--delete",
                 "io.kestra.cli",
                 directory.getPath(),
+            };
+            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("3 flow(s)"));
+            out.reset();
+
+            args = new String[]{
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "--delete",
+                "io.kestra.cli",
+                subDirectory.getPath(),
 
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
+            // 2 delete + 1 update
             assertThat(out.toString(), containsString("3 flow(s)"));
         }
     }
@@ -94,17 +111,32 @@ class FlowNamespaceUpdateCommandTest {
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
             assertThat(out.toString(), containsString("3 flow(s)"));
+            out.reset();
 
-            String[] newArgs = {
+            // no "delete" arg should behave as no-delete
+            args = new String[]{
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
                 "io.kestra.cli",
-                subDirectory.getPath(),
-                "--no-delete"
+                subDirectory.getPath()
             };
-            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, newArgs);
+            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("1 flow(s)"));
+            out.reset();
+
+            args = new String[]{
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "--no-delete",
+                "io.kestra.cli",
+                subDirectory.getPath()
+            };
+            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
             assertThat(out.toString(), containsString("1 flow(s)"));
         }

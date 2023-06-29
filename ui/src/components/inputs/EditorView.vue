@@ -643,7 +643,11 @@
                 :source="flowYaml"
                 :is-allowed-edit="isAllowedEdit()"
                 :view-type="viewType"
-            />
+            >
+                <template #top-bar v-if="viewType === 'topology'">
+                    <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" />
+                </template>
+            </LowCodeEditor>
         </div>
         <PluginDocumentation
             v-if="viewType === 'source-doc'"

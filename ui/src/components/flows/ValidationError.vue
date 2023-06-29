@@ -2,13 +2,18 @@
     <el-tooltip popper-class="p-0 bg-transparent" :placement="tooltipPlacement" :show-arrow="false" :disabled="!error" raw-content transition="" :persistent="false">
         <template #content>
             <el-container class="error-tooltip">
-                <el-header><AlertCircle class="align-middle text-danger"/><span class="align-middle">{{$t("error detected")}}</span></el-header>
+                <el-header>
+                    <AlertCircle class="align-middle text-danger" />
+                    <span class="align-middle">
+                        {{ $t("error detected") }}
+                    </span>
+                </el-header>
                 <el-main>{{ error }}</el-main>
             </el-container>
         </template>
         <el-button v-bind="$attrs" :link="link" :size="size" type="default">
             <component :class="'text-' + (error ? 'danger' : 'success')" :is="error ? AlertCircle : CheckCircle" />
-            <span v-if="error" class="text-danger">{{$t("error detected")}}</span>
+            <span v-if="error" class="text-danger">{{ $t("error detected") }}</span>
         </el-button>
     </el-tooltip>
 </template>
@@ -55,7 +60,7 @@
             height: fit-content;
         }
 
-        &:hover {
+        &:hover, &:focus {
             background-color: var(--el-button-bg-color);
         }
 
@@ -80,7 +85,7 @@
         border-radius: $border-radius-lg;
         color: $black;
 
-        html.dark {
+        html.dark & {
             color: white;
         }
 

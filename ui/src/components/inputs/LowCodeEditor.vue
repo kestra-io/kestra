@@ -540,6 +540,7 @@
 
 <template>
     <div ref="vueFlow" class="vueflow">
+        <slot name="top-bar"/>
         <VueFlow
             v-model="elements"
             :default-marker-color="cssVariable('--bs-cyan')"

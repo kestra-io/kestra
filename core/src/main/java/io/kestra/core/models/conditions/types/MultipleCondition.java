@@ -1,12 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
 import io.kestra.core.exceptions.InternalException;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -17,9 +11,18 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.services.FlowService;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Map;
@@ -27,10 +30,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 @SuperBuilder
 @ToString
@@ -48,6 +47,10 @@ import javax.validation.constraints.Pattern;
             title = "A flow that is waiting for 2 flows that is successful in 1 days",
             code = {
                 "triggers:",
+                "  - id: flow-status-conditions",
+                "    type: io.kestra.core.models.conditions.types.ExecutionStatusCondition",
+                "    in:",
+                "      - SUCCESS",
                 "  - id: multiple-listen-flow",
                 "    type: io.kestra.core.models.triggers.types.Flow",
                 "    conditions:",
@@ -56,18 +59,14 @@ import javax.validation.constraints.Pattern;
                 "        window: P1D",
                 "        windowAdvance: P0D",
                 "        conditions:",
-                "          success:",
-                "            type: io.kestra.core.models.conditions.types.ExecutionStatusCondition",
-                "            in:",
-                "              - SUCCESS",
                 "          flow-a:",
                 "            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition",
-                "            namespace: io.kestra.tests",
-                "            flowId: trigger-multiplecondition-flow-a",
+                "            namespace: io.kestra.demo",
+                "            flowId: multiplecondition-flow-a",
                 "          flow-b:",
                 "            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition",
-                "            namespace: io.kestra.tests",
-                "            flowId: trigger-multiplecondition-flow-b"
+                "            namespace: io.kestra.demo",
+                "            flowId: multiplecondition-flow-b"
             }
         )
     }

@@ -161,41 +161,42 @@ export default class YamlUtils {
         return index === -1 ? Number.MAX_SAFE_INTEGER : index;
     }
 
-    static getTaskType(source, position) {
-        const lineCounter = new LineCounter();
-        const yamlDoc = yaml.parseDocument(source, {lineCounter});
+    static extractAllTypes(source) {
+        const yamlDoc = yaml.parseDocument(source);
+        const types = [];
         if (yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks", "triggers", "errors"].includes(e.key.value))) {
-            const cursorIndex = lineCounter.lineStarts[position.lineNumber - 1] + position.column;
-            if (yamlDoc.contents) {
-                for (const item of yamlDoc.contents.items) {
-                    if (item.value instanceof YAMLSeq && item.key.range[0] <= cursorIndex && item.value.range[1] >= cursorIndex) {
-                        return YamlUtils._getTaskType(item.value, cursorIndex, null)
+            yaml.visit(yamlDoc, {
+                Map(_, map) {
+                    if (map.items) {
+                        for (const item of map.items) {
+                            if (item.key.value === "type") {
+                                const type = item.value?.value;
+                                types.push({type, range: map.range});
+                            }
+                        }
                     }
                 }
+            })
+        }
+        return types;
+    }
+
+    static getTaskType(source, position) {
+        const types = this.extractAllTypes(source)
+
+        const lineCounter = new LineCounter();
+        yaml.parseDocument(source, {lineCounter});
+        const cursorIndex = lineCounter.lineStarts[position.lineNumber - 1] + position.column;
+
+        for(const type of types.reverse()) {
+            if (cursorIndex > type.range[1]) {
+                return type.type;
+            }
+            if (cursorIndex >= type.range[0] && cursorIndex <= type.range[1]) {
+                return type.type;
             }
         }
         return null;
-    }
-
-    static _getTaskType(element, cursorIndex, previousTaskType) {
-        let taskType = previousTaskType
-        for (const item of element.items) {
-            // Every -1 & +1 allows catching cursor
-            // that is just behind or just after a task
-            if (item instanceof Pair) {
-                if (item.key.value === "type" && element.range[0]-1 <= cursorIndex && element.range[1]+1 >= cursorIndex) {
-                    taskType = item.value.value
-                }
-                if ((item.value instanceof YAMLSeq || item.value instanceof YAMLMap) && item.value.range[0]-1 <= cursorIndex && item.value.range[1]+1 >= cursorIndex) {
-                    taskType = this._getTaskType(item.value, cursorIndex, taskType)
-                }
-            } else if (item.range[0]-1 <= cursorIndex && item.range[1]+1 >= cursorIndex) {
-                if (item.items instanceof Array) {
-                    taskType = this._getTaskType(item, cursorIndex)
-                }
-            }
-        }
-        return taskType
     }
 
     static swapTasks(source, taskId1, taskId2) {

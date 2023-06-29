@@ -302,7 +302,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .entrySet()
             .stream()
             .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
-            .sorted(Comparator.comparing(DailyExecutionStatistics::getDate))
+            .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
             .collect(Collectors.toList()), startDate, endDate);
     }
 
@@ -498,10 +498,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             String finalCurrentDate = currentDate.format(formatter);
             DailyExecutionStatistics dailyExecutionStatistics = results
                 .stream()
-                .filter(e -> formatter.format(e.getDate()).equals(finalCurrentDate))
+                .filter(e -> formatter.format(e.getStartDate()).equals(finalCurrentDate))
                 .findFirst()
                 .orElse(DailyExecutionStatistics.builder()
-                    .date(currentDate.toInstant())
+                    .startDate(currentDate.toInstant())
                     .groupBy(groupByType)
                     .duration(DailyExecutionStatistics.Duration.builder().build())
                     .build()
@@ -519,7 +519,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
 
         DailyExecutionStatistics build = DailyExecutionStatistics.builder()
-            .date(date)
+            .startDate(date)
             .groupBy(groupByType)
             .duration(DailyExecutionStatistics.Duration.builder()
                 .avg(Duration.ofMillis(durationSum / count))

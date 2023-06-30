@@ -85,6 +85,15 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
     }
 
+    @Test
+    void nonRequiredNoDefaultNoValueIsNull() {
+        HashMap<String, String> inputsWithMissingOptionalInput = new HashMap<>(inputs);
+        inputsWithMissingOptionalInput.remove("bool");
+
+        assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool"), is(true));
+        assertThat(typedInputs(inputsWithMissingOptionalInput).get("bool"), nullValue());
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void allValidInputs() throws URISyntaxException, IOException {

@@ -129,6 +129,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getInputs().get("float"), is(42.42));
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
+        assertThat(result.getInputs().containsKey("bool"), is(true));
+        assertThat(result.getInputs().get("bool"), nullValue());
         assertThat(result.getLabels().get("a"), is("label-1"));
         assertThat(result.getLabels().get("b"), is("label-2"));
         assertThat(result.getLabels().get("flow-label-1"), is("flow-label-1"));

@@ -4,6 +4,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import lombok.Builder;
@@ -48,6 +49,7 @@ public class Execution implements DeletedInterface {
     List<TaskRun> taskRunList;
 
     @With
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     Map<String, Object> inputs;
 
     @With

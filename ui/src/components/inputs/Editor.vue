@@ -20,6 +20,7 @@
                             <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
                         </el-tooltip>
                     </el-button-group>
+                    <slot name="extends-navbar"/>
                 </div>
             </slot>
         </nav>

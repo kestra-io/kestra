@@ -22,6 +22,7 @@ import org.junitpioneer.jupiter.RetryingTest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -71,6 +72,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private PauseTest.Suite pauseTest;
+
+    @Inject
+    private SkipExecutionCaseTest skipExecutionCaseTest;
 
     @BeforeAll
     void init() throws IOException, URISyntaxException {
@@ -247,5 +251,10 @@ public abstract class JdbcRunnerTest {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "execution-start-date", null, null, Duration.ofSeconds(60));
 
         assertThat((String) execution.getTaskRunList().get(0).getOutputs().get("value"), matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
+    }
+
+    @Test
+    void skipExecution() throws TimeoutException, InterruptedException {
+        skipExecutionCaseTest.skipExecution();
     }
 }

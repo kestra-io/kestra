@@ -3,12 +3,15 @@ package io.kestra.cli.commands.servers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.ExecutorInterface;
+import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @CommandLine.Command(
@@ -20,6 +23,12 @@ public class ExecutorCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
 
+    @Inject
+    private SkipExecutionService skipExecutionService;
+
+    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
+    private List<String> skipExecutions = Collections.emptyList();
+
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(
@@ -29,6 +38,8 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
+        this.skipExecutionService.setSkipExecutions(skipExecutions);
+
         super.call();
 
         ExecutorInterface executorService = applicationContext.getBean(ExecutorInterface.class);

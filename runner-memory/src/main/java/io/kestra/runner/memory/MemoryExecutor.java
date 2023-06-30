@@ -89,6 +89,9 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     protected FlowListenersInterface flowListeners;
 
+    @Inject
+    private SkipExecutionService skipExecutionService;
+
     @Override
     public void run() {
         flowListeners.run();
@@ -101,6 +104,11 @@ public class MemoryExecutor implements ExecutorInterface {
     }
 
     private void executionQueue(Execution message) {
+        if (skipExecutionService.skipExecution(message.getId())) {
+            log.warn("Skipping execution {}", message.getId());
+            return;
+        }
+
         if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.getState().isCreated()) {
             this.handleExecution(saveExecution(message));
         }
@@ -295,6 +303,11 @@ public class MemoryExecutor implements ExecutorInterface {
     }
 
     private void workerTaskResultQueue(WorkerTaskResult message) {
+        if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
+            log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
+            return;
+        }
+
         synchronized (this) {
             if (log.isDebugEnabled()) {
                 executorService.log(log, true, message);
@@ -367,6 +380,8 @@ public class MemoryExecutor implements ExecutorInterface {
                 }
             });
     }
+
+
 
     private static class ExecutionState {
         private final Execution execution;

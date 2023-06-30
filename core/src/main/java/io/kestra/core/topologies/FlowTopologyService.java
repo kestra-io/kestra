@@ -69,15 +69,17 @@ public class FlowTopologyService {
         return FlowTopologyGraph.of(graph);
     }
 
-    public FlowTopologyGraph graphNamespace(String namespace) {
+    public FlowTopologyGraph namespaceGraph(String namespace) {
         List<FlowTopology> flowTopologies = flowTopologyRepository.findByNamespace(namespace);
 
         FlowTopologyGraph graph = this.graph(
             flowTopologies.stream(),
             (flowNode -> flowNode)
         );
-        List<String> flowInGraph = graph.getNodes().stream().map(FlowNode::getId).toList();
-        Set<FlowNode> existingNodes = graph.getNodes();
+        List<String> flowInGraph = graph.getNodes().stream().map(FlowNode::getId).distinct().toList();
+        Set<FlowNode> existingNodes = new HashSet<>(graph.getNodes().stream()
+            .collect(Collectors.toMap(node -> node.getId() + "_" + node.getNamespace(), Function.identity(), (node1, node2) -> node1))
+            .values());
         Set<FlowNode> newNodes = new HashSet<>();
 
         flowRepository.findByNamespace(namespace).forEach(flow -> {

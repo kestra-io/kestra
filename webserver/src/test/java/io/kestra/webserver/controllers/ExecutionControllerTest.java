@@ -9,12 +9,15 @@ import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -52,6 +55,9 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
+
+    @Inject
+    ExecutionRepositoryInterface executionRepositoryInterface;
 
     @Inject
     @Client("/")
@@ -166,6 +172,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         triggerExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
+        // Wait for execution indexation
+        Await.until(() -> executionRepositoryInterface.findByFlowId(namespace, flowId, Pageable.from(1)).size() == 1);
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)

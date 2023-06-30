@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
@@ -85,8 +84,9 @@ public class BlueprintController {
     @SuppressWarnings("unchecked")
     @ExecuteOn(TaskExecutors.IO)
     @Get("tags")
-    @Operation(tags = {"Blueprint Tags"}, summary = "List all blueprint tags")
+    @Operation(tags = {"Blueprint Tags"}, summary = "List blueprint tags matching the filter")
     public List<BlueprintTagItem> blueprintTags(
+        @Parameter(description = "A string filter to get tags with matching blueprints only") @Nullable @QueryValue(value = "q") Optional<String> q,
         HttpRequest<?> httpRequest
     ) throws URISyntaxException {
         return fastForwardToKestraApi(httpRequest, "/v1/blueprints/tags", Argument.of(List.class, BlueprintTagItem.class));

@@ -122,8 +122,15 @@
                 }
             },
             loadTags(beforeLoadBlueprintBaseUri) {
+                const query = {}
+                if (this.$route.query.q || this.q) {
+                    query.q = this.$route.query.q || this.q;
+                }
+
                 return this.$http
-                    .get(beforeLoadBlueprintBaseUri + "/tags")
+                    .get(beforeLoadBlueprintBaseUri + "/tags", {
+                        params: query
+                    })
                     .then(response => {
                         // Handle switch tab while fetching data
                         if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
@@ -169,12 +176,7 @@
                 const beforeLoadBlueprintBaseUri = this.blueprintBaseUri;
 
                 Promise.all([
-                    new Promise(async (resolve) => {
-                        if (this.tags === undefined) {
-                            await this.loadTags(beforeLoadBlueprintBaseUri);
-                        }
-                        resolve();
-                    }),
+                    this.loadTags(beforeLoadBlueprintBaseUri),
                     this.loadBlueprints(beforeLoadBlueprintBaseUri)
                 ]).finally(() => {
                     // Handle switch tab while fetching data
@@ -186,7 +188,6 @@
             hardReload() {
                 this.ready = false;
                 this.selectedTag = 0;
-                this.tags = undefined;
                 this.load(this.onDataLoaded);
             }
         },
@@ -223,6 +224,11 @@
             },
             blueprintBaseUri() {
                 this.hardReload();
+            },
+            tags() {
+                if(!this.tags.hasOwnProperty(this.selectedTag)) {
+                    this.selectedTag = 0;
+                }
             }
         }
     };

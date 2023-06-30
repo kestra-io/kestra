@@ -137,7 +137,7 @@ class BlueprintControllerTest {
         );
 
         List<BlueprintController.BlueprintTagItem> blueprintTags = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/blueprints/community/tags"),
+            HttpRequest.GET("/api/v1/blueprints/community/tags?q=someQuery"),
             Argument.of(List.class, BlueprintController.BlueprintTagItem.class)
         );
 
@@ -147,6 +147,6 @@ class BlueprintControllerTest {
         assertThat(blueprintTags.get(0).getPublishedAt(), is(Instant.parse("2023-06-01T08:37:10.171Z")));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/tags")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/tags?q=someQuery")));
     }
 }

@@ -1,0 +1,8 @@
+id: recursive-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: taskInvalid
+    type: io.kestra.core.tasks.flows.Flow
+    flowId: recursive-flow
+    namespace: io.kestra.tests

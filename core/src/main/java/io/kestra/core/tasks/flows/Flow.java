@@ -15,11 +15,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -111,12 +111,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
 
-        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
-
-        if (flowVars.get("id") == ((Map<?, ?>) runContext.getVariables().get("flow")).get("id") && flowVars.get("namespace") == ((Map<?, ?>) runContext.getVariables().get("flow")).get("namespace")) {
-            throw new IllegalStateException("Recursive flow call detected");
-        }
-
         Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
             for (Map.Entry<String, String> entry: this.inputs.entrySet()) {
@@ -131,6 +125,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
+        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
 
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
             runContext.render(this.namespace),

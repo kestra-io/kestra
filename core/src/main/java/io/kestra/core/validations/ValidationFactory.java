@@ -196,7 +196,9 @@ public class ValidationFactory {
                 .stream()
                 .forEach(
                     task -> {
-                        if (task instanceof io.kestra.core.tasks.flows.Flow && ((io.kestra.core.tasks.flows.Flow) task).getFlowId().equals(value.getId())) {
+                        if (task instanceof io.kestra.core.tasks.flows.Flow taskFlow
+                                && taskFlow.getFlowId().equals(value.getId())
+                                && taskFlow.getNamespace().equals(value.getNamespace())) {
                             violations.add("Recursive call to flow [" + value.getId() + "]");
                         }
                     }

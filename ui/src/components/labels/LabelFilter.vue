@@ -6,7 +6,8 @@
         filterable
         allow-create
         clearable
-        :collapse-tags="collapseTags"
+        collapse-tags
+        collapse-tags-tooltip
         default-first-option
         :persistent="false"
         :reserve-keyword="false"
@@ -36,9 +37,9 @@
         props: {
             modelValue: {
                 type: [Array, String],
-                default: [],
+                default: () => [],
                 validator(value) {
-                    return isValidLabels(value);
+                    return typeof value === "string" ? isValidLabel(value) : isValidLabels(value);
                 }
             }
         },
@@ -55,7 +56,7 @@
         },
         watch: {
             modelValue: {
-                handler (newValue, _) {
+                handler (newValue) {
                     this.labels = this.asArrayProp(newValue);
                 }
             }
@@ -65,8 +66,8 @@
                 return (!Array.isArray(unknownValue) && unknownValue !== undefined) ? [unknownValue] : unknownValue;
             },
             onInput(value) {
-                this.labels = value;
-                this.$emit("update:modelValue", value)
+                this.labels = value.filter((label) => isValidLabel(label));
+                this.$emit("update:modelValue", this.labels)
             },
         }
     };

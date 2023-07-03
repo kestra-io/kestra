@@ -18,6 +18,10 @@ case "$JAVA_FULLVERSION" in
         ;;
 esac
 
+# Opens java.nio due to https://github.com/snowflakedb/snowflake-jdbc/issues/589
+# Opens java.util due to https://github.com/Azure/azure-sdk-for-java/issues/27806
+JAVA_ADD_OPENS="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
+
 # Exec
-exec java ${JAVA_OPTS} -jar "$0" "$@"
+exec java ${JAVA_OPTS} ${JAVA_ADD_OPENS} -jar "$0" "$@"
 exit 127

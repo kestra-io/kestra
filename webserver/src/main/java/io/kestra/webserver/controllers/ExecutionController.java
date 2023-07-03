@@ -477,9 +477,8 @@ public class ExecutionController {
         return Single
             .<Execution>create(emitter -> {
                 Runnable receive = this.executionQueue.receive(item -> {
-                    Flow flow = flowRepository.findByExecution(current);
-
                     if (item.getId().equals(current.getId())) {
+                        Flow flow = flowRepository.findByExecution(current);
 
                         if (this.isStopFollow(flow, item)) {
                             emitter.onSuccess(item);

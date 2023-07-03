@@ -32,11 +32,6 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         Map<Field<Object>, Object> map = super.produceFields(consumerGroup, key, message);
 
         map.put(
-            AbstractJdbcRepository.field("value"),
-            JSONB.valueOf(mapper.writeValueAsString(message))
-        );
-
-        map.put(
             AbstractJdbcRepository.field("type"),
             DSL.field("CAST(? AS queue_type)", this.cls.getName())
         );

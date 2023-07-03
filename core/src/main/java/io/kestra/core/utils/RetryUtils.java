@@ -158,23 +158,22 @@ public class RetryUtils {
                     event.getAttemptCount(),
                     event.getFailure()
                 ))
-                .onRetry(event -> {
-                    currentLogger.info(
-                        "Retrying{}, elapsed {} and {} attempts",
-                        finalMethod(),
-                        event.getElapsedTime().truncatedTo(ChronoUnit.SECONDS),
-                        event.getAttemptCount()
-                    );
-                });
+                .onRetry(event -> currentLogger.info(
+                    "Retrying{}, elapsed {} and {} attempts",
+                    finalMethod(),
+                    event.getElapsedTime().truncatedTo(ChronoUnit.SECONDS),
+                    event.getAttemptCount()
+                ));
 
             return retryPolicy;
         }
 
-        private Object finalMethod() {
-            if (Thread.currentThread().getStackTrace().length > 4) {
-                return " [class '" + Thread.currentThread().getStackTrace()[3].getClassName() + "'" +
-                    ", method '" + Thread.currentThread().getStackTrace()[3].getMethodName() + "'" +
-                    " on line '" + Thread.currentThread().getStackTrace()[3].getLineNumber() + "']";
+        private String finalMethod() {
+            var stackTraces = Thread.currentThread().getStackTrace();
+            if (stackTraces.length > 4) {
+                return " [class '" + stackTraces[3].getClassName() + "'" +
+                    ", method '" + stackTraces[3].getMethodName() + "'" +
+                    " on line '" + stackTraces[3].getLineNumber() + "']";
             }
             return "";
         }

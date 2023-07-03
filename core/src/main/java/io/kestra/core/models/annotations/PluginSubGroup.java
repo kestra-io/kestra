@@ -26,6 +26,7 @@ public @interface PluginSubGroup {
         CLOUD,
         STORAGE,
         MISC,
-        TOOL
+        TOOL,
+        AI
     }
 }

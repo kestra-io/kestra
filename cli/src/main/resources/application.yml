@@ -151,6 +151,11 @@ kestra:
       format: "[Date: {}] [Duration: {} ms] [Method: {}] [Url: {}] [Status: {}] [Length: {}] [Ip: {}] [Port: {}]"
       filters:
         - ".*\\[Url: /api/.*"
+    basic-auth:
+      enabled: false
+      username: admin
+      password: kestra
+      realm: Kestra
 
   anonymous-usage-report:
     enabled: true

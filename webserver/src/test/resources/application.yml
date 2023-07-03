@@ -27,3 +27,8 @@ kestra:
   server:
     access-log:
       enabled: false
+    basic-auth:
+      enabled: false
+      username: admin
+      password: kestra
+      realm: Kestra

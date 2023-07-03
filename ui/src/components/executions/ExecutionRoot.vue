@@ -6,9 +6,9 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <a :href="`/api/v1/executions/${execution.id}`" :download="`execution_${execution.id}.json`">
-                        <el-button :icon="Download" size="large" type="default">
-                            {{ $t('dump') }}
+                    <a :href="`${apiRoot}executions/${execution.id}`" target="_blank">
+                        <el-button :icon="Api" size="large" type="default">
+                            {{ $t('api') }}
                         </el-button>
                     </a>
                 </li>
@@ -35,9 +35,10 @@
 </template>
 
 <script setup>
-    import Download from "vue-material-design-icons/Download.vue";
+    import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import {apiRoot} from "../../utils/axios"
 </script>
 
 <script>

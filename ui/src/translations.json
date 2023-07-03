@@ -450,7 +450,7 @@
       }
     },
     "title": "Title",
-    "dump": "Dump",
+    "api": "Api",
     "expand error": "Expand only failed task",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
@@ -910,7 +910,7 @@
       }
     },
     "title": "Titre",
-    "dump": "Télécharger",
+    "api": "Api",
     "expand error": "Afficher uniquement les erreurs",
     "expand all": "Afficher tout",
     "collapse all": "Masquer tout",

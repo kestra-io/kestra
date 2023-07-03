@@ -10,6 +10,7 @@
                 :source="flow.source"
                 :execution="execution"
                 @follow="forwardEvent('follow', $event)"
+                view-type="topology"
             />
         </div>
     </el-card>

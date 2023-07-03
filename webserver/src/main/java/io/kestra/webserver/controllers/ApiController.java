@@ -30,7 +30,7 @@ public class ApiController {
             "<head>\n" +
             "  <title>Api | Kestra</title>\n" +
             "  <meta charset='utf-8'/>\n" +
-            "  <link rel=\"shortcut icon\" type=\"image/png\" href=\"/static/icon_black.png\" />\n" +
+            "  <link rel=\"shortcut icon\" type=\"image/png\" href=\"/static/favicon.png\" />\n" +
             "  <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'/>\n" +
             "  <link href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap\" rel=\"stylesheet\">\n" +
             "  <script src='https://unpkg.com/rapidoc/dist/rapidoc-min.js'></script>\n" +

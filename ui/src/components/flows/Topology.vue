@@ -8,6 +8,7 @@
                 :flow-graph="flowGraph"
                 :source="flow.source"
                 :is-read-only="isReadOnly"
+                view-type="topology"
             />
         </div>
     </el-card>

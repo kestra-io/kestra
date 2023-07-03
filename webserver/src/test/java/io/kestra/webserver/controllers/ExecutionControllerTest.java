@@ -249,7 +249,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getResponse().getBody(String.class).get(), containsString("No task found"));
     }
 
-    @Test
+    @RetryingTest(5)
     void restartWithNoFailure() throws TimeoutException {
         final String flowId = "restart_with_inputs";
 

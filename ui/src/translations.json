@@ -262,6 +262,7 @@
     "labels": "Labels",
     "label filter placeholder": "Label as 'key:value'",
     "execution labels": "Execution labels",
+    "wrong labels": "Empty key or value is not allowed in labels",
     "feeds": {
       "title": "What's new at Kestra"
     },
@@ -719,8 +720,9 @@
     "disabled flow desc": "Ce flow est désactivé, veuillez le réactiver pour l'exécuter.",
     "label": "Label",
     "labels": "Labels",
-    "label filter placeholder": "Label as 'key:value'",
+    "label filter placeholder": "Label au format 'clé:valeur'",
     "execution labels": "Labels d'exécution",
+    "wrong labels": "Clé ou valeur vide détecté dans les labels",
     "feeds": {
       "title": "Quoi de neuf sur Kestra"
     },

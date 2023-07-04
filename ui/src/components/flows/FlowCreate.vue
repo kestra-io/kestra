@@ -9,7 +9,7 @@
             :total="total"
             :guided-properties="guidedProperties"
             :flow-error="flowError"
-            :flow="flowWithSource"
+            :flow="sourceWrapper"
         />
     </div>
     <div id="guided-right" />
@@ -19,38 +19,36 @@
     import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
-    import YamlUtils from "../../utils/yamlUtils";
 
     export default {
         mixins: [RouteContext],
         components: {
             EditorView
         },
-        data() {
-            return {
-                defaultFlowTemplate: {
-                    id: "hello-world",
-                    namespace: "dev",
-                    tasks: [{
-                        id: "hello",
-                        type: "io.kestra.core.tasks.log.Log",
-                        message: "Kestra team wishes you a great day! 👋"
-                    }]
-                }
-            }
-        },
         beforeUnmount() {
             this.$store.commit("flow/setFlowError", undefined);
         },
         computed: {
-            flowWithSource() {
-                return {source: YamlUtils.stringify(this.defaultFlowTemplate)};
+            sourceWrapper() {
+                return {source: this.defaultFlowTemplate};
+            },
+            defaultFlowTemplate() {
+                if(this.$route.query.copy && this.flow){
+                    return this.flow.source;
+                }
+
+                return `id: hello-world
+namespace: dev
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.log.Log
+    message: Kestra team wishes you a great day! 👋`;
             },
             ...mapState("flow", ["flowGraph", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flowError"]),
+            ...mapGetters("flow", ["flow", "flowError"]),
             routeInfo() {
                 return {
                     title: this.$t("flows")

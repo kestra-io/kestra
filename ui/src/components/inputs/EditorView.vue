@@ -74,10 +74,6 @@
             type: Boolean,
             default: false
         },
-        sourceCopy: {
-            type: String,
-            default: null
-        },
         total: {
             type: Number,
             default: null

@@ -31,4 +31,6 @@ kestra:
       enabled: false
       username: admin
       password: kestra
-      realm: Kestra
+    open-urls:
+      - "/ping"
+      - "/api/v1/executions/webhook/"

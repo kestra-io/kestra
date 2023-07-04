@@ -12,27 +12,45 @@ import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
 import java.util.Base64;
+import java.util.List;
 
-@Filter("/api/*/**")
+@Filter("/**")
 @Requires(property = "kestra.server.basic-auth.enabled", value = "true")
 public class AuthenticationFilter implements HttpServerFilter {
     private static final String PREFIX = "Basic";
 
     @Value("${kestra.server.basic-auth.username}")
     private String username;
+
     @Value("${kestra.server.basic-auth.password}")
     private String password;
-    @Value("${kestra.server.basic-auth.realm}")
+
+    @Value("${kestra.server.basic-auth.realm:Kestra}")
     private String realm;
 
+    @Value("${kestra.server.open-urls:[]}")
+    private List<String> openUrls;
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        var basicAuth = request.getHeaders().getAuthorization()
+        boolean isOpenUrl = this.openUrls
+            .stream()
+            .anyMatch(s -> request.getPath().startsWith(s));
+
+        if (isOpenUrl) {
+            return Flowable.fromPublisher(chain.proceed(request));
+        }
+
+        var basicAuth = request
+            .getHeaders()
+            .getAuthorization()
             .filter(auth -> auth.toLowerCase().startsWith(PREFIX.toLowerCase()))
             .map(cred -> BasicAuth.from(cred.substring(PREFIX.length() + 1)));
 
-        if (basicAuth.isEmpty() || !basicAuth.get().username().equals(username) || !basicAuth.get().password().equals(password)) {
+        if (basicAuth.isEmpty() ||
+            !basicAuth.get().username().equals(username) ||
+            !basicAuth.get().password().equals(password)
+        ) {
             return Flowable.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + realm));
         }
 

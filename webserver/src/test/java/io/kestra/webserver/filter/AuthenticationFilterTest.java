@@ -25,13 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Property(name = "kestra.server.basic-auth.enabled", value = "true")
 class AuthenticationFilterTest extends AbstractMemoryRunnerTest {
-
     @Inject
     @Client("/")
     private RxHttpClient client;
 
     @Value("${kestra.server.basic-auth.username}")
     private String username;
+
     @Value("${kestra.server.basic-auth.password}")
     private String password;
 

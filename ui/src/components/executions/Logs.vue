@@ -101,7 +101,7 @@
             taskRunList() {
                 const fullList = [];
                 for (const taskRun of (this.execution.taskRunList || [])) {
-                    for (const attempt in taskRun.attempts) {
+                    for (const attempt in (taskRun.attempts ?? [{}])) {
                         fullList.push({
                             ...taskRun,
                             attempt: parseInt(attempt),

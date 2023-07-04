@@ -16,6 +16,7 @@ import FlowCreate from "../components/flows/FlowCreate.vue";
 import FlowMetrics from "../components/flows/FlowMetrics.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
+import FlowTriggerDetail from "../components/flows/FlowTriggerDetail.vue";
 
 export default [
     //Flows
@@ -26,6 +27,7 @@ export default [
     {name: "flows/create", path: "/flows/new", component: FlowCreate},
     {name: "flows/update", path: "/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
     {name: "flows/metrics", path: "/flows/metrics", component: FlowMetrics},
+    {name: "flows/triggers/detail", path: "/flows/:namespace/:flowId/triggers/:id", component: FlowTriggerDetail},
 
     //Executions
     {name: "executions/list", path: "/executions", component: Executions},

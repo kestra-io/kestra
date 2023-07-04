@@ -3,7 +3,7 @@
         <home
             v-if="flow"
             :namespace="flow.namespace"
-            :flow="flow"
+            :flow-id="flow.id"
             :prevent-route-info="true"
             :restore-url="false"
         />

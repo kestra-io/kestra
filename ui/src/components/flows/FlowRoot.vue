@@ -40,6 +40,7 @@
     import FlowDependencies from "./FlowDependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
+    import FlowTriggers from "./FlowTriggers.vue";
 
     export default {
         mixins: [RouteContext],
@@ -130,6 +131,14 @@
                         name: "revisions",
                         component: FlowRevisions,
                         title: this.$t("revisions")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        name: "triggers",
+                        component: FlowTriggers,
+                        title: this.$t("triggers")
                     });
                 }
 

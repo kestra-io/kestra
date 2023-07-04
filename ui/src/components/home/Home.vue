@@ -32,8 +32,6 @@
 
             <home-description v-if="namespace" :description="description" class="mb-4" />
 
-            <home-trigger v-if="flow?.triggers" :triggers="flow.triggers" class="mb-4" />
-
             <el-row v-if="displayPieChart" :gutter="15" class="auto-height mb-4">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
@@ -112,7 +110,6 @@
                     </router-link>
                 </el-row>
             </el-card>
-            <home-trigger v-if="flow?.triggers" :triggers="flow.triggers" class="mb-4" />
             <onboarding-bottom v-if="!flowId" />
         </div>
     </div>
@@ -136,12 +133,10 @@
     import action from "../../models/action";
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import DateRange from "../layout/DateRange.vue";
-    import HomeTrigger from "./HomeTrigger.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
         components: {
-            HomeTrigger,
             DateRange,
             OnboardingBottom,
             Collapse,
@@ -159,8 +154,8 @@
                 type: String,
                 default: undefined
             },
-            flow: {
-                type: Object,
+            flowId: {
+                type: String,
                 default: undefined
             },
             description: {
@@ -311,9 +306,6 @@
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
             ...mapState("auth", ["user"]),
-            flowId() {
-                return this.flow?.id
-            },
             routeInfo() {
                 return {
                     title: this.$t("home"),

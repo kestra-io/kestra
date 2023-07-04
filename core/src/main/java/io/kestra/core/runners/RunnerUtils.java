@@ -117,7 +117,10 @@ public class RunnerUtils {
                 }
 
                 if (!input.getRequired() && current == null) {
-                    return Optional.empty();
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        null
+                    ));
                 }
 
                 var parsedInput = parseInput(flow, execution, input, current);
@@ -126,7 +129,7 @@ public class RunnerUtils {
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
 
         return handleNestedInputs(results);
     }

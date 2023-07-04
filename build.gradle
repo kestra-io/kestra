@@ -168,6 +168,8 @@ subprojects {
         // configure en_US default locale for tests
         systemProperty 'user.language', 'en'
         systemProperty 'user.country', 'US'
+
+        environment 'SECRETS_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
     }
 
     testlogger {

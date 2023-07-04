@@ -218,7 +218,7 @@ Here are some examples of the available plugins:
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-azure/#storage-blob">Azure Blob Storage</a></td>
-        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Bash">Bash</a></td>
+        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.bash">Bash</a></td>
         <td><a href="https://kestra.io/plugins/plugin-gcp#bigquery">Big Query</a></td>
     </tr>
     <tr>
@@ -248,12 +248,12 @@ Here are some examples of the available plugins:
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-googleworkspace#sheets">Google Sheets</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-scripts-groovy">Groovy</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-script-groovy">Groovy</a></td>
         <td><a href="https://kestra.io/plugins/plugin-fs#http">Http</a></td>
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-serdes#json">JSON</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-scripts-jython">Jython</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-script-jython">Jython</a></td>
         <td><a href="https://kestra.io/plugins/plugin-kafka">Kafka</a></td>
     </tr>
     <tr>
@@ -264,10 +264,10 @@ Here are some examples of the available plugins:
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-mongodb">MongoDb</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-mysql">MySQL</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-scripts-nashorn">Nashorn</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-script-nashorn">Nashorn</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Node">Node</a></td>
+        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.node">Node</a></td>
         <td><a href="https://kestra.io/plugins/plugin-crypto#openpgp">Open PGP</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-oracle">Oracle</a></td>
     </tr>
@@ -279,7 +279,7 @@ Here are some examples of the available plugins:
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-powerbi">Power BI</a></td>
         <td><a href="https://kestra.io/plugins/plugin-pulsar">Apache Pulsar</a></td>
-        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Python">Python</a></td>
+        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.python">Python</a></td>
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-redshift">Redshift</a></td>

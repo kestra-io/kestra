@@ -72,20 +72,29 @@ public class FlowTopologyService {
     public FlowTopologyGraph namespaceGraph(String namespace) {
         List<FlowTopology> flowTopologies = flowTopologyRepository.findByNamespace(namespace);
 
-        FlowTopologyGraph graph = this.graph(
-            flowTopologies.stream(),
-            (flowNode -> flowNode)
-        );
-        List<String> flowInGraph = graph.getNodes().stream().map(FlowNode::getId).distinct().toList();
-        Set<FlowNode> existingNodes = new HashSet<>(graph.getNodes().stream()
+        FlowTopologyGraph graph = this.graph(flowTopologies.stream(), (flowNode -> flowNode));
+
+        List<String> flowInGraph = graph.
+            getNodes()
+            .stream()
+            .map(FlowNode::getId)
+            .distinct()
+            .toList();
+
+        Set<FlowNode> existingNodes = new HashSet<>(graph
+            .getNodes()
+            .stream()
             .collect(Collectors.toMap(node -> node.getId() + "_" + node.getNamespace(), Function.identity(), (node1, node2) -> node1))
-            .values());
+            .values()
+        );
+
         Set<FlowNode> newNodes = new HashSet<>();
 
         flowRepository.findByNamespace(namespace).forEach(flow -> {
             if (flowInGraph.contains(flow.getId())) {
                 return;
             }
+
             FlowNode flowNode = FlowNode.builder()
                 .id(flow.getId())
                 .uid(flow.getNamespace() + "_" + flow.getId())

@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.is;
 public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Inject
     private RunnerUtils runnerUtils;
+
     @Inject
     private SecretService secretService;
 
@@ -30,9 +31,9 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     void getUnknownSecret() {
         IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
-            secretService.findSecret("unknown_secret_key")
+            secretService.findSecret(null, "unknown_secret_key")
         );
 
-        assertThat(exception.getMessage(), is("Unable to find secret 'unknown_secret_key'. You should add it in your environment variables as 'SECRETS_UNKNOWN_SECRET_KEY' with base64-encoded value."));
+        assertThat(exception.getMessage(), is("Unable to find secret 'unknown_secret_key'"));
     }
 }

@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import jakarta.inject.Singleton;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -22,8 +23,12 @@ public class SecretService {
         ));
     }
 
-    public String findSecret(String key) throws IllegalVariableEvaluationException {
-        return Optional.ofNullable(decodedSecrets.get(key.toUpperCase())).orElseThrow(() -> new IllegalVariableEvaluationException("Unable to find secret '" + key + "'. " +
-            "You should add it in your environment variables as 'SECRETS_" + key.toUpperCase() + "' with base64-encoded value."));
+    public String findSecret(String namespace, String key) throws IOException, IllegalVariableEvaluationException {
+        return Optional
+            .ofNullable(decodedSecrets.get(key.toUpperCase()))
+            .orElseThrow(() -> new IllegalVariableEvaluationException("Unable to find secret '" + key + "'. " +
+                "You should add it in your environment variables as 'SECRETS_" + key.toUpperCase() +
+                "' with base64-encoded value."
+            ));
     }
 }

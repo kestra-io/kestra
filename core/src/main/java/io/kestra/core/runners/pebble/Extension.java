@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble;
 
+import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
@@ -17,12 +18,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 
 @Singleton
 public class Extension extends AbstractExtension {
+    @Inject
+    private SecretFunction secretFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -82,6 +88,7 @@ public class Extension extends AbstractExtension {
         tests.put("now", new NowFunction());
         tests.put("json", new JsonFunction());
         tests.put("currentEachOutput", new CurrentEachOutputFunction());
+        tests.put("secret", secretFunction);
 
         return tests;
     }

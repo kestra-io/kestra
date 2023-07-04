@@ -44,11 +44,11 @@ public class SecretExtension extends AbstractExtension {
 
     @Override
     public Map<String, Function> getFunctions() {
-        Map<String, Function> tests = new HashMap<>();
+        Map<String, Function> functions = new HashMap<>();
 
-        tests.put("secret", secretFunction);
+        functions.put("secret", secretFunction);
 
-        return tests;
+        return functions;
     }
 
     @Override

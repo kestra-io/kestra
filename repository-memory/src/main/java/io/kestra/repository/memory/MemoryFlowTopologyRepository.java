@@ -16,6 +16,11 @@ public class MemoryFlowTopologyRepository implements FlowTopologyRepositoryInter
     }
 
     @Override
+    public List<FlowTopology> findByNamespace(String namespace) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public FlowTopology save(FlowTopology flowTopology) {
         throw new UnsupportedOperationException();
     }

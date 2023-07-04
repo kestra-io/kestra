@@ -17,24 +17,31 @@ public abstract class AbstractFlowTopologyRepositoryTest {
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
 
-    @Test
-    void suite() {
-        flowTopologyRepository.save(FlowTopology.builder()
+    protected FlowTopology createSimpleFlowTopology(String flowA, String flowB) {
+        return FlowTopology.builder()
             .relation(FlowRelation.FLOW_TASK)
             .source(FlowNode.builder()
-                .namespace("io.kestra.test")
-                .id("flow-a")
+                .id(flowA)
+                .namespace("io.kestra.tests")
+                .uid(flowA)
                 .build()
             )
             .destination(FlowNode.builder()
-                .namespace("io.kestra.test")
-                .id("flow-b")
+                .id(flowB)
+                .namespace("io.kestra.tests")
+                .uid(flowB)
                 .build()
             )
-            .build()
+            .build();
+    }
+
+    @Test
+    void suite() {
+        flowTopologyRepository.save(
+            createSimpleFlowTopology("flow-a", "flow-b")
         );
 
-        List<FlowTopology> list = flowTopologyRepository.findByFlow("io.kestra.test", "flow-a", false);
+        List<FlowTopology> list = flowTopologyRepository.findByFlow("io.kestra.tests", "flow-a", false);
 
         assertThat(list.size(), is(1));
     }

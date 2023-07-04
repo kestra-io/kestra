@@ -10,6 +10,8 @@ import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
@@ -18,8 +20,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +36,12 @@ public class FlowTopologyService {
 
     @Inject
     protected RunnerUtils runnerUtils;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private FlowTopologyRepositoryInterface flowTopologyRepository;
 
 
     public FlowTopologyGraph graph(Stream<FlowTopology> flows, Function<FlowNode, FlowNode> anonymize) {
@@ -57,6 +67,50 @@ public class FlowTopologyService {
             });
 
         return FlowTopologyGraph.of(graph);
+    }
+
+    public FlowTopologyGraph namespaceGraph(String namespace) {
+        List<FlowTopology> flowTopologies = flowTopologyRepository.findByNamespace(namespace);
+
+        FlowTopologyGraph graph = this.graph(flowTopologies.stream(), (flowNode -> flowNode));
+
+        List<String> flowInGraph = graph.
+            getNodes()
+            .stream()
+            .map(FlowNode::getId)
+            .distinct()
+            .toList();
+
+        Set<FlowNode> existingNodes = new HashSet<>(graph
+            .getNodes()
+            .stream()
+            .collect(Collectors.toMap(node -> node.getId() + "_" + node.getNamespace(), Function.identity(), (node1, node2) -> node1))
+            .values()
+        );
+
+        Set<FlowNode> newNodes = new HashSet<>();
+
+        flowRepository.findByNamespace(namespace).forEach(flow -> {
+            if (flowInGraph.contains(flow.getId())) {
+                return;
+            }
+
+            FlowNode flowNode = FlowNode.builder()
+                .id(flow.getId())
+                .uid(flow.getNamespace() + "_" + flow.getId())
+                .namespace(flow.getNamespace())
+                .build();
+
+            newNodes.add(flowNode);
+        });
+
+        Set<FlowNode> updatedNodes = new HashSet<>(existingNodes);
+        updatedNodes.addAll(newNodes);
+
+        return FlowTopologyGraph.builder()
+            .nodes(updatedNodes)
+            .edges(graph.getEdges())
+            .build();
     }
 
     public Stream<FlowTopology> topology(Flow child, Stream<Flow> allFlows) {

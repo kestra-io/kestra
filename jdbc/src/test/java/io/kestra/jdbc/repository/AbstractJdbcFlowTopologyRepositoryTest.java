@@ -1,8 +1,6 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.topologies.FlowNode;
-import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.AbstractFlowTopologyRepositoryTest;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -15,7 +13,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public abstract class AbstractJdbcFlowTopologyRepositoryTest  extends AbstractFlowTopologyRepositoryTest {
+public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlowTopologyRepositoryTest {
     @Inject
     JdbcTestUtils jdbcTestUtils;
 
@@ -32,19 +30,8 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest  extends AbstractFl
 
         flowTopologyRepository.save(
             flow,
-            List.of(FlowTopology.builder()
-                .relation(FlowRelation.FLOW_TASK)
-                .source(FlowNode.builder()
-                    .id("flow-a")
-                    .namespace("io.kestra.tests")
-                    .build()
-                )
-                .destination(FlowNode.builder()
-                    .id("flow-b")
-                    .namespace("io.kestra.tests")
-                    .build()
-                )
-                .build()
+            List.of(
+                createSimpleFlowTopology("flow-a", "flow-b")
             )
         );
 
@@ -53,19 +40,8 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest  extends AbstractFl
 
         flowTopologyRepository.save(
             flow,
-            List.of(FlowTopology.builder()
-                .relation(FlowRelation.FLOW_TASK)
-                .source(FlowNode.builder()
-                    .id("flow-a")
-                    .namespace("io.kestra.tests")
-                    .build()
-                )
-                .destination(FlowNode.builder()
-                    .id("flow-c")
-                    .namespace("io.kestra.tests")
-                    .build()
-                )
-                .build()
+            List.of(
+                createSimpleFlowTopology("flow-a", "flow-c")
             )
         );
 
@@ -73,7 +49,21 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest  extends AbstractFl
 
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getDestination().getId(), is("flow-c"));
+
+        flowTopologyRepository.save(
+            flow,
+            List.of(
+                createSimpleFlowTopology("flow-a", "flow-b"),
+                createSimpleFlowTopology("flow-a", "flow-c")
+            )
+        );
+
+        list = flowTopologyRepository.findByNamespace("io.kestra.tests");
+
+        assertThat(list.size(), is(2));
     }
+
+
 
     @BeforeEach
     protected void init() {

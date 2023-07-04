@@ -8,23 +8,30 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.tasks.scripts.BashService;
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.AbstractMap;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwBiConsumer;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -50,8 +57,8 @@ import javax.validation.constraints.NotNull;
                 - id: inputFiles
                   type: io.kestra.core.tasks.storages.LocalFiles
                   inputs:
-                    - name: hello.txt
-                      content : "Hello World\\n"
+                    hello.txt: "Hello World\\n"
+                    addresse.json: "{{ outputs.myTaskId.uri }}"
                 - id: bash
                   type: io.kestra.core.tasks.scripts.Bash
                   commands:
@@ -60,7 +67,7 @@ import javax.validation.constraints.NotNull;
     ),
     @Example(
         full = true,
-        title = "Send a local file to Kestra's internal storage",
+        title = "Send local files to Kestra's internal storage",
         code = """
             id: "local-files"
             namespace: "io.kestra.tests"
@@ -72,89 +79,90 @@ import javax.validation.constraints.NotNull;
                 - id: bash
                   type: io.kestra.core.tasks.scripts.Bash
                   commands:
-                    - echo "Hello from Bash" >> bash.txt
+                    - mkdir -p sub/dir
+                    - echo "Hello from Bash" >> sub/dir/bash1.txt
+                    - echo "Hello from Bash" >> sub/dir/bash2.txt
                 - id: outputFiles
                   type: io.kestra.core.tasks.storages.LocalFiles
                   outputs:
-                    - bash.txt
+                    - sub/**
             """
     )
 })
 public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFilesOutput> {
-
     @Schema(title = "The files to create on the local filesystem")
     @PluginProperty(dynamic = true)
-    @Builder.Default
-    private List<LocalFile> inputs = Collections.emptyList();
+    private Object inputs;
 
-    @Schema(title = "The files from the local filesystem to send to the internal storage")
+    @Schema(
+        title = "The files from the local filesystem to send to the internal storage",
+        description = "must be a [Glob expression](https://en.wikipedia.org/wiki/Glob_(programming)) relative to current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`"
+    )
     @PluginProperty(dynamic = true)
-    @Builder.Default
-    private List<String> outputs =  Collections.emptyList();
+    private List<String> outputs;
 
     @Override
     public LocalFilesOutput run(RunContext runContext) throws Exception {
-        for (var input: inputs) {
-            var fileName = input.getName();
-            var file = new File(runContext.tempDir().toString(), fileName);
-            if (file.exists()) {
-               throw new IllegalVariableEvaluationException("File '" + fileName + "' already exist!");
-            }
+        Logger logger = runContext.logger();
 
-            var fileContent = runContext.render(input.getContent());
-            if (fileContent.startsWith("kestra://")) {
-                try (var is = runContext.uriToInputStream(URI.create(fileContent));
-                     var out = new FileOutputStream(file)) {
-                    IOUtils.copyLarge(is, out);
+        Map<String, String> inputFiles = this.inputs == null ? Map.of() : BashService.transformInputFiles(runContext, this.inputs);
+
+        inputFiles
+            .forEach(throwBiConsumer((fileName, input) -> {
+                var file = new File(runContext.tempDir().toString(), fileName);
+                if (file.exists()) {
+                    throw new IllegalVariableEvaluationException("File '" + fileName + "' already exist!");
                 }
-            } else {
-                Files.write(file.toPath(), fileContent.getBytes());
-            }
 
-            if (input.getExecutable()) {
-                if (!file.setExecutable(true)) {
-                    runContext.logger().warn("Unable to set executable the file '" + input.getName() + "'");
+                if (!file.getParentFile().exists()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    file.getParentFile().mkdirs();
                 }
-            }
-        }
 
-        List<URI> outputFiles = new ArrayList<>();
-        for (var output: outputs) {
-            var fileName = runContext.render(output);
-            var file = new File(runContext.tempDir().toString(), fileName);
-            if (!file.exists()) {
-                throw new IllegalVariableEvaluationException("Output file '" + fileName + "' didn't exist");
-            }
-            var outputUri = runContext.putTempFile(file);
-            outputFiles.add(outputUri);
+                var fileContent = runContext.render(input);
+                if (fileContent.startsWith("kestra://")) {
+                    try (var is = runContext.uriToInputStream(URI.create(fileContent));
+                         var out = new FileOutputStream(file)) {
+                        IOUtils.copyLarge(is, out);
+                    }
+                } else {
+                    Files.write(file.toPath(), fileContent.getBytes());
+                }
+            }));
+
+        var outputFiles = ListUtils.emptyOnNull(outputs)
+            .stream()
+            .flatMap(throwFunction(output -> this.outputMatcher(runContext, output)))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        logger.info("Provide {} input(s) and capture {} output(s).", inputFiles.size(), outputFiles.size());
+
+        return LocalFilesOutput.builder()
+            .uris(outputFiles)
+            .build();
+    }
+
+    private Stream<AbstractMap.SimpleEntry<String, URI>> outputMatcher(RunContext runContext, String output) throws IllegalVariableEvaluationException, IOException {
+        var glob = runContext.render(output);
+        final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
+
+        try (Stream<Path> walk = Files.walk(runContext.tempDir())) {
+            return walk
+                .filter(Files::isRegularFile)
+                .filter(path -> pathMatcher.matches(runContext.tempDir().relativize(path)))
+                .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
+                    runContext.tempDir().relativize(path).toString(),
+                    runContext.putTempFile(path.toFile())
+                )))
+                .toList()
+                .stream();
         }
-        return LocalFilesOutput.builder().outputFiles(outputFiles).build();
     }
 
     @Builder
     @Getter
     public static class LocalFilesOutput implements Output {
         @Schema(title = "The URI of the files that have been sent to the internal storage")
-        private List<URI> outputFiles;
-    }
-
-    @SuperBuilder
-    @NoArgsConstructor
-    @Getter
-    public static class LocalFile {
-        @Schema(title = "The name of the local file")
-        @PluginProperty(dynamic = true)
-        @NotNull
-        private String name;
-
-        @Schema(title = "The content of the local file")
-        @PluginProperty(dynamic = true)
-        @NotNull
-        private String content;
-
-        @Schema(title = "If the local file should be set as executable")
-        @PluginProperty
-        @Builder.Default
-        private Boolean executable = false;
+        private Map<String, URI> uris;
     }
 }

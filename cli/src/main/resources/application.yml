@@ -151,6 +151,11 @@ kestra:
       format: "[Date: {}] [Duration: {} ms] [Method: {}] [Url: {}] [Status: {}] [Length: {}] [Ip: {}] [Port: {}]"
       filters:
         - ".*\\[Url: /api/.*"
+    basic-auth:
+      enabled: false
+    open-urls:
+      - "/ping"
+      - "/api/v1/executions/webhook/"
 
   anonymous-usage-report:
     enabled: true

@@ -27,3 +27,10 @@ kestra:
   server:
     access-log:
       enabled: false
+    basic-auth:
+      enabled: false
+      username: admin
+      password: kestra
+    open-urls:
+      - "/ping"
+      - "/api/v1/executions/webhook/"

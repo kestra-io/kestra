@@ -19,7 +19,6 @@ public class TestMethodScopedWorker extends Worker {
      */
     @Override
     public void close() throws InterruptedException {
-        this.executors.shutdown();
-        this.executors.awaitTermination(60, TimeUnit.SECONDS);
+        this.executors.shutdownNow();
     }
 }

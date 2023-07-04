@@ -9,6 +9,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junitpioneer.jupiter.RetryingTest;
 
 import java.util.Collections;

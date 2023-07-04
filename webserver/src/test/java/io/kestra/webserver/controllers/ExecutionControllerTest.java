@@ -32,7 +32,6 @@ import io.micronaut.rxjava2.http.client.sse.RxSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.File;
 import java.time.Duration;
@@ -251,7 +250,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getResponse().getBody(String.class).get(), containsString("No task found"));
     }
 
-    @RetryingTest(5)
+    @Test
     void restartWithNoFailure() throws TimeoutException {
         final String flowId = "restart_with_inputs";
 
@@ -352,7 +351,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             Duration.ofSeconds(30));
     }
 
-    @RetryingTest(5)
+    @Test
     void restartFromLastFailed() throws TimeoutException, InterruptedException {
         final String flowId = "restart_last_failed";
 
@@ -368,10 +367,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            flow.get(),
-            firstExecution, throwRunnable(() -> {
-                Thread.sleep(1000);
-
+            execution -> execution.getId().equals(firstExecution.getId()) &&
+                execution.getTaskRunList().size() == 4 &&
+                execution.getState().isTerminated(),
+            () -> {
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
@@ -387,13 +386,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 IntStream
                     .range(0, 2)
                     .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
-                    assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
-                    assertThat(taskRun.getAttempts().size(), is(1));
+                        assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
+                        assertThat(taskRun.getAttempts().size(), is(1));
 
-                    assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RESTARTED));
-                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size(), is(1));
-                });
-            }),
+                        assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RESTARTED));
+                        assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size(), is(1));
+                    });
+            },
             Duration.ofSeconds(15)
         );
 
@@ -513,7 +512,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     }
 
-    @RetryingTest(5)
+    @Test
     void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");

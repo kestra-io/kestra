@@ -138,7 +138,8 @@
                     tabs.push({
                         name: "triggers",
                         component: FlowTriggers,
-                        title: this.$t("triggers")
+                        title: this.$t("triggers"),
+                        disabled: !this.flow.triggers
                     });
                 }
 

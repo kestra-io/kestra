@@ -1,6 +1,8 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -35,6 +37,45 @@ import java.util.stream.Stream;
     description = "List your tasks and their dependencies, and Kestra will figure out the rest.\n" +
         "Task can only depends on task from the DAG tasks.\n" +
         "For technical reasons, low-code interaction with this Task is disabled for now."
+)
+@Plugin(
+    examples = {
+        @Example(
+            title = "Five tasks for which the execution order is defined by their upstream dependencies.",
+            code = """
+                  tasks:
+                    - task:
+                        id: task1
+                        type: io.kestra.core.tasks.log.Log
+                        message: I'm the task 1
+                    - task:
+                        id: task2
+                        type: io.kestra.core.tasks.log.Log
+                        message: I'm the task 2
+                      dependsOn:
+                        - task1
+                    - task:
+                        id: task3
+                        type: io.kestra.core.tasks.log.Log
+                        message: I'm the task 3
+                      dependsOn:
+                        - task1
+                    - task:
+                        id: task4
+                        type: io.kestra.core.tasks.log.Log
+                        message: I'm the task 4
+                      dependsOn:
+                        - task2
+                    - task:
+                        id: task5
+                        type: io.kestra.core.tasks.log.Log
+                        message: I'm the task 5
+                      dependsOn:
+                        - task4
+                        - task3
+                  """
+        )
+    }
 )
 public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull

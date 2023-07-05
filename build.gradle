@@ -170,6 +170,7 @@ subprojects {
         systemProperty 'user.country', 'US'
 
         environment 'SECRETS_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
+        environment 'SECRETS_NON_B64_SECRET', "some secret value"
     }
 
     testlogger {

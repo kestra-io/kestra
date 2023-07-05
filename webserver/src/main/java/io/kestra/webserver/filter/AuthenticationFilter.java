@@ -28,8 +28,11 @@ public class AuthenticationFilter implements HttpServerFilter {
     @Value("${kestra.server.basic-auth.realm:Kestra}")
     private String realm;
 
-    @Value("${kestra.server.open-urls:[]}")
+    @Value("${kestra.server.basic-auth.open-urls:[]}")
     private List<String> openUrls;
+
+    @Value("${endpoints.all.port:8085}")
+    private int managementPort;
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
@@ -37,7 +40,7 @@ public class AuthenticationFilter implements HttpServerFilter {
             .stream()
             .anyMatch(s -> request.getPath().startsWith(s));
 
-        if (isOpenUrl) {
+        if (isOpenUrl || isManagementEndpoint(request)) {
             return Flowable.fromPublisher(chain.proceed(request));
         }
 
@@ -55,6 +58,10 @@ public class AuthenticationFilter implements HttpServerFilter {
         }
 
         return Flowable.fromPublisher(chain.proceed(request));
+    }
+
+    private boolean isManagementEndpoint(HttpRequest<?> request) {
+        return request.getUri().getPort() == managementPort;
     }
 
     record BasicAuth(String username, String password) {

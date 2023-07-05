@@ -8,11 +8,16 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
+import io.micronaut.management.endpoint.annotation.Endpoint;
+import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteMatch;
+import io.micronaut.web.router.RouteMatchUtils;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Filter("/**")
 @Requires(property = "kestra.server.basic-auth.enabled", value = "true")
@@ -61,7 +66,11 @@ public class AuthenticationFilter implements HttpServerFilter {
     }
 
     private boolean isManagementEndpoint(HttpRequest<?> request) {
-        return request.getUri().getPort() == managementPort;
+        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?,?> method) {
+            return method.getAnnotation(Endpoint.class) != null;
+        }
+        return false;
     }
 
     record BasicAuth(String username, String password) {

@@ -34,6 +34,3 @@ kestra:
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"
-        - "/health"
-        - "/prometheus"
-        - "/metrics"

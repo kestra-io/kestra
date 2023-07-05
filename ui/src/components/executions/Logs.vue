@@ -40,6 +40,7 @@
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             @follow="forwardEvent('follow', $event)"
+            @opened-taskruns-count="openedTaskrunsCounts[taskRun.id] = $event"
             :logs-to-open-parent="logsToOpen"
         />
         <div v-else-if="execution.state.current !== State.RUNNING">
@@ -52,6 +53,7 @@
                 :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                 :filter="filter"
                 @follow="forwardEvent('follow', $event)"
+                @opened-taskruns-count="openedTaskrunsCounts[taskRun.id] = $event"
                 :logs-to-open-parent="logsToOpen"
             />
         </div>
@@ -67,7 +69,6 @@
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import Collapse from "../layout/Collapse.vue";
     import State from "../../utils/state";
-    import {logDisplayTypes} from "../../utils/constants";
 
     export default {
         components: {
@@ -83,7 +84,8 @@
                 fullscreen: false,
                 level: undefined,
                 filter: undefined,
-                logsToOpen: undefined
+                logsToOpen: undefined,
+                openedTaskrunsCounts: {}
             };
         },
         created() {
@@ -110,14 +112,12 @@
                 }
                 return fullList
             },
-            logDisplayButtonText() {
-                if (this.logsToOpen) {
-                    return this.logsToOpen.length !== 0 ? this.$t("collapse all") : this.$t("expand all")
-                } else {
-                    const logDisplay =  localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
-                    return logDisplay === logDisplayTypes.HIDDEN ? this.$t("expand all") : this.$t("collapse all")
-                }
+            openedTaskrunsTotal() {
+                return Object.values(this.openedTaskrunsCounts).reduce((prev, count) => prev + count, 0);
             },
+            logDisplayButtonText() {
+                return this.openedTaskrunsTotal === 0 ? this.$t("expand all") : this.$t("collapse all")
+            }
         },
         methods: {
             downloadContent() {
@@ -145,12 +145,7 @@
                 this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
             },
             handleLogDisplay() {
-                const logDisplay =  localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
-                if (this.logsToOpen) {
-                    this.logsToOpen.length === 0 ? this.logsToOpen = State.arrayAllStates().map(s => s.name) : this.logsToOpen = []
-                    return;
-                }
-                if (logDisplay === logDisplayTypes.HIDDEN ) {
+                if(this.openedTaskrunsTotal === 0) {
                     this.logsToOpen = State.arrayAllStates().map(s => s.name)
                 } else {
                     this.logsToOpen = []

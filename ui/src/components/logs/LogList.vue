@@ -197,6 +197,7 @@
             Duration,
             TaskIcon,
         },
+        emits: ["opened-taskruns-count"],
         props: {
             level: {
                 type: String,
@@ -254,6 +255,9 @@
             };
         },
         watch: {
+            "showLogs.length": function(openedTaskrunsCount) {
+                this.$emit("opened-taskruns-count", openedTaskrunsCount);
+            },
             level: function () {
                 this.page = 1;
                 this.logsList = [];

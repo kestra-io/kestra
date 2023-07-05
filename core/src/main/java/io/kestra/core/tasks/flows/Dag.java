@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 @Plugin(
     examples = {
         @Example(
-            title = "5 tasks for which the order is defined by dependencies.",
+            title = "Five tasks for which the execution order is defined by their upstream dependencies.",
             code = """
                   tasks:
                     - task:

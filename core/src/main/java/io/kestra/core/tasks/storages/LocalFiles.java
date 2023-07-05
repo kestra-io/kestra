@@ -58,7 +58,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                   type: io.kestra.core.tasks.storages.LocalFiles
                   inputs:
                     hello.txt: "Hello World\\n"
-                    addresse.json: "{{ outputs.myTaskId.uri }}"
+                    address.json: "{{ outputs.myTaskId.uri }}"
                 - id: bash
                   type: io.kestra.core.tasks.scripts.Bash
                   commands:
@@ -90,13 +90,16 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     )
 })
 public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFilesOutput> {
-    @Schema(title = "The files to create on the local filesystem")
+    @Schema(
+        title = "The files to create on the local filesystem. Can be a map or a JSON object.",
+        anyOf = { Map.class, String.class }
+    )
     @PluginProperty(dynamic = true)
     private Object inputs;
 
     @Schema(
-        title = "The files from the local filesystem to send to the internal storage",
-        description = "must be a [Glob expression](https://en.wikipedia.org/wiki/Glob_(programming)) relative to current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`"
+        title = "The files from the local filesystem to send to the internal storage.",
+        description = "Must be a list of [Glob](https://en.wikipedia.org/wiki/Glob_(programming)) expressions relative to the current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`"
     )
     @PluginProperty(dynamic = true)
     private List<String> outputs;

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Singleton
 @Slf4j
 public class SecretService {
-    private static final String SECRET_PREFIX = "SECRETS_";
+    private static final String SECRET_PREFIX = "SECRET_";
     private Map<String, String> decodedSecrets;
 
     @PostConstruct
@@ -40,7 +40,7 @@ public class SecretService {
         return Optional
             .ofNullable(decodedSecrets.get(key.toUpperCase()))
             .orElseThrow(() -> new IllegalVariableEvaluationException("Unable to find secret '" + key + "'. " +
-                "You should add it in your environment variables as 'SECRETS_" + key.toUpperCase() +
+                "You should add it in your environment variables as '" + SECRET_PREFIX + key.toUpperCase() +
                 "' with base64-encoded value."
             ));
     }

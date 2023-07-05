@@ -457,7 +457,9 @@
     "collapse all": "Collapse all",
     "log expand setting": "Log default display",
     "slack support": "Ask help on our Slack",
-    "error detected": "Error detected"
+    "error detected": "Error detected",
+    "cannot swap tasks": "Can't swap the tasks",
+    "dependency task": "Task {taskId} is a dependency of another task"
   },
   "fr": {
     "id": "Identifiant",
@@ -919,6 +921,8 @@
     "collapse all": "Masquer tout",
     "log expand setting": "Affichage par défaut des journaux",
     "slack support": "Demandez de l'aide sur notre Slack",
-    "error detected": "Erreur détectée"
+    "error detected": "Erreur détectée",
+    "cannot swap tasks": "Impossible de permuter les tâches",
+    "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche"
   }
 }

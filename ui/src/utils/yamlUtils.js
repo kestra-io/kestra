@@ -205,6 +205,17 @@ export default class YamlUtils {
         const task1 = YamlUtils._extractTask(yamlDoc, taskId1);
         const task2 = YamlUtils._extractTask(yamlDoc, taskId2);
 
+        yaml.visit(yamlDoc, {
+            Pair(_, pair) {
+                if (pair.key.value === 'dependsOn' && pair.value.items.map(e => e.value).includes(taskId2)) {
+                    throw {
+                        message: 'dependency task',
+                        messageOptions: { taskId: taskId2 }
+                    };
+                }
+            }
+        });
+
         YamlUtils._extractTask(yamlDoc, taskId1, () => task2);
         YamlUtils._extractTask(yamlDoc, taskId2, () => task1);
 

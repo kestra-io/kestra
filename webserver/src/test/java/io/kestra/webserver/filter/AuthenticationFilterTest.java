@@ -51,6 +51,13 @@ class AuthenticationFilterTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void testManagementEndpoint() {
+        var response = client.toBlocking().exchange("/health");
+
+        assertThat(response.getStatus(), is(HttpStatus.OK));
+    }
+
+    @Test
     void testAuthenticated() {
         var response = client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth(username, password));

@@ -180,7 +180,7 @@ public abstract class JdbcRunnerTest {
         TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }
 
-    @RetryingTest(5)
+    @RetryingTest(5) // flaky on MySQL
     void withFailedTemplate() throws Exception {
         TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }

@@ -138,7 +138,7 @@ public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFil
             .flatMap(throwFunction(output -> this.outputMatcher(runContext, output)))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        logger.info("Provide {} input(s) and capture {} output(s).", inputFiles.size(), outputFiles.size());
+        logger.info("Provided {} input(s) and captured {} output(s).", inputFiles.size(), outputFiles.size());
 
         return LocalFilesOutput.builder()
             .uris(outputFiles)

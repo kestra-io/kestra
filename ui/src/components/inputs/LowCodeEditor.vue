@@ -208,12 +208,21 @@
             // check multiple intersection with task
             const taskNode2 = e.intersections.find(n => n.type === "task");
             if (taskNode2) {
-                emit("on-edit", YamlUtils.swapTasks(props.source, taskNode1.id, taskNode2.id))
+                try {
+                    emit("on-edit", YamlUtils.swapTasks(props.source, taskNode1.id, taskNode2.id))
+                } catch (e) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("cannot swap tasks"),
+                        message: t(e.message, e.messageOptions)
+                    });
+                    taskNode1.position = lastPosition.value;
+                }
             } else {
-                getNodes.value.find(n => n.id === e.node.id).position = lastPosition.value;
+                taskNode1.position = lastPosition.value;
             }
         } else {
-            getNodes.value.find(n => n.id === e.node.id).position = lastPosition.value;
+            e.node.position = lastPosition.value;
         }
         resetNodesStyle();
         e.node.style = {...e.node.style, zIndex: 1}

@@ -40,6 +40,11 @@ services:
             username: kestra
             password: k3str4
         kestra:
+          server:
+            basic-auth:
+              enabled: false
+              username: admin
+              password: kestra
           repository:
             type: postgres
           storage:

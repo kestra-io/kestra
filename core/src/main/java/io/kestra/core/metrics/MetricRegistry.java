@@ -59,6 +59,7 @@ public class MetricRegistry {
     public final static String TAG_NAMESPACE_ID = "namespace_id";
     public final static String TAG_STATE = "state";
     public final static String TAG_ATTEMPT_COUNT = "attempt_count";
+    public final static String TAG_WORKER_GROUP = "worker_group";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -128,10 +129,11 @@ public class MetricRegistry {
      * We don't include current state since it will breakup the values per state and it's make no sense.
      *
      * @param workerTask the current WorkerTask
+     * @param workerGroup the worker group, optional
      * @return tags to applied to metrics
      */
-    public String[] tags(WorkerTask workerTask, String... tags) {
-        return ArrayUtils.addAll(
+    public String[] tags(WorkerTask workerTask, String workerGroup, String... tags) {
+        var finalTags = ArrayUtils.addAll(
             ArrayUtils.addAll(
                 this.tags(workerTask.getTask()),
                 tags
@@ -139,6 +141,7 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, workerTask.getTaskRun().getNamespace(),
             TAG_FLOW_ID, workerTask.getTaskRun().getFlowId()
         );
+        return workerGroup != null ? ArrayUtils.addAll(finalTags, TAG_WORKER_GROUP, workerGroup) : finalTags;
     }
 
     /**
@@ -180,6 +183,21 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
         };
+    }
+
+    /**
+     * Return tags for current {@link TriggerContext}
+     *
+     * @param triggerContext the current TriggerContext
+     * @param workerGroup the worker group, optional
+     * @return tags to applied to metrics
+     */
+    public String[] tags(TriggerContext triggerContext, String workerGroup) {
+        var finalTags = new String[]{
+            TAG_FLOW_ID, triggerContext.getFlowId(),
+            TAG_NAMESPACE_ID, triggerContext.getNamespace()
+        };
+        return workerGroup != null ? ArrayUtils.addAll(finalTags, TAG_WORKER_GROUP, workerGroup) : finalTags;
     }
 
     /**

@@ -42,10 +42,12 @@
                                             <strong>{{ $t("duration") }}:</strong>
                                             {{ $filters.humanizeDuration(attempt.state.duration) }}
                                         </template>
-                                        <code>{{ currentTaskRun.taskId }}</code>
-                                        <small v-if="currentTaskRun.value">
-                                            {{ currentTaskRun.value }}
-                                        </small>
+                                        <span>
+                                            <code class="me-1">{{ currentTaskRun.taskId }}</code>
+                                            <small v-if="currentTaskRun.value">
+                                                {{ currentTaskRun.value }}
+                                            </small>
+                                        </span>
                                     </el-tooltip>
                                 </div>
 

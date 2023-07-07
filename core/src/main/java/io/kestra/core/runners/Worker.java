@@ -170,10 +170,10 @@ public class Worker implements Runnable, AutoCloseable {
 
     private void handleTrigger(WorkerTrigger workerTrigger) {
         this.metricRegistry
-            .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext()))
+            .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup))
             .record(() -> {
                     this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                        .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext())));
+                        .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
                     try {
@@ -248,12 +248,12 @@ public class Worker implements Runnable, AutoCloseable {
 
     private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) throws QueueException {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask))
+            .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask, workerGroup))
             .increment();
 
         if (workerTask.getTaskRun().getState().getCurrent() == State.Type.CREATED) {
             metricRegistry
-                .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, metricRegistry.tags(workerTask))
+                .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, metricRegistry.tags(workerTask, workerGroup))
                 .record(Duration.between(
                     workerTask.getTaskRun().getState().getStartDate(), now()
                 ));
@@ -315,7 +315,8 @@ public class Worker implements Runnable, AutoCloseable {
                             MetricRegistry.METRIC_WORKER_RETRYED_COUNT,
                             metricRegistry.tags(
                                 current.get(),
-                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount())
+                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount()),
+                                MetricRegistry.TAG_WORKER_GROUP, workerGroup
                             )
                         )
                         .increment();
@@ -380,11 +381,11 @@ public class Worker implements Runnable, AutoCloseable {
 
     private void logTerminated(WorkerTask workerTask) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(workerTask))
+            .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(workerTask, workerGroup))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, metricRegistry.tags(workerTask))
+            .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, metricRegistry.tags(workerTask, workerGroup))
             .record(workerTask.getTaskRun().getState().getDuration());
 
         workerTask.logger().info(
@@ -445,7 +446,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         metricRunningCount.incrementAndGet();
 
-        WorkerThread workerThread = new WorkerThread(logger, workerTask, task, runContext, metricRegistry);
+        WorkerThread workerThread = new WorkerThread(logger, workerTask, task, runContext, metricRegistry, workerGroup);
 
         // emit attempts
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask
@@ -516,7 +517,7 @@ public class Worker implements Runnable, AutoCloseable {
     }
 
     public AtomicInteger getMetricRunningCount(WorkerTask workerTask) {
-        String[] tags = this.metricRegistry.tags(workerTask);
+        String[] tags = this.metricRegistry.tags(workerTask, workerGroup);
         Arrays.sort(tags);
 
         long index = Hashing
@@ -528,7 +529,7 @@ public class Worker implements Runnable, AutoCloseable {
             .computeIfAbsent(index, l -> metricRegistry.gauge(
                 MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
                 new AtomicInteger(0),
-                metricRegistry.tags(workerTask)
+                metricRegistry.tags(workerTask, workerGroup)
             ));
     }
 
@@ -591,12 +592,13 @@ public class Worker implements Runnable, AutoCloseable {
         RunnableTask<?> task;
         RunContext runContext;
         MetricRegistry metricRegistry;
+        String workerGroup;
 
         Output taskOutput;
         io.kestra.core.models.flows.State.Type taskState;
         boolean killed = false;
 
-        public WorkerThread(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
+        public WorkerThread(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry, String workerGroup) {
             super("WorkerThread");
             this.setUncaughtExceptionHandler(this::exceptionHandler);
 
@@ -605,6 +607,7 @@ public class Worker implements Runnable, AutoCloseable {
             this.task = task;
             this.runContext = runContext;
             this.metricRegistry = metricRegistry;
+            this.workerGroup = workerGroup;
         }
 
         @Override
@@ -623,7 +626,8 @@ public class Worker implements Runnable, AutoCloseable {
                                     MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
                                     metricRegistry.tags(
                                         this.workerTask,
-                                        MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
+                                        MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount()),
+                                        MetricRegistry.TAG_WORKER_GROUP, workerGroup
                                     )
                                 )
                                 .increment()

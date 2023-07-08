@@ -15,7 +15,8 @@ RUN apt-get update -y && \
     if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
     groupadd kestra && \
     useradd -m -g kestra kestra && \
-    chown -R kestra:kestra /app
+    chown -R kestra:kestra /app && \
+    chmod +x /app/kestra
 
 USER kestra
 

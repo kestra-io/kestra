@@ -29,10 +29,13 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially sharing the same working directory",
-    description = "By default, Kestra will launch each task on a fresh working directory and on a new worker instance.\n" +
-        "This task will run sequentially keeping the same filesystem allowing reuse of previous task files on next tasks and" +
-        "keeping track of execution time for each tasks. It can only runs runnable tasks as tasks will be run immediately on the worker"
+    title = "Run tasks sequentially in the same working directory",
+    description = "Tasks are stateless by default. Kestra will launch each task within a temporary working directory on a Worker.\n" +
+        "The `WorkingDirectory` task allows reusing the same file system's working directory across multiple tasks \n" +
+        "so that multiple sequential tasks can use output files from previous tasks without having to use the `{{outputs.taskId.outputName}}` syntax." +
+        "Note that the `WorkingDirectory` only works with runnable tasks because those tasks are executed directly on the Worker." +
+        "This means that using flowable tasks such as the `Parallel` task within the `WorkingDirectory` task will not work." +
+        "The `WorkingDirectory` task requires Kestra>=0.9.0."
 )
 @Plugin(
     examples = {

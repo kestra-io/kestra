@@ -1,16 +1,9 @@
 package io.kestra.core.plugins;
 
-import com.google.common.collect.ImmutableList;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
 import jakarta.inject.Singleton;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import lombok.*;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,30 +12,15 @@ import java.util.stream.Stream;
 @EqualsAndHashCode
 @ToString
 @Singleton
-public class PluginRegistry  {
+public class PluginRegistry {
     private List<RegisteredPlugin> plugins;
     private Map<String, RegisteredPlugin> pluginsByClass;
+    @Setter
+    private Runnable cacheCleaner;
 
-    public PluginRegistry(List<RegisteredPlugin> registeredPlugin) {
-        this.plugins = ImmutableList.copyOf(registeredPlugin);
-        this.pluginsByClass = registeredPlugin
-            .stream()
-            .flatMap(plugin -> Stream.of(
-                plugin.getTasks()
-                    .stream()
-                    .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
-                plugin.getTriggers()
-                    .stream()
-                    .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
-                plugin.getConditions()
-                    .stream()
-                    .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
-                plugin.getControllers()
-                    .stream()
-                    .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin))
-                ).flatMap(i -> i)
-            )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
+    public PluginRegistry() {
+        this.plugins = new ArrayList<>();
+        this.pluginsByClass = new HashMap<>();
     }
 
     public Optional<RegisteredPlugin> find(String name) {
@@ -51,5 +29,31 @@ public class PluginRegistry  {
         }
 
         return Optional.empty();
+    }
+
+    public void addPlugin(RegisteredPlugin registeredPlugin) {
+        this.plugins.add(registeredPlugin);
+        this.pluginsByClass.putAll(
+            Stream.of(registeredPlugin)
+                .flatMap(plugin -> Stream.of(
+                        plugin.getTasks()
+                            .stream()
+                            .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
+                        plugin.getTriggers()
+                            .stream()
+                            .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
+                        plugin.getConditions()
+                            .stream()
+                            .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
+                        plugin.getControllers()
+                            .stream()
+                            .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin))
+                    ).flatMap(i -> i)
+                ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1))
+        );
+
+        if(this.cacheCleaner != null){
+            this.cacheCleaner.run();
+        }
     }
 }

@@ -20,6 +20,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -33,13 +34,36 @@ public class PluginScanner {
     }
 
     /**
+     * Scans the specified top-level plugin directory for plugins. Keeps the scan alive allowing plugins hot-reload
+     * @param onNewPlugin the callback to be called when a new plugin is found
+     */
+    public void continuousScan(final Path pluginPaths, Consumer<RegisteredPlugin> onNewPlugin) {
+        try {
+            new PluginResolver(pluginPaths).watch(
+                plugin -> {
+                    RegisteredPlugin t = scanClassLoader(
+                        PluginClassLoader.of(
+                            plugin.getLocation(),
+                            plugin.getResources(),
+                            this.parent
+                        ), plugin, null);
+                    if (t.getManifest() != null) {
+                        onNewPlugin.accept(t);
+                    }
+                });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Scans the specified top-level plugin directory for plugins.
      *
      * @param pluginPaths the absolute path to a top-level plugin directory.
      */
     public List<RegisteredPlugin> scan(final Path pluginPaths) {
         return new PluginResolver(pluginPaths)
-            .resolves()
+            .initialPlugins()
             .stream()
             .map(plugin -> {
                 log.debug("Loading plugins from path: {}", plugin.getLocation());

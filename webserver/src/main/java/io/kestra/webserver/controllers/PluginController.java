@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.contexts.KestraApplicationContext;
 import io.kestra.core.docs.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -7,8 +8,10 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
+import io.micronaut.cache.CacheManager;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
@@ -23,6 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,11 +37,31 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/plugins/")
 public class PluginController {
+    public static final String PLUGINS_CACHE_KEY = "plugins";
+
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
 
     @Inject
     private PluginService pluginService;
+
+    @Inject
+    private KestraApplicationContext applicationContext;
+
+    @Inject
+    private CacheManager<?> cacheManager;
+
+    @PostConstruct
+    private void invalidateCacheOnNewPlugin() {
+        if (applicationContext == null) {
+            return;
+        }
+
+        PluginRegistry pluginRegistry = applicationContext.getPluginRegistry();
+        if (pluginRegistry != null) {
+            pluginRegistry.setCacheCleaner(cacheManager.getCache(PLUGINS_CACHE_KEY)::invalidateAll);
+        }
+    }
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -54,7 +78,7 @@ public class PluginController {
             .header("Cache-Control", "public, max-age=3600");
     }
 
-    @Cacheable("default")
+    @Cacheable(PLUGINS_CACHE_KEY)
     protected Map<String, Object> schemasCache(SchemaType type) {
         if (type == SchemaType.flow) {
             return jsonSchemaGenerator.schemas(Flow.class);
@@ -105,7 +129,7 @@ public class PluginController {
             .header("Cache-Control", "public, max-age=3600");
     }
 
-    @Cacheable("default")
+    @Cacheable("inputs")
     protected ClassInputDocumentation inputDocumentation(Input.Type type) throws ClassNotFoundException {
         Class<? extends Input<?>> inputCls = type.cls();
 
@@ -179,7 +203,7 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    @Cacheable("default")
+    @Cacheable(PLUGINS_CACHE_KEY)
     protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties) {
         RegisteredPlugin registeredPlugin = plugins
             .stream()

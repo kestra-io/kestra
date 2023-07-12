@@ -23,7 +23,7 @@ micronaut:
     netty:
       max-chunk-size: 10MB
   caches:
-    default:
+    plugins:
       maximum-weight: 10485760
 
   http:

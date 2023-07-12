@@ -11,10 +11,6 @@ micronaut:
         url: http://localhost:8081
 
 kestra:
-  repository:
-    type: memory
-  queue:
-    type: memory
   storage:
     type: local
     local:
@@ -34,3 +30,59 @@ kestra:
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"
+  queue:
+    type: h2
+  repository:
+    type: h2
+  jdbc:
+    tables:
+      queues:
+        table: "queues"
+      flows:
+        table: "flows"
+        cls: io.kestra.core.models.flows.Flow
+      executions:
+        table: "executions"
+        cls: io.kestra.core.models.executions.Execution
+      templates:
+        table: "templates"
+        cls: io.kestra.core.models.templates.Template
+      triggers:
+        table: "triggers"
+        cls: io.kestra.core.models.triggers.Trigger
+      logs:
+        table: "logs"
+        cls: io.kestra.core.models.executions.LogEntry
+      metrics:
+        table: "metrics"
+        cls: io.kestra.core.models.executions.MetricEntry
+      multipleconditions:
+        table: "multipleconditions"
+        cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
+      workertaskexecutions:
+        table: "workertaskexecutions"
+        cls: io.kestra.core.runners.WorkerTaskExecution
+      executorstate:
+        table: "executorstate"
+        cls: io.kestra.core.runners.ExecutorState
+      executordelayed:
+        table: "executordelayed"
+        cls: io.kestra.core.runners.ExecutionDelay
+      settings:
+        table: "settings"
+        cls: io.kestra.core.models.Setting
+      flowtopologies:
+        table: "flow_topologies"
+        cls: io.kestra.core.models.topologies.FlowTopology
+datasources:
+  h2:
+    url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driverClassName: org.h2.Driver
+flyway:
+  datasources:
+    h2:
+      enabled: true
+      locations:
+        - classpath:migrations/h2

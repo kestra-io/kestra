@@ -16,6 +16,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.LabelUtils;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -397,7 +398,7 @@ public class RunnerUtils {
 
         List<Label> executionLabels = new ArrayList<>();
         if (flow.getLabels() != null) {
-            executionLabels.addAll(flow.getLabels());
+            executionLabels.addAll(LabelUtils.from(flow.getLabels()));
         }
         if (labels != null) {
             executionLabels.addAll(labels);

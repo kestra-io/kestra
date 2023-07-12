@@ -55,7 +55,7 @@ public class FlowWithSource extends Flow {
     }
 
     public boolean isUpdatable(Flow flow, String flowSource) {
-        return flow.equalsWithoutRevision(flow) &&
+        return this.equalsWithoutRevision(flow) &&
             this.source.equals(cleanupSource(flowSource));
     }
 

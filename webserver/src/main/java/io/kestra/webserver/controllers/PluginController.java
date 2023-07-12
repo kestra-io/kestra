@@ -38,6 +38,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     public static final String PLUGINS_CACHE_KEY = "plugins";
+    public static final String INPUTS_CACHE_KEY = "inputs";
 
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
@@ -93,7 +94,7 @@ public class PluginController {
         }
     }
 
-    @Get(uri = "inputs")
+    @Get(uri = INPUTS_CACHE_KEY)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
@@ -129,7 +130,7 @@ public class PluginController {
             .header("Cache-Control", "public, max-age=3600");
     }
 
-    @Cacheable("inputs")
+    @Cacheable(INPUTS_CACHE_KEY)
     protected ClassInputDocumentation inputDocumentation(Input.Type type) throws ClassNotFoundException {
         Class<? extends Input<?>> inputCls = type.cls();
 

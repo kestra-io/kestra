@@ -50,9 +50,9 @@ public class PluginResolver implements AutoCloseable {
                 while ((key = watchService.take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
                         Path eventPath = pluginPath.resolve((Path) event.context());
-                        if(event.kind() == StandardWatchEventKinds.ENTRY_CREATE){
+                        if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
                             createdWaitingForWrite.add(eventPath);
-                        }else if(event.kind() == StandardWatchEventKinds.ENTRY_MODIFY && createdWaitingForWrite.remove(eventPath)){
+                        } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY && createdWaitingForWrite.remove(eventPath)) {
                             onNewPlugin.accept(toExternalPlugin(eventPath));
                         }
                     }

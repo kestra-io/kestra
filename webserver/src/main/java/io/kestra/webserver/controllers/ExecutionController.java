@@ -7,6 +7,7 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.LabelUtils;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.utils.RequestUtils;
@@ -431,7 +432,7 @@ public class ExecutionController {
 
         var result = execution.get();
         if (flow.getLabels() != null) {
-            result = result.withLabels(flow.getLabels());
+            result = result.withLabels(LabelUtils.from(flow.getLabels()));
         }
         executionQueue.emit(result);
         eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));

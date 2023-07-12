@@ -1,7 +1,6 @@
 package io.kestra.core.schedulers;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -63,9 +62,9 @@ abstract public class AbstractSchedulerTest {
             ))
             .revision(1)
             .labels(
-                List.of(
-                    new Label("flow-label-1", "flow-label-1"),
-                    new Label("flow-label-2", "flow-label-2"))
+                Map.of(
+                    "flow-label-1", "flow-label-1",
+                    "flow-label-2", "flow-label-2")
             )
             .triggers(triggers)
             .tasks(Collections.singletonList(Return.builder()

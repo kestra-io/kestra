@@ -26,6 +26,7 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.LabelUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -202,7 +203,7 @@ public class Worker implements Runnable, AutoCloseable {
                         if (flowLabels != null) {
                             evaluate = evaluate.map( execution -> {
                                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                                    executionLabels.addAll(flowLabels);
+                                    executionLabels.addAll(LabelUtils.from(flowLabels));
                                     return execution.withLabels(executionLabels);
                                 }
                             );

@@ -2,7 +2,7 @@ package io.kestra.webserver.filter;
 
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
@@ -14,17 +14,17 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import javax.validation.ConstraintViolationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Property(name = "kestra.server.basic-auth.enabled", value = "true")
-class AuthenticationFilterTest extends AbstractMemoryRunnerTest {
+class AuthenticationFilterTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
     private RxHttpClient client;

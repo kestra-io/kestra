@@ -33,9 +33,7 @@
         // if we align both of them this can be removed
         mounted() {
             if (Array.isArray(this.labels)) {
-                const labelMap = {};
-                this.labels.forEach(label => labelMap[label.key] = label.value)
-                this.labelMap = labelMap;
+                this.labelMap = Object.fromEntries(this.labels.map(label => [label.key, label.value]))
             } else {
                 this.labelMap = this.labels;
             }

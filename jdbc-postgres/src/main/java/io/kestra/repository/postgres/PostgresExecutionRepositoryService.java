@@ -21,13 +21,8 @@ public abstract class PostgresExecutionRepositoryService {
 
         if (labels != null)  {
             labels.forEach((key, value) -> {
-                Field<String> field = DSL.field("value #>> '{labels, " + key + "}'", String.class);
-
-                if (value == null) {
-                    conditions.add(field.isNotNull());
-                } else {
-                    conditions.add(field.eq(value));
-                }
+                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
+                conditions.add(DSL.condition(sql));
             });
         }
 

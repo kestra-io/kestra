@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers.types;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContextFactory;
@@ -10,6 +11,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,9 +30,9 @@ class FlowTest {
             .namespace("io.kestra.unittest")
             .revision(1)
             .labels(
-                Map.of(
-                    "flow-label-1", "flow-label-1",
-                    "flow-label-2", "flow-label-2")
+                List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2"))
             )
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
@@ -58,7 +60,7 @@ class FlowTest {
 
         assertThat(evaluate.isPresent(), is(true));
         assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
-        assertThat(evaluate.get().getLabels().get("flow-label-1"), is("flow-label-1"));
-        assertThat(evaluate.get().getLabels().get("flow-label-2"), is("flow-label-2"));
+        assertThat(evaluate.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(evaluate.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));;
     }
 }

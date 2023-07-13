@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers.types;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.DateTimeBetweenCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
@@ -91,8 +92,8 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("date"), date), is(date));
         assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
-        assertThat(evaluate.get().getLabels().get("flow-label-1"), is("flow-label-1"));
-        assertThat(evaluate.get().getLabels().get("flow-label-2"), is("flow-label-2"));
+        assertThat(evaluate.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(evaluate.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
     }
 
     @SuppressWarnings("unchecked")
@@ -396,9 +397,9 @@ class ScheduleTest {
             .id(IdUtils.create())
             .namespace("io.kestra.tests")
             .labels(
-                Map.of(
-                    "flow-label-1", "flow-label-1",
-                    "flow-label-2", "flow-label-2")
+                List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2"))
             )
             .build();
 

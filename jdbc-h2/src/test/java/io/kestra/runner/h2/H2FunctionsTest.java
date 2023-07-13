@@ -21,6 +21,14 @@ class H2FunctionsTest {
     }
 
     @Test
+    public void jqStringWithArray() {
+        String jqString = H2Functions.jqString("""
+            {"a": [{"b": "c", "d": "e"}]}
+            """, ".a[].b");
+        assertThat(jqString, is("c"));
+    }
+
+    @Test
     public void jqBoolean() {
         Boolean jqString = H2Functions.jqBoolean("{\"a\": true}", ".a");
         assertThat(jqString, is(true));

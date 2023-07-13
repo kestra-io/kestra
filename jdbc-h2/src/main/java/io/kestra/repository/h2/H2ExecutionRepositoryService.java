@@ -20,12 +20,14 @@ public abstract class H2ExecutionRepositoryService {
 
         if (labels != null) {
             labels.forEach((key, value) -> {
-                Field<String> field = DSL.field("JQ_STRING(\"value\", '.labels." + key + "')", String.class);
+                Field<String> keyField = DSL.field("JQ_STRING(\"value\", '.labels[].key')", String.class);
+                conditions.add(keyField.eq(key));
 
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[].value')", String.class);
                 if (value == null) {
-                    conditions.add(field.isNotNull());
+                    conditions.add(valueField.isNotNull());
                 } else {
-                    conditions.add(field.eq(value));
+                    conditions.add(valueField.eq(value));
                 }
             });
         }

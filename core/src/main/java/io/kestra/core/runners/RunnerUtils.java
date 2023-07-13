@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -283,7 +284,7 @@ public class RunnerUtils {
         return this.runOne(namespace, flowId, revision, inputs, duration, null);
     }
 
-    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
@@ -301,7 +302,7 @@ public class RunnerUtils {
         return this.runOne(flow, inputs, duration, null);
     }
 
-    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, Map<String, String> labels) throws TimeoutException {
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels) throws TimeoutException {
         if (duration == null) {
             duration = Duration.ofSeconds(15);
         }
@@ -381,7 +382,7 @@ public class RunnerUtils {
         return e -> e.getParentId() != null && e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
     }
 
-    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Map<String, String> labels) {
+    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, List<Label> labels) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
             .namespace(flow.getNamespace())
@@ -394,12 +395,12 @@ public class RunnerUtils {
             execution = execution.withInputs(inputs.apply(flow, execution));
         }
 
-        Map<String, String> executionLabels = new HashMap<>();
+        List<Label> executionLabels = new ArrayList<>();
         if (flow.getLabels() != null) {
-            executionLabels.putAll(flow.getLabels());
+            executionLabels.addAll(flow.getLabels());
         }
         if (labels != null) {
-            executionLabels.putAll(labels);
+            executionLabels.addAll(labels);
         }
         if (!executionLabels.isEmpty()) {
             execution = execution.withLabels(executionLabels);

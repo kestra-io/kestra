@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -130,10 +131,11 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().containsKey("bool"), is(true));
         assertThat(result.getInputs().get("bool"), nullValue());
-        assertThat(result.getLabels().get("a"), is("label-1"));
-        assertThat(result.getLabels().get("b"), is("label-2"));
-        assertThat(result.getLabels().get("flow-label-1"), is("flow-label-1"));
-        assertThat(result.getLabels().get("flow-label-2"), is("flow-label-2"));
+        assertThat(result.getLabels().size(), is(4));
+        assertThat(result.getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(result.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
+        assertThat(result.getLabels().get(2), is(new Label("a", "label-1")));
+        assertThat(result.getLabels().get(3), is(new Label("b", "label-2")));
     }
 
     @Test
@@ -467,8 +469,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b"), is(true));
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name"), is(List.of("john")));
         assertThat(((Map<String, List<Integer>>) execution.getTrigger().getVariables().get("parameters")).get("age"), containsInAnyOrder("12", "13"));
-        assertThat(execution.getLabels().get("flow-label-1"), is("flow-label-1"));
-        assertThat(execution.getLabels().get("flow-label-2"), is("flow-label-2"));
+        assertThat(execution.getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(execution.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
 
         execution = client.toBlocking().retrieve(
             HttpRequest

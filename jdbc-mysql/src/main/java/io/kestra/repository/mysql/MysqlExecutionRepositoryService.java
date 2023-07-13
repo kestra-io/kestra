@@ -21,12 +21,14 @@ public abstract class MysqlExecutionRepositoryService {
 
         if (labels != null) {
             labels.forEach((key, value) -> {
-                Field<String> field = DSL.field("JSON_VALUE(value, '$.labels." + key + "' NULL ON EMPTY)", String.class);
+                Field<String> keyField = DSL.field("JSON_VALUE(value, '$.labels[*].key' NULL ON EMPTY)", String.class);
+                conditions.add(keyField.eq(key));
 
+                Field<String> valueField = DSL.field("JSON_VALUE(value, '$.labels[*].value' NULL ON EMPTY)", String.class);
                 if (value == null) {
-                    conditions.add(field.isNotNull());
+                    conditions.add(valueField.isNotNull());
                 } else {
-                    conditions.add(field.eq(value));
+                    conditions.add(valueField.eq(value));
                 }
             });
         }

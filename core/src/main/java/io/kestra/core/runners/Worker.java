@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
@@ -200,8 +201,8 @@ public class Worker implements Runnable, AutoCloseable {
                         var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
                         if (flowLabels != null) {
                             evaluate = evaluate.map( execution -> {
-                                    Map<String, String> executionLabels = execution.getLabels() != null ? execution.getLabels() : new HashMap<>();
-                                    executionLabels.putAll(flowLabels);
+                                    List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
+                                    executionLabels.addAll(flowLabels);
                                     return execution.withLabels(executionLabels);
                                 }
                             );

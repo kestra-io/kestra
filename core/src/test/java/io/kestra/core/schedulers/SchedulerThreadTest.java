@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -93,8 +94,8 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
             assertThat(last.get().getTrigger().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getTrigger().getVariables().get("counter"), is(3));
-            assertThat(last.get().getLabels().get("flow-label-1"), is("flow-label-1"));
-            assertThat(last.get().getLabels().get("flow-label-2"), is("flow-label-2"));
+            assertThat(last.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+            assertThat(last.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
             AbstractSchedulerTest.COUNTER = 0;
         }
     }

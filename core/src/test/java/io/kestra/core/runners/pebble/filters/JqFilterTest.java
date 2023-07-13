@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
@@ -12,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -127,5 +127,21 @@ class JqFilterTest {
         assertThat(variableRenderer.render("{{ vars | jq(\".float\") | first | className }}", vars), is("java.lang.Float"));
         assertThat(variableRenderer.render("{{ vars | jq(\".bool\") | first | className }}", vars), is("java.lang.Boolean"));
         assertThat(variableRenderer.render("{{ vars | jq(\".null\") | first | className }}", vars), is(""));
+    }
+
+    @Test
+    void object() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "vars", ImmutableMap.of(
+                "object", Map.of("key", "value"),
+                "array", new String[]{"arrayValue"}
+            )
+        );
+
+        String render = variableRenderer.render("{% set object = vars | jq(\".object\") %}{{object[0].key}}", vars);
+        assertThat(render, is("value"));
+
+        render = variableRenderer.render("{% set array = vars | jq(\".array\") %}{{array[0][0]}}", vars);
+        assertThat(render, is("arrayValue"));
     }
 }

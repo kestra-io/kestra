@@ -1,15 +1,12 @@
 package io.kestra.core.runners.pebble.filters;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
+import io.kestra.core.serializers.JacksonMapper;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import io.kestra.core.serializers.JacksonMapper;
 import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
@@ -71,17 +68,21 @@ public class JqFilter implements Filter {
                         out.add(v.numberValue());
                     } else if (v instanceof BooleanNode) {
                         out.add(v.booleanValue());
+                    } else if (v instanceof ObjectNode) {
+                        out.add(JacksonMapper.ofJson().convertValue(v, Map.class));
+                    } else if (v instanceof ArrayNode) {
+                        out.add(JacksonMapper.ofJson().convertValue(v, List.class));
                     } else {
                         out.add(v);
                     }
                 });
             } catch (Exception e) {
-                throw new Exception("Failed to resolve JQ expression '" + pattern +  "' and value '" + input +  "'", e);
+                throw new Exception("Failed to resolve JQ expression '" + pattern + "' and value '" + input + "'", e);
             }
 
             return out;
         } catch (Exception e) {
-            throw new PebbleException(e, "Unable to parse jq value '" + input +  "' with type '" + input.getClass().getName() + "'", lineNumber, self.getName());
+            throw new PebbleException(e, "Unable to parse jq value '" + input + "' with type '" + input.getClass().getName() + "'", lineNumber, self.getName());
         }
     }
 }

@@ -53,7 +53,7 @@ public class BlueprintController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "{id}/flow", produces = "application/yaml")
-    @Operation(tags = {"blueprints"}, summary = "Get a blueprint flow")
+    @Operation(tags = {"Blueprints"}, summary = "Get a blueprint flow")
     public String blueprintFlow(
         @Parameter(description = "The blueprint id") String id,
         HttpRequest<?> httpRequest
@@ -63,7 +63,7 @@ public class BlueprintController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "{id}/graph")
-    @Operation(tags = {"blueprints"}, summary = "Get a blueprint graph")
+    @Operation(tags = {"Blueprints"}, summary = "Get a blueprint graph")
     public Map<String, Object> blueprintGraph(
         @Parameter(description = "The blueprint id") String id,
         HttpRequest<?> httpRequest
@@ -73,7 +73,7 @@ public class BlueprintController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "{id}")
-    @Operation(tags = {"blueprints"}, summary = "Get a blueprint")
+    @Operation(tags = {"Blueprints"}, summary = "Get a blueprint")
     public BlueprintItemWithFlow blueprint(
         @Parameter(description = "The blueprint id") String id,
         HttpRequest<?> httpRequest

@@ -43,7 +43,7 @@ IF %java_version% NEQ 0 (
 
 REM Opens java.nio due to https://github.com/snowflakedb/snowflake-jdbc/issues/589
 REM Opens java.util due to https://github.com/Azure/azure-sdk-for-java/issues/27806
-SET JAVA_ADD_OPENS="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
+SET "JAVA_ADD_OPENS=--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
 
 java %JAVA_OPTS% %JAVA_ADD_OPENS% -jar "%this%" %*
 

@@ -274,8 +274,8 @@ public class ExecutionController {
     @Delete(uri = "executions/by-ids", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete a list of executions")
-    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> deleteByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
@@ -609,8 +609,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
-    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Restarted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> restartByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
@@ -815,8 +815,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
-    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> killByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {

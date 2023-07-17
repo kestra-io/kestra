@@ -56,7 +56,7 @@
     "@vitejs/plugin-vue": "^4.2.3",
     "@vue/eslint-config-prettier": "^7.1.0",
     "@vue/test-utils": "^2.4.0",
-    "eslint": "^8.43.0",
+    "eslint": "^8.45.0",
     "eslint-plugin-vue": "^9.15.0",
     "jsdom": "^22.1.0",
     "monaco-editor": "^0.39.0",

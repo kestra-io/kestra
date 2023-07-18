@@ -12,13 +12,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
         license = @License(name = "Apache 2.0", url = "https://raw.githubusercontent.com/kestra-io/kestra/master/LICENSE")
     ),
     tags = {
-        @Tag(name = "Flows", description = "Flows api"),
-        @Tag(name = "Templates", description = "Templates api"),
-        @Tag(name = "Executions", description = "Executions api"),
-        @Tag(name = "Logs", description = "Logs api"),
-        @Tag(name = "Plugins", description = "Plugins api"),
-        @Tag(name = "Stats", description = "Stats api"),
-        @Tag(name = "Misc", description = "Misc api"),
+        @Tag(name = "Flows", description = "Flows API"),
+        @Tag(name = "Templates", description = "Templates API"),
+        @Tag(name = "Executions", description = "Executions API"),
+        @Tag(name = "Logs", description = "Logs API"),
+        @Tag(name = "Plugins", description = "Plugins API"),
+        @Tag(name = "Stats", description = "Stats API"),
+        @Tag(name = "Misc", description = "Misc API"),
+        @Tag(name = "Blueprints", description = "Blueprints API"),
+        @Tag(name = "Blueprint Tags", description = "Blueprint Tags API"),
+        @Tag(name = "Metrics", description = "Metrics API"),
     }
 )
 public class Application {

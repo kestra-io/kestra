@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -17,7 +18,9 @@ import lombok.experimental.SuperBuilder;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -118,10 +121,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
-        Map<String, String> labels = new HashMap<>();
+        List<Label> labels = new ArrayList<>();
         if (this.labels != null) {
             for (Map.Entry<String, String> entry: this.labels.entrySet()) {
-                labels.put(entry.getKey(), runContext.render(entry.getValue()));
+                labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
             }
         }
 

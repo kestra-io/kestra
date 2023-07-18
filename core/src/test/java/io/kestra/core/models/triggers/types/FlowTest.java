@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers.types;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContextFactory;
@@ -58,7 +59,7 @@ class FlowTest {
 
         assertThat(evaluate.isPresent(), is(true));
         assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
-        assertThat(evaluate.get().getLabels().get("flow-label-1"), is("flow-label-1"));
-        assertThat(evaluate.get().getLabels().get("flow-label-2"), is("flow-label-2"));
+        assertThat(evaluate.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(evaluate.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
     }
 }

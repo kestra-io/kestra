@@ -221,23 +221,27 @@ public class ExecutorService {
 
         if (parent instanceof FlowableTask<?> flowableParent) {
 
-            List<NextTaskRun> nexts = flowableParent.resolveNexts(
-                runContextFactory.of(
-                    executor.getFlow(),
-                    parent,
+            try {
+                List<NextTaskRun> nexts = flowableParent.resolveNexts(
+                    runContextFactory.of(
+                        executor.getFlow(),
+                        parent,
+                        executor.getExecution(),
+                        parentTaskRun
+                    ),
                     executor.getExecution(),
                     parentTaskRun
-                ),
-                executor.getExecution(),
-                parentTaskRun
-            );
-
-            if (nexts.size() > 0) {
-                return this.saveFlowableOutput(
-                    nexts,
-                    executor,
-                    parentTaskRun
                 );
+
+                if (nexts.size() > 0) {
+                    return this.saveFlowableOutput(
+                        nexts,
+                        executor,
+                        parentTaskRun
+                    );
+                }
+            } catch (Exception e) {
+                log.warn("Unable to resolve the next tasks to run", e);
             }
         }
 

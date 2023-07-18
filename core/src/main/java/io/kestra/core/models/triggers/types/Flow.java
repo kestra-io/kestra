@@ -1,6 +1,8 @@
 package io.kestra.core.models.triggers.types;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.utils.LabelUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -85,7 +87,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(flow.getLabels())
+            .labels(LabelUtils.from(flow.getLabels()))
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,

@@ -1,11 +1,13 @@
 package io.kestra.webserver.controllers;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.LabelUtils;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.utils.RequestUtils;
@@ -15,6 +17,7 @@ import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -271,8 +274,8 @@ public class ExecutionController {
     @Delete(uri = "executions/by-ids", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete a list of executions")
-    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> deleteByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
@@ -429,7 +432,7 @@ public class ExecutionController {
 
         var result = execution.get();
         if (flow.getLabels() != null) {
-            result = result.withLabels(flow.getLabels());
+            result = result.withLabels(LabelUtils.from(flow.getLabels()));
         }
         executionQueue.emit(result);
         eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
@@ -462,7 +465,7 @@ public class ExecutionController {
         Execution current = runnerUtils.newExecution(
             find.get(),
             (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files),
-            RequestUtils.toMap(labels)
+            parseLabels(labels)
         );
 
         executionQueue.emit(current);
@@ -494,6 +497,18 @@ public class ExecutionController {
                 }
             })
             .blockingGet();
+    }
+
+    private List<Label> parseLabels(List<String> labels) {
+        return labels == null ? null : labels.stream()
+            .map(label ->  {
+                String[] split = label.split(":");
+                if (split.length != 2) {
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid labels parameter");
+                }
+                return new Label(split[0], split[1]);
+            })
+            .toList();
     }
 
     protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
@@ -594,8 +609,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
-    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Restarted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> restartByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
@@ -800,8 +815,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
-    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> killByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {

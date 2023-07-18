@@ -451,7 +451,7 @@
       }
     },
     "title": "Title",
-    "api": "Api",
+    "api": "API",
     "expand error": "Expand only failed task",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
@@ -915,7 +915,7 @@
       }
     },
     "title": "Titre",
-    "api": "Api",
+    "api": "API",
     "expand error": "Afficher uniquement les erreurs",
     "expand all": "Afficher tout",
     "collapse all": "Masquer tout",

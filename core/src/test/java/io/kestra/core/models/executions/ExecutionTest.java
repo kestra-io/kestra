@@ -1,10 +1,12 @@
 package io.kestra.core.models.executions;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.State;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -153,10 +155,10 @@ class ExecutionTest {
     @Test
     void labels() {
         final Execution execution = Execution.builder()
-            .labels(Map.of("test", "test-value"))
+            .labels(List.of(new Label("test", "test-value")))
             .build();
 
         assertThat(execution.getLabels().size(), is(1));
-        assertThat(execution.getLabels().get("test"), is("test-value"));
+        assertThat(execution.getLabels().get(0), is(new Label("test", "test-value")));
     }
 }

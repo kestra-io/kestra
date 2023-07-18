@@ -14,6 +14,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public abstract class JdbcMapper {
+    private static final DateTimeFormatter INSTANT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        .withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter ZONED_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     private static ObjectMapper MAPPER;
 
     public static ObjectMapper of() {
@@ -24,19 +27,14 @@ public abstract class JdbcMapper {
             module.addSerializer(Instant.class, new JsonSerializer<>() {
                 @Override
                 public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-                    jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                        .withZone(ZoneOffset.UTC)
-                        .format(instant)
-                    );
+                    jsonGenerator.writeString(INSTANT_FORMATTER.format(instant));
                 }
             });
 
             module.addSerializer(ZonedDateTime.class, new JsonSerializer<>() {
                 @Override
                 public void serialize(ZonedDateTime instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-                    jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-                        .format(instant)
-                    );
+                    jsonGenerator.writeString(ZONED_DATE_TIME_FORMATTER.format(instant));
                 }
             });
 

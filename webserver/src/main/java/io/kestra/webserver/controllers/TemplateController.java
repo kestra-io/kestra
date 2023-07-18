@@ -48,7 +48,7 @@ public class TemplateController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Template"}, summary = "Get a template")
+    @Operation(tags = {"Templates"}, summary = "Get a template")
     public Template index(
         @Parameter(description = "The template namespace") @PathVariable String namespace,
         @Parameter(description = "The template id") @PathVariable String id
@@ -60,7 +60,7 @@ public class TemplateController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Template"}, summary = "Search for templates")
+    @Operation(tags = {"Templates"}, summary = "Search for templates")
     public PagedResults<Template> find(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
@@ -73,7 +73,7 @@ public class TemplateController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Template"}, summary = "Create a template")
+    @Operation(tags = {"Templates"}, summary = "Create a template")
     public HttpResponse<Template> create(
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
@@ -92,7 +92,7 @@ public class TemplateController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Template"}, summary = "Update a template")
+    @Operation(tags = {"Templates"}, summary = "Update a template")
     public HttpResponse<Template> update(
         @Parameter(description = "The template namespace") @PathVariable String namespace,
         @Parameter(description = "The template id") @PathVariable String id,
@@ -109,7 +109,7 @@ public class TemplateController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Template"}, summary = "Delete a template")
+    @Operation(tags = {"Templates"}, summary = "Delete a template")
     @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
         @Parameter(description = "The template namespace") @PathVariable String namespace,
@@ -126,7 +126,7 @@ public class TemplateController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Template"}, summary = "List all distinct namespaces")
+    @Operation(tags = {"Templates"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
         return templateRepository.findDistinctNamespace();
     }
@@ -253,6 +253,7 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
+        tags = {"Templates"},
         summary = "Export templates as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> exportByQuery(
@@ -267,6 +268,7 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/export/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
     @Operation(
+        tags = {"Templates"},
         summary = "Export templates as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> exportByIds(
@@ -282,8 +284,8 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-query")
     @Operation(
-        tags = {"Flows"},
-        summary = "Delete flows returned by the query parameters."
+        tags = {"Templates"},
+        summary = "Delete templates returned by the query parameters."
     )
     public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
@@ -301,8 +303,8 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-ids")
     @Operation(
-        tags = {"Flows"},
-        summary = "Delete flows by their IDs."
+        tags = {"Templates"},
+        summary = "Delete templates by their IDs."
     )
     public HttpResponse<BulkResponse> deleteByIds(
         @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
@@ -335,6 +337,7 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/import", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
+        tags = {"Templates"},
         summary = "Import templates as a ZIP archive of yaml sources or a multi-objects YAML file."
     )
     @ApiResponse(responseCode = "204", description = "On success")

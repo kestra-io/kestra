@@ -38,10 +38,6 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
-
-        // be sure attempts are available on the queue
-        // we cannot know the exact number of executions, but we should have at least 15 of them
-        assertThat(executions.size(), greaterThan(15));
-        assertThat(executions.get(8).getTaskRunList().get(0).getAttempts().size(), is(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 }

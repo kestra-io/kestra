@@ -5,6 +5,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -20,6 +21,7 @@ import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.utils.LabelUtils;
 import io.kestra.core.validations.CronExpression;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -273,7 +275,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())
-            .labels(conditionContext.getFlow().getLabels())
+            .labels(LabelUtils.from(conditionContext.getFlow().getLabels()))
             .state(new State())
             .trigger(executionTrigger)
             // keep to avoid breaking compatibility

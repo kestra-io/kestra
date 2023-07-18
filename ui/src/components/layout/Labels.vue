@@ -2,7 +2,7 @@
     <span v-if="labels">
         <!-- 'el-check-tag' would be a better fit but it currently lacks customization -->
         <el-tag
-            v-for="(value, key) in labels"
+            v-for="(value, key) in labelMap"
             :key="key"
             :type="checked(key) ? 'info' : ''"
             class="me-1 labels"
@@ -27,6 +27,20 @@
             filterEnabled: {
                 type: Boolean,
                 default: true
+            }
+        },
+        // this is needed as flows uses a Map and Execution a List of Labels.
+        // if we align both of them this can be removed
+        mounted() {
+            if (Array.isArray(this.labels)) {
+                this.labelMap = Object.fromEntries(this.labels.map(label => [label.key, label.value]))
+            } else {
+                this.labelMap = this.labels;
+            }
+        },
+        data() {
+            return {
+                labelMap: {}
             }
         },
         methods: {

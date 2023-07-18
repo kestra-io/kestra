@@ -1,0 +1,6 @@
+id: execution-start-date
+namespace: io.kestra.tests
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ execution.startDate }}"

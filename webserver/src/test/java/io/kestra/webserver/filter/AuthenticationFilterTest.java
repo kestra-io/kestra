@@ -64,29 +64,4 @@ class AuthenticationFilterTest extends JdbcH2ControllerTest {
 
         assertThat(response.getStatus(), is(HttpStatus.OK));
     }
-
-    @MockBean
-    SettingRepositoryInterface settingRepository() {
-        return new SettingRepositoryInterface() {
-            @Override
-            public Optional<Setting> findByKey(String key) {
-                return Optional.empty();
-            }
-
-            @Override
-            public List<Setting> findAll() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public Setting save(Setting setting) throws ConstraintViolationException {
-                return setting;
-            }
-
-            @Override
-            public Setting delete(Setting setting) {
-                return setting;
-            }
-        };
-    }
 }

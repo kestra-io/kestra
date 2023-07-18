@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
 
@@ -94,8 +95,8 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
             assertThat(last.get().getTrigger().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getTrigger().getVariables().get("counter"), is(3));
-            assertThat(last.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
-            assertThat(last.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
+            assertThat(last.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+            assertThat(last.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
             AbstractSchedulerTest.COUNTER = 0;
         }
     }

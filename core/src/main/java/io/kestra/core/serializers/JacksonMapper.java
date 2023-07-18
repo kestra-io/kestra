@@ -99,7 +99,6 @@ abstract public class JacksonMapper {
             new IonObjectMapper(new IonFactory())
         )
         .registerModule(new IonModule())
-        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS)
         .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
     public static ObjectMapper ofIon() {
@@ -115,7 +114,6 @@ abstract public class JacksonMapper {
 
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
             .registerModule(new JavaTimeModule())
             .registerModule(new Jdk8Module())

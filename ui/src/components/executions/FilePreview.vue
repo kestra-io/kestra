@@ -1,7 +1,7 @@
 <template>
     <csv v-if="extensionToMonacoLang === 'csv'" :value="formattedContent" />
     <img v-else-if="extensionToMonacoLang === 'image'" :src="formattedContent" alt="Image output preview">
-    <editor v-else :model-value="formattedContent" :lang="extensionToMonacoLang" format-on-start />
+    <editor v-else :model-value="formattedContent" :lang="extensionToMonacoLang" read-only />
 </template>
 <script>
     import Editor from "../inputs/Editor.vue";
@@ -26,6 +26,8 @@
                 switch(this.extension) {
                 case "json":
                     return "json";
+                case "jsonl":
+                    return "jsonl";
                 case "yaml":
                 case "yml":
                 case "ion":
@@ -36,7 +38,10 @@
                 case "jpg":
                 case "jpeg":
                 case "png":
+                case "gif":
                 case "svg":
+                case "bpm":
+                case "webp":
                     return "image";
                 default:
                     return "text";

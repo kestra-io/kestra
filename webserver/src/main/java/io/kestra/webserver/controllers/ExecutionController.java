@@ -1009,6 +1009,21 @@ public class ExecutionController {
             }
         }
 
-        return HttpResponse.ok(PreviewResponse.builder().extension(extension).content(contentBuilder.toString()).build());
+        return HttpResponse.ok(PreviewResponse.builder().extension(extension).content(truncateStringSize(contentBuilder.toString())).build());
+    }
+
+    public String truncateStringSize(String content) {
+        // Equivalent to 2MB
+        int maxSizeInBytes = 2097152;
+        byte[] inputBytes = content.getBytes();
+
+        if (inputBytes.length <= maxSizeInBytes) {
+
+            return content;
+        }
+        byte[] truncatedBytes = new byte[maxSizeInBytes];
+        System.arraycopy(inputBytes, 0, truncatedBytes, 0, maxSizeInBytes);
+
+        return new String(truncatedBytes);
     }
 }

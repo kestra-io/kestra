@@ -6,7 +6,8 @@ public enum ImageFileExtension {
     PNG("png"),
     SVG("svg"),
     GIF("gif"),
-    BMP("bmp");
+    BMP("bmp"),
+    WEBP("webp");
 
     private final String extension;
 

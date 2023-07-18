@@ -12,6 +12,7 @@ export default {
         },
         metrics: [],
         metricsTotal: 0,
+        filePreview: undefined
     },
     actions: {
         loadExecutions({commit}, options) {
@@ -143,6 +144,13 @@ export default {
             }).then(response => {
                 return response.data
             })
+        },
+        filePreview({commit}, options) {
+            return this.$http.get(`api/v1/executions/${options.executionId}/file/preview`, {
+                params: options
+            }).then(response => {
+                commit("setFilePreview", response.data)
+            })
         }
     },
     mutations: {
@@ -179,6 +187,9 @@ export default {
         },
         setMetricsTotal(state, metrics) {
             state.metricsTotal = metrics
+        },
+        setFilePreview(state, filePreview) {
+            state.filePreview = filePreview
         }
     },
     getters: {

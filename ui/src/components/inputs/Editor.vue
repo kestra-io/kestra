@@ -81,6 +81,7 @@
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
+            formatOnStart: {type: Boolean, default: false}
         },
         components: {
             MonacoEditor,
@@ -206,6 +207,8 @@
 
                 this.editor = editor;
 
+
+
                 if (!this.original) {
                     this.editor.onDidBlurEditorWidget(() => {
                         this.$emit("focusout", editor.getValue());
@@ -323,6 +326,12 @@
                         this.$emit("cursor", {position: position, model: model})
                     }, 100);
                 });
+
+                if (this.formatOnStart) {
+                    setTimeout(function() {
+                        editor.getAction("editor.action.formatDocument").run();
+                    }, 1000);
+                }
             },
             autoFold(autoFold) {
                 if (autoFold) {

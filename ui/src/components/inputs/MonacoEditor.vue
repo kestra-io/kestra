@@ -171,6 +171,38 @@
                         command: "editor.action.triggerSuggest"
                     })
 
+                    // Register a new language
+                    monaco.languages.register({id: "ion"});
+
+                    monaco.languages.setLanguageConfiguration("ion", {
+                    });
+
+                    // Register a tokens provider for the language
+                    const config = {
+                        brackets: [["{", "}"]],
+                        tokenizer: {
+                            root: [
+                                [/^\s+([a-zA-Z]|\d)+:/, "string.key.json"],
+                                [/\d+:/, "string.key.json"],
+                                [/[a-zA-Z]+:/, "string.key.json"],
+                                [/".*?":/, "string.key.json"],
+                            ],
+                        },
+                        theme: {
+                            base: "vs",
+                            inherit: true,
+                            rules: [
+                                {token: "property", foreground: "#008800"},
+                            ],
+                        },
+
+                        colors: {
+                            property: "#008800",
+                        },
+                    };
+
+                    monaco.languages.setLanguageConfiguration("ion", config);
+
                     this.editor = monaco.editor.create(this.$el, options);
                 }
 

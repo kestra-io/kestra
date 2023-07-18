@@ -85,6 +85,31 @@
                     <var-value :execution="execution" :value="scope.row.output" />
                 </template>
             </el-table-column>
+
+            <el-table-column :label="$t('preview')">
+                <template #default="scope">
+                    <div v-if="scope.row.output.startsWith('kestra:///')">
+                        <el-button @click="getFilePreview(scope.row.output)">
+                            {{ $t('open') }}
+                        </el-button>
+                        <el-drawer
+                            v-if="selectedPreview === scope.row.output"
+                            v-model="isPreviewOpen"
+                            destroy-on-close
+                            lock-scroll
+                            size=""
+                            :append-to-body="true"
+                        >
+                            <template #header>
+                                <h3>{{ $t('preview') }}</h3>
+                            </template>
+                            <template #default>
+                                <FilePreview :content="filePreview.content" :extension="filePreview.extension" v-if="filePreview" />
+                            </template>
+                        </el-drawer>
+                    </div>
+                </template>
+            </el-table-column>
         </el-table>
         <pagination :total="outputs.length" :page="page" :size="size" @page-changed="onPageChanged" />
     </div>
@@ -96,9 +121,11 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Collapse from "../layout/Collapse.vue";
     import Pagination from "../layout/Pagination.vue";
+    import FilePreview from "./FilePreview.vue";
 
     export default {
         components: {
+            FilePreview,
             Pagination,
             VarValue,
             Editor,
@@ -113,7 +140,9 @@
                 debugStackTrace: "",
                 isModalOpen: false,
                 size: this.$route.query.size ? this.$route.query.size : 25,
-                page: this.$route.query.page ? this.$route.query.page : 1
+                page: this.$route.query.page ? this.$route.query.page : 1,
+                isPreviewOpen: false,
+                selectedPreview: null
             };
         },
         created() {
@@ -126,6 +155,9 @@
                 if (this.$route.query.search !== this.filter) {
                     this.filter = this.$route.query.search || "";
                 }
+            },
+            filePreview() {
+                this.isPreviewOpen = true;
             }
         },
         methods: {
@@ -172,9 +204,16 @@
                     }
                 });
             },
+            getFilePreview(path) {
+                this.$store.dispatch("execution/filePreview", {
+                    executionId: this.execution.id,
+                    path: path
+                })
+                this.selectedPreview = path
+            }
         },
         computed: {
-            ...mapState("execution", ["execution"]),
+            ...mapState("execution", ["execution","filePreview"]),
             selectOptions() {
                 const options = {};
                 for (const taskRun of this.execution.taskRunList || []) {

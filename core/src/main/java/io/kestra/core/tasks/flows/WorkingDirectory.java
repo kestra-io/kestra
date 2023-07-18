@@ -64,7 +64,7 @@ import java.util.List;
         ),
         @Example(
             full = true,
-            title = "Add input and output files in a Working Directory to use them in a Python script",
+            title = "Add input and output files within a Working Directory to use them in a Python script",
             code = """
     id: apiJSONtoMongoDB
     namespace: dev

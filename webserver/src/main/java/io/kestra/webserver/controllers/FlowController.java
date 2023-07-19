@@ -227,9 +227,8 @@ public class FlowController {
             namespace,
             sources
                 .stream()
-                .map(flow -> yamlFlowParser.parse(flow, Flow.class))
-                .collect(Collectors.toList()),
-            sources,
+                .map(flow -> FlowWithSource.of(yamlFlowParser.parse(flow, Flow.class), flow))
+                .toList(),
             delete
         );
     }
@@ -250,19 +249,18 @@ public class FlowController {
         return this
             .updateCompleteNamespace(
                 namespace,
-                flows,
                 flows
                     .stream()
-                    .map(throwFunction(Flow::generateSource))
+                    .map(throwFunction(flow -> FlowWithSource.of(flow, flow.generateSource())))
                     .collect(Collectors.toList()),
                 delete
             )
             .stream()
             .map(FlowWithSource::toFlow)
-            .collect(Collectors.toList());
+            .toList();
     }
 
-    private List<FlowWithSource> updateCompleteNamespace(String namespace, List<Flow> flows, List<String> sources, Boolean delete) {
+    protected List<FlowWithSource> updateCompleteNamespace(String namespace, List<FlowWithSource> flows, Boolean delete) {
         // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
@@ -285,7 +283,7 @@ public class FlowController {
             .stream()
             .map(Flow::getId)
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
 
         if (duplicate.size() < flows.size()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
@@ -301,7 +299,7 @@ public class FlowController {
         List<String> ids = flows
             .stream()
             .map(Flow::getId)
-            .collect(Collectors.toList());
+            .toList();
 
         // delete all not in updated ids
         List<FlowWithSource> deleted = new ArrayList<>();
@@ -314,25 +312,23 @@ public class FlowController {
                     flowRepository.delete(flow);
                     return FlowWithSource.of(flow, flow.generateSource());
                 })
-                .collect(Collectors.toList());
+                .toList();
         }
 
         // update or create flows
-        List<FlowWithSource> updatedOrCreated = IntStream.range(0, flows.size())
-            .mapToObj(index -> {
-                Flow flow = flows.get(index);
-                String source = sources.get(index);
-
+        List<FlowWithSource> updatedOrCreated = flows.stream()
+            .map(flowWithSource -> {
+                Flow flow = flowWithSource.toFlow();
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
                 if (existingFlow.isPresent()) {
-                    return flowRepository.update(flow, existingFlow.get(), source, taskDefaultService.injectDefaults(flow));
+                    return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 } else {
-                    return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
+                    return flowRepository.create(flow, flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 }
             })
-            .collect(Collectors.toList());
+            .toList();
 
-        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
+        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).toList();
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)

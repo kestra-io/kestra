@@ -24,6 +24,7 @@ html.dark {
     #{--bs-border-color}: $border-color;
     #{--bs-link-color}: $secondary;
     #{--bs-link-color-rgb}: to-rgb($secondary);
+    #{--bs-secondary-color}: var(--bs-gray-700);
     --bs-link-hover-color: #D0CDF9;
     #{--card-bg}: $card-bg;
     #{--input-bg}: $input-bg;

@@ -41,7 +41,11 @@ public class JdbcTestUtils {
                     configuration.dialect() == SQLDialect.POSTGRES
                 ))
                 .filter(table -> !table.getName().equals("flyway_schema_history"))
-                .forEach(t -> dslContext.truncate(t.getName()).execute());
+                .forEach(t -> {
+                    try (var delete = dslContext.delete(t)) {
+                        delete.execute();
+                    }
+                });
         });
     }
 

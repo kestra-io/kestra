@@ -40,7 +40,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Schema(
     title = "Allow to create files in the local filesystem or to send files from the local filesystem to the internal storage.",
-    description = "This task should be used with the WorkingDirectory task to be able to access the same local filesystem within multiple tasks. Note that this is a flowable task, so setting `disabled: true` will not work on this task."
+    description = "This task should be used with the WorkingDirectory task to be able to access the same local filesystem within multiple tasks. Note that this task cannot be skipped, so setting `disabled: true` will not work on this task."
 )
 @Plugin(examples = {
     @Example(

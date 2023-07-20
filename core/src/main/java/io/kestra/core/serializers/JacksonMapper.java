@@ -30,18 +30,16 @@ abstract public class JacksonMapper {
         new ObjectMapper()
     );
 
+    private static final ObjectMapper NON_STRICT_MAPPER = MAPPER
+        .copy()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     public static ObjectMapper ofJson() {
         return MAPPER;
     }
 
     public static ObjectMapper ofJson(boolean strict) {
-        if (strict) {
-            return MAPPER;
-        }
-
-        return MAPPER
-            .copy()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return strict ? MAPPER : NON_STRICT_MAPPER;
     }
 
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.configure(

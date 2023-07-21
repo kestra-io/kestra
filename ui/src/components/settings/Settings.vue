@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-form class="ks-horizontal">
+        <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
                 <el-select :model-value="lang" @update:model-value="onLang">
                     <el-option
@@ -258,10 +258,6 @@
                         text: "Source Code Pro"
                     },
                     {
-                        value: "'Times New Roman', serif",
-                        text: "Times"
-                    },
-                    {
                         value: "'Courier New', monospace",
                         text: "Courier"
                     },
@@ -286,3 +282,8 @@
         }
     };
 </script>
+<style>
+    .el-input-number {
+        max-width: 20vw;
+    }
+</style>

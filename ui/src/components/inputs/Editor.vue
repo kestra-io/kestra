@@ -20,7 +20,7 @@
                             <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
                         </el-tooltip>
                     </el-button-group>
-                    <slot name="extends-navbar"/>
+                    <slot name="extends-navbar" />
                 </div>
             </slot>
         </nav>
@@ -185,8 +185,8 @@
                 return {
                     ...{
                         tabSize: 2,
-                        fontFamily: "'Source Code Pro', monospace",
-                        fontSize: 12,
+                        fontFamily:  localStorage.getItem("editorFontFamily") ? localStorage.getItem("editorFontFamily") : "'Source Code Pro', monospace",
+                        fontSize: localStorage.getItem("editorFontSize") ? parseInt(localStorage.getItem("editorFontSize")) : 12,
                         showFoldingControls: "always",
                         scrollBeyondLastLine: false,
                         roundedSelection: false,

@@ -245,6 +245,8 @@
     "Default log level": "Default log level",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
     "Editor theme": "Editor theme",
+    "Editor fontsize": "Editor font size",
+    "Editor fontfamily": "Editor font family",
     "errors": {
       "404": {
         "title": "Page not found",
@@ -708,6 +710,8 @@
     "Default log level": "Niveau de log par défaut",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "Editor theme": "Theme de l'éditeur",
+    "Editor fontsize": "Taille de police de l'éditeur",
+    "Editor fontfamily": "Police de l'éditeur",
     "errors": {
       "404": {
         "title": "Page introuvable",

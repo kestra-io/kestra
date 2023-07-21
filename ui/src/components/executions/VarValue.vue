@@ -1,15 +1,11 @@
 <template>
-    <el-button
-        v-if="isFile(value)"
-        :icon="Download"
-        @click="download(value)"
-        type="primary"
-    >
-        <span>
-            {{ $t('download') }}
-            <span v-if="humanSize">({{ humanSize }})</span>
-        </span>
-    </el-button>
+    <a class="el-button el-button--primary mt-2 mb-2 " v-if="isFile(value)" :href="itemUrl(value)" target="_blank">
+        <Download />
+        &nbsp;
+        {{ $t('download') }}
+        &nbsp;
+        <span v-if="humanSize">({{ humanSize }})</span>
+    </a>
     <span v-else>
         {{ value }}
     </span>

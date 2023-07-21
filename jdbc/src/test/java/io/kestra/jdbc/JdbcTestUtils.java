@@ -38,14 +38,10 @@ public class JdbcTestUtils {
                 .getTables()
                 .stream()
                 .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                    configuration.dialect() == SQLDialect.POSTGRES
+                    table.getSchema().getName().equals("public") // for Postgres
                 ))
                 .filter(table -> !table.getName().equals("flyway_schema_history"))
-                .forEach(t -> {
-                    try (var delete = dslContext.delete(t)) {
-                        delete.execute();
-                    }
-                });
+                .forEach(t -> dslContext.delete(t).execute());
         });
     }
 

@@ -10,14 +10,14 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.repository.memory.MemoryFlowRepository;
+import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -51,22 +50,20 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class FlowControllerTest extends AbstractMemoryRunnerTest {
+class FlowControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
     RxHttpClient client;
 
     @Inject
-    MemoryFlowRepository memoryFlowRepository;
+    AbstractJdbcFlowRepository jdbcFlowRepository;
 
     @BeforeEach
-    protected void init() throws IOException, URISyntaxException {
-        memoryFlowRepository.findAll()
-            .forEach(memoryFlowRepository::delete);
+    protected void init() {
+        jdbcFlowRepository.findAll()
+            .forEach(jdbcFlowRepository::delete);
 
-        super.init();
-
-        TestsUtils.loads(repositoryLoader);
+        super.setup();
     }
 
     @Test
@@ -154,8 +151,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         // f3 & f4 must be updated
         updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
         assertThat(updated.size(), is(4));
-        assertThat(updated.get(0).getInputs().get(0).getName(), is("2"));
-        assertThat(updated.get(1).getInputs().get(0).getName(), is("1"));
+        assertThat(updated.get(2).getInputs().get(0).getName(), is("3-3"));
+        assertThat(updated.get(3).getInputs().get(0).getName(), is("4"));
 
         // f1 & f2 must be deleted
         assertThrows(HttpClientResponseException.class, () -> {

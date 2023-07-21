@@ -2,9 +2,8 @@ package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.repository.memory.MemoryMetricRepository;
+import io.kestra.jdbc.repository.AbstractJdbcMetricRepository;
+import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -15,12 +14,11 @@ import io.micronaut.rxjava2.http.client.RxHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
-class MetricControllerTest extends AbstractMemoryRunnerTest {
+class MetricControllerTest extends JdbcH2ControllerTest {
     private static final String TESTS_FLOW_NS = "io.kestra.tests";
 
     @Inject
@@ -28,7 +26,7 @@ class MetricControllerTest extends AbstractMemoryRunnerTest {
     RxHttpClient client;
 
     @Inject
-    MemoryMetricRepository memoryMetricRepository;
+    AbstractJdbcMetricRepository jdbcMetricRepository;
 
     @SuppressWarnings("unchecked")
     @Test

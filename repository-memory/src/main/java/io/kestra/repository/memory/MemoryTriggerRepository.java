@@ -3,10 +3,12 @@ package io.kestra.repository.memory;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 
 import java.util.*;
 
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -40,5 +42,10 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     @Override
     public void delete(Trigger trigger) {
         triggers.remove(trigger);
+    }
+
+    @Override
+    public ArrayListTotal<Trigger> find(Pageable from, String query, String namespace) {
+        throw new UnsupportedOperationException();
     }
 }

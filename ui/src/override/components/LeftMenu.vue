@@ -39,6 +39,7 @@
     import Ballot from "vue-material-design-icons/Ballot.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import FileCodeOutline from "vue-material-design-icons/FileCodeOutline.vue";
+    import AccountSupervisorOutline from "vue-material-design-icons/AccountSupervisorOutline.vue";
     import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import Github from "vue-material-design-icons/Github.vue";
@@ -206,6 +207,14 @@
                         title: this.$t("settings"),
                         icon: {
                             element: CogOutline,
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/admin",
+                        title: this.$t("administration"),
+                        icon: {
+                            element: AccountSupervisorOutline,
                             class: "menu-icon"
                         }
                     }

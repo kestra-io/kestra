@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-form class="ks-horizontal">
+        <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
                 <el-select :model-value="lang" @update:model-value="onLang">
                     <el-option
@@ -27,6 +27,27 @@
                 <el-select :model-value="editorTheme" @update:model-value="onEditorTheme">
                     <el-option
                         v-for="item in editorThemesOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item :label="$t('Editor fontsize')">
+                <el-input-number
+                    :model-value="editorFontSize"
+                    @update:model-value="onFontSize"
+                    controls-position="right"
+                    :min="1"
+                    :max="50"
+                />
+            </el-form-item>
+
+            <el-form-item :label="$t('Editor fontfamily')">
+                <el-select :model-value="editorFontFamily" @update:model-value="onFontFamily">
+                    <el-option
+                        v-for="item in fontFamilyOptions"
                         :key="item.value"
                         :label="item.text"
                         :value="item.value"
@@ -98,7 +119,9 @@
                 editorTheme: undefined,
                 autofoldTextEditor: undefined,
                 guidedTour: undefined,
-                logDisplay: undefined
+                logDisplay: undefined,
+                editorFontSize: undefined,
+                editorFontFamily: undefined
             };
         },
         created() {
@@ -112,6 +135,8 @@
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
+            this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
+            this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -174,6 +199,16 @@
                 localStorage.setItem("logDisplay", value);
                 this.logDisplay = value;
                 this.$toast().saved();
+            },
+            onFontSize(value) {
+                localStorage.setItem("editorFontSize", value);
+                this.editorFontSize = value;
+                this.$toast().saved();
+            },
+            onFontFamily(value) {
+                localStorage.setItem("editorFontFamily", value);
+                this.editorFontFamily = value;
+                this.$toast().saved();
             }
         },
         computed: {
@@ -215,6 +250,40 @@
                     {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")}
                 ]
             },
+            fontFamilyOptions() {
+                // Array of font family that contains arabic language and japanese, chinese, korean languages compatible font family
+                return [
+                    {
+                        value: "'Source Code Pro', monospace",
+                        text: "Source Code Pro"
+                    },
+                    {
+                        value: "'Courier New', monospace",
+                        text: "Courier"
+                    },
+                    {
+                        value: "'Times New Roman', serif",
+                        text: "Times New Roman"
+                    },
+                    {
+                        value: "'Book Antiqua', serif",
+                        text: "Book Antiqua"
+                    },
+                    {
+                        value: "'Times New Roman Arabic', serif",
+                        text: "Times New Roman Arabic"
+                    },
+                    {
+                        value: "'SimSun', sans-serif",
+                        text: "SimSun"
+                    }
+                ]
+            }
         }
     };
 </script>
+<style>
+    .el-input-number {
+        max-width: 20vw;
+    }
+</style>

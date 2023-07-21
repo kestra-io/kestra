@@ -12,7 +12,7 @@
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
-    import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+    import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {setDiagnosticsOptions} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas"
     import Utils from "../../utils/utils";

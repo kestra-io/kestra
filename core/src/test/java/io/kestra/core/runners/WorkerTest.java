@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
+import io.kestra.core.tasks.test.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @MicronautTest
-class WorkingDirectoryTest {
+class WorkerTest {
     @Inject
     ApplicationContext applicationContext;
 
@@ -65,7 +65,7 @@ class WorkingDirectoryTest {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         workerTaskResultQueue.receive(workerTaskResult::set);
 
-        workerTaskQueue.emit(workerTask("1"));
+        workerTaskQueue.emit(workerTask(1000));
 
         Await.until(
             () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
@@ -140,14 +140,14 @@ class WorkingDirectoryTest {
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
         workerTaskResultQueue.receive(workerTaskResult::add);
 
-        WorkerTask workerTask = workerTask("999");
+        WorkerTask workerTask = workerTask(999000);
 
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);
 
-        WorkerTask notKilled = workerTask("2");
+        WorkerTask notKilled = workerTask(2000);
         workerTaskQueue.emit(notKilled);
 
         Thread.sleep(500);
@@ -179,11 +179,11 @@ class WorkingDirectoryTest {
         assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
     }
 
-    private WorkerTask workerTask(String sleep) {
-        Bash bash = Bash.builder()
-            .type(Bash.class.getName())
+    private WorkerTask workerTask(long sleepDuration) {
+        Sleep bash = Sleep.builder()
+            .type(Sleep.class.getName())
             .id("unit-test")
-            .commands(new String[]{"for i in $(seq 1 " + sleep + "); do echo $i; sleep 1; done"})
+            .duration(sleepDuration)
             .build();
 
         Flow flow = Flow.builder()

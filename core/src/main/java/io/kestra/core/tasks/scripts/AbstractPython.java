@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Slf4j
+@Deprecated
 public abstract class AbstractPython extends AbstractBash {
     @Builder.Default
     @Schema(

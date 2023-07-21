@@ -4,12 +4,12 @@ import io.kestra.core.docs.DocumentationWithSchema;
 import io.kestra.core.docs.InputType;
 import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
+import io.kestra.core.tasks.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
-import io.kestra.core.tasks.scripts.Bash;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -66,7 +66,7 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, PluginIcon.class)
             );
 
-            assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Bash.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
+            assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Log.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
         });
     }
 

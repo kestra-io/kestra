@@ -113,17 +113,17 @@ tasks:
     concurrent: 3
     tasks:
       - id: task1
-        type: io.kestra.core.tasks.scripts.Bash
+        type: io.kestra.plugin.scripts.shell.Commands
         commands:
           - 'echo "running {{task.id}}"'
           - 'sleep 10'
       - id: task2
-        type: io.kestra.core.tasks.scripts.Bash
+        type: io.kestra.plugin.scripts.shell.Commands
         commands:
           - 'echo "running {{task.id}}"'
           - 'sleep 10'
       - id: task3
-        type: io.kestra.core.tasks.scripts.Bash
+        type: io.kestra.plugin.scripts.shell.Commands
         commands:
           - 'echo "running {{task.id}}"'
           - 'sleep 10'

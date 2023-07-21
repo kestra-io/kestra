@@ -27,7 +27,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @NoArgsConstructor
 @Schema(
     title = "Execute a Node.js script",
-    description = "With the Node task, you can execute a full javascript script.\n" +
+    description = "This task is deprecated, please use the io.kestra.plugin.scripts.node.Script or io.kestra.plugin.scripts.node.Commands task instead.\n\n" +
+        "With the Node task, you can execute a full javascript script.\n" +
         "The task will create a temporary folder for each tasks and allows to install some npm packages defined in an optional `package.json` file.\n" +
         "\n" +
         "By convention, you need to define at least a `main.js` files in `inputFiles` that will be the script used.\n" +
@@ -41,7 +42,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
         "Kestra.counter('count', 1, {tag1: 'i', tag2: 'win'});\n" +
         "Kestra.timer('timer1', (callback) => { setTimeout(callback, 1000) }, {tag1: 'i', tag2: 'lost'});\n" +
         "Kestra.timer('timer2', 2.12, {tag1: 'i', tag2: 'destroy'});\n" +
-        "```"
+        "```",
+    deprecated = true
 )
 @Plugin(
     examples = {
@@ -94,6 +96,7 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
         )
     }
 )
+@Deprecated
 public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
     @Builder.Default
     @Schema(

@@ -13,8 +13,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.log.Log;
-import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.tasks.flows.Dag;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -127,17 +126,16 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void bash() throws URISyntaxException {
+    void dag() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
-            Map<String, Object> generate = jsonSchemaGenerator.schemas(Bash.class);
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Dag.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
-            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
-            assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
-            assertThat((List<String>) bash.get("required"), not(contains("interpreter")));
+            var dag = definitions.get("io.kestra.core.tasks.flows.Dag-1");
+            assertThat((List<String>) dag.get("required"), not(contains("errors")));
         });
     }
 

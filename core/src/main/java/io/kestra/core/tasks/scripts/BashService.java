@@ -22,6 +22,7 @@ import javax.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
+@Deprecated
 abstract public class BashService {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");

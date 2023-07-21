@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Deprecated
 public class ProcessBuilderScriptRunner implements ScriptRunnerInterface {
     public RunResult run(
         AbstractBash abstractBash,

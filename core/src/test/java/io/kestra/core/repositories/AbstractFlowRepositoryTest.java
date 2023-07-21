@@ -16,7 +16,7 @@ import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -131,10 +131,10 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(
-                Bash.builder()
-                    .id("id")
-                    .type(Bash.class.getName())
-                    .commands(Collections.singletonList("echo 1").toArray(new String[0]))
+                Log.builder()
+                    .id(IdUtils.create())
+                    .type(Log.class.getName())
+                    .message("Hello World")
                     .build()
             ))
             .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))

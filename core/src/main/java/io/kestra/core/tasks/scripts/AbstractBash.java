@@ -33,6 +33,7 @@ import static io.kestra.core.utils.Rethrow.*;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Deprecated
 abstract public class AbstractBash extends Task {
     @Builder.Default
     @Schema(

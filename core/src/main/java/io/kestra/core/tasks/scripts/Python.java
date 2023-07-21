@@ -27,7 +27,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @NoArgsConstructor
 @Schema(
     title = "Execute a Python script",
-    description = "With the Python task, you can execute a full Python script.\n" +
+    description = "This task is deprecated, please use the io.kestra.plugin.scripts.python.Script or io.kestra.plugin.scripts.python.Commands task instead.\n\n" +
+        "With the Python task, you can execute a full Python script.\n" +
         "The task will create a fresh `virtualenv` for every tasks and allows to install some Python package define in `requirements` property.\n" +
         "\n" +
         "By convention, you need to define at least a `main.py` files in `inputFiles` that will be the script used.\n" +
@@ -43,7 +44,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
         "Kestra.counter('count', 1, {'tag1': 'i', 'tag2': 'win'})\n" +
         "Kestra.timer('timer1', lambda: time.sleep(1), {'tag1': 'i', 'tag2': 'lost'})\n" +
         "Kestra.timer('timer2', 2.12, {'tag1': 'i', 'tag2': 'destroy'})\n" +
-        "```"
+        "```",
+    deprecated = true
 )
 @Plugin(
     examples = {
@@ -84,6 +86,7 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
     }
 )
 @Slf4j
+@Deprecated
 public class Python extends AbstractPython implements RunnableTask<ScriptOutput> {
     @Schema(
         title = "The commands to run",

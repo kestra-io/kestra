@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Test;
 
@@ -46,10 +46,10 @@ class FlowWithSourceTest {
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .tasks(List.of(
-                Bash.builder()
+                Log.builder()
                     .id(IdUtils.create())
-                    .type(Return.class.getName())
-                    .commands(new String[]{"timeout 1 bash -c 'cat < /dev/null > /dev/tcp/{{ inputs.host }}/{{ inputs.port }}'", "echo $?"})
+                    .type(Log.class.getName())
+                    .message("Hello World")
                     .build()
             ))
             .triggers(List.of(Schedule.builder().id("schedule").cron("0 1 9 * * *").build()));
@@ -60,8 +60,7 @@ class FlowWithSourceTest {
 
         String source = flow.getSource();
 
-        assertThat(source, containsString("  - \"timeout "));
-        assertThat(source, containsString("  - echo"));
+        assertThat(source, containsString("message: Hello World"));
         assertThat(source, containsString("  cron: 0 1 9 * * *"));
     }
 }

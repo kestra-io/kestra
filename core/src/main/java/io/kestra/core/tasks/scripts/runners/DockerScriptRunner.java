@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Deprecated
 public class DockerScriptRunner implements ScriptRunnerInterface {
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
 

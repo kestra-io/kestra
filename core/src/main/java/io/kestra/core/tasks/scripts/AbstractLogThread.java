@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated
 public abstract class AbstractLogThread extends Thread {
     private final InputStream inputStream;
     private int logsCount = 0;

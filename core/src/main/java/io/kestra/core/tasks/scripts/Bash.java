@@ -25,7 +25,9 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a Bash script, command or set of commands."
+    title = "Execute a Bash script, command or set of commands.",
+    description = "This task is deprecated, please use the io.kestra.plugin.scripts.shell.Script or io.kestra.plugin.scripts.shell.Commands task instead.",
+    deprecated = true
 )
 @Plugin(
     examples = {
@@ -103,6 +105,7 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
         )
     }
 )
+@Deprecated
 public class Bash extends AbstractBash implements RunnableTask<ScriptOutput> {
     @Schema(
         title = "The commands to run",

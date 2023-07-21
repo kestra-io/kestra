@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 
 @Builder
 @Getter
+@Deprecated
 public class ScriptOutput implements io.kestra.core.models.tasks.Output {
     @Schema(
         title = "The value extract from output of the commands"

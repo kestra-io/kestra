@@ -77,7 +77,7 @@
                     v-model="inputs[input.name]"
                 />
 
-                <small v-if="input.description" class="text-muted">{{ input.description }}</small>
+                <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
             </el-form-item>
             <el-form-item
                 :label="$t('execution labels')"
@@ -119,6 +119,7 @@
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
+    import Markdown from "../layout/Markdown.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {

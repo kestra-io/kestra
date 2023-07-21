@@ -24,6 +24,10 @@
                 type: Boolean,
                 default: false,
             },
+            fontSizeVar: {
+                type: String,
+                default: "font-size-sm"
+            }
         },
         emits: ["rendered"],
         computed: {
@@ -41,6 +45,9 @@
 
                 return outHtml;
             },
+            fontSizeCss() {
+                return `var(--${this.fontSizeVar})`;
+            }
         },
     };
 </script>
@@ -71,7 +78,7 @@
         }
 
 
-        font-size: var(--font-size-sm);
+        font-size: v-bind(fontSizeCss);
 
         a.header-anchor {
             color: var(--bs-gray-600);

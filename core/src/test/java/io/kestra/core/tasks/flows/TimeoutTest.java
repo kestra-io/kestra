@@ -48,7 +48,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
             .tasks(Collections.singletonList(Sleep.builder()
                 .id("test")
                 .type(Sleep.class.getName())
-                .duration(100L)
+                .duration(100000L)
                 .timeout(Duration.ofNanos(100000))
                 .build()))
             .build();

@@ -27,8 +27,8 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow a list of task to fail",
-    description = "If any child tasks failed, the flow will stop executing child tasks, but will continue on the main flow execution."
+    title = "Allow a list of tasks to fail without stopping the execution of downstream tasks in the flow.",
+    description = "If any child task of the `AllowFailure` task fails, the flow will stop executing this block of tasks (i.e. the next tasks in the `AllowFailure` block will no longer be executed), but the flow execution of the tasks, following the `AllowFailure` task, will continue."
 )
 @Plugin(
     examples = {

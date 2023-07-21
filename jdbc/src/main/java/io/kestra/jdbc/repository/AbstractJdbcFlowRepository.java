@@ -83,7 +83,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     from = context
                         .select(field("value", String.class))
                         .from(jdbcRepository.getTable())
-                        .where(field("namespace").eq(namespace))
+                        .where(this.revisionDefaultFilter())
+                        .and(field("namespace").eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(revision.get()));
                 } else {
@@ -97,6 +98,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 return this.jdbcRepository.fetchOne(from);
             });
+    }
+
+    protected Condition revisionDefaultFilter() {
+        return DSL.trueCondition();
     }
 
     @Override
@@ -113,7 +118,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             field("value", String.class)
                         )
                         .from(jdbcRepository.getTable())
-                        .where(field("namespace").eq(namespace))
+                        .where(this.revisionDefaultFilter())
+                        .and(field("namespace").eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(integer)))
                     .orElseGet(() -> context
@@ -150,7 +156,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         field("value", String.class)
                     )
                     .from(jdbcRepository.getTable())
-                    .where(field("namespace", String.class).eq(namespace))
+                    .where(this.revisionDefaultFilter())
+                    .and(field("namespace", String.class).eq(namespace))
                     .and(field("id", String.class).eq(id))
                     .orderBy(field("revision", Integer.class).asc());
 

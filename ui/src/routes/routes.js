@@ -16,6 +16,7 @@ import FlowCreate from "../components/flows/FlowCreate.vue";
 import FlowMetrics from "../components/flows/FlowMetrics.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
+import Admin from "override/components/admin/Admin.vue";
 
 export default [
     //Flows
@@ -52,6 +53,9 @@ export default [
 
     //Settings
     {name: "settings", path: "/settings", component: Settings},
+
+    //Admin
+    {name: "admin", path: "/admin/:tab?", component: Admin},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:pathMatch(.*)", component: Errors, props: {code: 404}},

@@ -1,0 +1,1 @@
+ALTER TABLE triggers ADD FULLTEXT ix_fulltext (namespace, flow_id, trigger_id, execution_id);

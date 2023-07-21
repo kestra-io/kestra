@@ -13,6 +13,11 @@ class Me {
     isAllowed(permission, action, namespace) {
         return true;
     }
+
+    // eslint-disable-next-line no-unused-vars
+    isAllowedGlobal(permission, action) {
+        return true;
+    }
 }
 
 export default {

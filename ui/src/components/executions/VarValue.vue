@@ -31,12 +31,7 @@
             },
             itemUrl(value) {
                 return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
-            },
-            download(value) {
-                const url = this.itemUrl(value);
-                window.open(url, "_blank");
             }
-
         },
         created() {
             if (this.isFile(this.value)) {

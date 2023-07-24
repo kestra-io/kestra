@@ -7,6 +7,7 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.repositories.WorkerInstanceRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -41,6 +42,9 @@ public class MiscController {
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
 
+    @Inject
+    TenantService tenantService;
+
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
 
@@ -70,6 +74,7 @@ public class MiscController {
     public Configuration configuration() {
         Configuration.ConfigurationBuilder builder = Configuration
             .builder()
+            .tenantId(tenantService.resolveTenant())
             .uuid(instanceService.fetch())
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
@@ -103,6 +108,8 @@ public class MiscController {
     @Value
     @Builder(toBuilder = true)
     public static class Configuration {
+        String tenantId;
+
         String uuid;
 
         String version;

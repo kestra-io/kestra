@@ -1,14 +1,11 @@
 <template>
-    <el-link
-        v-if="isFile(value)"
-        :icon="Download"
-        target="_blank"
-        type="primary"
-        :href="itemUrl(value)"
-    >
+    <a class="el-button el-button--primary mt-2 mb-2 " v-if="isFile(value)" :href="itemUrl(value)" target="_blank">
+        <Download />
+        &nbsp;
         {{ $t('download') }}
+        &nbsp;
         <span v-if="humanSize">({{ humanSize }})</span>
-    </el-link>
+    </a>
     <span v-else>
         {{ value }}
     </span>
@@ -34,8 +31,7 @@
             },
             itemUrl(value) {
                 return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
-            },
-
+            }
         },
         created() {
             if (this.isFile(this.value)) {

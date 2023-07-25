@@ -178,4 +178,14 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(runContext.metrics().get(3).getValue(), is(Duration.ofSeconds(123)));
         assertThat(runContext.metrics().get(3).getTags().size(), is(1));
     }
+
+    @Test
+    void fileExtension() {
+        RunContext runContext = runContextFactory.of();
+
+        assertThat(runContext.fileExtension(null), nullValue());
+        assertThat(runContext.fileExtension(""), nullValue());
+        assertThat(runContext.fileExtension("/file/hello"), nullValue());
+        assertThat(runContext.fileExtension("/file/hello.txt"), is(".txt"));
+    }
 }

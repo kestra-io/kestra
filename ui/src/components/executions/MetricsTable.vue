@@ -128,6 +128,8 @@
 
                 if (this.internalSort) {
                     params.sort = this.internalSort;
+                } else {
+                    params.sort = "name:asc";
                 }
 
                 this.$store.dispatch("execution/loadMetrics", {

@@ -86,28 +86,9 @@
                 </template>
             </el-table-column>
 
-            <el-table-column :label="$t('preview')">
+            <el-table-column :label="$t('preview')" align="center">
                 <template #default="scope">
-                    <div v-if="scope.row.output.startsWith('kestra:///')">
-                        <el-button @click="getFilePreview(scope.row.output)">
-                            {{ $t('open') }}
-                        </el-button>
-                        <el-drawer
-                            v-if="selectedPreview === scope.row.output"
-                            v-model="isPreviewOpen"
-                            destroy-on-close
-                            lock-scroll
-                            size=""
-                            :append-to-body="true"
-                        >
-                            <template #header>
-                                <h3>{{ $t('preview') }}</h3>
-                            </template>
-                            <template #default>
-                                <FilePreview :content="filePreview.content" :extension="filePreview.extension" v-if="filePreview" />
-                            </template>
-                        </el-drawer>
-                    </div>
+                    <FilePreview v-if="scope.row.output.startsWith('kestra:///')" :value="scope.row.output" :execution-id="execution.id" />
                 </template>
             </el-table-column>
         </el-table>
@@ -155,9 +136,6 @@
                 if (this.$route.query.search !== this.filter) {
                     this.filter = this.$route.query.search || "";
                 }
-            },
-            filePreview() {
-                this.isPreviewOpen = true;
             }
         },
         methods: {
@@ -203,17 +181,10 @@
                         page: item.page
                     }
                 });
-            },
-            getFilePreview(path) {
-                this.$store.dispatch("execution/filePreview", {
-                    executionId: this.execution.id,
-                    path: path
-                })
-                this.selectedPreview = path
             }
         },
         computed: {
-            ...mapState("execution", ["execution","filePreview"]),
+            ...mapState("execution", ["execution", "filePreview"]),
             selectOptions() {
                 const options = {};
                 for (const taskRun of this.execution.taskRunList || []) {

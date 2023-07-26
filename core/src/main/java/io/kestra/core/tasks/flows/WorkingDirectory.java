@@ -166,6 +166,7 @@ public class WorkingDirectory extends Sequential {
                 .flowId(parent.getFlowId())
                 .taskId(task.getId())
                 .parentTaskRunId(parent.getId())
+                .value(parent.getValue()) // copy parent value so that it can be used with existing flowable tasks easily
                 .state(new State())
                 .build()
             )

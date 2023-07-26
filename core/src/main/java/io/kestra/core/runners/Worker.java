@@ -142,9 +142,11 @@ public class Worker implements Runnable, AutoCloseable {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
-            RunContext runContext = workerTask.getRunContext();
+            RunContext runContext = workerTask.getRunContext().forWorker(applicationContext, workerTask);
 
             try {
+                workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
+
                 for (Task currentTask : workingDirectory.getTasks()) {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
@@ -161,6 +163,8 @@ public class Worker implements Runnable, AutoCloseable {
 
                     runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
                 }
+
+                workingDirectory.postExecuteTasks(runContext, workerTask.getTaskRun());
             } finally {
                 runContext.cleanup();
             }

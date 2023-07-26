@@ -11,7 +11,7 @@
                     <h2 class="blueprint-title align-self-center">
                         {{ blueprint.title }}
                     </h2>
-                    <div class="ms-auto align-self-center">
+                    <div v-if="userCanCreateFlow" class="ms-auto align-self-center">
                         <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
                             <el-button size="large" type="primary" v-if="!embed">
                                 {{ $t('use') }}
@@ -93,6 +93,9 @@
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Markdown from "../../layout/Markdown.vue";
+    import {mapState} from "vuex";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
 
     export default {
@@ -158,6 +161,10 @@
             }
         },
         computed: {
+            ...mapState("auth", ["user"]),
+            userCanCreateFlow() {
+                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+            },
             parsedFlow() {
                 return {
                     ...YamlUtils.parse(this.blueprint.flow),

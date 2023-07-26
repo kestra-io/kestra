@@ -56,7 +56,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else size="large" text bg @click="blueprintToEditor(blueprint.id)">
+                            <el-button v-else-if="userCanCreateFlow" size="large" text bg @click="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -76,6 +76,9 @@
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import RestoreUrl from "../../../../mixins/restoreUrl";
+    import permission from "../../../../models/permission";
+    import action from "../../../../models/action";
+    import {mapState} from "vuex";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -196,6 +199,12 @@
                 this.ready = false;
                 this.selectedTag = 0;
                 this.load(this.onDataLoaded);
+            }
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            userCanCreateFlow() {
+                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             }
         },
         watch: {

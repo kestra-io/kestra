@@ -19,9 +19,9 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
 class LocalStorageTest {
@@ -44,8 +44,12 @@ class LocalStorageTest {
 
         this.putFile(resource, "/" + prefix + "/storage/get.yml");
 
-        InputStream get = storageInterface.get(new URI("/" + prefix + "/storage/get.yml"));
+        URI item = new URI("/" + prefix + "/storage/get.yml");
+        InputStream get = storageInterface.get(item);
         assertThat(CharStreams.toString(new InputStreamReader(get)), is(content));
+        assertTrue(storageInterface.exists(item));
+        assertThat(storageInterface.size(item), is((long) content.length()));
+        assertThat(storageInterface.lastModifiedTime(item), notNullValue());
 
         InputStream getScheme = storageInterface.get(new URI("kestra:///" + prefix + "/storage/get.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(getScheme)), is(content));

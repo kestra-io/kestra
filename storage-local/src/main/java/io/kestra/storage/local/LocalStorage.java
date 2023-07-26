@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,6 +58,11 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
+    public boolean exists(URI uri) {
+        return Files.exists(getPath(uri));
+    }
+
+    @Override
     public Long size(URI uri) throws IOException {
         try {
             return Files.size(getPath(URI.create(uri.getPath())));
@@ -65,6 +71,12 @@ public class LocalStorage implements StorageInterface {
         } catch (IOException e) {
             throw new IOException("Unable to find file at '" + uri + "' with message '" + e.getMessage() + "'");
         }
+    }
+
+    @Override
+    public Long lastModifiedTime(URI uri) throws IOException {
+        FileTime lastModifiedTime = Files.getLastModifiedTime(getPath(uri));
+        return lastModifiedTime.toMillis();
     }
 
     @Override

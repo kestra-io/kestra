@@ -29,8 +29,26 @@ public interface StorageInterface {
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(URI uri) throws IOException;
 
+    /**
+     * Whether the uri points to a file/object that exist in the internal storage.
+     *
+     * @param uri the URI of the file/object in the internal storage.
+     * @return true if the uri points to a file/object that exist in the internal storage.
+     */
+    default boolean exists(URI uri) {
+        try {
+            get(uri);
+            return true;
+        } catch (IOException ieo) {
+            return false;
+        }
+    }
+
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     Long size(URI uri) throws IOException;
+
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    Long lastModifiedTime(URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
     URI put(URI uri, InputStream data) throws IOException;
@@ -94,6 +112,29 @@ public interface StorageInterface {
         if (name != null) {
             paths.add(name);
         }
+
+        if (value != null) {
+            paths.add(Hashing
+                .goodFastHash(64)
+                .hashString(value, Charsets.UTF_8)
+                .toString()
+            );
+        }
+
+        return String.join("/", paths);
+    }
+
+    default String cachePrefix(String namespace, String flowId, String taskId, @Nullable String value) {
+        String namespacePrefix = namespace.replace(".", "/");
+
+        ArrayList<String> paths = new ArrayList<>(
+            List.of(
+                namespacePrefix,
+                Slugify.of(flowId),
+                Slugify.of(taskId),
+                "cache"
+            )
+        );
 
         if (value != null) {
             paths.add(Hashing

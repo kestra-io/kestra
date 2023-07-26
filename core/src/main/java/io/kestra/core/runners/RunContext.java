@@ -588,6 +588,51 @@ public class RunContext {
         return this.storageInterface.delete(resolve);
     }
 
+    /**
+     * Get from the internal storage the cache file corresponding to this task.
+     * If the cache file didn't exist, an empty Optional is returned.
+     *
+     * @param namespace the flow namespace
+     * @param flowId the flow identifier
+     * @param taskId the task identifier
+     * @param value optional, the task run value
+     *
+     * @return an Optional with the cache input stream or empty.
+     */
+    public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.get(uri)) : Optional.empty();
+    }
+
+    public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.lastModifiedTime(uri)) : Optional.empty();
+    }
+
+    /**
+     * Put into the internal storage the cache file corresponding to this task.
+     *
+     * @param file the cache as a ZIP archive
+     * @param namespace the flow namespace
+     * @param flowId the flow identifier
+     * @param taskId the task identifier
+     * @param value optional, the task run value
+     *
+     * @return the URI of the file inside the internal storage.
+     */
+    public URI putTaskCacheFile(File file, String namespace, String flowId, String taskId, String value) throws IOException {
+        return this.putTempFile(
+            file,
+            "/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value),
+            "cache.zip"
+        );
+    }
+
+    public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.delete(uri)) : Optional.empty();
+    }
+
     public List<URI> purgeStorageExecution() throws IOException {
         return this.storageInterface.deleteByPrefix(this.storageExecutionPrefix);
     }

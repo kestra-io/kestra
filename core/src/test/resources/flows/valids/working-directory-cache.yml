@@ -1,0 +1,16 @@
+id: working-directory-cache
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    cache:
+      ttl: PT5m
+      patterns:
+        - "*.txt"
+    tasks:
+      - id: inputFiles
+        type: io.kestra.core.tasks.storages.LocalFiles
+        inputs:
+          hello.txt: |
+            HELLO WORLD

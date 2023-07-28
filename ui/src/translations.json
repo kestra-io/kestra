@@ -465,7 +465,16 @@
     "cannot swap tasks": "Can't swap the tasks",
     "dependency task": "Task {taskId} is a dependency of another task",
     "administration": "Administration",
-    "evaluation lock date": "Evaluation lock date"
+    "evaluation lock date": "Evaluation lock date",
+    "unlock trigger": {
+      "tooltip": {
+        "execution": "There is an execution running for this trigger",
+        "evaluation": "The trigger is currently in evaluation"
+      },
+      "confirmation": "Are you sure you want to unlock the trigger ?",
+      "warning": "It could lead to concurrent executions for the same trigger and should be considered as a last resort option.",
+      "button": "Unlock trigger"
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -935,6 +944,15 @@
     "cannot swap tasks": "Impossible de permuter les tâches",
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
     "administration": "Administration",
-    "evaluation lock date": "Date verrou évaluation"
+    "evaluation lock date": "Date verrou évaluation",
+    "unlock trigger": {
+      "tooltip": {
+        "execution": "Il existe une exécution en cours pour ce trigger",
+        "evaluation": "Le déclencheur est en cours d'évaluation"
+      },
+      "confirmation": "Êtes vous sûr(e) de vouloir débloquer le déclencheur ?",
+      "warning": "Cela pourrait amener à de multiples exécutions concurrentes pour le même déclencheur et devrait être considéré comme une solution de dernier recours.",
+      "button": "Débloquer le déclencheur"
+    }
   }
 }

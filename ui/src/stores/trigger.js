@@ -10,6 +10,9 @@ export default {
             }).then(response => {
                 return response.data;
             })
+        },
+        async unlock({commit}, options) {
+            return (await this.$http.post(`/api/v1/triggers/${options.namespace}/${options.flowId}/${options.triggerId}/unlock`)).data;
         }
     }
 }

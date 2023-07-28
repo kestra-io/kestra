@@ -108,11 +108,11 @@ export default (callback, store, router) => {
 
             // Authentication expired
             if (errorResponse.response.status === 401 &&
-                store.getters["auth/isLogged"]) {
+                store.getters["auth/isLogged"] &&
+                !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")) {
                 document.body.classList.add("login")
 
                 store.dispatch("core/isUnsaved", false);
-                store.commit("auth/setUser", undefined);
                 store.commit("layout/setTopNavbar", undefined);
                 router.push({
                     name: "login",
@@ -133,11 +133,6 @@ export default (callback, store, router) => {
                     content: errorResponse.response.data,
                     variant: "error"
                 })
-
-                if(errorResponse.response.status === 401 &&
-                    store.getters["auth/isLogged"]){
-                    store.commit("auth/setExpired", true);
-                }
 
                 return Promise.reject(errorResponse);
             }

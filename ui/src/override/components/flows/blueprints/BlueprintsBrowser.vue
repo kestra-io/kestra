@@ -17,7 +17,7 @@
                         {{ $t("all tags") }}
                     </el-radio-button>
                     <el-radio-button
-                        v-for="tag in Object.values(tags)"
+                        v-for="tag in Object.values(tags || {})"
                         :key="tag.id"
                         :label="tag.id"
                         class="hoverable"

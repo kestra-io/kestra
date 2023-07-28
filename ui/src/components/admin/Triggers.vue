@@ -86,13 +86,41 @@
                                 {{ scope.row.evaluateRunningDate ? $filters.date(scope.row.evaluateRunningDate, "iso") : "" }}
                             </template>
                         </el-table-column>
+                        <el-table-column column-key="action" class-name="row-action">
+                            <template #default="scope">
+                                <el-button text v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                    <kicon
+                                        :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
+                                        placement="left" @click="triggerToUnlock = scope.row">
+                                        <lock-off />
+                                    </kicon>
+                                </el-button>
+                            </template>
+                        </el-table-column>
                     </el-table>
                 </template>
             </data-table>
+
+            <el-dialog v-model="triggerToUnlock" destroy-on-close :append-to-body="true">
+                <template #header>
+                    <span v-html="$t('unlock trigger.confirmation')" />
+                </template>
+                {{ $t("unlock trigger.warning") }}
+                <template #footer>
+                    <el-form-item class="submit">
+                        <el-button :icon="LockOff" @click="unlock" type="primary">
+                            {{ $t('unlock trigger.button') }}
+                        </el-button>
+                    </el-form-item>
+                </template>
+            </el-dialog>
         </div>
     </div>
 </template>
-
+<script setup>
+    import LockOff from "vue-material-design-icons/LockOff.vue";
+    import Kicon from "../Kicon.vue";
+</script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import RouteContext from "../../mixins/routeContext";
@@ -115,7 +143,8 @@
         data() {
             return {
                 triggers: undefined,
-                total: undefined
+                total: undefined,
+                triggerToUnlock: undefined
             };
         },
         methods: {
@@ -131,8 +160,29 @@
                     this.total = triggersData.total;
                     callback();
                 });
+            },
+            async unlock() {
+                const namespace = this.triggerToUnlock.namespace;
+                const flowId = this.triggerToUnlock.flowId;
+                const triggerId = this.triggerToUnlock.triggerId;
+                const unlockedTrigger = await this.$store.dispatch("trigger/unlock", {
+                    namespace: namespace,
+                    flowId: flowId,
+                    triggerId: triggerId
+                });
+
+                this.$message({
+                    message: this.$t("trigger unlocked"),
+                    type: "success"
+                });
+
+                const triggerIdx = this.triggers.findIndex(trigger => trigger.namespace === namespace && trigger.flowId === flowId && trigger.triggerId === triggerId);
+                if (triggerIdx !== -1) {
+                    this.triggers[triggerIdx] = unlockedTrigger;
+                }
+
+                this.triggerToUnlock = undefined;
             }
         }
     };
 </script>
-

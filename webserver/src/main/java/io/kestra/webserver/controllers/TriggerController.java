@@ -46,7 +46,7 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/{namespace}/{flowId}/{triggerId}/unlock")
+    @Post(uri = "/{namespace}/{flowId}/{triggerId}/unlock")
     @Operation(tags = {"Triggers"}, summary = "Unlock a trigger")
     public HttpResponse<Trigger> unlock(
         @Parameter(description = "The namespace") @PathVariable String namespace,

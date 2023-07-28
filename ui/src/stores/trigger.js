@@ -12,7 +12,7 @@ export default {
             })
         },
         async unlock({commit}, options) {
-            return (await this.$http.put(`/api/v1/triggers/${options.namespace}/${options.flowId}/${options.triggerId}/unlock`)).data;
+            return (await this.$http.post(`/api/v1/triggers/${options.namespace}/${options.flowId}/${options.triggerId}/unlock`)).data;
         }
     }
 }

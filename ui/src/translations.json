@@ -468,7 +468,7 @@
     "evaluation lock date": "Evaluation lock date",
     "unlock trigger": {
       "tooltip": {
-        "execution": "The trigger is currently in an execution",
+        "execution": "There is an execution running for this trigger",
         "evaluation": "The trigger is currently in evaluation"
       },
       "confirmation": "Are you sure you want to unlock the trigger ?",
@@ -947,7 +947,7 @@
     "evaluation lock date": "Date verrou évaluation",
     "unlock trigger": {
       "tooltip": {
-        "execution": "Le déclencheur est en cours d'exécution",
+        "execution": "Il existe une exécution en cours pour ce trigger",
         "evaluation": "Le déclencheur est en cours d'évaluation"
       },
       "confirmation": "Êtes vous sûr(e) de vouloir débloquer le déclencheur ?",

@@ -221,7 +221,7 @@ public class FlowController {
     ) throws ConstraintViolationException {
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
+        return HttpResponse.ok(create(flowParsed, flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -230,7 +230,11 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
-        return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
+        return HttpResponse.ok(create(flow, flow.generateSource()).toFlow());
+    }
+
+    protected FlowWithSource create(Flow flow, String source) {
+        return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -348,7 +352,7 @@ public class FlowController {
                 if (existingFlow.isPresent()) {
                     return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 } else {
-                    return flowRepository.create(flow, flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
+                    return create(flow, flowWithSource.getSource());
                 }
             })
             .toList();
@@ -371,7 +375,7 @@ public class FlowController {
         }
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
+        return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
@@ -387,7 +391,11 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
+        return HttpResponse.ok(update(flow, existingFlow.get(), flow.generateSource()).toFlow());
+    }
+
+    protected FlowWithSource update(Flow current, Flow previous, String source) {
+        return flowRepository.update(current, previous, source, taskDefaultService.injectDefaults(current));
     }
 
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)

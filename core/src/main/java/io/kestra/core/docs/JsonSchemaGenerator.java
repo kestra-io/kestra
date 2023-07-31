@@ -426,10 +426,10 @@ public class JsonSchemaGenerator {
 
         this.build(builder,false);
 
-        // base is passed, we don't return base properties
+        // we don't return base properties unless specified with @PluginProperty
         builder
             .forFields()
-            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
+            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getAnnotation(PluginProperty.class) == null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 

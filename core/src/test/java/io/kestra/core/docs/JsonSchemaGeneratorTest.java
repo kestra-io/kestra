@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -121,6 +122,13 @@ class JsonSchemaGeneratorTest {
             var allOf = (List<Object>) task.get("allOf");
 
             assertThat(allOf.size(), is(1));
+
+            Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
+
+            assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
+                Matchers.aMapWithSize(1),
+                hasKey("conditions")
+            ));
         });
     }
 

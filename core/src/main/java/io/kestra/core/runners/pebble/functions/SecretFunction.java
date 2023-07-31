@@ -30,7 +30,7 @@ public class SecretFunction implements Function {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
 
         try {
-            return secretService.findSecret(flow.get("namespace"), key);
+            return secretService.findSecret(flow.get("tenantId"), flow.get("namespace"), key);
         } catch (IllegalVariableEvaluationException | IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }

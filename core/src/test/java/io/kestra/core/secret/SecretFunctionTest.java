@@ -34,7 +34,7 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     void getUnknownSecret() {
         IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
-            secretService.findSecret(null, "unknown_secret_key")
+            secretService.findSecret(null, null, "unknown_secret_key")
         );
 
         assertThat(exception.getMessage(), containsString("Unable to find secret 'unknown_secret_key'"));

@@ -36,7 +36,7 @@ public class SecretService {
             ));
     }
 
-    public String findSecret(String namespace, String key) throws IOException, IllegalVariableEvaluationException {
+    public String findSecret(String tenantId, String namespace, String key) throws IOException, IllegalVariableEvaluationException {
         return Optional
             .ofNullable(decodedSecrets.get(key.toUpperCase()))
             .orElseThrow(() -> new IllegalVariableEvaluationException("Unable to find secret '" + key + "'. " +

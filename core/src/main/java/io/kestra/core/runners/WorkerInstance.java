@@ -18,6 +18,8 @@ public class WorkerInstance {
 
     @NotNull
     private String hostname;
+    private Integer port;
+    private Integer managementPort;
 
     private String workerGroup;
 

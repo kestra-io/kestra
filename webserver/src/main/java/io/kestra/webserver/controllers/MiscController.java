@@ -52,6 +52,7 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
+            .isWorkerInstanceEnabled(false)
             .build();
     }
 
@@ -63,7 +64,7 @@ public class MiscController {
     }
 
     @Value
-    @Builder
+    @Builder(toBuilder = true)
     public static class Configuration {
         String uuid;
 
@@ -74,5 +75,8 @@ public class MiscController {
 
         @JsonInclude
         Boolean isAnonymousUsageEnabled;
+
+        @JsonInclude
+        Boolean isWorkerInstanceEnabled;
     }
 }

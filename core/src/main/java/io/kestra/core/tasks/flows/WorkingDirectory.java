@@ -88,56 +88,56 @@ import javax.validation.constraints.NotNull;
             full = true,
             title = "Add input and output files within a Working Directory to use them in a Python script",
             code = """
-    id: apiJSONtoMongoDB
-    namespace: dev
+                id: apiJSONtoMongoDB
+                namespace: dev
 
-    tasks:
-    - id: wdir
-        type: io.kestra.core.tasks.flows.WorkingDirectory
-        tasks:
-        - id: demoSQL
-            type: io.kestra.core.tasks.storages.LocalFiles
-            inputs:
-            query.sql: |
-                SELECT sum(total) as total, avg(quantity) as avg_quantity
-                FROM sales;
+                tasks:
+                - id: wdir
+                    type: io.kestra.core.tasks.flows.WorkingDirectory
+                    tasks:
+                    - id: demoSQL
+                        type: io.kestra.core.tasks.storages.LocalFiles
+                        inputs:
+                        query.sql: |
+                            SELECT sum(total) as total, avg(quantity) as avg_quantity
+                            FROM sales;
 
-        - id: inlineScript
-            type: io.kestra.plugin.scripts.python.Script
-            runner: DOCKER
-            docker:
-            image: python:3.11-slim
-            beforeCommands:
-            - pip install requests kestra > /dev/null
-            warningOnStdErr: false
-            script: |
-            import requests
-            import json
-            from kestra import Kestra
+                    - id: inlineScript
+                        type: io.kestra.plugin.scripts.python.Script
+                        runner: DOCKER
+                        docker:
+                        image: python:3.11-slim
+                        beforeCommands:
+                        - pip install requests kestra > /dev/null
+                        warningOnStdErr: false
+                        script: |
+                        import requests
+                        import json
+                        from kestra import Kestra
 
-            with open('query.sql', 'r') as input_file:
-                sql = input_file.read()
+                        with open('query.sql', 'r') as input_file:
+                            sql = input_file.read()
 
-            response = requests.get('https://api.github.com')
-            data = response.json()
+                        response = requests.get('https://api.github.com')
+                        data = response.json()
 
-            with open('output.json', 'w') as output_file:
-                json.dump(data, output_file)
+                        with open('output.json', 'w') as output_file:
+                            json.dump(data, output_file)
 
-            Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
+                        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-        - id: jsonFiles
-            type: io.kestra.core.tasks.storages.LocalFiles
-            outputs:
-            - output.json
+                    - id: jsonFiles
+                        type: io.kestra.core.tasks.storages.LocalFiles
+                        outputs:
+                        - output.json
 
-    - id: loadToMongoDB
-        type: io.kestra.plugin.mongodb.Load
-        connection:
-        uri: mongodb://host.docker.internal:27017/
-        database: local
-        collection: github
-        from: "{{outputs.jsonFiles.uris['output.json']}}"
+                - id: loadToMongoDB
+                    type: io.kestra.plugin.mongodb.Load
+                    connection:
+                    uri: mongodb://host.docker.internal:27017/
+                    database: local
+                    collection: github
+                    from: "{{outputs.jsonFiles.uris['output.json']}}"
                 """
         ),
         @Example(
@@ -160,6 +160,28 @@ import javax.validation.constraints.NotNull;
                 "        - |",
                 "          echo '::{\"outputs\": {\"stay\":\"'$(cat {{ workingDir }}/stay.txt)'\"}}::'"
             }
+        ),
+        @Example(
+            full = true,
+            title = "A working directory with a cache of the node_modules directory",
+            code = """
+                id: node-with-cache
+                namespace: dev
+                tasks:
+                  - id: working-dir
+                    type: io.kestra.core.tasks.flows.WorkingDirectory
+                    cache:
+                      patterns:
+                        - node_modules/**
+                      ttl: PT1H
+                    tasks:
+                    - id: script
+                      type: io.kestra.plugin.scripts.node.Script
+                      beforeCommands:
+                        - npm install colors
+                      script: |
+                        const colors = require("colors");
+                        console.log(colors.red("Hello"));"""
         )
     }
 )

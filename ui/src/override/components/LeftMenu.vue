@@ -17,7 +17,7 @@
         </template>
 
         <template #footer>
-            <span class="version">{{ configs ? configs.version : '' }}</span>
+            <span class="version">{{ configs.version }}</span>
         </template>
 
         <template #toggle-icon>
@@ -128,7 +128,7 @@
                             element: TimelineTextOutline,
                             class: "menu-icon"
                         },
-                        hidden: !(this.configs && this.configs.isTaskRunEnabled)
+                        hidden: !this.configs.isTaskRunEnabled
                     },
                     {
                         href: "/logs",
@@ -243,10 +243,7 @@
         computed: {
             ...mapState("misc", ["configs"]),
             menu() {
-                if (this.configs) {
-                    return this.disabledCurrentRoute(this.generateMenu());
-                }
-                return [];
+                return this.disabledCurrentRoute(this.generateMenu());
             }
         }
     };

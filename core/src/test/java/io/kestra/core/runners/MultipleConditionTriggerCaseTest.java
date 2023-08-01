@@ -115,7 +115,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         // trigger was not done
-        countDownLatch.await(5, TimeUnit.SECONDS);
+        countDownLatch.await(10, TimeUnit.SECONDS);
         assertThat(ended.size(), is(2));
     }
 }

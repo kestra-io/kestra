@@ -9,6 +9,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
@@ -158,6 +159,7 @@ public class PluginResolver implements AutoCloseable {
         if (watchService != null) {
             watchService.close();
             watcherThread.shutdown();
+            watcherThread.awaitTermination(1, TimeUnit.MINUTES);
         }
     }
 }

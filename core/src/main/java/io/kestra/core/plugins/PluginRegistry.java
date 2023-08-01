@@ -7,22 +7,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@AllArgsConstructor
 @Getter
 @EqualsAndHashCode
 @ToString
 @Singleton
 public class PluginRegistry {
-    private List<RegisteredPlugin> plugins;
-    private Map<String, RegisteredPlugin> pluginsByClass;
+    private final List<RegisteredPlugin> plugins = new ArrayList<>();
+    private final Map<String, RegisteredPlugin> pluginsByClass = new HashMap<>();
     @Setter
     private Runnable cacheCleaner;
-
-    public PluginRegistry() {
-        this.plugins = new ArrayList<>();
-        this.pluginsByClass = new HashMap<>();
-    }
-
     public Optional<RegisteredPlugin> find(String name) {
         if (pluginsByClass.containsKey(name)) {
             return Optional.of(pluginsByClass.get(name));

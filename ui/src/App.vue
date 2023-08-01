@@ -1,6 +1,6 @@
 <template>
     <el-config-provider>
-        <left-menu @menu-collapse="onMenuCollapse" />
+        <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main :class="menuCollapsed" v-if="loaded">
             <top-nav-bar :menu-collapsed="menuCollapsed" v-if="displayNavBar" />
@@ -46,6 +46,7 @@
             ...mapState("core", ["message", "error"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("flow", ["overallTotal"]),
+            ...mapGetters("misc", ["configs"]),
             displayNavBar() {
                 if (this.$router) {
                     return this.$route.name !== "welcome";
@@ -54,10 +55,10 @@
                 return true;
             }
         },
-        created() {
+        async created() {
             if (this.created === false) {
+                await this.loadGeneralRessources()
                 this.displayApp()
-                this.loadGeneralRessources()
                 this.initGuidedTour();
             }
         },
@@ -73,7 +74,7 @@
                 document.getElementById("app-container").style.display = "block";
                 this.loaded = true;
             },
-            loadGeneralRessources() {
+            async loadGeneralRessources() {
                 let uid = localStorage.getItem("uid");
                 if (uid === null) {
                     uid = Utils.uid();
@@ -81,19 +82,17 @@
                 }
 
                 this.$store.dispatch("plugin/icons")
-                this.$store.dispatch("misc/loadConfigs")
-                    .then(value => {
-                        this.$store.dispatch("api/events", {
-                            type: "PAGE",
-                            page: pageFromRoute(this.$router.currentRoute.value)
-                        });
+                const config = await this.$store.dispatch("misc/loadConfigs");
+                this.$store.dispatch("api/events", {
+                    type: "PAGE",
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
 
-                        this.$store.dispatch("api/loadFeeds", {
-                            version: value.version,
-                            iid: value.uuid,
-                            uid: uid,
-                        });
-                    })
+                this.$store.dispatch("api/loadFeeds", {
+                    version: config.version,
+                    iid: config.uuid,
+                    uid: uid,
+                });
             },
             initGuidedTour() {
                 this.$store.dispatch("flow/findFlows", {limit: 1})

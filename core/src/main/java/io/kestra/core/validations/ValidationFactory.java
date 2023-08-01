@@ -160,7 +160,12 @@ public class ValidationFactory {
                 return true;
             }
 
-            if(value.getTasks().stream().anyMatch(task -> !(task instanceof RunnableTask<?>))) {
+            if (value.getTasks() == null || value.getTasks().isEmpty()) {
+                context.messageTemplate("The 'tasks' property cannot be empty");
+                return false;
+            }
+
+            if (value.getTasks().stream().anyMatch(task -> !(task instanceof RunnableTask<?>))) {
                 context.messageTemplate("Only runnable tasks are allowed as children of a WorkingDirectory task");
                 return false;
             }

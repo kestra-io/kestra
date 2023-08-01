@@ -96,6 +96,17 @@ class FlowTest {
     }
 
     @Test
+    void workingDirectoryNoTasks() {
+        Flow flow = this.parse("flows/invalids/workingdirectory-no-tasks.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getConstraintViolations().size(), is(2));
+
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: The tasks property cannot be empty"));
+    }
+
+    @Test
     void updateTask() throws InternalException {
         Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
 

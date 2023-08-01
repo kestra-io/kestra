@@ -15,7 +15,7 @@
                 </el-form-item>
                 <el-form-item>
                     <status-filter-buttons
-                        :value="$route.query.state"
+                        :value="Utils.asArray($route.query.state)"
                         @update:model-value="onDataTableValue('state', $event)"
                     />
                 </el-form-item>
@@ -168,6 +168,7 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Utils from "../../utils/utils";
 </script>
 
 <script>

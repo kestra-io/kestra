@@ -12,7 +12,8 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         RestoreQueueCommand.class,
-        FlowListenersRestoreCommand.class
+        FlowListenersRestoreCommand.class,
+        ReindexCommand.class
     }
 )
 @Slf4j

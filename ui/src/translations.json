@@ -474,7 +474,8 @@
       "confirmation": "Are you sure you want to unlock the trigger ?",
       "warning": "It could lead to concurrent executions for the same trigger and should be considered as a last resort option.",
       "button": "Unlock trigger"
-    }
+    },
+    "date format": "Date format"
   },
   "fr": {
     "id": "Identifiant",
@@ -953,6 +954,7 @@
       "confirmation": "Êtes vous sûr(e) de vouloir débloquer le déclencheur ?",
       "warning": "Cela pourrait amener à de multiples exécutions concurrentes pour le même déclencheur et devrait être considéré comme une solution de dernier recours.",
       "button": "Débloquer le déclencheur"
-    }
+    },
+    "date format": "Format de date"
   }
 }

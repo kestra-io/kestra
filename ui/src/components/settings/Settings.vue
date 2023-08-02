@@ -23,6 +23,17 @@
                 </el-select>
             </el-form-item>
 
+            <el-form-item :label="$t('date format')">
+                <el-select :model-value="dateFormat" @update:model-value="onDateFormat">
+                    <el-option
+                        v-for="item in dateFormats"
+                        :key="item.value"
+                        :label="now.format(item.value)"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
             <el-form-item :label="$t('Editor theme')">
                 <el-select :model-value="editorTheme" @update:model-value="onEditorTheme">
                     <el-option
@@ -104,6 +115,7 @@
     import action from "../../models/action";
     import {logDisplayTypes} from "../../utils/constants";
 
+    export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export default {
         mixins: [RouteContext],
         components: {
@@ -117,11 +129,13 @@
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
+                dateFormat: undefined,
                 autofoldTextEditor: undefined,
                 guidedTour: undefined,
                 logDisplay: undefined,
                 editorFontSize: undefined,
-                editorFontFamily: undefined
+                editorFontFamily: undefined,
+                now: this.$moment()
             };
         },
         created() {
@@ -132,6 +146,7 @@
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
+            this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "LLLL";
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
@@ -169,6 +184,11 @@
             onTheme(value) {
                 Utils.switchTheme(value)
                 this.theme = value;
+                this.$toast().saved();
+            },
+            onDateFormat(value) {
+                localStorage.setItem(DATE_FORMAT_STORAGE_KEY, value);
+                this.dateFormat = value;
                 this.$toast().saved();
             },
             onEditorTheme(value) {
@@ -235,6 +255,17 @@
                 return  [
                     {value: "vs", text: "Light"},
                     {value: "dark", text: "Dark"}
+                ]
+            },
+            dateFormats() {
+                return  [
+                    {value: "YYYY-MM-DD"},
+                    {value: "YYYY-MM-DDThh:mm:ssZ"},
+                    {value: "MM/DD/YYYY"},
+                    {value: "DD/MM/YYYY"},
+                    {value: "YYYY/MM/DD"},
+                    {value: "MM/DD/YY"},
+                    {value: "LLLL"}
                 ]
             },
             canReadFlows() {

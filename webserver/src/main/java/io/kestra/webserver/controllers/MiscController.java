@@ -1,7 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.collectors.ExecutionUsage;
+import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
@@ -17,8 +17,6 @@ import jakarta.inject.Inject;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.validation.Valid;
 
 @Slf4j
 @Controller
@@ -57,11 +55,11 @@ public class MiscController {
             .build();
     }
 
-    @Get("/api/v1/execution-usage")
+    @Get("/api/v1/usages")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get execution usage information")
-    public ExecutionUsage executionUsage() {
-        return ExecutionUsage.of(executionRepository);
+    public Usage usages() {
+        return collectorService.metrics();
     }
 
     @Value

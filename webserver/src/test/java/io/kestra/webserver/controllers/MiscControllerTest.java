@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
@@ -31,13 +30,5 @@ class MiscControllerTest extends JdbcH2ControllerTest {
         assertThat(response.getUuid(), notNullValue());
         assertThat(response.getIsTaskRunEnabled(), is(false));
         assertThat(response.getIsAnonymousUsageEnabled(), is(true));
-    }
-
-    @Test
-    void executionUsage() {
-        var response = client.toBlocking().retrieve("/api/v1/execution-usage", ExecutionUsage.class);
-
-        assertThat(response, notNullValue());
-        // the memory executor didn't support daily statistics so we cannot have real execution usage
     }
 }

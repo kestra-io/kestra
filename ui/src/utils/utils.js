@@ -184,4 +184,12 @@ export default class Utils {
     static splitFirst(str, separator){
         return str.split(separator).slice(1).join(separator);
     }
+
+    static asArray(objOrArray) {
+        if(objOrArray === undefined) {
+            return [];
+        }
+
+        return Array.isArray(objOrArray) ? objOrArray : [objOrArray];
+    }
 }

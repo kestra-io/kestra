@@ -15,7 +15,7 @@
                 </el-form-item>
                 <el-form-item>
                     <status-filter-buttons
-                        :value="$route.query.state"
+                        :value="Utils.asArray($route.query.state)"
                         @update:model-value="onDataTableValue('state', $event)"
                     />
                 </el-form-item>
@@ -121,7 +121,9 @@
         </data-table>
     </div>
 </template>
-
+<script setup>
+    import Utils from "../../utils/utils";
+</script>
 <script>
     import {mapState} from "vuex";
     import DataTable from "../layout/DataTable.vue";

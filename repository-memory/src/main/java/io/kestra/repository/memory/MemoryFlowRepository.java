@@ -132,6 +132,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         List<Flow> results = flows.values()
             .stream()
             .filter(flow -> namespace == null || flow.getNamespace().equals(namespace) || flow.getNamespace().startsWith(namespace + "."))
+            .filter(flow -> labels == null || labels.isEmpty() || (flow.getLabels() != null && flow.getLabels().stream().anyMatch(label -> labels.containsKey(label.key()) && labels.get(label.key()).equals(label.value()))))
             .collect(Collectors.toList());
         return ArrayListTotal.of(pageable, results);
     }
@@ -146,6 +147,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return flows.values()
             .stream()
             .filter(flow ->  namespace == null || flow.getNamespace().equals(namespace) || flow.getNamespace().startsWith(namespace + "."))
+            .filter(flow -> labels == null || labels.isEmpty() || (flow.getLabels() != null && flow.getLabels().stream().anyMatch(label -> labels.containsKey(label.key()) && labels.get(label.key()).equals(label.value()))))
             .sorted(Comparator.comparingInt(Flow::getRevision))
             .map(flow -> findByIdWithSource(flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision())).get())
             .collect(Collectors.toList());

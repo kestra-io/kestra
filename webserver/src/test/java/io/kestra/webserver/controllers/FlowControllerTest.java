@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.debugs.Return;
@@ -682,6 +683,50 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.size(), is(2));
         assertThat(body.get(0).getConstraints(), containsString("Unrecognized field \"unknownProp\""));
         assertThat(body.get(1).getConstraints(), containsString("Invalid type: io.kestra.core.tasks.debugs.UnknownTask"));
+    }
+
+    @Test
+    void createThenUpdateFlowWithWebhook() {
+        // create the flow
+        String source = """
+            id: test-webhook
+            namespace: io.kestra.unittest
+            triggers:
+              - id: webhook
+                type: io.kestra.core.models.triggers.types.Webhook
+            tasks:
+              - id: hello
+                type: io.kestra.core.tasks.log.Log
+                message: Hello Webhook
+            """;
+        FlowWithSource flow = client.toBlocking().retrieve(POST("/api/v1/flows", source).contentType(MediaType.APPLICATION_YAML_TYPE), FlowWithSource.class);
+
+        assertThat(flow.getId(), is("test-webhook"));
+        assertThat(flow.getTriggers().size(), is(1));
+        Webhook webhook = (Webhook) flow.getTriggers().get(0);
+        String key = webhook.getKey();
+        assertThat(key, notNullValue());
+
+
+        // update the flow
+        source = """
+            id: test-webhook
+            namespace: io.kestra.unittest
+            triggers:
+              - id: webhook
+                type: io.kestra.core.models.triggers.types.Webhook
+            tasks:
+              - id: hello
+                type: io.kestra.core.tasks.log.Log
+                message: Hello updated Webhook
+            """;
+        flow = client.toBlocking().retrieve(PUT("/api/v1/flows/io.kestra.unittest/test-webhook", source).contentType(MediaType.APPLICATION_YAML_TYPE), FlowWithSource.class);
+
+        assertThat(flow.getId(), is("test-webhook"));
+        assertThat(flow.getTriggers().size(), is(1));
+        webhook = (Webhook) flow.getTriggers().get(0);
+        assertThat(webhook.getKey(), is(key));
+
     }
 
     private Flow generateFlow(String namespace, String inputName) {

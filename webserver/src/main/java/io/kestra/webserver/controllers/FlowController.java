@@ -10,6 +10,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -19,6 +20,7 @@ import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -47,7 +49,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -195,6 +196,7 @@ public class FlowController {
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
+        handleWebhookKey(flowParsed);
 
         return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -205,6 +207,7 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException {
+        handleWebhookKey(flow);
         return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
 
@@ -345,6 +348,7 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
+        handleWebhookKey(flowParsed, existingFlow.get());
 
         return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -361,6 +365,7 @@ public class FlowController {
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
+        handleWebhookKey(flow, existingFlow.get());
 
         return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
@@ -671,6 +676,30 @@ public class FlowController {
         }
 
         return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    private void handleWebhookKey(Flow flow) {
+        flow.getTriggers().stream()
+            .filter(trigger -> trigger instanceof Webhook)
+            .map(trigger -> (Webhook) trigger)
+            .filter(webhook -> webhook.getKey() == null)
+            .forEach(webhook -> webhook.setKey(IdUtils.create()));
+    }
+
+    private void handleWebhookKey(Flow current, Flow existing) {
+        current.getTriggers().stream()
+            .filter(trigger -> trigger instanceof Webhook)
+            .map(trigger -> (Webhook) trigger)
+            .filter(webhook -> webhook.getKey() == null)
+            .forEach(webhook -> searchKey(existing, webhook.getId()).ifPresentOrElse(key -> webhook.setKey(key), () -> webhook.setKey(IdUtils.create())));
+    }
+
+    private Optional<String> searchKey(Flow flow, String triggerId) {
+        return flow.getTriggers().stream()
+            .filter(trigger -> trigger instanceof Webhook)
+            .filter(trigger -> trigger.getId().equals(triggerId))
+            .map(trigger -> ((Webhook) trigger).getKey())
+            .findFirst();
     }
 
     protected void importFlow(String source, Flow parsed) {

@@ -31,10 +31,11 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Schema(
     title = "Trigger a flow from a webhook",
-    description = "Webbook trigger allow you to trigger a flow from a webhook url. " +
-        "The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`. " +
+    description = "Webhook trigger allows you to trigger a flow from a webhook URL. " +
+        "A webhook has a key property that will be part of the URL used to trigger the flow: `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`. " +
+        "If the key is not set, Kestra will generates one for you that will be available in the Triggers tab of the flow. " +
         "Kestra accept `GET`, `POST` & `PUT` request on this url. " +
-        "The whole body & headers will be available as variable:\n " +
+        "The webhook request body and headers will be available as variables inside the flow:\n " +
         "- `trigger.body`\n" +
         "- `trigger.headers`"
 )
@@ -63,7 +64,6 @@ import javax.validation.constraints.Size;
     }
 )
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
-    @Builder.Default
     @Size(min = 16, max = 256)
     @Schema(
         title = "The unique key that will be part of the url",
@@ -75,7 +75,8 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         defaultValue = "<generated-hash>"
     )
     @PluginProperty
-    private final String key = IdUtils.create();
+    @Setter // if not set, the key will be generated at creation/update time by the controller
+    private String key;
 
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);

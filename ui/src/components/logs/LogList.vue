@@ -331,7 +331,8 @@
                 if (this.logsToOpenParent) {
                     return this.logsToOpenParent
                 }
-                switch(localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT){
+
+                switch(localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT) {
                     case logDisplayTypes.ERROR:
                         return [State.FAILED, State.RUNNING, State.PAUSED]
                     case logDisplayTypes.ALL:
@@ -465,7 +466,7 @@
                 }
             },
             attempts(taskRun) {
-                if (this.execution.state.current === State.RUNNING || !this.attemptNumber) {
+                if (this.execution.state.current === State.RUNNING || this.attemptNumber === undefined) {
                     return taskRun.attempts ?? [{state: taskRun.state}];
                 }
 

@@ -513,6 +513,20 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void webhookDynamicKey() {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
+                ),
+            Execution.class
+        );
+
+        assertThat(execution, notNullValue());
+        assertThat(execution.getId(), notNullValue());
+    }
+
+    @Test
     void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");

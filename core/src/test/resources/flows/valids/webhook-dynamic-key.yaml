@@ -1,0 +1,16 @@
+id: webhook-dynamic-key
+namespace: io.kestra.tests
+labels:
+  flow-label-1: flow-label-1
+  flow-label-2: flow-label-2
+
+tasks:
+  - id: out
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{trigger | json }}"
+
+
+triggers:
+  - id: webhook
+    type: io.kestra.core.models.triggers.types.Webhook
+    key: "{{ flow.id }}"

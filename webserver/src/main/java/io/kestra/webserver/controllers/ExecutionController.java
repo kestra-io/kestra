@@ -417,7 +417,16 @@ public class ExecutionController {
             .stream()
             .filter(o -> o instanceof Webhook)
             .map(o -> (Webhook) o)
-            .filter(w -> w.getKey().equals(key))
+            .filter(w -> {
+                RunContext runContext = runContextFactory.of(flow, w);
+                try {
+                    String webhookKey = runContext.render(w.getKey());
+                    return webhookKey.equals(key);
+                } catch (IllegalVariableEvaluationException e) {
+                    // be conservative, don't crash but filter the webhook
+                    return false;
+                }
+            })
             .findFirst();
 
         if (webhook.isEmpty()) {

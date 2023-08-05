@@ -7,6 +7,12 @@
     "eslint:recommended",
     "plugin:vue/vue3-strongly-recommended"
   ],
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    // support TypeScript-based Vue components
+    // https://eslint.vuejs.org/user-guide/#how-to-use-a-custom-parser
+    "parser": "@typescript-eslint/parser"
+  },
   "rules": {
     "vue/html-indent": [
       "error",
@@ -46,6 +52,7 @@
     "no-unused-vars": [
       "error",
       {
+        // vars prefixed with '_' are ignored
         "argsIgnorePattern": "^_"
       }
     ]

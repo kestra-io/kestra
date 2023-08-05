@@ -1,5 +1,5 @@
 <template>
-    <errors code="404" v-if="error && embed"/>
+    <errors code="404" v-if="error && embed" />
     <div v-else>
         <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
@@ -35,6 +35,7 @@
                     class="blueprint-card"
                     :class="{'embed': embed}"
                     v-for="blueprint in blueprints"
+                    :key="blueprint.id"
                     @click="goToDetail(blueprint.id)"
                 >
                     <component
@@ -278,7 +279,7 @@
                 this.hardReload();
             },
             tags() {
-                if(!this.tags.hasOwnProperty(this.selectedTag)) {
+                if(!Object.prototype.hasOwnProperty.call(this.tags, this.selectedTag)) {
                     this.selectedTag = 0;
                 }
             }

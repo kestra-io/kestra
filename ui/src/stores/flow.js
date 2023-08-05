@@ -190,7 +190,7 @@ export default {
                     return Promise.reject(error);
                 })
         },
-        getGraphFromSourceResponse({commit}, options) {
+        getGraphFromSourceResponse({_commit}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow

@@ -110,10 +110,10 @@ export default {
                 commit("setExecution", null)
             })
         },
-        bulkDeleteExecution({commit}, options) {
+        bulkDeleteExecution({_commit}, options) {
             return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId})
         },
-        queryDeleteExecution({commit}, options) {
+        queryDeleteExecution({_commit}, options) {
             return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})
         },
         followExecution(_, options) {

@@ -61,8 +61,8 @@
                     <el-col :md="24" :lg="embed ? 24 : 6">
                         <h4>Plugins</h4>
                         <div class="plugins-container">
-                            <div v-for="task in [...new Set(blueprint.includedTasks)]">
-                                <task-icon :cls="task" :icons="icons"/>
+                            <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
+                                <task-icon :cls="task" :icons="icons" />
                             </div>
                         </div>
                     </el-col>
@@ -91,6 +91,7 @@
 
     export default {
         components: {Markdown},
+        emits: ["back"],
         data() {
             return {
                 flowGraph: undefined,
@@ -102,7 +103,7 @@
                     {
                         label: this.$t("blueprints.title"),
                         link: {
-                            name: 'blueprints',
+                            name: "blueprints",
                             params: this.$route.params
                         }
                     }
@@ -111,7 +112,8 @@
         },
         props: {
             blueprintId: {
-                type: String
+                type: String,
+                required: true
             },
             embed: {
                 type: Boolean,

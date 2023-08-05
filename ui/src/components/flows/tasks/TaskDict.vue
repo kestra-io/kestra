@@ -57,7 +57,7 @@
             },
         },
         watch: {
-            modelValue(newValue, oldValue) {
+            modelValue(_newValue, _oldValue) {
                 this.currentValue = Object.entries(toRaw(this.values));
             }
         },

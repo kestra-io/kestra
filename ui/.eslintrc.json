@@ -4,8 +4,8 @@
     "node": true
   },
   "extends": [
-    "plugin:vue/vue3-strongly-recommended",
-    "eslint:recommended"
+    "eslint:recommended",
+    "plugin:vue/vue3-strongly-recommended"
   ],
   "rules": {
     "vue/html-indent": [
@@ -42,6 +42,12 @@
     ],
     "vue/multi-word-component-names": [
       "off"
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
     ]
   }
 }

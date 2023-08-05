@@ -4,12 +4,6 @@
 
     // Icons
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import FileEdit from "vue-material-design-icons/FileEdit.vue";
-    import Exclamation from "vue-material-design-icons/Exclamation.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
 
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -82,8 +76,8 @@
         },
         guidedProperties: {
             type: Object,
-            default: {
-                tourStarted: false
+            default: () => {
+                return {tourStarted: false};
             }
         },
         flowError: {
@@ -96,7 +90,7 @@
         },
         expandedSubflows: {
             type: Array,
-            default: []
+            default: () => []
         }
     })
 
@@ -677,7 +671,7 @@
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
-            @restartGuidedTour="() => persistViewType(editorViewTypes.SOURCE)"
+            @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
             :read-only="isReadOnly"
         >
             <template #extends-navbar>
@@ -732,7 +726,7 @@
                 </template>
             </LowCodeEditor>
             <el-alert v-else type="warning" :closable="false">
-                {{ $t("unable to generate graph")}}
+                {{ $t("unable to generate graph") }}
             </el-alert>
         </div>
         <PluginDocumentation

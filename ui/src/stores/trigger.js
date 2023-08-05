@@ -4,7 +4,7 @@ export default {
     namespaced: true,
 
     actions: {
-        search({commit}, options) {
+        search({_commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
             return this.$http.get(`${apiUrl(this)}/triggers/search${sortString}`, {
@@ -13,7 +13,7 @@ export default {
                 return response.data;
             })
         },
-        async unlock({commit}, options) {
+        async unlock({_commit}, options) {
             return (await this.$http.post(`${apiUrl(this)}/triggers/${options.namespace}/${options.flowId}/${options.triggerId}/unlock`)).data;
         }
     }

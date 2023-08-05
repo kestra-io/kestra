@@ -28,15 +28,14 @@
 </script>
 
 <script>
-    import ValidationError from "../flows/ValidationError.vue";
-
     export default {
-        components: {ValidationError},
         props: {
             type: {
-                type: String
+                type: String,
+                required: true
             }
         },
+        emits: ["switch-view"],
         methods: {
             switchView(view) {
                 this.$emit("switch-view", view)

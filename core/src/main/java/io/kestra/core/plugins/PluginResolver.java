@@ -44,18 +44,12 @@ public class PluginResolver implements AutoCloseable {
         this.initialPlugins().forEach(onNewPlugin);
         watchService = FileSystems.getDefault().newWatchService();
         pluginPath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
-        Set<Path> createdWaitingForWrite = new HashSet<>();
         watcherThread.execute(throwRunnable(() -> {
             WatchKey key;
             try {
                 while ((key = watchService.take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
-                        Path eventPath = pluginPath.resolve((Path) event.context());
-                        if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                            createdWaitingForWrite.add(eventPath);
-                        } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY && createdWaitingForWrite.remove(eventPath)) {
-                            onNewPlugin.accept(toExternalPlugin(eventPath));
-                        }
+                        onNewPlugin.accept(toExternalPlugin(pluginPath.resolve((Path) event.context())));
                     }
                     key.reset();
                 }

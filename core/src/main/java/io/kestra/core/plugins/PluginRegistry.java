@@ -1,9 +1,15 @@
 package io.kestra.core.plugins;
 
 import jakarta.inject.Singleton;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -18,6 +24,7 @@ public class PluginRegistry {
     private final Map<String, RegisteredPlugin> pluginsByClass = new ConcurrentHashMap<>();
     @Setter
     private Runnable cacheCleaner;
+
     public Optional<RegisteredPlugin> find(String name) {
         if (pluginsByClass.containsKey(name)) {
             return Optional.of(pluginsByClass.get(name));
@@ -47,7 +54,18 @@ public class PluginRegistry {
                 ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1))
         );
 
-        if(this.cacheCleaner != null){
+        cleanCache();
+    }
+
+    public void removePlugin(String filePath) {
+        this.plugins.removeIf(plugin -> plugin.getExternalPlugin().getLocation().getFile().equals(filePath));
+        this.pluginsByClass.entrySet().removeIf(entry -> entry.getValue().getExternalPlugin().getLocation().getFile().equals(filePath));
+
+        cleanCache();
+    }
+
+    private void cleanCache() {
+        if (this.cacheCleaner != null) {
             this.cacheCleaner.run();
         }
     }

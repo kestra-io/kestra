@@ -69,7 +69,7 @@ public class Helpers {
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         PluginRegistry pluginRegistry = new PluginRegistry();
-        pluginScanner.continuousScan(pluginsPath, pluginRegistry::addPlugin);
+        pluginScanner.continuousScan(pluginsPath, pluginRegistry::addPlugin, pluginRegistry::removePlugin);
         KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
 
         return new KestraApplicationContextBuilder()

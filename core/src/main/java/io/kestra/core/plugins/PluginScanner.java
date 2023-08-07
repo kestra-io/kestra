@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 public class PluginScanner {
     ClassLoader parent;
 
+    private final Set<String> registeredPluginsFilePaths = new HashSet<>();
+
     public PluginScanner(ClassLoader parent) {
         this.parent = parent;
     }
@@ -37,10 +39,15 @@ public class PluginScanner {
      * Scans the specified top-level plugin directory for plugins. Keeps the scan alive allowing plugins hot-reload
      * @param onNewPlugin the callback to be called when a new plugin is found
      */
-    public void continuousScan(final Path pluginPaths, Consumer<RegisteredPlugin> onNewPlugin) {
+    public void continuousScan(final Path pluginPaths, Consumer<RegisteredPlugin> onNewPlugin, Consumer<String> onDeletePlugin) {
         try {
             new PluginResolver(pluginPaths).watch(
                 plugin -> {
+                    // Deduplication guard
+                    if(registeredPluginsFilePaths.contains(plugin.getLocation().getFile())) {
+                        return;
+                    }
+
                     RegisteredPlugin t = scanClassLoader(
                         PluginClassLoader.of(
                             plugin.getLocation(),
@@ -48,8 +55,12 @@ public class PluginScanner {
                             this.parent
                         ), plugin, null);
                     if (t.getManifest() != null) {
+                        registeredPluginsFilePaths.add(plugin.getLocation().getFile());
                         onNewPlugin.accept(t);
                     }
+                }, filePath -> {
+                    registeredPluginsFilePaths.remove(filePath);
+                    onDeletePlugin.accept(filePath);
                 });
         } catch (Exception e) {
             throw new RuntimeException(e);

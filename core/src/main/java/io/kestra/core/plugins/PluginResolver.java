@@ -40,16 +40,27 @@ public class PluginResolver implements AutoCloseable {
         return path.toString().toLowerCase().endsWith(".class");
     }
 
-    public void watch(Consumer<ExternalPlugin> onNewPlugin) throws Exception {
+    /**
+     * Watches the plugin path for new plugins and notifies the specified callbacks.
+     * @param onNewPlugin called with ExternalPlugin information when a new plugin is found
+     * @param onDeletePlugin called with the previous plugin path when a plugin is deleted
+     */
+    public void watch(Consumer<ExternalPlugin> onNewPlugin, Consumer<String> onDeletePlugin) throws Exception {
         this.initialPlugins().forEach(onNewPlugin);
         watchService = FileSystems.getDefault().newWatchService();
-        pluginPath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
+        pluginPath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         watcherThread.execute(throwRunnable(() -> {
             WatchKey key;
             try {
                 while ((key = watchService.take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
-                        onNewPlugin.accept(toExternalPlugin(pluginPath.resolve((Path) event.context())));
+                        WatchEvent.Kind<?> kind = event.kind();
+                        Path eventPath = pluginPath.resolve((Path) event.context());
+                        if(kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                            onNewPlugin.accept(toExternalPlugin(eventPath));
+                        } else {
+                            onDeletePlugin.accept(eventPath.toString());
+                        }
                     }
                     key.reset();
                 }

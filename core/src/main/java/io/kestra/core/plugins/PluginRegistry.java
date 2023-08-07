@@ -4,6 +4,8 @@ import jakarta.inject.Singleton;
 import lombok.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,8 +14,8 @@ import java.util.stream.Stream;
 @ToString
 @Singleton
 public class PluginRegistry {
-    private final List<RegisteredPlugin> plugins = new ArrayList<>();
-    private final Map<String, RegisteredPlugin> pluginsByClass = new HashMap<>();
+    private final List<RegisteredPlugin> plugins = new CopyOnWriteArrayList<>();
+    private final Map<String, RegisteredPlugin> pluginsByClass = new ConcurrentHashMap<>();
     @Setter
     private Runnable cacheCleaner;
     public Optional<RegisteredPlugin> find(String name) {

@@ -48,16 +48,16 @@ public class PluginController {
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-            tags = {"Plugins"},
-            summary = "Get all json schemas for a type",
-            description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+        tags = {"Plugins"},
+        summary = "Get all json schemas for a type",
+        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
     public HttpResponse<Map<String, Object>> schemas(
-            @Parameter(description = "The schema needed") @PathVariable SchemaType type
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type
     ) {
         return HttpResponse.ok()
-                .body(this.schemasCache(type))
-                .header("Cache-Control", "public, max-age=3600");
+            .body(this.schemasCache(type))
+            .header("Cache-Control", "public, max-age=3600");
     }
 
     @Cacheable(PLUGINS_CACHE_KEY)
@@ -78,37 +78,37 @@ public class PluginController {
     @Get(uri = INPUTS_CACHE_KEY)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-            tags = {"Plugins"},
-            summary = "Get all types for an inputs"
+        tags = {"Plugins"},
+        summary = "Get all types for an inputs"
     )
     public List<InputType> inputs() throws ClassNotFoundException {
         return Stream.of(Input.Type.values())
-                .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
-                .collect(Collectors.toList());
+            .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
+            .collect(Collectors.toList());
     }
 
     @Get(uri = "inputs/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-            tags = {"Plugins"},
-            summary = "Get all json schemas for a type",
-            description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+        tags = {"Plugins"},
+        summary = "Get all json schemas for a type",
+        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
     public MutableHttpResponse<DocumentationWithSchema> inputSchemas(
-            @Parameter(description = "The schema needed") @PathVariable Input.Type type
+        @Parameter(description = "The schema needed") @PathVariable Input.Type type
     ) throws ClassNotFoundException, IOException {
         ClassInputDocumentation classInputDocumentation = this.inputDocumentation(type);
 
         return HttpResponse.ok()
-                .body(new DocumentationWithSchema(
-                        DocumentationGenerator.render(classInputDocumentation),
-                        new Schema(
-                                classInputDocumentation.getPropertiesSchema(),
-                                null,
-                                classInputDocumentation.getDefs()
-                        )
-                ))
-                .header("Cache-Control", "public, max-age=3600");
+            .body(new DocumentationWithSchema(
+                DocumentationGenerator.render(classInputDocumentation),
+                new Schema(
+                    classInputDocumentation.getPropertiesSchema(),
+                    null,
+                    classInputDocumentation.getDefs()
+                )
+            ))
+            .header("Cache-Control", "public, max-age=3600");
     }
 
     @Cacheable(INPUTS_CACHE_KEY)
@@ -123,10 +123,10 @@ public class PluginController {
     @Operation(tags = {"Plugins"}, summary = "Get list of plugins")
     public List<Plugin> search() {
         return pluginService
-                .allPlugins()
-                .stream()
-                .map(Plugin::of)
-                .collect(Collectors.toList());
+            .allPlugins()
+            .stream()
+            .map(Plugin::of)
+            .collect(Collectors.toList());
     }
 
     @Get(uri = "icons")
@@ -134,26 +134,26 @@ public class PluginController {
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
     public Map<String, PluginIcon> icons() {
         return pluginService
-                .allPlugins()
-                .stream()
-                .flatMap(plugin -> Stream
-                        .concat(
-                                plugin.getTasks().stream(),
-                                Stream.concat(
-                                        plugin.getTriggers().stream(),
-                                        plugin.getConditions().stream()
-                                )
-                        )
-                        .map(e -> new AbstractMap.SimpleEntry<>(
-                                e.getName(),
-                                new PluginIcon(
-                                        e.getSimpleName(),
-                                        plugin.icon(e),
-                                        FlowableTask.class.isAssignableFrom(e)
-                                )
-                        ))
+            .allPlugins()
+            .stream()
+            .flatMap(plugin -> Stream
+                .concat(
+                    plugin.getTasks().stream(),
+                    Stream.concat(
+                        plugin.getTriggers().stream(),
+                        plugin.getConditions().stream()
+                    )
                 )
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
+                .map(e -> new AbstractMap.SimpleEntry<>(
+                    e.getName(),
+                    new PluginIcon(
+                        e.getSimpleName(),
+                        plugin.icon(e),
+                        FlowableTask.class.isAssignableFrom(e)
+                    )
+                ))
+            )
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -161,44 +161,44 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
     public HttpResponse<DocumentationWithSchema> pluginDocumentation(
-            @Parameter(description = "The plugin full class name") @PathVariable String cls,
-            @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
+        @Parameter(description = "The plugin full class name") @PathVariable String cls,
+        @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
-                pluginService.allPlugins(),
-                cls,
-                allProperties
+            pluginService.allPlugins(),
+            cls,
+            allProperties
         );
 
         var doc = DocumentationGenerator.render(classPluginDocumentation);
 
         return HttpResponse.ok()
-                .body(new DocumentationWithSchema(
-                        doc,
-                        new Schema(
-                                classPluginDocumentation.getPropertiesSchema(),
-                                classPluginDocumentation.getOutputsSchema(),
-                                classPluginDocumentation.getDefs()
-                        )
-                ))
-                .header("Cache-Control", "public, max-age=3600");
+            .body(new DocumentationWithSchema(
+                doc,
+                new Schema(
+                    classPluginDocumentation.getPropertiesSchema(),
+                    classPluginDocumentation.getOutputsSchema(),
+                    classPluginDocumentation.getDefs()
+                )
+            ))
+            .header("Cache-Control", "public, max-age=3600");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Cacheable(PLUGINS_CACHE_KEY)
     protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties) {
         RegisteredPlugin registeredPlugin = plugins
-                .stream()
-                .filter(r -> r.hasClass(className))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
+            .stream()
+            .filter(r -> r.hasClass(className))
+            .findFirst()
+            .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
 
         Class cls = registeredPlugin
-                .findClass(className)
-                .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
+            .findClass(className)
+            .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
 
         Class baseCls = registeredPlugin
-                .baseClass(className);
+            .baseClass(className);
 
         return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
     }

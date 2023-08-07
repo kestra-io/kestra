@@ -167,7 +167,7 @@
             </template>
         </data-table>
 
-        <bottom-line v-if="displayBottomBar">
+        <fixed-bar v-if="displayBottomBar">
             <ul>
                 <template v-if="$route.name === 'flows/update'">
                     <li>
@@ -183,7 +183,7 @@
                     </li>
                 </template>
             </ul>
-        </bottom-line>
+        </fixed-bar>
     </div>
 </template>
 
@@ -220,7 +220,7 @@
     import State from "../../utils/state";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
-    import BottomLine from "../layout/BottomLine.vue";
+    import FixedBar from "../layout/FixedBar.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
@@ -243,7 +243,7 @@
             Kicon,
             Labels,
             Id,
-            BottomLine,
+            FixedBar,
             TriggerFlow
         },
         props: {
@@ -295,7 +295,7 @@
                     .add(-30, "days").toISOString(true);
             },
             displayBottomBar() {
-                return (this.$route.name === "flows/update");
+                return this.$route.name === "flows/update";
             },
             canCheck() {
                 return this.canDelete || this.canUpdate;

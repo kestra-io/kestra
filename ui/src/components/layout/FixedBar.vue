@@ -1,27 +1,49 @@
 <template>
-    <nav class="bottom-line">
+    <nav class="fixed-bar" :style="{top: `${topOffset}px`}">
         <slot />
     </nav>
 </template>
 <script>
-    export default {}
+    // 5 rem
+    const topBarInitialOffset = 80;
+    export default {
+        created() {
+            // 5 rem = 80px = top offset of the fixed bar to ensure smooth bar transition
+            window.onscroll = () => {
+                this.topOffset = Math.max(0, topBarInitialOffset - window.scrollY)
+                if (window.scrollY > topBarInitialOffset) {
+                    this.$el.classList.add("with-bar");
+                } else {
+                    this.$el.classList.remove("with-bar");
+                }
+            }
+        },
+        data() {
+            return {
+                topOffset: topBarInitialOffset
+            }
+        }
+    }
 </script>
 <style lang="scss">
-    .bottom-line {
+    .fixed-bar {
         position: fixed;
-        bottom: 0;
         right: 0;
         left: 0;
         border-radius: 0;
-        border-top: 1px solid var(--bs-border-color);
         z-index: 90;
-        background-color: var(--bs-white);
-        padding: var(--spacer);
+        padding-top: var(--spacer);
         text-align: right;
         transition: margin-left ease 0.2s;
+        padding-right: calc(var(--spacer) * 4);
 
-        html.dark & {
-            background-color: var(--bs-gray-100-darken-5);
+        &.with-bar {
+            border-bottom: 1px solid var(--bs-border-color);
+            background-color: var(--bs-white);
+
+            html.dark & {
+                background-color: var(--bs-gray-100-darken-5);
+            }
         }
 
         button {

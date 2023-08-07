@@ -1,7 +1,7 @@
 <template>
     <div class="edit-flow-div">
         <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
-        <bottom-line v-if="canSave || canDelete || canExecute">
+        <fixed-bar v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
                     <el-button :icon="icon.Delete" size="large" v-if="canDelete" @click="deleteFile">
@@ -27,7 +27,7 @@
                     </el-button>
                 </li>
             </ul>
-        </bottom-line>
+        </fixed-bar>
         <div id="guided-right" />
     </div>
 </template>

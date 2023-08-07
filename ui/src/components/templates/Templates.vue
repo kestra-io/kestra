@@ -88,7 +88,7 @@
         </div>
 
 
-        <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
+        <fixed-bar v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
                 <li>
                     <div class="el-input el-input-file el-input--large custom-upload">
@@ -115,7 +115,7 @@
                     </router-link>
                 </li>
             </ul>
-        </bottom-line>
+        </fixed-bar>
     </div>
 </template>
 
@@ -134,7 +134,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import FixedBar from "../layout/FixedBar.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
@@ -149,7 +149,7 @@
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
-            BottomLine,
+            FixedBar,
             Eye,
             DataTable,
             SearchField,

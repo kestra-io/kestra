@@ -11,7 +11,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
 
-    import BottomLine from "../layout/BottomLine.vue";
+    import FixedBar from "../layout/FixedBar.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -795,7 +795,7 @@
             @switch-view="switchViewType"
         />
     </el-card>
-    <bottom-line v-if="!graphOnly">
+    <fixed-bar v-if="!graphOnly">
         <ul>
             <li v-if="isAllowedEdit || canDelete">
                 <el-dropdown>
@@ -881,7 +881,7 @@
                 </el-button>
             </li>
         </ul>
-    </bottom-line>
+    </fixed-bar>
 </template>
 
 <style lang="scss" scoped>

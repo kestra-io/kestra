@@ -3,7 +3,7 @@
         <div v-if="ready">
             <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
         </div>
-        <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
+        <fixed-bar v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
                     <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
@@ -30,7 +30,7 @@
                     </template>
                 </li>
             </ul>
-        </bottom-line>
+        </fixed-bar>
     </div>
 </template>
 
@@ -46,7 +46,7 @@
     import Logs from "./Logs.vue";
     import Topology from "./Topology.vue";
     import ExecutionOutput from "./ExecutionOutput.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import FixedBar from "../layout/FixedBar.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
@@ -61,7 +61,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            BottomLine,
+            FixedBar,
             TriggerFlow,
             Tabs,
         },

@@ -2,7 +2,7 @@
     <templates-deprecated />
     <div>
         <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
-        <bottom-line v-if="canSave || canDelete">
+        <fixed-bar v-if="canSave || canDelete">
             <ul>
                 <li>
                     <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteFile">
@@ -16,7 +16,7 @@
                     </template>
                 </li>
             </ul>
-        </bottom-line>
+        </fixed-bar>
     </div>
 </template>
 

@@ -3,7 +3,7 @@
         <div v-if="ready">
             <FlowDeletedWarn v-if="deleted" @restore-flow="restoreFlow()"/>
             <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
-            <bottom-line v-if="displayBottomLine()">
+            <fixed-bar v-if="displayFixedBar()">
                 <ul>
                     <li>
                         <template v-if="isAllowedEdit">
@@ -21,7 +21,7 @@
                         />
                     </li>
                 </ul>
-            </bottom-line>
+            </fixed-bar>
         </div>
     </div>
 </template>
@@ -41,7 +41,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
-    import BottomLine from "../../components/layout/BottomLine.vue";
+    import FixedBar from "../layout/FixedBar.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
@@ -54,7 +54,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            BottomLine,
+            FixedBar,
             TriggerFlow,
             Tabs
         },
@@ -198,7 +198,7 @@
 
                 return null;
             },
-            displayBottomLine() {
+            displayFixedBar() {
                 const name = this.activeTabName();
                 return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
             },

@@ -137,7 +137,7 @@
             </data-table>
         </div>
 
-        <bottom-line>
+        <fixed-bar>
             <ul>
                 <li>
                     <div class="el-input el-input-file el-input--large custom-upload">
@@ -171,7 +171,7 @@
                     </router-link>
                 </li>
             </ul>
-        </bottom-line>
+        </fixed-bar>
     </div>
 </template>
 
@@ -193,7 +193,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import FixedBar from "../layout/FixedBar.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
@@ -213,7 +213,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,
-            BottomLine,
+            FixedBar,
             Eye,
             DataTable,
             SearchField,

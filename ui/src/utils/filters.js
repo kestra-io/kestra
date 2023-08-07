@@ -1,6 +1,8 @@
 import Utils from "./utils";
 import {getCurrentInstance} from "vue";
 import {DATE_FORMAT_STORAGE_KEY} from "../components/settings/Settings.vue";
+import {TIMEZONE_STORAGE_KEY} from "../components/settings/Settings.vue";
+import moment from "moment-timezone";
 
 export default {
     invisibleSpace: (value) => {
@@ -21,7 +23,7 @@ export default {
         } else {
             f = format ?? localStorage.getItem(DATE_FORMAT_STORAGE_KEY) ?? "LLLL";
         }
-        return getCurrentInstance().appContext.config.globalProperties.$moment(dateString).format(f)
+        return getCurrentInstance().appContext.config.globalProperties.$moment(dateString).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).format(f)
     }
 }
 

@@ -70,7 +70,6 @@
     },
     "created date": "Created date",
     "updated date": "Updated date",
-    "date": "Date",
     "source": "Source",
     "home": "Home",
     "create": "Create",
@@ -475,7 +474,8 @@
       "warning": "It could lead to concurrent executions for the same trigger and should be considered as a last resort option.",
       "button": "Unlock trigger"
     },
-    "date format": "Date format"
+    "date format": "Date format",
+    "timezone": "Timezone"
   },
   "fr": {
     "id": "Identifiant",
@@ -548,7 +548,6 @@
     },
     "created date": "Date de création",
     "updated date": "Date de mise à jour",
-    "date": "Date",
     "source": "Source",
     "home": "Accueil",
     "create": "Créer",
@@ -955,6 +954,7 @@
       "warning": "Cela pourrait amener à de multiples exécutions concurrentes pour le même déclencheur et devrait être considéré comme une solution de dernier recours.",
       "button": "Débloquer le déclencheur"
     },
-    "date format": "Format de date"
+    "date format": "Format de date",
+    "timezone": "Fuseau horaire"
   }
 }

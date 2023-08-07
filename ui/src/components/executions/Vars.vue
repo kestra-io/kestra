@@ -21,7 +21,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column :label="$t('preview')" align="center">
+        <el-table-column column-key="action" class-name="row-action">
             <template #default="scope">
                 <FilePreview v-if="scope.row.value.startsWith('kestra:///')" :value="scope.row.value" :execution-id="execution.id" />
             </template>

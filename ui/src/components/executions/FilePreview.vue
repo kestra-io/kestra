@@ -44,36 +44,31 @@
                 selectedPreview: null
             }
         },
-        watch: {
-            filePreview() {
-                this.isPreviewOpen = true;
-            }
-        },
         computed: {
             ...mapState("execution", ["filePreview"]),
             extensionToMonacoLang() {
                 switch (this.filePreview.extension) {
-                case "json":
-                    return "json";
-                case "jsonl":
-                    return "jsonl";
-                case "yaml":
-                case "yml":
-                case "ion":
-                    // little hack to get ion colored with monaco
-                    return "yaml";
-                case "csv":
-                    return "csv";
-                case "jpg":
-                case "jpeg":
-                case "png":
-                case "gif":
-                case "svg":
-                case "bpm":
-                case "webp":
-                    return "image";
-                default:
-                    return "text";
+                    case "json":
+                        return "json";
+                    case "jsonl":
+                        return "jsonl";
+                    case "yaml":
+                    case "yml":
+                    case "ion":
+                        // little hack to get ion colored with monaco
+                        return "yaml";
+                    case "csv":
+                        return "csv";
+                    case "jpg":
+                    case "jpeg":
+                    case "png":
+                    case "gif":
+                    case "svg":
+                    case "bpm":
+                    case "webp":
+                        return "image";
+                    default:
+                        return "text";
                 }
             },
             formattedContent() {
@@ -96,11 +91,16 @@
         },
         methods: {
             getFilePreview(path) {
-                this.$store.dispatch("execution/filePreview", {
-                    executionId: this.executionId,
-                    path: path
-                })
-                this.selectedPreview = path
+                this.selectedPreview = path;
+
+                this.$store
+                    .dispatch("execution/filePreview", {
+                        executionId: this.executionId,
+                        path: path
+                    })
+                    .then(() => {
+                        this.isPreviewOpen = true;
+                    });
             },
         }
     }

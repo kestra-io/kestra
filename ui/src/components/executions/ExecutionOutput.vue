@@ -86,7 +86,7 @@
                 </template>
             </el-table-column>
 
-            <el-table-column :label="$t('preview')" align="center">
+            <el-table-column column-key="action" class-name="row-action">
                 <template #default="scope">
                     <FilePreview v-if="scope.row.output.startsWith('kestra:///')" :value="scope.row.output" :execution-id="execution.id" />
                 </template>

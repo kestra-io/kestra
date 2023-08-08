@@ -26,6 +26,6 @@ public abstract class PostgresExecutionRepositoryService {
             });
         }
 
-        return conditions.size() == 0 ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 }

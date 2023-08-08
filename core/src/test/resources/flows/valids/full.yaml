@@ -1,5 +1,8 @@
 id: full
 namespace: io.kestra.tests
+labels:
+  key1: value1
+  key2: value2
 
 #triggers:
 #- type: schedule

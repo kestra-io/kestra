@@ -1,3 +1,5 @@
 package io.kestra.core.models;
 
-public record Label(String key, String value) {}
+import javax.validation.constraints.NotNull;
+
+public record Label(@NotNull String key, @NotNull String value) {}

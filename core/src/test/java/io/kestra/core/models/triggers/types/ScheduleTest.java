@@ -398,9 +398,10 @@ class ScheduleTest {
             .id(IdUtils.create())
             .namespace("io.kestra.tests")
             .labels(
-                Map.of(
-                    "flow-label-1", "flow-label-1",
-                    "flow-label-2", "flow-label-2")
+                List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2")
+                )
             )
             .build();
 

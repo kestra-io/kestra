@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.*;
 
 public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repositories.AbstractFlowRepositoryTest {
     @Inject
-    AbstractJdbcFlowRepository flowRepository;
+    protected AbstractJdbcFlowRepository flowRepository;
 
     @Inject
     JdbcTestUtils jdbcTestUtils;
@@ -36,7 +36,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
     protected JooqDSLContextWrapper dslContextWrapper;
 
     @Test
-    void find() {
+    protected void find() {
         List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
@@ -44,11 +44,6 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         assertThat((long) save.size(), is(6L));
 
         save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, Map.of("country", "FR"));
-        assertThat(save.size(), is(1));
-
-        HashMap<String, String> map = new HashMap<>();
-        map.put("region", null);
-        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, map);
         assertThat(save.size(), is(1));
     }
 

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import io.kestra.core.models.Label;
-import io.kestra.core.utils.LabelUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,7 +30,9 @@ public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> 
         else if (p.hasToken(JsonToken.START_OBJECT)) {
             // deserialize as map
             Map<String, String> ret = ctxt.readValue(p, Map.class);
-            return LabelUtils.from(ret);
+            return ret == null ? null : ret.entrySet().stream()
+                .map(entry -> new Label(entry.getKey(), entry.getValue()))
+                .toList();
         }
         throw new IllegalArgumentException("Unable to deserialize value as it's neither an object neither an array");
     }

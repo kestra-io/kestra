@@ -16,19 +16,17 @@ public abstract class MysqlFlowRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "id"), query));
         }
 
-        if (labels != null)  {
+        if (labels != null) {
             labels.forEach((key, value) -> {
-                Field<String> field = DSL.field("JSON_VALUE(value, '$.labels." + key + "' NULL ON EMPTY)", String.class);
+                Field<String> keyField = DSL.field("JSON_SEARCH(value, 'one', '" + key + "', NULL, '$.labels[*].key')", String.class);
+                conditions.add(keyField.isNotNull());
 
-                if (value == null) {
-                    conditions.add(field.isNotNull());
-                } else {
-                    conditions.add(field.eq(value));
-                }
+                Field<String> valueField = DSL.field("JSON_SEARCH(value, 'one', '" + value + "', NULL, '$.labels[*].value')", String.class);
+                conditions.add(valueField.isNotNull());
             });
         }
 
-        return conditions.size() == 0 ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {

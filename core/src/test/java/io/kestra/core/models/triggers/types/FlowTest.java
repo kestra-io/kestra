@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,9 +31,10 @@ class FlowTest {
             .namespace("io.kestra.unittest")
             .revision(1)
             .labels(
-                Map.of(
-                    "flow-label-1", "flow-label-1",
-                    "flow-label-2", "flow-label-2")
+                List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2")
+                )
             )
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")

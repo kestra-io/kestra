@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import javax.validation.ConstraintViolationException;
@@ -231,6 +232,12 @@ public abstract class AbstractFlowRepositoryTest {
 
         save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
+
+        save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests", Map.of("key1", "value1"));
+        assertThat((long) save.size(), is(1L));
+
+        save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests", Map.of("key1", "value2"));
+        assertThat((long) save.size(), is(0L));
     }
 
     @Test

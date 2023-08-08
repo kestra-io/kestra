@@ -19,19 +19,21 @@ public abstract class H2FlowRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(List.of("fulltext"), query));
         }
 
-        if (labels != null)  {
+        if (labels != null) {
             labels.forEach((key, value) -> {
-                Field<String> field = DSL.field("JQ_STRING(\"value\", '.labels." + key + "')", String.class);
+                Field<String> keyField = DSL.field("JQ_STRING(\"value\", '.labels[]?.key')", String.class);
+                conditions.add(keyField.eq(key));
 
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]?.value')", String.class);
                 if (value == null) {
-                    conditions.add(field.isNotNull());
+                    conditions.add(valueField.isNull());
                 } else {
-                    conditions.add(field.eq(value));
+                    conditions.add(valueField.eq(value));
                 }
             });
         }
 
-        return conditions.size() == 0 ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {

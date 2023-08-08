@@ -1,0 +1,1 @@
+create index flows_labels ON flows USING GIN((value -> 'labels'));

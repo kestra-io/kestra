@@ -4,10 +4,8 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.utils.LabelUtils;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.utils.RequestUtils;
@@ -75,9 +73,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
@@ -441,7 +437,7 @@ public class ExecutionController {
 
         var result = execution.get();
         if (flow.getLabels() != null) {
-            result = result.withLabels(LabelUtils.from(flow.getLabels()));
+            result = result.withLabels(flow.getLabels());
         }
         executionQueue.emit(result);
         eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));

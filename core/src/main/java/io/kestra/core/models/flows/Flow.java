@@ -3,10 +3,13 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -14,6 +17,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
@@ -63,7 +68,10 @@ public class Flow implements DeletedInterface {
 
     String description;
 
-    Map<String, String> labels;
+    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
+    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    List<Label> labels;
+
 
     @Valid
     List<Input<?>> inputs;

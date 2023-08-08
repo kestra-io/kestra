@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.AbstractMap;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
 @EqualsAndHashCode
 @ToString
 @Singleton
+@Slf4j
 public class PluginRegistry {
     private final List<RegisteredPlugin> plugins = new CopyOnWriteArrayList<>();
     private final Map<String, RegisteredPlugin> pluginsByClass = new ConcurrentHashMap<>();
@@ -34,6 +36,8 @@ public class PluginRegistry {
     }
 
     public void addPlugin(RegisteredPlugin registeredPlugin) {
+        log.info("Adding plugin '{}'", registeredPlugin.getExternalPlugin().getLocation().getFile());
+
         this.plugins.add(registeredPlugin);
         this.pluginsByClass.putAll(
             Stream.of(registeredPlugin)
@@ -58,8 +62,14 @@ public class PluginRegistry {
     }
 
     public void removePlugin(String filePath) {
-        this.plugins.removeIf(plugin -> plugin.getExternalPlugin().getLocation().getFile().equals(filePath));
-        this.pluginsByClass.entrySet().removeIf(entry -> entry.getValue().getExternalPlugin().getLocation().getFile().equals(filePath));
+        log.info("Remove plugin '{}'", filePath);
+
+        this.plugins
+            .removeIf(plugin -> plugin.getExternalPlugin().getLocation().getFile().equals(filePath));
+
+        this.pluginsByClass
+            .entrySet()
+            .removeIf(entry -> entry.getValue().getExternalPlugin().getLocation().getFile().equals(filePath));
 
         cleanCache();
     }

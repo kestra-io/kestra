@@ -37,6 +37,7 @@ public class PluginScanner {
 
     /**
      * Scans the specified top-level plugin directory for plugins. Keeps the scan alive allowing plugins hot-reload
+     * @param Path pluginPaths
      * @param onNewPlugin the callback to be called when a new plugin is found
      */
     public void continuousScan(final Path pluginPaths, Consumer<RegisteredPlugin> onNewPlugin, Consumer<String> onDeletePlugin) {
@@ -48,7 +49,11 @@ public class PluginScanner {
                             plugin.getLocation(),
                             plugin.getResources(),
                             this.parent
-                        ), plugin, null);
+                        ),
+                        plugin,
+                        null
+                    );
+
                     if (t.getManifest() != null) {
                         if(registeredPluginsFilePaths.contains(plugin.getLocation().getFile())) {
                             onDeletePlugin.accept(plugin.getLocation().getFile());
@@ -56,10 +61,12 @@ public class PluginScanner {
                         registeredPluginsFilePaths.add(plugin.getLocation().getFile());
                         onNewPlugin.accept(t);
                     }
-                }, filePath -> {
+                },
+                filePath -> {
                     registeredPluginsFilePaths.remove(filePath);
                     onDeletePlugin.accept(filePath);
-                });
+                }
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

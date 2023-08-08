@@ -22,8 +22,11 @@ public class PluginHotReloadInitializer implements ApplicationEventListener<Serv
     public void onApplicationEvent(ServiceReadyEvent event) {
         if (applicationContext instanceof KestraApplicationContext kestraApplicationContext &&
                 kestraApplicationContext.getPluginRegistry() != null &&
-                cacheManager.isPresent()) {
-            kestraApplicationContext.getPluginRegistry().setCacheCleaner(cacheManager.get().getCache(PluginController.PLUGINS_CACHE_KEY)::invalidateAll);
+                cacheManager.isPresent()
+        ) {
+            kestraApplicationContext
+                .getPluginRegistry()
+                .setCacheCleaner(cacheManager.get().getCache(PluginController.PLUGINS_CACHE_KEY)::invalidateAll);
         }
     }
 }

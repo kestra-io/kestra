@@ -37,11 +37,11 @@
 <template>
     <div class="position-relative">
         <div v-if="hasSelection" class="bulk-select-header">
-            <slot name="select-actions"/>
+            <slot name="select-actions" />
         </div>
         <el-table ref="table" v-bind="$attrs" :data="data" @selection-change="selectionChanged">
             <el-table-column type="selection" v-if="selectable" />
-            <slot name="default"/>
+            <slot name="default" />
         </el-table>
     </div>
 </template>

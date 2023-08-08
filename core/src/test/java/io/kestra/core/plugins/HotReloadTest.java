@@ -9,13 +9,13 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 public class HotReloadTest {
     @Test
@@ -39,6 +39,15 @@ public class HotReloadTest {
         try {
             Await.until(() -> !pluginRegistry.getPlugins().isEmpty(), Duration.ofMillis(500), Duration.ofSeconds(10));
             assertThat(pluginRegistry.getPlugins().size(), is(1));
+            assertThat(pluginRegistry.getPluginsByClass().size(), is(1));
+            assertThat(pluginRegistry.getPluginsByClass(), hasKey("io.kestra.plugin.templates.ExampleTask"));
+
+            // replacement
+            Files.copy(Paths.get(Objects.requireNonNull(HotReloadTest.class.getClassLoader().getResource("replacement_plugins")).toURI()).resolve(pluginName), pluginPathInHotReloadFolder, StandardCopyOption.REPLACE_EXISTING);
+            Await.until(() -> !pluginRegistry.getPluginsByClass().containsKey("io.kestra.plugin.templates.ExampleTask") && !pluginRegistry.getPlugins().isEmpty(), Duration.ofMillis(500), Duration.ofSeconds(10));
+            assertThat(pluginRegistry.getPlugins().size(), is(1));
+            assertThat(pluginRegistry.getPluginsByClass().size(), is(1));
+            assertThat(pluginRegistry.getPluginsByClass(), hasKey("io.kestra.plugin.templates.AnotherTask"));
         } finally {
             FileUtils.deleteDirectory(hotReloadPluginsPath.toFile());
         }

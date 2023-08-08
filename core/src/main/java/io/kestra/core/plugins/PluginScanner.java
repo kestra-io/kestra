@@ -43,11 +43,6 @@ public class PluginScanner {
         try {
             new PluginResolver(pluginPaths).watch(
                 plugin -> {
-                    // Deduplication guard
-                    if(registeredPluginsFilePaths.contains(plugin.getLocation().getFile())) {
-                        return;
-                    }
-
                     RegisteredPlugin t = scanClassLoader(
                         PluginClassLoader.of(
                             plugin.getLocation(),
@@ -55,6 +50,9 @@ public class PluginScanner {
                             this.parent
                         ), plugin, null);
                     if (t.getManifest() != null) {
+                        if(registeredPluginsFilePaths.contains(plugin.getLocation().getFile())) {
+                            onDeletePlugin.accept(plugin.getLocation().getFile());
+                        }
                         registeredPluginsFilePaths.add(plugin.getLocation().getFile());
                         onNewPlugin.accept(t);
                     }

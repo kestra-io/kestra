@@ -15,8 +15,7 @@
                 default: false
             },
             format: {
-                type: String,
-                default: "LLLL"
+                type: String
             },
             className: {
                 type: String,
@@ -28,7 +27,7 @@
                 return this.$moment(this.date).fromNow();
             },
             full() {
-                return this.$moment(this.date).format(this.format);
+                return this.$filters.date(this.date, this.format);
             }
         }
     };

@@ -23,6 +23,28 @@
                 </el-select>
             </el-form-item>
 
+            <el-form-item :label="$t('date format')">
+                <el-select :model-value="dateFormat" @update:model-value="onDateFormat">
+                    <el-option
+                        v-for="item in dateFormats"
+                        :key="timezone + item.value"
+                        :label="$filters.date(now, item.value)"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item :label="$t('timezone')">
+                <el-select :model-value="timezone" @update:model-value="onTimezone" filterable>
+                    <el-option
+                        v-for="item in zonesWithOffset"
+                        :key="item.zone"
+                        :label="`${item.zone} (UTC${item.offset === 0 ? '' : item.formattedOffset})`"
+                        :value="item.zone"
+                    />
+                </el-select>
+            </el-form-item>
+
             <el-form-item :label="$t('Editor theme')">
                 <el-select :model-value="editorTheme" @update:model-value="onEditorTheme">
                     <el-option
@@ -104,6 +126,8 @@
     import action from "../../models/action";
     import {logDisplayTypes} from "../../utils/constants";
 
+    export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
+    export const TIMEZONE_STORAGE_KEY = "timezone";
     export default {
         mixins: [RouteContext],
         components: {
@@ -117,11 +141,22 @@
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
+                dateFormat: undefined,
+                timezone: undefined,
+                zonesWithOffset: this.$moment.tz.names().map((zone) => {
+                  const timezoneMoment = this.$moment.tz(zone);
+                  return {
+                        zone,
+                        offset: timezoneMoment.utcOffset(),
+                        formattedOffset: timezoneMoment.format("Z")
+                    };
+                }).sort((a, b) => a.offset - b.offset),
                 autofoldTextEditor: undefined,
                 guidedTour: undefined,
                 logDisplay: undefined,
                 editorFontSize: undefined,
-                editorFontFamily: undefined
+                editorFontFamily: undefined,
+                now: this.$moment()
             };
         },
         created() {
@@ -132,6 +167,8 @@
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
+            this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
+            this.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
@@ -169,6 +206,16 @@
             onTheme(value) {
                 Utils.switchTheme(value)
                 this.theme = value;
+                this.$toast().saved();
+            },
+            onDateFormat(value) {
+                localStorage.setItem(DATE_FORMAT_STORAGE_KEY, value);
+                this.dateFormat = value;
+                this.$toast().saved();
+            },
+            onTimezone(value) {
+                localStorage.setItem(TIMEZONE_STORAGE_KEY, value);
+                this.timezone = value;
                 this.$toast().saved();
             },
             onEditorTheme(value) {
@@ -235,6 +282,17 @@
                 return  [
                     {value: "vs", text: "Light"},
                     {value: "dark", text: "Dark"}
+                ]
+            },
+            dateFormats() {
+                return  [
+                    {value: "YYYY-MM-DDTHH:mm:ssZ"},
+                    {value: "YYYY-MM-DD hh:mm:ss A"},
+                    {value: "DD/MM/YYYY HH:mm:ss"},
+                    {value: "lll"},
+                    {value: "llll"},
+                    {value: "LLL"},
+                    {value: "LLLL"}
                 ]
             },
             canReadFlows() {

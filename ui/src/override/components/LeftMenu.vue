@@ -14,6 +14,7 @@
                     <span class="img" />
                 </router-link>
             </div>
+            <Environment />
         </template>
 
         <template #footer>
@@ -29,6 +30,7 @@
 
 <script>
     import {SidebarMenu} from "vue-sidebar-menu";
+    import Environment from "../../components/layout/Environment.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
@@ -53,6 +55,7 @@
             ChevronLeft,
             ChevronRight,
             SidebarMenu,
+            Environment,
         },
         emits: ["menu-collapse"],
         methods: {
@@ -257,7 +260,7 @@
         .logo {
             overflow: hidden;
             padding: 35px 0;
-            height: 133px;
+            height: 113px;
             position: relative;
 
             a {

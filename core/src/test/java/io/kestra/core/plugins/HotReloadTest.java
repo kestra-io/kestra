@@ -24,11 +24,7 @@ public class HotReloadTest {
 
         PluginScanner pluginScanner = new PluginScanner(ClassLoader.getSystemClassLoader());
         PluginRegistry pluginRegistry = new PluginRegistry();
-        pluginScanner.continuousScan(hotReloadPluginsPath, plugin -> {
-            if (plugin.getManifest() != null) {
-                pluginRegistry.addPlugin(plugin);
-            }
-        }, pluginRegistry::removePlugin);
+        pluginScanner.continuousScan(hotReloadPluginsPath, pluginRegistry);
 
         String pluginName = "plugin-template-test-0.6.0-SNAPSHOT.jar";
         Path existingPluginsFolder = Paths.get(Objects.requireNonNull(HotReloadTest.class.getClassLoader().getResource("plugins")).toURI());

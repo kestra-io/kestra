@@ -194,7 +194,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         PluginRegistry pluginRegistry = new PluginRegistry();
-        pluginScanner.continuousScan(pluginsPath, pluginRegistry::addPlugin, pluginRegistry::removePlugin);
+        pluginScanner.continuousScan(pluginsPath, pluginRegistry);
         KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
 
         return pluginRegistry;

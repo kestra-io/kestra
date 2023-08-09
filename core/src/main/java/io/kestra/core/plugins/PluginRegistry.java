@@ -7,10 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -65,7 +62,14 @@ public class PluginRegistry {
         log.info("Remove plugin '{}'", filePath);
 
         this.plugins
-            .removeIf(plugin -> plugin.getExternalPlugin().getLocation().getFile().equals(filePath));
+            .stream()
+            .filter(plugin -> plugin.getExternalPlugin().getLocation().getFile().equals(filePath))
+            .findFirst()
+            .ifPresent(plugin -> {
+                 plugin.close();
+
+                 this.plugins.remove(plugin);
+            });
 
         this.pluginsByClass
             .entrySet()

@@ -49,8 +49,13 @@
                         :selectable="canCheck"
                     >
                         <template #select-actions>
-                            <bulk-select :model-value="queryBulkAction" :selections="selection" :total="total"
-                                         @update:model-value="toggleAllSelection()">
+                            <bulk-select
+                                :select-all="queryBulkAction"
+                                :selections="selection"
+                                :total="total"
+                                @update:select-all="toggleAllSelection"
+                                @unselect="toggleAllUnselected"
+                            >
                                 <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
                                     {{ $t('export') }}
                                 </el-button>

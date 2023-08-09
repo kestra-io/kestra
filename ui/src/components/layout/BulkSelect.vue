@@ -1,13 +1,19 @@
 <template>
     <div class="bulk-select">
         <el-checkbox
-            :model-value="modelValue"
+            :model-value="selections.length > 0"
+            @change="toggle"
             :indeterminate="partialCheck"
-            @change="toggleAll"
         >
-            <span v-html="$t('selection.selected', {count: modelValue ? total : selections.length})" />
+            <span v-html="$t('selection.selected', {count: selectAll ? total : selections.length})" />
         </el-checkbox>
         <el-button-group>
+            <el-button
+                :type="selectAll ? 'primary' : 'default'"
+                @click="toggleAll"
+                v-if="selections.length < total"
+                v-html="$t('selection.all', {count: total})"
+            />
             <slot />
         </el-button-group>
     </div>
@@ -17,17 +23,22 @@
         props: {
             total: {type: Number, required: true},
             selections: {type: Array, required: true},
-            modelValue: {type: Boolean, required: true},
+            selectAll: {type: Boolean, required: true},
         },
-        emits: ["update:modelValue"],
+        emits: ["update:selectAll", "unselect"],
         methods: {
-            toggleAll() {
-                this.$emit("update:modelValue", !this.modelValue);
+            toggle(value) {
+                if (!value) {
+                    this.$emit("unselect");
+                }
+            },
+            toggleAll(value) {
+                this.$emit("update:selectAll", !this.selectAll);
             }
         },
         computed: {
             partialCheck() {
-                return !this.modelValue && this.selections.length > 0;
+                return !this.selectAll && this.selections.length < this.total;
             },
         }
     }

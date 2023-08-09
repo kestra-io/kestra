@@ -62,8 +62,13 @@
                     :selectable="!hidden.includes('selection') && canCheck"
                 >
                     <template #select-actions>
-                        <bulk-select v-model="queryBulkAction" :selections="selection" :total="total"
-                                     @update:model-value="toggleAllSelection()">
+                        <bulk-select
+                            :select-all="queryBulkAction"
+                            :selections="selection"
+                            :total="total"
+                            @update:select-all="toggleAllSelection"
+                            @unselect="toggleAllUnselected"
+                        >
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t('restart') }}
                             </el-button>
@@ -281,8 +286,7 @@
                     .add(-30, "days").toISOString(true);
             },
             displayBottomBar() {
-                return (this.selection.length !== 0 && (this.canUpdate || this.canDelete)) ||
-                    (this.$route.name === "flows/update");
+                return (this.$route.name === "flows/update");
             },
             canCheck() {
                 return this.canDelete || this.canUpdate;

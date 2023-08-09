@@ -21,7 +21,7 @@ export default {
         if (format === "iso") {
             f = "YYYY-MM-DD HH:mm:ss.SSS"
         } else {
-            f = format ?? localStorage.getItem(DATE_FORMAT_STORAGE_KEY) ?? "LLLL";
+            f = format ?? localStorage.getItem(DATE_FORMAT_STORAGE_KEY) ?? "llll";
         }
         return getCurrentInstance().appContext.config.globalProperties.$moment(dateString).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).format(f)
     }

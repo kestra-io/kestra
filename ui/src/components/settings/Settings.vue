@@ -167,7 +167,7 @@
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
-            this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "LLLL";
+            this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
@@ -286,12 +286,12 @@
             },
             dateFormats() {
                 return  [
-                    {value: "YYYY-MM-DD"},
-                    {value: "YYYY-MM-DDThh:mm:ssZ"},
-                    {value: "MM/DD/YYYY"},
-                    {value: "DD/MM/YYYY"},
-                    {value: "YYYY/MM/DD"},
-                    {value: "MM/DD/YY"},
+                    {value: "YYYY-MM-DDTHH:mm:ssZ"},
+                    {value: "YYYY-MM-DD hh:mm:ss A"},
+                    {value: "DD/MM/YYYY HH:mm:ss"},
+                    {value: "lll"},
+                    {value: "llll"},
+                    {value: "LLL"},
                     {value: "LLLL"}
                 ]
             },

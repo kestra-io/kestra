@@ -35,9 +35,9 @@
                 </template>
 
                 <template #table>
-                    <el-table
+                    <select-table
+                        ref="selectTable"
                         :data="flows"
-                        ref="table"
                         :default-sort="{prop: 'id', order: 'ascending'}"
                         stripe
                         table-layout="auto"
@@ -46,89 +46,99 @@
                         @sort-change="onSort"
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
+                        :selectable="canCheck"
                     >
-                        <el-table-column type="selection" v-if="(canCheck)" />
-                        <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
-                            <template #default="scope">
-                                <router-link
-                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
-                                >
-                                    {{ $filters.invisibleSpace(scope.row.id) }}
-                                </router-link>
-                                &nbsp;<markdown-tooltip
+                        <template #select-actions>
+                            <bulk-select
+                                :select-all="queryBulkAction"
+                                :selections="selection"
+                                :total="total"
+                                @update:select-all="toggleAllSelection"
+                                @unselect="toggleAllUnselected"
+                            >
+                                <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
+                                    {{ $t('export') }}
+                                </el-button>
+                                <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                                    {{ $t('delete') }}
+                                </el-button>
+                                <el-button v-if="canUpdate" @click="enableFlows" :icon="FileDocumentCheckOutline">
+                                    {{ $t('enable') }}
+                                </el-button>
+                                <el-button v-if="canUpdate" @click="disableFlows" :icon="FileDocumentRemoveOutline">
+                                    {{ $t('disable') }}
+                                </el-button>
+                            </bulk-select>
+                        </template>
+                        <template #default>
+                            <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']"
+                                             :label="$t('id')">
+                                <template #default="scope">
+                                    <router-link
+                                        :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                    >
+                                        {{ $filters.invisibleSpace(scope.row.id) }}
+                                    </router-link>
+                                    &nbsp;<markdown-tooltip
                                     :id="scope.row.namespace + '-' + scope.row.id"
                                     :description="scope.row.description"
                                     :title="scope.row.namespace + '.' + scope.row.id"
                                 />
-                            </template>
-                        </el-table-column>
+                                </template>
+                            </el-table-column>
 
-                        <el-table-column :label="$t('labels')">
-                            <template #default="scope">
-                                <labels :labels="scope.row.labels" />
-                            </template>
-                        </el-table-column>
+                            <el-table-column :label="$t('labels')">
+                                <template #default="scope">
+                                    <labels :labels="scope.row.labels" />
+                                </template>
+                            </el-table-column>
 
-                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
+                            <el-table-column prop="namespace" sortable="custom"
+                                             :sort-orders="['ascending', 'descending']"
+                                             :label="$t('namespace')"
+                                             :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
-                        <el-table-column
-                            prop="state"
-                            :label="$t('execution statistics')"
-                            v-if="user.hasAny(permission.EXECUTION)"
-                            class-name="row-graph"
-                        >
-                            <template #default="scope">
-                                <state-chart
-                                    :duration="true"
-                                    :namespace="scope.row.namespace"
-                                    :flow-id="scope.row.id"
-                                    v-if="dailyGroupByFlowReady"
-                                    :data="chartData(scope.row)"
-                                />
-                            </template>
-                        </el-table-column>
+                            <el-table-column
+                                prop="state"
+                                :label="$t('execution statistics')"
+                                v-if="user.hasAny(permission.EXECUTION)"
+                                class-name="row-graph"
+                            >
+                                <template #default="scope">
+                                    <state-chart
+                                        :duration="true"
+                                        :namespace="scope.row.namespace"
+                                        :flow-id="scope.row.id"
+                                        v-if="dailyGroupByFlowReady"
+                                        :data="chartData(scope.row)"
+                                    />
+                                </template>
+                            </el-table-column>
 
-                        <el-table-column :label="$t('triggers')" class-name="row-action">
-                            <template #default="scope">
-                                <trigger-avatar :flow="scope.row" />
-                            </template>
-                        </el-table-column>
+                            <el-table-column :label="$t('triggers')" class-name="row-action">
+                                <template #default="scope">
+                                    <trigger-avatar :flow="scope.row" />
+                                </template>
+                            </el-table-column>
 
-                        <el-table-column column-key="action" class-name="row-action">
-                            <template #default="scope">
-                                <router-link :to="{name: 'flows/update', params : {namespace: scope.row.namespace, id: scope.row.id}}">
-                                    <kicon :tooltip="$t('details')" placement="left">
-                                        <eye />
-                                    </kicon>
-                                </router-link>
-                            </template>
-                        </el-table-column>
-                    </el-table>
+                            <el-table-column column-key="action" class-name="row-action">
+                                <template #default="scope">
+                                    <router-link
+                                        :to="{name: 'flows/update', params : {namespace: scope.row.namespace, id: scope.row.id}}">
+                                        <kicon :tooltip="$t('details')" placement="left">
+                                            <eye />
+                                        </kicon>
+                                    </router-link>
+                                </template>
+                            </el-table-column>
+                        </template>
+                    </select-table>
                 </template>
             </data-table>
         </div>
 
         <bottom-line>
             <ul>
-                <li>
-                    <ul v-if="flowsSelection.length !== 0 && canRead">
-                        <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()">
-                            <el-button v-if="canRead" :icon="Download" size="large" @click="exportFlows()">
-                                {{ $t('export') }}
-                            </el-button>
-                            <el-button v-if="canDelete" @click="deleteFlows" size="large" :icon="TrashCan">
-                                {{ $t('delete') }}
-                            </el-button>
-                            <el-button v-if="canUpdate" @click="enableFlows" size="large" :icon="FileDocumentCheckOutline">
-                                {{ $t('enable') }}
-                            </el-button>
-                            <el-button v-if="canUpdate" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
-                                {{ $t('disable') }}
-                            </el-button>
-                        </bottom-line-counter>
-                    </ul>
-                </li>
-                <li class="spacer" />
                 <li>
                     <div class="el-input el-input-file el-input--large custom-upload">
                         <div class="el-input__wrapper">
@@ -166,6 +176,8 @@
 </template>
 
 <script setup>
+    import BulkSelect from "../layout/BulkSelect.vue";
+    import SelectTable from "../layout/SelectTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
@@ -184,6 +196,7 @@
     import BottomLine from "../layout/BottomLine.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
+    import SelectTableActions from "../../mixins/selectTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
@@ -193,12 +206,11 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
-    import BottomLineCounter from "../layout/BottomLineCounter.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,
             BottomLine,
@@ -211,7 +223,6 @@
             MarkdownTooltip,
             Kicon,
             Labels,
-            BottomLineCounter,
             Upload,
             LabelFilter
         },
@@ -222,8 +233,6 @@
                 action: action,
                 dailyGroupByFlowReady: false,
                 dailyReady: false,
-                flowsSelection: [],
-                queryBulkAction: false,
                 file: undefined,
             };
         },
@@ -255,28 +264,18 @@
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
-            },
+            }
         },
         methods: {
-            handleSelectionChange(val) {
-                if (val.length === 0) {
-                    this.queryBulkAction = false
-                }
-                this.flowsSelection = val.map(x => {
-                    return {
-                        id: x.id,
-                        namespace: x.namespace
-                    }
-                });
-            },
-            selectAll() {
-                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
-                    this.$refs.table.toggleAllSelection();
+            selectionMapper(element) {
+                return {
+                    id: element.id,
+                    namespace: element.namespace
                 }
             },
             exportFlows() {
                 this.$toast().confirm(
-                    this.$t("flow export", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    this.$t("flow export", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -289,18 +288,19 @@
                                 })
                         } else {
                             return this.$store
-                                .dispatch("flow/exportFlowByIds", {ids: this.flowsSelection})
+                                .dispatch("flow/exportFlowByIds", {ids: this.selection})
                                 .then(_ => {
                                     this.$toast().success(this.$t("flows exported"));
                                 })
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
-            disableFlows(){
+            disableFlows() {
                 this.$toast().confirm(
-                    this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -310,23 +310,26 @@
                                 }, false))
                                 .then(r => {
                                     this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
-                                    this.loadData(() => {})
+                                    this.loadData(() => {
+                                    })
                                 })
                         } else {
                             return this.$store
-                                .dispatch("flow/disableFlowByIds", {ids: this.flowsSelection})
+                                .dispatch("flow/disableFlowByIds", {ids: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
-                                    this.loadData(() => {})
+                                    this.loadData(() => {
+                                    })
                                 })
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
-            enableFlows(){
+            enableFlows() {
                 this.$toast().confirm(
-                    this.$t("flow enable", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    this.$t("flow enable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -336,23 +339,26 @@
                                 }, false))
                                 .then(r => {
                                     this.$toast().success(this.$t("flows enabled", {count: r.data.count}));
-                                    this.loadData(() => {})
+                                    this.loadData(() => {
+                                    })
                                 })
                         } else {
                             return this.$store
-                                .dispatch("flow/enableFlowByIds", {ids: this.flowsSelection})
+                                .dispatch("flow/enableFlowByIds", {ids: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("flows enabled", {count: r.data.count}));
-                                    this.loadData(() => {})
+                                    this.loadData(() => {
+                                    })
                                 })
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
-            deleteFlows(){
+            deleteFlows() {
                 this.$toast().confirm(
-                    this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -362,18 +368,21 @@
                                 }, false))
                                 .then(r => {
                                     this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
-                                    this.loadData(() => {})
+                                    this.loadData(() => {
+                                    })
                                 })
                         } else {
                             return this.$store
-                                .dispatch("flow/deleteFlowByIds", {ids: this.flowsSelection})
+                                .dispatch("flow/deleteFlowByIds", {ids: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
-                                    this.loadData(() => {})
+                                    this.loadData(() => {
+                                    })
                                 })
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
             importFlows() {
@@ -383,7 +392,8 @@
                     .dispatch("flow/importFlows", formData)
                     .then(_ => {
                         this.$toast().success(this.$t("flows imported"));
-                        this.loadData(() => {})
+                        this.loadData(() => {
+                        })
                     })
             },
             chartData(row) {

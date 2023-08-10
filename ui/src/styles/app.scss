@@ -24,13 +24,10 @@
 
 // main layout
 main {
-    padding-right: var(--spacer);
-    padding-left: var(--spacer);
+    padding: var(--spacer);
     margin-right: auto;
     margin-left: auto;
 
-    padding-top: var(--spacer);
-    padding-bottom: 86px !important;
     transition: all 0.3s ease;
 
     &.menu-collapsed {
@@ -45,7 +42,7 @@ main {
         @include mixin.res(lg) {
             #{--offset-from-menu}: calc(var(--spacer) * 4);
             padding-left: calc(var(--menu-width) + var(--offset-from-menu));
-            padding-right: calc(var(--spacer) * 4);
+            padding-right: var(--offset-from-menu);
         }
     }
 }

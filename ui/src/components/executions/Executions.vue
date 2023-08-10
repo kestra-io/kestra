@@ -167,7 +167,7 @@
             </template>
         </data-table>
 
-        <fixed-bar v-if="displayBottomBar">
+        <fixed-bar v-if="displayFixedBar">
             <ul>
                 <template v-if="$route.name === 'flows/update'">
                     <li>
@@ -294,7 +294,7 @@
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
                     .add(-30, "days").toISOString(true);
             },
-            displayBottomBar() {
+            displayFixedBar() {
                 return this.$route.name === "flows/update";
             },
             canCheck() {

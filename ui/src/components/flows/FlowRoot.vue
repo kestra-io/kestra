@@ -41,7 +41,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
-    import FixedBar from "../layout/FixedBar.vue";
+    import FixedBar from "../../components/layout/FixedBar.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";

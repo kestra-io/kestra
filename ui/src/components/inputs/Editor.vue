@@ -393,11 +393,11 @@
             display: flex;
 
             &.full-height {
-                height: calc(100vh - 379px);
+                height: calc(100vh - 299px);
             }
 
             &.diff {
-                height: calc(100vh - 435px);
+                height: calc(100vh - 355px);
             }
 
             &.single-line {

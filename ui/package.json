@@ -50,7 +50,8 @@
     "vue3-tour": "git@github.com:kestra-io/vue3-tour.git",
     "vuex": "^4.1.0",
     "xss": "^1.0.14",
-    "yaml": "^2.3.1"
+    "yaml": "^2.3.1",
+    "@popperjs/core": "npm:@sxzz/popperjs-es@2.11.7"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.3.3",

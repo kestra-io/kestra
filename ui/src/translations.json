@@ -425,7 +425,7 @@
     "sequential": "Sequential",
     "can not delete": "Can not delete",
     "can not have less than 1 task": "Flows can not have less than 1 task.",
-    "task id already exist": "Task Id already exists",
+    "task id already exists": "Task Id already exists",
     "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
     "flow already exists": "Flow already exists",
     "namespace not allowed": "Namespace not allowed",
@@ -481,7 +481,8 @@
       "success": "Trigger is unlocked"
     },
     "date format": "Date format",
-    "timezone": "Timezone"
+    "timezone": "Timezone",
+    "add task": "Add a task"
   },
   "fr": {
     "id": "Identifiant",
@@ -911,7 +912,7 @@
     "sequential": "Séquentiel",
     "can not delete": "Suppression impossible",
     "can not have less than 1 task": "Un flow ne peut avoir moins d'1 tâche.",
-    "task id already exist": "Identifiant de tâche déjà utilisé",
+    "task id already exists": "Identifiant de tâche déjà utilisé",
     "Task Id already exist in the flow": "L'identifiant {taskId} est déjà utilisé dans le flow.",
     "flow already exists": "Flow déjà existant",
     "namespace not allowed": "Espace de nom non autorisé",
@@ -965,6 +966,8 @@
       "success": "Le déclencheur est débloqué"
     },
     "date format": "Format de date",
-    "timezone": "Fuseau horaire"
+    "timezone": "Fuseau horaire",
+    "add task": "Ajouter une tâche"
   }
 }
+

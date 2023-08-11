@@ -10,8 +10,9 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path ../.gitignore"
   },
   "dependencies": {
+    "@kestra-io/ui-libs": "^0.0.1",
     "@vue-flow/controls": "1.0.6",
-    "@vue-flow/core": "1.14.3",
+    "@vue-flow/core": "^1.14.3",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.4.0",
     "bootstrap": "^5.3.1",
@@ -35,6 +36,7 @@
     "moment-range": "4.0.2",
     "moment-timezone": "^0.5.43",
     "node-modules-polyfill": "^0.1.4",
+    "npm": "^9.8.1",
     "nprogress": "^0.2.0",
     "prismjs": "^1.29.0",
     "throttle-debounce": "^5.0.0",

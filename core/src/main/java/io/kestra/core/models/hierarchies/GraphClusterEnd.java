@@ -9,4 +9,8 @@ public class GraphClusterEnd extends AbstractGraph {
     public GraphClusterEnd() {
         super(IdUtils.create() + "_end");
     }
+
+    public GraphClusterEnd(String uid) {
+        super(uid + "_end");
+    }
 }

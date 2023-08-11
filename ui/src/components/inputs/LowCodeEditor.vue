@@ -4,12 +4,21 @@
     import {useStore} from "vuex";
     import {MarkerType, Position, useVueFlow, VueFlow} from "@vue-flow/core";
 
+    import TaskEdit from "../flows/TaskEdit.vue";
+    import SearchField from "../layout/SearchField.vue";
+    import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    import LogList from "../logs/LogList.vue";
+    import Collapse from "../layout/Collapse.vue";
+
     // Nodes
-    import Cluster from "../graph/nodes/Cluster.vue";
-    import Dot from "../graph/nodes/Dot.vue"
-    import Task from "../graph/nodes/Task.vue";
-    import Trigger from "../graph/nodes/Trigger.vue";
-    import Edge from "../graph/nodes/Edge.vue";
+    import {
+        TaskNode,
+        DotNode,
+        ClusterNode,
+        EdgeNode,
+        TriggerNode,
+        CollapsedClusterNode
+    } from "@kestra-io/ui-libs"
 
     // Topology Control
     import {Controls, ControlButton} from "@vue-flow/controls"
@@ -23,6 +32,11 @@
     import {cssVariable} from "../../utils/global";
     import dagre from "dagre";
     import Utils from "../../utils/utils";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import TaskEditor from "../flows/TaskEditor.vue";
+    import ValidationError from "../flows/ValidationError.vue";
+    import Markdown from "../layout/Markdown.vue";
+    import yamlUtils from "../../utils/yamlUtils";
 
     // Vue flow methods to interact with Graph
     const {
@@ -90,7 +104,6 @@
             (props.viewType?.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
     }
 
-
     // Components variables
     const dragging = ref(false);
     const isHorizontal = ref(isHorizontalDefault());
@@ -98,15 +111,43 @@
     const lastPosition = ref(null)
     const vueFlow = ref(null);
     const timer = ref(null);
+    const icons = ref(store.getters["plugin/getIcons"]);
+    const edgeReplacer = ref({});
+    const hiddenNodes = ref([]);
+    const collapsed = ref([]);
+    const clusterCollapseToNode = ref(["Triggers"])
+    const clusterToNode = ref([])
+    const taskObject = ref(null);
+    const taskEditData = ref(null);
+    const taskEdit = ref(null);
+    const isShowLogsOpen = ref(false);
+    const logFilter = ref("");
+    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
+    const isDrawerOpen = ref(false);
+    const isShowDescriptionOpen = ref(false);
+    const selectedTask = ref(null);
 
     // Init components
-    onMounted( async() => {
+    onMounted(async () => {
         // Regenerate graph on window resize
         observeWidth();
+        icons.value = ref(store.getters["plugin/getIcons"])
     })
 
     watch(() => props.flowGraph, () => {
         generateGraph();
+    })
+
+    watch(() => store.getters["plugin/getIcons"], () => {
+        icons.value = ref(store.getters["plugin/getIcons"])
+    })
+
+    watch(() => isDrawerOpen.value, () => {
+        if (!isDrawerOpen.value) {
+            isShowDescriptionOpen.value = false;
+            isShowLogsOpen.value = false;
+            selectedTask.value = null;
+        }
     })
 
     watch(() => props.viewType, () => {
@@ -137,7 +178,7 @@
     const onDelete = (event) => {
         const flowParsed = YamlUtils.parse(props.source);
         toast.confirm(
-            t("delete task confirm", {taskId: flowParsed.id}),
+            t("delete task confirm", {taskId: event.id}),
             () => {
 
                 const section = event.section ? event.section : SECTIONS.TASKS;
@@ -149,7 +190,7 @@
                     });
                     return;
                 }
-                emit("on-edit",YamlUtils.deleteTask(props.source, event.id, section))
+                emit("on-edit", YamlUtils.deleteTask(props.source, event.id, section))
             },
             () => {
             }
@@ -158,13 +199,63 @@
 
     // Source edit functions
     const onCreateNewTask = (event) => {
-        const source = props.source;
-        emit("on-edit",YamlUtils.insertTask(source, event.taskId, event.taskYaml, event.insertPosition))
+        taskEditData.value = {
+            insertionDetails: event,
+            action: "create_task",
+            section: SECTIONS.TASKS
+        };
+        taskEdit.value.$refs.taskEdit.click()
+    }
+
+    const onEditTask = (event) => {
+        taskEditData.value = {
+            action: "edit_task",
+            section: event.section ? event.section : SECTIONS.TASKS,
+            oldTaskId: event.task.id,
+        };
+        taskObject.value = event.task
+        taskEdit.value.$refs.taskEdit.click()
     }
 
     const onAddFlowableError = (event) => {
+        taskEditData.value = {
+            action: "add_flowable_error",
+            taskId: event.task.id
+        };
+        taskEdit.value.$refs.taskEdit.click()
+
+    }
+
+    const confirmEdit = (event) => {
         const source = props.source;
-        emit("on-edit",YamlUtils.insertErrorInFlowable(source, event.error, event.taskId))
+        const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
+        if (task === undefined || (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)) {
+            switch (taskEditData.value.action) {
+            case("create_task"):
+                emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]))
+            case("edit_task"):
+                emit("on-edit", YamlUtils.replaceTaskInDocument(
+                    source,
+                    taskEditData.value.oldTaskId,
+                    event
+                ))
+            case("add_flowable_error"):
+                emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId))
+            }
+        } else {
+            store.dispatch("core/showMessage", {
+                variant: "error",
+                title: t("error detected"),
+                message: t("Task Id already exist in the flow", {taskId: YamlUtils.parse(event).id})
+            });
+        }
+        taskEditData.value = null;
+        taskObject.value = null;
+    }
+
+    const closeEdit = () => {
+        taskEditData.value = null;
+        taskObject.value = null;
     }
 
     // Flow check functions
@@ -182,7 +273,8 @@
         if (!dragging.value) {
             linkedElements(id, node.uid).forEach((n) => {
                 if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-yellow")}
+                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-gray-900")}
+                    n.class = "rounded-3"
                 }
             });
         }
@@ -194,9 +286,10 @@
     }
 
     const resetNodesStyle = () => {
-        getNodes.value.filter(n => n.type === "task" || n.type === " trigger")
+        getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
             .forEach(n => {
                 n.style = {...n.style, opacity: "1", outline: "none"}
+                n.class = ""
             })
     }
 
@@ -231,7 +324,7 @@
             e.node.position = lastPosition.value;
         }
         resetNodesStyle();
-        e.node.style = {...e.node.style, zIndex: 1}
+        e.node.style = {...e.node.style, zIndex: 5}
         lastPosition.value = null;
     })
 
@@ -248,9 +341,11 @@
             e.intersections.forEach(n => {
                 if (n.type === "task") {
                     n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
+                    n.class = "rounded-3"
                 }
             })
             e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
+            e.node.class = "rounded-3"
         }
     })
 
@@ -282,30 +377,51 @@
     const generateDagreGraph = () => {
         const dagreGraph = new dagre.graphlib.Graph({compound: true})
         dagreGraph.setDefaultEdgeLabel(() => ({}))
-        dagreGraph.setGraph({rankdir: isHorizontal.value ? "LR" : "TB"})
+        dagreGraph.setGraph({rankdir: isHorizontal.value ? "LR" : "TB", edgesep: 5, ranksep: 40})
 
         for (const node of props.flowGraph.nodes) {
-            dagreGraph.setNode(node.uid, {
-                width: getNodeWidth(node),
-                height: getNodeHeight(node)
-            })
-        }
-
-        for (const edge of props.flowGraph.edges) {
-            dagreGraph.setEdge(edge.source, edge.target)
+            if (!hiddenNodes.value.includes(node.uid)) {
+                dagreGraph.setNode(node.uid, {
+                    width: getNodeWidth(node),
+                    height: getNodeHeight(node)
+                })
+            }
         }
 
         for (let cluster of (props.flowGraph.clusters || [])) {
-            dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"});
-
-            if (cluster.parents) {
-                dagreGraph.setParent(cluster.cluster.uid, cluster.parents[cluster.parents.length - 1]);
+            if (clusterCollapseToNode.value.includes(cluster.cluster.uid) && collapsed.value.includes(cluster.cluster.uid)) {
+                const node = {uid: cluster.cluster.uid, type: "collapsedcluster"};
+                dagreGraph.setNode(cluster.cluster.uid, {
+                    width: getNodeWidth(node),
+                    height: getNodeHeight(node)
+                });
+                clusterToNode.value.push(node)
+                continue
             }
+            if (!edgeReplacer.value[cluster.cluster.uid]) {
+                dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"});
 
-            for (let node of (cluster.nodes || [])) {
-                dagreGraph.setParent(node, cluster.cluster.uid)
+                for (let node of (cluster.nodes || [])) {
+                    if (!hiddenNodes.value.includes(node)) {
+                        dagreGraph.setParent(node, cluster.cluster.uid)
+                    }
+                }
+            }
+            if (cluster.parents) {
+                const nodeChild = edgeReplacer.value[cluster.cluster.uid] ? edgeReplacer.value[cluster.cluster.uid] : cluster.cluster.uid
+                if (!hiddenNodes.value.includes(nodeChild)) {
+                    dagreGraph.setParent(nodeChild, cluster.parents[cluster.parents.length - 1]);
+                }
             }
         }
+
+        for (const edge of (props.flowGraph.edges || [])) {
+            const newEdge = replaceIfCollapsed(edge.source, edge.target);
+            if (newEdge) {
+                dagreGraph.setEdge(newEdge.source, newEdge.target)
+            }
+        }
+
         dagre.layout(dagreGraph)
         return dagreGraph;
     }
@@ -323,34 +439,63 @@
     };
 
     const isTaskNode = (node) => {
-        return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask" || node.type === "io.kestra.core.models.hierarchies.GraphClusterRoot")
+        return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask")
     };
 
     const isTriggerNode = (node) => {
         return node.trigger !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTrigger");
     }
 
+    const isCollapsedCluster = (node) => {
+        return node.type === "collapsedcluster";
+    }
+
     const getNodeWidth = (node) => {
-        return isTaskNode(node) || isTriggerNode(node) ? 202 : 5;
+        return isTaskNode(node) || isTriggerNode(node) ? 184 : isCollapsedCluster(node) ? 150 : 5;
     };
 
     const getNodeHeight = (node) => {
-        return isTaskNode(node) || isTriggerNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
+        return isTaskNode(node) || isTriggerNode(node) ? 44 : isCollapsedCluster(node) ? 44 : 5;
     };
 
-    const complexEdgeHaveAdd = (edge) => {
+    const getNodeIcon = (node) => {
+        const type = isTaskNode(node) ? node.task.type : isTriggerNode(node) ? node.trigger.type : undefined
+        if (type && icons.value.value) {
+            return icons.value.value[type]
+        }
+        return null;
+    }
+
+    const haveAdd = (edge) => {
+        if (isLinkToFirstTask(edge)) {
+            return [getNextTaskId(edge.target), "before"];
+        }
+        if (isTaskParallel(edge.target) || YamlUtils.isTrigger(props.source, edge.target) || YamlUtils.isTrigger(props.source, edge.source)) {
+            return undefined;
+        }
+        if (YamlUtils.extractTask(props.source, edge.source) && YamlUtils.extractTask(props.source, edge.target)) {
+            return [edge.source, "after"];
+        }
         // Check if edge is an ending flowable
         // If true, enable add button to add a task
         // under the flowable task
-        const isEndtoEndEdge = edge.source.includes("_end") && edge.target.includes("_end")
-        if (isEndtoEndEdge) {
+        if (edge.source.endsWith("_end") && edge.target.endsWith("_end")) {
             // Cluster uid contains the flowable task id
             // So we look for the cluster having this end edge
             // to return his flowable id
             return [getClusterTaskIdWithEndNodeUid(edge.source), "after"];
         }
-        if (isLinkToFirstFlowableTask(edge)) {
-            return [getFirstTaskId(), "before"];
+        if (flowables().includes(edge.source)) {
+            return [getNextTaskId(edge.target), "before"];
+        }
+        if (YamlUtils.extractTask(props.source, edge.source) && edge.target.endsWith("_end")) {
+            return [edge.source, "after"];
+        }
+        if (YamlUtils.extractTask(props.source, edge.source) && edge.target.endsWith("_start")) {
+            return [edge.source, "after"];
+        }
+        if (YamlUtils.extractTask(props.source, edge.target) && edge.source.endsWith("_end")) {
+            return [edge.target, "before"];
         }
 
         return undefined;
@@ -365,10 +510,9 @@
         return undefined;
     }
 
-    const isLinkToFirstFlowableTask = (edge) => {
+    const isLinkToFirstTask = (edge) => {
         const firstTaskId = getFirstTaskId();
-
-        return flowables().includes(firstTaskId) && edge.target === firstTaskId;
+        return edge.target === firstTaskId;
     }
 
     const getFirstTaskId = () => {
@@ -386,6 +530,64 @@
         return target
     }
 
+
+    const collapseCluster = (clusterUid, regenerate, recursive) => {
+
+        const cluster = props.flowGraph.clusters.find(cluster => cluster.cluster.uid === clusterUid)
+        const nodeId = clusterUid === "Triggers" ? "Triggers" : Utils.splitFirst(clusterUid, "cluster_");
+        collapsed.value = collapsed.value.concat([nodeId])
+
+        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter(e => e != nodeId || recursive));
+        if (clusterUid !== "Triggers") {
+            hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid])
+            edgeReplacer.value = {
+                ...edgeReplacer.value,
+                [cluster.cluster.uid]: nodeId,
+                [cluster.start]: nodeId,
+                [cluster.end]: nodeId
+            }
+
+            for (let child of cluster.nodes) {
+                if (props.flowGraph.clusters.map(cluster => cluster.cluster.uid).includes(child)) {
+                    collapseCluster(child, false, true);
+                }
+            }
+        } else {
+            edgeReplacer.value = {
+                ...edgeReplacer.value,
+                [cluster.start]: nodeId,
+                [cluster.end]: nodeId
+            }
+        }
+
+        if (regenerate) {
+            generateGraph();
+        }
+    }
+
+    const expand = (taskId) => {
+        const cluster = props.flowGraph.clusters.find(cluster => cluster.cluster.uid === "cluster_" + taskId)
+
+        edgeReplacer.value = {}
+        hiddenNodes.value = []
+        clusterToNode.value = []
+        collapsed.value = collapsed.value.filter(n => n != taskId)
+
+        collapsed.value.forEach(n => collapseCluster("cluster_" + n, false, false))
+
+        generateGraph();
+    }
+
+    const replaceIfCollapsed = (source, target) => {
+        const newSource = edgeReplacer.value[source] ? edgeReplacer.value[source] : source
+        const newTarget = edgeReplacer.value[target] ? edgeReplacer.value[target] : target
+
+        if (newSource == newTarget || (hiddenNodes.value.includes(newSource) || hiddenNodes.value.includes(newTarget))) {
+            return null;
+        }
+        return {target: newTarget, source: newSource}
+    }
+
     const cleanGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
@@ -393,92 +595,131 @@
         elements.value = []
     }
 
+    const consolelog = () => {
+        console.log("myfunction")
+    }
+
+    const nodeColor = (node) => {
+        if (isTaskNode(node)) {
+            if (collapsed.value.includes(node.uid)) {
+                return "blue";
+            }
+            if (YamlUtils.isTaskError(props.source, node.task.id)) {
+                return "danger"
+            }
+            if (node.task.type === "io.kestra.core.tasks.flows.Flow") {
+                return "primary"
+            }
+        } else if (isTriggerNode(node) || isCollapsedCluster(node)) {
+            return "success";
+        }
+        return "default"
+    }
+
+    const isTaskParallel = (taskId) => {
+        const clusterTask = YamlUtils.parse(YamlUtils.extractTask(props.source, taskId));
+        return clusterTask?.type === "io.kestra.core.tasks.flows.EachParallel" ||
+            clusterTask?.type === "io.kestra.core.tasks.flows.Parallel" ? clusterTask : undefined;
+    }
+
+    const getEdgeColor = (edge) => {
+        if (YamlUtils.isTaskError(props.source, edge.source) || YamlUtils.isTaskError(props.source, edge.target)) {
+            return "danger"
+        }
+        return null;
+    }
+
     const generateGraph = () => {
         cleanGraph();
 
         nextTick(() => {
             emit("loading", true);
-            try {
-                if (!props.flowGraph || !flowHaveTasks()) {
-                    elements.value.push({
-                        id: "start",
-                        label: "",
-                        type: "dot",
-                        position: {x: 0, y: 0},
-                        style: {
-                            width: "5px",
-                            height: "5px"
+            if (!props.flowGraph || !flowHaveTasks()) {
+                elements.value.push({
+                    id: "start",
+                    label: "",
+                    type: "dot",
+                    position: {x: 0, y: 0},
+                    style: {
+                        width: "5px",
+                        height: "5px"
+                    },
+                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                    parentNode: undefined,
+                    draggable: false,
+                })
+                elements.value.push({
+                    id: "end",
+                    label: "",
+                    type: "dot",
+                    position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
+                    style: {
+                        width: "5px",
+                        height: "5px"
+                    },
+                    sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
+                    targetPosition: isHorizontal.value ? Position.Left : Position.Top,
+                    parentNode: undefined,
+                    draggable: false,
+                })
+                elements.value.push({
+                    id: "start|end",
+                    source: "start",
+                    target: "end",
+                    type: "edge",
+                    data: {
+                        edge: {
+                            relation: {
+                                relationType: "SEQUENTIAL"
+                            }
                         },
-                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                        parentNode: undefined,
-                        draggable: false,
-                    })
-                    elements.value.push({
-                        id: "end",
-                        label: "",
-                        type: "dot",
-                        position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
-                        style: {
-                            width: "5px",
-                            height: "5px"
-                        },
-                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                        parentNode: undefined,
-                        draggable: false,
-                    })
-                    elements.value.push({
-                        id: "start|end",
-                        source: "start",
-                        target: "end",
-                        type: "edge",
-                        markerEnd: MarkerType.ArrowClosed,
-                        data: {
-                            edge: {
-                                relation: {
-                                    relationType: "SEQUENTIAL"
-                                }
-                            },
-                            isFlowable: false,
-                            initTask: true,
-                        }
-                    })
+                        isFlowable: false,
+                        initTask: true,
+                        color: "primary"
+                    }
+                })
 
-                    emit("loading", false);
-                    return;
-                }
-                if (props.flowGraph === undefined) {
-                    emit("loading", false);
-                    return;
-                }
-                const dagreGraph = generateDagreGraph();
-                const clusters = {};
-                for (let cluster of (props.flowGraph.clusters || [])) {
+                emit("loading", false);
+                return;
+            }
+            if (props.flowGraph === undefined) {
+                emit("loading", false);
+                return;
+            }
+            const dagreGraph = generateDagreGraph();
+            const clusters = {};
+            for (let cluster of (props.flowGraph.clusters || [])) {
+                if (!edgeReplacer.value[cluster.cluster.uid] && !collapsed.value.includes(cluster.cluster.uid)) {
                     for (let nodeUid of cluster.nodes) {
                         clusters[nodeUid] = cluster.cluster;
                     }
 
-                    const dagreNode = dagreGraph.node(cluster.cluster.uid)
+                    const clusterUid = cluster.cluster.uid;
+                    const dagreNode = dagreGraph.node(clusterUid)
                     const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
 
-                    const clusterUid = cluster.cluster.uid;
                     elements.value.push({
                         id: clusterUid,
-                        label: clusterUid,
                         type: "cluster",
                         parentNode: parentNode,
                         position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
                         style: {
-                            width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
-                            height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
+                            width: clusterUid === "Triggers" && isHorizontal.value ? "350px" : dagreNode.width + "px",
+                            height: clusterUid === "Triggers" && !isHorizontal.value ? "180px" : dagreNode.height + "px"
                         },
+                        data: {
+                            collapsable: true,
+                            color: clusterUid === "Triggers" ? "success" : "blue"
+                        },
+                        class: `bg-light-${clusterUid === "Triggers" ? "success" : "blue"}-border rounded p-2`,
                     })
                 }
+            }
 
-                let disabledLowCode = [];
-
-                for (const node of props.flowGraph.nodes) {
+            let disabledLowCode = [];
+            for (const node of props.flowGraph.nodes.concat(clusterToNode.value)) {
+                if (!hiddenNodes.value.includes(node.uid)) {
                     const dagreNode = dagreGraph.node(node.uid);
                     let nodeType = "task";
                     if (node.type.includes("GraphClusterEnd")) {
@@ -489,6 +730,8 @@
                         nodeType = "dot";
                     } else if (node.type.includes("GraphTrigger")) {
                         nodeType = "trigger";
+                    } else if (node.type === "collapsedcluster") {
+                        nodeType = "collapsedcluster";
                     }
                     // Disable interaction for Dag task
                     // because our low code editor can not handle it for now
@@ -499,9 +742,10 @@
                         })
                     }
 
+                    const taskId = node?.task?.id;
                     elements.value.push({
                         id: node.uid,
-                        label: isTaskNode(node) ? node.task.id : "",
+                        label: isTaskNode(node) ? taskId : "",
                         type: nodeType,
                         position: getNodePosition(dagreNode, clusters[node.uid] ? dagreGraph.node(clusters[node.uid].uid) : undefined),
                         style: {
@@ -511,40 +755,72 @@
                         sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
                         targetPosition: isHorizontal.value ? Position.Left : Position.Top,
                         parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
-                        draggable: nodeType === "task" && !props.isReadOnly && isTaskNode(node) ? !disabledLowCode.includes(node.task.id) : false,
+                        draggable: nodeType === "task" && !props.isReadOnly && isTaskNode(node) ? !disabledLowCode.includes(taskId) : false,
                         data: {
                             node: node,
                             namespace: props.namespace,
                             flowId: props.flowId,
+                            execution: props.execution,
                             revision: props.execution ? props.execution.flowRevision : undefined,
-                            isFlowable: isTaskNode(node) ? flowables().includes(node.task.id) : false
+                            isFlowable: isTaskNode(node) ? flowables().includes(taskId) : false,
+                            color: nodeType != "dot" ? nodeColor(node) : null,
+                            expandable: taskId ? flowables().includes(taskId) && edgeReplacer.value["cluster_" + taskId] !== undefined : isCollapsedCluster(node),
+                            icon: getNodeIcon(node),
+                            isReadOnly: props.isReadOnly
                         },
+                        class: node.type === "collapsedcluster" ? `bg-light-${node.uid === "Triggers" ? "success" : "blue"}-border rounded p-2` : "",
                     })
                 }
-
-                for (const edge of props.flowGraph.edges) {
+            }
+            for (const edge of (props.flowGraph.edges || [])) {
+                const newEdge = replaceIfCollapsed(edge.source, edge.target);
+                if (newEdge) {
                     elements.value.push({
-                        id: edge.source + "|" + edge.target,
-                        source: edge.source,
-                        target: edge.target,
+                        id: newEdge.source + "|" + newEdge.target,
+                        source: newEdge.source,
+                        target: newEdge.target,
                         type: "edge",
-                        markerEnd: MarkerType.ArrowClosed,
+                        markerEnd: YamlUtils.extractTask(props.source, newEdge.target) ? {
+                            id: "marker-custom",
+                            type: MarkerType.ArrowClosed,
+                        } : "",
                         data: {
-                            edge: edge,
-                            haveAdd: complexEdgeHaveAdd(edge),
+                            haveAdd: haveAdd(edge),
                             isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
+                            haveDashArray: YamlUtils.isTrigger(props.source, edge.source) || YamlUtils.isTrigger(props.source, edge.target),
                             nextTaskId: getNextTaskId(edge.target),
-                            disabled: disabledLowCode.includes(edge.source)
+                            disabled: disabledLowCode.includes(edge.source) || props.execution || props.isReadOnly || !props.isAllowedEdit,
+                            color: getEdgeColor(edge)
+                        },
+                        style: {
+                            zIndex: 10,
                         }
                     })
                 }
-            } catch (e) {
-                console.error("Error while creating topology graph: " + e);
             }
-            finally {
-                emit("loading", false);
-            }
+            fitView();
+            emit("loading", false);
         })
+    }
+
+    const showLogs = (event) => {
+        selectedTask.value = event
+        isShowLogsOpen.value = true;
+        isDrawerOpen.value = true;
+    }
+
+    const onSearch = (search) => {
+        logFilter.value = search;
+    }
+
+    const onLevelChange = (level) => {
+        logLevel.value = level;
+    }
+
+    const showDescription = (event) => {
+        selectedTask.value = event
+        isShowDescriptionOpen.value = true;
+        isDrawerOpen.value = true;
     }
 
     // Expose method to be triggered by parents
@@ -566,43 +842,54 @@
             :elevate-edges-on-select="false"
         >
             <template #node-cluster="props">
-                <Cluster v-bind="props" />
+                <ClusterNode
+                    v-bind="props"
+                    @collapse="collapseCluster($event, true)"
+                />
             </template>
 
             <template #node-dot="props">
-                <Dot v-bind="props" />
+                <DotNode v-bind="props" />
             </template>
 
             <template #node-task="props">
-                <Task
+                <TaskNode
                     v-bind="props"
-                    @follow="forwardEvent('follow', $event)"
-                    @edit="forwardEvent('on-edit', $event)"
+                    @edit="onEditTask($event)"
                     @delete="onDelete"
-                    @addFlowableError="onAddFlowableError"
-                    @mouseover="onMouseOver"
-                    @mouseleave="onMouseLeave"
-                    :is-read-only="isReadOnly"
-                    :is-allowed-edit="isAllowedEdit"
+                    @expand="expand($event)"
+                    @openLink="consolelog()"
+                    @showLogs="showLogs($event)"
+                    @showDescription="showDescription($event)"
+                    @mouseover="onMouseOver($event)"
+                    @mouseleave="onMouseLeave()"
+                    @addError="onAddFlowableError($event)"
                 />
             </template>
 
             <template #node-trigger="props">
-                <Trigger
+                <TriggerNode
                     v-bind="props"
-                    @edit="forwardEvent('on-edit', $event)"
                     @delete="onDelete"
                     :is-read-only="isReadOnly"
                     :is-allowed-edit="isAllowedEdit"
+                    @edit="onEditTask($event)"
+                />
+            </template>
+
+            <template #node-collapsedcluster="props">
+                <CollapsedClusterNode
+                    v-bind="props"
+                    @expand="expand($event)"
                 />
             </template>
 
             <template #edge-edge="props">
-                <Edge
+                <EdgeNode
                     v-bind="props"
                     :yaml-source="source"
                     :flowables-ids="flowables()"
-                    @edit="onCreateNewTask"
+                    @addTask="onCreateNewTask($event)"
                     :is-read-only="isReadOnly"
                     :is-allowed-edit="isAllowedEdit"
                 />
@@ -615,12 +902,68 @@
                 </ControlButton>
             </Controls>
         </VueFlow>
+
+        <!-- Drawer to create/add task -->
+        <task-edit
+            component="div"
+            is-hidden
+            :emit-task-only="true"
+            class="node-action"
+            :section="SECTIONS.TASKS"
+            :task="taskObject"
+            :flow-id="flowId"
+            size="small"
+            :namespace="namespace"
+            :revision="execution ? execution.flowRevision : undefined"
+            :emit-only="true"
+            @update:task="confirmEdit($event)"
+            @close="closeEdit()"
+            ref="taskEdit"
+        />
+
+        <!--    Drawer to task informations (logs, description, ..)   -->
+        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
+        <el-drawer
+            v-if="isDrawerOpen && selectedTask"
+            v-model="isDrawerOpen"
+            :title="`Task ${selectedTask.id}`"
+            destroy-on-close
+            size=""
+            :append-to-body="true"
+        >
+            <div v-if="isShowLogsOpen">
+                <collapse>
+                    <el-form-item>
+                        <search-field :router="false" @search="onSearch" class="me-2" />
+                    </el-form-item>
+                    <el-form-item>
+                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
+                    </el-form-item>
+                </collapse>
+                <log-list
+                    v-for="taskRun in selectedTask.taskRuns"
+                    :key="taskRun.id"
+                    :execution="execution"
+                    :task-run-id="taskRun.id"
+                    :filter="logFilter"
+                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                    :level="logLevel"
+                    @follow="forwardEvent('follow', $event)"
+                    :hide-others-on-select="true"
+                />
+            </div>
+            <div v-if="isShowDescriptionOpen">
+                <markdown class="markdown-tooltip" :source="selectedTask.description" />
+            </div>
+        </el-drawer>
     </div>
 </template>
 
 
-
 <style scoped lang="scss">
+    @use "@kestra-io/ui-libs/dist/style.css";
+    @import "@kestra-io/ui-libs/dist/variables.scss";
+
     .vueflow {
         height: 100%;
         width: 100%;

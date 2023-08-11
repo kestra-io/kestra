@@ -45,7 +45,7 @@ import java.util.Optional;
                 "    type: io.kestra.core.tasks.flows.Pause",
                 "    tasks:",
                 "     - id: ko",
-                "       type: io.kestra.core.tasks.scripts.Bash",
+                "       type: io.kestra.plugin.scripts.shell.Commands",
                 "       commands:",
                 "        - 'echo \"trigger after manual restart\"'",
                 "  - id: last",

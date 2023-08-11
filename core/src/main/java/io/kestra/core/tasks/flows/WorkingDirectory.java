@@ -151,11 +151,11 @@ import javax.validation.constraints.NotNull;
                 "    type: io.kestra.core.tasks.flows.WorkingDirectory",
                 "    tasks:",
                 "      - id: first",
-                "        type: io.kestra.core.tasks.scripts.Bash",
+                "        type: io.kestra.plugin.scripts.shell.Commands",
                 "        commands:",
                 "        - 'echo \"{{ taskrun.id }}\" > {{ workingDir }}/stay.txt'",
                 "      - id: second",
-                "        type: io.kestra.core.tasks.scripts.Bash",
+                "        type: io.kestra.plugin.scripts.shell.Commands",
                 "        commands:",
                 "        - |",
                 "          echo '::{\"outputs\": {\"stay\":\"'$(cat {{ workingDir }}/stay.txt)'\"}}::'"

@@ -323,9 +323,8 @@
                     "  # " + this.$t("onboarding-flow.taskBash1") + "\n" +
                         "  # " + this.$t("onboarding-flow.taskBash2") + "\n" +
                         "- id: goodbye" + "\n" +
-                        "  type: io.kestra.core.tasks.scripts.Bash" + "\n" +
-                        "  commands:" + "\n" +
-                        "  - echo See you soon, {{ inputs.user }}!" + "\n",
+                        "  type: io.kestra.core.tasks.log.Log" + "\n" +
+                        "  message: See you soon, {{ inputs.user }}!" + "\n" +
                     " # " + this.$t("onboarding-flow.triggers") + "\n" +
                         "triggers:" + "\n" +
                         "  # " + this.$t("onboarding-flow.triggerSchedule1") + "\n" +

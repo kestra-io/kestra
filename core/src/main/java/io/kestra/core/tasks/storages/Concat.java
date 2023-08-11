@@ -48,7 +48,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                 "    type: io.kestra.core.tasks.flows.EachSequential",
                 "    tasks:",
                 "      - id: start_api_call",
-                "        type: io.kestra.core.tasks.scripts.Bash",
+                "        type: io.kestra.plugin.scripts.shell.Commands",
                 "        commands:",
                 "          - echo {{ taskrun.value }} > {{ temp.generated }}",
                 "        files:",
@@ -68,7 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
             code = {
                 "tasks:",
                 "  - id: echo",
-                "    type: io.kestra.core.tasks.scripts.Bash",
+                "    type: io.kestra.plugin.scripts.shell.Commands",
                 "    commands:",
                 "      - echo \"Hello John\" > {{ outputDirs.output }}/1.txt",
                 "      - echo \"Hello Jane\" > {{ outputDirs.output }}/2.txt",

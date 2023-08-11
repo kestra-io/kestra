@@ -31,11 +31,11 @@ import lombok.experimental.SuperBuilder;
                 "    type: io.kestra.core.tasks.flows.Worker",
                 "    tasks:",
                 "      - id: first",
-                "        type: io.kestra.core.tasks.scripts.Bash",
+                "        type: io.kestra.plugin.scripts.shell.Commands",
                 "        commands:",
                 "        - 'echo \"{{ taskrun.id }}\" > {{ workingDir }}/stay.txt'",
                 "      - id: second",
-                "        type: io.kestra.core.tasks.scripts.Bash",
+                "        type: io.kestra.plugin.scripts.shell.Commands",
                 "        commands:",
                 "        - |",
                 "          echo '::{\"outputs\": {\"stay\":\"'$(cat {{ workingDir }}/stay.txt)'\"}}::'"

@@ -43,7 +43,7 @@ import java.util.Optional;
                 "    type: io.kestra.core.tasks.flows.AllowFailure",
                 "    tasks:",
                 "     - id: ko",
-                "       type: io.kestra.core.tasks.scripts.Bash",
+                "       type: io.kestra.plugin.scripts.shell.Commands",
                 "       commands:",
                 "        - 'exit 1'",
                 "  - id: last",

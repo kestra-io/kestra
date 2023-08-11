@@ -70,7 +70,7 @@ tasks:
         commands:
           - python scripts/etl_script.py
           - python scripts/generate_orders.py
-      
+
       - id: outputFile
         type: io.kestra.core.tasks.storages.LocalFiles
         outputs:
@@ -105,7 +105,7 @@ tasks:
                     hello.txt: "Hello World\\n"
                     address.json: "{{ outputs.myTaskId.uri }}"
                 - id: bash
-                  type: io.kestra.core.tasks.scripts.Bash
+                  type: io.kestra.plugin.scripts.shell.Commands
                   commands:
                     - cat hello.txt
             """
@@ -122,7 +122,7 @@ tasks:
                 type: io.kestra.core.tasks.flows.WorkingDirectory
                 tasks:
                 - id: bash
-                  type: io.kestra.core.tasks.scripts.Bash
+                  type: io.kestra.plugin.scripts.shell.Commands
                   commands:
                     - mkdir -p sub/dir
                     - echo "Hello from Bash" >> sub/dir/bash1.txt

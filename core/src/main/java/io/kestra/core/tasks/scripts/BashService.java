@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 
 import java.io.*;
@@ -22,34 +25,9 @@ import javax.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
-@Deprecated
 abstract public class BashService {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
-
-    public static List<String> finalCommandsWithInterpreter(
-        String interpreter,
-        String[] interpreterArgs,
-        String commandAsString,
-        Path workingDirectory
-    ) throws IOException {
-        // build the final commands
-        List<String> commandsWithInterpreter = new ArrayList<>(Collections.singletonList(interpreter));
-
-        // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
-        if (commandAsString.length() > 131072) {
-            File bashTempFiles = File.createTempFile("bash", ".sh", workingDirectory.toFile());
-            Files.write(bashTempFiles.toPath(), commandAsString.getBytes());
-
-            commandAsString = bashTempFiles.getAbsolutePath();
-        } else {
-            commandsWithInterpreter.addAll(Arrays.asList(interpreterArgs));
-        }
-
-        commandsWithInterpreter.add(commandAsString);
-
-        return commandsWithInterpreter;
-    }
 
     public static Map<String, String> createOutputFiles(
         Path tempDirectory,
@@ -169,14 +147,13 @@ abstract public class BashService {
             }
         }
     }
-
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext)  {
         Matcher m = PATTERN.matcher(line);
         Map<String, Object> outputs = new HashMap<>();
 
         if (m.find()) {
             try {
-                AbstractBash.BashCommand<?> bashCommand = MAPPER.readValue(m.group(1), AbstractBash.BashCommand.class);
+                BashCommand<?> bashCommand = MAPPER.readValue(m.group(1), BashCommand.class);
 
                 if (bashCommand.getOutputs() != null) {
                     outputs.putAll(bashCommand.getOutputs());
@@ -192,5 +169,12 @@ abstract public class BashService {
         }
 
         return outputs;
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class BashCommand <T> {
+        private Map<String, Object> outputs;
+        private List<AbstractMetricEntry<T>> metrics;
     }
 }

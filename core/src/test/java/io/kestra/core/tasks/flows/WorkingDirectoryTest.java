@@ -16,8 +16,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
@@ -56,7 +55,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(4));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(execution.getTaskRunList().get(3).getOutputs().get("value"), is(execution.getTaskRunList().get(1).getId()));
+            assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value"), startsWith("kestra://"));
         }
 
         public void failed(RunnerUtils runnerUtils) throws TimeoutException {
@@ -74,7 +73,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(8));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), is(execution.findTaskRunsByTaskId("first").get(0).getId()));
+            assertThat((String) execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), startsWith("kestra://"));
         }
 
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {

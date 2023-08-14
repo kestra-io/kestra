@@ -10,29 +10,17 @@ tasks:
     type: io.kestra.core.tasks.flows.WorkingDirectory
     tasks:
       - id: first
-        type: io.kestra.core.tasks.scripts.Bash
-        outputFiles:
-          - out
-        commands:
-          - 'echo "{{ taskrun.id }}" > {{ outputFiles.out }}'
-          - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
-          - |
-            echo '::{"outputs": {"taskrun":"{{ taskrun.id }}"}}::'
-          - |
-            exit {{ inputs.failed == 'true' ? '1' : '0' }}
+        type: io.kestra.core.tasks.storages.LocalFiles
+        inputs:
+          out/stay.txt: "{{ inputs.failed == 'true' ? ko: taskrun.id }}"
       - id: second
-        type: io.kestra.core.tasks.scripts.Bash
-        inputFiles:
-          in.txt: "{{ outputs.first.files.out }}"
-        commands:
-          - |
-            echo '::{"outputs": {"taskrun":"'$(cat in.txt)'"}}::'
-          - |
-            echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::'
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - out/*
     errors:
       - id: error-t1
         type: io.kestra.core.tasks.debugs.Return
         format: "Error Trigger ! {{task.id}}"
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
-    format: "{{ outputs.second.vars.stay }}"
+    format: "{{ outputs.second.uris['out/stay.txt'] }}"

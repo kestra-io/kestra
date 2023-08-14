@@ -13,15 +13,11 @@ tasks:
         type: io.kestra.core.tasks.flows.Sequential
         tasks:
         - id: 2-1-1_t1
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - 'echo "{{task.id}} > {{ parents[0].taskrun.value }} > $(date +"%T.%N")"'
-            - 'sleep 1'
+          type: io.kestra.core.tasks.log.Log
+          message: "{task.id}} > {{ parents[0].taskrun.value }}"
         - id: 2-1-2_t2
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - 'echo "{{task.id}} > {{ parents[0].taskrun.value }} > $(date +"%T.%N")"'
-            - 'sleep 1'
+          type: io.kestra.core.tasks.log.Log
+          message: "{task.id}} > {{ parents[0].taskrun.value }}"
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

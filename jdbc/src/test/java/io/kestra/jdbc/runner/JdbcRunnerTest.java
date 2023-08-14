@@ -15,7 +15,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -68,7 +67,7 @@ public abstract class JdbcRunnerTest {
     private FlowCaseTest flowCaseTest;
 
     @Inject
-    private WorkerTest.Suite workerTest;
+    private WorkingDirectoryTest.Suite workingDirectoryTest;
 
     @Inject
     private PauseTest.Suite pauseTest;
@@ -215,17 +214,17 @@ public abstract class JdbcRunnerTest {
 
     @Test
     public void workerSuccess() throws Exception {
-        workerTest.success(runnerUtils);
+        workingDirectoryTest.success(runnerUtils);
     }
 
     @Test
     public void workerFailed() throws Exception {
-        workerTest.failed(runnerUtils);
+        workingDirectoryTest.failed(runnerUtils);
     }
 
     @Test
     public void workerEach() throws Exception {
-        workerTest.each(runnerUtils);
+        workingDirectoryTest.each(runnerUtils);
     }
 
     @Test

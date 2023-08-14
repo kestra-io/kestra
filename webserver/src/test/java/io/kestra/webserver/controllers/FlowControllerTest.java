@@ -85,10 +85,10 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void task() {
-        Task result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full/tasks/t5-t1"), Task.class);
+        Task result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/each-object/tasks/not-json"), Task.class);
 
-        assertThat(result.getId(), is("t5-t1"));
-        assertThat(result.getType(), is("io.kestra.core.tasks.scripts.Bash"));
+        assertThat(result.getId(), is("not-json"));
+        assertThat(result.getType(), is("io.kestra.core.tasks.debugs.Return"));
     }
 
     @Test

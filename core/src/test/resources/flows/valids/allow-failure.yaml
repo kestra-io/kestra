@@ -19,9 +19,7 @@ tasks:
                 type: io.kestra.core.tasks.debugs.Return
                 format: "{{task.id}} > {{taskrun.startDate}}"
               - id: ko
-                type: io.kestra.core.tasks.scripts.Bash
-                commands:
-                  - 'exit 1'
+                type: io.kestra.core.tasks.executions.Fail
               - id: 1-1-1-3
                 type: io.kestra.core.tasks.debugs.Return
                 format: "{{task.id}} > {{taskrun.startDate}}"
@@ -38,9 +36,7 @@ tasks:
     cases:
       "true":
         - id: crash
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - 'exit 1'
+          type: io.kestra.core.tasks.executions.Fail
     defaults:
       - id: last
         type: io.kestra.core.tasks.debugs.Return

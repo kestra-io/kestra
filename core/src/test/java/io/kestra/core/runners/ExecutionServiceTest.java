@@ -113,7 +113,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void restartDynamic() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "worker", null, (f, e) -> ImmutableMap.of("failed", "true"));
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 

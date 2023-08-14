@@ -2,7 +2,6 @@ id: template-3
 namespace: io.kestra.tests
 tasks:
   - id: "bash"
-    type: "io.kestra.core.tasks.scripts.Bash"
-    commands:
-      - 'echo "The current execution is : {{execution.id}}"'
+    type: "io.kestra.core.tasks.log.Log"
+    message: "The current execution is : {{execution.id}}"
 

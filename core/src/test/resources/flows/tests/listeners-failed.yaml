@@ -4,9 +4,7 @@ namespace: io.kestra.tests
 listeners:
   - tasks:
       - id: ko
-        type: io.kestra.core.tasks.scripts.Bash
-        commands:
-          - 'exit 1'
+        type: io.kestra.core.tasks.executions.Fail
 tasks:
   - id: first
     type: io.kestra.core.tasks.debugs.Return

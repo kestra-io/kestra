@@ -77,19 +77,16 @@ class JsonSchemaGeneratorTest {
             assertThat((List<String>) flow.get("required"), not(contains("deleted")));
             assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
-            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
-            assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
-            assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription"), containsString("Default value is : `true`"));
-            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription")).startsWith("This tells bash that"), is(true));
+            var bash = definitions.get("io.kestra.core.tasks.log.Log-1");
+            assertThat((List<String>) bash.get("required"), not(contains("level")));
+            assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
+            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("message").get("markdownDescription")).startsWith("Can be a string"), is(true));
             assertThat(((Map<String, Map<String, Object>>) bash.get("properties")).get("type").containsKey("pattern"), is(false));
-            assertThat((String) bash.get("markdownDescription"), containsString("Bash with some inputs files"));
-            assertThat((String) bash.get("markdownDescription"), containsString("outputFiles.first"));
+            assertThat((String) bash.get("markdownDescription"), containsString("##### Examples"));
+            assertThat((String) bash.get("markdownDescription"), containsString("level: WARN"));
 
-            var bashType = definitions.get("io.kestra.core.tasks.scripts.Bash-2");
+            var bashType = definitions.get("io.kestra.core.tasks.log.Log-2");
             assertThat(bashType, is(notNullValue()));
-
-            var python = definitions.get("io.kestra.core.tasks.scripts.Python-1");
-            assertThat((List<String>) python.get("required"), not(contains("exitOnFailed")));
         });
     }
 

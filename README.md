@@ -5,20 +5,14 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Event-driven declarative orchestrator to simplify data operations <br>
+    Event-Driven Declarative Orchestrator
 </h1>
 
 <div align="center">
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?style=flat-square" alt="License" /></a>
-  <a href="https://github.com/kestra-io/kestra/pulse"><img src="https://img.shields.io/github/commit-activity/m/kestra-io/kestra?style=flat-square" alt="Commits-per-month"></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra.svg?style=flat-square" alt="Github star" /></a>
   <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?style=flat-square" alt="Last Version" /></a>
-  <a href="https://hub.docker.com/r/kestra/kestra"><img src="https://img.shields.io/docker/pulls/kestra/kestra.svg?style=flat-square" alt="Docker pull" /></a>
   <a href="https://artifacthub.io/packages/helm/kestra/kestra"><img src="https://img.shields.io/badge/Artifact%20Hub-kestra-417598?style=flat-square&logo=artifacthub" alt="Artifact Hub" /></a>
-  <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?style=flat-square" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
-  <a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-chat-400d40?style=flat-square&logo=slack" alt="Slack"></a>
-  <a href="https://github.com/kestra-io/kestra/discussions"><img src="https://img.shields.io/github/discussions/kestra-io/kestra?style=flat-square" alt="Github discussions"></a>
-  <a href="https://twitter.com/kestra_io"><img src="https://img.shields.io/twitter/follow/kestra_io?style=flat-square" alt="Twitter" /></a>
   <a href="https://app.codecov.io/gh/kestra-io/kestra"><img src="https://img.shields.io/codecov/c/github/kestra-io/kestra?style=flat-square&token=It6L7BTaWK" alt="Code Cov" /></a>
   <a href="https://github.com/kestra-io/kestra/actions"><img src="https://img.shields.io/github/actions/workflow/status/kestra-io/kestra/main.yml?branch=develop&style=flat-square" alt="Github Actions" /></a>
 </div>
@@ -28,7 +22,7 @@
 <p align="center">
     <a href="https://kestra.io/"><b>Website</b></a> •
     <a href="https://twitter.com/kestra_io"><b>Twitter</b></a> •
-    <a href="https://www.linkedin.com/company/kestra/"><b>Linked In</b></a> •
+    <a href="https://www.linkedin.com/company/kestra/"><b>LinkedIn</b></a> •
     <a href="https://kestra.io/slack"><b>Slack</b></a> •
     <a href="https://kestra.io/docs/"><b>Documentation</b></a>
 </p>

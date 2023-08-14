@@ -7,45 +7,37 @@ tasks:
     tasks:
       - task:
           id: task1
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - sleep 1
+          type: io.kestra.core.tasks.log.Log
+          message: "{{ task.id }}"
       - task:
           id: task2
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - sleep 1
-            - echo '::{"outputs":{"test":"value","int":2,"bool":true,"float":3.65}}::'
+          type: io.kestra.core.tasks.log.Log
+          message: "{{ task.id }}"
         dependsOn:
           - task1
       - task:
           id: task3
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - sleep 1
+          type: io.kestra.core.tasks.log.Log
+          message: "{{ task.id }}"
         dependsOn:
           - task1
       - task:
           id: task4
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - sleep 1
+          type: io.kestra.core.tasks.log.Log
+          message: "{{ task.id }}"
         dependsOn:
           - task2
       - task:
           id: task5
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - sleep 1
+          type: io.kestra.core.tasks.log.Log
+          message: "{{ task.id }}"
         dependsOn:
           - task4
           - task3
       - task:
           id: task6
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - sleep 1
-            - echo {{ outputs.task2.vars.test }}
+          type: io.kestra.core.tasks.log.Log
+          message: "{{ task.id }}"
         dependsOn:
           - task2
           - task3

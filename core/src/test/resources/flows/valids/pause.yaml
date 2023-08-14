@@ -6,9 +6,8 @@ tasks:
     type: io.kestra.core.tasks.flows.Pause
     tasks:
       - id: subtask
-        type: io.kestra.core.tasks.scripts.Bash
-        commands:
-          - echo "trigger after manual restart"
+        type: io.kestra.core.tasks.log.Log
+        message: "trigger after manual restart"
   - id: last
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

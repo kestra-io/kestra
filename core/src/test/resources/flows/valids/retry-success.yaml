@@ -3,9 +3,8 @@ namespace: io.kestra.tests
 
 tasks:
 - id: failed
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-  - 'if [ "{{taskrun.attemptsCount}}" -eq 4 ]; then exit 0; else exit 1; fi'
+  type: io.kestra.core.tasks.log.Log
+  message: "{{ taskrun.attemptsCount == 4 ? 'ok' : ko}}"
   retry:
     type: constant
     interval: PT0.250S

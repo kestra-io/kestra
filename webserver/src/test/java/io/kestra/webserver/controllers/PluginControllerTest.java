@@ -73,20 +73,21 @@ class PluginControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void bash() throws URISyntaxException {
+    void returnTask() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.scripts.Bash"),
+                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.debugs.Return"),
                 DocumentationWithSchema.class
             );
 
-            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.scripts.Bash"));
-            assertThat(doc.getMarkdown(), containsString("Exit if any non true return value"));
-            assertThat(doc.getMarkdown(), containsString("The standard output line count"));
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(13));
-            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(6));
+            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.debugs.Return"));
+            assertThat(doc.getMarkdown(), containsString("Debugging task that returns"));
+            assertThat(doc.getMarkdown(), containsString("The templated string to render"));
+            assertThat(doc.getMarkdown(), containsString("The generated string"));
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(1));
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
         });
     }
 

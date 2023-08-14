@@ -7,15 +7,11 @@ tasks:
     value: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 1-1
-        type: io.kestra.core.tasks.scripts.Bash
-        commands:
-          - 'echo "{{task.id}} > $(date +"%T.%N")"'
-          - 'sleep 1'
+        type: io.kestra.core.tasks.log.Log
+        message: "{{ task.id }}"
       - id: 1-2
-        type: io.kestra.core.tasks.scripts.Bash
-        commands:
-          - 'echo "{{task.id}} > $(date +"%T.%N")"'
-          - 'sleep 1'
+        type: io.kestra.core.tasks.log.Log
+        message: "{{ task.id }}"
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

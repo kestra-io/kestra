@@ -40,7 +40,7 @@
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             @follow="forwardEvent('follow', $event)"
-            @opened-taskruns-count="openedTaskrunsCounts[taskRun.id] = $event"
+            @opened-taskruns-count="openedTaskrunsCounts['running'] = $event"
             :logs-to-open-parent="logsToOpen"
         />
         <div v-else-if="execution.state.current !== State.RUNNING">

@@ -109,6 +109,12 @@
         generateGraph();
     })
 
+    watch(() => props.viewType, () => {
+        isHorizontal.value = props.viewType === "source-topology" ? false :
+            (props.viewType?.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
+        generateGraph();
+    })
+
     // Event listeners & Watchers
     const observeWidth = () => {
         const resizeObserver = new ResizeObserver(function () {
@@ -549,7 +555,7 @@
 
 <template>
     <div ref="vueFlow" class="vueflow">
-        <slot name="top-bar"/>
+        <slot name="top-bar" />
         <VueFlow
             v-model="elements"
             :default-marker-color="cssVariable('--bs-cyan')"

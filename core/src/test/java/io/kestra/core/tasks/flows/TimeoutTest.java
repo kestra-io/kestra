@@ -17,13 +17,13 @@ import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 class TimeoutTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -38,7 +38,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
 
     @Test
     void timeout() throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         workerTaskLogQueue.receive(logs::add);
 
         Flow flow = Flow.builder()

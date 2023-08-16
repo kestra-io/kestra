@@ -29,9 +29,9 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,7 +76,7 @@ public class TaskDefaultsCaseTest {
     }
 
     public void invalidTaskDefaults() throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
@@ -139,7 +139,7 @@ public class TaskDefaultsCaseTest {
         }
 
         @Override
-        public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
             return FlowableUtils.resolveSequentialNexts(
                 execution,
                 this.childTasks(runContext, parentTaskRun),

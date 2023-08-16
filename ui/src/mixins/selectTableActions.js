@@ -24,6 +24,7 @@ export default {
             } else {
                 this.queryBulkAction = false;
             }
+            this.elTable.toggleAllSelection()
         },
         selectionMapper(element) {
             return element;

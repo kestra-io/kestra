@@ -9,22 +9,19 @@
 </h1>
 
 <div align="center">
+ <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?style=flat-square" alt="Last Version" /></a>
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?style=flat-square" alt="License" /></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra.svg?style=flat-square" alt="Github star" /></a>
-  <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?style=flat-square" alt="Last Version" /></a>
-  <a href="https://artifacthub.io/packages/helm/kestra/kestra"><img src="https://img.shields.io/badge/Artifact%20Hub-kestra-417598?style=flat-square&logo=artifacthub" alt="Artifact Hub" /></a>
-  <a href="https://app.codecov.io/gh/kestra-io/kestra"><img src="https://img.shields.io/codecov/c/github/kestra-io/kestra?style=flat-square&token=It6L7BTaWK" alt="Code Cov" /></a>
-  <a href="https://github.com/kestra-io/kestra/actions"><img src="https://img.shields.io/github/actions/workflow/status/kestra-io/kestra/main.yml?branch=develop&style=flat-square" alt="Github Actions" /></a>
+<a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?style=flat-square" alt="Kestra infinitely scalable orchestration and scheduling platform"></a
+<a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-chat-400d40?style=flat-square&logo=slack" alt="Slack"></a>
 </div>
 
 <br />
 
 <p align="center">
-    <a href="https://kestra.io/"><b>Website</b></a> •
-    <a href="https://twitter.com/kestra_io"><b>Twitter</b></a> •
-    <a href="https://www.linkedin.com/company/kestra/"><b>LinkedIn</b></a> •
-    <a href="https://kestra.io/slack"><b>Slack</b></a> •
-    <a href="https://kestra.io/docs/"><b>Documentation</b></a>
+    <a href="https://twitter.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="twitter" /></a> &nbsp;
+    <a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
+<a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
 </p>
 
 <br />

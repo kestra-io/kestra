@@ -1,6 +1,9 @@
 package io.kestra.storage.local;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -131,5 +134,71 @@ class LocalStorageTest {
 
         List<URI> deleted = storageInterface.deleteByPrefix(new URI("/" + prefix + "/storage/"));
         assertThat(deleted.size(), is(0));
+    }
+
+    @Test
+    void executionPrefix() {
+        var flow = Flow.builder().id("flow").namespace("namespace").build();
+        var execution = Execution.builder().id("execution").namespace("namespace").flowId("flow").build();
+        var taskRun = TaskRun.builder().id("taskrun").namespace("namespace").flowId("flow").executionId("execution").build();
+
+        var prefix = storageInterface.executionPrefix(flow, execution);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("/namespace/flow/executions/execution"));
+
+        prefix = storageInterface.executionPrefix(execution);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("/namespace/flow/executions/execution"));
+
+        prefix = storageInterface.executionPrefix(taskRun);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("/namespace/flow/executions/execution"));
+
+        var flowWithTenant = Flow.builder().id("flow").namespace("namespace").tenantId("tenant").build();
+        var executionWithTenant = Execution.builder().id("execution").namespace("namespace").flowId("flow").tenantId("tenant").build();
+        var taskRunWithTenant = TaskRun.builder().id("taskrun").namespace("namespace").flowId("flow").executionId("execution").tenantId("tenant").build();
+
+        prefix = storageInterface.executionPrefix(flowWithTenant, executionWithTenant);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("/tenant/namespace/flow/executions/execution"));
+
+        prefix = storageInterface.executionPrefix(executionWithTenant);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("/tenant/namespace/flow/executions/execution"));
+
+        prefix = storageInterface.executionPrefix(taskRunWithTenant);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("/tenant/namespace/flow/executions/execution"));
+
+    }
+
+    @Test
+    void cachePrefix() {
+        var prefix = storageInterface.cachePrefix(null, "namespace", "flow", "task", null);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("namespace/flow/task/cache"));
+
+        prefix = storageInterface.cachePrefix(null, "namespace", "flow", "task", "value");
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, startsWith("namespace/flow/task/cache/"));
+
+        prefix = storageInterface.cachePrefix("tenant", "namespace", "flow", "task", null);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("tenant/namespace/flow/task/cache"));
+    }
+
+    @Test
+    void statePrefix() {
+        var prefix = storageInterface.statePrefix(null, "namespace", "flow", "name", null);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("namespace/flow/states/name"));
+
+        prefix = storageInterface.statePrefix(null, "namespace", "flow", "name", "value");
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, startsWith("namespace/flow/states/name/"));
+
+        prefix = storageInterface.statePrefix("tenant", "namespace", "flow", "name", null);
+        assertThat(prefix, notNullValue());
+        assertThat(prefix, is("tenant/namespace/flow/states/name"));
     }
 }

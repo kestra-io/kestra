@@ -570,10 +570,12 @@ public class RunContext {
     @SuppressWarnings("unchecked")
     private String taskStateFilePathPrefix(String name, Boolean isNamespace, Boolean useTaskRun) {
         Map<String, String> taskrun = (Map<String, String>) this.getVariables().get("taskrun");
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
 
         return "/" + this.storageInterface.statePrefix(
-            ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
-            isNamespace ? null : ((Map<String, String>) this.getVariables().get("flow")).get("id"),
+            flow.get("tenantId"),
+            flow.get("namespace"),
+            isNamespace ? null : flow.get("id"),
             name,
             taskrun != null && useTaskRun ? taskrun.getOrDefault("value", null) : null
         );
@@ -640,12 +642,14 @@ public class RunContext {
      * @return an Optional with the cache input stream or empty.
      */
     public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value) + "/cache.zip");
         return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.get(uri)) : Optional.empty();
     }
 
     public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value) + "/cache.zip");
         return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.lastModifiedTime(uri)) : Optional.empty();
     }
 
@@ -661,15 +665,17 @@ public class RunContext {
      * @return the URI of the file inside the internal storage.
      */
     public URI putTaskCacheFile(File file, String namespace, String flowId, String taskId, String value) throws IOException {
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
         return this.putTempFile(
             file,
-            "/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value),
+            "/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value),
             "cache.zip"
         );
     }
 
     public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value) + "/cache.zip");
         return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.delete(uri)) : Optional.empty();
     }
 

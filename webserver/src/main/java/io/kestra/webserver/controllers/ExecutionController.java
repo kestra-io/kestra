@@ -525,12 +525,12 @@ public class ExecutionController {
         }
 
         // maybe state
-        prefix = storageInterface.statePrefix(flow.get().getNamespace(), flow.get().getId(), null, null);
+        prefix = storageInterface.statePrefix(flow.get().getTenantId(), flow.get().getNamespace(), flow.get().getId(), null, null);
         if (path.getPath().substring(1).startsWith(prefix)) {
             return null;
         }
 
-        prefix = storageInterface.statePrefix(flow.get().getNamespace(), null, null, null);
+        prefix = storageInterface.statePrefix(flow.get().getTenantId(), flow.get().getNamespace(), null, null, null);
         if (path.getPath().substring(1).startsWith(prefix)) {
             return null;
         }

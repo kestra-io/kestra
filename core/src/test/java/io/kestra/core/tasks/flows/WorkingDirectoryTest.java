@@ -78,7 +78,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist
-            URI cache = URI.create(storageInterface.cachePrefix("io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");
+            URI cache = URI.create(storageInterface.cachePrefix(null, "io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");
             storageInterface.delete(cache);
 
             Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory-cache");

@@ -26,7 +26,10 @@
             }
         },
         mounted() {
-            window.onresize = this.computeHeaderSize;
+            window.addEventListener("resize", this.computeHeaderSize);
+        },
+        unmounted() {
+            window.removeEventListener("resize", this.computeHeaderSize);
         },
         updated() {
             this.computeHeaderSize();

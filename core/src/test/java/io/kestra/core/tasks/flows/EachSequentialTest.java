@@ -14,6 +14,7 @@ import io.kestra.core.runners.RunnerUtils;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import jakarta.inject.Inject;
@@ -89,7 +90,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     public static void eachNullTest(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "each-null", Duration.ofSeconds(60));

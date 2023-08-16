@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -51,7 +52,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void logs() throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
         workerTaskLogQueue.receive(logs::add);
 
@@ -77,7 +78,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputsLarge() throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         workerTaskLogQueue.receive(logs::add);
 
         char[] chars = new char[1024 * 11];

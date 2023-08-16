@@ -21,10 +21,10 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,7 +48,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         templateRepository.create(TEMPLATE_1);
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-template.yaml")));
 
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);
 
 
@@ -78,7 +78,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     public static void withFailedTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-failed-template.yaml")));
 
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));

@@ -1,7 +1,6 @@
 package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.ExecutionFlowCondition;
@@ -16,18 +15,18 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 @MicronautTest
 class ConditionServiceTest {
@@ -66,8 +65,8 @@ class ConditionServiceTest {
     }
 
     @Test
-    void exception() throws InterruptedException {
-        List<LogEntry> logs = new ArrayList<>();
+    void exception() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);
 
         Flow flow = TestsUtils.mockFlow();

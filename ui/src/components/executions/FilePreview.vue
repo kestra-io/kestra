@@ -12,22 +12,22 @@
             <h3>{{ $t("preview") }}</h3>
         </template>
         <template #default>
-            <csv v-if="extensionToMonacoLang === 'csv'" :value="formattedContent" />
-            <img v-else-if="extensionToMonacoLang === 'image'" :src="formattedContent" alt="Image output preview">
-            <editor v-else :model-value="formattedContent" :lang="extensionToMonacoLang" read-only />
+            <list-preview v-if="filePreview.type === 'list'" :value="filePreview.content" />
+            <img v-else-if="filePreview.type === 'image'" :src="imageContent" alt="Image output preview">
+            <markdown v-else-if="filePreview.type === 'md'" :source="filePreview.content" />
+            <editor v-else :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
         </template>
     </el-drawer>
 </template>
 <script>
     import Editor from "../inputs/Editor.vue";
-    import * as ion from "ion-js";
-    import Papa from "papaparse";
-    import Csv from "../Csv.vue";
+    import ListPreview from "../ListPreview.vue";
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
     import {mapState} from "vuex";
+    import Markdown from "../layout/Markdown.vue";
 
     export default {
-        components: {EyeOutline, Csv, Editor},
+        components: {Markdown, EyeOutline, ListPreview, Editor},
         props: {
             value: {
                 type: String,
@@ -48,45 +48,25 @@
             ...mapState("execution", ["filePreview"]),
             extensionToMonacoLang() {
                 switch (this.filePreview.extension) {
-                    case "json":
-                        return "json";
-                    case "jsonl":
-                        return "jsonl";
-                    case "yaml":
-                    case "yml":
-                    case "ion":
-                        // little hack to get ion colored with monaco
-                        return "yaml";
-                    case "csv":
-                        return "csv";
-                    case "jpg":
-                    case "jpeg":
-                    case "png":
-                    case "gif":
-                    case "svg":
-                    case "bpm":
-                    case "webp":
-                        return "image";
-                    default:
-                        return "text";
+                case "json":
+                    return "json";
+                case "jsonl":
+                    return "jsonl";
+                case "yaml":
+                case "yml":
+                case "ion":
+                    // little hack to get ion colored with monaco
+                    return "yaml";
+                case "csv":
+                    return "csv";
+                case "py":
+                    return "python"
+                default:
+                    return this.filePreview.extension;
                 }
             },
-            formattedContent() {
-                switch (this.filePreview.extension) {
-                case "json":
-                    return JSON.stringify(JSON.parse(this.filePreview.content), null, 2);
-                case "ion":
-                    return ion.dumpPrettyText(ion.load(this.filePreview.content));
-                case "csv":
-                    return Papa.parse(this.filePreview.content);
-                case "jpg":
-                case "jpeg":
-                case "png":
-                case "svg":
-                    return "data:image/" + this.extension + ";base64," + this.filePreview.content;
-                default:
-                    return this.filePreview.content;
-                }
+            imageContent() {
+                return "data:image/" + this.extension + ";base64," + this.filePreview.content;
             }
         },
         methods: {

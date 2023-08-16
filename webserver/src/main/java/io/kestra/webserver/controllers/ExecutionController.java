@@ -30,10 +30,10 @@ import io.kestra.core.utils.Await;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.responses.PreviewResponse;
-import io.kestra.webserver.utils.ImageFileExtension;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.kestra.webserver.utils.filepreview.FileRender;
+import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
@@ -64,14 +64,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -974,7 +971,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "executions/{executionId}/file/preview", produces = MediaType.TEXT_JSON)
+    @Get(uri = "executions/{executionId}/file/preview", produces = MediaType.APPLICATION_JSON)
     @Operation(tags = {"Executions"}, summary = "Get file preview for an execution")
     public HttpResponse<?> filePreview(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -985,45 +982,11 @@ public class ExecutionController {
             return httpResponse;
         }
 
-        InputStream fileStream = storageInterface.get(path);
 
         String extension = FilenameUtils.getExtension(path.toString());
+        InputStream fileStream = storageInterface.get(path);
 
-        if (ImageFileExtension.isImageFileExtension(extension)) {
-            byte[] imageBytes = IOUtils.toByteArray(fileStream);
-            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-
-            return HttpResponse.ok(PreviewResponse.builder().extension(extension).content(base64Image).build());
-        }
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fileStream));
-        String line = reader.readLine();
-        int lineCount = 0;
-
-        StringBuilder contentBuilder = new StringBuilder();
-
-        while (line != null && lineCount < 100) {
-            contentBuilder.append(line);
-            lineCount++;
-            if ((line = reader.readLine()) != null) {
-                contentBuilder.append("\n");
-            }
-        }
-
-        return HttpResponse.ok(PreviewResponse.builder().extension(extension).content(truncateStringSize(contentBuilder.toString())).build());
-    }
-
-    public String truncateStringSize(String content) {
-        // Equivalent to 2MB
-        int maxSizeInBytes = 2097152;
-        byte[] inputBytes = content.getBytes();
-
-        if (inputBytes.length <= maxSizeInBytes) {
-
-            return content;
-        }
-        byte[] truncatedBytes = new byte[maxSizeInBytes];
-        System.arraycopy(inputBytes, 0, truncatedBytes, 0, maxSizeInBytes);
-
-        return new String(truncatedBytes);
+        FileRender fileRender = FileRenderBuilder.build(extension, fileStream);
+        return HttpResponse.ok(fileRender);
     }
 }

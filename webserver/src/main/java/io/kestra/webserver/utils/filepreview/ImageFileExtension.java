@@ -1,5 +1,8 @@
-package io.kestra.webserver.utils;
+package io.kestra.webserver.utils.filepreview;
 
+import lombok.Getter;
+
+@Getter
 public enum ImageFileExtension {
     JPG("jpg"),
     JPEG("jpeg"),
@@ -13,10 +16,6 @@ public enum ImageFileExtension {
 
     ImageFileExtension(String extension) {
         this.extension = extension;
-    }
-
-    public String getExtension() {
-        return extension;
     }
 
     public static boolean isImageFileExtension(String extension) {

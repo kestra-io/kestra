@@ -10,5 +10,7 @@ import lombok.experimental.SuperBuilder;
 public class PreviewResponse {
     String extension;
 
+    String type;
+
     String content;
 }

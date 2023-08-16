@@ -86,7 +86,7 @@
                                 {{ scope.row.evaluateRunningDate ? $filters.date(scope.row.evaluateRunningDate, "iso") : "" }}
                             </template>
                         </el-table-column>
-                        <el-table-column column-key="action" class-name="row-action">
+                        <el-table-column v-if="user.hasAnyAction(permission.FLOW, action.UPDATE)" column-key="action" class-name="row-action">
                             <template #default="scope">
                                 <el-button text v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
@@ -120,6 +120,8 @@
 <script setup>
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import Kicon from "../Kicon.vue";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -130,6 +132,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
+    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -172,7 +175,7 @@
                 });
 
                 this.$message({
-                    message: this.$t("trigger unlocked"),
+                    message: this.$t("unlock trigger.success"),
                     type: "success"
                 });
 
@@ -182,6 +185,14 @@
                 }
 
                 this.triggerToUnlock = undefined;
+            }
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("triggers")
+                }
             }
         }
     };

@@ -3,8 +3,6 @@
         id="side-menu"
         :menu="menu"
         @update:collapsed="onToggleCollapse"
-        :show-one-child="true"
-        :show-child="showChildren"
         width="268px"
         :collapsed="collapsed"
     >
@@ -48,6 +46,7 @@
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
     import FileDocumentArrowRightOutline from "vue-material-design-icons/FileDocumentArrowRightOutline.vue";
+    import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -68,22 +67,17 @@
                 return items
                     .map(r => {
                         if (r.href === this.$route.path) {
-                            r.disabled = true
+                            r.disabled = true;
                         }
 
-                        if (r.href !== "/" && this.$route.path.startsWith(r.href)) {
-                            r.class = "vsm--link_active"
+                        // route hack is still needed for blueprints
+                        if (r.href !== "/" && (this.$route.path.startsWith(r.href) || r.routes?.includes(this.$route.name))) {
+                            r.class = "vsm--link_active";
                         }
 
-                        // special case for plugins, were parents have no href to set active
-                        // Could be adapted to all routes to have something more generic
-                        if (r.routes?.includes(this.$route.name)) {
-                            r.class = "vsm--link_active"
-
-                            if (r.child) {
-                                this.showChildren = true
-                                r.child = this.disabledCurrentRoute(r.child)
-                            }
+                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href))) {
+                            r.class = "vsm--link_active";
+                            r.child = this.disabledCurrentRoute(r.child);
                         }
 
                         return r;
@@ -155,7 +149,6 @@
                             element: BookMultipleOutline,
                             class: "menu-icon"
                         },
-                        routes: ["plugins/view"],
                         child: [
                             {
                                 href: "https://kestra.io/docs/",
@@ -169,7 +162,6 @@
                             {
                                 href: "/plugins",
                                 title: this.$t("plugins.names"),
-                                routes: ["plugins/view"],
                                 icon: {
                                     element: GoogleCirclesExtended,
                                     class: "menu-icon"
@@ -214,16 +206,27 @@
                         }
                     },
                     {
-                        href: "/admin",
                         title: this.$t("administration"),
                         icon: {
                             element: AccountSupervisorOutline,
                             class: "menu-icon"
-                        }
+                        },
+                        child: [
+                            {
+                                href: "/admin/triggers",
+                                title: this.$t("triggers"),
+                                icon: {
+                                    element: TimerCogOutline,
+                                    class: "menu-icon"
+                                }
+                            }
+                        ]
                     }
                 ];
+            },
+            expandParentIfNeeded() {
+                document.querySelectorAll(".vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => e.click());
             }
-
         },
         watch: {
             menu: {
@@ -232,7 +235,7 @@
                         //empty icon name on mouseover
                         e.setAttribute("title", "")
                     });
-                    this.showChildren = false
+                    this.expandParentIfNeeded();
                 },
                 flush: 'post'
             }
@@ -240,7 +243,6 @@
         data() {
             return {
                 collapsed: localStorage.getItem("menuCollapsed") === "true",
-                showChildren: false
             };
         },
         computed: {
@@ -248,6 +250,9 @@
             menu() {
                 return this.disabledCurrentRoute(this.generateMenu());
             }
+        },
+        mounted() {
+            this.expandParentIfNeeded();
         }
     };
 </script>

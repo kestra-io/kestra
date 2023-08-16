@@ -102,11 +102,14 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .select(field("value"))
                     .hint(context.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.fullTextCondition(query));
+                    .where(this.fullTextCondition(query))
+                    .and(this.defaultFilter());
 
                 if (namespace != null) {
                     select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
                 }
+
+                select.and(this.defaultFilter());
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -114,6 +117,11 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
     protected Condition fullTextCondition(String query) {
         return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     @Override

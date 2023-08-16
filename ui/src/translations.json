@@ -476,7 +476,8 @@
       },
       "confirmation": "Are you sure you want to unlock the trigger ?",
       "warning": "It could lead to concurrent executions for the same trigger and should be considered as a last resort option.",
-      "button": "Unlock trigger"
+      "button": "Unlock trigger",
+      "success": "Trigger is unlocked"
     },
     "date format": "Date format",
     "timezone": "Timezone"
@@ -958,7 +959,8 @@
       },
       "confirmation": "Êtes vous sûr(e) de vouloir débloquer le déclencheur ?",
       "warning": "Cela pourrait amener à de multiples exécutions concurrentes pour le même déclencheur et devrait être considéré comme une solution de dernier recours.",
-      "button": "Débloquer le déclencheur"
+      "button": "Débloquer le déclencheur",
+      "success": "Le déclencheur est débloqué"
     },
     "date format": "Format de date",
     "timezone": "Fuseau horaire"

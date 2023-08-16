@@ -11,9 +11,9 @@
                 this.$emit("selection-change", selection);
             },
             computeHeaderSize() {
-                const tableHead = this.$refs.table.$el.querySelector('thead');
-                this.$el.style.setProperty("--table-header-width", `${tableHead.clientWidth}px`);
-                this.$el.style.setProperty("--table-header-height", `${tableHead.clientHeight}px`);
+                const tableElement = this.$refs.table.$el;
+                this.$el.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
+                this.$el.style.setProperty("--table-header-height", `${tableElement.querySelector('thead').clientHeight}px`);
             }
         },
         props: {

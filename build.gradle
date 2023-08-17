@@ -82,6 +82,17 @@ allprojects {
             // ugly bug on crypto plugin
             force('org.bouncycastle:bcprov-jdk15on:1.70')
             force('org.bouncycastle:bcpg-jdk15on:1.70')
+
+            // ugly bug for jackson
+            force("com.fasterxml.jackson.core:jackson-bom:" + jacksonVersion)
+            force("com.fasterxml.jackson.core:jackson-core:" + jacksonVersion)
+            force("com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion)
+            force("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:" + jacksonVersion)
+            force("com.fasterxml.jackson.module:jackson-module-parameter-names:" + jacksonVersion)
+            force("com.fasterxml.jackson.datatype:jackson-datatype-guava:" + jacksonVersion)
+            force("com.fasterxml.jackson.core:jackson-annotations:" + jacksonVersion)
+            force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
+            force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
         }
     }
 

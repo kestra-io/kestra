@@ -41,15 +41,6 @@ import javax.validation.constraints.Size;
 @Plugin(
     examples = {
         @Example(
-            title = "Add a webhook trigger to the current flow with a generated key, the webhook will be available at the URI `/api/v1/executions/webhook/{namespace}/{flowId}/{generated-key}`.",
-            code = {
-                "triggers:",
-                "  - id: webhook",
-                "    type: io.kestra.core.models.triggers.types.Webhook"
-            },
-            full = true
-        ),
-        @Example(
             title = "Add a webhook trigger to the current flow with the key `4wjtkzwVGBM9yKnjm3yv8r`, the webhook will be available at the URI `/api/v1/executions/webhook/{namespace}/{flowId}/4wjtkzwVGBM9yKnjm3yv8r`.",
             code = {
                 "triggers:",
@@ -62,19 +53,18 @@ import javax.validation.constraints.Size;
     }
 )
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
-    @Builder.Default
     @Size(max = 256)
+    @NotNull
     @Schema(
         title = "The unique key that will be part of the url",
-        description = "If you don't provide a key, a random one will be generated. The key is used for generating the url of the webhook.\n" +
+        description = "The key is used for generating the url of the webhook.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
             "Take care when using manual key, the key is the only security to protect your webhook and must be considered as a secret !\n" +
-            "::\n",
-        defaultValue = "<generated-hash>"
+            "::\n"
     )
     @PluginProperty(dynamic = true)
-    private final String key = IdUtils.create();
+    private String key;
 
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);

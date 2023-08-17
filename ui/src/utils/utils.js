@@ -192,4 +192,22 @@ export default class Utils {
 
         return Array.isArray(objOrArray) ? objOrArray : [objOrArray];
     }
+
+    static async copy(text) {
+        if(navigator.clipboard) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const node = document.createElement("textarea");
+        node.style.position = "absolute";
+        node.style.left = "-9999px";
+        node.textContent = text;
+        document.body.appendChild(node).value = text;
+        node.select()
+
+        document.execCommand('copy');
+
+        document.body.removeChild(node);
+    }
 }

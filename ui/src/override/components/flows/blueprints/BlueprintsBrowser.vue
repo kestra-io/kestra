@@ -79,6 +79,7 @@
     import permission from "../../../../models/permission";
     import action from "../../../../models/action";
     import {mapState} from "vuex";
+    import Utils from "../../../../utils/utils";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -115,7 +116,7 @@
                 return this.$route?.query?.selectedTag ?? 0
             },
             async copy(blueprintId) {
-                await navigator.clipboard.writeText(
+                await Utils.copy(
                     (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data
                 );
             },

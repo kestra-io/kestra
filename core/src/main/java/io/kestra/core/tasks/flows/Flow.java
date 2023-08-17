@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -141,6 +142,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
 
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute disabled flow");
+        }
+
+        if (flow instanceof FlowWithException fwe) {
+            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
         return runnerUtils

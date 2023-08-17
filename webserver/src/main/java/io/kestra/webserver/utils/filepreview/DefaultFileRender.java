@@ -12,23 +12,24 @@ public class DefaultFileRender extends FileRender {
         super(extension);
         renderContent(filestream);
 
-        this.type = TYPE.text;
+        this.type = Type.TEXT;
     }
-    DefaultFileRender(String extension, InputStream filestream, TYPE type) throws IOException {
+
+    DefaultFileRender(String extension, InputStream filestream, Type type) throws IOException {
         super(extension);
         renderContent(filestream);
 
         this.type = type;
     }
 
-    public void renderContent(InputStream fileStream) throws IOException {
+    private void renderContent(InputStream fileStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(fileStream));
         String line = reader.readLine();
         int lineCount = 0;
 
         StringBuilder contentBuilder = new StringBuilder();
 
-        while (line != null && lineCount < maxLines) {
+        while (line != null && lineCount < MAX_LINES) {
             contentBuilder.append(line);
             lineCount++;
             if ((line = reader.readLine()) != null) {
@@ -36,7 +37,7 @@ public class DefaultFileRender extends FileRender {
             }
         }
 
-        this.content =  truncateStringSize(contentBuilder.toString());
+        this.content = truncateStringSize(contentBuilder.toString());
     }
 
     private String truncateStringSize(String content) {

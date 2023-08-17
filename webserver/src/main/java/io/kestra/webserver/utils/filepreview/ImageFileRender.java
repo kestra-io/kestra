@@ -1,23 +1,41 @@
 package io.kestra.webserver.utils.filepreview;
 
+import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Base64;
 
 public class ImageFileRender extends FileRender {
     public String content;
 
-    ImageFileRender(String extension, InputStream filestream) throws IOException {
+    ImageFileRender(String extension, InputStream inputStream) throws IOException {
         super(extension);
-        renderContent(filestream);
-
-        this.type = TYPE.image;
+        this.content =  Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream));
+        this.type = Type.IMAGE;
     }
 
-    public void renderContent(InputStream fileStream) throws IOException {
-        byte[] imageBytes = IOUtils.toByteArray(fileStream);
-        this.content =  Base64.getEncoder().encodeToString(imageBytes);
+    @Getter
+    public enum ImageFileExtension {
+        JPG("jpg"),
+        JPEG("jpeg"),
+        PNG("png"),
+        SVG("svg"),
+        GIF("gif"),
+        BMP("bmp"),
+        WEBP("webp");
+
+        private final String extension;
+
+        ImageFileExtension(String extension) {
+            this.extension = extension;
+        }
+
+        public static boolean isImageFileExtension(String extension) {
+            return Arrays.stream(ImageFileExtension.values())
+                .anyMatch(r -> r.getExtension().equalsIgnoreCase(extension));
+        }
     }
 }

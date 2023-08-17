@@ -982,11 +982,10 @@ public class ExecutionController {
             return httpResponse;
         }
 
-
         String extension = FilenameUtils.getExtension(path.toString());
         InputStream fileStream = storageInterface.get(path);
 
-        FileRender fileRender = FileRenderBuilder.build(extension, fileStream);
+        FileRender fileRender = FileRenderBuilder.of(extension, fileStream);
         return HttpResponse.ok(fileRender);
     }
 }

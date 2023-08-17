@@ -12,9 +12,9 @@
             <h3>{{ $t("preview") }}</h3>
         </template>
         <template #default>
-            <list-preview v-if="filePreview.type === 'list'" :value="filePreview.content" />
-            <img v-else-if="filePreview.type === 'image'" :src="imageContent" alt="Image output preview">
-            <markdown v-else-if="filePreview.type === 'md'" :source="filePreview.content" />
+            <list-preview v-if="filePreview.type === 'LIST'" :value="filePreview.content" />
+            <img v-else-if="filePreview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
+            <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />
             <editor v-else :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
         </template>
     </el-drawer>
@@ -48,21 +48,21 @@
             ...mapState("execution", ["filePreview"]),
             extensionToMonacoLang() {
                 switch (this.filePreview.extension) {
-                case "json":
-                    return "json";
-                case "jsonl":
-                    return "jsonl";
-                case "yaml":
-                case "yml":
-                case "ion":
-                    // little hack to get ion colored with monaco
-                    return "yaml";
-                case "csv":
-                    return "csv";
-                case "py":
-                    return "python"
-                default:
-                    return this.filePreview.extension;
+                    case "json":
+                        return "json";
+                    case "jsonl":
+                        return "jsonl";
+                    case "yaml":
+                    case "yml":
+                    case "ion":
+                        // little hack to get ion colored with monaco
+                        return "yaml";
+                    case "csv":
+                        return "csv";
+                    case "py":
+                        return "python"
+                    default:
+                        return this.filePreview.extension;
                 }
             },
             imageContent() {

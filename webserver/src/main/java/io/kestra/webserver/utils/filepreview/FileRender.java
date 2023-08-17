@@ -1,11 +1,11 @@
 package io.kestra.webserver.utils.filepreview;
 
 public abstract class FileRender {
-    protected int maxLines = 100;
+    protected static int MAX_LINES = 100;
 
     public String extension;
 
-    public TYPE type;
+    public Type type;
 
     public Object content;
 
@@ -13,14 +13,10 @@ public abstract class FileRender {
         this.extension = extension;
     }
 
-    public void renderContent() {
-        return;
-    }
-
-    public enum TYPE {
-        text,
-        list,
-        image,
-        md
+    public enum Type {
+        TEXT,
+        LIST,
+        IMAGE,
+        MARKDOWN
     }
 }

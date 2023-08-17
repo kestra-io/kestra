@@ -1,4 +1,4 @@
-package io.kestra.core.tasks.scripts;
+package io.kestra.core.tasks;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,7 +25,7 @@ import javax.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
-abstract public class BashService {
+abstract public class PluginUtilsService {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
 
@@ -34,7 +34,7 @@ abstract public class BashService {
         List<String> outputFiles,
         Map<String, Object> additionalVars
     ) throws IOException {
-        return BashService.createOutputFiles(tempDirectory, outputFiles, additionalVars, false);
+        return PluginUtilsService.createOutputFiles(tempDirectory, outputFiles, additionalVars, false);
     }
 
     public static Map<String, String> createOutputFiles(
@@ -53,7 +53,7 @@ abstract public class BashService {
         if (outputs.size() > 0) {
             outputs
                 .forEach(throwConsumer(s -> {
-                    BashService.validFilename(s);
+                    PluginUtilsService.validFilename(s);
                     File tempFile;
 
                     if (isDir) {
@@ -109,7 +109,7 @@ abstract public class BashService {
             for (String fileName : inputFiles.keySet()) {
                 String finalFileName = runContext.render(fileName);
 
-                BashService.validFilename(finalFileName);
+                PluginUtilsService.validFilename(finalFileName);
 
                 File file = new File(fileName);
 

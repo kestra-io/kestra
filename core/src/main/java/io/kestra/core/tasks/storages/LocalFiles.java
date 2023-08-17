@@ -8,7 +8,7 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.scripts.BashService;
+import io.kestra.core.tasks.PluginUtilsService;
 import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -153,7 +153,7 @@ public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFil
     public LocalFilesOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        Map<String, String> inputFiles = this.inputs == null ? Map.of() : BashService.transformInputFiles(runContext, this.inputs);
+        Map<String, String> inputFiles = this.inputs == null ? Map.of() : PluginUtilsService.transformInputFiles(runContext, this.inputs);
 
         inputFiles
             .forEach(throwBiConsumer((fileName, input) -> {

@@ -470,7 +470,7 @@
                     return taskRun.attempts ?? [{state: taskRun.state}];
                 }
 
-                return [taskRun.attempts[this.attemptNumber]];
+                return taskRun.attempts ? [taskRun.attempts[this.attemptNumber]] : [];
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {

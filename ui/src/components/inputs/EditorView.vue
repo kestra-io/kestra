@@ -443,7 +443,7 @@
         timer.value = setTimeout(() => onEdit(event), 500)
     }
 
-    const switchView = (event) => {
+    const switchViewType = (event) => {
         persistViewType(event);
         if (["topology", "source-topology"].includes(viewType.value)) {
             isHorizontal.value = isHorizontalDefault();
@@ -722,11 +722,11 @@
                 </el-button>
             </template>
         </el-drawer>
-        <SwitchView
+        <switch-view
             v-if="!isReadOnly"
             :type="viewType"
             class="to-topology-button"
-            @switch-view="switchView"
+            @switch-view="switchViewType"
         />
     </el-card>
     <bottom-line v-if="!graphOnly">

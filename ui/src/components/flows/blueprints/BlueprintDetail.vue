@@ -55,7 +55,7 @@
                                 <template #nav>
                                     <div class="position-absolute copy-wrapper">
                                         <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                            <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
+                                            <el-button text round :icon="icon.ContentCopy" @click="Utils.copy(blueprint.flow)" />
                                         </el-tooltip>
                                     </div>
                                 </template>
@@ -87,6 +87,7 @@
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from "../../plugins/TaskIcon.vue";
     import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
+    import Utils from "../../../utils/utils";
 </script>
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
@@ -96,7 +97,6 @@
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
-
 
     export default {
         components: {Markdown},
@@ -129,9 +129,6 @@
                 } else {
                     this.$router.push({name: "blueprints"})
                 }
-            },
-            copy(text) {
-                navigator.clipboard.writeText(text);
             },
             asAutoRestoreDraft() {
                 localStorage.setItem("autoRestore-creation_draft", this.blueprint.flow);

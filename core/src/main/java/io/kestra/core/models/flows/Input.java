@@ -60,7 +60,7 @@ public abstract class Input<T> {
         STRING(StringInput.class.getName()),
         INT(IntInput.class.getName()),
         FLOAT(FloatInput.class.getName()),
-        BOOLEAN(StringInput.class.getName()),
+        BOOLEAN(BooleanInput.class.getName()),
         DATETIME(DateTimeInput.class.getName()),
         DATE(DateInput.class.getName()),
         TIME(TimeInput.class.getName()),

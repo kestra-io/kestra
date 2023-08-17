@@ -29,9 +29,7 @@ import javax.validation.constraints.NotNull;
 @Schema(
     title = "Kestra is able to trigger flow after another one. This allows chaining flow without need to update the base flows.\n" +
         "With that, you can break responsibility between different flow to different teams.",
-    description = "::alert{type=\"warning\"}\n" +
-        "If you don't provide any conditions, the flow will be triggered for **EVERY execution** of **EVERY flow** on your instance.\n" +
-        "::"
+    description = "Note that if you don't provide any conditions, the flow will be triggered for **EVERY execution** of **EVERY flow** on your instance.\n" 
 )
 @Plugin(
     examples = @Example(
@@ -68,11 +66,8 @@ import javax.validation.constraints.NotNull;
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
     @Nullable
     @Schema(
-        title = "Fill input of this flow based on output of current flow, allowing to pass data or file on the triggered flow",
-        description = "::alert{type=\"warning\"}\n" +
-            "If you provide invalid input, the flow will not be created! Since there is no task started, you can't log any reason visible on the execution ui.\n" +
-            "So you will need to go to Logs tabs on the ui to understand the error\n" +
-            "::"
+        title = "Using inputs allows passing data or files between flows",
+        description = "Note that if you provide an invalid input, the **subflow's execution will NOT be created** and you won't see an execution for that subflow in the UI. In that case, you can inspect the logs of the parent flow to understand the error.\n" 
     )
     @PluginProperty
     private Map<String, Object> inputs;

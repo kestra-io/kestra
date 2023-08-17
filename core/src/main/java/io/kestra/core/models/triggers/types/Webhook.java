@@ -66,11 +66,11 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     @Size(max = 256)
     @Schema(
         title = "The unique key that will be part of the url",
-        description = "If you don't provide a key, a random one will be generated. The key is used for generating the url of the webhook.\n" +
-            "\n" +
-            "::alert{type=\"warning\"}\n" +
-            "Take care when using manual key, the key is the only security to protect your webhook and must be considered as a secret !\n" +
-            "::\n",
+        description = """
+        If this value is not set, Kestra will randomly generate a key. The key is used as part of the webhook URL in the following format: `https://host_url/api/v1/executions/webhook/namespace/flow_id/webhook_key`.
+
+        You should treat that webhook key as a secret, as it's the only mechanism to protect your webhook from being triggered by unauthorized parties.
+        """
         defaultValue = "<generated-hash>"
     )
     @PluginProperty(dynamic = true)

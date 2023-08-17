@@ -26,12 +26,6 @@ dependencies {
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
 
-    // process
-    implementation ('com.github.docker-java:docker-java:3.3.1') {
-        exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
-    }
-    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.1'
-
     // schema
     implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.31.1'
     implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.31.1'

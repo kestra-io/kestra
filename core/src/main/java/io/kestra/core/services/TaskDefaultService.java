@@ -137,7 +137,7 @@ public class TaskDefaultService {
                     e.getKey(),
                     recursiveDefaults(e.getValue(), defaults)
                 ))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a2));
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         } else if (object instanceof Collection) {
             Collection<?> value = (Collection<?>) object;
             return value

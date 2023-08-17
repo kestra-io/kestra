@@ -15,6 +15,7 @@ $indigo: "" !default;
     border: 1px solid var(--bs-border-color);
     background-color: var(--bs-body-bg);
     color: var(--bs-body-color);
+    box-sizing: content-box !important;
 
     &:hover {
         background-color: var(--bs-body-bg);

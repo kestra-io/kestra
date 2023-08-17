@@ -1,6 +1,6 @@
 <script setup>
     // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
+    import {getCurrentInstance, nextTick, onMounted, onBeforeMount, ref, watch} from "vue";
     import {useStore} from "vuex";
     import {MarkerType, Position, useVueFlow, VueFlow} from "@vue-flow/core";
 
@@ -22,6 +22,7 @@
 
     // Topology Control
     import {Controls, ControlButton} from "@vue-flow/controls"
+    import {Background} from "@vue-flow/background";
     import SplitCellsHorizontal from "../../assets/icons/SplitCellsHorizontal.vue"
     import SplitCellsVertical from "../../assets/icons/SplitCellsVertical.vue"
 
@@ -37,6 +38,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import Markdown from "../layout/Markdown.vue";
     import yamlUtils from "../../utils/yamlUtils";
+    const router = getCurrentInstance().appContext.config.globalProperties.$router;
 
     // Vue flow methods to interact with Graph
     const {
@@ -128,10 +130,14 @@
     const selectedTask = ref(null);
 
     // Init components
-    onMounted(async () => {
+    onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
-        icons.value = ref(store.getters["plugin/getIcons"])
+
+    })
+
+    onBeforeMount(() => {
+        store.dispatch("plugin/icons").then(icons => icons.value = icons)
     })
 
     watch(() => props.flowGraph, () => {
@@ -199,6 +205,7 @@
 
     // Source edit functions
     const onCreateNewTask = (event) => {
+        console.log(event)
         taskEditData.value = {
             insertionDetails: event,
             action: "create_task",
@@ -233,14 +240,17 @@
             switch (taskEditData.value.action) {
             case("create_task"):
                 emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]))
+                return;
             case("edit_task"):
                 emit("on-edit", YamlUtils.replaceTaskInDocument(
                     source,
                     taskEditData.value.oldTaskId,
                     event
                 ))
+                return;
             case("add_flowable_error"):
                 emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId))
+                return;
             }
         } else {
             store.dispatch("core/showMessage", {
@@ -460,7 +470,7 @@
 
     const getNodeIcon = (node) => {
         const type = isTaskNode(node) ? node.task.type : isTriggerNode(node) ? node.trigger.type : undefined
-        if (type && icons.value.value) {
+        if (type && icons?.value?.value) {
             return icons.value.value[type]
         }
         return null;
@@ -530,7 +540,6 @@
         return target
     }
 
-
     const collapseCluster = (clusterUid, regenerate, recursive) => {
 
         const cluster = props.flowGraph.clusters.find(cluster => cluster.cluster.uid === clusterUid)
@@ -595,8 +604,23 @@
         elements.value = []
     }
 
-    const consolelog = () => {
-        console.log("myfunction")
+    const openFlow = (data) => {
+        if (data.link.executionId) {
+            store
+                .dispatch("execution/loadExecution", {id: data.link.executionId})
+                .then(value => {
+                    store.commit("execution/setExecution", value);
+                    router.push({
+                        name: "executions/update",
+                        params: {namespace: data.link.namespace, flowId: data.link.id, tab: "topology", id: data.link.executionId,},
+                    });
+                })
+        } else {
+            router.push({
+                name: "flows/update",
+                params: {"namespace": data.link.namespace, "id": data.link.id, tab: "overview"},
+            });
+        }
     }
 
     const nodeColor = (node) => {
@@ -766,7 +790,8 @@
                             color: nodeType != "dot" ? nodeColor(node) : null,
                             expandable: taskId ? flowables().includes(taskId) && edgeReplacer.value["cluster_" + taskId] !== undefined : isCollapsedCluster(node),
                             icon: getNodeIcon(node),
-                            isReadOnly: props.isReadOnly
+                            isReadOnly: props.isReadOnly,
+                            link: node.task?.type === "io.kestra.core.tasks.flows.Flow" ? linkDatas(node.task) : false
                         },
                         class: node.type === "collapsedcluster" ? `bg-light-${node.uid === "Triggers" ? "success" : "blue"}-border rounded p-2` : "",
                     })
@@ -823,6 +848,17 @@
         isDrawerOpen.value = true;
     }
 
+    const linkDatas = (task) => {
+        const data = {id: task.flowId, namespace: task.namespace}
+        if (props.execution) {
+            const taskrun = props.execution.taskRunList.find(r => r.taskId == task.id && r.outputs.executionId)
+            if (taskrun) {
+                data.executionId = taskrun.outputs.executionId
+            }
+        }
+        return data
+    }
+
     // Expose method to be triggered by parents
     defineExpose({
         generateGraph
@@ -841,6 +877,7 @@
             :elevate-nodes-on-select="false"
             :elevate-edges-on-select="false"
         >
+            <Background />
             <template #node-cluster="props">
                 <ClusterNode
                     v-bind="props"
@@ -858,7 +895,7 @@
                     @edit="onEditTask($event)"
                     @delete="onDelete"
                     @expand="expand($event)"
-                    @openLink="consolelog()"
+                    @openLink="openFlow($event)"
                     @showLogs="showLogs($event)"
                     @showDescription="showDescription($event)"
                     @mouseover="onMouseOver($event)"

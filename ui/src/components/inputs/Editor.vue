@@ -80,7 +80,7 @@
             readOnly: {type: Boolean, default: false},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
-            creating: {type: Boolean, default: false},
+            creating: {type: Boolean, default: false}
         },
         components: {
             MonacoEditor,

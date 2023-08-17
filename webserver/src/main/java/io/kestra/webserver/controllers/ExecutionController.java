@@ -1,16 +1,42 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Await;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.kestra.webserver.utils.filepreview.FileRender;
+import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
@@ -31,39 +57,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.*;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.types.Webhook;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
-
-import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -966,5 +968,24 @@ public class ExecutionController {
                     cancel.get().run();
                 }
             });
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "executions/{executionId}/file/preview", produces = MediaType.APPLICATION_JSON)
+    @Operation(tags = {"Executions"}, summary = "Get file preview for an execution")
+    public HttpResponse<?> filePreview(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The internal storage uri") @QueryValue URI path
+    ) throws IOException {
+        HttpResponse<StreamedFile> httpResponse = this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
+        if (httpResponse != null) {
+            return httpResponse;
+        }
+
+        String extension = FilenameUtils.getExtension(path.toString());
+        InputStream fileStream = storageInterface.get(path);
+
+        FileRender fileRender = FileRenderBuilder.of(extension, fileStream);
+        return HttpResponse.ok(fileRender);
     }
 }

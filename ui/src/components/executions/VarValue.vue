@@ -1,5 +1,5 @@
 <template>
-    <a class="el-button el-button--primary mt-2 mb-2 " v-if="isFile(value)" :href="itemUrl(value)" target="_blank">
+    <a class="el-button el-button--small el-button--primary" v-if="isFile(value)" :href="itemUrl(value)" target="_blank">
         <Download />
         &nbsp;
         {{ $t('download') }}

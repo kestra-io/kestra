@@ -135,6 +135,7 @@
     const taskError = ref(store.getters["flow/taskError"])
     const user = store.getters["auth/user"];
     const routeParams = router.currentRoute.value.params;
+    const blueprintsLoaded = ref(false);
 
     const persistViewType = (value) => {
         viewType.value = value;
@@ -621,7 +622,7 @@
             </template>
         </editor>
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <Blueprints :class="{'d-none': viewType !== 'source-blueprints'}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
+        <Blueprints v-if="(viewType === 'source-blueprints' && (blueprintsLoaded = true)) || blueprintsLoaded" :class="{'d-none': viewType !== 'source-blueprints'}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
         <div
             :class="viewType === 'source-topology' ? 'combined-right-view' : viewType === 'topology' ? 'vueflow': 'hide-view'"
         >

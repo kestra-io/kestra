@@ -20,13 +20,11 @@ import java.util.Map;
 @NoArgsConstructor
 @Schema(
     title = "Set a state in the state store.",
-    description = """
-    Values will be added or modified for a given key:
-    * If you provide a new key, the new key-value pair will be added
-    * If you provide an existing key, the existing value for that key will be overwritten.
-    
-    Note that this method is **not thread-safe**. When many concurrent executions are trying to set a value for the same key, there is **no transactional guarantee for such write operations**.
-    """
+    description = "Values will be added or modified for a given key:\n"
+        + " * If you provide a new key, the new key-value pair will be added"
+        + " * If you provide an existing key, the existing value for that key will be overwritten."
+        + "\n\nNote that this method is **not -safe**. When many concurrent executions are trying to set"
+        + " a value for the same key, there is **no transactional guarantee for such write operations**."
 )
 @Plugin(
     examples = {

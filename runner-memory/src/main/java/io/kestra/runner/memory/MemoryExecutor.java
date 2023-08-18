@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -69,7 +70,7 @@ public class MemoryExecutor implements ExecutorInterface {
     private TaskDefaultService taskDefaultService;
 
     @Inject
-    private Template.TemplateExecutorInterface templateExecutorInterface;
+    private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
 
     @Inject
     private ExecutorService executorService;
@@ -115,14 +116,16 @@ public class MemoryExecutor implements ExecutorInterface {
     }
 
     private Flow transform(Flow flow, Execution execution) {
-        try {
-            flow = Template.injectTemplate(
-                flow,
-                execution,
-                (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
-            );
-        } catch (InternalException e) {
-            log.debug("Failed to inject template",  e);
+        if (templateExecutorInterface.isPresent()) {
+            try {
+                flow = Template.injectTemplate(
+                    flow,
+                    execution,
+                    (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
+                );
+            } catch (InternalException e) {
+                log.debug("Failed to inject template",  e);
+            }
         }
 
         return taskDefaultService.injectDefaults(flow, execution);

@@ -1,7 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.templates.Template;
-import io.kestra.core.repositories.TemplateRepositoryInterface;
+import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -12,6 +12,7 @@ import java.util.Arrays;
 
 @Singleton
 @MysqlRepositoryEnabled
+@TemplateEnabled
 public class MysqlTemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public MysqlTemplateRepository(ApplicationContext applicationContext) {

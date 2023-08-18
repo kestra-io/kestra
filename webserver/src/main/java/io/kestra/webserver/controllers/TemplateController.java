@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.templates.Template;
+import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -39,6 +40,7 @@ import java.util.zip.ZipOutputStream;
 
 @Validated
 @Controller("/api/v1/templates")
+@TemplateEnabled
 public class TemplateController {
     @Inject
     private TemplateRepositoryInterface templateRepository;

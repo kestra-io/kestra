@@ -13,6 +13,8 @@ import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.context.annotation.Property;
+import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
 public class TemplateTest extends AbstractMemoryRunnerTest {
     @Inject
     protected TemplateRepositoryInterface templateRepository;
@@ -46,7 +49,8 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
     public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
         templateRepository.create(TEMPLATE_1);
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-template.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
+            "flows/templates/with-template.yaml")));
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);
@@ -76,7 +80,8 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
 
     public static void withFailedTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-failed-template.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
+            "flows/templates/with-failed-template.yaml")));
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(logs::add);

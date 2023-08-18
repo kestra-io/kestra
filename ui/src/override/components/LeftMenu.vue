@@ -109,6 +109,7 @@
                             element: ContentCopy,
                             class: "menu-icon",
                         },
+                        hidden: !this.configs.isTemplateEnabled
                     },
                     {
                         href: "/executions",

@@ -1,4 +1,5 @@
 <template>
+    <templates-deprecated />
     <div>
         <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <bottom-line v-if="canSave || canDelete">
@@ -22,6 +23,7 @@
 <script setup>
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
+    import TemplatesDeprecated from "./TemplatesDeprecated.vue";
 </script>
 
 <script>

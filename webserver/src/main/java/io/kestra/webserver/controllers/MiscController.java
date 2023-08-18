@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -19,6 +20,8 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 @Slf4j
 @Controller
 public class MiscController {
@@ -33,6 +36,9 @@ public class MiscController {
 
     @Inject
     CollectorService collectorService;
+
+    @Inject
+    Optional<TemplateRepositoryInterface> templateRepository;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
@@ -61,7 +67,8 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
-            .isWorkerInstanceEnabled(false);
+            .isWorkerInstanceEnabled(false)
+            .isTemplateEnabled(templateRepository.isPresent());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -97,6 +104,9 @@ public class MiscController {
 
         @JsonInclude
         Boolean isWorkerInstanceEnabled;
+
+        @JsonInclude
+        Boolean isTemplateEnabled;
 
         Environment environment;
     }

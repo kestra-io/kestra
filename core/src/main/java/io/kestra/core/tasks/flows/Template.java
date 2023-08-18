@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
@@ -14,6 +15,7 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
@@ -79,6 +81,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
+@TemplateEnabled
 public class Template extends Task implements FlowableTask<Template.Output> {
     @Valid
     @PluginProperty
@@ -187,6 +190,10 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     }
 
     protected io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
+        if (!applicationContext.containsBean(TemplateExecutorInterface.class)) {
+            throw new DeserializationException(new Exception("Templates are disabled, please check your configuration"));
+        }
+
         TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);
 
         return templateExecutor.findById(this.namespace, this.templateId)
@@ -280,6 +287,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         Optional<io.kestra.core.models.templates.Template> findById(String namespace, String templateId);
     }
 
+    @TemplateEnabled
     public static class MemoryTemplateExecutor implements io.kestra.core.tasks.flows.Template.TemplateExecutorInterface {
         @Inject
         private TemplateRepositoryInterface templateRepository;

@@ -459,6 +459,8 @@
     "expand all": "Expand all",
     "collapse all": "Collapse all",
     "log expand setting": "Log default display",
+    "environment name setting": "Environment name",
+    "environment color setting": "Environment color",
     "slack support": "Ask help on our Slack",
     "error detected": "Error detected",
     "cannot swap tasks": "Can't swap the tasks",

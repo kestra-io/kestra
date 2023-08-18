@@ -108,6 +108,23 @@
                     />
                 </el-select>
             </el-form-item>
+
+            <el-form-item :label="$t('environment name setting')">
+                <el-input
+                    v-model="envName"
+                    @change="onEnvNameChange"
+                    :placeholder="$t('name')"
+                    clearable
+                />
+            </el-form-item>
+
+            <el-form-item :label="$t('environment color setting')">
+                <el-color-picker
+                    v-model="envColor"
+                    @change="onEnvColorChange"
+                    show-alpha
+                />
+            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -121,7 +138,7 @@
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapGetters, mapState} from "vuex";
+    import {mapGetters, mapState, useStore} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes} from "../../utils/constants";
@@ -156,11 +173,14 @@
                 logDisplay: undefined,
                 editorFontSize: undefined,
                 editorFontFamily: undefined,
-                now: this.$moment()
+                now: this.$moment(),
+                envName: undefined,
+                envColor: undefined
             };
         },
         created() {
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+            const store = useStore();
 
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
@@ -174,6 +194,8 @@
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
             this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
+            this.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
+            this.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
         },
         methods: {
             onNamespaceSelect(value) {
@@ -256,11 +278,27 @@
                 localStorage.setItem("editorFontFamily", value);
                 this.editorFontFamily = value;
                 this.$toast().saved();
+            },
+            onEnvNameChange(value) {
+                if (value && value !== this.configs?.environment?.name) {
+                    this.$store.commit("layout/setEnvName", value);
+                }
+
+                this.$toast().saved();
+            },
+            onEnvColorChange(value) {
+                console.log(value, this.configs?.environment?.color)
+                if (value && value !== this.configs?.environment?.color) {
+                    this.$store.commit("layout/setEnvColor", value);
+                }
+
+                this.$toast().saved();
             }
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("auth", ["user"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")

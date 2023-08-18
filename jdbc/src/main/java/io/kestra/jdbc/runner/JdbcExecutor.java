@@ -124,6 +124,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private WorkerGroupService workerGroupService;
 
+    @Inject
+    private SkipExecutionService skipExecutionService;
+
     @SneakyThrows
     @Override
     public void run() {
@@ -190,6 +193,11 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private void executionQueue(Execution message) {
+        if (skipExecutionService.skipExecution(message.getId())) {
+            log.warn("Skipping execution {}", message.getId());
+            return;
+        }
+
         Executor result = executionRepository.lock(message.getId(), pair -> {
             Execution execution = pair.getLeft();
             ExecutorState executorState = pair.getRight();
@@ -331,6 +339,11 @@ public class JdbcExecutor implements ExecutorInterface {
 
 
     private void workerTaskResultQueue(WorkerTaskResult message) {
+        if (skipExecutionService.skipExecution(message.getTaskRun().getTaskId())) {
+            log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
+            return;
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }

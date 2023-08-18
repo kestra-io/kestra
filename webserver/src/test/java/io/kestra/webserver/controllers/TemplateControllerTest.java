@@ -9,7 +9,9 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -36,6 +38,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
 class TemplateControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")

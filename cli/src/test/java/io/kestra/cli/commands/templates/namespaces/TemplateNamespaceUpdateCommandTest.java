@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
@@ -20,7 +21,7 @@ class TemplateNamespaceUpdateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+        try (ApplicationContext ctx = ApplicationContext.run(Map.of("kestra.templates.enabled", "true"), Environment.CLI, Environment.TEST)) {
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -46,7 +47,7 @@ class TemplateNamespaceUpdateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+        try (ApplicationContext ctx = ApplicationContext.run(Map.of("kestra.templates.enabled", "true"), Environment.CLI, Environment.TEST)) {
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -76,7 +77,7 @@ class TemplateNamespaceUpdateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+        try (ApplicationContext ctx = ApplicationContext.run(Map.of("kestra.templates.enabled", "true"), Environment.CLI, Environment.TEST)) {
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();

@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -33,6 +34,7 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,7 +82,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private TaskDefaultService taskDefaultService;
 
     @Inject
-    private Template.TemplateExecutorInterface templateExecutorInterface;
+    private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
 
     @Inject
     private ExecutorService executorService;
@@ -171,7 +173,7 @@ public class JdbcExecutor implements ExecutorInterface {
         flowQueue.receive(
             FlowTopology.class,
             flow -> {
-                if (flow == null) {
+                if (flow == null || flow instanceof FlowWithException) {
                     return;
                 }
 
@@ -435,14 +437,16 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private Flow transform(Flow flow, Execution execution) {
-        try {
-            flow = Template.injectTemplate(
-                flow,
-                execution,
-                (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
-            );
-        } catch (InternalException e) {
-            log.warn("Failed to inject template",  e);
+        if (templateExecutorInterface.isPresent()) {
+            try {
+                flow = Template.injectTemplate(
+                    flow,
+                    execution,
+                    (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
+                );
+            } catch (InternalException e) {
+                log.warn("Failed to inject template",  e);
+            }
         }
 
         return taskDefaultService.injectDefaults(flow, execution);

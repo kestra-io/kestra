@@ -1,4 +1,5 @@
 <template>
+    <templates-deprecated />
     <div v-if="ready">
         <div>
             <data-table
@@ -124,6 +125,7 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import TemplatesDeprecated from "./TemplatesDeprecated.vue";
 </script>
 
 <script>

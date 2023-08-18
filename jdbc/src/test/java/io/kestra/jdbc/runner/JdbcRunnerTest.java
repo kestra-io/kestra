@@ -6,9 +6,11 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.tasks.flows.*;
+import io.kestra.core.tasks.flows.EachSequentialTest;
+import io.kestra.core.tasks.flows.FlowCaseTest;
+import io.kestra.core.tasks.flows.PauseTest;
+import io.kestra.core.tasks.flows.WorkingDirectoryTest;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -22,7 +24,6 @@ import org.junitpioneer.jupiter.RetryingTest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -60,9 +61,6 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private TaskDefaultsCaseTest taskDefaultsCaseTest;
-
-    @Inject
-    private TemplateRepositoryInterface templateRepository;
 
     @Inject
     private FlowCaseTest flowCaseTest;
@@ -177,16 +175,6 @@ public abstract class JdbcRunnerTest {
     @Test
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
-    }
-
-    @Test
-    void withTemplate() throws Exception {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
-    }
-
-    @RetryingTest(5) // flaky on MySQL
-    void withFailedTemplate() throws Exception {
-        TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }
 
     @Test

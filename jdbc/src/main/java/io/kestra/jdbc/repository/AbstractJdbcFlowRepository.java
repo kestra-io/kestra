@@ -52,7 +52,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             String source = record.get("value", String.class);
 
             try {
-                return this.jdbcRepository.deserialize(source);
+                Flow deserialize = this.jdbcRepository.deserialize(source);
+
+                // raise exception for invalid flow, ex: Templates disabled
+                deserialize.allTasksWithChilds();
+
+                return deserialize;
             } catch (DeserializationException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);

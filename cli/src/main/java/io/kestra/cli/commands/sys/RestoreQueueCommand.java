@@ -2,6 +2,7 @@ package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.services.RestoreQueueService;
+import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,7 @@ public class RestoreQueueCommand extends AbstractCommand {
         }
 
         // templates
-        if (!this.noTemplates) {
+        if (!this.noTemplates && applicationContext.containsBean(TemplateRepositoryInterface.class)) {
             int size = restoreQueueService.templates(noRecreate);
             stdOut("Successfully send {0} templates", size);
         }

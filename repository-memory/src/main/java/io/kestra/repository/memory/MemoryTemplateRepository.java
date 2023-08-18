@@ -1,6 +1,6 @@
 package io.kestra.repository.memory;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.templates.TemplateEnabled;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.value.ValueException;
@@ -21,6 +21,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled
+@TemplateEnabled
 public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     private final Map<String, Template> templates = new HashMap<>();
 

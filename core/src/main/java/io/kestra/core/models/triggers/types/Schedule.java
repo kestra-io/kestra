@@ -43,14 +43,14 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @io.kestra.core.validations.Schedule
 @Schema(
-    title = "Schedule a flow based on cron date",
-    description = "Kestra is able to trigger flow based on Schedule (aka the time). If you need to wait another system " +
-        "to be ready and can't use any event mechanism, you can schedule 1 or more time for the current flow.\n" +
+    title = "Schedule a flow based on a cron expression",
+    description = "Kestra is able to trigger a flow based on a schedule. If you need to wait for another system " +
+        "to be ready and can't use any event mechanism, you can add one or more schedule to a flow.\n" +
         "\n" +
-        "The scheduler will keep the last execution date for this schedule based on the id. This allow you to change the " +
-        "cron expression without restart all the past execution (if backfill exists)\n" +
+        "The scheduler will keep the last execution date for this schedule. This allow you to change the " +
+        "cron expression without restarting all past executions (if backfill exists)\n" +
         "If you changed the current id, the scheduler will think it's a new schedule and will start with a fresh date and " +
-        "replay the all backfill date (if backfill exists)"
+        "replay all backfill dates (if backfill exists)."
 )
 @Plugin(
     examples = {
@@ -113,9 +113,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @NotNull
     @CronExpression
     @Schema(
-        title = "the cron expression",
-        description = "a standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) without second.\n" +
-            "Can also be a cron extensions / nicknames:\n" +
+        title = "The cron expression",
+        description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) without second.\n" +
+            "Can also be a cron extension / nickname:\n" +
             "* `@yearly`\n" +
             "* `@annually`\n" +
             "* `@monthly`\n" +
@@ -128,17 +128,17 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private String cron;
 
     @Schema(
-        title = "The time zone id to use for evaluate cron. Default value is the server default zone id."
+        title = "The time zone id to use for evaluating the cron expression. Default value is the server default zone id."
     )
     @PluginProperty
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
     @Schema(
-        title = "Backfill options in order to fill missing previous past date",
-        description = "Kestra will handle optionally a backfill. The concept of backfill is the replay the missing schedule because we create the flow later.\n" +
+        title = "Backfill option in order to fill missing previous past dates",
+        description = "Kestra could optionally handle a backfill. The concept of a backfill is to replay missing schedules when a flow is created but we need to schedule it before its creation date.\n" +
             "\n" +
-            "Backfill will do all schedules between define date & current date and will start after the normal schedule."
+            "A backfill will do all schedules between a define date and the current date, then the normal schedule will be done."
     )
     @PluginProperty
     private ScheduleBackfill backfill;
@@ -253,6 +253,15 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         Map<String, String> inputs = new HashMap<>();
+
+        // add flow inputs with default value
+        var flow = conditionContext.getFlow();
+        if (flow.getInputs() != null) {
+            flow.getInputs().stream()
+                .filter(input -> input.getDefaults() != null)
+                .forEach(input -> inputs.put(input.getName(), input.getDefaults()));
+        }
+
         if (this.inputs != null) {
             for (Map.Entry<String, String> entry: this.inputs.entrySet()) {
                 inputs.put(entry.getKey(), runContext.render(entry.getValue()));
@@ -283,7 +292,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .build();
 
         // add inputs and inject defaults
-        if (inputs.size() > 0) {
+        if (!inputs.isEmpty()) {
             RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
             execution = execution.withInputs(runnerUtils.typedInputs(conditionContext.getFlow(), execution, inputs));
         }

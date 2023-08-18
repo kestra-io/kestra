@@ -1,7 +1,3 @@
-import {cssVariable} from "../utils/global";
-
-const defaultColor = cssVariable("--el-fill-color-dark");
-
 export default {
     namespaced: true,
     state: {
@@ -32,14 +28,7 @@ export default {
         },
         envColor(state) {
             if (!state.envColor) {
-                const color = localStorage.getItem("envColor");
-
-                if (!color) {
-                    localStorage.setItem("envColor", defaultColor);
-                    state.envColor = defaultColor;
-                } else {
-                    state.envColor = color;
-                }
+                state.envColor = localStorage.getItem("envColor");
             }
             return state.envColor;
         }

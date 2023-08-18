@@ -6,6 +6,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -36,6 +37,14 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
 
+    @io.micronaut.context.annotation.Value("${kestra.environment.name}")
+    @Nullable
+    protected String environmentName;
+
+    @io.micronaut.context.annotation.Value("${kestra.environment.color}")
+    @Nullable
+    protected String environmentColor;
+
     @Get("/ping")
     @Hidden
     public HttpResponse<?> ping() {
@@ -46,14 +55,24 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get current configurations")
     public Configuration configuration() {
-        return Configuration
+        Configuration.ConfigurationBuilder builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
-            .isWorkerInstanceEnabled(false)
-            .build();
+            .isWorkerInstanceEnabled(false);
+
+        if (this.environmentName != null || this.environmentColor != null) {
+            builder.environment(
+                Environment.builder()
+                    .name(this.environmentName)
+                    .color(this.environmentColor)
+                    .build()
+            );
+        }
+
+        return builder.build();
     }
 
     @Get("/api/v1/usages")
@@ -78,5 +97,14 @@ public class MiscController {
 
         @JsonInclude
         Boolean isWorkerInstanceEnabled;
+
+        Environment environment;
+    }
+
+    @Value
+    @Builder(toBuilder = true)
+    public static class Environment {
+        String name;
+        String color;
     }
 }

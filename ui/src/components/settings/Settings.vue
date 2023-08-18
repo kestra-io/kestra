@@ -194,8 +194,8 @@
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
             this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
-            this.envName = store.getters["layout/envName"];
-            this.envColor = store.getters["layout/envColor"];
+            this.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
+            this.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
         },
         methods: {
             onNamespaceSelect(value) {
@@ -280,17 +280,25 @@
                 this.$toast().saved();
             },
             onEnvNameChange(value) {
-                this.$store.commit("layout/setEnvName", value);
+                if (value && value !== this.configs?.environment?.name) {
+                    this.$store.commit("layout/setEnvName", value);
+                }
+
                 this.$toast().saved();
             },
             onEnvColorChange(value) {
-                this.$store.commit("layout/setEnvColor", value);
+                console.log(value, this.configs?.environment?.color)
+                if (value && value !== this.configs?.environment?.color) {
+                    this.$store.commit("layout/setEnvColor", value);
+                }
+
                 this.$toast().saved();
             }
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("auth", ["user"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")

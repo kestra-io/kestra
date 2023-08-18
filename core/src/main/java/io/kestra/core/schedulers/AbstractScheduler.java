@@ -6,6 +6,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
@@ -137,6 +138,15 @@ public abstract class AbstractScheduler implements Scheduler {
                             triggerStateSaved.remove(trigger.uid());
                             triggerQueue.delete(trigger);
                         });
+                } else if (flow instanceof FlowWithException fwe) {
+                    log.error("Cannot schedule an invalid flow, the flow will be removed from scheduling: " + fwe.getException());
+                    ListUtils.emptyOnNull(flow.getTriggers())
+                        .forEach(abstractTrigger -> {
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
+
+                            triggerStateSaved.remove(trigger.uid());
+                            triggerQueue.delete(trigger);
+                        });
                 } else if (previous != null) {
                     FlowService
                         .findRemovedTrigger(flow, previous)
@@ -183,8 +193,14 @@ public abstract class AbstractScheduler implements Scheduler {
 
         this.schedulable = flows
             .stream()
-            .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
+            .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .filter(flow -> !flow.isDisabled())
+            .peek(flow -> {
+                if (flow instanceof FlowWithException fwe) {
+                    log.error("Cannot schedule an invalid flow, the flow will be removed from scheduling: " + fwe.getException());
+                }
+            })
+            .filter(flow -> !(flow instanceof FlowWithException))
             .flatMap(flow -> flow.getTriggers()
                 .stream()
                 .filter(abstractTrigger -> !abstractTrigger.isDisabled() && abstractTrigger instanceof PollingTriggerInterface)

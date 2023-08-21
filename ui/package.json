@@ -64,7 +64,7 @@
     "monaco-editor": "^0.39.0",
     "monaco-yaml": "4.0.0-alpha.0",
     "prettier": "^3.0.1",
-    "sass": "^1.64.2",
+    "sass": "^1.66.1",
     "vite": "^4.4.9",
     "vite-plugin-rewrite-all": "^1.0.1",
     "vitest": "^0.34.1"

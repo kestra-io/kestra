@@ -1,3 +1,7 @@
+<script>
+    export const VIEW_TYPE_STORAGE_KEY = "view-type";
+    export const SOURCE_TOPOLOGY_VIEW_TYPE = "source-topology";
+</script>
 <script setup>
     import {computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex"
@@ -90,10 +94,8 @@
         }
     })
 
-    const viewTypeStorageKey = "view-type";
-
     const loadViewType = () => {
-        return localStorage.getItem(viewTypeStorageKey);
+        return localStorage.getItem(VIEW_TYPE_STORAGE_KEY);
     }
 
     const initViewType = () => {
@@ -108,7 +110,7 @@
             return storedValue;
         }
 
-        localStorage.setItem(viewTypeStorageKey, defaultValue);
+        localStorage.setItem(VIEW_TYPE_STORAGE_KEY, defaultValue);
         return defaultValue;
     }
 
@@ -139,7 +141,7 @@
 
     const persistViewType = (value) => {
         viewType.value = value;
-        localStorage.setItem(viewTypeStorageKey, value);
+        localStorage.setItem(VIEW_TYPE_STORAGE_KEY, value);
     }
 
     const localStorageKey = computed(() => {
@@ -233,7 +235,7 @@
 
 
     const viewTypeOnReadOnly = () => {
-        const defaultValue = "source-topology";
+        const defaultValue = SOURCE_TOPOLOGY_VIEW_TYPE;
 
         if (props.isCreating) {
             return "source";

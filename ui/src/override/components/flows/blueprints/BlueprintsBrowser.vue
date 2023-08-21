@@ -82,7 +82,7 @@
     import {mapState} from "vuex";
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
-    import {VIEW_TYPE_STORAGE_KEY, SOURCE_TOPOLOGY_VIEW_TYPE} from "../../../../components/inputs/EditorView.vue"
+    import {editorViewTypes} from "../../../../utils/constants";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -125,7 +125,7 @@
                 );
             },
             async blueprintToEditor(blueprintId) {
-                localStorage.setItem(VIEW_TYPE_STORAGE_KEY, SOURCE_TOPOLOGY_VIEW_TYPE);
+                localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
                 localStorage.setItem("autoRestore-creation_draft", (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data);
                 this.$router.push({name: 'flows/create'});
             },

@@ -234,6 +234,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .conditionContext(flowWithTrigger.getConditionContext())
                     .triggerContext(TriggerContext
                         .builder()
+                        .tenantId(flowWithTrigger.getFlow().getTenantId())
                         .namespace(flowWithTrigger.getFlow().getNamespace())
                         .flowId(flowWithTrigger.getFlow().getId())
                         .flowRevision(flowWithTrigger.getFlow().getRevision())
@@ -494,7 +495,9 @@ public abstract class AbstractScheduler implements Scheduler {
 
         synchronized (triggerStateSavedLock) {
             this.triggerState.save(trigger);
-            this.executionQueue.emit(executionWithTrigger.getExecution());
+            // we need to be sure that the tenantId is propagated from the trigger to the execution
+            var execution = executionWithTrigger.getExecution().withTenantId(executionWithTrigger.getTriggerContext().getTenantId());
+            this.executionQueue.emit(execution);
         }
     }
 
@@ -632,6 +635,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 .pollingTrigger(f.getPollingTrigger())
                 .conditionContext(f.getConditionContext())
                 .triggerContext(TriggerContext.builder()
+                    .tenantId(f.getTriggerContext().getTenantId())
                     .namespace(f.getTriggerContext().getNamespace())
                     .flowId(f.getTriggerContext().getFlowId())
                     .flowRevision(f.getTriggerContext().getFlowRevision())

@@ -541,7 +541,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 flow = Template.injectTemplate(
                     flow,
                     execution,
-                    (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
+                    (tenantId, namespace, id) -> templateExecutorInterface.get().findById(tenantId, namespace, id).orElse(null)
                 );
             } catch (InternalException e) {
                 log.warn("Failed to inject template", e);

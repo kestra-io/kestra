@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <errors code="404" v-if="error && embed"/>
+    <div v-else>
         <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
                 <div class="d-flex sub-nav">
@@ -80,11 +81,12 @@
     import action from "../../../../models/action";
     import {mapState} from "vuex";
     import Utils from "../../../../utils/utils";
+    import Errors from "../../../../components/errors/Errors.vue";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
-        components: {TaskIcon, DataTable, SearchField},
-        emits: ["goToDetail"],
+        components: {TaskIcon, DataTable, SearchField, Errors},
+        emits: ["goToDetail", "loaded"],
         props: {
             blueprintBaseUri: {
                 type: String,
@@ -108,7 +110,8 @@
                 total: 0,
                 icon: {
                     ContentCopy: shallowRef(ContentCopy)
-                }
+                },
+                error: false
             }
         },
         methods: {
@@ -189,7 +192,15 @@
                 Promise.all([
                     this.loadTags(beforeLoadBlueprintBaseUri),
                     this.loadBlueprints(beforeLoadBlueprintBaseUri)
-                ]).finally(() => {
+                ]).then(() => {
+                    this.$emit("loaded");
+                }).catch(() => {
+                    if(this.embed) {
+                        this.error = true;
+                    } else {
+                        this.$store.dispatch("core/showError", 404);
+                    }
+                }).finally(() => {
                     // Handle switch tab while fetching data
                     if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
                         callback();

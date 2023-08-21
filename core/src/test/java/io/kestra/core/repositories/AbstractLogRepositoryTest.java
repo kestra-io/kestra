@@ -54,6 +54,10 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 
+        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null, null, null, null, null);
+        assertThat(find.size(), is(1));
+        assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
+
         List<LogEntry> list = logRepository.findByExecutionId(save.getExecutionId(), null);
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));

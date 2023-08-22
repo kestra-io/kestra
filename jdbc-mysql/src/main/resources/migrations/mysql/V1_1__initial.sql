@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE FUNCTION PARSE_ISO8601_DURATION(duration VARCHAR(20))
+CREATE FUNCTION IF NOT EXISTS PARSE_ISO8601_DURATION(duration VARCHAR(20))
     RETURNS bigint
     LANGUAGE SQL
     CONTAINS SQL
@@ -21,7 +21,7 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE FUNCTION PARSE_ISO8601_DATETIME(date VARCHAR(50))
+CREATE FUNCTION IF NOT EXISTS PARSE_ISO8601_DATETIME(date VARCHAR(50))
     RETURNS datetime
     LANGUAGE SQL
     CONTAINS SQL
@@ -39,7 +39,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CREATE TABLE queues (
+CREATE TABLE IF NOT EXISTS queues (
     `offset` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `type` ENUM(
         'io.kestra.core.models.executions.Execution',
@@ -68,7 +68,7 @@ CREATE TABLE queues (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE `flows` (
+CREATE TABLE IF NOT EXISTS `flows` (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE `flows` (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE `templates` (
+CREATE TABLE IF NOT EXISTS `templates` (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE `templates` (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE `executions` (
+CREATE TABLE IF NOT EXISTS `executions` (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE `executions` (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE triggers (
+CREATE TABLE IF NOT EXISTS triggers (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE triggers (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE logs (
+CREATE TABLE IF NOT EXISTS logs (
     `key` VARCHAR(30) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
@@ -158,16 +158,14 @@ CREATE TABLE logs (
         'TRACE'
     ) GENERATED ALWAYS AS (value ->> '$.level') STORED NOT NULL,
     `timestamp` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.timestamp' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
-    INDEX ix_namespace (deleted, namespace),
     INDEX ix_execution_id (deleted, execution_id),
     INDEX ix_execution_id__task_id (deleted, execution_id, task_id),
     INDEX ix_execution_id__taskrun_id (deleted, execution_id, taskrun_id),
-    INDEX ix_timestamp (deleted, timestamp),
     FULLTEXT ix_fulltext (namespace, flow_id, task_id, execution_id, taskrun_id, trigger_id, message, thread)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE multipleconditions (
+CREATE TABLE IF NOT EXISTS multipleconditions (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
@@ -200,19 +198,19 @@ CREATE TABLE multipleconditions (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE workertaskexecutions (
+CREATE TABLE IF NOT EXISTS workertaskexecutions (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE executorstate (
+CREATE TABLE IF NOT EXISTS executorstate (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE executordelayed (
+CREATE TABLE IF NOT EXISTS executordelayed (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `date` DATETIME(6) GENERATED ALWAYS AS (
@@ -228,3 +226,158 @@ CREATE TABLE executordelayed (
     ) STORED NOT NULL,
     INDEX ix_date (`date`)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+/* ---!!! previously on V2__setting.sql !!!--- */
+CREATE TABLE IF NOT EXISTS settings (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+/* ---!!! previously on V5__flow_topologies.sql !!!--- */
+CREATE TABLE IF NOT EXISTS `flow_topologies` (
+     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+     `value` JSON NOT NULL,
+     `source_namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.source.namespace') STORED NOT NULL,
+     `source_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.source.id') STORED NOT NULL,
+     `relation` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.relation') STORED NOT NULL,
+     `destination_namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.destination.namespace') STORED NOT NULL,
+     `destination_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.destination.id') STORED NOT NULL,
+     INDEX ix_destination (destination_namespace, destination_id),
+     INDEX ix_destination__source (destination_namespace, destination_id, source_namespace, source_id)
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+ALTER TABLE queues CHANGE consumers consumers SET(
+    'indexer',
+    'executor',
+    'worker',
+    'scheduler',
+    'flow_topology'
+);
+
+/* ----------------------- metrics ----------------------- */
+/* ---!!! previously on V8__metrics.sql !!!--- */
+
+CREATE TABLE IF NOT EXISTS metrics (
+                         `key` VARCHAR(30) NOT NULL PRIMARY KEY,
+                         `value` JSON NOT NULL,
+                         `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
+                         `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
+                         `flow_id`  VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.flowId') STORED NOT NULL,
+                         `task_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskId') STORED,
+                         `execution_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED NOT NULL,
+                         `taskrun_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskRunId') STORED,
+                         `metric_name` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.name') STORED,
+                         `timestamp` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.timestamp' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
+                         INDEX ix_metrics_flow_id (deleted, namespace, flow_id),
+                         INDEX ix_metrics_execution_id (deleted, execution_id),
+                         INDEX ix_metrics_timestamp (deleted, timestamp)
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+/* ---!!! previously on V10__metric_missing_value.sql !!!--- */
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS `?`()
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+    ALTER TABLE metrics ADD COLUMN metric_value FLOAT GENERATED ALWAYS AS (value ->> '$.value') STORED NOT NULL;
+END //
+DELIMITER ;
+CALL `?`();
+DROP PROCEDURE `?`;
+
+/* ---!!! previously on V11__queues_consumer_group.sql !!!--- */
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS `?`()
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+    ALTER TABLE queues ADD COLUMN consumer_group VARCHAR(250);
+END //
+DELIMITER ;
+CALL `?`();
+DROP PROCEDURE `?`;
+
+/* ---!!! previously on V14__polling_trigger.sql !!!--- */
+ALTER TABLE queues MODIFY COLUMN `type`
+    ENUM(
+        'io.kestra.core.models.executions.Execution',
+        'io.kestra.core.models.flows.Flow',
+        'io.kestra.core.models.templates.Template',
+        'io.kestra.core.models.executions.ExecutionKilled',
+        'io.kestra.core.runners.WorkerJob',
+        'io.kestra.core.runners.WorkerTask',
+        'io.kestra.core.runners.WorkerTaskResult',
+        'io.kestra.core.runners.WorkerInstance',
+        'io.kestra.core.runners.WorkerTaskRunning',
+        'io.kestra.core.models.executions.LogEntry',
+        'io.kestra.core.models.triggers.Trigger',
+        'io.kestra.ee.models.audits.AuditLog',
+        'io.kestra.core.models.executions.MetricEntry',
+        'io.kestra.core.runners.WorkerTrigger',
+        'io.kestra.core.runners.WorkerTriggerResult'
+        ) NOT NULL;
+
+-- trigger logs have no execution id
+ALTER TABLE logs MODIFY COLUMN execution_id varchar(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED NULL;
+
+-- Update WorkerTask and WorkerTrigger to WorkerJob then delete the two enums that are no more used
+UPDATE queues SET `type` = 'io.kestra.core.runners.WorkerJob'
+WHERE `type` = 'io.kestra.core.runners.WorkerTask' OR `type` = 'io.kestra.core.runners.WorkerTrigger';
+
+ALTER TABLE queues MODIFY COLUMN `type`
+    ENUM(
+        'io.kestra.core.models.executions.Execution',
+        'io.kestra.core.models.flows.Flow',
+        'io.kestra.core.models.templates.Template',
+        'io.kestra.core.models.executions.ExecutionKilled',
+        'io.kestra.core.runners.WorkerJob',
+        'io.kestra.core.runners.WorkerTaskResult',
+        'io.kestra.core.runners.WorkerInstance',
+        'io.kestra.core.runners.WorkerTaskRunning',
+        'io.kestra.core.models.executions.LogEntry',
+        'io.kestra.core.models.triggers.Trigger',
+        'io.kestra.ee.models.audits.AuditLog',
+        'io.kestra.core.models.executions.MetricEntry',
+        'io.kestra.core.runners.WorkerTriggerResult'
+        ) NOT NULL;
+
+/* ---!!! previously on V15__trigger_fulltext.sql !!!--- */
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS `?`()
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+    ALTER TABLE triggers ADD FULLTEXT ix_fulltext (namespace, flow_id, trigger_id, execution_id);
+END //
+DELIMITER ;
+CALL `?`();
+DROP PROCEDURE `?`;
+
+/* ---!!! previously on V16__index_logs.sql !!!--- */
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS `?`()
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+    DROP INDEX ix_namespace ON logs;
+END //
+DELIMITER ;
+CALL `?`();
+DROP PROCEDURE `?`;
+
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS `?`()
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+    DROP INDEX ix_timestamp ON logs;
+END //
+DELIMITER ;
+CALL `?`();
+DROP PROCEDURE `?`;
+
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS `?`()
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+    CREATE INDEX ix_namespace_flow ON logs (deleted, timestamp, level, namespace, flow_id);
+END //
+DELIMITER ;
+CALL `?`();
+DROP PROCEDURE `?`;

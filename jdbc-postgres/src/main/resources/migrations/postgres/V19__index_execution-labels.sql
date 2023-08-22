@@ -1,1 +1,0 @@
-create index executions_labels ON executions USING GIN((value -> 'labels'));

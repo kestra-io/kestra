@@ -355,7 +355,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         if (workerTask.getTask().getRetry() != null &&
             workerTask.getTask().getRetry().getWarningOnRetry() &&
-            finalWorkerTask.getTaskRun().getAttempts().size() > 0 &&
+            finalWorkerTask.getTaskRun().attemptNumber() > 1 &&
             state == State.Type.SUCCESS
         ) {
             state = State.Type.WARNING;

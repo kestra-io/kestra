@@ -3,7 +3,7 @@
         <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main :class="menuCollapsed" v-if="loaded">
-            <top-nav-bar :menu-collapsed="menuCollapsed" v-if="displayNavBar" />
+<!--            <top-nav-bar :menu-collapsed="menuCollapsed" v-if="displayNavBar" />-->
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />

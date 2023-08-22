@@ -1,8 +1,7 @@
 <template>
-    <div>
-        <div v-if="ready">
-            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
-            <bottom-line v-if="displayBottomLine()">
+    <div v-if="ready">
+        <embed-top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+            <template #buttons v-if="$refs.currentTab && displayButtons">
                 <ul>
                     <li>
                         <template v-if="isAllowedEdit">
@@ -15,13 +14,15 @@
                         <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
                     </li>
                 </ul>
-            </bottom-line>
-        </div>
+            </template>
+        </embed-top-nav-bar>
+        <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
     </div>
 </template>
 
 <script setup>
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import EmbedTopNavBar from "../layout/EmbedTopNavBar.vue";
 </script>
 
 <script>
@@ -29,7 +30,6 @@
     import FlowRevisions from "./FlowRevisions.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
-    import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -43,7 +43,6 @@
     import FlowTriggers from "./FlowTriggers.vue";
 
     export default {
-        mixins: [RouteContext],
         components: {
             BottomLine,
             TriggerFlow,
@@ -175,10 +174,6 @@
 
                 return null;
             },
-            displayBottomLine() {
-                const name = this.activeTabName();
-                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
-            },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.flow.namespace,
@@ -227,6 +222,10 @@
                 }
                 return false;
             },
+            displayButtons() {
+                const name = this.activeTabName();
+                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
+            }
         },
         unmounted () {
             this.$store.commit("flow/setFlow", undefined)

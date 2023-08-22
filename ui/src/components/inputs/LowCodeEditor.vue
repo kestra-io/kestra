@@ -468,8 +468,12 @@
         return isTaskNode(node) || isTriggerNode(node) ? 44 : isCollapsedCluster(node) ? 44 : 5;
     };
 
+    const getNodeType = (node) => {
+        return isTaskNode(node) ? node.task.type : isTriggerNode(node) ? node.trigger.type : undefined
+    }
+
     const getNodeIcon = (node) => {
-        const type = isTaskNode(node) ? node.task.type : isTriggerNode(node) ? node.trigger.type : undefined
+        const type = getNodeType(node);
         if (type && icons?.value?.value) {
             return icons.value.value[type]
         }
@@ -790,6 +794,7 @@
                             color: nodeType != "dot" ? nodeColor(node) : null,
                             expandable: taskId ? flowables().includes(taskId) && edgeReplacer.value["cluster_" + taskId] !== undefined : isCollapsedCluster(node),
                             icon: getNodeIcon(node),
+                            cls: getNodeType(node),
                             isReadOnly: props.isReadOnly,
                             link: node.task?.type === "io.kestra.core.tasks.flows.Flow" ? linkDatas(node.task) : false
                         },

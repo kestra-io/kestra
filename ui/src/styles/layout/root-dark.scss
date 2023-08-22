@@ -1,7 +1,7 @@
 @use 'sass:map';
 
-@import "@kestra-io/ui-libs/dist/_theme-dark.scss";
-@import "@kestra-io/ui-libs/dist/_variables.scss";
+@import "@kestra-io/ui-libs/src/scss/theme-dark.scss";
+@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 // Bootstrap
 @import "bootstrap/scss/functions";

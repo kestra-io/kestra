@@ -50,7 +50,7 @@
 
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/dist/_variables.scss";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .el-button.el-button--default {
         transition: none;

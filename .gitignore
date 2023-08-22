@@ -34,6 +34,7 @@ ui/.env.*.local
 webserver/src/main/resources/ui
 yarn.lock
 ui/coverage
+ui/stats.html
 
 ### Docker
 /.env

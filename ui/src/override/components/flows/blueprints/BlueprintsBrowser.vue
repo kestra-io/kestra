@@ -280,7 +280,7 @@
 </script>
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-    @import "@kestra-io/ui-libs/dist/_variables.scss";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .sub-nav {
         margin: 0 0 $spacer;

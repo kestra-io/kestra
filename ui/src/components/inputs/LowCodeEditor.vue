@@ -998,9 +998,6 @@
 
 
 <style scoped lang="scss">
-    @use "@kestra-io/ui-libs/dist/style.css";
-    @import "@kestra-io/ui-libs/dist/variables.scss";
-
     .vueflow {
         height: 100%;
         width: 100%;

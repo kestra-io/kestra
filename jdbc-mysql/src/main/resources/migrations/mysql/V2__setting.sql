@@ -1,4 +1,0 @@
-CREATE TABLE settings (
-    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
-    `value` JSON NOT NULL
-) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

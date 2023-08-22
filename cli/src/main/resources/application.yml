@@ -59,18 +59,21 @@ flyway:
         - classpath:migrations/postgres
       # We must ignore missing migrations as we delete some wrong or not used anymore migrations
       ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true
     mysql:
       enabled: true
       locations:
         - classpath:migrations/mysql
       # We must ignore missing migrations as we delete some wrong or not used anymore migrations
       ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true
     h2:
       enabled: true
       locations:
         - classpath:migrations/h2
       # We must ignore missing migrations as we delete some wrong or not used anymore migrations
       ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true
 
 kestra:
   retries:

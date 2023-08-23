@@ -85,7 +85,7 @@
         components: {
             MonacoEditor,
         },
-        emits: ["save", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
+        emits: ["save", "execute", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
         editor: undefined,
         data() {
             return {
@@ -227,6 +227,19 @@
                     contextMenuOrder: 1.5,
                     run: (ed) => {
                         this.$emit("save", ed.getValue())
+                    }
+                });
+
+                this.editor.addAction({
+                    id: "kestra-execute",
+                    label: "Execute the flow",
+                    keybindings: [
+                        KeyMod.CtrlCmd | KeyCode.KeyE,
+                    ],
+                    contextMenuGroupId: "navigation",
+                    contextMenuOrder: 1.5,
+                    run: (ed) => {
+                        this.$emit("execute", ed.getValue())
                     }
                 });
 

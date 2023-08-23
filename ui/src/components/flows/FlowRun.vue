@@ -5,7 +5,7 @@
             {{ $t('disabled flow desc') }}
         </el-alert>
 
-        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent>
+        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="onSubmit($refs.form)">
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
@@ -96,7 +96,7 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled || haveBadLabels">
+                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" native-type="submit" :disabled="flow.disabled || haveBadLabels">
                             {{ $t('launch execution') }}
                         </el-button>
                         <el-text v-if="haveBadLabels" type="danger" size="small">

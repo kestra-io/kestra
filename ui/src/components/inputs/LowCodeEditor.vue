@@ -264,7 +264,7 @@
                 .dispatch("execution/loadExecution", {id: data.link.executionId})
                 .then(value => {
                     store.commit("execution/setExecution", value);
-                    router.push({
+                    window.open(router.resolve({
                         name: "executions/update",
                         params: {
                             namespace: data.link.namespace,
@@ -272,13 +272,13 @@
                             tab: "topology",
                             id: data.link.executionId,
                         },
-                    });
+                    }).href,'_blank');;
                 })
         } else {
-            router.push({
+            window.open(router.resolve({
                 name: "flows/update",
                 params: {"namespace": data.link.namespace, "id": data.link.id, tab: "overview"},
-            });
+            }).href,'_blank');
         }
     }
 

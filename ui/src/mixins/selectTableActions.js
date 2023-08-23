@@ -17,14 +17,11 @@ export default {
         toggleAllUnselected() {
             this.elTable.clearSelection()
         },
-        toggleAllSelection(active) {
-            // only some are selected, we should set queryBulkAction to true because it will select all
-            if (active && this.elTable.getSelectionRows().length > 0 && !this.queryBulkAction) {
-                this.queryBulkAction = true;
-            } else {
-                this.queryBulkAction = false;
+        toggleAllSelection() {
+            if (this.elTable.getSelectionRows().length < this.elTable.data.length) {
+                this.elTable.toggleAllSelection()
             }
-            this.elTable.toggleAllSelection()
+            this.queryBulkAction = true;
         },
         selectionMapper(element) {
             return element;

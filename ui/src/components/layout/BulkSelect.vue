@@ -32,7 +32,7 @@
                     this.$emit("unselect");
                 }
             },
-            toggleAll(value) {
+            toggleAll() {
                 this.$emit("update:selectAll", !this.selectAll);
             }
         },

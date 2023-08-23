@@ -4,8 +4,8 @@ import _isEqual from "lodash/isEqual";
 
 export default {
     created() {
-        this.internalPageSize = this.pageSize;
-        this.internalPageNumber = this.pageNumber;
+        this.internalPageSize = this.pageSize ?? this.$route.query.size ?? 25;
+        this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1;
 
         // @TODO: ugly hack from restoreUrl
         if (this.loadInit) {
@@ -29,12 +29,10 @@ export default {
             default: () => {}
         },
         pageSize: {
-            type: Number,
-            default: 25
+            type: Number
         },
         pageNumber: {
-            type: Number,
-            default: 1
+            type: Number
         },
     },
     watch: {

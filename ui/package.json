@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path ../.gitignore"
   },
   "dependencies": {
-    "@kestra-io/ui-libs": "^0.0.3",
+    "@kestra-io/ui-libs": "^0.0.8",
     "@popperjs/core": "npm:@sxzz/popperjs-es@2.11.7",
     "@vue-flow/background": "^1.2.0",
     "@vue-flow/controls": "1.0.6",
@@ -27,7 +27,7 @@
     "element-plus": "^2.3.9",
     "humanize-duration": "^3.29.0",
     "js-yaml": "^4.1.0",
-    "lodash": "4.17.21",
+    "lodash": "^4.17.21",
     "markdown-it": "^13.0.1",
     "markdown-it-anchor": "^8.6.7",
     "markdown-it-container": "^3.0.0",

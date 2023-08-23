@@ -342,10 +342,6 @@
                             padding: 0.2rem;
                             border-radius: $border-radius;
 
-                            html.dark & {
-                                background-color: var(--bs-white);
-                            }
-
                             & * {
                                 margin-top: 0;
                             }

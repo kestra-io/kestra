@@ -531,7 +531,6 @@
 
             .task-icon {
                 width: 36px;
-                background: var(--bs-white);
                 padding: 6px;
             }
 

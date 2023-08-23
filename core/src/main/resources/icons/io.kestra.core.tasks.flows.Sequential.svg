@@ -1,8 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20"
-     preserveAspectRatio="xMidYMid meet" viewBox="0 0 20 20"
-     fill="currentColor"
-     style="-ms-transform: rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);">
-    <path
-        d="M11 13.824V6.176A2.395 2.395 0 0 0 12.4 4a2.4 2.4 0 1 0-4.8 0c0 .967.576 1.796 1.4 2.176v7.649A2.393 2.393 0 0 0 7.6 16a2.4 2.4 0 1 0 4.8 0c0-.967-.575-1.796-1.4-2.176zM10 2.615a1.384 1.384 0 1 1 0 2.768a1.384 1.384 0 0 1 0-2.768zm0 14.77a1.385 1.385 0 1 1 0-2.77a1.385 1.385 0 0 1 0 2.77z"
-        />
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2.66632H20V10.6663H12V2.66632Z" fill="currentColor"/>
+    <path d="M12 21.3336H20V29.3336H12V21.3336Z" fill="currentColor"/>
+    <path d="M14.6667 10.432H17.3333V21.3336H14.6667V10.432Z" fill="currentColor"/>
 </svg>

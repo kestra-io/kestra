@@ -287,7 +287,6 @@
                 this.$toast().saved();
             },
             onEnvColorChange(value) {
-                console.log(value, this.configs?.environment?.color)
                 if (value && value !== this.configs?.environment?.color) {
                     this.$store.commit("layout/setEnvColor", value);
                 }

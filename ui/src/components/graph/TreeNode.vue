@@ -2,7 +2,7 @@
     <div class="node-wrapper" :class="nodeClass">
         <div class="status-color" v-if="execution" :class="statusClass" />
         <div class="icon">
-            <task-icon :cls="type" />
+            <task-icon :cls="type" theme="light" />
         </div>
         <div class="task-content">
             <div class="card-header">

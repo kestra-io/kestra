@@ -20,6 +20,7 @@
 <script>
     import {mapState} from "vuex";
     import {Buffer} from "buffer";
+    import {cssVariable} from "../../utils/global";
 
     export default {
         props: {
@@ -30,6 +31,13 @@
             onlyIcon: {
                 type: Boolean,
                 default: false
+            },
+            theme: {
+                type: String,
+                default: undefined,
+                validator(value) {
+                    return ["dark", "light"].includes(value)
+                }
             }
         },
 
@@ -57,20 +65,33 @@
             tooltipEnd() {
                 return this.name ;
             },
-
             imageBase64() {
-                const icon = this.icon ? this.icon.icon : undefined;
-                return icon ? icon : Buffer.from("<svg xmlns=\"http://www.w3.org/2000/svg\" " +
-                    "xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" " +
-                    "focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: " +
-                    "rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" " +
-                    "preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\">" +
-                    "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"#0D1523FF\"/>" +
-                    "</svg>", "utf8").toString("base64");
+                let icon = this.icon && this.icon.icon ? Buffer.from(this.icon.icon, 'base64').toString('utf8') : undefined;
+
+                if (!icon) {
+                    icon = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
+                        "xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" " +
+                        "focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: " +
+                        "rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" " +
+                        "preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\">" +
+                        "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/>" +
+                        "</svg>";
+                }
+
+                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+                let color = darkTheme ? cssVariable("--bs-gray-900") : cssVariable("--bs-black");
+
+                if (this.theme) {
+                    color = this.theme === "dark" ? cssVariable("--bs-gray-900") : cssVariable("--bs-black");
+                }
+
+                icon = icon.replaceAll("currentColor", color);
+
+                return Buffer.from(icon, "utf8").toString("base64");
             },
             icon() {
                 return (this.icons || {})[this.cls]
-            }
+            },
         }
     };
 </script>
@@ -114,10 +135,14 @@
 
         &.only-icon {
             > .icon {
-                margin: 0;
-                margin-top: 2px;
                 height: 100%;
-                vertical-align: center;
+                position: relative;
+
+                :deep(svg) {
+                    position: absolute;
+                    padding: 2px;
+                    top: 0
+                }
             }
         }
     }

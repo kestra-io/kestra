@@ -27,6 +27,7 @@
     import {pageFromRoute} from "../../utils/eventsRouter";
     import {SECTIONS} from "../../utils/constants.js";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
+    import {editorViewTypes} from "../../utils/constants";
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
@@ -90,17 +91,15 @@
         }
     })
 
-    const viewTypeStorageKey = "view-type";
-
     const loadViewType = () => {
-        return localStorage.getItem(viewTypeStorageKey);
+        return localStorage.getItem(editorViewTypes.STORAGE_KEY);
     }
 
     const initViewType = () => {
-        const defaultValue = "source-doc";
+        const defaultValue = editorViewTypes.SOURCE_DOC;
 
         if (props.execution || props.isReadOnly) {
-            return "topology";
+            return editorViewTypes.TOPOLOGY;
         }
 
         const storedValue = loadViewType();
@@ -108,12 +107,12 @@
             return storedValue;
         }
 
-        localStorage.setItem(viewTypeStorageKey, defaultValue);
+        localStorage.setItem(editorViewTypes.STORAGE_KEY, defaultValue);
         return defaultValue;
     }
 
     const isHorizontalDefault = () => {
-        return viewType.value === "source-topology" ? false : localStorage.getItem("topology-orientation") === "1"
+        return viewType.value === editorViewTypes.SOURCE_TOPOLOGY ? false : localStorage.getItem("topology-orientation") === "1"
     }
 
     const editorDomElement = ref(null);
@@ -139,7 +138,7 @@
 
     const persistViewType = (value) => {
         viewType.value = value;
-        localStorage.setItem(viewTypeStorageKey, value);
+        localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     }
 
     const localStorageKey = computed(() => {
@@ -197,7 +196,7 @@
                 && localStorage.getItem("tourDoneOrSkip") !== "true"
                 && props.total === 0) {
                 tours["guidedTour"].start();
-                persistViewType("source");
+                persistViewType(editorViewTypes.SOURCE);
             }
         }, 200)
         window.addEventListener("popstate", () => {
@@ -233,14 +232,14 @@
 
 
     const viewTypeOnReadOnly = () => {
-        const defaultValue = "source-topology";
+        const defaultValue = SOURCE_TOPOLOGY_VIEW_TYPE;
 
         if (props.isCreating) {
-            return "source";
+            return editorViewTypes.SOURCE;
         }
 
         if (props.execution || props.isReadOnly) {
-            return "topology";
+            return editorViewTypes.TOPOLOGY;
         }
 
         const storedValue = loadViewType();
@@ -341,7 +340,7 @@
         clearTimeout(timer.value)
         return store.dispatch("flow/validateFlow", {flow: event})
             .then(value => {
-                if (flowHaveTasks() && ["topology", "source-topology"].includes(viewType.value)) {
+                if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
                     generateGraph()
                 }
 
@@ -445,14 +444,14 @@
 
     const switchViewType = (event) => {
         persistViewType(event);
-        if (["topology", "source-topology"].includes(viewType.value)) {
+        if ([editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
             isHorizontal.value = isHorizontalDefault();
             if (updatedFromEditor.value) {
                 onEdit(flowYaml.value)
                 updatedFromEditor.value = false;
             }
         }
-        if (event === "source" && editorDomElement?.value?.$el) {
+        if (event === editorViewTypes.SOURCE && editorDomElement?.value?.$el) {
             editorDomElement.value.$el.style = null;
         }
     }
@@ -576,7 +575,7 @@
             });
     }
 
-    const combinedEditor = computed(() => ["source-doc", "source-topology", "source-blueprints"].includes(viewType.value));
+    const combinedEditor = computed(() => [editorViewTypes.SOURCE_DOC, editorViewTypes.SOURCE_TOPOLOGY, editorViewTypes.SOURCE_BLUEPRINTS].includes(viewType.value));
 
     const dragEditor = (e) => {
         let dragX = e.clientX;
@@ -605,7 +604,7 @@
     <el-card shadow="never" v-loading="isLoading">
         <editor
             ref="editorDomElement"
-            v-if="combinedEditor || viewType === 'source'"
+            v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
             :style="combinedEditor ? {width: editorWidthPercentage} : {}"
             @save="save"
@@ -615,16 +614,16 @@
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
-            @restartGuidedTour="() => persistViewType('source')"
+            @restartGuidedTour="() => persistViewType(editorViewTypes.SOURCE)"
         >
             <template #extends-navbar>
                 <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" />
             </template>
         </editor>
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== 'source-blueprints'}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
+        <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
         <div
-            :class="viewType === 'source-topology' ? 'combined-right-view' : viewType === 'topology' ? 'vueflow': 'hide-view'"
+            :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : viewType === editorViewTypes.TOPOLOGY ? 'vueflow': 'hide-view'"
         >
             <LowCodeEditor
                 v-if="flowGraph"
@@ -641,13 +640,13 @@
                 :is-allowed-edit="isAllowedEdit()"
                 :view-type="viewType"
             >
-                <template #top-bar v-if="viewType === 'topology'">
+                <template #top-bar v-if="viewType === editorViewTypes.TOPOLOGY">
                     <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" />
                 </template>
             </LowCodeEditor>
         </div>
         <PluginDocumentation
-            v-if="viewType === 'source-doc'"
+            v-if="viewType === editorViewTypes.SOURCE_DOC"
             class="plugin-doc combined-right-view enhance-readability"
         />
         <el-drawer

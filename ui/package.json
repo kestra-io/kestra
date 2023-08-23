@@ -51,6 +51,7 @@
     "vue-router": "^4.2.4",
     "vue-sidebar-menu": "^5.2.10",
     "vue-virtual-scroller": "^2.0.0-beta.8",
+    "vue3-popper": "^1.5.0",
     "vue3-tour": "git@github.com:kestra-io/vue3-tour.git",
     "vuex": "^4.1.0",
     "xss": "^1.0.14",

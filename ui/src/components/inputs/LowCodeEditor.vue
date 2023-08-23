@@ -180,7 +180,6 @@
     }
 
     const onCreateNewTask = (event) => {
-        console.log(event)
         taskEditData.value = {
             insertionDetails: event,
             action: "create_task",

@@ -4,7 +4,7 @@ import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor

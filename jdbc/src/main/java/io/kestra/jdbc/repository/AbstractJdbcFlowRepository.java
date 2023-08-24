@@ -65,7 +65,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .id(jsonNode.get("id").asText())
                         .namespace(jsonNode.get("namespace").asText())
                         .revision(jsonNode.get("revision").asInt())
-                        .source(JacksonMapper.ofJson().writeValueAsString(JacksonMapper.toMap(source)))
                         .exception(e.getMessage())
                         .tasks(List.of())
                         .build();
@@ -142,10 +141,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     return Optional.empty();
                 }
 
-                 return Optional.of(FlowWithSource.of(
-                    jdbcRepository.map(fetched),
-                    fetched.get("source_code", String.class)
-                ));
+                Flow flow = jdbcRepository.map(fetched);
+                String source = fetched.get("source_code", String.class);
+                if (flow instanceof FlowWithException fwe) {
+                    return Optional.of(fwe.toBuilder().source(source).build());
+                }
+                return Optional.of(FlowWithSource.of(flow, source));
             });
     }
 

@@ -180,6 +180,12 @@
                 localStorage.removeItem(restoredLocalStorageKey);
             }
         }
+
+        // validate flow on first load
+        store.dispatch("flow/validateFlow", {flow: flowYaml.value})
+            .then(value => {
+              return value;
+            });
     }
 
     const persistEditorWidth = () => {

@@ -85,12 +85,6 @@
                     <var-value :execution="execution" :value="scope.row.output" />
                 </template>
             </el-table-column>
-
-            <el-table-column column-key="action" class-name="row-action">
-                <template #default="scope">
-                    <FilePreview v-if="scope.row.output.startsWith('kestra:///')" :value="scope.row.output" :execution-id="execution.id" />
-                </template>
-            </el-table-column>
         </el-table>
         <pagination :total="outputs.length" :page="page" :size="size" @page-changed="onPageChanged" />
     </div>
@@ -102,11 +96,9 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Collapse from "../layout/Collapse.vue";
     import Pagination from "../layout/Pagination.vue";
-    import FilePreview from "./FilePreview.vue";
 
     export default {
         components: {
-            FilePreview,
             Pagination,
             VarValue,
             Editor,
@@ -184,7 +176,7 @@
             }
         },
         computed: {
-            ...mapState("execution", ["execution", "filePreview"]),
+            ...mapState("execution", ["execution"]),
             selectOptions() {
                 const options = {};
                 for (const taskRun of this.execution.taskRunList || []) {

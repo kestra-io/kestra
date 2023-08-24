@@ -91,13 +91,13 @@ public class JdbcExecutor implements ExecutorInterface {
     private ConditionService conditionService;
 
     @Inject
+    private JdbcFlowTriggerService flowTriggerService;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     @Inject
     protected FlowListenersInterface flowListeners;
-
-    @Inject
-    private AbstractJdbcMultipleConditionStorage multipleConditionStorage;
 
     @Inject
     private AbstractJdbcWorkerTaskExecutionStorage workerTaskExecutionStorage;
@@ -295,21 +295,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 conditionService.isTerminatedWithListeners(flow, execution) &&
                 this.deduplicateFlowTrigger(execution, executorState)
             ) {
-                // multiple conditions storage
-                multipleConditionStorage.save(
-                    flowService
-                        .multipleFlowTrigger(allFlows.stream(), flow, execution, multipleConditionStorage)
-                );
-
-                // Flow Trigger
-                flowService
-                    .flowTriggerExecution(allFlows.stream(), execution, multipleConditionStorage)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows)
                     .forEach(this.executionQueue::emit);
-
-                // Trigger is done, remove matching multiple condition
-                flowService
-                    .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
-                    .forEach(multipleConditionStorage::delete);
             }
 
             // worker task execution

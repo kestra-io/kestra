@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 @MemoryQueueEnabled
 @Slf4j
 public class MemoryExecutor implements ExecutorInterface {
-    private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
@@ -92,6 +91,9 @@ public class MemoryExecutor implements ExecutorInterface {
 
     @Inject
     private SkipExecutionService skipExecutionService;
+
+    @Inject
+    private MemoryFlowTriggerService flowTriggerService;
 
     @Override
     public void run() {
@@ -231,21 +233,8 @@ public class MemoryExecutor implements ExecutorInterface {
 
             // multiple condition
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
-                // multiple conditions storage
-                multipleConditionStorage.save(
-                    flowService
-                        .multipleFlowTrigger(allFlows.stream(), flow, execution, multipleConditionStorage)
-                );
-
-                // Flow Trigger
-                flowService
-                    .flowTriggerExecution(allFlows.stream(), execution, multipleConditionStorage)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows)
                     .forEach(this.executionQueue::emit);
-
-                // Trigger is done, remove matching multiple condition
-                flowService
-                    .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
-                    .forEach(multipleConditionStorage::delete);
             }
 
             // worker task execution

@@ -6,10 +6,6 @@ import lombok.Getter;
 @Getter
 public class GraphClusterRoot extends AbstractGraph {
     public GraphClusterRoot() {
-        super(IdUtils.create() + "_start");
-    }
-
-    public GraphClusterRoot(String uid) {
-        super(uid + "_start");
+        super(IdUtils.create() + "_root");
     }
 }

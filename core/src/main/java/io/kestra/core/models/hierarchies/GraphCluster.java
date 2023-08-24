@@ -25,8 +25,8 @@ public class GraphCluster extends AbstractGraph {
         super();
 
         this.relationType = null;
-        this.root = new GraphClusterRoot(this.getUid());
-        this.end = new GraphClusterEnd(this.getUid());
+        this.root = new GraphClusterRoot();
+        this.end = new GraphClusterEnd();
 
         graph.addNode(this.root);
         graph.addNode(this.end);
@@ -37,8 +37,8 @@ public class GraphCluster extends AbstractGraph {
         super(uid);
 
         this.relationType = null;
-        this.root = new GraphClusterRoot(this.getUid());
-        this.end = new GraphClusterEnd(this.getUid());
+        this.root = new GraphClusterRoot();
+        this.end = new GraphClusterEnd();
 
         graph.addNode(this.root);
         graph.addNode(this.end);
@@ -50,8 +50,8 @@ public class GraphCluster extends AbstractGraph {
         this.uid = "cluster_" + task.getId();
         this.relationType = relationType;
 
-        this.root = new GraphClusterRoot(this.getUid());
-        this.end = new GraphClusterEnd(this.getUid());
+        this.root = new GraphClusterRoot();
+        this.end = new GraphClusterEnd();
 
         graph.addNode(this.root);
         graph.addNode(this.end);

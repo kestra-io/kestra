@@ -886,12 +886,16 @@
     }
 
     .slider {
-        flex: 0 0 calc(1rem / 3);
-        border-radius: 0.25rem;
+        flex: 0 0 calc(1rem / 7);
+        border-radius: 0.15rem;
         margin: 0 0.25rem;
-        background-color: var(--bs-secondary);
+        background-color: var(--bs-border-color);
         border: none;
         cursor: col-resize;
         user-select: none; /* disable selection */
+
+        &:hover {
+            background-color: var(--bs-secondary);
+        }
     }
 </style>

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -37,7 +38,7 @@ public class Executor {
     }
 
     public Boolean canBeProcessed() {
-        return !(this.getException() != null || this.getFlow() == null || this.getExecution().isDeleted());
+        return !(this.getException() != null || this.getFlow() == null || this.getFlow() instanceof FlowWithException || this.getExecution().isDeleted());
     }
 
     public Executor withFlow(Flow flow) {

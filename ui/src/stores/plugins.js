@@ -40,7 +40,14 @@ export default {
                 this.$http.get("/api/v1/plugins/icons", {}),
                 this.dispatch("api/pluginIcons")
             ]).then(responses => {
-                const icons = _merge(responses[0].data, responses[1].data);
+                const icons = responses[0].data;
+
+                for (const [key, plugin] of Object.entries(responses[1].data)) {
+                    if (icons[key] === undefined) {
+                        icons[key] = plugin
+                    }
+                }
+
                 commit("setIcons", icons);
 
                 return icons;

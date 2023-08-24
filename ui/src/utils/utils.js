@@ -33,9 +33,13 @@ export default class Utils {
 
     static flatten(object) {
         return Object.assign({}, ...function _flatten(child, path = []) {
+            if (child === null) {
+                return {[path.join(".")]: null};
+            }
+
             return []
                 .concat(...Object
-                    .keys(child)
+                    .keys(child === null ? [] : child)
                     .map(key => typeof child[key] === "object" ?
                         _flatten(child[key], path.concat([key])) :
                         ({[path.concat([key]).join(".")]: child[key]})

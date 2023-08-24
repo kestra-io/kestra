@@ -161,7 +161,9 @@
     const initYamlSource = async () => {
         flowYaml.value = props.flow.source;
 
-        await generateGraph();
+        if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
+          await generateGraph();
+        }
 
         if (!props.isReadOnly) {
             let restoredLocalStorageKey;

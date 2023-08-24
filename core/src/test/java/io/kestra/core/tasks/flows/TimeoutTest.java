@@ -39,7 +39,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
     @Test
     void timeout() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
         Flow flow = Flow.builder()
             .id(IdUtils.create())

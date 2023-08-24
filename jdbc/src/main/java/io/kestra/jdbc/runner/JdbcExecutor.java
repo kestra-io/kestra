@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -20,6 +21,7 @@ import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.micronaut.context.ApplicationContext;
@@ -173,11 +175,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
         flowQueue.receive(
             FlowTopology.class,
-            flow -> {
-                if (flow == null || flow instanceof FlowWithException) {
+            either -> {
+                if (either == null || either.isRight() || either.getLeft() == null || either.getLeft() instanceof FlowWithException) {
                     return;
                 }
 
+                Flow flow = either.getLeft();
                 flowTopologyRepository.save(
                     flow,
                     (flow.isDeleted() ?
@@ -195,7 +198,13 @@ public class JdbcExecutor implements ExecutorInterface {
         );
     }
 
-    private void executionQueue(Execution message) {
+    private void executionQueue(Either<Execution, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize an execution: {}", either.getRight().getMessage());
+            return;
+        }
+
+        Execution message = either.getLeft();
         if (skipExecutionService.skipExecution(message.getId())) {
             log.warn("Skipping execution {}", message.getId());
             return;
@@ -328,7 +337,13 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
 
-    private void workerTaskResultQueue(WorkerTaskResult message) {
+    private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage());
+            return;
+        }
+
+        WorkerTaskResult message = either.getLeft();
         if (skipExecutionService.skipExecution(message.getTaskRun().getTaskId())) {
             log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
             return;

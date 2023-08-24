@@ -53,7 +53,13 @@ public class JdbcScheduler extends AbstractScheduler {
 
         executionQueue.receive(
             Scheduler.class,
-            execution -> {
+            either -> {
+                if (either.isRight()) {
+                    log.error("Unable to dserialize an execution: {}", either.getRight().getMessage());
+                    return;
+                }
+
+                Execution execution = either.getLeft();
                 if (execution.getTrigger() != null) {
                     var flow = flowRepository.findById(execution.getNamespace(), execution.getFlowId()).orElse(null);
                     if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {

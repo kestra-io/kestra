@@ -64,7 +64,7 @@ class WorkerTest {
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(workerTaskResult::set);
+        workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
 
         workerTaskQueue.emit(workerTask(1000));
 
@@ -89,7 +89,7 @@ class WorkerTest {
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(workerTaskResult::set);
+        workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
 
         Pause pause = Pause.builder()
             .type(Pause.class.getName())
@@ -133,13 +133,13 @@ class WorkerTest {
     @Test
     void killed() throws InterruptedException, TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
         Worker worker = new Worker(applicationContext, 8, null);
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
-        workerTaskResultQueue.receive(workerTaskResult::add);
+        workerTaskResultQueue.receive(either -> workerTaskResult.add(either.getLeft()));
 
         WorkerTask workerTask = workerTask(999000);
 

@@ -3,10 +3,12 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -142,7 +144,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     @Override
-    public Runnable receive(String consumerGroup, Consumer<T> consumer) {
+    public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
@@ -164,7 +166,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get());
 
-                if (result.size() > 0) {
+                if (!result.isEmpty()) {
                     List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
 
                     maxOffset.set(offsets.get(offsets.size() - 1));
@@ -180,7 +182,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<T> consumer) {
+    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
         String queueName = queueName(queueType);
 
         return this.poll(() -> {
@@ -189,7 +191,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName);
 
-                if (result.size() > 0) {
+                if (!result.isEmpty()) {
 
                     this.updateGroupOffsets(
                         ctx,
@@ -252,13 +254,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         };
     }
 
-    private void send(Result<Record> fetch, Consumer<T> consumer) {
+    private void send(Result<Record> fetch, Consumer<Either<T, DeserializationException>> consumer) {
         fetch
             .map(record -> {
                 try {
-                    return JacksonMapper.ofJson().readValue(record.get("value", String.class), cls);
+                    return Either.<T, DeserializationException>left(JacksonMapper.ofJson().readValue(record.get("value", String.class), cls));
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    return Either.<T, DeserializationException>right(new DeserializationException(e, record.get("value", String.class)));
                 }
             })
             .forEach(consumer);

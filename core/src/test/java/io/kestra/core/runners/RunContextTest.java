@@ -54,7 +54,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void logs() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
-        workerTaskLogQueue.receive(logs::add);
+        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "logs");
 
@@ -79,7 +79,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Test
     void inputsLarge() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
         char[] chars = new char[1024 * 11];
         Arrays.fill(chars, 'a');

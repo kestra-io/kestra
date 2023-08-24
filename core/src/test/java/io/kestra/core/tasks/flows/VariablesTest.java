@@ -42,7 +42,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
     @Test
     void invalidVars() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "variables-invalid");
 

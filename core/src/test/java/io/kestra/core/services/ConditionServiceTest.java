@@ -67,7 +67,7 @@ class ConditionServiceTest {
     @Test
     void exception() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(logs::add);
+        logQueue.receive(either -> logs.add(either.getLeft()));
 
         Flow flow = TestsUtils.mockFlow();
         Schedule schedule = Schedule.builder().id("unit").type(Schedule.class.getName()).cron("0 0 1 * *").build();

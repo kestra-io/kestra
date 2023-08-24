@@ -34,7 +34,8 @@ abstract public class JdbcQueueTest {
     void noGroup() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        flowQueue.receive(flow -> {
+        flowQueue.receive(either -> {
+            Flow flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
@@ -53,7 +54,8 @@ abstract public class JdbcQueueTest {
     void withGroup() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        flowQueue.receive("consumer_group", flow -> {
+        flowQueue.receive("consumer_group", either -> {
+            Flow flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit("consumer_group", builder("io.kestra.f2"));
             }
@@ -76,7 +78,8 @@ abstract public class JdbcQueueTest {
         AtomicReference<String> namespace = new AtomicReference<>();
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        flowQueue.receive(Indexer.class, flow -> {
+        flowQueue.receive(Indexer.class, either -> {
+            Flow flow = either.getLeft();
             namespace.set(flow.getNamespace());
             countDownLatch.countDown();
         });
@@ -89,7 +92,8 @@ abstract public class JdbcQueueTest {
         flowQueue.emit(builder("io.kestra.f2"));
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        flowQueue.receive(Indexer.class, flow -> {
+        flowQueue.receive(Indexer.class, either -> {
+            Flow flow = either.getLeft();
             namespace.set(flow.getNamespace());
             countDownLatch2.countDown();
         });
@@ -106,7 +110,8 @@ abstract public class JdbcQueueTest {
         AtomicReference<String> namespace = new AtomicReference<>();
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        flowQueue.receive("consumer_group", Indexer.class, flow -> {
+        flowQueue.receive("consumer_group", Indexer.class, either -> {
+            Flow flow = either.getLeft();
             namespace.set(flow.getNamespace());
             countDownLatch.countDown();
         });
@@ -119,7 +124,8 @@ abstract public class JdbcQueueTest {
         flowQueue.emit("consumer_group", builder("io.kestra.f2"));
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        flowQueue.receive("consumer_group", Indexer.class, flow -> {
+        flowQueue.receive("consumer_group", Indexer.class, either -> {
+            Flow flow = either.getLeft();
             namespace.set(flow.getNamespace());
             countDownLatch2.countDown();
         });

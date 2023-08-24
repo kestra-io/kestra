@@ -1,6 +1,5 @@
-    package io.kestra.jdbc;
+package io.kestra.jdbc;
 
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
@@ -164,10 +163,8 @@ public abstract class AbstractJdbcRepository<T> {
     public T deserialize(String record) {
         try {
             return JacksonMapper.ofJson().readValue(record, cls);
-        } catch (InvalidTypeIdException e) {
-            throw new DeserializationException(e);
         } catch (IOException e) {
-            throw new DeserializationException(e);
+            throw new DeserializationException(e, record);
         }
     }
 

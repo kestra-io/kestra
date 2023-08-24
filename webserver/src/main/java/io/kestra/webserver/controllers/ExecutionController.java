@@ -463,7 +463,13 @@ public class ExecutionController {
 
         return Single
             .<Execution>create(emitter -> {
-                Runnable receive = this.executionQueue.receive(item -> {
+                Runnable receive = this.executionQueue.receive(either -> {
+                    if (either.isRight()) {
+                        log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
+                        return;
+                    }
+
+                    Execution item = either.getLeft();
                     if (item.getId().equals(current.getId())) {
                         Flow flow = flowRepository.findByExecution(current);
 
@@ -921,7 +927,13 @@ public class ExecutionController {
                 emitter.onNext(Event.of(execution).id("progress"));
 
                 // consume new value
-                Runnable receive = this.executionQueue.receive(current -> {
+                Runnable receive = this.executionQueue.receive(either -> {
+                    if (either.isRight()) {
+                        log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
+                        return;
+                    }
+
+                    Execution current = either.getLeft();
                     if (current.getId().equals(executionId)) {
 
                         emitter.onNext(Event.of(current).id("progress"));

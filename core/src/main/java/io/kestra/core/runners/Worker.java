@@ -108,14 +108,14 @@ public class Worker implements Runnable, AutoCloseable {
     @Override
     public void run() {
         this.executionKilledQueue.receive(executionKilled -> {
-            if (executionKilled != null) {
+            if (executionKilled != null && executionKilled.isLeft()) {
                 // @FIXME: the hashset will never expire killed execution
-                killedExecution.add(executionKilled.getExecutionId());
+                killedExecution.add(executionKilled.getLeft().getExecutionId());
 
                 synchronized (this) {
                     workerThreadReferences
                         .stream()
-                        .filter(workerThread -> executionKilled.getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
+                        .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
                         .forEach(WorkerThread::kill);
                 }
             }
@@ -124,8 +124,14 @@ public class Worker implements Runnable, AutoCloseable {
         this.workerJobQueue.receive(
             this.workerGroup,
             Worker.class,
-            workerTask -> {
+            either -> {
                 executors.execute(() -> {
+                    if (either.isRight()) {
+                        log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
+                        return;
+                    }
+
+                    WorkerJob workerTask = either.getLeft();
                     if (workerTask instanceof WorkerTask task) {
                         handleTask(task);
                     }

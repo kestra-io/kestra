@@ -17,7 +17,9 @@ import java.io.IOException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 @Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class, TriggerRepositoryInterface.class})
 public class Indexer implements IndexerInterface {
@@ -57,7 +59,13 @@ public class Indexer implements IndexerInterface {
     }
 
     protected <T> void send(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
-        queueInterface.receive(Indexer.class, item -> {
+        queueInterface.receive(Indexer.class, either -> {
+            if (either.isRight()) {
+                log.error("unable to deserialize an item: {}", either.getRight().getMessage());
+                return;
+            }
+
+            T item = either.getLeft();
             this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, "type", item.getClass().getName()).increment();
             this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "type", item.getClass().getName()).increment();
 

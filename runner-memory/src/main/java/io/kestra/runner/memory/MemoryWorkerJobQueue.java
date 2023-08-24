@@ -1,5 +1,7 @@
 package io.kestra.runner.memory;
 
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.utils.Either;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -21,7 +23,7 @@ public class MemoryWorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<WorkerJob> consumer) {
+    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
         return workerTaskQueue.receive(consumerGroup, queueType, consumer);
     }
 

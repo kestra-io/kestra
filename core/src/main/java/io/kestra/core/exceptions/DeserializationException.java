@@ -1,15 +1,22 @@
 package io.kestra.core.exceptions;
 
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import java.io.IOException;
 
 public class DeserializationException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    public DeserializationException(InvalidTypeIdException cause) {
-        super(cause);
+    private String record;
+
+    public String getRecord() {
+        return record;
     }
 
-    public DeserializationException(Throwable cause) {
+    public DeserializationException(IOException cause, String record) {
         super(cause);
+        this.record = record;
+    }
+
+    public DeserializationException(String message) {
+        super(message);
     }
 }

@@ -34,7 +34,7 @@
                     >
                         <el-table-column prop="triggerId" sortable="custom" :sort-orders="['ascending', 'descending']"
                                          :label="$t('id')" />
-                        <el-table-column sortable="custom" :sort-orders="['ascending', 'descending']"
+                        <el-table-column prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']"
                                          :label="$t('flow')">
                             <template #default="scope">
                                 <router-link
@@ -49,7 +49,7 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column sortable="custom" :sort-orders="['ascending', 'descending']"
+                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']"
                                          :label="$t('namespace')">
                             <template #default="scope">
                                 {{ $filters.invisibleSpace(scope.row.namespace) }}
@@ -68,20 +68,17 @@
                         </el-table-column>
 
                         <el-table-column prop="executionCurrentState" :label="$t('state')" />
-                        <el-table-column sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('date')">
+                        <el-table-column :label="$t('date')">
                             <template #default="scope">
                                 {{ scope.row.date ? $filters.date(scope.row.date, "iso") : "" }}
                             </template>
                         </el-table-column>
-                        <el-table-column sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('updated date')">
+                        <el-table-column :label="$t('updated date')">
                             <template #default="scope">
                                 {{ scope.row.updatedDate ? $filters.date(scope.row.updatedDate, "iso") : "" }}
                             </template>
                         </el-table-column>
-                        <el-table-column sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('evaluation lock date')">
+                        <el-table-column :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 {{ scope.row.evaluateRunningDate ? $filters.date(scope.row.evaluateRunningDate, "iso") : "" }}
                             </template>

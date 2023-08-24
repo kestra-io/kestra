@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -377,6 +378,10 @@ public class ExecutionController {
             throw new IllegalStateException("Cannot execute disabled flow");
         }
 
+        if (flow instanceof FlowWithException fwe) {
+            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+        }
+
         Optional<Webhook> webhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
             .getTriggers())
             .stream()
@@ -432,12 +437,17 @@ public class ExecutionController {
             return null;
         }
 
-        if (find.get().isDisabled()) {
+        Flow found = find.get();
+        if (found.isDisabled()) {
             throw new IllegalStateException("Cannot execute disabled flow");
         }
 
+        if (found instanceof FlowWithException fwe) {
+            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+        }
+
         Execution current = runnerUtils.newExecution(
-            find.get(),
+            found,
             (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files),
             parseLabels(labels)
         );

@@ -1,5 +1,7 @@
 <template>
-    <EyeOutline role="button" @click="getFilePreview(value)" />
+    <el-button size="small" type="primary" :icon="EyeOutline" @click="getFilePreview(value)">
+        Preview
+    </el-button>
     <el-drawer
         v-if="selectedPreview === value && filePreview"
         v-model="isPreviewOpen"
@@ -19,15 +21,19 @@
         </template>
     </el-drawer>
 </template>
+
+<script setup>
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+</script>
+
 <script>
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
     import {mapState} from "vuex";
     import Markdown from "../layout/Markdown.vue";
 
     export default {
-        components: {Markdown, EyeOutline, ListPreview, Editor},
+        components: {Markdown, ListPreview, Editor},
         props: {
             value: {
                 type: String,

@@ -20,12 +20,6 @@
                 </template>
             </template>
         </el-table-column>
-
-        <el-table-column column-key="action" class-name="row-action">
-            <template #default="scope">
-                <FilePreview v-if="scope.row.value && scope.row.value.startsWith('kestra:///')" :value="scope.row.value" :execution-id="execution.id" />
-            </template>
-        </el-table-column>
     </el-table>
 </template>
 
@@ -34,12 +28,10 @@
     import VarValue from "./VarValue.vue";
     import DateAgo from "../../components/layout/DateAgo.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import FilePreview from "./FilePreview.vue";
     import {mapState} from "vuex";
 
     export default {
         components: {
-            FilePreview,
             DateAgo,
             VarValue,
             SubFlowLink

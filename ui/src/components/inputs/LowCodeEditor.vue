@@ -379,11 +379,13 @@
         <el-drawer
             v-if="isDrawerOpen && selectedTask"
             v-model="isDrawerOpen"
-            :title="`Task ${selectedTask.id}`"
             destroy-on-close
             size=""
             :append-to-body="true"
         >
+            <template #header>
+                <code>{{ selectedTask.id }}</code>
+            </template>
             <div v-if="isShowLogsOpen">
                 <collapse>
                     <el-form-item>

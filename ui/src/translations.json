@@ -355,7 +355,7 @@
         "content": "Let's add a task that will log a message \"Hey there, Kestra user!\" to the terminal. This message will be captured with a log level <code>INFO</code>."
       },
       "step7": {
-        "title": "Extract data from an API",
+        "title": "Fetch data from an API",
         "content": "Let's add a task that will extract data from an HTTP API. In the following tasks, we will process this data in Python and SQL."
       },
       "step8": {
@@ -375,7 +375,7 @@
         "content": "You're all set! Now, you can save your flow by clicking on the Save button."
       },
       "step12": {
-        "title": "Now execute the flow!",
+        "title": "Execute the flow!",
         "content": "You can execute your flow by clicking on the New Execution button."
       },
       "step13": {
@@ -397,8 +397,8 @@
       "taskAPI": "This task extracts data from an API.",
       "taskPython": "This task runs a Python script.",
       "taskQuery": "Run a DuckDB query.",
-      "triggers": "To trigger the Flow we use the 'triggers' property.",
-      "triggerSchedule1": "Here we use the 'schedule' trigger to run the flow every minute."
+      "triggers": "To run the flow in an automated fashion, add one or more 'triggers'.",
+      "triggerSchedule1": "Here we use the 'Schedule' trigger to run the flow every minute."
     },
     "Skip tour": "Skip tour",
     "Next step": "Next step",
@@ -407,19 +407,19 @@
     "Step": "Step",
     "welcome aboard": "\uD83D\uDE80 Welcome aboard!",
     "welcome aboard content": "You're all set! Check Blueprints to find more examples and kickstart your next flow.",
-    "welcome display require": "Let's create a <strong>first workflow</strong> step by step",
+    "welcome display require": "Run your <strong>first flow</strong> to get started",
     "welcome button create": "Create my first flow",
     "get started": "Get started",
-    "get started content": "Ready to dive in? Check out our documentation for step-by-step guides.",
-    "watch demo": "Watch our Demo Video",
-    "watch demo content": "See a product tour video explaining key features in under 4 minutes.",
+    "get started content": "Check our documentation for a step-by-step walkthrough.",
+    "watch demo": "Take a Product Tour",
+    "watch demo content": "See the product tour video explaining key concepts.",
     "need help?": "Need help?",
-    "need help? content": "Need assistance with a specific feature or flow? Our community of data engineers and developers are here to help.",
-    "show task documentation": "Show Task documentation",
-    "hide task documentation": "Hide Task documentation",
-    "show task documentation in editor": "Show Task documentation in editor",
+    "need help? content": "Need assistance with a specific feature or flow? Our developer community is here to help.",
+    "show task documentation": "Show task documentation",
+    "hide task documentation": "Hide task documentation",
+    "show task documentation in editor": "Show task documentation in the editor",
     "show documentation": "Show documentation",
-    "focus task": "Focus on any element to see its documentation.",
+    "focus task": "Click on any element to see its documentation.",
     "validate": "Validate",
     "add global error handler": "Add global error handler",
     "add error handler": "Add an error handler",
@@ -435,7 +435,7 @@
     "choice": "Choice",
     "sequential": "Sequential",
     "can not delete": "Can not delete",
-    "can not have less than 1 task": "Flows can not have less than 1 task.",
+    "can not have less than 1 task": "Each flow must have at least one task.",
     "task id already exists": "Task Id already exists",
     "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
     "flow already exists": "Flow already exists",
@@ -467,7 +467,7 @@
     },
     "title": "Title",
     "api": "API",
-    "expand error": "Expand only failed task",
+    "expand error": "Expand only failed tasks",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
     "expand": "Expand",
@@ -475,7 +475,7 @@
     "log expand setting": "Log default display",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
-    "slack support": "Ask help on our Slack",
+    "slack support": "Ask any question via Slack",
     "error detected": "Error detected",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",

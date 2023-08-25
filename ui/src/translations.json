@@ -331,65 +331,74 @@
     "Reset guided tour": "Restart Guided Tour",
     "onboarding-content": {
       "step1": {
-        "title": "Welcome to Kestra's flow editor!",
-        "content": "Did you know that Kestra uses YAML, a simple and easy-to-read declarative language? This means that you can easily define your flows by writing out the steps in plain text. Don't worry if you still need to become familiar with YAML; we'll guide you through it step by step."
+        "title": "Welcome to Kestra!",
+        "content": "Kestra uses a simple, declarative interface to create a language-agnostic workflow definition in a portable YAML file. Let's create your first workflow."
       },
       "step2": {
-        "title": "This is the Kestra Editor",
-        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with <code>#</code>. Tasks type and attributes can be searched thanks to the autocomplete feature with <kbd>CTRL or ⌘ + SPACE</kbd>."
+        "title": "This is the built-in code editor",
+        "content": "You can edit your flow directly here from the UI. To add comments, use <code>#</code>. All tasks, triggers and inputs are strongly typed — you can search their attributes with a keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> thanks to the autocompletion feature."
       },
       "step3": {
-        "title": "Let's start with your first flow",
-        "content": "The first step to define a flow is to give it an ID, a namespace, and, optionally, a description."
+        "title": "Let's write your first flow",
+        "content": "Give your flow an ID, a namespace, and, optionally, a description."
       },
       "step4": {
         "title": "Define inputs",
-        "content": "The next step is to define the inputs of your flow. This is done by giving each input a name and a type."
+        "content": "You can optionally define custom input parameters to execute the flow with custom, runtime-specific values. To do that, give each input a name, a type, and optionally a default value."
       },
       "step5": {
         "title": "Add tasks",
-        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
+        "content": "Add a list of tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
       },
       "step6": {
-        "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log \"Hey there, Kestra user\""
+        "title": "First task",
+        "content": "Let's add a task that will log a message \"Hey there, Kestra user!\" to the terminal. This message will be captured with a log level <code>INFO</code>."
       },
       "step7": {
-        "title": "Run Bash command",
-        "content": "Sometimes, you want to run specific scripts, Python, Node, Bash, etc. Here we run a bash command to display a message."
+        "title": "Fetch data from an API",
+        "content": "Let's add a task that will extract data from an HTTP API. In the following tasks, we will process this data in Python and SQL."
       },
       "step8": {
-        "title": "Schedule",
-        "content": "To schedule a flow we add a 'trigger'. Here we schedule the Flow every minute."
+        "title": "Run a Python script",
+        "content": "The <code>beforeCommands</code> property ensures that required libraries are installed before starting the task. You can also specify a custom Docker image. The task reads the output of the previous task and extracts only the relevant data using <code>jq</code>. Then, it transforms it in a Polars dataframe and writes the outputs into a CSV file."
       },
       "step9": {
+        "title": "Run a SQL query",
+        "content": "Run a SQL query in DuckDB and output the final result as a downloadable artifact that you can preview as a table in the Outputs tab in the UI."
+      },
+      "step10": {
+        "title": "Schedule",
+        "content": "To schedule a flow we add a 'trigger'. Here we schedule the flow to run every minute."
+      },
+      "step11": {
         "title": "Save your flow",
         "content": "You're all set! Now, you can save your flow by clicking on the Save button."
       },
-      "step10": {
-        "title": "Now execute your flow!",
-        "content": "You can execute your flow by clicking on the New execution button."
+      "step12": {
+        "title": "Execute the flow!",
+        "content": "You can execute your flow by clicking on the New Execution button."
       },
-      "step11": {
+      "step13": {
         "title": "Enter inputs",
-        "content": "Finally, if your flow has inputs, you will be asked to enter them before executing the flow. We have already fill the input for you with a default value."
+        "content": "If your flow has inputs, you can optionally overwrite them before executing the flow."
       }
     },
     "onboarding-flow": {
-      "onboardComment1": "Flow declaration with a mandatory unique identifier, a namespace, and an optional description.",
-      "onboardComment2": "Flow identifier are unique inside a namespace.",
+      "onboardComment1": "Flow declaration with a mandatory unique ID, a namespace, and an optional description.",
+      "onboardComment2": "Flow ID must be unique within a namespace.",
       "inputs": "Flow inputs: each input has a name, a type, and an optional default value.",
-      "inputsDetails1": "We define one input of name 'user' with a default value 'Data Engineer'",
+      "inputsDetails1": "We define one input of name 'user' with a default value 'Kestra user'",
       "tasks1": "List of tasks that will be executed one after the other.",
       "tasks2": "Each task must have an identifier unique for the flow and a type.",
-      "tasks3": "Depending on the type of the task, you may have to pass additional attributes.",
-      "taskLog1": "This is one of the simplest task: it echos a message in the log, like the 'echo' command.",
-      "taskLog2": "The message is passed thanks to the 'format' attribute.",
-      "taskLog3": "We use the variable from the 'inputs' : {'{{'} and {'}}'} are separator of a Pebble expression in which we can access variables.",
-      "taskBash1": "This task runs a bash command.",
-      "taskBash2": "Here we just 'echo' a message, using again the input variable.",
-      "triggers": "To trigger the Flow we use the 'triggers' property.",
-      "triggerSchedule1": "Here we use the 'schedule' trigger to run the flow every minute."
+      "tasks3": "Check the task documentation for a full list of attributes.",
+      "taskLog1": "This task logs a message to the terminal.",
+      "taskLog2": "The message is passed using the 'format' attribute.",
+      "taskLog3": "We use Pebble expressions defined with curly brackets to access the input variables.",
+      "taskAPI": "This task extracts data from an API.",
+      "taskPython": "This task runs a Python script.",
+      "taskQuery": "Run a DuckDB query.",
+      "triggers": "To run the flow in an automated fashion, add one or more 'triggers'.",
+      "triggerSchedule1": "Here we use the 'Schedule' trigger to run the flow every minute."
     },
     "Skip tour": "Skip tour",
     "Next step": "Next step",
@@ -397,20 +406,20 @@
     "Finish": "Finish",
     "Step": "Step",
     "welcome aboard": "\uD83D\uDE80 Welcome aboard!",
-    "welcome aboard content": "You're all set up with Kestra, start creating your first flow and see the magic in action!",
-    "welcome display require": "Ready to start using Kestra? Let's create <strong>your first flow</strong> together!",
+    "welcome aboard content": "You're all set! Check Blueprints to find more examples and kickstart your next flow.",
+    "welcome display require": "Run your <strong>first flow</strong> to get started",
     "welcome button create": "Create my first flow",
     "get started": "Get started",
-    "get started content": "Ready to dive in? Check out our documentation for step-by-step guides.",
-    "watch demo": "Watch our Demo Video",
-    "watch demo content": "Get a glimpse of Kestra's power with our demo video.",
+    "get started content": "Check our documentation for a step-by-step walkthrough.",
+    "watch demo": "Take a Product Tour",
+    "watch demo content": "See the product tour video explaining key concepts.",
     "need help?": "Need help?",
-    "need help? content": "Need assistance with a specific feature or flow? Our community of data engineers and developers are here to help.",
-    "show task documentation": "Show Task documentation",
-    "hide task documentation": "Hide Task documentation",
-    "show task documentation in editor": "Show Task documentation in editor",
+    "need help? content": "Need assistance with a specific feature or flow? Our developer community is here to help.",
+    "show task documentation": "Show task documentation",
+    "hide task documentation": "Hide task documentation",
+    "show task documentation in editor": "Show task documentation in the editor",
     "show documentation": "Show documentation",
-    "focus task": "Focus on any element to see its documentation.",
+    "focus task": "Click on any element to see its documentation.",
     "validate": "Validate",
     "add global error handler": "Add global error handler",
     "add error handler": "Add an error handler",
@@ -426,7 +435,7 @@
     "choice": "Choice",
     "sequential": "Sequential",
     "can not delete": "Can not delete",
-    "can not have less than 1 task": "Flows can not have less than 1 task.",
+    "can not have less than 1 task": "Each flow must have at least one task.",
     "task id already exists": "Task Id already exists",
     "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
     "flow already exists": "Flow already exists",
@@ -437,7 +446,7 @@
     "source and blueprints": "Source and blueprints",
     "editor": "Editor",
     "error in editor": "An error have been found in the editor",
-    "delete task confirm": "Do you want to delete the task <code>{taskId}</code> ?",
+    "delete task confirm": "Do you want to delete the task <code>{taskId}</code>?",
     "can not save": "Can not save",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
     "namespace and id readonly": "Namespace and id are read-only. They were reinitialized to their initial value.",
@@ -452,13 +461,13 @@
     "save draft": {
       "message": "Draft saved",
       "retrieval": {
-        "creation": "A Flow creation draft was retrieved, do you want to resume its edition ?",
-        "existing": "A <code>{flowFullName}</code> Flow draft was retrieved, do you want to resume its edition ?"
+        "creation": "Flow draft was saved, do you want to continue editing the flow?",
+        "existing": "A <code>{flowFullName}</code> Flow draft was saved, do you want to continue editing the flow?"
       }
     },
     "title": "Title",
     "api": "API",
-    "expand error": "Expand only failed task",
+    "expand error": "Expand only failed tasks",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
     "expand": "Expand",
@@ -466,7 +475,7 @@
     "log expand setting": "Log default display",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
-    "slack support": "Ask help on our Slack",
+    "slack support": "Ask any question via Slack",
     "error detected": "Error detected",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",
@@ -479,7 +488,7 @@
         "execution": "There is an execution running for this trigger",
         "evaluation": "The trigger is currently in evaluation"
       },
-      "confirmation": "Are you sure you want to unlock the trigger ?",
+      "confirmation": "Are you sure you want to unlock the trigger?",
       "warning": "It could lead to concurrent executions for the same trigger and should be considered as a last resort option.",
       "button": "Unlock trigger",
       "success": "Trigger is unlocked"

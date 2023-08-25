@@ -1,8 +1,5 @@
-@use "variable" as global-var;
-
-// bootstrap
-@use "layout/bootstrap";
-
+@use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
+@use "@kestra-io/ui-libs/src/scss/vendor.scss";
 
 // element-plus
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
@@ -45,10 +42,6 @@
 
 // third
 @use "nprogress/nprogress.css";
-@use "vue-material-design-icons/styles.css";
-@use "@vue-flow/core/dist/style.css" as core;
-@use "@vue-flow/core/dist/theme-default.css" as theme;
-@use "@vue-flow/controls/dist/style.css" as controls;
 
 //noinspection CssUnknownTarget
 @import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;700;800&family=Source+Code+Pro:wght@400;700;800&display=swap");

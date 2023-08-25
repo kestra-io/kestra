@@ -1,13 +1,14 @@
 <script setup>
-    import {ref, onMounted, inject, nextTick} from "vue";
+    import {ref, onMounted, inject, nextTick, getCurrentInstance} from "vue";
     import {useRoute} from "vue-router";
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
+    import {Background} from "@vue-flow/background";
     import dagre from "dagre"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue";
 
     import {cssVariable} from "../../utils/global"
-    import FlowDependenciesBlock from "./FlowDependenciesBlock.vue";
+    import {DependenciesNode} from "@kestra-io/ui-libs"
 
     import {linkedElements} from "../../utils/vueFlow"
 
@@ -15,6 +16,7 @@
 
     const route = useRoute();
     const axios = inject("axios")
+    const router = getCurrentInstance().appContext.config.globalProperties.$router;
 
     const loaded = ref([]);
     const dependencies = ref({
@@ -54,7 +56,7 @@
     };
 
     const expand = (data) => {
-        load({namespace: data.namespace, id: data.id})
+        load({namespace: data.namespace, id: data.flowId})
     };
 
     const generateDagreGraph = () => {
@@ -64,8 +66,8 @@
 
         for (const node of dependencies.value.nodes) {
             dagreGraph.setNode(node.uid, {
-                width: 250 ,
-                height: 62
+                width: 184 ,
+                height: 44
             })
         }
 
@@ -93,8 +95,8 @@
                 type: "flow",
                 position: getNodePosition(dagreNode),
                 style: {
-                    width: "250px",
-                    height: "62px",
+                    width: "184px",
+                    height: "44px",
                 },
                 sourcePosition: Position.Right,
                 targetPosition: Position.Left,
@@ -104,6 +106,8 @@
                     namespace: node.namespace,
                     flowId: node.id,
                     current: node.namespace === route.params.namespace && node.id === route.params.id,
+                    color: "pink",
+                    link: true
                 }
             }]);
         }
@@ -113,7 +117,10 @@
                 id: edge.source + "|" + edge.target,
                 source: edge.source,
                 target: edge.target,
-                markerEnd: MarkerType.ArrowClosed,
+                markerEnd: {
+                    id: "marker-custom",
+                    type: MarkerType.ArrowClosed,
+                },
                 type: "smoothstep"
             }]);
         }
@@ -134,6 +141,13 @@
         removeSelectedNodes(getNodes.value);
         removeSelectedEdges(getEdges.value);
     }
+
+    const openFlow = (data) => {
+        router.push({
+            name: "flows/update",
+            params: {"namespace": data.namespace, "id": data.flowId, tab: "dependencies"},
+        });
+    }
 </script>
 
 <template>
@@ -145,13 +159,14 @@
             :nodes-draggable="false"
             :elevate-nodes-on-select="false"
         >
+            <Background />
             <template #node-flow="props">
-                <FlowDependenciesBlock
-                    :node="props.data.node"
-                    :loaded="props.data.loaded"
-                    @expand="expand"
+                <DependenciesNode
+                    v-bind="props"
+                    @expand-dependencies="expand"
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
+                    @open-link="openFlow($event)"
                 />
             </template>
 

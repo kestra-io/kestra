@@ -1,7 +1,7 @@
 @use 'sass:math';
 @use "sass:map";
 @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-@import "../variable";
+@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 // button
 .el-button {

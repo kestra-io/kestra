@@ -1,12 +1,15 @@
 @use 'sass:map';
-@import "../theme-dark";
-@import "../variable";
+
+@import "@kestra-io/ui-libs/src/scss/theme-dark.scss";
+@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 // Bootstrap
 @import "bootstrap/scss/functions";
 @import "bootstrap/scss/mixins";
 @import "bootstrap/scss/vendor/rfs";
 @import "bootstrap/scss/variables";
+
+
 
 html.dark {
     #{--bs-gray}: #{map.get($grays, "600")};

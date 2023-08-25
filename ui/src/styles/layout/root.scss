@@ -2,8 +2,7 @@
 @use 'sass:math';
 @use 'element-plus/theme-chalk/src/mixins/var' as *;
 
-
-@import "../variable";
+@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 // use bootstrap for main style
 :root {

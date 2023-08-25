@@ -40,9 +40,6 @@
                 }
             }
         },
-
-        components: {
-        },
         computed: {
             ...mapState("plugin", ["icons"]),
             name() {

@@ -42,11 +42,17 @@
         emits: ["update:modelValue"],
         created() {
             if (this.modelValue) {
-                this.taskObject = YamlUtils.parse(this.modelValue);
-                this.selectedTaskType = this.taskObject.type;
-                this.$store.dispatch("flow/validateTask", {task: this.modelValue, section: this.section})
-
-                this.load();
+                this.setup()
+            }
+        },
+        watch: {
+            modelValue: {
+                handler() {
+                    if (!this.modelValue) {
+                        this.taskObject = {};
+                        this.selectedTaskType = undefined;
+                    }
+                }
             }
         },
         beforeUnmount() {
@@ -73,6 +79,13 @@
             };
         },
         methods: {
+            setup() {
+                this.taskObject = YamlUtils.parse(this.modelValue);
+                this.selectedTaskType = this.taskObject.type;
+                this.$store.dispatch("flow/validateTask", {task: this.modelValue, section: this.section})
+
+                this.load();
+            },
             load() {
                 this.isLoading = true;
                 this.$store

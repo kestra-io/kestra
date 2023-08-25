@@ -54,7 +54,7 @@ export default {
             });
         },
         loadInputsType({commit}) {
-            return this.$http.get(`/api/v1/plugins/inputs`, {}).then(response => {
+            return this.$http.get("/api/v1/plugins/inputs", {}).then(response => {
                 commit("setInputsType", response.data)
 
                 return response.data;
@@ -101,6 +101,7 @@ export default {
     getters: {
         getPluginSingleList: state => state.pluginSingleList,
         getPluginsDocumentation: state => state.pluginsDocumentation,
+        getIcons: state => state.icons
     }
 }
 

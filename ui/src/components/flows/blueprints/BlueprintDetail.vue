@@ -75,8 +75,6 @@
                         </div>
                     </el-col>
                 </el-row>
-
-
             </div>
         </template>
     </div>
@@ -175,7 +173,7 @@
     };
 </script>
 <style scoped lang="scss">
-    @import "../../../styles/variable";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .header-wrapper {
         margin-bottom: calc($spacer * 2);

@@ -1,29 +1,35 @@
 <script setup>
     // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
+    import {getCurrentInstance, nextTick, onMounted, onBeforeMount, ref, watch} from "vue";
     import {useStore} from "vuex";
-    import {MarkerType, Position, useVueFlow, VueFlow} from "@vue-flow/core";
+    import {MarkerType, Position, useVueFlow} from "@vue-flow/core";
 
-    // Nodes
-    import Cluster from "../graph/nodes/Cluster.vue";
-    import Dot from "../graph/nodes/Dot.vue"
-    import Task from "../graph/nodes/Task.vue";
-    import Trigger from "../graph/nodes/Trigger.vue";
-    import Edge from "../graph/nodes/Edge.vue";
+    import TaskEdit from "../flows/TaskEdit.vue";
+    import SearchField from "../layout/SearchField.vue";
+    import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    import LogList from "../logs/LogList.vue";
+    import Collapse from "../layout/Collapse.vue";
 
-    // Topology Control
-    import {Controls, ControlButton} from "@vue-flow/controls"
-    import SplitCellsHorizontal from "../../assets/icons/SplitCellsHorizontal.vue"
-    import SplitCellsVertical from "../../assets/icons/SplitCellsVertical.vue"
+    // Topology
+    import {
+        Topology
+    } from "@kestra-io/ui-libs"
 
     // Utils
-    import YamlUtils from "../../utils/yamlUtils";
+    import {YamlUtils, VueFlowUtils} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../utils/constants";
-    import {linkedElements} from "../../utils/vueFlow";
     import {cssVariable} from "../../utils/global";
     import dagre from "dagre";
     import Utils from "../../utils/utils";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import TaskEditor from "../flows/TaskEditor.vue";
+    import ValidationError from "../flows/ValidationError.vue";
+    import Markdown from "../layout/Markdown.vue";
+    import yamlUtils from "../../utils/yamlUtils";
 
+    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+
+    const vueflowId = ref(Math.random().toString());
     // Vue flow methods to interact with Graph
     const {
         id,
@@ -36,8 +42,9 @@
         removeSelectedElements,
         onNodeDragStart,
         onNodeDragStop,
-        onNodeDrag
-    } = useVueFlow({id: Math.random().toString()});
+        onNodeDrag,
+        setElements,
+    } = useVueFlow({id: vueflowId.value});
 
     // props
     const props = defineProps({
@@ -90,23 +97,39 @@
             (props.viewType?.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
     }
 
-
     // Components variables
-    const dragging = ref(false);
     const isHorizontal = ref(isHorizontalDefault());
     const elements = ref([])
-    const lastPosition = ref(null)
     const vueFlow = ref(null);
     const timer = ref(null);
+    const icons = ref(store.getters["plugin/getIcons"]);
+    const taskObject = ref(null);
+    const taskEditData = ref(null);
+    const taskEdit = ref(null);
+    const isShowLogsOpen = ref(false);
+    const logFilter = ref("");
+    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
+    const isDrawerOpen = ref(false);
+    const isShowDescriptionOpen = ref(false);
+    const selectedTask = ref(null);
 
     // Init components
-    onMounted( async() => {
+    onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
     })
 
+
     watch(() => props.flowGraph, () => {
         generateGraph();
+    })
+
+    watch(() => isDrawerOpen.value, () => {
+        if (!isDrawerOpen.value) {
+            isShowDescriptionOpen.value = false;
+            isShowLogsOpen.value = false;
+            selectedTask.value = null;
+        }
     })
 
     watch(() => props.viewType, () => {
@@ -129,15 +152,15 @@
         resizeObserver.observe(vueFlow.value);
     }
 
-
     const forwardEvent = (type, event) => {
         emit(type, event);
     };
+    // Source edit functions
 
     const onDelete = (event) => {
         const flowParsed = YamlUtils.parse(props.source);
         toast.confirm(
-            t("delete task confirm", {taskId: flowParsed.id}),
+            t("delete task confirm", {taskId: event.id}),
             () => {
 
                 const section = event.section ? event.section : SECTIONS.TASKS;
@@ -149,123 +172,74 @@
                     });
                     return;
                 }
-                emit("on-edit",YamlUtils.deleteTask(props.source, event.id, section))
+                emit("on-edit", YamlUtils.deleteTask(props.source, event.id, section))
             },
             () => {
             }
         )
     }
 
-    // Source edit functions
     const onCreateNewTask = (event) => {
-        const source = props.source;
-        emit("on-edit",YamlUtils.insertTask(source, event.taskId, event.taskYaml, event.insertPosition))
+        taskEditData.value = {
+            insertionDetails: event,
+            action: "create_task",
+            section: SECTIONS.TASKS
+        };
+        taskEdit.value.$refs.taskEdit.click()
+    }
+
+    const onEditTask = (event) => {
+        taskEditData.value = {
+            action: "edit_task",
+            section: event.section ? event.section : SECTIONS.TASKS,
+            oldTaskId: event.task.id,
+        };
+        taskObject.value = event.task
+        taskEdit.value.$refs.taskEdit.click()
     }
 
     const onAddFlowableError = (event) => {
+        taskEditData.value = {
+            action: "add_flowable_error",
+            taskId: event.task.id
+        };
+        taskEdit.value.$refs.taskEdit.click()
+
+    }
+
+    const confirmEdit = (event) => {
         const source = props.source;
-        emit("on-edit",YamlUtils.insertErrorInFlowable(source, event.error, event.taskId))
-    }
-
-    // Flow check functions
-    const flowHaveTasks = (source) => {
-        const flow = source ? source : props.source
-        return flow ? YamlUtils.flowHaveTasks(flow) : false;
-    }
-
-    const flowables = () => {
-        return props.flowGraph && props.flowGraph.flowables ? props.flowGraph.flowables : [];
-    }
-
-    // Graph interactions functions
-    const onMouseOver = (node) => {
-        if (!dragging.value) {
-            linkedElements(id, node.uid).forEach((n) => {
-                if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-yellow")}
-                }
-            });
-        }
-
-    }
-
-    const onMouseLeave = () => {
-        resetNodesStyle();
-    }
-
-    const resetNodesStyle = () => {
-        getNodes.value.filter(n => n.type === "task" || n.type === " trigger")
-            .forEach(n => {
-                n.style = {...n.style, opacity: "1", outline: "none"}
-            })
-    }
-
-    onNodeDragStart((e) => {
-        dragging.value = true;
-        resetNodesStyle();
-        e.node.style = {...e.node.style, zIndex: 1976}
-        lastPosition.value = e.node.position;
-    })
-
-    onNodeDragStop((e) => {
-        dragging.value = false;
-        if (checkIntersections(e.intersections, e.node) === null) {
-            const taskNode1 = e.node;
-            // check multiple intersection with task
-            const taskNode2 = e.intersections.find(n => n.type === "task");
-            if (taskNode2) {
-                try {
-                    emit("on-edit", YamlUtils.swapTasks(props.source, taskNode1.id, taskNode2.id))
-                } catch (e) {
-                    store.dispatch("core/showMessage", {
-                        variant: "error",
-                        title: t("cannot swap tasks"),
-                        message: t(e.message, e.messageOptions)
-                    });
-                    taskNode1.position = lastPosition.value;
-                }
-            } else {
-                taskNode1.position = lastPosition.value;
+        const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
+        if (task === undefined || (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)) {
+            switch (taskEditData.value.action) {
+                case("create_task"):
+                    emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]))
+                    return;
+                case("edit_task"):
+                    emit("on-edit", YamlUtils.replaceTaskInDocument(
+                        source,
+                        taskEditData.value.oldTaskId,
+                        event
+                    ))
+                    return;
+                case("add_flowable_error"):
+                    emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId))
+                    return;
             }
         } else {
-            e.node.position = lastPosition.value;
+            store.dispatch("core/showMessage", {
+                variant: "error",
+                title: t("error detected"),
+                message: t("Task Id already exist in the flow", {taskId: YamlUtils.parse(event).id})
+            });
         }
-        resetNodesStyle();
-        e.node.style = {...e.node.style, zIndex: 1}
-        lastPosition.value = null;
-    })
+        taskEditData.value = null;
+        taskObject.value = null;
+    }
 
-    onNodeDrag((e) => {
-        resetNodesStyle();
-        getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
-            if (n.type === "trigger" || (n.type === "task" && YamlUtils.isParentChildrenRelation(props.source, n.id, e.node.id))) {
-                n.style = {...n.style, opacity: "0.5"}
-            } else {
-                n.style = {...n.style, opacity: "1"}
-            }
-        })
-        if (!checkIntersections(e.intersections, e.node) && e.intersections.filter(n => n.type === "task").length === 1) {
-            e.intersections.forEach(n => {
-                if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
-                }
-            })
-            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
-        }
-    })
-
-    const checkIntersections = (intersections, node) => {
-        const tasksMeet = intersections.filter(n => n.type === "task").map(n => n.id);
-        if (tasksMeet.length > 1) {
-            return "toomuchtaskerror";
-        }
-        if (tasksMeet.length === 1 && YamlUtils.isParentChildrenRelation(props.source, tasksMeet[0], node.id)) {
-            return "parentchildrenerror";
-        }
-        if (intersections.filter(n => n.type === "trigger").length > 0) {
-            return "triggererror";
-        }
-        return null;
+    const closeEdit = () => {
+        taskEditData.value = null;
+        taskObject.value = null;
     }
 
     const toggleOrientation = () => {
@@ -280,271 +254,75 @@
 
     // Graph generation functions
     const generateDagreGraph = () => {
-        const dagreGraph = new dagre.graphlib.Graph({compound: true})
-        dagreGraph.setDefaultEdgeLabel(() => ({}))
-        dagreGraph.setGraph({rankdir: isHorizontal.value ? "LR" : "TB"})
-
-        for (const node of props.flowGraph.nodes) {
-            dagreGraph.setNode(node.uid, {
-                width: getNodeWidth(node),
-                height: getNodeHeight(node)
-            })
-        }
-
-        for (const edge of props.flowGraph.edges) {
-            dagreGraph.setEdge(edge.source, edge.target)
-        }
-
-        for (let cluster of (props.flowGraph.clusters || [])) {
-            dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"});
-
-            if (cluster.parents) {
-                dagreGraph.setParent(cluster.cluster.uid, cluster.parents[cluster.parents.length - 1]);
-            }
-
-            for (let node of (cluster.nodes || [])) {
-                dagreGraph.setParent(node, cluster.cluster.uid)
-            }
-        }
-        dagre.layout(dagreGraph)
-        return dagreGraph;
+        return VueFlowUtils.generateDagreGraph(props.flowGraph, hiddenNodes.value, isHorizontal.value, clusterCollapseToNode.value, edgeReplacer.value, collapsed.value, clusterToNode.value);
     }
 
-    const getNodePosition = (n, parent) => {
-        const position = {x: n.x - n.width / 2, y: n.y - n.height / 2};
-
-        // bug with parent node,
-        if (parent) {
-            const parentPosition = getNodePosition(parent);
-            position.x = position.x - parentPosition.x;
-            position.y = position.y - parentPosition.y;
+    const openFlow = (data) => {
+        if (data.link.executionId) {
+            store
+                .dispatch("execution/loadExecution", {id: data.link.executionId})
+                .then(value => {
+                    store.commit("execution/setExecution", value);
+                    window.open(router.resolve({
+                        name: "executions/update",
+                        params: {
+                            namespace: data.link.namespace,
+                            flowId: data.link.id,
+                            tab: "topology",
+                            id: data.link.executionId,
+                        },
+                    }).href,'_blank');;
+                })
+        } else {
+            window.open(router.resolve({
+                name: "flows/update",
+                params: {"namespace": data.link.namespace, "id": data.link.id, tab: "overview"},
+            }).href,'_blank');
         }
-        return position;
-    };
-
-    const isTaskNode = (node) => {
-        return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask" || node.type === "io.kestra.core.models.hierarchies.GraphClusterRoot")
-    };
-
-    const isTriggerNode = (node) => {
-        return node.trigger !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTrigger");
     }
 
-    const getNodeWidth = (node) => {
-        return isTaskNode(node) || isTriggerNode(node) ? 202 : 5;
-    };
-
-    const getNodeHeight = (node) => {
-        return isTaskNode(node) || isTriggerNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
-    };
-
-    const complexEdgeHaveAdd = (edge) => {
-        // Check if edge is an ending flowable
-        // If true, enable add button to add a task
-        // under the flowable task
-        const isEndtoEndEdge = edge.source.includes("_end") && edge.target.includes("_end")
-        if (isEndtoEndEdge) {
-            // Cluster uid contains the flowable task id
-            // So we look for the cluster having this end edge
-            // to return his flowable id
-            return [getClusterTaskIdWithEndNodeUid(edge.source), "after"];
-        }
-        if (isLinkToFirstFlowableTask(edge)) {
-            return [getFirstTaskId(), "before"];
-        }
-
-        return undefined;
-    }
-
-    const getClusterTaskIdWithEndNodeUid = (nodeUid) => {
-        const cluster = props.flowGraph.clusters.find(cluster => cluster.end === nodeUid);
-        if (cluster) {
-            return Utils.splitFirst(cluster.cluster.uid, "cluster_");
-        }
-
-        return undefined;
-    }
-
-    const isLinkToFirstFlowableTask = (edge) => {
-        const firstTaskId = getFirstTaskId();
-
-        return flowables().includes(firstTaskId) && edge.target === firstTaskId;
-    }
-
-    const getFirstTaskId = () => {
-        return YamlUtils.getFirstTask(props.source);
-    }
-
-    const getNextTaskId = (target) => {
-        while (YamlUtils.extractTask(props.source, target) === undefined) {
-            const edge = props.flowGraph.edges.find(e => e.source === target)
-            if (!edge) {
-                return null
-            }
-            target = edge.target
-        }
-        return target
-    }
-
-    const cleanGraph = () => {
-        removeEdges(getEdges.value)
-        removeNodes(getNodes.value)
-        removeSelectedElements(getElements.value)
-        elements.value = []
-    }
 
     const generateGraph = () => {
-        cleanGraph();
+        // VueFlowUtils.cleanGraph(vueflowId.value);
+        //
+        // nextTick(() => {
+        //     emit("loading", true);
+        //     fitView();
+        //     setElements(elements.value);
+        //     emit("loading", false);
+        // })
+    }
 
-        nextTick(() => {
-            emit("loading", true);
-            try {
-                if (!props.flowGraph || !flowHaveTasks()) {
-                    elements.value.push({
-                        id: "start",
-                        label: "",
-                        type: "dot",
-                        position: {x: 0, y: 0},
-                        style: {
-                            width: "5px",
-                            height: "5px"
-                        },
-                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                        parentNode: undefined,
-                        draggable: false,
-                    })
-                    elements.value.push({
-                        id: "end",
-                        label: "",
-                        type: "dot",
-                        position: isHorizontal.value ? {x: 50, y: 0} : {x: 0, y: 50},
-                        style: {
-                            width: "5px",
-                            height: "5px"
-                        },
-                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                        parentNode: undefined,
-                        draggable: false,
-                    })
-                    elements.value.push({
-                        id: "start|end",
-                        source: "start",
-                        target: "end",
-                        type: "edge",
-                        markerEnd: MarkerType.ArrowClosed,
-                        data: {
-                            edge: {
-                                relation: {
-                                    relationType: "SEQUENTIAL"
-                                }
-                            },
-                            isFlowable: false,
-                            initTask: true,
-                        }
-                    })
+    const showLogs = (event) => {
+        selectedTask.value = event
+        isShowLogsOpen.value = true;
+        isDrawerOpen.value = true;
+    }
 
-                    emit("loading", false);
-                    return;
-                }
-                if (props.flowGraph === undefined) {
-                    emit("loading", false);
-                    return;
-                }
-                const dagreGraph = generateDagreGraph();
-                const clusters = {};
-                for (let cluster of (props.flowGraph.clusters || [])) {
-                    for (let nodeUid of cluster.nodes) {
-                        clusters[nodeUid] = cluster.cluster;
-                    }
+    const onSearch = (search) => {
+        logFilter.value = search;
+    }
 
-                    const dagreNode = dagreGraph.node(cluster.cluster.uid)
-                    const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
+    const onLevelChange = (level) => {
+        logLevel.value = level;
+    }
 
-                    const clusterUid = cluster.cluster.uid;
-                    elements.value.push({
-                        id: clusterUid,
-                        label: clusterUid,
-                        type: "cluster",
-                        parentNode: parentNode,
-                        position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
-                        style: {
-                            width: clusterUid === "Triggers" && isHorizontal.value ? "400px" : dagreNode.width + "px",
-                            height: clusterUid === "Triggers" && !isHorizontal.value ? "250px" : dagreNode.height + "px",
-                        },
-                    })
-                }
+    const showDescription = (event) => {
+        selectedTask.value = event
+        isShowDescriptionOpen.value = true;
+        isDrawerOpen.value = true;
+    }
 
-                let disabledLowCode = [];
+    const emitEdit = (event) => {
+        emit("on-edit", event)
+    }
 
-                for (const node of props.flowGraph.nodes) {
-                    const dagreNode = dagreGraph.node(node.uid);
-                    let nodeType = "task";
-                    if (node.type.includes("GraphClusterEnd")) {
-                        nodeType = "dot";
-                    } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
-                        nodeType = "dot";
-                    } else if (node.type.includes("GraphClusterRoot")) {
-                        nodeType = "dot";
-                    } else if (node.type.includes("GraphTrigger")) {
-                        nodeType = "trigger";
-                    }
-                    // Disable interaction for Dag task
-                    // because our low code editor can not handle it for now
-                    if (isTaskNode(node) && node.task.type === "io.kestra.core.tasks.flows.Dag") {
-                        disabledLowCode.push(node.task.id);
-                        YamlUtils.getChildrenTasks(props.source, node.task.id).forEach(child => {
-                            disabledLowCode.push(child);
-                        })
-                    }
-
-                    elements.value.push({
-                        id: node.uid,
-                        label: isTaskNode(node) ? node.task.id : "",
-                        type: nodeType,
-                        position: getNodePosition(dagreNode, clusters[node.uid] ? dagreGraph.node(clusters[node.uid].uid) : undefined),
-                        style: {
-                            width: getNodeWidth(node) + "px",
-                            height: getNodeHeight(node) + "px"
-                        },
-                        sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
-                        targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                        parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
-                        draggable: nodeType === "task" && !props.isReadOnly && isTaskNode(node) ? !disabledLowCode.includes(node.task.id) : false,
-                        data: {
-                            node: node,
-                            namespace: props.namespace,
-                            flowId: props.flowId,
-                            revision: props.execution ? props.execution.flowRevision : undefined,
-                            isFlowable: isTaskNode(node) ? flowables().includes(node.task.id) : false
-                        },
-                    })
-                }
-
-                for (const edge of props.flowGraph.edges) {
-                    elements.value.push({
-                        id: edge.source + "|" + edge.target,
-                        source: edge.source,
-                        target: edge.target,
-                        type: "edge",
-                        markerEnd: MarkerType.ArrowClosed,
-                        data: {
-                            edge: edge,
-                            haveAdd: complexEdgeHaveAdd(edge),
-                            isFlowable: flowables().includes(edge.source) || flowables().includes(edge.target),
-                            nextTaskId: getNextTaskId(edge.target),
-                            disabled: disabledLowCode.includes(edge.source)
-                        }
-                    })
-                }
-            } catch (e) {
-                console.error("Error while creating topology graph: " + e);
-            }
-            finally {
-                emit("loading", false);
-            }
-        })
+    const message = (event) => {
+        store.dispatch("core/showMessage", {
+            variant: event.variant,
+            title: t(event.title),
+            message: t(event.message)
+        });
     }
 
     // Expose method to be triggered by parents
@@ -555,69 +333,86 @@
 
 <template>
     <div ref="vueFlow" class="vueflow">
-        <slot name="top-bar" />
-        <VueFlow
-            v-model="elements"
-            :default-marker-color="cssVariable('--bs-cyan')"
-            :fit-view-on-init="true"
-            :nodes-draggable="false"
-            :nodes-connectable="false"
-            :elevate-nodes-on-select="false"
-            :elevate-edges-on-select="false"
+        <slot name="top-bar"/>
+        <Topology
+            :id="vueflowId"
+            :is-horizontal="isHorizontal"
+            :is-read-only="isReadOnly"
+            :is-allowed-edit="isAllowedEdit"
+            :source="source"
+            :toggle-orientation-button="['topology'].includes(viewType)"
+            :flowGraph="props.flowGraph"
+            :flow-id="flowId"
+            :namespace="namespace"
+            @toggle-orientation="toggleOrientation"
+            @edit="onEditTask($event)"
+            @delete="onDelete"
+            @open-link="openFlow($event)"
+            @show-logs="showLogs($event)"
+            @show-description="showDescription($event)"
+            @on-add-flowable-error="onAddFlowableError($event)"
+            @add-task="onCreateNewTask($event)"
+            @swapped-task="emitEdit($event)"
+            @message="message($event)"
+        />
+
+        <!-- Drawer to create/add task -->
+        <task-edit
+            component="div"
+            is-hidden
+            :emit-task-only="true"
+            class="node-action"
+            :section="SECTIONS.TASKS"
+            :task="taskObject"
+            :flow-id="flowId"
+            size="small"
+            :namespace="namespace"
+            :revision="execution ? execution.flowRevision : undefined"
+            :emit-only="true"
+            @update:task="confirmEdit($event)"
+            @close="closeEdit()"
+            ref="taskEdit"
+        />
+
+        <!--    Drawer to task informations (logs, description, ..)   -->
+        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
+        <el-drawer
+            v-if="isDrawerOpen && selectedTask"
+            v-model="isDrawerOpen"
+            destroy-on-close
+            size=""
+            :append-to-body="true"
         >
-            <template #node-cluster="props">
-                <Cluster v-bind="props" />
+            <template #header>
+                <code>{{ selectedTask.id }}</code>
             </template>
-
-            <template #node-dot="props">
-                <Dot v-bind="props" />
-            </template>
-
-            <template #node-task="props">
-                <Task
-                    v-bind="props"
+            <div v-if="isShowLogsOpen">
+                <collapse>
+                    <el-form-item>
+                        <search-field :router="false" @search="onSearch" class="me-2"/>
+                    </el-form-item>
+                    <el-form-item>
+                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange"/>
+                    </el-form-item>
+                </collapse>
+                <log-list
+                    v-for="taskRun in selectedTask.taskRuns"
+                    :key="taskRun.id"
+                    :execution="execution"
+                    :task-run-id="taskRun.id"
+                    :filter="logFilter"
+                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                    :level="logLevel"
                     @follow="forwardEvent('follow', $event)"
-                    @edit="forwardEvent('on-edit', $event)"
-                    @delete="onDelete"
-                    @addFlowableError="onAddFlowableError"
-                    @mouseover="onMouseOver"
-                    @mouseleave="onMouseLeave"
-                    :is-read-only="isReadOnly"
-                    :is-allowed-edit="isAllowedEdit"
+                    :hide-others-on-select="true"
                 />
-            </template>
-
-            <template #node-trigger="props">
-                <Trigger
-                    v-bind="props"
-                    @edit="forwardEvent('on-edit', $event)"
-                    @delete="onDelete"
-                    :is-read-only="isReadOnly"
-                    :is-allowed-edit="isAllowedEdit"
-                />
-            </template>
-
-            <template #edge-edge="props">
-                <Edge
-                    v-bind="props"
-                    :yaml-source="source"
-                    :flowables-ids="flowables()"
-                    @edit="onCreateNewTask"
-                    :is-read-only="isReadOnly"
-                    :is-allowed-edit="isAllowedEdit"
-                />
-            </template>
-
-            <Controls :show-interactive="false">
-                <ControlButton @click="toggleOrientation" v-if="['topology'].includes(viewType)">
-                    <SplitCellsVertical :size="48" v-if="!isHorizontal" />
-                    <SplitCellsHorizontal v-if="isHorizontal" />
-                </ControlButton>
-            </Controls>
-        </VueFlow>
+            </div>
+            <div v-if="isShowDescriptionOpen">
+                <markdown class="markdown-tooltip" :source="selectedTask.description"/>
+            </div>
+        </el-drawer>
     </div>
 </template>
-
 
 
 <style scoped lang="scss">

@@ -28,13 +28,20 @@
                 </el-radio-group>
             </template>
             <template #table>
-                <el-alert type="info" v-if="!blueprints || blueprints.length  === 0" :closable="false">
+                <el-alert type="info" v-if="!blueprints || blueprints.length === 0" :closable="false">
                     {{ $t('no result') }}
                 </el-alert>
-                <el-card class="blueprint-card" :class="{'embed': embed}" v-for="blueprint in blueprints"
-                         @click="goToDetail(blueprint.id)">
-                    <component class="blueprint-link" :is="embed ? 'div' : 'router-link'"
-                               :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
+                <el-card
+                    class="blueprint-card"
+                    :class="{'embed': embed}"
+                    v-for="blueprint in blueprints"
+                    @click="goToDetail(blueprint.id)"
+                >
+                    <component
+                        class="blueprint-link"
+                        :is="embed ? 'div' : 'router-link'"
+                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}"
+                    >
                         <div class="left">
                             <div>
                                 <div class="title">
@@ -45,15 +52,23 @@
                                 </div>
                             </div>
                             <div class="tasks-container">
-                                <task-icon :cls="task" only-icon
-                                           v-for="task in [...new Set(blueprint.includedTasks)]" />
+                                <task-icon
+                                    :cls="task"
+                                    only-icon
+                                    v-for="task in [...new Set(blueprint.includedTasks)]"
+                                />
                             </div>
                         </div>
                         <div class="side buttons ms-auto">
                             <slot name="buttons" :blueprint="blueprint" />
                             <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                <el-button @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy"
-                                           size="large" text bg>
+                                <el-button
+                                    @click.prevent.stop="copy(blueprint.id)"
+                                    :icon="icon.ContentCopy"
+                                    size="large"
+                                    text
+                                    bg
+                                >
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
@@ -127,7 +142,7 @@
             async blueprintToEditor(blueprintId) {
                 localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
                 localStorage.setItem("autoRestore-creation_draft", (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data);
-                this.$router.push({name: 'flows/create'});
+                this.$router.push({name: "flows/create"});
             },
             tagsToString(blueprintTags) {
                 return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")
@@ -265,7 +280,7 @@
 </script>
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-    @import "../../../../styles/variable";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .sub-nav {
         margin: 0 0 $spacer;

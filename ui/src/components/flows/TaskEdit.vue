@@ -3,8 +3,9 @@
         :is="component"
         :icon="CodeTags"
         @click="onShow"
+        ref="taskEdit"
     >
-        <span v-if="component !== 'el-button'">{{ $t('show task source') }}</span>
+        <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
         <el-drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -14,25 +15,37 @@
             :append-to-body="true"
         >
             <template #header>
-                <code>{{ taskId || task.id }}</code>
+                <code>{{ taskId || task?.id || $t("add task") }}</code>
             </template>
             <template #footer>
                 <div v-loading="isLoading">
-                    <ValidationError link  :error="taskError" />
+                    <ValidationError link :error="taskError" />
 
-                    <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !isReadOnly" :disabled="taskError !== undefined" type="primary">
-                        {{ $t('save') }}
+                    <el-button
+                        :icon="ContentSave"
+                        @click="saveTask"
+                        v-if="canSave && !isReadOnly"
+                        :disabled="taskError !== undefined"
+                        type="primary"
+                    >
+                        {{ $t("save") }}
                     </el-button>
-                    <el-alert show-icon :closable="false" class="mb-0 mt-3" v-if="revision && isReadOnly" type="warning">
-                        <strong>{{ $t('seeing old revision', {revision: revision}) }}</strong>
+                    <el-alert
+                        show-icon
+                        :closable="false"
+                        class="mb-0 mt-3"
+                        v-if="revision && isReadOnly"
+                        type="warning"
+                    >
+                        <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
                     </el-alert>
                 </div>
             </template>
 
-            <el-tabs v-if="taskYaml" v-model="activeTabs">
+            <el-tabs v-model="activeTabs">
                 <el-tab-pane name="form">
                     <template #label>
-                        <span>{{ $t('form') }}</span>
+                        <span>{{ $t("form") }}</span>
                     </template>
                     <task-editor
                         ref="editor"
@@ -43,10 +56,9 @@
                 </el-tab-pane>
                 <el-tab-pane name="source">
                     <template #label>
-                        <span>{{ $t('source') }}</span>
+                        <span>{{ $t("source") }}</span>
                     </template>
                     <editor
-                        v-if="taskYaml"
                         :read-only="isReadOnly"
                         ref="editor"
                         @save="saveTask"
@@ -61,7 +73,7 @@
                 <el-tab-pane v-if="pluginMardown" name="documentation">
                     <template #label>
                         <span>
-                            {{ $t('documentation.documentation') }}
+                            {{ $t("documentation.documentation") }}
                         </span>
                     </template>
                     <div class="documentation">
@@ -91,7 +103,7 @@
 
     export default {
         components: {Editor, TaskEditor, Markdown, ValidationError},
-        emits: ["update:task"],
+        emits: ["update:task", "close"],
         props: {
             component: {
                 type: String,
@@ -127,6 +139,48 @@
             emitOnly: {
                 type: Boolean,
                 default: false
+            },
+            emitTaskOnly: {
+                type: Boolean,
+                default: false
+            },
+            isHidden: {
+                type: Boolean,
+                default: false
+            },
+        },
+        watch: {
+            task: {
+                async handler() {
+                    if (this.task) {
+                        this.taskYaml = YamlUtils.stringify(this.task);
+                        if (this.task.type) {
+                            this.$store
+                                .dispatch("plugin/load", {cls: this.task.type})
+                        }
+                    } else {
+                        this.taskYaml = "";
+                    }
+                },
+                immediate: true
+            },
+            taskYaml: {
+                handler() {
+                    const task = YamlUtils.parse(this.taskYaml);
+                    if (task?.type && task.type !== this.type) {
+                        this.$store
+                            .dispatch("plugin/load", {cls: task.type})
+                        this.type = task.type
+                    }
+                },
+            },
+            isModalOpen: {
+                handler() {
+                    if (!this.isModalOpen) {
+                        this.$emit("close");
+                        this.activeTabs = "form";
+                    }
+                }
             }
         },
         methods: {
@@ -147,6 +201,13 @@
             },
 
             saveTask() {
+                if (this.emitTaskOnly) {
+                    this.$emit("update:task", this.taskYaml);
+                    this.taskYaml = "";
+                    this.isModalOpen = false;
+
+                    return
+                }
                 let updatedSource;
                 try {
                     updatedSource = YamlUtils.replaceTaskInDocument(
@@ -175,12 +236,12 @@
             },
             async onShow() {
                 this.isModalOpen = !this.isModalOpen;
-                if (this.taskId || this.task.id) {
+                if (this.taskId) {
                     this.taskYaml = await this.load(this.taskId ? this.taskId : this.task.id);
-                } else {
+                } else if (this.task) {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
-                if(this.task.type) {
+                if (this.task?.type) {
                     this.$store
                         .dispatch("plugin/load", {cls: this.task.type})
                 }
@@ -195,13 +256,11 @@
         data() {
             return {
                 uuid: Utils.uid(),
-                taskYaml: undefined,
+                taskYaml: "",
                 isModalOpen: false,
                 activeTabs: "form",
+                type: null,
             };
-        },
-        created() {
-
         },
         computed: {
             ...mapState("flow", ["flow"]),
@@ -211,7 +270,7 @@
             ...mapState("flow", ["revisions"]),
             ...mapState("plugin", ["plugin"]),
             pluginMardown() {
-                if(this.plugin && this.plugin.markdown) {
+                if (this.plugin && this.plugin.markdown && YamlUtils.parse(this.taskYaml)?.type) {
                     return this.plugin.markdown
                 }
                 return null
@@ -224,11 +283,6 @@
             },
             isReadOnly() {
                 return this.flow && this.revision && this.flow.revision !== this.revision
-            },
-            taskErrorContent() {
-                return this.taskError
-                    ? "<pre style='max-width: 40vw; white-space: pre-wrap'>" + this.taskError + "</pre>"
-                    :  ""
             }
         }
     };

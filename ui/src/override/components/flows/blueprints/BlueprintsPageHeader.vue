@@ -13,7 +13,7 @@
 </template>
 
 <style scoped lang="scss">
-    @import "../../../../styles/variable";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .header {
         $neg-offset-from-menu: calc(-1 * var(--offset-from-menu));

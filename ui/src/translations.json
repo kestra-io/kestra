@@ -6,6 +6,7 @@
     "close": "Close",
     "namespace": "Namespace",
     "description": "Description",
+    "show description": "Show description",
     "revision": "Revision",
     "Language": "Language",
     "Set default page": "Set default page",
@@ -412,6 +413,7 @@
     "focus task": "Focus on any element to see its documentation.",
     "validate": "Validate",
     "add global error handler": "Add global error handler",
+    "add error handler": "Add an error handler",
     "add trigger": "Add trigger",
     "edit metadata": "Edit Metadata",
     "taskDefaults": "Task Defaults",
@@ -425,7 +427,7 @@
     "sequential": "Sequential",
     "can not delete": "Can not delete",
     "can not have less than 1 task": "Flows can not have less than 1 task.",
-    "task id already exist": "Task Id already exists",
+    "task id already exists": "Task Id already exists",
     "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
     "flow already exists": "Flow already exists",
     "namespace not allowed": "Namespace not allowed",
@@ -459,6 +461,8 @@
     "expand error": "Expand only failed task",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
+    "expand": "Expand",
+    "collapse": "Collapse",
     "log expand setting": "Log default display",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
@@ -481,7 +485,8 @@
       "success": "Trigger is unlocked"
     },
     "date format": "Date format",
-    "timezone": "Timezone"
+    "timezone": "Timezone",
+    "add task": "Add a task"
   },
   "fr": {
     "id": "Identifiant",
@@ -489,6 +494,7 @@
     "ok": "OK",
     "close": "Fermer",
     "description": "Description",
+    "show description": "Afficher la description",
     "namespace": "Espace de nom",
     "revision": "Révision",
     "Language": "Langue",
@@ -898,6 +904,7 @@
     "focus task": "Cliquer sur une tâche pour voir sa documentation",
     "validate": "Valider",
     "add global error handler": "Gérer les erreurs globales",
+    "add error handler": "Gérer les erreurs",
     "add trigger": "Ajouter un déclencheur",
     "edit metadata": "Éditer les métadonnées",
     "taskDefaults": "Valeur de tâches par défaut",
@@ -911,7 +918,7 @@
     "sequential": "Séquentiel",
     "can not delete": "Suppression impossible",
     "can not have less than 1 task": "Un flow ne peut avoir moins d'1 tâche.",
-    "task id already exist": "Identifiant de tâche déjà utilisé",
+    "task id already exists": "Identifiant de tâche déjà utilisé",
     "Task Id already exist in the flow": "L'identifiant {taskId} est déjà utilisé dans le flow.",
     "flow already exists": "Flow déjà existant",
     "namespace not allowed": "Espace de nom non autorisé",
@@ -945,6 +952,8 @@
     "expand error": "Afficher uniquement les erreurs",
     "expand all": "Afficher tout",
     "collapse all": "Masquer tout",
+    "expand": "Afficher",
+    "collapse": "Masquer",
     "log expand setting": "Affichage par défaut des journaux",
     "slack support": "Demandez de l'aide sur notre Slack",
     "error detected": "Erreur détectée",
@@ -965,6 +974,8 @@
       "success": "Le déclencheur est débloqué"
     },
     "date format": "Format de date",
-    "timezone": "Fuseau horaire"
+    "timezone": "Fuseau horaire",
+    "add task": "Ajouter une tâche"
   }
 }
+

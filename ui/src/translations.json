@@ -372,11 +372,11 @@
       },
       "step11": {
         "title": "Save your flow 🚀",
-        "content": "we're all set! Now, you can save the flow by clicking on the Save button."
+        "content": "We're all set! You can save the flow by clicking on the <code>Save</code> button."
       },
       "step12": {
         "title": "Execute the flow!",
-        "content": "You can execute your flow by clicking on the New Execution button."
+        "content": "Let's execute our flow by clicking on the <code>New Execution</code> button."
       },
       "step13": {
         "title": "Enter inputs",

@@ -47,3 +47,11 @@
         }
     }
 </script>
+
+<style scoped lang="scss">
+    :deep(.el-button) {
+        &.el-button--default {
+            background: var(--card-bg);
+        }
+    }
+</style>

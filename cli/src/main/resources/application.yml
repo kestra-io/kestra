@@ -36,6 +36,13 @@ micronaut:
         connect-timeout: 180s
         read-timeout: 180s
 
+  # By default, Micronaut uses a scheduled executor with 2*nbProc for @Scheduled which is a lot as we didn't use much scheduling tasks.
+  # Using core-pool-size to set the minimum nb threads to keep when idle instead.
+  executors:
+    scheduled:
+      type: scheduled
+      core-pool-size: 1
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false

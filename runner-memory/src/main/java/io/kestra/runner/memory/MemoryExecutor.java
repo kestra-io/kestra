@@ -94,9 +94,9 @@ public class MemoryExecutor implements ExecutorInterface {
     private SkipExecutionService skipExecutionService;
 
     @Inject
-    private MemoryFlowTriggerService flowTriggerService;
+    private AbstractFlowTriggerService flowTriggerService;
 
-    private MultipleConditionStorageInterface multipleConditionStorage = new MemoryMultipleConditionStorage();
+    private final MultipleConditionStorageInterface multipleConditionStorage = new MemoryMultipleConditionStorage();
 
     @Override
     public void run() {

@@ -92,7 +92,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private MultipleConditionStorageInterface multipleConditionStorage;
 
     @Inject
-    private JdbcFlowTriggerService flowTriggerService;
+    private AbstractFlowTriggerService flowTriggerService;
 
     @Inject
     private MetricRegistry metricRegistry;

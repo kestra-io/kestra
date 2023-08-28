@@ -45,7 +45,6 @@
     import Github from "vue-material-design-icons/Github.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
-    import FileDocumentArrowRightOutline from "vue-material-design-icons/FileDocumentArrowRightOutline.vue";
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
 
@@ -169,15 +168,6 @@
                                 },
                             },
                             {
-                                href: "https://kestra.io/docs/flow-examples/",
-                                title: this.$t("documentation.examples"),
-                                icon: {
-                                    element: FileDocumentArrowRightOutline,
-                                    class: "menu-icon"
-                                },
-                                external: true
-                            },
-                            {
                                 href: "https://kestra.io/slack",
                                 title: "Slack",
                                 icon: {
@@ -199,14 +189,6 @@
                         ]
                     },
                     {
-                        href: "/settings",
-                        title: this.$t("settings"),
-                        icon: {
-                            element: CogOutline,
-                            class: "menu-icon"
-                        }
-                    },
-                    {
                         title: this.$t("administration"),
                         icon: {
                             element: AccountSupervisorOutline,
@@ -222,6 +204,14 @@
                                 }
                             }
                         ]
+                    },
+                    {
+                        href: "/settings",
+                        title: this.$t("settings"),
+                        icon: {
+                            element: CogOutline,
+                            class: "menu-icon"
+                        }
                     }
                 ];
             },

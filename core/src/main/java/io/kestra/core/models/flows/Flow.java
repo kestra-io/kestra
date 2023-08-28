@@ -196,6 +196,11 @@ public class Flow extends AbstractFlow {
             Stream<Task> taskStream = ((FlowableTask<?>) task).allChildTasks()
                 .stream()
                 .flatMap(this::allTasksWithChilds);
+            if (((FlowableTask<?>) task).getErrors() != null) {
+                taskStream = Stream.concat(taskStream, ((FlowableTask<?>) task).getErrors()
+                    .stream()
+                    .flatMap(this::allTasksWithChilds));
+            }
 
             return Stream.concat(
                 Stream.of(task),

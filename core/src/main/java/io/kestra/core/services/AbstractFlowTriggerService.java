@@ -17,10 +17,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class AbstractFlowTriggerService<S extends MultipleConditionStorageInterface> {
-    @Inject
-    protected Optional<S> multipleConditionStorage;
-
+public abstract class AbstractFlowTriggerService {
     @Inject
     private ConditionService conditionService;
 
@@ -30,18 +27,11 @@ public abstract class AbstractFlowTriggerService<S extends MultipleConditionStor
     @Inject
     private FlowService flowService;
 
-    public AbstractFlowTriggerService(Optional<S> multipleConditionStorage, ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService) {
-        this.multipleConditionStorage = multipleConditionStorage;
-        this.conditionService = conditionService;
-        this.runContextFactory = runContextFactory;
-        this.flowService = flowService;
-    }
-
-    public Stream<FlowService.FlowWithFlowTrigger> withFlowTriggersOnly(Stream<Flow> allFlows) {
+    public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<Flow> allFlows) {
         return allFlows
             .filter(flow -> !flow.isDisabled())
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
-            .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowService.FlowWithFlowTrigger(flow, trigger)));
+            .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)));
     }
 
     public Stream<io.kestra.core.models.triggers.types.Flow> flowTriggers(Flow flow) {
@@ -52,15 +42,15 @@ public abstract class AbstractFlowTriggerService<S extends MultipleConditionStor
             .map(io.kestra.core.models.triggers.types.Flow.class::cast);
     }
 
-    public List<Execution> computeExecutionsFromFlowTriggers(Execution execution, List<Flow> allFlows) {
-        List<FlowService.FlowWithFlowTrigger> validTriggersBeforeMultipleConditionEval = allFlows.stream()
+    public List<Execution> computeExecutionsFromFlowTriggers(Execution execution, List<Flow> allFlows, Optional<MultipleConditionStorageInterface> multipleConditionStorage) {
+        List<FlowWithFlowTrigger> validTriggersBeforeMultipleConditionEval = allFlows.stream()
             // prevent recursive flow triggers
             .filter(flow -> flowService.removeUnwanted(flow, execution))
             // ensure flow & triggers are enabled
             .filter(flow -> !flow.isDisabled())
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             // validate flow triggers conditions excluding multiple conditions
-            .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowService.FlowWithFlowTrigger(flow, trigger)))
+            .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)))
             .filter(flowWithFlowTrigger -> conditionService.valid(
                 flowWithFlowTrigger.getFlow(),
                 flowWithFlowTrigger.getTrigger().getConditions().stream()
@@ -154,5 +144,13 @@ public abstract class AbstractFlowTriggerService<S extends MultipleConditionStor
         private final MultipleConditionWindow multipleConditionWindow;
         private final io.kestra.core.models.triggers.types.Flow trigger;
         private final MultipleCondition multipleCondition;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    @ToString
+    public static class FlowWithFlowTrigger {
+        private final Flow flow;
+        private final io.kestra.core.models.triggers.types.Flow trigger;
     }
 }

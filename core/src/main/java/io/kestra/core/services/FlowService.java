@@ -12,10 +12,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -182,13 +179,5 @@ public class FlowService {
         }
 
         return object;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    @ToString
-    public static class FlowWithFlowTrigger {
-        private final Flow flow;
-        private final io.kestra.core.models.triggers.types.Flow trigger;
     }
 }

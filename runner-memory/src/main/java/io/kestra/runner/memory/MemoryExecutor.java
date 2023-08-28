@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -95,6 +96,8 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     private MemoryFlowTriggerService flowTriggerService;
 
+    private MultipleConditionStorageInterface multipleConditionStorage = new MemoryMultipleConditionStorage();
+
     @Override
     public void run() {
         flowListeners.run();
@@ -126,7 +129,7 @@ public class MemoryExecutor implements ExecutorInterface {
                     (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
                 );
             } catch (InternalException e) {
-                log.debug("Failed to inject template",  e);
+                log.debug("Failed to inject template", e);
             }
         }
 
@@ -233,7 +236,7 @@ public class MemoryExecutor implements ExecutorInterface {
 
             // multiple condition
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
             }
 
@@ -372,7 +375,6 @@ public class MemoryExecutor implements ExecutorInterface {
                 }
             });
     }
-
 
 
     private static class ExecutionState {

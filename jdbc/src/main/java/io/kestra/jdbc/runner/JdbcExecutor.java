@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -76,9 +77,6 @@ public class JdbcExecutor implements ExecutorInterface {
     private RunContextFactory runContextFactory;
 
     @Inject
-    private FlowService flowService;
-
-    @Inject
     private TaskDefaultService taskDefaultService;
 
     @Inject
@@ -89,6 +87,9 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private ConditionService conditionService;
+
+    @Inject
+    private MultipleConditionStorageInterface multipleConditionStorage;
 
     @Inject
     private JdbcFlowTriggerService flowTriggerService;
@@ -295,7 +296,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 conditionService.isTerminatedWithListeners(flow, execution) &&
                 this.deduplicateFlowTrigger(execution, executorState)
             ) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
             }
 

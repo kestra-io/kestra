@@ -51,6 +51,7 @@ public class MemoryMultipleConditionStorage implements MultipleConditionStorageI
             .collect(Collectors.toList());
     }
 
+    @Override
     public synchronized void save(List<MultipleConditionWindow> multipleConditionWindows) {
         multipleConditionWindows
             .forEach(window -> {
@@ -70,6 +71,7 @@ public class MemoryMultipleConditionStorage implements MultipleConditionStorageI
             });
     }
 
+    @Override
     public void delete(MultipleConditionWindow multipleConditionWindow) {
         find(multipleConditionWindow.getNamespace(), multipleConditionWindow.getFlowId())
             .ifPresent(byCondition -> {

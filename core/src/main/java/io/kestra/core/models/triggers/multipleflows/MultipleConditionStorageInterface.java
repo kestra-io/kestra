@@ -48,4 +48,8 @@ public interface MultipleConditionStorageInterface {
                 .build()
             );
     }
+
+    void save(List<MultipleConditionWindow> multipleConditionWindows);
+
+    void delete(MultipleConditionWindow multipleConditionWindow);
 }

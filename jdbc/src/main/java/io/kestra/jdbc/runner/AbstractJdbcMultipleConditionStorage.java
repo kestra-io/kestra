@@ -61,6 +61,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
             });
     }
 
+    @Override
     public synchronized void save(List<MultipleConditionWindow> multipleConditionWindows) {
         this.jdbcRepository
             .getDslContextWrapper()
@@ -75,6 +76,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
             });
     }
 
+    @Override
     public void delete(MultipleConditionWindow multipleConditionWindow) {
         this.jdbcRepository.delete(multipleConditionWindow);
     }

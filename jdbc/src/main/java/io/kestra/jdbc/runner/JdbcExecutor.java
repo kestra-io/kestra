@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -76,9 +77,6 @@ public class JdbcExecutor implements ExecutorInterface {
     private RunContextFactory runContextFactory;
 
     @Inject
-    private FlowService flowService;
-
-    @Inject
     private TaskDefaultService taskDefaultService;
 
     @Inject
@@ -91,13 +89,16 @@ public class JdbcExecutor implements ExecutorInterface {
     private ConditionService conditionService;
 
     @Inject
+    private MultipleConditionStorageInterface multipleConditionStorage;
+
+    @Inject
+    private AbstractFlowTriggerService flowTriggerService;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     @Inject
     protected FlowListenersInterface flowListeners;
-
-    @Inject
-    private AbstractJdbcMultipleConditionStorage multipleConditionStorage;
 
     @Inject
     private AbstractJdbcWorkerTaskExecutionStorage workerTaskExecutionStorage;
@@ -295,21 +296,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 conditionService.isTerminatedWithListeners(flow, execution) &&
                 this.deduplicateFlowTrigger(execution, executorState)
             ) {
-                // multiple conditions storage
-                multipleConditionStorage.save(
-                    flowService
-                        .multipleFlowTrigger(allFlows.stream(), flow, execution, multipleConditionStorage)
-                );
-
-                // Flow Trigger
-                flowService
-                    .flowTriggerExecution(allFlows.stream(), execution, multipleConditionStorage)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
-
-                // Trigger is done, remove matching multiple condition
-                flowService
-                    .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
-                    .forEach(multipleConditionStorage::delete);
             }
 
             // worker task execution

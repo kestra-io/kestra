@@ -1,8 +1,3 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M6.66504 2.66632H14.665V10.6663H6.66504V2.66632Z" fill="currentColor"/>
-    <path d="M17.335 2.66632H25.335V10.6663H17.335V2.66632Z" fill="currentColor"/>
-    <path d="M6.66504 21.3336H14.665V29.3336H6.66504V21.3336Z" fill="currentColor"/>
-    <path d="M17.335 21.3336H25.335V29.3336H17.335V21.3336Z" fill="currentColor"/>
-    <path d="M9.33171 10.432H11.9984V21.3336H9.33171V10.432Z" fill="currentColor"/>
-    <path d="M20.0016 10.432H22.6683V21.3336H20.0016V10.432Z" fill="currentColor"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+<path d="M22 19L20 19L20 12C20 10.9 19.11 10 18 10L15 10L15 12L18 12L18 19L16 19L19 22L22 19ZM15 19L13 19L13 14L11 14L11 19L9 19L12 22L15 19ZM14 11.05C14 9.94 13.13 9.04 12 9.03C10.87 9.02 10 9.9 10 11C10 12.11 10.89 13 12 13C13.09 13 13.97 12.13 14 11.05ZM13 2L11 2L11 8L13 8L13 2ZM9 10L6 10C4.89 10 4 10.9 4 12L4 19L2 19L5 22L8 19L6 19L6 12L9 12L9 10Z" fill="currentColor"/>
 </svg>

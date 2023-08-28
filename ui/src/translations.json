@@ -332,55 +332,55 @@
     "onboarding-content": {
       "step1": {
         "title": "Welcome to Kestra!",
-        "content": "Kestra uses a simple, declarative interface to create a language-agnostic workflow definition in a portable YAML file. Let's create your first workflow."
+        "content": "Kestra uses a declarative interface to create a language-agnostic workflow definition in a YAML file format. Follow the next steps to create your first workflow."
       },
       "step2": {
         "title": "This is the built-in code editor",
-        "content": "You can edit your flow directly here from the UI. To add comments, use <code>#</code>. All tasks, triggers and inputs are strongly typed — you can search their attributes with a keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> thanks to the autocompletion feature."
+        "content": "You can edit your flow directly here from the UI. To add comments to your code, use <code>#</code>. Kestra provides autocompletion for all workflow components, including tasks, triggers and inputs. Start typing and use the keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> to leverage the autocompletion feature."
       },
       "step3": {
-        "title": "Let's write your first flow",
-        "content": "Give your flow an ID, a namespace, and, optionally, a description."
+        "title": "Let's write your first flow!",
+        "content": "Set an ID, namespace, and (optionally) a description for your flow."
       },
       "step4": {
         "title": "Define inputs",
-        "content": "You can optionally define custom input parameters to execute the flow with custom, runtime-specific values. To do that, give each input a name, a type, and optionally a default value."
+        "content": "You can define custom input parameters to execute your workflow dynamically using custom, runtime-specific values. Give each input a name, a type, and (optionally) a default value."
       },
       "step5": {
         "title": "Add tasks",
-        "content": "Add a list of tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
+        "content": "Add a list of tasks to your flow. A task is an atomic unit of work that will perform a specific action. A task can execute a SQL query, run a Python script, trigger a data transformation job or send an email."
       },
       "step6": {
-        "title": "First task",
+        "title": "Your first task",
         "content": "Let's add a task that will log a message \"Hey there, Kestra user!\" to the terminal. This message will be captured with a log level <code>INFO</code>."
       },
       "step7": {
         "title": "Fetch data from an API",
-        "content": "Let's add a task that will extract data from an HTTP API. In the following tasks, we will process this data in Python and SQL."
+        "content": "Let's add a task that will extract data from an HTTP API. In the next steps, we will process that data in Python and SQL."
       },
       "step8": {
         "title": "Run a Python script",
-        "content": "The <code>beforeCommands</code> property ensures that required libraries are installed before starting the task. You can also specify a custom Docker image. The task reads the output of the previous task and extracts only the relevant data using <code>jq</code>. Then, it transforms it in a Polars dataframe and writes the outputs into a CSV file."
+        "content": "In this task, we read the output from the previous step and we extract only relevant data using <code>jq</code>. Then, we use Polars to transform that data and save the final dataframe as a CSV file. Note how the <code>beforeCommands</code> property ensures that required Python packages are installed before starting the task. You can also specify a custom Docker image."
       },
       "step9": {
-        "title": "Run a SQL query",
-        "content": "Run a SQL query in DuckDB and output the final result as a downloadable artifact that you can preview as a table in the Outputs tab in the UI."
+        "title": "Execute a SQL query",
+        "content": "In this task, we use DuckDB to execute a SQL query and output the final result as a downloadable artifact. You can preview that result artifact as a table in the Outputs tab in the UI."
       },
       "step10": {
-        "title": "Schedule",
-        "content": "To schedule a flow we add a 'trigger'. Here we schedule the flow to run every minute."
+        "title": "Schedule your flow",
+        "content": "To schedule our flow, we can add one or more <code>triggers</code> — each of them can run the flow with different input parameter values. Here, we schedule the flow to run every minute."
       },
       "step11": {
-        "title": "Save your flow",
-        "content": "You're all set! Now, you can save your flow by clicking on the Save button."
+        "title": "Save your flow 🚀",
+        "content": "We're all set! You can save the flow by clicking on the <code>Save</code> button."
       },
       "step12": {
         "title": "Execute the flow!",
-        "content": "You can execute your flow by clicking on the New Execution button."
+        "content": "Let's execute our flow by clicking on the <code>New Execution</code> button."
       },
       "step13": {
         "title": "Enter inputs",
-        "content": "If your flow has inputs, you can optionally overwrite them before executing the flow."
+        "content": "You can set custom parameter values before executing the flow."
       }
     },
     "onboarding-flow": {
@@ -405,13 +405,13 @@
     "Previous step": "Previous step",
     "Finish": "Finish",
     "Step": "Step",
-    "welcome aboard": "\uD83D\uDE80 Welcome aboard!",
-    "welcome aboard content": "You're all set! Check Blueprints to find more examples and kickstart your next flow.",
+    "welcome aboard": "\uD83D\uDE80 Welcome to Kestra!",
+    "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
     "welcome display require": "Run your <strong>first flow</strong> to get started",
     "welcome button create": "Create my first flow",
     "get started": "Get started",
     "get started content": "Check our documentation for a step-by-step walkthrough.",
-    "watch demo": "Take a Product Tour",
+    "watch demo": "Take a product tour",
     "watch demo content": "See the product tour video explaining key concepts.",
     "need help?": "Need help?",
     "need help? content": "Need assistance with a specific feature or flow? Our developer community is here to help.",

@@ -121,6 +121,7 @@
     const isLoading = ref(false);
     const haveChange = ref(false)
     const flowYaml = ref("")
+    const triggerFlow = ref(null);
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)
     const newError = ref(null)
@@ -529,6 +530,13 @@
         })
     };
 
+    const execute = (_) => {
+        if (!triggerFlow.value) {
+            return;
+        }
+        triggerFlow.value.onClick();
+    };
+
     const canDelete = () => {
         return (
             user.isAllowed(
@@ -616,6 +624,7 @@
             :class="combinedEditor ? 'editor-combined' : ''"
             :style="combinedEditor ? {width: editorWidthPercentage} : {}"
             @save="save"
+            @execute="execute"
             v-model="flowYaml"
             schema-type="flow"
             lang="yaml"
@@ -801,6 +810,7 @@
             <li v-if="flow">
                 <trigger-flow
                     v-if="!props.isCreating"
+                    ref="triggerFlow"
                     type="default"
                     :disabled="flow.disabled"
                     :flow-id="flow.id"

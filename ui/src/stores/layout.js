@@ -11,11 +11,21 @@ export default {
             state.topNavbar = value
         },
         setEnvName(state, value) {
-            localStorage.setItem("envName", value);
+            if (value) {
+                localStorage.setItem("envName", value);
+            } else {
+                localStorage.removeItem("envName");
+            }
+
             state.envName = value;
         },
         setEnvColor(state, value) {
-            localStorage.setItem("envColor", value);
+            if (value) {
+                localStorage.setItem("envColor", value);
+            } else {
+                localStorage.removeItem("envColor");
+            }
+
             state.envColor = value;
         }
     },

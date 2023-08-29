@@ -280,14 +280,14 @@
                 this.$toast().saved();
             },
             onEnvNameChange(value) {
-                if (value && value !== this.configs?.environment?.name) {
+                if (value !== this.configs?.environment?.name) {
                     this.$store.commit("layout/setEnvName", value);
                 }
 
                 this.$toast().saved();
             },
             onEnvColorChange(value) {
-                if (value && value !== this.configs?.environment?.color) {
+                if (value !== this.configs?.environment?.color) {
                     this.$store.commit("layout/setEnvColor", value);
                 }
 

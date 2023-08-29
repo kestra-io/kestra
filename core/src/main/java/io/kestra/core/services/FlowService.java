@@ -14,11 +14,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ClassUtils;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Provides business logic to manipulate {@link Flow}
@@ -37,6 +41,45 @@ public class FlowService {
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return keepLastVersionCollector(stream);
+    }
+
+    public List<String> deprecationPaths(Flow flow) {
+        List<String> deprecationPaths = deprecationTraversal("", flow).toList();
+        return deprecationPaths.isEmpty() ? null : deprecationPaths;
+    }
+
+    private Stream<String> deprecationTraversal(String prefix, Object object) {
+        if(ClassUtils.isPrimitiveOrWrapper(object.getClass()) || String.class.equals(object.getClass())) {
+            return Stream.empty();
+        }
+
+        return Stream.concat(
+            object.getClass().isAnnotationPresent(Deprecated.class) ? Stream.of(prefix) : Stream.empty(),
+            Arrays.stream(object.getClass().getDeclaredFields())
+                .filter(f -> {
+                    int modifiers = f.getModifiers();
+                    return !Modifier.isStatic(modifiers);
+                })
+                .flatMap(field -> {
+                    try {
+                        field.setAccessible(true);
+                        Object fieldValue = field.get(object);
+
+                        if (fieldValue instanceof Iterable<?> iterableValue) {
+                            fieldValue = StreamSupport.stream(iterableValue.spliterator(), false).toArray(Object[]::new);
+                        }
+                        if (fieldValue instanceof Object[] arrayValue) {
+                            return IntStream.range(0, arrayValue.length).boxed().flatMap(i -> deprecationTraversal(field.getName() + "[%d]".formatted(i), arrayValue[i]));
+                        }
+
+                        return field.isAnnotationPresent(Deprecated.class) && fieldValue != null ? Stream.of(prefix + "." + field.getName()) : Stream.empty();
+                    } catch (IllegalAccessException e) {
+                        // silent failure (we don't compromise the app / response for warnings)
+                    }
+
+                    return Stream.empty();
+                })
+        );
     }
 
     public Flow keepLastVersion(Stream<Flow> stream, String namespace, String flowId) {

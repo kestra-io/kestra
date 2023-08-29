@@ -7,6 +7,7 @@
         :flow="flow"
         :is-read-only="isReadOnly"
         :flow-error="flowError"
+        :flow-deprecations="flowDeprecations"
     />
 </template>
 <script>
@@ -29,10 +30,11 @@
         },
         computed: {
             ...mapState("flow", ["flow", "flowGraph"]),
-            ...mapGetters("flow", ["flowError"]),
+            ...mapGetters("flow", ["flowError", "flowDeprecations"]),
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowError", undefined);
+            this.$store.commit("flow/setFlowDeprecations", undefined);
         },
     };
 </script>

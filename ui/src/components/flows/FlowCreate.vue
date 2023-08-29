@@ -9,6 +9,7 @@
             :total="total"
             :guided-properties="guidedProperties"
             :flow-error="flowError"
+            :flow-deprecations="flowDeprecations"
             :flow="sourceWrapper"
         />
     </div>
@@ -27,6 +28,7 @@
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowError", undefined);
+            this.$store.commit("flow/setFlowDeprecations", undefined);
         },
         computed: {
             sourceWrapper() {
@@ -48,7 +50,7 @@ tasks:
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flow", "flowError"]),
+            ...mapGetters("flow", ["flow", "flowError", "flowDeprecations"]),
             routeInfo() {
                 return {
                     title: this.$t("flows")

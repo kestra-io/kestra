@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -72,6 +71,9 @@ public class FlowController {
 
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
+
+    @Inject
+    private FlowService flowService;
 
     @Inject
     private YamlFlowParser yamlFlowParser;
@@ -450,14 +452,16 @@ public class FlowController {
                 try {
                     Flow flowParse = yamlFlowParser.parse(flow, Flow.class);
 
+                    validateConstraintViolationBuilder.deprecationPaths(flowService.deprecationPaths(flowParse));
+
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
 
                     modelValidator.validate(taskDefaultService.injectDefaults(flowParse));
-
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 }
+
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
@@ -486,7 +490,7 @@ public class FlowController {
         return validateConstraintViolationBuilder.build();
     }
 
-    public enum TaskValidationType  {
+    public enum TaskValidationType {
         TASKS,
         TRIGGERS
     }
@@ -703,7 +707,7 @@ public class FlowController {
             .toList();
     }
 
-    protected List<FlowWithSource> setFlowsDisableByQuery(String query, String namespace,List<String> labels, boolean disable) {
+    protected List<FlowWithSource> setFlowsDisableByQuery(String query, String namespace, List<String> labels, boolean disable) {
         return flowRepository
             .findWithSource(query, namespace, RequestUtils.toMap(labels))
             .stream()

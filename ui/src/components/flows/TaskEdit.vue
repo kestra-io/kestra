@@ -24,7 +24,7 @@
                     <el-button
                         :icon="ContentSave"
                         @click="saveTask"
-                        v-if="canSave && !isReadOnly"
+                        v-if="canSave && !readOnly"
                         :disabled="taskError !== undefined"
                         type="primary"
                     >
@@ -34,7 +34,7 @@
                         show-icon
                         :closable="false"
                         class="mb-0 mt-3"
-                        v-if="revision && isReadOnly"
+                        v-if="revision && readOnly"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -43,7 +43,7 @@
             </template>
 
             <el-tabs v-model="activeTabs">
-                <el-tab-pane name="form">
+                <el-tab-pane v-if="!readOnly" name="form">
                     <template #label>
                         <span>{{ $t("form") }}</span>
                     </template>
@@ -59,7 +59,7 @@
                         <span>{{ $t("source") }}</span>
                     </template>
                     <editor
-                        :read-only="isReadOnly"
+                        :read-only="readOnly"
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
@@ -148,6 +148,10 @@
                 type: Boolean,
                 default: false
             },
+            readOnly: {
+                type: Boolean,
+                default: false
+            }
         },
         watch: {
             task: {
@@ -178,7 +182,7 @@
                 handler() {
                     if (!this.isModalOpen) {
                         this.$emit("close");
-                        this.activeTabs = "form";
+                        this.activeTabs = this.defaultActiveTab();
                     }
                 }
             }
@@ -252,22 +256,23 @@
                     this.$store.dispatch("flow/validateTask", {task: value, section: this.section})
                 }, 500);
             },
+            defaultActiveTab() {
+                return this.readOnly ? "source" : "form";
+            }
         },
         data() {
             return {
                 uuid: Utils.uid(),
                 taskYaml: "",
                 isModalOpen: false,
-                activeTabs: "form",
+                activeTabs: this.defaultActiveTab(),
                 type: null,
             };
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapState("flow", ["flow", "revisions"]),
             ...mapGetters("flow", ["taskError"]),
             ...mapState("auth", ["user"]),
-            ...mapState("flow", ["revisions"]),
-            ...mapState("flow", ["revisions"]),
             ...mapState("plugin", ["plugin"]),
             pluginMardown() {
                 if (this.plugin && this.plugin.markdown && YamlUtils.parse(this.taskYaml)?.type) {
@@ -280,9 +285,6 @@
             },
             isLoading() {
                 return this.taskYaml === undefined;
-            },
-            isReadOnly() {
-                return this.flow && this.revision && this.flow.revision !== this.revision
             }
         }
     };

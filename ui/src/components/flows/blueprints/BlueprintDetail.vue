@@ -83,7 +83,7 @@
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
-    import TaskIcon from "../../plugins/TaskIcon.vue";
+    import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
     import Utils from "../../../utils/utils";
 </script>
@@ -254,7 +254,7 @@
 
                 :deep(.wrapper) {
                     .icon {
-                        height: 70%;
+                        height: 100%;
                         margin: 0;
                     }
 

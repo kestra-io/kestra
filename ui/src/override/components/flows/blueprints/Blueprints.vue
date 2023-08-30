@@ -12,13 +12,11 @@
     import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
     import BlueprintsBrowser from "./BlueprintsBrowser.vue";
     import BlueprintsPageHeader from "./BlueprintsPageHeader.vue";
-    import TaskIcon from "../../../../components/plugins/TaskIcon.vue";
 
     export default {
         mixins: [RouteContext],
         inheritAttrs: false,
         components: {
-            TaskIcon,
             SearchField,
             DataTable,
             BlueprintDetail,

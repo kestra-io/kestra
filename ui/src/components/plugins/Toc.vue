@@ -40,7 +40,7 @@
 </template>
 
 <script>
-    import TaskIcon from "../plugins/TaskIcon.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
     export default {
         emits: ["routerChange"],

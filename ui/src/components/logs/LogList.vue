@@ -174,7 +174,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
-    import TaskIcon from "../plugins/TaskIcon.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import _xor from "lodash/xor";
     import FlowUtils from "../../utils/flowUtils.js";
     import moment from "moment";

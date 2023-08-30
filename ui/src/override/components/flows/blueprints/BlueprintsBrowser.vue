@@ -54,7 +54,6 @@
                             <div class="tasks-container">
                                 <task-icon
                                     :cls="task"
-                                    only-icon
                                     v-for="task in [...new Set(blueprint.includedTasks)]"
                                 />
                             </div>
@@ -87,7 +86,7 @@
 <script>
     import SearchField from "../../../../components/layout/SearchField.vue";
     import DataTable from "../../../../components/layout/DataTable.vue";
-    import TaskIcon from "../../../../components/plugins/TaskIcon.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import DataTableActions from "../../../../mixins/dataTableActions";
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -354,12 +353,6 @@
 
                         :deep(> *) {
                             width: $plugin-icon-size;
-                            padding: 0.2rem;
-                            border-radius: $border-radius;
-
-                            & * {
-                                margin-top: 0;
-                            }
                         }
                     }
                 }
@@ -393,11 +386,11 @@
 
                     .tasks-container {
                         margin: 0 $spacer;
-                        height: 2.5rem;
+                        height: 2.0rem;
 
                         :deep(.wrapper) {
-                            width: 2.5rem;
-                            padding: 8px;
+                            width: 2.0rem;
+                            height: 2.0rem;
                         }
                     }
                 }

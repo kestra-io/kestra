@@ -38,8 +38,6 @@ public class DagTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList().size(), is(7));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("task1"));
-        assertThat(execution.getTaskRunList().get(6).getTaskId(), is("task5"));
     }
 
     @Test

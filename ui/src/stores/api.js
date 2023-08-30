@@ -42,6 +42,9 @@ export default {
                     counter: counter++,
                 }
             });
+        },
+        pluginIcons(_, __) {
+            return axios.get(API_URL + "/v1/plugins/icons", {})
         }
     },
     mutations: {

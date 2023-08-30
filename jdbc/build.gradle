@@ -7,5 +7,4 @@ dependencies {
     implementation("io.micronaut.flyway:micronaut-flyway")
 
     testImplementation project(':core').sourceSets.test.output
-    testImplementation project(':runner-memory')
 }

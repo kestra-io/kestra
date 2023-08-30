@@ -8,6 +8,7 @@ plugins {
 
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
+    id "org.sonarqube" version "4.2.1.3168"
 
     // helper
     id "com.github.ben-manes.versions" version "0.47.0"
@@ -69,7 +70,7 @@ allprojects {
     //
     configurations.all {
         resolutionStrategy {
-            force("org.jooq:jooq:3.16.10")
+            force("org.jooq:jooq:3.17.14")
             force("org.slf4j:slf4j-api:1.7.36")
 
             // ugly bug on google cloud plugins
@@ -78,6 +79,21 @@ allprojects {
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.13")
+
+            // ugly bug on crypto plugin
+            force('org.bouncycastle:bcprov-jdk15on:1.70')
+            force('org.bouncycastle:bcpg-jdk15on:1.70')
+
+            // ugly bug for jackson
+            force("com.fasterxml.jackson.core:jackson-bom:" + jacksonVersion)
+            force("com.fasterxml.jackson.core:jackson-core:" + jacksonVersion)
+            force("com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion)
+            force("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:" + jacksonVersion)
+            force("com.fasterxml.jackson.module:jackson-module-parameter-names:" + jacksonVersion)
+            force("com.fasterxml.jackson.datatype:jackson-datatype-guava:" + jacksonVersion)
+            force("com.fasterxml.jackson.core:jackson-annotations:" + jacksonVersion)
+            force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
+            force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
         }
     }
 
@@ -314,6 +330,17 @@ task jacoco(type: JacocoReport) {
         html.required = true
         xml.required = true
         csv.required = true
+    }
+}
+
+/**********************************************************************************************************************\
+ * Sonar
+ **********************************************************************************************************************/
+sonar {
+    properties {
+        property "sonar.projectKey", "kestra-io_kestra"
+        property "sonar.organization", "kestra-io"
+        property "sonar.host.url", "https://sonarcloud.io"
     }
 }
 

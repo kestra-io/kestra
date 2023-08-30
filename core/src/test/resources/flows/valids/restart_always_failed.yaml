@@ -3,10 +3,9 @@ namespace: io.kestra.tests
 
 tasks:
   - id: failStep
-    type: io.kestra.core.tasks.scripts.Bash
+    type: io.kestra.core.tasks.executions.Fail
     description: "This fails"
-    commands:
-      - 'exit 1'
+
 errors:
   - id: errorHandler
     type: io.kestra.core.tasks.log.Log

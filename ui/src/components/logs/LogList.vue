@@ -174,7 +174,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
-    import TaskIcon from "../plugins/TaskIcon.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import _xor from "lodash/xor";
     import FlowUtils from "../../utils/flowUtils.js";
     import moment from "moment";
@@ -331,7 +331,8 @@
                 if (this.logsToOpenParent) {
                     return this.logsToOpenParent
                 }
-                switch(localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT){
+
+                switch(localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT) {
                     case logDisplayTypes.ERROR:
                         return [State.FAILED, State.RUNNING, State.PAUSED]
                     case logDisplayTypes.ALL:
@@ -465,11 +466,11 @@
                 }
             },
             attempts(taskRun) {
-                if (this.execution.state.current === State.RUNNING || !this.attemptNumber) {
+                if (this.execution.state.current === State.RUNNING || this.attemptNumber === undefined) {
                     return taskRun.attempts ?? [{state: taskRun.state}];
                 }
 
-                return [taskRun.attempts[this.attemptNumber]];
+                return taskRun.attempts ? [taskRun.attempts[this.attemptNumber]] : [];
             },
             onTaskSelect(dropdownVisible, task) {
                 if (dropdownVisible && this.taskRun?.id !== task.id) {
@@ -530,7 +531,6 @@
 
             .task-icon {
                 width: 36px;
-                background: var(--bs-white);
                 padding: 6px;
             }
 

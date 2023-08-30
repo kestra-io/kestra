@@ -23,6 +23,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.PluginService;
 import io.micronaut.core.annotation.Nullable;
@@ -304,29 +305,25 @@ public class JsonSchemaGenerator {
                     TypeContext typeContext = context.getTypeContext();
 
                     if (declaredType.getErasedType() == Task.class) {
-                        return pluginService
-                            .allPlugins()
+                        return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == AbstractTrigger.class) {
-                        return pluginService
-                            .allPlugins()
+                        return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == Condition.class) {
-                        return pluginService
-                            .allPlugins()
+                        return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == ScheduleCondition.class) {
-                        return pluginService
-                            .allPlugins()
+                        return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                             .filter(ScheduleCondition.class::isAssignableFrom)
@@ -404,6 +401,11 @@ public class JsonSchemaGenerator {
         }
     }
 
+    protected List<RegisteredPlugin> getRegisteredPlugins() {
+        return pluginService
+            .allPlugins();
+    }
+
     private boolean defaultInAllOf(JsonNode property) {
         if (property.has("allOf")) {
             for (Iterator<JsonNode> it = property.get("allOf").elements(); it.hasNext(); ) {
@@ -424,10 +426,10 @@ public class JsonSchemaGenerator {
 
         this.build(builder,false);
 
-        // base is passed, we don't return base properties
+        // we don't return base properties unless specified with @PluginProperty
         builder
             .forFields()
-            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
+            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getAnnotation(PluginProperty.class) == null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 

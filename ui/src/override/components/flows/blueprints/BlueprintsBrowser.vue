@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <errors code="404" v-if="error && embed"/>
+    <div v-else>
         <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
                 <div class="d-flex sub-nav">
@@ -17,7 +18,7 @@
                         {{ $t("all tags") }}
                     </el-radio-button>
                     <el-radio-button
-                        v-for="tag in Object.values(tags)"
+                        v-for="tag in Object.values(tags || {})"
                         :key="tag.id"
                         :label="tag.id"
                         class="hoverable"
@@ -27,13 +28,20 @@
                 </el-radio-group>
             </template>
             <template #table>
-                <el-alert type="info" v-if="!blueprints || blueprints.length  === 0" :closable="false">
+                <el-alert type="info" v-if="!blueprints || blueprints.length === 0" :closable="false">
                     {{ $t('no result') }}
                 </el-alert>
-                <el-card class="blueprint-card" :class="{'embed': embed}" v-for="blueprint in blueprints"
-                         @click="goToDetail(blueprint.id)">
-                    <component class="blueprint-link" :is="embed ? 'div' : 'router-link'"
-                               :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}">
+                <el-card
+                    class="blueprint-card"
+                    :class="{'embed': embed}"
+                    v-for="blueprint in blueprints"
+                    @click="goToDetail(blueprint.id)"
+                >
+                    <component
+                        class="blueprint-link"
+                        :is="embed ? 'div' : 'router-link'"
+                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}"
+                    >
                         <div class="left">
                             <div>
                                 <div class="title">
@@ -44,19 +52,26 @@
                                 </div>
                             </div>
                             <div class="tasks-container">
-                                <task-icon :cls="task" only-icon
-                                           v-for="task in [...new Set(blueprint.includedTasks)]" />
+                                <task-icon
+                                    :cls="task"
+                                    v-for="task in [...new Set(blueprint.includedTasks)]"
+                                />
                             </div>
                         </div>
                         <div class="side buttons ms-auto">
                             <slot name="buttons" :blueprint="blueprint" />
                             <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                <el-button @click.prevent.stop="copy(blueprint.id)" :icon="icon.ContentCopy"
-                                           size="large" text bg>
+                                <el-button
+                                    @click.prevent.stop="copy(blueprint.id)"
+                                    :icon="icon.ContentCopy"
+                                    size="large"
+                                    text
+                                    bg
+                                >
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else size="large" text bg @click="blueprintToEditor(blueprint.id)">
+                            <el-button v-else-if="userCanCreateFlow" size="large" text bg @click="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -71,16 +86,22 @@
 <script>
     import SearchField from "../../../../components/layout/SearchField.vue";
     import DataTable from "../../../../components/layout/DataTable.vue";
-    import TaskIcon from "../../../../components/plugins/TaskIcon.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import DataTableActions from "../../../../mixins/dataTableActions";
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import RestoreUrl from "../../../../mixins/restoreUrl";
+    import permission from "../../../../models/permission";
+    import action from "../../../../models/action";
+    import {mapState} from "vuex";
+    import Utils from "../../../../utils/utils";
+    import Errors from "../../../../components/errors/Errors.vue";
+    import {editorViewTypes} from "../../../../utils/constants";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
-        components: {TaskIcon, DataTable, SearchField},
-        emits: ["goToDetail"],
+        components: {TaskIcon, DataTable, SearchField, Errors},
+        emits: ["goToDetail", "loaded"],
         props: {
             blueprintBaseUri: {
                 type: String,
@@ -104,7 +125,8 @@
                 total: 0,
                 icon: {
                     ContentCopy: shallowRef(ContentCopy)
-                }
+                },
+                error: false
             }
         },
         methods: {
@@ -112,13 +134,14 @@
                 return this.$route?.query?.selectedTag ?? 0
             },
             async copy(blueprintId) {
-                await navigator.clipboard.writeText(
+                await Utils.copy(
                     (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data
                 );
             },
             async blueprintToEditor(blueprintId) {
+                localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
                 localStorage.setItem("autoRestore-creation_draft", (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data);
-                this.$router.push({name: 'flows/create'});
+                this.$router.push({name: "flows/create"});
             },
             tagsToString(blueprintTags) {
                 return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")
@@ -185,7 +208,15 @@
                 Promise.all([
                     this.loadTags(beforeLoadBlueprintBaseUri),
                     this.loadBlueprints(beforeLoadBlueprintBaseUri)
-                ]).finally(() => {
+                ]).then(() => {
+                    this.$emit("loaded");
+                }).catch(() => {
+                    if(this.embed) {
+                        this.error = true;
+                    } else {
+                        this.$store.dispatch("core/showError", 404);
+                    }
+                }).finally(() => {
                     // Handle switch tab while fetching data
                     if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
                         callback();
@@ -196,6 +227,12 @@
                 this.ready = false;
                 this.selectedTag = 0;
                 this.load(this.onDataLoaded);
+            }
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            userCanCreateFlow() {
+                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             }
         },
         watch: {
@@ -242,7 +279,7 @@
 </script>
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-    @import "../../../../styles/variable";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .sub-nav {
         margin: 0 0 $spacer;
@@ -316,16 +353,6 @@
 
                         :deep(> *) {
                             width: $plugin-icon-size;
-                            padding: 0.2rem;
-                            border-radius: $border-radius;
-
-                            html.dark & {
-                                background-color: var(--bs-white);
-                            }
-
-                            & * {
-                                margin-top: 0;
-                            }
                         }
                     }
                 }
@@ -359,11 +386,11 @@
 
                     .tasks-container {
                         margin: 0 $spacer;
-                        height: 2.5rem;
+                        height: 2.0rem;
 
                         :deep(.wrapper) {
-                            width: 2.5rem;
-                            padding: 8px;
+                            width: 2.0rem;
+                            height: 2.0rem;
                         }
                     }
                 }

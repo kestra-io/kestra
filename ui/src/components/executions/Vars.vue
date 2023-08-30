@@ -1,5 +1,5 @@
 <template>
-    <el-table stripe table-layout="auto" fixed :data="variables" size="small">
+    <el-table stripe table-layout="auto" fixed :data="variables">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>
@@ -28,6 +28,7 @@
     import VarValue from "./VarValue.vue";
     import DateAgo from "../../components/layout/DateAgo.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
+    import {mapState} from "vuex";
 
     export default {
         components: {
@@ -47,6 +48,7 @@
             },
         },
         computed: {
+            ...mapState("execution", ["execution"]),
             variables() {
                 return Utils.executionVars(this.data);
             },

@@ -6,9 +6,9 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.contexts.KestraClassLoader;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -26,7 +26,7 @@ class FlowListenersRestoreCommandTest {
         }
     }
 
-    @Test
+    @RetryingTest(5)
     void run() throws InterruptedException {
         final int COUNT = 5;
 

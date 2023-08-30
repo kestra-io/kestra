@@ -20,19 +20,16 @@ public class JooqExecuteListenerFactory {
         return new org.jooq.ExecuteListenerProvider() {
             @Override
             public @NotNull ExecuteListener provide() {
-                return new DefaultExecuteListener() {
+                return new ExecuteListener() {
                     Long startTime;
 
                     @Override
                     public void executeStart(ExecuteContext ctx) {
-                        super.executeStart(ctx);
                         startTime = System.currentTimeMillis();
                     }
 
                     @Override
                     public void executeEnd(ExecuteContext ctx) {
-                        super.executeEnd(ctx);
-
                         Duration duration = Duration.ofMillis(System.currentTimeMillis() - startTime);
 
                         metricRegistry.timer(MetricRegistry.JDBC_QUERY_DURATION, "sql", ctx.sql())

@@ -98,10 +98,10 @@ public class Helpers {
         }
     }
 
-    public static void runApplicationContext(String[] env, BiConsumer<ApplicationContext, EmbeddedServer> consumer) throws URISyntaxException {
+    public static void runApplicationContext(String[] env, Map<String, Object> properties, BiConsumer<ApplicationContext, EmbeddedServer> consumer) throws URISyntaxException {
         try (ApplicationContext applicationContext = applicationContext(
             pluginsPath(),
-            null,
+            properties,
             env
         ).start()) {
             EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
@@ -109,5 +109,9 @@ public class Helpers {
 
             consumer.accept(applicationContext, embeddedServer);
         }
+    }
+
+    public static void runApplicationContext(String[] env, BiConsumer<ApplicationContext, EmbeddedServer> consumer) throws URISyntaxException {
+        runApplicationContext(env, null, consumer);
     }
 }

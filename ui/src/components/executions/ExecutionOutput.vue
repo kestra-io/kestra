@@ -113,7 +113,9 @@
                 debugStackTrace: "",
                 isModalOpen: false,
                 size: this.$route.query.size ? this.$route.query.size : 25,
-                page: this.$route.query.page ? this.$route.query.page : 1
+                page: this.$route.query.page ? this.$route.query.page : 1,
+                isPreviewOpen: false,
+                selectedPreview: null
             };
         },
         created() {
@@ -171,7 +173,7 @@
                         page: item.page
                     }
                 });
-            },
+            }
         },
         computed: {
             ...mapState("execution", ["execution"]),

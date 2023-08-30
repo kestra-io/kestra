@@ -25,9 +25,7 @@ tasks:
           type: io.kestra.core.runners.TaskDefaultsCaseTest$DefaultSequential3
           tasks:
           - id: ko
-            type: io.kestra.core.tasks.scripts.Bash
-            commands:
-              - 'exit 1'
+            type: io.kestra.core.tasks.executions.Fail
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

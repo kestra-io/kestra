@@ -2,6 +2,7 @@ package io.kestra.core.models.triggers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.micronaut.core.annotation.Introspected;
@@ -39,6 +40,7 @@ abstract public class AbstractTrigger {
     private String description;
 
     @Valid
+    @PluginProperty
     @Schema(
         title = "List of Conditions in order to limit the flow trigger."
     )

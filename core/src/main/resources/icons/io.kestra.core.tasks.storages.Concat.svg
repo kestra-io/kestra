@@ -1,1 +1,3 @@
-<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>set-merge</title><path d="M2 7V9H7V7H2M12 9V11H9V13H12V15L15 12L12 9M17 9V15H22V9H17M2 11V13H7V11H2M2 15V17H7V15H2Z" /></svg>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+<path d="M17 7V9H22V7H17ZM2 9V15H7V9H2ZM12 9V11H9V13H12V15L15 12L12 9ZM17 11V13H22V11H17ZM17 15V17H22V15H17Z" fill="currentColor"/>
+</svg>

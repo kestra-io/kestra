@@ -1,5 +1,8 @@
 id: full
 namespace: io.kestra.tests
+labels:
+  key1: value1
+  key2: value2
 
 #triggers:
 #- type: schedule
@@ -11,9 +14,8 @@ namespace: io.kestra.tests
 
 tasks:
 - id: t1
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-  - 'echo "{{ task.id }}"'
+  type: io.kestra.core.tasks.log.Log
+  message: "{{ task.id }}"
 
 - id: t2
   type: io.kestra.core.tasks.debugs.Return
@@ -33,17 +35,14 @@ tasks:
   concurrent: 3
   tasks:
   - id: t5-t1
-    type: io.kestra.core.tasks.scripts.Bash
-    commands:
-    - echo "t5-t1 {{execution.id}}"
+    type: io.kestra.core.tasks.log.Log
+    message: "t5-t1 {{execution.id}}"
   - id: t5-t2
-    type: io.kestra.core.tasks.scripts.Bash
-    commands:
-    - echo "t5-t2 {{execution.id}}"
+    type: io.kestra.core.tasks.log.Log
+    message: "t5-t2 {{execution.id}}"
   - id: t5-t3
-    type: io.kestra.core.tasks.scripts.Bash
-    commands:
-    - echo "t4-t3 {{execution.id}}"
+    type: io.kestra.core.tasks.log.Log
+    message: "t4-t3 {{execution.id}}"
   - id: t5-t4
     type: io.kestra.core.tasks.flows.Parallel
     tasks:
@@ -57,14 +56,11 @@ tasks:
             type: io.kestra.core.tasks.flows.Parallel
             tasks:
             - id: t5-t4-t1-t1-t1-last
-              type: io.kestra.core.tasks.scripts.Bash
-              commands:
-                - 'echo "t5-t5-t1-t1-t1-last : {{execution.id}}"'
+              type: io.kestra.core.tasks.log.Log
+              message: "t5-t5-t1-t1-t1-last : {{execution.id}}"
 
 
 - id: last
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-    - 'echo "last"'
-    - 'sleep 1'
+  type: io.kestra.core.tasks.log.Log
+  message: "last"
 

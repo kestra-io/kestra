@@ -15,7 +15,7 @@
                 </el-form-item>
                 <el-form-item>
                     <status-filter-buttons
-                        :value="$route.query.state"
+                        :value="Utils.asArray($route.query.state)"
                         @update:model-value="onDataTableValue('state', $event)"
                     />
                 </el-form-item>
@@ -49,9 +49,9 @@
             </template>
 
             <template #table>
-                <el-table
+                <select-table
+                    ref="selectTable"
                     :data="executions"
-                    ref="table"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     stripe
                     table-layout="auto"
@@ -59,93 +59,116 @@
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
+                    :selectable="!hidden.includes('selection') && canCheck"
                 >
-                    <el-table-column type="selection" v-if="!hidden.includes('selection') && (canCheck)" />
+                    <template #select-actions>
+                        <bulk-select
+                            :select-all="queryBulkAction"
+                            :selections="selection"
+                            :total="total"
+                            @update:select-all="toggleAllSelection"
+                            @unselect="toggleAllUnselected"
+                        >
+                            <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                                {{ $t('restart') }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                                {{ $t('kill') }}
+                            </el-button>
+                            <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
+                                {{ $t('delete') }}
+                            </el-button>
+                        </bulk-select>
+                    </template>
+                    <template #default>
+                        <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom"
+                                         :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                            <template #default="scope">
+                                <id :value="scope.row.id" :shrink="true" />
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
-                        <template #default="scope">
-                            <id :value="scope.row.id" :shrink="true" />
-                        </template>
-                    </el-table-column>
+                        <el-table-column prop="state.startDate" v-if="!hidden.includes('state.startDate')"
+                                         sortable="custom"
+                                         :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                            <template #default="scope">
+                                <date-ago :inverted="true" :date="scope.row.state.startDate" />
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column prop="state.startDate" v-if="!hidden.includes('state.startDate')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
-                        <template #default="scope">
-                            <date-ago :inverted="true" :date="scope.row.state.startDate" />
-                        </template>
-                    </el-table-column>
+                        <el-table-column prop="state.endDate" v-if="!hidden.includes('state.endDate')" sortable="custom"
+                                         :sort-orders="['ascending', 'descending']" :label="$t('end date')">
+                            <template #default="scope">
+                                <date-ago :inverted="true" :date="scope.row.state.endDate" />
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column prop="state.endDate" v-if="!hidden.includes('state.endDate')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('end date')">
-                        <template #default="scope">
-                            <date-ago :inverted="true" :date="scope.row.state.endDate" />
-                        </template>
-                    </el-table-column>
+                        <el-table-column prop="state.duration" v-if="!hidden.includes('state.duration')"
+                                         sortable="custom"
+                                         :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                            <template #default="scope">
+                                <span v-if="isRunning(scope.row)">{{
+                                        $filters.humanizeDuration(durationFrom(scope.row))
+                                    }}</span>
+                                <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column prop="state.duration" v-if="!hidden.includes('state.duration')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('duration')">
-                        <template #default="scope">
-                            <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
-                            <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
-                        </template>
-                    </el-table-column>
+                        <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')"
+                                         prop="namespace"
+                                         sortable="custom" :sort-orders="['ascending', 'descending']"
+                                         :label="$t('namespace')"
+                                         :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
-                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
+                        <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')"
+                                         prop="flowId"
+                                         sortable="custom" :sort-orders="['ascending', 'descending']"
+                                         :label="$t('flow')">
+                            <template #default="scope">
+                                <router-link
+                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                    {{ $filters.invisibleSpace(scope.row.flowId) }}
+                                </router-link>
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
-                        <template #default="scope">
-                            <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
-                                {{ $filters.invisibleSpace(scope.row.flowId) }}
-                            </router-link>
-                        </template>
-                    </el-table-column>
+                        <el-table-column v-if="!hidden.includes('labels')" :label="$t('labels')">
+                            <template #default="scope">
+                                <labels :labels="scope.row.labels" />
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column v-if="!hidden.includes('labels')" :label="$t('labels')">
-                        <template #default="scope">
-                            <labels :labels="scope.row.labels" />
-                        </template>
-                    </el-table-column>
+                        <el-table-column prop="state.current" v-if="!hidden.includes('state.current')" sortable="custom"
+                                         :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                            <template #default="scope">
+                                <status :status="scope.row.state.current" size="small" />
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column prop="state.current" v-if="!hidden.includes('state.current')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
-                        <template #default="scope">
-                            <status :status="scope.row.state.current" size="small" />
-                        </template>
-                    </el-table-column>
+                        <el-table-column prop="triggers" v-if="!hidden.includes('triggers')" :label="$t('triggers')"
+                                         class-name="shrink">
+                            <template #default="scope">
+                                <trigger-avatar :execution="scope.row" />
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column prop="triggers" v-if="!hidden.includes('triggers')" :label="$t('triggers')" class-name="shrink">
-                        <template #default="scope">
-                            <trigger-avatar :execution="scope.row" />
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column column-key="action" class-name="row-action">
-                        <template #default="scope">
-                            <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
-                                <kicon :tooltip="$t('details')" placement="left">
-                                    <eye />
-                                </kicon>
-                            </router-link>
-                        </template>
-                    </el-table-column>
-                </el-table>
+                        <el-table-column column-key="action" class-name="row-action">
+                            <template #default="scope">
+                                <router-link
+                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                    <kicon :tooltip="$t('details')" placement="left">
+                                        <eye />
+                                    </kicon>
+                                </router-link>
+                            </template>
+                        </el-table-column>
+                    </template>
+                </select-table>
             </template>
         </data-table>
 
         <bottom-line v-if="displayBottomBar">
             <ul>
-                <li v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
-                        <el-button v-if="canUpdate" :icon="Restart" size="large" @click="restartExecutions()">
-                            {{ $t('restart') }}
-                        </el-button>
-                        <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
-                            {{ $t('kill') }}
-                        </el-button>
-                        <el-button v-if="canDelete" :icon="Delete" size="large" type="default" @click="deleteExecutions()">
-                            {{ $t('delete') }}
-                        </el-button>
-                    </bottom-line-counter>
-                </li>
-
-                <li class="spacer" />
-
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
@@ -155,7 +178,8 @@
                         </template>
                     </li>
                     <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id"
+                                      :namespace="flow.namespace" />
                     </li>
                 </template>
             </ul>
@@ -164,10 +188,13 @@
 </template>
 
 <script setup>
+    import BulkSelect from "../layout/BulkSelect.vue";
+    import SelectTable from "../layout/SelectTable.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Utils from "../../utils/utils";
 </script>
 
 <script>
@@ -177,6 +204,7 @@
     import Status from "../Status.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
+    import SelectTableActions from "../../mixins/selectTableActions";
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
@@ -193,13 +221,12 @@
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import BottomLine from "../layout/BottomLine.vue";
-    import BottomLineCounter from "../layout/BottomLineCounter.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             Status,
             Eye,
@@ -217,7 +244,6 @@
             Labels,
             Id,
             BottomLine,
-            BottomLineCounter,
             TriggerFlow
         },
         props: {
@@ -239,9 +265,7 @@
                 isDefaultNamespaceAllow: true,
                 dailyReady: false,
                 dblClickRouteName: "executions/update",
-                flowTriggerDetails: undefined,
-                executionsSelection: [],
-                queryBulkAction: false
+                flowTriggerDetails: undefined
             };
         },
         computed: {
@@ -262,8 +286,7 @@
                     .add(-30, "days").toISOString(true);
             },
             displayBottomBar() {
-                return (this.executionsSelection.length !== 0 && (this.canUpdate || this.canDelete)) ||
-                    (this.$route.name === "flows/update");
+                return (this.$route.name === "flows/update");
             },
             canCheck() {
                 return this.canDelete || this.canUpdate;
@@ -279,18 +302,10 @@
             },
         },
         methods: {
-            handleSelectionChange(val) {
-                if (val.length === 0) {
-                    this.queryBulkAction = false
-                }
-                this.executionsSelection = val.map(x => x.id);
+            selectionMapper(execution) {
+                return execution.id
             },
-            selectAll() {
-                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
-                    this.$refs.table.toggleAllSelection();
-                }
-            },
-            isRunning(item){
+            isRunning(item) {
                 return State.isRunning(item.state.current);
             },
             onStatusChange() {
@@ -337,7 +352,7 @@
             },
             restartExecutions() {
                 this.$toast().confirm(
-                    this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -351,7 +366,7 @@
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkRestartExecution", {executionsId: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();
@@ -360,12 +375,13 @@
                                 }), this.$t(e.message)))
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
             deleteExecutions() {
                 this.$toast().confirm(
-                    this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -379,7 +395,7 @@
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
                                     this.loadData();
@@ -388,12 +404,13 @@
                                 }), this.$t(e.message)))
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
             killExecutions() {
                 this.$toast().confirm(
-                    this.$t("bulk kill", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
+                    this.$t("bulk kill", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -407,7 +424,7 @@
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkKill", {executionsId: this.executionsSelection})
+                                .dispatch("execution/bulkKill", {executionsId: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
                                     this.loadData();
@@ -416,15 +433,18 @@
                                 }), this.$t(e.message)))
                         }
                     },
-                    () => {}
+                    () => {
+                    }
                 )
             },
             editFlow() {
-                this.$router.push({name:"flows/update", params: {
-                    namespace: this.flow.namespace,
-                    id: this.flow.id,
-                    tab: "editor"
-                }})
+                this.$router.push({
+                    name: "flows/update", params: {
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        tab: "editor"
+                    }
+                })
             },
         }
     };

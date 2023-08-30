@@ -2,12 +2,9 @@ package io.kestra.core.services;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.conditions.types.MultipleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
@@ -15,10 +12,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -83,129 +77,9 @@ public class FlowService {
             .filter(Objects::nonNull);
     }
 
-    public List<FlowWithFlowTrigger> flowWithFlowTrigger(Stream<Flow> flowStream) {
-        return flowStream
-            .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
-            .filter(flow -> !flow.isDisabled())
-            .flatMap(flow -> flow.getTriggers()
-                .stream()
-                .filter(abstractTrigger -> !abstractTrigger.isDisabled())
-                .map(trigger -> new FlowWithTrigger(flow, trigger))
-            )
-            .filter(f -> f.getTrigger() instanceof io.kestra.core.models.triggers.types.Flow)
-            .map(f -> new FlowWithFlowTrigger(
-                    f.getFlow(),
-                    (io.kestra.core.models.triggers.types.Flow) f.getTrigger()
-                )
-            )
-            .collect(Collectors.toList());
-    }
-
     protected boolean removeUnwanted(Flow f, Execution execution) {
         // we don't allow recursive
         return !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution));
-    }
-
-    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, @Nullable MultipleConditionStorageInterface multipleConditionStorage) {
-        return flowStream
-            .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
-            .filter(flow -> !flow.isDisabled())
-            .flatMap(flow -> flow.getTriggers()
-                .stream()
-                .filter(abstractTrigger -> !abstractTrigger.isDisabled())
-                .map(trigger -> new FlowWithTrigger(flow, trigger))
-            )
-            .filter(f -> conditionService.isValid(
-                f.getTrigger(),
-                f.getFlow(),
-                execution,
-                multipleConditionStorage
-            ))
-            .filter(f -> f.getTrigger() instanceof io.kestra.core.models.triggers.types.Flow)
-            .map(f -> new FlowWithFlowTrigger(
-                    f.getFlow(),
-                    (io.kestra.core.models.triggers.types.Flow) f.getTrigger()
-                )
-            )
-            .filter(f -> this.removeUnwanted(f.getFlow(), execution))
-            .map(f -> f.getTrigger().evaluate(
-                runContextFactory.of(f.getFlow(), execution),
-                f.getFlow(),
-                execution
-            ))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
-    }
-
-    private Stream<FlowWithFlowTriggerAndMultipleCondition> multipleFlowStream(
-        Stream<Flow> flowStream,
-        MultipleConditionStorageInterface multipleConditionStorage
-    ) {
-        return flowWithFlowTrigger(flowStream)
-            .stream()
-            .flatMap(e -> e.getTrigger()
-                .getConditions()
-                .stream()
-                .filter(condition -> condition instanceof MultipleCondition)
-                .map(condition -> {
-                    MultipleCondition multipleCondition = (MultipleCondition) condition;
-
-                    return new FlowWithFlowTriggerAndMultipleCondition(
-                        e.getFlow(),
-                        multipleConditionStorage.getOrCreate(e.getFlow(), multipleCondition),
-                        e.getTrigger(),
-                        multipleCondition
-                    );
-                })
-            );
-    }
-
-    public List<MultipleConditionWindow> multipleFlowTrigger(
-        Stream<Flow> flowStream,
-        Flow flow,
-        Execution execution,
-        MultipleConditionStorageInterface multipleConditionStorage
-    ) {
-        return multipleFlowStream(flowStream, multipleConditionStorage)
-            .map(f -> {
-                Map<String, Boolean> results = f.getMultipleCondition()
-                    .getConditions()
-                    .entrySet()
-                    .stream()
-                    .map(e -> new AbstractMap.SimpleEntry<>(
-                        e.getKey(),
-                        conditionService.isValid(e.getValue(), flow, execution)
-                    ))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-                return f.getMultipleConditionWindow().with(results);
-            })
-            .filter(multipleConditionWindow -> multipleConditionWindow.getResults().size() > 0)
-            .collect(Collectors.toList());
-    }
-
-    public List<MultipleConditionWindow> multipleFlowToDelete(
-        Stream<Flow> flowStream,
-        MultipleConditionStorageInterface multipleConditionStorage
-    ) {
-        return Stream
-            .concat(
-                multipleFlowStream(flowStream, multipleConditionStorage)
-                    .filter(f -> f.getMultipleCondition().getConditions().size() ==
-                        (f.getMultipleConditionWindow().getResults() == null ? 0 :
-                            f.getMultipleConditionWindow()
-                                .getResults()
-                                .entrySet()
-                                .stream()
-                                .filter(Map.Entry::getValue)
-                                .count()
-                        )
-                    )
-                    .map(FlowWithFlowTriggerAndMultipleCondition::getMultipleConditionWindow),
-                multipleConditionStorage.expired().stream()
-            )
-            .collect(Collectors.toList());
     }
 
     public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
@@ -219,7 +93,7 @@ public class FlowService {
     }
 
     public static String cleanupSource(String source) {
-        return source.replaceFirst("(?m)^revision: \\d+\n?","");
+        return source.replaceFirst("(?m)^revision: \\d+\n?", "");
     }
 
     public static String injectDisabled(String source, Boolean disabled) {
@@ -305,30 +179,5 @@ public class FlowService {
         }
 
         return object;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    private static class FlowWithTrigger {
-        private final Flow flow;
-        private final AbstractTrigger trigger;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    @ToString
-    public static class FlowWithFlowTrigger {
-        private final Flow flow;
-        private final io.kestra.core.models.triggers.types.Flow trigger;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    @ToString
-    private static class FlowWithFlowTriggerAndMultipleCondition {
-        private final Flow flow;
-        private final MultipleConditionWindow multipleConditionWindow;
-        private final io.kestra.core.models.triggers.types.Flow trigger;
-        private final MultipleCondition multipleCondition;
     }
 }

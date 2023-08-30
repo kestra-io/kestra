@@ -20,24 +20,14 @@ tasks:
             - id: worker
               type: io.kestra.core.tasks.flows.WorkingDirectory
               tasks:
-                - id: first
-                  type: io.kestra.core.tasks.scripts.Bash
-                  outputFiles:
-                    - out
-                  commands:
-                    - 'echo "{{ taskrun.id }}" > {{ outputFiles.out }}'
-                    - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
-                    - |
-                      echo '::{"outputs": {"taskrun":"{{ taskrun.id }}"}}::'
-                - id: second
-                  type: io.kestra.core.tasks.scripts.Bash
-                  inputFiles:
-                    in.txt: "{{ outputs.first.s1.s2.s3.files.out }}"
-                  commands:
-                    - |
-                      echo '::{"outputs": {"taskrun":"'$(cat in.txt)'"}}::'
-                    - |
-                      echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::'
+              - id: first
+                type: io.kestra.core.tasks.storages.LocalFiles
+                inputs:
+                  out/stay.txt: "{{ taskrun.id }}"
+              - id: second
+                type: io.kestra.core.tasks.storages.LocalFiles
+                outputs:
+                  - out/*
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
-    format: "{{ outputs.second.s1.s2.s3.vars.stay }}"
+    format: "{{ outputs.second.s1.s2.s3.uris['out/stay.txt'] }}"

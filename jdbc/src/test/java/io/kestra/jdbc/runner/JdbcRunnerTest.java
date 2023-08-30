@@ -6,16 +6,17 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.tasks.flows.*;
+import io.kestra.core.tasks.flows.EachSequentialTest;
+import io.kestra.core.tasks.flows.FlowCaseTest;
+import io.kestra.core.tasks.flows.PauseTest;
+import io.kestra.core.tasks.flows.WorkingDirectoryTest;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -62,16 +63,16 @@ public abstract class JdbcRunnerTest {
     private TaskDefaultsCaseTest taskDefaultsCaseTest;
 
     @Inject
-    private TemplateRepositoryInterface templateRepository;
-
-    @Inject
     private FlowCaseTest flowCaseTest;
 
     @Inject
-    private WorkerTest.Suite workerTest;
+    private WorkingDirectoryTest.Suite workingDirectoryTest;
 
     @Inject
     private PauseTest.Suite pauseTest;
+
+    @Inject
+    private SkipExecutionCaseTest skipExecutionCaseTest;
 
     @BeforeAll
     void init() throws IOException, URISyntaxException {
@@ -177,16 +178,6 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void withTemplate() throws Exception {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
-    }
-
-    @RetryingTest(5) // flaky on MySQL
-    void withFailedTemplate() throws Exception {
-        TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
-    }
-
-    @Test
     void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
         taskDefaultsCaseTest.taskDefaults();
@@ -215,17 +206,17 @@ public abstract class JdbcRunnerTest {
 
     @Test
     public void workerSuccess() throws Exception {
-        workerTest.success(runnerUtils);
+        workingDirectoryTest.success(runnerUtils);
     }
 
     @Test
     public void workerFailed() throws Exception {
-        workerTest.failed(runnerUtils);
+        workingDirectoryTest.failed(runnerUtils);
     }
 
     @Test
     public void workerEach() throws Exception {
-        workerTest.each(runnerUtils);
+        workingDirectoryTest.each(runnerUtils);
     }
 
     @Test
@@ -248,5 +239,10 @@ public abstract class JdbcRunnerTest {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "execution-start-date", null, null, Duration.ofSeconds(60));
 
         assertThat((String) execution.getTaskRunList().get(0).getOutputs().get("value"), matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
+    }
+
+    @Test
+    void skipExecution() throws TimeoutException, InterruptedException {
+        skipExecutionCaseTest.skipExecution();
     }
 }

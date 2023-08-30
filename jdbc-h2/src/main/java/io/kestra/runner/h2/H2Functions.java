@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,7 +66,11 @@ public class H2Functions {
 
     @SneakyThrows
     private static <T> T jq(String value, String expression, Function<JsonNode, T> function) {
-        JsonNode node = H2Functions.jq(value, expression).get(0);
+        List<JsonNode> jq = H2Functions.jq(value, expression);
+        if (jq.isEmpty()) {
+            return null;
+        }
+        JsonNode node = jq.get(0);
 
         if (node instanceof NullNode) {
             return null;

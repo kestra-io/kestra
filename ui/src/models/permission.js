@@ -1,5 +1,5 @@
 export default {
-    FLOW : "FLOW",
+    FLOW: "FLOW",
     EXECUTION: "EXECUTION",
-    TEMPLATE: "TEMPLATE",
+    TEMPLATE: "TEMPLATE"
 }

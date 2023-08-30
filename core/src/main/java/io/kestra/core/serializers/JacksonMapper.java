@@ -30,18 +30,16 @@ abstract public class JacksonMapper {
         new ObjectMapper()
     );
 
+    private static final ObjectMapper NON_STRICT_MAPPER = MAPPER
+        .copy()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     public static ObjectMapper ofJson() {
         return MAPPER;
     }
 
     public static ObjectMapper ofJson(boolean strict) {
-        if (strict) {
-            return MAPPER;
-        }
-
-        return MAPPER
-            .copy()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return strict ? MAPPER : NON_STRICT_MAPPER;
     }
 
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.configure(
@@ -101,7 +99,6 @@ abstract public class JacksonMapper {
             new IonObjectMapper(new IonFactory())
         )
         .registerModule(new IonModule())
-        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS)
         .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
     public static ObjectMapper ofIon() {
@@ -117,7 +114,6 @@ abstract public class JacksonMapper {
 
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
             .registerModule(new JavaTimeModule())
             .registerModule(new Jdk8Module())

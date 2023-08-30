@@ -21,17 +21,12 @@ public abstract class PostgresFlowRepositoryService {
 
         if (labels != null)  {
             labels.forEach((key, value) -> {
-                Field<String> field = DSL.field("value #>> '{labels, " + key + "}'", String.class);
-
-                if (value == null) {
-                    conditions.add(field.isNotNull());
-                } else {
-                    conditions.add(field.eq(value));
-                }
+                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
+                conditions.add(DSL.condition(sql));
             });
         }
 
-        return conditions.size() == 0 ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {

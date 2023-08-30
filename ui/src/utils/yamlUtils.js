@@ -207,10 +207,10 @@ export default class YamlUtils {
 
         yaml.visit(yamlDoc, {
             Pair(_, pair) {
-                if (pair.key.value === 'dependsOn' && pair.value.items.map(e => e.value).includes(taskId2)) {
+                if (pair.key.value === "dependsOn" && pair.value.items.map(e => e.value).includes(taskId2)) {
                     throw {
-                        message: 'dependency task',
-                        messageOptions: { taskId: taskId2 }
+                        message: "dependency task",
+                        messageOptions: {taskId: taskId2}
                     };
                 }
             }
@@ -426,6 +426,66 @@ export default class YamlUtils {
             }
         })
         return children;
+    }
+
+    static getParentTask(source, taskId) {
+        const yamlDoc = yaml.parseDocument(source);
+        let parentTask = null;
+        yaml.visit(yamlDoc, {
+            Map(_, map) {
+                if (map.get("id") !== taskId) {
+                    yaml.visit(map, {
+                        Map(_, childMap) {
+                            if (childMap.get("id") === taskId) {
+                                parentTask = map.get("id");
+                                return yaml.visit.BREAK;
+                            }
+                        }
+                    })
+                }
+            }
+        })
+        return parentTask;
+    }
+
+    static isTaskError(source, taskId) {
+        const yamlDoc = yaml.parseDocument(source);
+        let isTaskError = false;
+        yaml.visit(yamlDoc, {
+            Pair(_, pair) {
+                if (pair.key.value === "errors") {
+                    yaml.visit(pair, {
+                        Map(_, map) {
+                            if (map.get("id") === taskId) {
+                                isTaskError = true;
+                                return yaml.visit.BREAK;
+                            }
+                        }
+                    })
+                }
+            }
+        })
+        return isTaskError;
+    }
+
+    static isTrigger(source, taskId) {
+        const yamlDoc = yaml.parseDocument(source);
+        let isTrigger = false;
+        yaml.visit(yamlDoc, {
+            Pair(_, pair) {
+                if (pair.key.value === "triggers") {
+                    yaml.visit(pair, {
+                        Map(_, map) {
+                            if (map.get("id") === taskId) {
+                                isTrigger = true;
+                                return yaml.visit.BREAK;
+                            }
+                        }
+                    })
+                }
+            }
+        })
+        return isTrigger;
     }
 
     static replaceIdAndNamespace(source, id, namespace) {

@@ -3,8 +3,6 @@
         id="side-menu"
         :menu="menu"
         @update:collapsed="onToggleCollapse"
-        :show-one-child="true"
-        :show-child="showChildren"
         width="268px"
         :collapsed="collapsed"
     >
@@ -14,10 +12,11 @@
                     <span class="img" />
                 </router-link>
             </div>
+            <Environment />
         </template>
 
         <template #footer>
-            <span class="version">{{ configs ? configs.version : '' }}</span>
+            <span class="version">{{ configs.version }}</span>
         </template>
 
         <template #toggle-icon>
@@ -29,6 +28,7 @@
 
 <script>
     import {SidebarMenu} from "vue-sidebar-menu";
+    import Environment from "../../components/layout/Environment.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
@@ -39,12 +39,13 @@
     import Ballot from "vue-material-design-icons/Ballot.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import FileCodeOutline from "vue-material-design-icons/FileCodeOutline.vue";
+    import AccountSupervisorOutline from "vue-material-design-icons/AccountSupervisorOutline.vue";
     import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import Github from "vue-material-design-icons/Github.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
-    import FileDocumentArrowRightOutline from "vue-material-design-icons/FileDocumentArrowRightOutline.vue";
+    import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -52,6 +53,7 @@
             ChevronLeft,
             ChevronRight,
             SidebarMenu,
+            Environment,
         },
         emits: ["menu-collapse"],
         methods: {
@@ -64,22 +66,17 @@
                 return items
                     .map(r => {
                         if (r.href === this.$route.path) {
-                            r.disabled = true
+                            r.disabled = true;
                         }
 
-                        if (r.href !== "/" && this.$route.path.startsWith(r.href)) {
-                            r.class = "vsm--link_active"
+                        // route hack is still needed for blueprints
+                        if (r.href !== "/" && (this.$route.path.startsWith(r.href) || r.routes?.includes(this.$route.name))) {
+                            r.class = "vsm--link_active";
                         }
 
-                        // special case for plugins, were parents have no href to set active
-                        // Could be adapted to all routes to have something more generic
-                        if (r.routes?.includes(this.$route.name)) {
-                            r.class = "vsm--link_active"
-
-                            if (r.child) {
-                                this.showChildren = true
-                                r.child = this.disabledCurrentRoute(r.child)
-                            }
+                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href))) {
+                            r.class = "vsm--link_active";
+                            r.child = this.disabledCurrentRoute(r.child);
                         }
 
                         return r;
@@ -111,6 +108,7 @@
                             element: ContentCopy,
                             class: "menu-icon",
                         },
+                        hidden: !this.configs.isTemplateEnabled
                     },
                     {
                         href: "/executions",
@@ -127,7 +125,7 @@
                             element: TimelineTextOutline,
                             class: "menu-icon"
                         },
-                        hidden: !(this.configs && this.configs.isTaskRunEnabled)
+                        hidden: !this.configs.isTaskRunEnabled
                     },
                     {
                         href: "/logs",
@@ -151,7 +149,6 @@
                             element: BookMultipleOutline,
                             class: "menu-icon"
                         },
-                        routes: ["plugins/view"],
                         child: [
                             {
                                 href: "https://kestra.io/docs/",
@@ -165,20 +162,10 @@
                             {
                                 href: "/plugins",
                                 title: this.$t("plugins.names"),
-                                routes: ["plugins/view"],
                                 icon: {
                                     element: GoogleCirclesExtended,
                                     class: "menu-icon"
                                 },
-                            },
-                            {
-                                href: "https://kestra.io/docs/flow-examples/",
-                                title: this.$t("documentation.examples"),
-                                icon: {
-                                    element: FileDocumentArrowRightOutline,
-                                    class: "menu-icon"
-                                },
-                                external: true
                             },
                             {
                                 href: "https://kestra.io/slack",
@@ -202,6 +189,23 @@
                         ]
                     },
                     {
+                        title: this.$t("administration"),
+                        icon: {
+                            element: AccountSupervisorOutline,
+                            class: "menu-icon"
+                        },
+                        child: [
+                            {
+                                href: "/admin/triggers",
+                                title: this.$t("triggers"),
+                                icon: {
+                                    element: TimerCogOutline,
+                                    class: "menu-icon"
+                                }
+                            }
+                        ]
+                    },
+                    {
                         href: "/settings",
                         title: this.$t("settings"),
                         icon: {
@@ -210,8 +214,10 @@
                         }
                     }
                 ];
+            },
+            expandParentIfNeeded() {
+                document.querySelectorAll(".vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => e.click());
             }
-
         },
         watch: {
             menu: {
@@ -220,7 +226,7 @@
                         //empty icon name on mouseover
                         e.setAttribute("title", "")
                     });
-                    this.showChildren = false
+                    this.expandParentIfNeeded();
                 },
                 flush: 'post'
             }
@@ -228,17 +234,16 @@
         data() {
             return {
                 collapsed: localStorage.getItem("menuCollapsed") === "true",
-                showChildren: false
             };
         },
         computed: {
             ...mapState("misc", ["configs"]),
             menu() {
-                if (this.configs) {
-                    return this.disabledCurrentRoute(this.generateMenu());
-                }
-                return [];
+                return this.disabledCurrentRoute(this.generateMenu());
             }
+        },
+        mounted() {
+            this.expandParentIfNeeded();
         }
     };
 </script>
@@ -251,7 +256,7 @@
         .logo {
             overflow: hidden;
             padding: 35px 0;
-            height: 133px;
+            height: 113px;
             position: relative;
 
             a {

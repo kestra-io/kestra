@@ -12,9 +12,8 @@ listeners:
           - FAILED
     tasks:
       - id: execution-failed-listener
-        type: io.kestra.core.tasks.scripts.Bash
-        commands:
-          - 'sleep 1'
+        type: io.kestra.core.tasks.log.Log
+        message: "{{ task.id }}"
 
   - conditions:
       - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
@@ -35,6 +34,4 @@ tasks:
           format: "{{task.id}} > {{taskrun.startDate}}"
       KO:
         - id: ko
-          type: io.kestra.core.tasks.scripts.Bash
-          commands:
-            - 'exit 1'
+          type: io.kestra.core.tasks.executions.Fail

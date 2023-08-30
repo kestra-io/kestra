@@ -1,11 +1,13 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.collectors.ExecutionUsage;
+import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -18,7 +20,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.Valid;
+import java.util.Optional;
 
 @Slf4j
 @Controller
@@ -35,8 +37,19 @@ public class MiscController {
     @Inject
     CollectorService collectorService;
 
+    @Inject
+    Optional<TemplateRepositoryInterface> templateRepository;
+
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
+
+    @io.micronaut.context.annotation.Value("${kestra.environment.name}")
+    @Nullable
+    protected String environmentName;
+
+    @io.micronaut.context.annotation.Value("${kestra.environment.color}")
+    @Nullable
+    protected String environmentColor;
 
     @Get("/ping")
     @Hidden
@@ -48,24 +61,36 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get current configurations")
     public Configuration configuration() {
-        return Configuration
+        Configuration.ConfigurationBuilder builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
-            .build();
+            .isWorkerInstanceEnabled(false)
+            .isTemplateEnabled(templateRepository.isPresent());
+
+        if (this.environmentName != null || this.environmentColor != null) {
+            builder.environment(
+                Environment.builder()
+                    .name(this.environmentName)
+                    .color(this.environmentColor)
+                    .build()
+            );
+        }
+
+        return builder.build();
     }
 
-    @Get("/api/v1/execution-usage")
+    @Get("/api/v1/usages")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get execution usage information")
-    public ExecutionUsage executionUsage() {
-        return ExecutionUsage.of(executionRepository);
+    public Usage usages() {
+        return collectorService.metrics();
     }
 
     @Value
-    @Builder
+    @Builder(toBuilder = true)
     public static class Configuration {
         String uuid;
 
@@ -76,5 +101,20 @@ public class MiscController {
 
         @JsonInclude
         Boolean isAnonymousUsageEnabled;
+
+        @JsonInclude
+        Boolean isWorkerInstanceEnabled;
+
+        @JsonInclude
+        Boolean isTemplateEnabled;
+
+        Environment environment;
+    }
+
+    @Value
+    @Builder(toBuilder = true)
+    public static class Environment {
+        String name;
+        String color;
     }
 }

@@ -1,3 +1,5 @@
+import _merge from "lodash/merge";
+
 export default {
     namespaced: true,
     state: {
@@ -25,7 +27,7 @@ export default {
             }
 
             return this.$http.get(`/api/v1/plugins/${options.cls}`, {params: options}).then(response => {
-                if(options.all === true) {
+                if (options.all === true) {
                     commit("setPluginAllProps", response.data)
                 } else {
                     commit("setPlugin", response.data)
@@ -34,14 +36,25 @@ export default {
             })
         },
         icons({commit}) {
-            return this.$http.get("/api/v1/plugins/icons", {}).then(response => {
-                commit("setIcons", response.data)
+            return Promise.all([
+                this.$http.get("/api/v1/plugins/icons", {}),
+                this.dispatch("api/pluginIcons")
+            ]).then(responses => {
+                const icons = responses[0].data;
 
-                return response.data;
-            })
+                for (const [key, plugin] of Object.entries(responses[1].data)) {
+                    if (icons[key] === undefined) {
+                        icons[key] = plugin
+                    }
+                }
+
+                commit("setIcons", icons);
+
+                return icons;
+            });
         },
         loadInputsType({commit}) {
-            return this.$http.get(`/api/v1/plugins/inputs`, {}).then(response => {
+            return this.$http.get("/api/v1/plugins/inputs", {}).then(response => {
                 commit("setInputsType", response.data)
 
                 return response.data;
@@ -88,6 +101,7 @@ export default {
     getters: {
         getPluginSingleList: state => state.pluginSingleList,
         getPluginsDocumentation: state => state.pluginsDocumentation,
+        getIcons: state => state.icons
     }
 }
 

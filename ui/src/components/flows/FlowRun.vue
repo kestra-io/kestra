@@ -5,7 +5,7 @@
             {{ $t('disabled flow desc') }}
         </el-alert>
 
-        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent>
+        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="onSubmit($refs.form)">
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
@@ -77,7 +77,7 @@
                     v-model="inputs[input.name]"
                 />
 
-                <small v-if="input.description" class="text-muted">{{ input.description }}</small>
+                <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
             </el-form-item>
             <el-form-item
                 :label="$t('execution labels')"
@@ -96,7 +96,7 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled || haveBadLabels">
+                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" native-type="submit" :disabled="flow.disabled || haveBadLabels">
                             {{ $t('launch execution') }}
                         </el-button>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
@@ -119,6 +119,7 @@
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
+    import Markdown from "../layout/Markdown.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {

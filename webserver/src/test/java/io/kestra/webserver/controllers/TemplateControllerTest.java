@@ -2,14 +2,16 @@ package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.repository.memory.MemoryTemplateRepository;
+import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -36,20 +38,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class TemplateControllerTest extends AbstractMemoryRunnerTest {
+@Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
+class TemplateControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
     RxHttpClient client;
 
     @Inject
-    MemoryTemplateRepository templateRepository;
+    AbstractJdbcTemplateRepository templateRepository;
 
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
         templateRepository.findAll()
             .forEach(templateRepository::delete);
 
-        super.init();
+        super.setup();
     }
 
     private Template createTemplate() {

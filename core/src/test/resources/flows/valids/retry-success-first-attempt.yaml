@@ -1,0 +1,18 @@
+id: retry-success-first-attempt
+namespace: io.kestra.tests
+
+tasks:
+- id: not-retry-and-no-warning
+  type: io.kestra.core.tasks.log.Log
+  message: "foo"
+  retry:
+    type: constant
+    interval: PT0.250S
+    maxAttempt: 5
+    maxDuration: PT15S
+    warningOnRetry: true
+
+errors:
+  - id: never-happen
+    type: io.kestra.core.tasks.log.Log
+    message: Never {{task.id}}

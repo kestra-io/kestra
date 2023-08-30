@@ -29,9 +29,7 @@ tasks:
           type: io.kestra.core.tasks.flows.Sequential
           tasks:
             - id: failed
-              type: io.kestra.core.tasks.scripts.Bash
-              commands:
-              - 'exit 1'
+              type: io.kestra.core.tasks.executions.Fail
           errors:
             - id: error-t1
               type: io.kestra.core.tasks.debugs.Return

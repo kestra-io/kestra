@@ -69,11 +69,9 @@ export default {
                             variant: "danger"
                         }, {root: true});
                         delete response.data.exception;
-                        commit("setFlow", JSON.parse(response.data.source));
-                    } else {
-                        commit("setFlow", response.data);
                     }
 
+                    commit("setFlow", response.data);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })

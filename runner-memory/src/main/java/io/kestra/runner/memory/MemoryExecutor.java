@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -24,6 +25,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,7 +36,6 @@ import java.util.stream.Collectors;
 @MemoryQueueEnabled
 @Slf4j
 public class MemoryExecutor implements ExecutorInterface {
-    private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
@@ -69,7 +70,7 @@ public class MemoryExecutor implements ExecutorInterface {
     private TaskDefaultService taskDefaultService;
 
     @Inject
-    private Template.TemplateExecutorInterface templateExecutorInterface;
+    private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
 
     @Inject
     private ExecutorService executorService;
@@ -89,6 +90,14 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     protected FlowListenersInterface flowListeners;
 
+    @Inject
+    private SkipExecutionService skipExecutionService;
+
+    @Inject
+    private AbstractFlowTriggerService flowTriggerService;
+
+    private final MultipleConditionStorageInterface multipleConditionStorage = new MemoryMultipleConditionStorage();
+
     @Override
     public void run() {
         flowListeners.run();
@@ -101,20 +110,27 @@ public class MemoryExecutor implements ExecutorInterface {
     }
 
     private void executionQueue(Execution message) {
+        if (skipExecutionService.skipExecution(message.getId())) {
+            log.warn("Skipping execution {}", message.getId());
+            return;
+        }
+
         if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.getState().isCreated()) {
             this.handleExecution(saveExecution(message));
         }
     }
 
     private Flow transform(Flow flow, Execution execution) {
-        try {
-            flow = Template.injectTemplate(
-                flow,
-                execution,
-                (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
-            );
-        } catch (InternalException e) {
-            log.debug("Failed to inject template",  e);
+        if (templateExecutorInterface.isPresent()) {
+            try {
+                flow = Template.injectTemplate(
+                    flow,
+                    execution,
+                    (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
+                );
+            } catch (InternalException e) {
+                log.debug("Failed to inject template", e);
+            }
         }
 
         return taskDefaultService.injectDefaults(flow, execution);
@@ -220,21 +236,8 @@ public class MemoryExecutor implements ExecutorInterface {
 
             // multiple condition
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
-                // multiple conditions storage
-                multipleConditionStorage.save(
-                    flowService
-                        .multipleFlowTrigger(allFlows.stream(), flow, execution, multipleConditionStorage)
-                );
-
-                // Flow Trigger
-                flowService
-                    .flowTriggerExecution(allFlows.stream(), execution, multipleConditionStorage)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
-
-                // Trigger is done, remove matching multiple condition
-                flowService
-                    .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
-                    .forEach(multipleConditionStorage::delete);
             }
 
             // worker task execution
@@ -295,6 +298,11 @@ public class MemoryExecutor implements ExecutorInterface {
     }
 
     private void workerTaskResultQueue(WorkerTaskResult message) {
+        if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
+            log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
+            return;
+        }
+
         synchronized (this) {
             if (log.isDebugEnabled()) {
                 executorService.log(log, true, message);
@@ -367,6 +375,7 @@ public class MemoryExecutor implements ExecutorInterface {
                 }
             });
     }
+
 
     private static class ExecutionState {
         private final Execution execution;

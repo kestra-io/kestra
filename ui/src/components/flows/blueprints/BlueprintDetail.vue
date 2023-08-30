@@ -11,7 +11,7 @@
                     <h2 class="blueprint-title align-self-center">
                         {{ blueprint.title }}
                     </h2>
-                    <div class="ms-auto align-self-center">
+                    <div v-if="userCanCreateFlow" class="ms-auto align-self-center">
                         <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
                             <el-button size="large" type="primary" v-if="!embed">
                                 {{ $t('use') }}
@@ -55,7 +55,7 @@
                                 <template #nav>
                                     <div class="position-absolute copy-wrapper">
                                         <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                            <el-button text round :icon="icon.ContentCopy" @click="copy(blueprint.flow)" />
+                                            <el-button text round :icon="icon.ContentCopy" @click="Utils.copy(blueprint.flow)" />
                                         </el-tooltip>
                                     </div>
                                 </template>
@@ -75,8 +75,6 @@
                         </div>
                     </el-col>
                 </el-row>
-
-
             </div>
         </template>
     </div>
@@ -85,15 +83,18 @@
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
-    import TaskIcon from "../../plugins/TaskIcon.vue";
+    import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
+    import Utils from "../../../utils/utils";
 </script>
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import {shallowRef} from "vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Markdown from "../../layout/Markdown.vue";
-
+    import {mapState} from "vuex";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
     export default {
         components: {Markdown},
@@ -127,9 +128,6 @@
                     this.$router.push({name: "blueprints"})
                 }
             },
-            copy(text) {
-                navigator.clipboard.writeText(text);
-            },
             asAutoRestoreDraft() {
                 localStorage.setItem("autoRestore-creation_draft", this.blueprint.flow);
             }
@@ -158,6 +156,10 @@
             }
         },
         computed: {
+            ...mapState("auth", ["user"]),
+            userCanCreateFlow() {
+                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+            },
             parsedFlow() {
                 return {
                     ...YamlUtils.parse(this.blueprint.flow),
@@ -171,7 +173,7 @@
     };
 </script>
 <style scoped lang="scss">
-    @import "../../../styles/variable";
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .header-wrapper {
         margin-bottom: calc($spacer * 2);
@@ -252,7 +254,7 @@
 
                 :deep(.wrapper) {
                     .icon {
-                        height: 70%;
+                        height: 100%;
                         margin: 0;
                     }
 

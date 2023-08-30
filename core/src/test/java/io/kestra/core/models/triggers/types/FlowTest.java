@@ -11,10 +11,12 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
@@ -29,9 +31,10 @@ class FlowTest {
             .namespace("io.kestra.unittest")
             .revision(1)
             .labels(
-                Map.of(
-                    "flow-label-1", "flow-label-1",
-                    "flow-label-2", "flow-label-2")
+                List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2")
+                )
             )
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
@@ -59,7 +62,7 @@ class FlowTest {
 
         assertThat(evaluate.isPresent(), is(true));
         assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
-        assertThat(evaluate.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
-        assertThat(evaluate.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
     }
 }

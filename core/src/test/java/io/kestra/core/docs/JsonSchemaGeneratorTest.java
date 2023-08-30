@@ -13,8 +13,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.log.Log;
-import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.tasks.flows.Dag;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -23,6 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -77,19 +77,16 @@ class JsonSchemaGeneratorTest {
             assertThat((List<String>) flow.get("required"), not(contains("deleted")));
             assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
-            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
-            assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
-            assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription"), containsString("Default value is : `true`"));
-            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription")).startsWith("This tells bash that"), is(true));
+            var bash = definitions.get("io.kestra.core.tasks.log.Log-1");
+            assertThat((List<String>) bash.get("required"), not(contains("level")));
+            assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
+            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("message").get("markdownDescription")).startsWith("Can be a string"), is(true));
             assertThat(((Map<String, Map<String, Object>>) bash.get("properties")).get("type").containsKey("pattern"), is(false));
-            assertThat((String) bash.get("markdownDescription"), containsString("Bash with some inputs files"));
-            assertThat((String) bash.get("markdownDescription"), containsString("outputFiles.first"));
+            assertThat((String) bash.get("markdownDescription"), containsString("##### Examples"));
+            assertThat((String) bash.get("markdownDescription"), containsString("level: WARN"));
 
-            var bashType = definitions.get("io.kestra.core.tasks.scripts.Bash-2");
+            var bashType = definitions.get("io.kestra.core.tasks.log.Log-2");
             assertThat(bashType, is(notNullValue()));
-
-            var python = definitions.get("io.kestra.core.tasks.scripts.Python-1");
-            assertThat((List<String>) python.get("required"), not(contains("exitOnFailed")));
         });
     }
 
@@ -122,22 +119,28 @@ class JsonSchemaGeneratorTest {
             var allOf = (List<Object>) task.get("allOf");
 
             assertThat(allOf.size(), is(1));
+
+            Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
+
+            assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
+                Matchers.aMapWithSize(1),
+                hasKey("conditions")
+            ));
         });
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    void bash() throws URISyntaxException {
+    void dag() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
-            Map<String, Object> generate = jsonSchemaGenerator.schemas(Bash.class);
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Dag.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
-            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
-            assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
-            assertThat((List<String>) bash.get("required"), not(contains("interpreter")));
+            var dag = definitions.get("io.kestra.core.tasks.flows.Dag-1");
+            assertThat((List<String>) dag.get("required"), not(contains("errors")));
         });
     }
 

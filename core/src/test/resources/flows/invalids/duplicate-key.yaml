@@ -3,11 +3,10 @@ namespace: io.kestra.tests
 
 tasks:
   - id: bad-task
-    type: "io.kestra.core.tasks.scripts.Bash"
-    inputFiles:
+    type: "io.kestra.core.tasks.states.Set"
+    data:
       variables.tf: |
         test
       variables.tf: |
         test
-    commands:
-      - ls
+    name: "unit"

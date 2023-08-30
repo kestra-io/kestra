@@ -26,7 +26,6 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.utils.LabelUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -142,9 +141,11 @@ public class Worker implements Runnable, AutoCloseable {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
-            RunContext runContext = workerTask.getRunContext();
+            RunContext runContext = workerTask.getRunContext().forWorker(applicationContext, workerTask);
 
             try {
+                workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
+
                 for (Task currentTask : workingDirectory.getTasks()) {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
@@ -161,6 +162,8 @@ public class Worker implements Runnable, AutoCloseable {
 
                     runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
                 }
+
+                workingDirectory.postExecuteTasks(runContext, workerTask.getTaskRun());
             } finally {
                 runContext.cleanup();
             }
@@ -203,7 +206,7 @@ public class Worker implements Runnable, AutoCloseable {
                         if (flowLabels != null) {
                             evaluate = evaluate.map( execution -> {
                                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                                    executionLabels.addAll(LabelUtils.from(flowLabels));
+                                    executionLabels.addAll(flowLabels);
                                     return execution.withLabels(executionLabels);
                                 }
                             );
@@ -352,7 +355,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         if (workerTask.getTask().getRetry() != null &&
             workerTask.getTask().getRetry().getWarningOnRetry() &&
-            finalWorkerTask.getTaskRun().getAttempts().size() > 0 &&
+            finalWorkerTask.getTaskRun().attemptNumber() > 1 &&
             state == State.Type.SUCCESS
         ) {
             state = State.Type.WARNING;

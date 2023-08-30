@@ -82,7 +82,7 @@
 </script>
 
 <style lang="scss" scoped>
-@import "../../styles/_variable.scss";
+@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 .status-pie {
     div {

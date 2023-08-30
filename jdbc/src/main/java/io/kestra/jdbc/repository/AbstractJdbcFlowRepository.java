@@ -52,7 +52,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             String source = record.get("value", String.class);
 
             try {
-                return this.jdbcRepository.deserialize(source);
+                Flow deserialize = this.jdbcRepository.deserialize(source);
+
+                // raise exception for invalid flow, ex: Templates disabled
+                deserialize.allTasksWithChilds();
+
+                return deserialize;
             } catch (DeserializationException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
@@ -60,7 +65,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .id(jsonNode.get("id").asText())
                         .namespace(jsonNode.get("namespace").asText())
                         .revision(jsonNode.get("revision").asInt())
-                        .source(JacksonMapper.ofJson().writeValueAsString(JacksonMapper.toMap(source)))
                         .exception(e.getMessage())
                         .tasks(List.of())
                         .build();
@@ -83,7 +87,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     from = context
                         .select(field("value", String.class))
                         .from(jdbcRepository.getTable())
-                        .where(field("namespace").eq(namespace))
+                        .where(this.revisionDefaultFilter())
+                        .and(field("namespace").eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(revision.get()));
                 } else {
@@ -97,6 +102,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 return this.jdbcRepository.fetchOne(from);
             });
+    }
+
+    protected Condition revisionDefaultFilter() {
+        return DSL.trueCondition();
     }
 
     @Override
@@ -113,7 +122,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             field("value", String.class)
                         )
                         .from(jdbcRepository.getTable())
-                        .where(field("namespace").eq(namespace))
+                        .where(this.revisionDefaultFilter())
+                        .and(field("namespace").eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(integer)))
                     .orElseGet(() -> context
@@ -131,10 +141,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     return Optional.empty();
                 }
 
-                 return Optional.of(FlowWithSource.of(
-                    jdbcRepository.map(fetched),
-                    fetched.get("source_code", String.class)
-                ));
+                Flow flow = jdbcRepository.map(fetched);
+                String source = fetched.get("source_code", String.class);
+                if (flow instanceof FlowWithException fwe) {
+                    return Optional.of(fwe.toBuilder().source(source).build());
+                }
+                return Optional.of(FlowWithSource.of(flow, source));
             });
     }
 
@@ -150,7 +162,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         field("value", String.class)
                     )
                     .from(jdbcRepository.getTable())
-                    .where(field("namespace", String.class).eq(namespace))
+                    .where(this.revisionDefaultFilter())
+                    .and(field("namespace", String.class).eq(namespace))
                     .and(field("id", String.class).eq(id))
                     .orderBy(field("revision", Integer.class).asc());
 

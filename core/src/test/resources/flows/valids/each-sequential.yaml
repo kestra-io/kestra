@@ -13,9 +13,8 @@ tasks:
         type: io.kestra.core.tasks.flows.AllowFailure
         tasks:
           - id: 1-2
-            type: io.kestra.core.tasks.scripts.Bash
-            commands:
-              - "exit {{ parent.taskrun.value == 'value 1' ? 1 : 0 }}"
+            type: io.kestra.core.tasks.log.Log
+            message: "{{ parent.taskrun.value == 'value 1' ? 'ok' : ko }}"
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

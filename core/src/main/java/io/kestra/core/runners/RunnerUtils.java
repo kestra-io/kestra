@@ -16,7 +16,6 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.LabelUtils;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -41,8 +40,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 @Singleton
 public class RunnerUtils {
@@ -398,7 +395,7 @@ public class RunnerUtils {
 
         List<Label> executionLabels = new ArrayList<>();
         if (flow.getLabels() != null) {
-            executionLabels.addAll(LabelUtils.from(flow.getLabels()));
+            executionLabels.addAll(flow.getLabels());
         }
         if (labels != null) {
             executionLabels.addAll(labels);

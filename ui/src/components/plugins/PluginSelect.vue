@@ -28,8 +28,7 @@
 
 <script>
     import {mapState} from "vuex";
-    import TaskIcon from "./TaskIcon.vue";
-    import {SECTIONS} from "../../utils/constants";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
     export default {
         components: {
@@ -70,23 +69,15 @@
 </script>
 
 <style lang="scss" scoped>
-    :deep(div.wrapper.only-icon) {
+    :deep(div.wrapper) {
         display: inline-block;
-        width: 25px;
-        height: 25px;
+        width: 20px;
+        height: 20px;
         margin-right: var(--spacer);
-        background: white;
-        padding: 2px;
-        position: relative;
-        top: 4px;
-
-        .icon {
-            margin-top: 0;
-        }
     }
 
     :deep(.el-input__prefix-inner) {
-        .wrapper.only-icon {
+        .wrapper {
             top: 0;
             margin-right: 0;
         }

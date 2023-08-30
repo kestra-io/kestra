@@ -8,7 +8,7 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.scripts.BashService;
+import io.kestra.core.tasks.PluginUtilsService;
 import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -40,9 +40,54 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Schema(
     title = "Allow to create files in the local filesystem or to send files from the local filesystem to the internal storage.",
-    description = "This task should be used with the WorkingDirectory task to be able to access the same local filesystem within multiple tasks."
+    description = "This task should be used with the WorkingDirectory task to be able to access the same local filesystem within multiple tasks. Note that this task cannot be skipped, so setting `disabled: true` will not work on this task."
 )
 @Plugin(examples = {
+    @Example(
+        full = true,
+        title = "Output local files created in a Python task and load them to S3",
+        code = """
+id: outputsFromPythonTask
+namespace: dev
+
+tasks:
+  - id: wdir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+      - id: cloneRepository
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/kestra-io/examples
+        branch: main
+
+      - id: gitPythonScripts
+        type: io.kestra.plugin.scripts.python.Commands
+        warningOnStdErr: false
+        runner: DOCKER
+        docker:
+          image: ghcr.io/kestra-io/pydata:latest
+        beforeCommands:
+          - pip install faker > /dev/null
+        commands:
+          - python scripts/etl_script.py
+          - python scripts/generate_orders.py
+
+      - id: outputFile
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - orders.csv
+          - "*.parquet"
+
+  - id: loadCsvToS3
+    type: io.kestra.plugin.aws.s3.Upload
+    accessKeyId: "{{secret('AWS_ACCESS_KEY_ID')}}"
+    secretKeyId: "{{secret('AWS_SECRET_ACCESS_KEY')}}"
+    region: eu-central-1
+    bucket: kestraio
+    key: stage/orders.csv
+    from: "{{outputs.outputFile.uris['orders.csv']}}"
+    disabled: true
+            """
+    ),
     @Example(
         full = true,
         title = "Create a local file that will be accessible to a bash task",
@@ -60,7 +105,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     hello.txt: "Hello World\\n"
                     address.json: "{{ outputs.myTaskId.uri }}"
                 - id: bash
-                  type: io.kestra.core.tasks.scripts.Bash
+                  type: io.kestra.plugin.scripts.shell.Commands
                   commands:
                     - cat hello.txt
             """
@@ -77,7 +122,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 type: io.kestra.core.tasks.flows.WorkingDirectory
                 tasks:
                 - id: bash
-                  type: io.kestra.core.tasks.scripts.Bash
+                  type: io.kestra.plugin.scripts.shell.Commands
                   commands:
                     - mkdir -p sub/dir
                     - echo "Hello from Bash" >> sub/dir/bash1.txt
@@ -108,7 +153,7 @@ public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFil
     public LocalFilesOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        Map<String, String> inputFiles = this.inputs == null ? Map.of() : BashService.transformInputFiles(runContext, this.inputs);
+        Map<String, String> inputFiles = this.inputs == null ? Map.of() : PluginUtilsService.transformInputFiles(runContext, this.inputs);
 
         inputFiles
             .forEach(throwBiConsumer((fileName, input) -> {

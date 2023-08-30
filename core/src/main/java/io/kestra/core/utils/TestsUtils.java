@@ -69,7 +69,13 @@ abstract public class TestsUtils {
         AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
         try {
             Await.until(() -> {
-                matchingLogs.set(logs.stream().filter(logMatcher).collect(Collectors.toList()));
+                matchingLogs.set(
+                    Collections.synchronizedList(logs)
+                        .stream()
+                        .filter(logMatcher)
+                        .collect(Collectors.toList())
+                );
+
                 if(countMatcher == null){
                     return !matchingLogs.get().isEmpty();
                 }

@@ -1,6 +1,8 @@
 import path from "path";
 import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
+import pluginRewriteAll from 'vite-plugin-rewrite-all';
+import {visualizer} from "rollup-plugin-visualizer";
 
 export default defineConfig({
     base: "",
@@ -14,8 +16,15 @@ export default defineConfig({
     },
     plugins: [
         vue(),
+        pluginRewriteAll(),
+        visualizer()
     ],
     css: {
         devSourcemap: true
+    },
+    optimizeDeps: {
+        exclude: [
+            '* > @kestra-io/ui-libs'
+        ]
     },
 })

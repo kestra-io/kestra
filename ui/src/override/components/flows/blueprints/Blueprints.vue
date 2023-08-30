@@ -2,7 +2,7 @@
     <blueprints-page-header v-if="!embed" />
     <div class="main-container" v-bind="$attrs">
         <blueprint-detail v-if="selectedBlueprintId" :embed="embed" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined" />
-        <blueprints-browser :class="{'d-none': !!selectedBlueprintId}" :embed="embed" blueprint-base-uri="/api/v1/blueprints/community" @go-to-detail="blueprintId => selectedBlueprintId = blueprintId" />
+        <blueprints-browser @loaded="$emit('loaded', $event)" :class="{'d-none': !!selectedBlueprintId}" :embed="embed" blueprint-base-uri="/api/v1/blueprints/community" @go-to-detail="blueprintId => selectedBlueprintId = blueprintId" />
     </div>
 </template>
 <script>
@@ -12,13 +12,11 @@
     import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
     import BlueprintsBrowser from "./BlueprintsBrowser.vue";
     import BlueprintsPageHeader from "./BlueprintsPageHeader.vue";
-    import TaskIcon from "../../../../components/plugins/TaskIcon.vue";
 
     export default {
         mixins: [RouteContext],
         inheritAttrs: false,
         components: {
-            TaskIcon,
             SearchField,
             DataTable,
             BlueprintDetail,

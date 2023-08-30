@@ -33,9 +33,13 @@ export default class Utils {
 
     static flatten(object) {
         return Object.assign({}, ...function _flatten(child, path = []) {
+            if (child === null) {
+                return {[path.join(".")]: null};
+            }
+
             return []
                 .concat(...Object
-                    .keys(child)
+                    .keys(child === null ? [] : child)
                     .map(key => typeof child[key] === "object" ?
                         _flatten(child[key], path.concat([key])) :
                         ({[path.concat([key]).join(".")]: child[key]})
@@ -183,5 +187,31 @@ export default class Utils {
 
     static splitFirst(str, separator){
         return str.split(separator).slice(1).join(separator);
+    }
+
+    static asArray(objOrArray) {
+        if(objOrArray === undefined) {
+            return [];
+        }
+
+        return Array.isArray(objOrArray) ? objOrArray : [objOrArray];
+    }
+
+    static async copy(text) {
+        if(navigator.clipboard) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const node = document.createElement("textarea");
+        node.style.position = "absolute";
+        node.style.left = "-9999px";
+        node.textContent = text;
+        document.body.appendChild(node).value = text;
+        node.select()
+
+        document.execCommand('copy');
+
+        document.body.removeChild(node);
     }
 }

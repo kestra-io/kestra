@@ -2,9 +2,8 @@ id: "first_flow"
 namespace: "validation"
 tasks:
   - id: task_one
-    type: io.kestra.core.tasks.scripts.Bash
-    commands:
-      - 'echo strange---string'
+    type: io.kestra.core.tasks.log.Log
+    message: "strange---string"
 
 ---
 

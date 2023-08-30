@@ -3,18 +3,14 @@ namespace: io.kestra.tests
 
 tasks:
 - id: a
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-    - 'exit 0'
+  type: io.kestra.core.tasks.log.Log
+  message: "{{ task.id }}"
 - id: b
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-    - 'exit 0'
+  type: io.kestra.core.tasks.log.Log
+  message: "{{ task.id }}"
 - id: c
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-    - 'if [ "{{taskrun.attemptsCount}}" -eq 1 ]; then exit 0; else exit 1; fi'
+  type: io.kestra.core.tasks.log.Log
+  message: "{{taskrun.attemptsCount == 1 ? 'ok' : ko}}"
 - id: d
-  type: io.kestra.core.tasks.scripts.Bash
-  commands:
-    - 'exit 0'
+  type: io.kestra.core.tasks.log.Log
+  message: "{{ task.id }}"

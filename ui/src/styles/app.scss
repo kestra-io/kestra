@@ -1,5 +1,7 @@
-@use "variable" as global-var;
+@use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
+
+ @use "@kestra-io/ui-libs/src/scss/app.scss";
 
 // element-plus
 @use "layout/element-plus-overload";
@@ -18,10 +20,6 @@
 @use "components/vue-material-design-icon";
 @use "components/vue-nprogress" with (
     $indigo: global-var.$indigo
-);
-@use "components/vue-flow"  with (
-    $cyan: global-var.$cyan,
-    $indigo: global-var.$purple
 );
 
 // main layout

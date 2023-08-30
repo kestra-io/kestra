@@ -24,6 +24,8 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.net.URI;
@@ -480,6 +482,17 @@ public class RunContext {
         return this.putTempFile(file, this.storageOutputPrefix.toString(), name);
     }
 
+    /**
+     * Put the temporary file on storage and delete it after.
+     * This method is meant to be used by polling triggers, the name of the destination file is derived from the
+     * executionId and the trigger passed as parameters.
+     *
+     * @param file the temporary file to upload to storage
+     * @param executionId overwrite file name
+     * @param trigger the trigger
+     * @return the {@code StorageObject} created
+     * @throws IOException If the temporary file can't be read
+     */
     public URI putTempFile(File file, String executionId, AbstractTrigger trigger) throws IOException {
         return this.putTempFile(
             file,
@@ -573,6 +586,51 @@ public class RunContext {
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
         return this.storageInterface.delete(resolve);
+    }
+
+    /**
+     * Get from the internal storage the cache file corresponding to this task.
+     * If the cache file didn't exist, an empty Optional is returned.
+     *
+     * @param namespace the flow namespace
+     * @param flowId the flow identifier
+     * @param taskId the task identifier
+     * @param value optional, the task run value
+     *
+     * @return an Optional with the cache input stream or empty.
+     */
+    public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.get(uri)) : Optional.empty();
+    }
+
+    public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.lastModifiedTime(uri)) : Optional.empty();
+    }
+
+    /**
+     * Put into the internal storage the cache file corresponding to this task.
+     *
+     * @param file the cache as a ZIP archive
+     * @param namespace the flow namespace
+     * @param flowId the flow identifier
+     * @param taskId the task identifier
+     * @param value optional, the task run value
+     *
+     * @return the URI of the file inside the internal storage.
+     */
+    public URI putTaskCacheFile(File file, String namespace, String flowId, String taskId, String value) throws IOException {
+        return this.putTempFile(
+            file,
+            "/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value),
+            "cache.zip"
+        );
+    }
+
+    public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.delete(uri)) : Optional.empty();
     }
 
     public List<URI> purgeStorageExecution() throws IOException {
@@ -678,6 +736,16 @@ public class RunContext {
         }
 
         return tempFile;
+    }
+
+    /**
+     * Get the file extension including the '.' to be used with the various methods that took a suffix.
+     * @param fileName the name of the file
+     * @return the file extension including the '.' or null
+     */
+    public String fileExtension(String fileName) {
+        String extension = FilenameUtils.getExtension(fileName);
+        return StringUtils.isEmpty(extension) ? null : "." + extension;
     }
 
     public void cleanup() {

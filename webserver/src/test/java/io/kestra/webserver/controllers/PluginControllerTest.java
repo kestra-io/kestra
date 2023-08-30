@@ -4,12 +4,12 @@ import io.kestra.core.docs.DocumentationWithSchema;
 import io.kestra.core.docs.InputType;
 import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
+import io.kestra.core.tasks.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
-import io.kestra.core.tasks.scripts.Bash;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -66,27 +66,28 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, PluginIcon.class)
             );
 
-            assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Bash.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
+            assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Log.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
         });
     }
 
 
     @SuppressWarnings("unchecked")
     @Test
-    void bash() throws URISyntaxException {
+    void returnTask() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.scripts.Bash"),
+                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.debugs.Return"),
                 DocumentationWithSchema.class
             );
 
-            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.scripts.Bash"));
-            assertThat(doc.getMarkdown(), containsString("Exit if any non true return value"));
-            assertThat(doc.getMarkdown(), containsString("The standard output line count"));
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(13));
-            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(6));
+            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.debugs.Return"));
+            assertThat(doc.getMarkdown(), containsString("Debugging task that returns"));
+            assertThat(doc.getMarkdown(), containsString("The templated string to render"));
+            assertThat(doc.getMarkdown(), containsString("The generated string"));
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(1));
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
         });
     }
 

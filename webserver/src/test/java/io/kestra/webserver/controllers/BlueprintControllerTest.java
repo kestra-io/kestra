@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -77,6 +76,7 @@ class BlueprintControllerTest {
         wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/flow")));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void blueprintGraph(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/id_1/graph.*"))

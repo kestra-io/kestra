@@ -22,9 +22,12 @@ dependencies {
 
     // test
     testImplementation project(':core').sourceSets.test.output
-    testImplementation project(':repository-memory')
-    testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.0")
+
+    testImplementation project(':jdbc')
+    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':jdbc-h2')
+    testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 

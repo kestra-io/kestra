@@ -139,7 +139,7 @@ jobs:
             plugins: ""
             packages: ""
           - name: "-full"
-            plugins: io.kestra.storage:storage-azure:LATEST io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-airbyte:LATEST io.kestra.plugin:plugin-amqp:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-azure:LATEST io.kestra.plugin:plugin-powerbi:LATEST io.kestra.plugin:plugin-pulsar:LATEST io.kestra.plugin:plugin-cassandra:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-couchbase:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-dbt:LATEST io.kestra.plugin:plugin-debezium-mysql:LATEST io.kestra.plugin:plugin-debezium-postgres:LATEST io.kestra.plugin:plugin-debezium-sqlserver:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fivetran:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-git:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-duckdb:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-nats:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-pinot:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-rockset:LATEST io.kestra.plugin:plugin-jdbc-snowflake:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-trino:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-mqtt:LATEST io.kestra.plugin:plugin-neo4j:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-openai:LATEST io.kestra.plugin:plugin-redis:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-script-node:LATEST io.kestra.plugin:plugin-script-powershell:LATEST io.kestra.plugin:plugin-script-python:LATEST io.kestra.plugin:plugin-script-r:LATEST io.kestra.plugin:plugin-script-shell:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-servicenow:LATEST io.kestra.plugin:plugin-singer:LATEST io.kestra.plugin:plugin-soda:LATEST io.kestra.plugin:plugin-spark:LATEST io.kestra.plugin:plugin-tika:LATEST
+            plugins: io.kestra.storage:storage-azure:LATEST io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-airbyte:LATEST io.kestra.plugin:plugin-amqp:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-azure:LATEST io.kestra.plugin:plugin-powerbi:LATEST io.kestra.plugin:plugin-pulsar:LATEST io.kestra.plugin:plugin-cassandra:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-couchbase:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-databricks:LATEST io.kestra.plugin:plugin-dbt:LATEST io.kestra.plugin:plugin-debezium-mysql:LATEST io.kestra.plugin:plugin-debezium-postgres:LATEST io.kestra.plugin:plugin-debezium-sqlserver:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fivetran:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-git:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-hightouch:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-duckdb:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-nats:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-pinot:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-rockset:LATEST io.kestra.plugin:plugin-jdbc-snowflake:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-trino:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-mqtt:LATEST io.kestra.plugin:plugin-neo4j:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-openai:LATEST io.kestra.plugin:plugin-redis:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-script-julia:LATEST io.kestra.plugin:plugin-script-node:LATEST io.kestra.plugin:plugin-script-powershell:LATEST io.kestra.plugin:plugin-script-python:LATEST io.kestra.plugin:plugin-script-r:LATEST io.kestra.plugin:plugin-script-shell:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-servicenow:LATEST io.kestra.plugin:plugin-singer:LATEST io.kestra.plugin:plugin-soda:LATEST io.kestra.plugin:plugin-spark:LATEST io.kestra.plugin:plugin-tika:LATEST io.kestra.plugin:plugin-malloy:LATEST
             packages: python3 python3-venv python-is-python3 nodejs npm curl zip unzip
     steps:
       - uses: actions/checkout@v3
@@ -277,48 +277,6 @@ jobs:
           echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
           echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
           ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon --priority=normal
-
-  pip:
-    name: Publish to Pip
-    runs-on: ubuntu-latest
-    needs: check
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - name: Copy gradle properties
-        run: |
-          cp gradle.properties core/src/main/resources/scripts/python/gradle.properties
-          cp README.md core/src/main/resources/scripts/python/README.md
-
-      - name: Install pypa/build
-        working-directory: core/src/main/resources/scripts/python
-        run: >-
-          python -m
-          pip install
-          build
-          --user
-
-      - name: Build a binary wheel and a source tarball
-        working-directory: core/src/main/resources/scripts/python
-        run: >-
-          python -m
-          build
-          --sdist
-          --wheel
-          --outdir dist/
-          .
-
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          packages-dir: core/src/main/resources/scripts/python
 
   end:
     runs-on: ubuntu-latest

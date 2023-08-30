@@ -73,6 +73,7 @@
     import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
     import Labels from "../layout/Labels.vue"
+    import {toRaw} from "vue";
 
     export default {
         components: {
@@ -162,12 +163,7 @@
                 return ret;
             },
             inputs() {
-                const inputs = {};
-                for (const key in this.execution.inputs) {
-                    inputs[key] = this.execution.inputs[key];
-                }
-
-                return inputs;
+                return toRaw(this.execution.inputs);
             }
         },
     };

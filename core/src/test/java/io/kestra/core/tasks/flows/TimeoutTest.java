@@ -9,7 +9,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.services.TaskDefaultService;
-import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -17,13 +17,13 @@ import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 class TimeoutTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -38,17 +38,17 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
 
     @Test
     void timeout() throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         workerTaskLogQueue.receive(logs::add);
 
         Flow flow = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .revision(1)
-            .tasks(Collections.singletonList(Bash.builder()
+            .tasks(Collections.singletonList(Sleep.builder()
                 .id("test")
-                .type(Bash.class.getName())
-                .commands(new String[]{"sleep 100"})
+                .type(Sleep.class.getName())
+                .duration(100000L)
                 .timeout(Duration.ofNanos(100000))
                 .build()))
             .build();

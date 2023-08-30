@@ -25,45 +25,33 @@
         "tasks": [
           {
             "id": "t1",
-            "type": "io.kestra.core.tasks.scripts.UnknownTask",
-            "commands": [
-              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-            ]
+            "type": "io.kestra.core.tasks.debugs.UnknownTask",
+            "message": "{{task.id}}"
           },
           {
             "id": "t2",
-            "type": "io.kestra.core.tasks.scripts.Bash",
-            "commands": [
-              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-            ]
+            "type": "io.kestra.core.tasks.log.Log",
+            "message": "{{task.id}}"
           },
           {
             "id": "t3",
-            "type": "io.kestra.core.tasks.scripts.Bash",
-            "commands": [
-              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-            ]
+            "type": "io.kestra.core.tasks.log.Log",
+            "message": "{{task.id}}"
           },
           {
             "id": "t4",
-            "type": "io.kestra.core.tasks.scripts.Bash",
-            "commands": [
-              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-            ]
+            "type": "io.kestra.core.tasks.log.Log",
+            "message": "{{task.id}}"
           },
           {
             "id": "t5",
-            "type": "io.kestra.core.tasks.scripts.Bash",
-            "commands": [
-              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-            ]
+            "type": "io.kestra.core.tasks.log.Log",
+            "message": "{{task.id}}"
           },
           {
             "id": "t6",
-            "type": "io.kestra.core.tasks.scripts.Bash",
-            "commands": [
-              "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-            ]
+            "type": "io.kestra.core.tasks.log.Log",
+            "message": "{{task.id}}"
           }
         ]
       },
@@ -74,10 +62,8 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "t1",
-        "type": "io.kestra.core.tasks.scripts.Bash",
-        "commands": [
-          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-        ]
+        "type": "io.kestra.core.tasks.log.Log",
+        "message": "{{task.id}}"
       },
       "relationType": "PARALLEL"
     },
@@ -86,10 +72,8 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "t2",
-        "type": "io.kestra.core.tasks.scripts.Bash",
-        "commands": [
-          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-        ]
+        "type": "io.kestra.core.tasks.log.Log",
+        "message": "{{task.id}}"
       },
       "relationType": "PARALLEL"
     },
@@ -98,10 +82,8 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "t3",
-        "type": "io.kestra.core.tasks.scripts.Bash",
-        "commands": [
-          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-        ]
+        "type": "io.kestra.core.tasks.log.Log",
+        "message": "{{task.id}}"
       },
       "relationType": "PARALLEL"
     },
@@ -110,10 +92,8 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "t4",
-        "type": "io.kestra.core.tasks.scripts.Bash",
-        "commands": [
-          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-        ]
+        "type": "io.kestra.core.tasks.log.Log",
+        "message": "{{task.id}}"
       },
       "relationType": "PARALLEL"
     },
@@ -122,10 +102,8 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "t5",
-        "type": "io.kestra.core.tasks.scripts.Bash",
-        "commands": [
-          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-        ]
+        "type": "io.kestra.core.tasks.log.Log",
+        "message": "{{task.id}}"
       },
       "relationType": "PARALLEL"
     },
@@ -134,10 +112,8 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "t6",
-        "type": "io.kestra.core.tasks.scripts.Bash",
-        "commands": [
-          "echo \"{{task.id}} > $(date +\"%T.%N\")\""
-        ]
+        "type": "io.kestra.core.tasks.log.Log",
+        "message": "{{task.id}}"
       },
       "relationType": "PARALLEL"
     },

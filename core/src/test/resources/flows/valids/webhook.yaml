@@ -13,3 +13,4 @@ tasks:
 triggers:
   - id: webhook
     type: io.kestra.core.models.triggers.types.Webhook
+    key: a-secret-key

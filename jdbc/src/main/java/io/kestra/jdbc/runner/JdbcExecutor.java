@@ -6,8 +6,10 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -33,6 +35,7 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,13 +77,10 @@ public class JdbcExecutor implements ExecutorInterface {
     private RunContextFactory runContextFactory;
 
     @Inject
-    private FlowService flowService;
-
-    @Inject
     private TaskDefaultService taskDefaultService;
 
     @Inject
-    private Template.TemplateExecutorInterface templateExecutorInterface;
+    private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
 
     @Inject
     private ExecutorService executorService;
@@ -89,13 +89,16 @@ public class JdbcExecutor implements ExecutorInterface {
     private ConditionService conditionService;
 
     @Inject
+    private MultipleConditionStorageInterface multipleConditionStorage;
+
+    @Inject
+    private AbstractFlowTriggerService flowTriggerService;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     @Inject
     protected FlowListenersInterface flowListeners;
-
-    @Inject
-    private AbstractJdbcMultipleConditionStorage multipleConditionStorage;
 
     @Inject
     private AbstractJdbcWorkerTaskExecutionStorage workerTaskExecutionStorage;
@@ -123,6 +126,9 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private WorkerGroupService workerGroupService;
+
+    @Inject
+    private SkipExecutionService skipExecutionService;
 
     @SneakyThrows
     @Override
@@ -168,7 +174,7 @@ public class JdbcExecutor implements ExecutorInterface {
         flowQueue.receive(
             FlowTopology.class,
             flow -> {
-                if (flow == null) {
+                if (flow == null || flow instanceof FlowWithException) {
                     return;
                 }
 
@@ -190,6 +196,11 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private void executionQueue(Execution message) {
+        if (skipExecutionService.skipExecution(message.getId())) {
+            log.warn("Skipping execution {}", message.getId());
+            return;
+        }
+
         Executor result = executionRepository.lock(message.getId(), pair -> {
             Execution execution = pair.getLeft();
             ExecutorState executorState = pair.getRight();
@@ -285,21 +296,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 conditionService.isTerminatedWithListeners(flow, execution) &&
                 this.deduplicateFlowTrigger(execution, executorState)
             ) {
-                // multiple conditions storage
-                multipleConditionStorage.save(
-                    flowService
-                        .multipleFlowTrigger(allFlows.stream(), flow, execution, multipleConditionStorage)
-                );
-
-                // Flow Trigger
-                flowService
-                    .flowTriggerExecution(allFlows.stream(), execution, multipleConditionStorage)
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
-
-                // Trigger is done, remove matching multiple condition
-                flowService
-                    .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
-                    .forEach(multipleConditionStorage::delete);
             }
 
             // worker task execution
@@ -331,6 +329,11 @@ public class JdbcExecutor implements ExecutorInterface {
 
 
     private void workerTaskResultQueue(WorkerTaskResult message) {
+        if (skipExecutionService.skipExecution(message.getTaskRun().getTaskId())) {
+            log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
+            return;
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }
@@ -422,14 +425,16 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private Flow transform(Flow flow, Execution execution) {
-        try {
-            flow = Template.injectTemplate(
-                flow,
-                execution,
-                (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
-            );
-        } catch (InternalException e) {
-            log.warn("Failed to inject template",  e);
+        if (templateExecutorInterface.isPresent()) {
+            try {
+                flow = Template.injectTemplate(
+                    flow,
+                    execution,
+                    (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
+                );
+            } catch (InternalException e) {
+                log.warn("Failed to inject template",  e);
+            }
         }
 
         return taskDefaultService.injectDefaults(flow, execution);

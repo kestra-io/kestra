@@ -5,9 +5,8 @@ import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.tasks.flows.Flow;
-import io.kestra.core.tasks.log.Log;
-import io.kestra.core.tasks.scripts.Bash;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -18,9 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -53,26 +50,24 @@ class DocumentationGeneratorTest {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
-    void bash() throws IOException {
+    void dag() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class bash = scan.findClass(Bash.class.getName()).orElseThrow();
+        Class dag = scan.findClass(Dag.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, dag, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("Bash"));
+        assertThat(render, containsString("Dag"));
         assertThat(render, containsString("**Required:** ✔️"));
 
-        assertThat(render, containsString("`exitOnFailed`"));
+        assertThat(render, containsString("`concurrent`"));
 
         int propertiesIndex = render.indexOf("Properties");
-        int outputsIndex = render.indexOf("Outputs");
         int definitionsIndex = render.indexOf("Definitions");
 
-        assertRequiredPropsAreFirst(render.substring(propertiesIndex, outputsIndex));
-        assertRequiredPropsAreFirst(render.substring(outputsIndex, definitionsIndex));
+        assertRequiredPropsAreFirst(render.substring(propertiesIndex, definitionsIndex));
 
         String definitionsDoc = render.substring(definitionsIndex);
         Arrays.stream(definitionsDoc.split("[^#]### "))

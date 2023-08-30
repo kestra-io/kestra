@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.templates;
 
 import io.kestra.cli.AbstractApiCommand;
+import io.kestra.core.models.templates.TemplateEnabled;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@TemplateEnabled
 public class TemplateExportCommand extends AbstractApiCommand {
     private static final String DEFAULT_FILE_NAME = "templates.zip";
 

@@ -6,22 +6,26 @@ import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.scripts.Bash;
+import io.kestra.core.tasks.flows.Template;
+import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -36,6 +40,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import javax.validation.ConstraintViolationException;
@@ -43,6 +48,8 @@ import javax.validation.ConstraintViolationException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -131,10 +138,10 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(
-                Bash.builder()
-                    .id("id")
-                    .type(Bash.class.getName())
-                    .commands(Collections.singletonList("echo 1").toArray(new String[0]))
+                Log.builder()
+                    .id(IdUtils.create())
+                    .type(Log.class.getName())
+                    .message("Hello World")
                     .build()
             ))
             .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
@@ -215,7 +222,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace("io.kestra.tests");
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 2));
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 3));
 
         save = flowRepository.findByNamespace("io.kestra.tests2");
         assertThat((long) save.size(), is(1L));
@@ -231,6 +238,12 @@ public abstract class AbstractFlowRepositoryTest {
 
         save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
+
+        save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests", Map.of("key1", "value1"));
+        assertThat((long) save.size(), is(1L));
+
+        save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests", Map.of("key1", "value2"));
+        assertThat((long) save.size(), is(0L));
     }
 
     @Test
@@ -358,8 +371,43 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findDistinctNamespace() {
         List<String> distinctNamespace = flowRepository.findDistinctNamespace();
-        assertThat((long) distinctNamespace.size(), is(3L));
+        assertThat((long) distinctNamespace.size(), is(4L));
     }
+
+    @Test
+    void templateDisabled() {
+        Template template = Template.builder()
+            .id(IdUtils.create())
+            .type(Template.class.getName())
+            .namespace("test")
+            .templateId("testTemplate")
+            .build();
+
+        Template templateSpy = spy(template);
+
+        doReturn(Collections.emptyList())
+            .when(templateSpy)
+            .allChildTasks();
+
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .tasks(Collections.singletonList(templateSpy))
+            .build();
+
+        flowRepository.create(
+            flow,
+            flow.generateSource(),
+            flow
+        );
+
+        Optional<Flow> found = flowRepository.findById(flow.getNamespace(), flow.getId());
+
+        assertThat(found.isPresent(), is(true));
+        assertThat(found.get() instanceof FlowWithException, is(true));
+        assertThat(((FlowWithException) found.get()).getException(), containsString("Templates are disabled"));
+    }
+
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {

@@ -20,7 +20,7 @@
                             <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
                         </el-tooltip>
                     </el-button-group>
-                    <slot name="extends-navbar"/>
+                    <slot name="extends-navbar" />
                 </div>
             </slot>
         </nav>
@@ -80,12 +80,12 @@
             readOnly: {type: Boolean, default: false},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
-            creating: {type: Boolean, default: false},
+            creating: {type: Boolean, default: false}
         },
         components: {
             MonacoEditor,
         },
-        emits: ["save", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
+        emits: ["save", "execute", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
         editor: undefined,
         data() {
             return {
@@ -185,8 +185,8 @@
                 return {
                     ...{
                         tabSize: 2,
-                        fontFamily: "'Source Code Pro', monospace",
-                        fontSize: 12,
+                        fontFamily:  localStorage.getItem("editorFontFamily") ? localStorage.getItem("editorFontFamily") : "'Source Code Pro', monospace",
+                        fontSize: localStorage.getItem("editorFontSize") ? parseInt(localStorage.getItem("editorFontSize")) : 12,
                         showFoldingControls: "always",
                         scrollBeyondLastLine: false,
                         roundedSelection: false,
@@ -227,6 +227,19 @@
                     contextMenuOrder: 1.5,
                     run: (ed) => {
                         this.$emit("save", ed.getValue())
+                    }
+                });
+
+                this.editor.addAction({
+                    id: "kestra-execute",
+                    label: "Execute the flow",
+                    keybindings: [
+                        KeyMod.CtrlCmd | KeyCode.KeyE,
+                    ],
+                    contextMenuGroupId: "navigation",
+                    contextMenuOrder: 1.5,
+                    run: (ed) => {
+                        this.$emit("execute", ed.getValue())
                     }
                 });
 
@@ -284,36 +297,36 @@
                     editor.onDidContentSizeChange(e => {
                         this.$refs.container.style.height = (e.contentHeight + 7) + "px";
                     });
-
-                    this.editor.onDidContentSizeChange(_ => {
-                        if (this.guidedProperties.monacoRange) {
-                            editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
-                            let decorations = [
-                                {
-                                    range: this.guidedProperties.monacoRange,
-                                    options: {
-                                        isWholeLine: true,
-                                        inlineClassName: "highlight-text"
-                                    },
-                                    className: "highlight-text",
-                                }
-                            ];
-                            decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
-                                {
-                                    range: this.guidedProperties.monacoDisableRange,
-                                    options: {
-                                        isWholeLine: true,
-                                        inlineClassName: "disable-text"
-                                    },
-                                    className: "disable-text",
-                                },
-                            ]) : decorations;
-                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
-                        } else {
-                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
-                        }
-                    });
                 }
+
+                this.editor.onDidContentSizeChange(_ => {
+                    if (this.guidedProperties.monacoRange) {
+                        editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
+                        let decorations = [
+                            {
+                                range: this.guidedProperties.monacoRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "highlight-text"
+                                },
+                                className: "highlight-text",
+                            }
+                        ];
+                        decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
+                            {
+                                range: this.guidedProperties.monacoDisableRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "disable-text"
+                                },
+                                className: "disable-text",
+                            },
+                        ]) : decorations;
+                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                    } else {
+                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                    }
+                });
 
                 this.editor.onDidChangeCursorPosition(() => {
                     let position = this.editor.getPosition();

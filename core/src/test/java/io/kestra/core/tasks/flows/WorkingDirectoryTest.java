@@ -5,16 +5,19 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -35,8 +38,16 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         suite.each(runnerUtils);
     }
 
+    @Test
+    void cache() throws TimeoutException, IOException {
+        suite.cache(runnerUtils);
+    }
+
     @Singleton
     public static class Suite {
+        @Inject
+        StorageInterface storageInterface;
+
         public void success(RunnerUtils runnerUtils) throws TimeoutException {
             Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory", null,
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
@@ -44,7 +55,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(4));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(execution.getTaskRunList().get(3).getOutputs().get("value"), is(execution.getTaskRunList().get(1).getId()));
+            assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value"), startsWith("kestra://"));
         }
 
         public void failed(RunnerUtils runnerUtils) throws TimeoutException {
@@ -62,7 +73,25 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(8));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), is(execution.findTaskRunsByTaskId("first").get(0).getId()));
+            assertThat((String) execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), startsWith("kestra://"));
+        }
+
+        public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+            // make sure the cache didn't exist
+            URI cache = URI.create(storageInterface.cachePrefix("io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");
+            storageInterface.delete(cache);
+
+            Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory-cache");
+
+            assertThat(execution.getTaskRunList(), hasSize(2));
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            assertTrue(storageInterface.exists(cache));
+
+            // a second run should use the cache so the execution failed as the localfile cannot create the file as it already exist
+            execution = runnerUtils.runOne("io.kestra.tests", "working-directory-cache");
+
+            assertThat(execution.getTaskRunList(), hasSize(2));
+            assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         }
     }
 }

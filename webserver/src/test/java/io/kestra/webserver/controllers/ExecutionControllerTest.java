@@ -3,19 +3,19 @@ package io.kestra.webserver.controllers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.triggers.types.Webhook;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
@@ -45,7 +45,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class ExecutionControllerTest extends AbstractMemoryRunnerTest {
+class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Inject
     EmbeddedServer embeddedServer;
 
@@ -92,8 +92,6 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             Execution.class
         );
     }
-
-
     private MultipartBody createInputsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
@@ -434,7 +432,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             FileMetas.class
         ).blockingFirst();
 
-        assertThat(metas.getSize(), equalTo(648L));
+        assertThat(metas.getSize(), equalTo(2193L));
 
         String newExecutionId = IdUtils.create();
 
@@ -515,6 +513,20 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void webhookDynamicKey() {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
+                ),
+            Execution.class
+        );
+
+        assertThat(execution, notNullValue());
+        assertThat(execution.getId(), notNullValue());
+    }
+
+    @Test
     void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
@@ -550,5 +562,15 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused(), is(false));
+    }
+
+    @Test
+    void find() throws TimeoutException, InterruptedException {
+        PagedResults<?> executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(0L));
+
     }
 }

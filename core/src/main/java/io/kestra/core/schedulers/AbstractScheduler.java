@@ -27,6 +27,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -588,6 +589,7 @@ public abstract class AbstractScheduler implements Scheduler {
     }
 
     @Override
+    @PreDestroy
     public void close() {
         this.scheduleExecutor.shutdown();
     }

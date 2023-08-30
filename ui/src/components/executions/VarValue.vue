@@ -1,14 +1,18 @@
 <template>
-    <el-link
-        v-if="isFile(value)"
-        :icon="Download"
-        target="_blank"
-        type="primary"
-        :href="itemUrl(value)"
-    >
-        {{ $t('download') }}
-        <span v-if="humanSize">({{ humanSize }})</span>
-    </el-link>
+    <el-button-group v-if="isFile(value)" >
+        <a class="el-button el-button--small el-button--primary" :href="itemUrl(value)" target="_blank">
+            <Download />
+            {{ $t('download') }}
+        </a>
+        <FilePreview v-if="value.startsWith('kestra:///')" :value="value" :execution-id="execution.id" />
+        <el-button disabled size="small" type="primary" v-if="humanSize">
+            ({{ humanSize }})
+        </el-button>
+    </el-button-group>
+
+    <span v-else-if="value === null">
+        <em>null</em>
+    </span>
     <span v-else>
         {{ value }}
     </span>
@@ -16,6 +20,7 @@
 
 <script setup>
     import Download from "vue-material-design-icons/Download.vue";
+    import FilePreview from "./FilePreview.vue";
 </script>
 
 <script>
@@ -34,8 +39,7 @@
             },
             itemUrl(value) {
                 return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
-            },
-
+            }
         },
         created() {
             if (this.isFile(this.value)) {
@@ -55,7 +59,7 @@
         props: {
             value: {
                 type: [String, Object, Boolean, Number],
-                required: true
+                required: false
             },
             execution: {
                 type: Object,

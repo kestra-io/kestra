@@ -4,6 +4,8 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.DateTimeBetweenCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -25,7 +27,7 @@ import java.util.*;
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class ScheduleTest {
@@ -88,12 +90,44 @@ class ScheduleTest {
         assertThat(evaluate.isPresent(), is(true));
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+        var inputs = evaluate.get().getInputs();
 
         assertThat(dateFromVars(vars.get("date"), date), is(date));
         assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
-        assertThat(evaluate.get().getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
-        assertThat(evaluate.get().getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+        assertThat(inputs.size(), is(2));
+        assertThat(inputs.get("input1"), nullValue());
+        assertThat(inputs.get("input2"), is("default"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void successWithInput() throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 1 * *").inputs(Map.of("input1", "input1")).build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minus(1, ChronoUnit.MONTHS);
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContext(trigger),
+            triggerContext(date, trigger)
+        );
+
+        assertThat(evaluate.isPresent(), is(true));
+
+        var inputs = evaluate.get().getInputs();
+
+        System.out.println(inputs);
+        assertThat(inputs.size(), is(2));
+        assertThat(inputs.get("input1"), is("input1"));
+        assertThat(inputs.get("input2"), is("default"));
     }
 
     @SuppressWarnings("unchecked")
@@ -397,10 +431,15 @@ class ScheduleTest {
             .id(IdUtils.create())
             .namespace("io.kestra.tests")
             .labels(
-                Map.of(
-                    "flow-label-1", "flow-label-1",
-                    "flow-label-2", "flow-label-2")
+                List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2")
+                )
             )
+            .inputs(List.of(
+                StringInput.builder().name("input1").type(Input.Type.STRING).required(false).build(),
+                StringInput.builder().name("input2").type(Input.Type.STRING).defaults("default").build()
+            ))
             .build();
 
         TriggerContext triggerContext = TriggerContext.builder()

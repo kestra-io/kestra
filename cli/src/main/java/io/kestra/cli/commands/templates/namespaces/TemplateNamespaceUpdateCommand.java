@@ -3,6 +3,7 @@ package io.kestra.cli.commands.templates.namespaces;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.templates.TemplateValidateCommand;
 import io.kestra.core.models.templates.Template;
+import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -13,10 +14,10 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import javax.validation.ConstraintViolationException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@TemplateEnabled
 public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
     @Inject
     public YamlFlowParser yamlFlowParser;

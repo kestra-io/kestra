@@ -13,7 +13,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
@@ -63,9 +65,9 @@ abstract public class AbstractMetricEntry<T> {
 
     protected String[] tagsAsArray(Map<String, String> others) {
         return Stream.concat(
-            this.tags.entrySet().stream(),
-            others.entrySet().stream()
-        )
+                Optional.ofNullable(this.tags).map(Map::entrySet).stream().flatMap(Collection::stream),
+                others.entrySet().stream()
+            )
             .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
             .collect(Collectors.toList())
             .toArray(String[]::new);

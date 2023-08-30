@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-form class="ks-horizontal">
+        <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
                 <el-select :model-value="lang" @update:model-value="onLang">
                     <el-option
@@ -23,10 +23,53 @@
                 </el-select>
             </el-form-item>
 
+            <el-form-item :label="$t('date format')">
+                <el-select :model-value="dateFormat" @update:model-value="onDateFormat">
+                    <el-option
+                        v-for="item in dateFormats"
+                        :key="timezone + item.value"
+                        :label="$filters.date(now, item.value)"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item :label="$t('timezone')">
+                <el-select :model-value="timezone" @update:model-value="onTimezone" filterable>
+                    <el-option
+                        v-for="item in zonesWithOffset"
+                        :key="item.zone"
+                        :label="`${item.zone} (UTC${item.offset === 0 ? '' : item.formattedOffset})`"
+                        :value="item.zone"
+                    />
+                </el-select>
+            </el-form-item>
+
             <el-form-item :label="$t('Editor theme')">
                 <el-select :model-value="editorTheme" @update:model-value="onEditorTheme">
                     <el-option
                         v-for="item in editorThemesOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item :label="$t('Editor fontsize')">
+                <el-input-number
+                    :model-value="editorFontSize"
+                    @update:model-value="onFontSize"
+                    controls-position="right"
+                    :min="1"
+                    :max="50"
+                />
+            </el-form-item>
+
+            <el-form-item :label="$t('Editor fontfamily')">
+                <el-select :model-value="editorFontFamily" @update:model-value="onFontFamily">
+                    <el-option
+                        v-for="item in fontFamilyOptions"
                         :key="item.value"
                         :label="item.text"
                         :value="item.value"
@@ -65,6 +108,23 @@
                     />
                 </el-select>
             </el-form-item>
+
+            <el-form-item :label="$t('environment name setting')">
+                <el-input
+                    v-model="envName"
+                    @change="onEnvNameChange"
+                    :placeholder="$t('name')"
+                    clearable
+                />
+            </el-form-item>
+
+            <el-form-item :label="$t('environment color setting')">
+                <el-color-picker
+                    v-model="envColor"
+                    @change="onEnvColorChange"
+                    show-alpha
+                />
+            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -78,11 +138,13 @@
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapGetters, mapState} from "vuex";
+    import {mapGetters, mapState, useStore} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes} from "../../utils/constants";
 
+    export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
+    export const TIMEZONE_STORAGE_KEY = "timezone";
     export default {
         mixins: [RouteContext],
         components: {
@@ -96,22 +158,44 @@
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
+                dateFormat: undefined,
+                timezone: undefined,
+                zonesWithOffset: this.$moment.tz.names().map((zone) => {
+                  const timezoneMoment = this.$moment.tz(zone);
+                  return {
+                        zone,
+                        offset: timezoneMoment.utcOffset(),
+                        formattedOffset: timezoneMoment.format("Z")
+                    };
+                }).sort((a, b) => a.offset - b.offset),
                 autofoldTextEditor: undefined,
                 guidedTour: undefined,
-                logDisplay: undefined
+                logDisplay: undefined,
+                editorFontSize: undefined,
+                editorFontFamily: undefined,
+                now: this.$moment(),
+                envName: undefined,
+                envColor: undefined
             };
         },
         created() {
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+            const store = useStore();
 
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
+            this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
+            this.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
+            this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
+            this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
+            this.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
+            this.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
         },
         methods: {
             onNamespaceSelect(value) {
@@ -146,6 +230,16 @@
                 this.theme = value;
                 this.$toast().saved();
             },
+            onDateFormat(value) {
+                localStorage.setItem(DATE_FORMAT_STORAGE_KEY, value);
+                this.dateFormat = value;
+                this.$toast().saved();
+            },
+            onTimezone(value) {
+                localStorage.setItem(TIMEZONE_STORAGE_KEY, value);
+                this.timezone = value;
+                this.$toast().saved();
+            },
             onEditorTheme(value) {
                 localStorage.setItem("editorTheme", value);
                 this.editorTheme = value;
@@ -174,11 +268,36 @@
                 localStorage.setItem("logDisplay", value);
                 this.logDisplay = value;
                 this.$toast().saved();
+            },
+            onFontSize(value) {
+                localStorage.setItem("editorFontSize", value);
+                this.editorFontSize = value;
+                this.$toast().saved();
+            },
+            onFontFamily(value) {
+                localStorage.setItem("editorFontFamily", value);
+                this.editorFontFamily = value;
+                this.$toast().saved();
+            },
+            onEnvNameChange(value) {
+                if (value !== this.configs?.environment?.name) {
+                    this.$store.commit("layout/setEnvName", value);
+                }
+
+                this.$toast().saved();
+            },
+            onEnvColorChange(value) {
+                if (value !== this.configs?.environment?.color) {
+                    this.$store.commit("layout/setEnvColor", value);
+                }
+
+                this.$toast().saved();
             }
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("auth", ["user"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")
@@ -202,6 +321,17 @@
                     {value: "dark", text: "Dark"}
                 ]
             },
+            dateFormats() {
+                return  [
+                    {value: "YYYY-MM-DDTHH:mm:ssZ"},
+                    {value: "YYYY-MM-DD hh:mm:ss A"},
+                    {value: "DD/MM/YYYY HH:mm:ss"},
+                    {value: "lll"},
+                    {value: "llll"},
+                    {value: "LLL"},
+                    {value: "LLLL"}
+                ]
+            },
             canReadFlows() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ);
             },
@@ -215,6 +345,40 @@
                     {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")}
                 ]
             },
+            fontFamilyOptions() {
+                // Array of font family that contains arabic language and japanese, chinese, korean languages compatible font family
+                return [
+                    {
+                        value: "'Source Code Pro', monospace",
+                        text: "Source Code Pro"
+                    },
+                    {
+                        value: "'Courier New', monospace",
+                        text: "Courier"
+                    },
+                    {
+                        value: "'Times New Roman', serif",
+                        text: "Times New Roman"
+                    },
+                    {
+                        value: "'Book Antiqua', serif",
+                        text: "Book Antiqua"
+                    },
+                    {
+                        value: "'Times New Roman Arabic', serif",
+                        text: "Times New Roman Arabic"
+                    },
+                    {
+                        value: "'SimSun', sans-serif",
+                        text: "SimSun"
+                    }
+                ]
+            }
         }
     };
 </script>
+<style>
+    .el-input-number {
+        max-width: 20vw;
+    }
+</style>

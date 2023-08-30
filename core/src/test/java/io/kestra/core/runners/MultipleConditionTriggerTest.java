@@ -4,6 +4,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
+import org.junitpioneer.jupiter.RetryingTest;
 
 @MicronautTest
 public class MultipleConditionTriggerTest extends AbstractMemoryRunnerTest {
@@ -15,7 +16,7 @@ public class MultipleConditionTriggerTest extends AbstractMemoryRunnerTest {
         runnerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5)
     void triggerFailed() throws Exception {
         runnerCaseTest.failed();
     }

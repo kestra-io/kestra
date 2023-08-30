@@ -6,8 +6,7 @@ tasks:
     message: "strange---string"
   - id: deprecated_task
     type: io.kestra.core.plugins.test.DeprecatedTask
-    message: "some message"
-    level: WARN
+    additionalProperty: "value"
 
 ---
 

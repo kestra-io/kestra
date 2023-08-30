@@ -96,7 +96,8 @@
     })
 
     const flowWarnings = computed(() => {
-        return props.flowDeprecations?.map(f => `${f} is deprecated.`)
+        const warnings = props.flowDeprecations?.map(f => `${f} is deprecated.`);
+        return warnings?.length > 0 ? warnings : undefined;
     })
 
     const loadViewType = () => {

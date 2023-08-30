@@ -142,7 +142,7 @@
                     }, Object.create(null))
 
                 return {
-                    labels: props.data.map(r => moment(r.date).format(getFormat(r.groupBy))),
+                    labels: props.data.map(r => moment(r.startDate).format(getFormat(r.groupBy))),
                     datasets: props.big || props.global || props.duration ?
                         [{
                             type: "line",

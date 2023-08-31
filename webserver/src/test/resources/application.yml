@@ -86,3 +86,5 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/h2
+      ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true

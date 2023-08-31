@@ -12,6 +12,8 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/mysql
+      ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true
 
 kestra:
   queue:

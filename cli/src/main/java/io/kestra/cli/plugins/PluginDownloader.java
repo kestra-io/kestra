@@ -2,6 +2,9 @@ package io.kestra.cli.plugins;
 
 import com.google.common.collect.ImmutableList;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -10,25 +13,17 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
-import org.eclipse.aether.resolution.DependencyRequest;
-import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
-import org.eclipse.aether.util.filter.DependencyFilterUtils;
-
-import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import java.io.File;
@@ -42,7 +37,7 @@ import java.util.stream.Collectors;
 @Singleton
 @Slf4j
 public class PluginDownloader {
-    private List<RepositoryConfig> repositoryConfigs;
+    private final List<RepositoryConfig> repositoryConfigs;
     private final RepositorySystem system;
     private final RepositorySystemSession session;
 
@@ -60,22 +55,14 @@ public class PluginDownloader {
         this.repositoryConfigs.add(repositoryConfig);
     }
 
-    public List<URL> resolve(List<String> dependencies) throws DependencyResolutionException, MalformedURLException {
+    public List<URL> resolve(List<String> dependencies) throws MalformedURLException, ArtifactResolutionException {
         List<RemoteRepository> repositories = remoteRepositories();
 
-        ImmutableList.Builder<URL> urls = ImmutableList.builder();
+        List<ArtifactResult> artifactResults = resolveArtifacts(repositories, dependencies);
+        List<URL> localUrls = resolveUrls(artifactResults);
+        log.debug("Resolved Plugin {} with {}", dependencies, localUrls);
 
-        for (String dependency : dependencies) {
-            log.debug("Resolving plugin {}", dependency);
-
-            List<ArtifactResult> artifactResults = resolveArtifacts(repositories, dependency);
-            List<URL> localUrls = resolveUrls(artifactResults);
-            log.debug("Resolved Plugin {} with {}", dependency, localUrls);
-
-            urls.addAll(localUrls);
-        }
-
-        return urls.build();
+        return localUrls;
     }
 
     private List<RemoteRepository> remoteRepositories() {
@@ -139,18 +126,21 @@ public class PluginDownloader {
         return session;
     }
 
-    private List<ArtifactResult> resolveArtifacts(List<RemoteRepository> repositories, String dependency) throws DependencyResolutionException {
-        Artifact artifact = new DefaultArtifact(dependency);
+    private List<ArtifactResult> resolveArtifacts(List<RemoteRepository> repositories, List<String> dependencies) throws ArtifactResolutionException {
+        List<ArtifactRequest> requests = dependencies
+            .stream()
+            .map(s -> {
+                Artifact artifact = new DefaultArtifact(s);
 
-        DependencyFilter classpathFlter = DependencyFilterUtils.classpathFilter("jar");
+                return new ArtifactRequest(
+                    artifact,
+                    repositories,
+                    null
+                );
+            })
+            .collect(Collectors.toList());
 
-        CollectRequest collectRequest = new CollectRequest();
-        collectRequest.setRoot(new Dependency(artifact, "jar"));
-        collectRequest.setRepositories(repositories);
-
-        DependencyRequest depRequest = new DependencyRequest(collectRequest, classpathFlter);
-
-        return system.resolveDependencies(session, depRequest).getArtifactResults();
+        return system.resolveArtifacts(session, requests);
     }
 
     private List<URL> resolveUrls(List<ArtifactResult> artifactResults) throws MalformedURLException {

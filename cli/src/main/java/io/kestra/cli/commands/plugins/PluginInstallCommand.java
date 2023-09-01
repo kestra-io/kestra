@@ -1,10 +1,12 @@
 package io.kestra.cli.commands.plugins;
 
+import io.micronaut.http.uri.UriBuilder;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.plugins.PluginDownloader;
 import io.kestra.cli.plugins.RepositoryConfig;
 import io.kestra.core.utils.IdUtils;
+import org.apache.http.client.utils.URIBuilder;
 import picocli.CommandLine;
 
 import java.net.URI;
@@ -15,7 +17,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+
 import jakarta.inject.Inject;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @CommandLine.Command(
     name = "install",
@@ -52,7 +58,28 @@ public class PluginInstallCommand extends AbstractCommand {
 
         if (repositories != null) {
             Arrays.stream(repositories)
-                .forEach(s -> pluginDownloader.addRepository(new RepositoryConfig(IdUtils.create(), "default", s.toString())));
+                .forEach(throwConsumer(s -> {
+                    URIBuilder uriBuilder = new URIBuilder(s);
+
+                    RepositoryConfig.RepositoryConfigBuilder builder = RepositoryConfig.builder()
+                        .id(IdUtils.create())
+                        .type("default");
+
+                    if (uriBuilder.getUserInfo() != null) {
+                        int index = uriBuilder.getUserInfo().indexOf(":");
+
+                        builder.basicAuth(new RepositoryConfig.BasicAuth(
+                            uriBuilder.getUserInfo().substring(0, index),
+                            uriBuilder.getUserInfo().substring(index + 1)
+                        ));
+
+                        uriBuilder.setUserInfo(null);
+                    }
+
+                    builder.url(uriBuilder.build().toString());
+
+                    pluginDownloader.addRepository(builder.build());
+                }));
         }
 
         List<URL> resolveUrl = pluginDownloader.resolve(dependencies);

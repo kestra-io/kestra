@@ -29,6 +29,8 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.eclipse.aether.util.repository.AuthenticationBuilder;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -79,14 +81,23 @@ public class PluginDownloader {
     private List<RemoteRepository> remoteRepositories() {
         return repositoryConfigs
             .stream()
-            .map(repositoryConfig ->
-                new RemoteRepository.Builder(
+            .map(repositoryConfig -> {
+                var build = new RemoteRepository.Builder(
                     repositoryConfig.getId(),
                     repositoryConfig.getType(),
                     repositoryConfig.getUrl()
-                )
-                .build()
-            )
+                );
+
+                if (repositoryConfig.getBasicAuth() != null) {
+                    var authenticationBuilder = new AuthenticationBuilder();
+                    authenticationBuilder.addUsername(repositoryConfig.getBasicAuth().getUsername());
+                    authenticationBuilder.addPassword(repositoryConfig.getBasicAuth().getPassword());
+
+                    build.setAuthentication(authenticationBuilder.build());
+                }
+
+                return build.build();
+            })
             .collect(Collectors.toList());
     }
 

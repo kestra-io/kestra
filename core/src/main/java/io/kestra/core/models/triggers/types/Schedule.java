@@ -21,6 +21,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.validations.CronExpression;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 
 @SuperBuilder
 @ToString
@@ -143,7 +145,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @PluginProperty
     private ScheduleBackfill backfill;
 
+    @Schema(hidden = true)
     @Builder.Default
+    @Null
     private final Duration interval = null;
 
     @Valid

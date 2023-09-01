@@ -33,4 +33,19 @@ class ScheduleTest {
         assertThat(modelValidator.isValid(build).isPresent(), is(true));
         assertThat(modelValidator.isValid(build).get().getMessage(), containsString("backfill and lateMaximumDelay are incompatible options"));
     }
+
+    @Test
+    void intervalValidation() {
+        Schedule build = Schedule.builder()
+            .id(IdUtils.create())
+            .type(Schedule.class.getName())
+            .cron("* * * * *")
+            .interval(Duration.ofSeconds(5))
+            .build();
+
+
+        assertThat(modelValidator.isValid(build).isPresent(), is(true));
+        assertThat(modelValidator.isValid(build).get().getMessage(), containsString("interval: must be null"));
+
+    }
 }

@@ -4,7 +4,11 @@ ARG KESTRA_PLUGINS=""
 ARG APT_PACKAGES=""
 
 WORKDIR /app
-COPY docker /
+
+RUN groupadd kestra && \
+    useradd -m -g kestra kestra && \
+
+COPY --chown=kestra:kestra docker /
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
@@ -12,8 +16,6 @@ RUN apt-get update -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
     if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
-    groupadd kestra && \
-    useradd -m -g kestra kestra && \
     chown -R kestra:kestra /app
 
 USER kestra

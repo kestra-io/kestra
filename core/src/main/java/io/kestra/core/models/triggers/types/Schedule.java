@@ -170,6 +170,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @PluginProperty
     private Duration lateMaximumDelay;
 
+    @Schema(
+        title = "Allow concurrent flow execution",
+        description = "Whether to continue triggering flow even if last execution is still running"
+    )
+    @PluginProperty
+    @Builder.Default
+    private boolean allowConcurrent = false;
+
     @Getter(AccessLevel.NONE)
     private transient ExecutionTime executionTime;
 

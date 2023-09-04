@@ -52,4 +52,11 @@ abstract public class AbstractTrigger {
 
     @Valid
     private WorkerGroup workerGroup;
+
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "Whether to allow concurrent flow execution or not."
+    )
+    private boolean allowConcurrent = false;
 }

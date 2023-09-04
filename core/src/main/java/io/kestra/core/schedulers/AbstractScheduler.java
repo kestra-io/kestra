@@ -245,7 +245,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 )
                 .filter(f -> this.isEvaluationInterval(f, now))
                 .filter(f -> !this.isTriggerRunning(f))
-                .filter(f -> this.isExecutionNotRunning(f, now))
+                .filter(f -> f.getTrigger().isAllowConcurrent() || this.isExecutionNotRunning(f, now))
                 .map(f -> {
                     Trigger lastTrigger = this.getLastTrigger(f, now);
 
@@ -479,7 +479,6 @@ public abstract class AbstractScheduler implements Scheduler {
         if (flowWithPollingTrigger.getPollingTrigger().getInterval() == null) {
             return false;
         }
-
         var runningTrigger = this.triggerState
             .findLast(flowWithPollingTrigger.getTriggerContext())
             .filter(trigger -> trigger.getEvaluateRunningDate() != null);

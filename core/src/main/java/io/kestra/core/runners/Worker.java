@@ -383,6 +383,11 @@ public class Worker implements Runnable, AutoCloseable {
                     .withState(State.Type.FAILED)
                 );
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
+            RunContext runContext = workerTask
+                .getRunContext()
+                .forWorker(this.applicationContext, workerTask);
+
+            runContext.logger().error("Exception while trying to emit the worker task result to the queue", e);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } finally {

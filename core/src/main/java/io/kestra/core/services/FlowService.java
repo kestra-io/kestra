@@ -72,7 +72,7 @@ public class FlowService {
                         }
 
                         return Stream.concat(
-                            method.isAnnotationPresent(Deprecated.class) && fieldValue != null ? Stream.of(prefix + "." + fieldName) : Stream.empty(),
+                            method.isAnnotationPresent(Deprecated.class) && fieldValue != null ? Stream.of(prefix.isEmpty() ? fieldName : prefix + "." + fieldName) : Stream.empty(),
                             additionalDeprecationPaths
                         );
                     } catch (IllegalAccessException | InvocationTargetException e) {

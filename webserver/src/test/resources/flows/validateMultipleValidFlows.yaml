@@ -7,6 +7,11 @@ tasks:
   - id: deprecated_task
     type: io.kestra.core.plugins.test.DeprecatedTask
     additionalProperty: "value"
+listeners:
+  - tasks:
+      - id: log
+        type: io.kestra.core.tasks.log.Log
+        message: logging
 
 ---
 

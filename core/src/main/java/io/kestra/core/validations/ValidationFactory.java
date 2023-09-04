@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.tasks.flows.Switch;
@@ -20,6 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Factory
 public class ValidationFactory {
@@ -183,18 +186,22 @@ public class ValidationFactory {
 
             List<String> violations = new ArrayList<>();
 
-            // task unique id
+            // tasks unique id
             List<String> taskIds = value.allTasksWithChilds()
                 .stream()
                 .map(Task::getId)
                 .toList();
-            List<String> taskDuplicates = taskIds
-                .stream()
-                .distinct()
-                .filter(entry -> Collections.frequency(taskIds, entry) > 1)
+
+            List<String> duplicateIds = getDuplicates(taskIds);
+
+            List<String> triggerIds = Optional.ofNullable(value.getTriggers()).map(Collection::stream).orElse(Stream.empty())
+                .map(AbstractTrigger::getId)
                 .toList();
-            if (taskDuplicates.size() > 0) {
-                violations.add("Duplicate task id with name [" + String.join(", ", taskDuplicates) + "]");
+
+            duplicateIds.addAll(getDuplicates(triggerIds));
+
+            if (!duplicateIds.isEmpty()) {
+                violations.add("Duplicate task id with name [" + String.join(", ", duplicateIds) + "]");
             }
 
             value.allTasksWithChilds()
@@ -232,6 +239,13 @@ public class ValidationFactory {
                 return true;
             }
         };
+    }
+
+    private static List<String> getDuplicates(List<String> taskIds) {
+        return taskIds.stream()
+            .distinct()
+            .filter(entry -> Collections.frequency(taskIds, entry) > 1)
+            .collect(Collectors.toList());
     }
 
     @Singleton

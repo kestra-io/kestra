@@ -86,6 +86,7 @@ public class Flow implements DeletedInterface {
     List<Task> errors;
 
     @Valid
+    @Deprecated
     List<Listener> listeners;
 
     @Valid

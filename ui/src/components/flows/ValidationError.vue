@@ -1,34 +1,69 @@
 <template>
-    <el-tooltip popper-class="p-0 bg-transparent" :placement="tooltipPlacement" :show-arrow="false" :disabled="!error" raw-content transition="" :persistent="false">
-        <template #content>
-            <el-container class="error-tooltip">
-                <el-header>
-                    <AlertCircle class="align-middle text-danger" />
-                    <span class="align-middle">
-                        {{ $t("error detected") }}
-                    </span>
-                </el-header>
-                <el-main>{{ error }}</el-main>
-            </el-container>
-        </template>
-        <el-button v-bind="$attrs" :link="link" :size="size" type="default">
-            <component :class="'text-' + (error ? 'danger' : 'success')" :is="error ? AlertCircle : CheckCircle" />
-            <span v-if="error" class="text-danger">{{ $t("error detected") }}</span>
+    <span>
+        <!-- Valid -->
+        <el-button v-if="!error && !warnings" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
+            <check-circle class="text-success" />
         </el-button>
-    </el-tooltip>
+
+        <!-- Errors -->
+        <el-tooltip v-if="error" popper-class="p-0 bg-transparent" :placement="tooltipPlacement" :show-arrow="false" raw-content transition="" :persistent="false" :hide-after="0">
+            <template #content>
+                <el-container class="validation-tooltip">
+                    <el-header>
+                        <alert-circle class="align-middle text-danger"/>
+                        <span class="align-middle">
+                            {{ $t("error detected") }}
+                        </span>
+                    </el-header>
+                    <el-main>{{ error.split(/, ?/).join("\n") }}</el-main>
+                </el-container>
+            </template>
+            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error">
+                <alert-circle class="text-danger" />
+                <span class="text-danger label">{{ $t("error detected") }}</span>
+            </el-button>
+        </el-tooltip>
+
+        <!-- Warnings -->
+        <el-tooltip v-if="warnings" popper-class="p-0 bg-transparent" :placement="tooltipPlacement" :show-arrow="false" raw-content transition="" :persistent="false" :hide-after="0">
+            <template #content>
+                <el-container class="validation-tooltip">
+                    <el-header>
+                        <alert class="align-middle text-warning"/>
+                        <span class="align-middle">
+                            {{$t("warning detected") }}
+                        </span>
+                    </el-header>
+                    <el-main>{{ warnings.join("\n") }}</el-main>
+                </el-container>
+            </template>
+            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning">
+                <alert class="text-warning" />
+                <span class="text-warning label">{{ $t("warning detected") }}</span>
+            </el-button>
+        </el-tooltip>
+    </span>
 </template>
 
-<script setup>
+<script>
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-</script>
+    import Alert from "vue-material-design-icons/Alert.vue";
 
-<script>
     export default {
         inheritAttrs: false,
+        components: {
+            CheckCircle,
+            AlertCircle,
+            Alert
+        },
         props: {
             error: {
                 type: String,
+                default: undefined
+            },
+            warnings: {
+                type: Array,
                 default: undefined
             },
             link: {
@@ -44,10 +79,20 @@
                 default: undefined
             }
         },
+        methods: {
+            onResize(maxWidth) {
+                const buttonLabels = this.$el.querySelectorAll(".el-button span.label");
 
+                buttonLabels.forEach(el => el.classList.remove("d-none"))
+                this.$nextTick(() => {
+                    if(this.$el.offsetLeft + this.$el.offsetWidth > maxWidth) {
+                        buttonLabels.forEach(el => el.classList.add("d-none"))
+                    }
+                });
+            }
+        }
     };
 </script>
-
 
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
@@ -64,20 +109,25 @@
             background-color: var(--el-button-bg-color);
         }
 
-        &:has(.material-design-icon.text-success) {
+        &.success {
             border-color: rgb(var(--bs-success-rgb));
         }
-        &:has(.material-design-icon.text-danger) {
-            border-color: rgb(var(--bs-danger-rgb));
 
-            span.text-danger:not(.material-design-icon) {
-                margin-left: calc(var(--spacer) / 2);
-                font-size: $font-size-sm;
-            }
+        &:not(.success) span:not(.material-design-icon) {
+            margin-left: calc(var(--spacer) / 2);
+            font-size: $font-size-sm;
+        }
+
+        &.warning {
+            border-color: rgb(var(--bs-warning-rgb));
+        }
+
+        &.error {
+            border-color: rgb(var(--bs-danger-rgb));
         }
     }
 
-    .error-tooltip {
+    .validation-tooltip {
         padding: 0;
         width: fit-content;
         min-width: 20vw;
@@ -97,14 +147,12 @@
         .el-header {
             padding: $spacer;
             background-color: var(--bs-gray-200);
-            border-bottom: 1px solid var(--bs-gray-300);
             border-radius: $border-radius-lg $border-radius-lg 0 0;
             font-size: $font-size-sm;
             font-weight: $font-weight-bold;
 
             html.dark & {
                 background-color: var(--bs-gray-500);
-                border-bottom: 1px solid var(--bs-gray-600);
             }
 
             .material-design-icon {
@@ -115,13 +163,15 @@
 
         .el-main {
             padding: calc(2 * var(--spacer)) $spacer !important;
-            border-radius: 0 0 $border-radius-lg $border-radius-lg;
             font-family: $font-family-monospace;
             background-color: white;
+            white-space: pre;
+            border-top: 1px solid var(--bs-gray-300);
 
             html.dark & {
                 color: white;
                 background-color: var(--bs-gray-400);
+                border-top: 1px solid var(--bs-gray-600);
             }
         }
     }

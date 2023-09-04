@@ -669,6 +669,9 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
         List<ValidateConstraintViolation> body = response.body();
         assertThat(body.size(), is(2));
+        assertThat(body.get(0).getDeprecationPaths(), hasSize(2));
+        assertThat(body.get(0).getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty"));
+        assertThat(body.get(1).getDeprecationPaths(), empty());
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", is(nullValue()))
         ));

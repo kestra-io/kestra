@@ -14,11 +14,17 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ClassUtils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Provides business logic to manipulate {@link Flow}
@@ -37,6 +43,53 @@ public class FlowService {
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return keepLastVersionCollector(stream);
+    }
+
+    public List<String> deprecationPaths(Flow flow) {
+        return deprecationTraversal("", flow).toList();
+    }
+
+    private Stream<String> deprecationTraversal(String prefix, Object object) {
+        if (ClassUtils.isPrimitiveOrWrapper(object.getClass()) || String.class.equals(object.getClass())) {
+            return Stream.empty();
+        }
+
+        return Stream.concat(
+            object.getClass().isAnnotationPresent(Deprecated.class) ? Stream.of(prefix) : Stream.empty(),
+            allGetters(object.getClass())
+                .flatMap(method -> {
+                    try {
+                        Object fieldValue = method.invoke(object);
+
+                        if (fieldValue instanceof Iterable<?> iterableValue) {
+                            fieldValue = StreamSupport.stream(iterableValue.spliterator(), false).toArray(Object[]::new);
+                        }
+
+                        String fieldName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
+                        Stream<String> additionalDeprecationPaths = Stream.empty();
+                        if (fieldValue instanceof Object[] arrayValue) {
+                            additionalDeprecationPaths = IntStream.range(0, arrayValue.length).boxed().flatMap(i -> deprecationTraversal(fieldName + "[%d]".formatted(i), arrayValue[i]));
+                        }
+
+                        return Stream.concat(
+                            method.isAnnotationPresent(Deprecated.class) && fieldValue != null ? Stream.of(prefix + "." + fieldName) : Stream.empty(),
+                            additionalDeprecationPaths
+                        );
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        // silent failure (we don't compromise the app / response for warnings)
+                    }
+
+                    return Stream.empty();
+                })
+        );
+    }
+
+    private Stream<Method> allGetters(Class<?> clazz) {
+        return Arrays.stream(clazz.getMethods())
+            .filter(m -> !m.getDeclaringClass().equals(Object.class))
+            .filter(method -> method.getName().startsWith("get") && method.getName().length() > 3 && method.getParameterCount() == 0)
+            .filter(method -> !method.getReturnType().equals(Void.TYPE))
+            .filter(method -> !Modifier.isStatic(method.getModifiers()));
     }
 
     public Flow keepLastVersion(Stream<Flow> stream, String namespace, String flowId) {

@@ -9,6 +9,13 @@ micronaut:
     services:
       api:
         url: http://localhost:8081
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+    writeDurationsAsTimestamps: false
+  serialization-inclusion: non_default
+  deserialization:
+    FAIL_ON_UNKNOWN_PROPERTIES: false
 
 kestra:
   storage:

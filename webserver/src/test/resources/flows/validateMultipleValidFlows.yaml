@@ -4,6 +4,9 @@ tasks:
   - id: task_one
     type: io.kestra.core.tasks.log.Log
     message: "strange---string"
+  - id: deprecated_task
+    type: io.kestra.core.plugins.test.DeprecatedTask
+    additionalProperty: "value"
 
 ---
 

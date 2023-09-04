@@ -2,10 +2,12 @@ package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
@@ -42,9 +44,9 @@ class ErrorControllerTest {
             ))
         );
 
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class));
-        });
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(Object.class))
+        );
 
         assertThat(exception.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
 
@@ -62,17 +64,25 @@ class ErrorControllerTest {
         Map<String, Object> flow =  ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
-            "unknown", "properties"
+            "unknown", "properties",
+            "tasks", Collections.singletonList(ImmutableMap.of(
+                "id", IdUtils.create(),
+                "type", Log.class.getName(),
+                "message", "logging"
+            ))
         );
 
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class));
-        });
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST("/api/v1/flows", JacksonMapper.ofYaml().writeValueAsString(flow)).contentType(MediaType.APPLICATION_YAML),
+                Argument.of(String.class),
+                Argument.of(JsonError.class)
+            )
+        );
 
         assertThat(exception.getStatus(), is(UNPROCESSABLE_ENTITY));
 
         String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response, containsString("Failed to convert argument [flow] for value [null] due to: Unrecognized field \\\"unknown\\\""));
+        assertThat(response, containsString("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.Flow), not marked as ignorable"));
         assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"unknown\\\"]\""));
     }
 
@@ -89,9 +99,9 @@ class ErrorControllerTest {
             ))
         );
 
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class));
-        });
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class))
+        );
 
         assertThat(exception.getStatus(), is(UNPROCESSABLE_ENTITY));
 

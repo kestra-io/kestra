@@ -88,7 +88,16 @@
         flowError: {
             type: String,
             default: undefined
+        },
+        flowDeprecations: {
+            type: Array,
+            default: undefined
         }
+    })
+
+    const flowWarnings = computed(() => {
+        const warnings = props.flowDeprecations?.map(f => `${f} is deprecated.`);
+        return warnings?.length > 0 ? warnings : undefined;
     })
 
     const loadViewType = () => {
@@ -118,6 +127,7 @@
     const editorDomElement = ref(null);
     const editorWidthStorageKey = "editor-width";
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
+    const validationDomElement = ref(null);
     const isLoading = ref(false);
     const haveChange = ref(false)
     const flowYaml = ref("")
@@ -185,7 +195,9 @@
         // validate flow on first load
         store.dispatch("flow/validateFlow", {flow: flowYaml.value})
             .then(value => {
-              return value;
+                validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+
+                return value;
             });
     }
 
@@ -194,6 +206,8 @@
             localStorage.setItem(editorWidthStorageKey, editorWidthPercentage.value);
         }
     }
+
+    const onResize = () => validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
 
     onMounted(async () => {
         await initYamlSource();
@@ -212,9 +226,13 @@
             stopTour();
         });
         window.addEventListener("beforeunload", persistEditorWidth);
+
+        window.addEventListener("resize", onResize)
     })
 
     onBeforeUnmount(() => {
+        window.removeEventListener("resize", onResize)
+
         store.commit("plugin/setEditorPlugin", undefined);
         document.removeEventListener("keydown", save);
         document.removeEventListener("popstate", () => {
@@ -352,6 +370,8 @@
                 if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
                     generateGraph()
                 }
+
+                validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
 
                 return value;
             });
@@ -600,14 +620,15 @@
         let blockWidthPercent = (blockWidth / parentWidth) * 100;
 
         document.onmousemove = function onMouseMove(e) {
-            const percent = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100);
+            let percent = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100);
             if (percent > 75) {
-                editorWidthPercentage.value = 75 + "%";
+                percent = 75
             } else if (percent < 25) {
-                editorWidthPercentage.value = 25 + "%";
-            } else {
-                editorWidthPercentage.value = percent + "%";
+                percent = 25
             }
+
+            editorWidthPercentage.value = percent + "%";
+            validationDomElement.value.onResize(percent * parentWidth / 100);
         }
 
         document.onmouseup = () => {
@@ -634,7 +655,7 @@
             @restartGuidedTour="() => persistViewType(editorViewTypes.SOURCE)"
         >
             <template #extends-navbar>
-                <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" />
+                <ValidationError ref="validationDomElement" tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
             </template>
         </editor>
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
@@ -658,7 +679,7 @@
                 :view-type="viewType"
             >
                 <template #top-bar v-if="viewType === editorViewTypes.TOPOLOGY">
-                    <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" />
+                    <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
                 </template>
             </LowCodeEditor>
         </div>

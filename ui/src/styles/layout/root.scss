@@ -69,4 +69,8 @@
             #{--bs-#{$key}-darken-#{$i}}: #{darken($value, $i)};
         }
     }
+
+    &:not(.dark){
+        #{--bs-warning-rgb}: 221, 95, 0;
+    }
 }

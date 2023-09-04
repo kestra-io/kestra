@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @SuperBuilder(toBuilder = true)
@@ -31,6 +32,7 @@ public class ValidateConstraintViolation {
     private int index;
 
     private String constraints;
+    private List<String> deprecationPaths;
 
     @JsonIgnore
     public String getIdentity(){

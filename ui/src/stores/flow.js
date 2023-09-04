@@ -21,6 +21,7 @@ export default {
         flowGraphParam: undefined,
         revisions: undefined,
         flowError: undefined,
+        flowDeprecations: undefined,
         taskError: undefined,
         metrics: [],
         aggregatedMetrics: undefined,
@@ -231,6 +232,7 @@ export default {
             return axios.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
                     commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
+                    commit("setFlowDeprecations", response.data[0] ? response.data[0].deprecationPaths : undefined)
                     return response.data
                 })
         },
@@ -348,6 +350,9 @@ export default {
         setFlowError(state, flowError) {
             state.flowError = flowError
         },
+        setFlowDeprecations(state, flowDeprecations) {
+            state.flowDeprecations = flowDeprecations
+        },
         setTaskError(state, taskError) {
             state.taskError = taskError
         },
@@ -370,6 +375,11 @@ export default {
         flowError(state) {
             if (state.flowError) {
                 return state.flowError;
+            }
+        },
+        flowDeprecations(state) {
+            if (state.flowDeprecations) {
+                return state.flowDeprecations;
             }
         },
         taskError(state) {

@@ -352,7 +352,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void restartFromLastFailed() throws TimeoutException, InterruptedException {
+    void restartFromLastFailed() throws TimeoutException {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
@@ -432,7 +432,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             FileMetas.class
         ).blockingFirst();
 
-        assertThat(metas.getSize(), equalTo(2272L));
+        assertThat(metas.getSize(), equalTo(2466L));
 
         String newExecutionId = IdUtils.create();
 
@@ -565,7 +565,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void find() throws TimeoutException, InterruptedException {
+    void find() {
         PagedResults<?> executions = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
         );

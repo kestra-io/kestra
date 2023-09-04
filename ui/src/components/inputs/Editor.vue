@@ -2,7 +2,7 @@
     <div class="ks-editor edit-flow-editor">
         <nav v-if="original === undefined && navbar" class="top-nav">
             <slot name="nav">
-                <div>
+                <div class="text-nowrap">
                     <el-button-group>
                         <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
                             <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />

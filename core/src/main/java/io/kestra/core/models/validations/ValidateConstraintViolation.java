@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -36,12 +35,18 @@ public class ValidateConstraintViolation {
 
     @JsonIgnore
     public String getIdentity(){
-        return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(index);
+        return flow != null && namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(index);
     }
 
     @JsonIgnore
     public String getIdentity(Path directory) throws IOException {
-        return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(Files.walk(directory).collect(Collectors.toList()).get(index));
+        return flow != null && namespace != null ? getFlowId() : flow != null ? flow : getPath(directory);
+    }
+
+    private String getPath(Path directory) throws IOException {
+        try (var files = Files.walk(directory)) {
+            return String.valueOf(files.toList().get(index));
+        }
     }
 
     @JsonIgnore

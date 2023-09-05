@@ -61,11 +61,12 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     }
 
     public static String buildYamlBody(Path directory) throws IOException {
-        return Files.walk(directory)
-            .filter(Files::isRegularFile)
-            .filter(YamlFlowParser::isValidExtension)
-            .map(throwFunction(path -> Files.readString(path, Charset.defaultCharset())))
-            .collect(Collectors.joining("\n---\n"));
+        try(var files = Files.walk(directory)) {
+            return files.filter(Files::isRegularFile)
+                .filter(YamlFlowParser::isValidExtension)
+                .map(throwFunction(path -> Files.readString(path, Charset.defaultCharset())))
+                .collect(Collectors.joining("\n---\n"));
+        }
     }
 
     // bug in micronaut, we can't inject YamlFlowParser & ModelValidator, so we inject from implementation
@@ -81,20 +82,21 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         String clsName = cls.getSimpleName().toLowerCase();
 
         if(this.local) {
-            Files.walk(directory)
-                .filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
-                .forEach(path -> {
-                    try {
-                        Object parse = yamlFlowParser.parse(path.toFile(), cls);
-                        modelValidator.validate(parse);
-                        stdOut("@|green \u2713|@ - " + identity.apply(parse));
-                    } catch (ConstraintViolationException e) {
-                        stdErr("@|red \u2718|@ - " + path);
-                        FlowValidateCommand.handleException(e, clsName);
-                        returnCode.set(1);
-                    }
-                });
+            try(var files = Files.walk(directory)) {
+                files.filter(Files::isRegularFile)
+                    .filter(YamlFlowParser::isValidExtension)
+                    .forEach(path -> {
+                        try {
+                            Object parse = yamlFlowParser.parse(path.toFile(), cls);
+                            modelValidator.validate(parse);
+                            stdOut("@|green \u2713|@ - " + identity.apply(parse));
+                        } catch (ConstraintViolationException e) {
+                            stdErr("@|red \u2718|@ - " + path);
+                            FlowValidateCommand.handleException(e, clsName);
+                            returnCode.set(1);
+                        }
+                    });
+            }
         } else {
             String body = FlowValidateCommand.buildYamlBody(directory);
 

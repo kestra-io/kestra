@@ -36,8 +36,8 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     public Integer call() throws Exception {
         super.call();
 
-        try {
-            List<String> flows = Files.walk(directory)
+        try (var files = Files.walk(directory)) {
+            List<String> flows = files
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
                 .map(path -> {
@@ -50,7 +50,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 .collect(Collectors.toList());
 
             String body = "";
-            if (flows.size() == 0) {
+            if (flows.isEmpty()) {
                 stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
             } else {
                 body = String.join("\n---\n", flows);

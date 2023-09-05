@@ -34,14 +34,14 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
     public Integer call() throws Exception {
         super.call();
 
-        try {
-            List<Template> templates = Files.walk(directory)
+        try (var files = Files.walk(directory)) {
+            List<Template> templates = files
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
                 .map(path -> yamlFlowParser.parse(path.toFile(), Template.class))
                 .collect(Collectors.toList());
 
-            if (templates.size() == 0) {
+            if (templates.isEmpty()) {
                 stdOut("No template found on '{}'", directory.toFile().getAbsolutePath());
             }
 

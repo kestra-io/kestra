@@ -34,6 +34,7 @@ public class JdbcH2ControllerTest {
         TestsUtils.loads(repositoryLoader);
 
         if (!runner.isRunning()) {
+            runner.setSchedulerEnabled(false);
             runner.run();
         }
     }

@@ -35,7 +35,8 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [date]"));
+        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [date, listen]"));
+        assertThat(validate.get().getMessage(), containsString("Duplicate trigger id with name [trigger]"));
     }
 
     @Test

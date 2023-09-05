@@ -6,8 +6,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.annotation.Factory;
@@ -17,9 +17,13 @@ import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 @Factory
 public class ValidationFactory {
@@ -183,18 +187,22 @@ public class ValidationFactory {
 
             List<String> violations = new ArrayList<>();
 
-            // task unique id
+            // tasks unique id
             List<String> taskIds = value.allTasksWithChilds()
                 .stream()
                 .map(Task::getId)
                 .toList();
-            List<String> taskDuplicates = taskIds
-                .stream()
-                .distinct()
-                .filter(entry -> Collections.frequency(taskIds, entry) > 1)
-                .toList();
-            if (taskDuplicates.size() > 0) {
-                violations.add("Duplicate task id with name [" + String.join(", ", taskDuplicates) + "]");
+
+            List<String> duplicateIds = getDuplicates(taskIds);
+
+            if (!duplicateIds.isEmpty()) {
+                violations.add("Duplicate task id with name [" + String.join(", ", duplicateIds) + "]");
+            }
+
+            duplicateIds = getDuplicates(value.allTriggerIds());
+
+            if (!duplicateIds.isEmpty()) {
+                violations.add("Duplicate trigger id with name [" + String.join(", ", duplicateIds) + "]");
             }
 
             value.allTasksWithChilds()
@@ -202,8 +210,8 @@ public class ValidationFactory {
                 .forEach(
                     task -> {
                         if (task instanceof io.kestra.core.tasks.flows.Flow taskFlow
-                                && taskFlow.getFlowId().equals(value.getId())
-                                && taskFlow.getNamespace().equals(value.getNamespace())) {
+                            && taskFlow.getFlowId().equals(value.getId())
+                            && taskFlow.getNamespace().equals(value.getNamespace())) {
                             violations.add("Recursive call to flow [" + value.getId() + "]");
                         }
                     }
@@ -234,6 +242,13 @@ public class ValidationFactory {
         };
     }
 
+    private static List<String> getDuplicates(List<String> taskIds) {
+        return taskIds.stream()
+            .distinct()
+            .filter(entry -> Collections.frequency(taskIds, entry) > 1)
+            .collect(Collectors.toList());
+    }
+
     @Singleton
     ConstraintValidator<Regex, String> patternValidator() {
         return (value, annotationMetadata, context) -> {
@@ -243,7 +258,7 @@ public class ValidationFactory {
 
             try {
                 Pattern.compile(value);
-            } catch(PatternSyntaxException e) {
+            } catch (PatternSyntaxException e) {
                 context.messageTemplate("invalid pattern [" + value + "]");
                 return false;
             }

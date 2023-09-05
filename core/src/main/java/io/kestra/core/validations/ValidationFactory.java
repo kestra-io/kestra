@@ -6,9 +6,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.annotation.Factory;
@@ -18,11 +17,13 @@ import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Factory
 public class ValidationFactory {
@@ -194,14 +195,14 @@ public class ValidationFactory {
 
             List<String> duplicateIds = getDuplicates(taskIds);
 
-            List<String> triggerIds = Optional.ofNullable(value.getTriggers()).map(Collection::stream).orElse(Stream.empty())
-                .map(AbstractTrigger::getId)
-                .toList();
-
-            duplicateIds.addAll(getDuplicates(triggerIds));
-
             if (!duplicateIds.isEmpty()) {
                 violations.add("Duplicate task id with name [" + String.join(", ", duplicateIds) + "]");
+            }
+
+            duplicateIds = getDuplicates(value.allTriggerIds());
+
+            if (!duplicateIds.isEmpty()) {
+                violations.add("Duplicate trigger id with name [" + String.join(", ", duplicateIds) + "]");
             }
 
             value.allTasksWithChilds()
@@ -209,8 +210,8 @@ public class ValidationFactory {
                 .forEach(
                     task -> {
                         if (task instanceof io.kestra.core.tasks.flows.Flow taskFlow
-                                && taskFlow.getFlowId().equals(value.getId())
-                                && taskFlow.getNamespace().equals(value.getNamespace())) {
+                            && taskFlow.getFlowId().equals(value.getId())
+                            && taskFlow.getNamespace().equals(value.getNamespace())) {
                             violations.add("Recursive call to flow [" + value.getId() + "]");
                         }
                     }
@@ -257,7 +258,7 @@ public class ValidationFactory {
 
             try {
                 Pattern.compile(value);
-            } catch(PatternSyntaxException e) {
+            } catch (PatternSyntaxException e) {
                 context.messageTemplate("invalid pattern [" + value + "]");
                 return false;
             }

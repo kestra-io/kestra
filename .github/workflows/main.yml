@@ -72,6 +72,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: SonarCloud cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
       # JDK
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -92,6 +99,12 @@ jobs:
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check jacoco javadoc --no-daemon --priority=normal
+
+      - name: Analyze with Sonar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar --info
 
       # Codecov
       - uses: codecov/codecov-action@v3

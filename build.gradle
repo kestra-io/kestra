@@ -312,6 +312,10 @@ subprojects {
         getAdditionalSourceDirs().setFrom(files(sourceSets.main.allSource.srcDirs))
         getSourceDirectories().setFrom(files(sourceSets.main.allSource.srcDirs))
         getClassDirectories().setFrom(files(sourceSets.main.output))
+        reports {
+            html.required = true
+            xml.required = true
+        }
     }
 }
 
@@ -325,12 +329,6 @@ task jacoco(type: JacocoReport) {
     getSourceDirectories().setFrom(files(javaProject.sourceSets.main.allSource.srcDirs))
     getClassDirectories().setFrom(files(javaProject.sourceSets.main.output))
     getExecutionData().setFrom(files(javaProject.jacocoTestReport.executionData))
-
-    reports {
-        html.required = true
-        xml.required = true
-        csv.required = true
-    }
 }
 
 /**********************************************************************************************************************\

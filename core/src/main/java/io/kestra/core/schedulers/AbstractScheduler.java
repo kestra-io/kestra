@@ -613,7 +613,7 @@ public abstract class AbstractScheduler implements Scheduler {
         public FlowWithPollingTrigger from(Flow flow) throws InternalException {
             AbstractTrigger abstractTrigger = flow.getTriggers()
                 .stream()
-                .filter(a -> a.getId().equals(this.trigger.getId()))
+                .filter(a -> a.getId().equals(this.trigger.getId()) && a instanceof PollingTriggerInterface)
                 .findFirst()
                 .orElseThrow(() -> new InternalException("Couldn't find the trigger '" + this.trigger.getId() + "' on flow '" + flow.uid() + "'"));
 

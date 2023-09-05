@@ -49,13 +49,13 @@ public class LocalFlowRepositoryLoader {
                 Path tempDirectory = Files.createTempDirectory("loader");
 
                 for (Path path1 : fileSystem.getRootDirectories()) {
-                    Files
-                        .walk(path1)
-                        .filter(path -> Files.isRegularFile(path) && path.startsWith(substring))
-                        .forEach(throwConsumer(path -> FileUtils.copyURLToFile(
-                            path.toUri().toURL(),
-                            tempDirectory.resolve(path.toString().substring(1)).toFile())
-                        ));
+                    try (var files = Files.walk(path1)) {
+                        files.filter(path -> Files.isRegularFile(path) && path.startsWith(substring))
+                            .forEach(throwConsumer(path -> FileUtils.copyURLToFile(
+                                path.toUri().toURL(),
+                                tempDirectory.resolve(path.toString().substring(1)).toFile())
+                            ));
+                    }
                 }
 
                 this.load(tempDirectory.toFile());

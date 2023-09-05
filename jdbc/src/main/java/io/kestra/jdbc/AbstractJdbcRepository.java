@@ -132,12 +132,12 @@ public abstract class AbstractJdbcRepository<T> {
 
     public <R extends Record> Instant getDate(R record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
-        Integer minute = fields.contains("minute") ? record.get("minute", Integer.class) : null;
-        Integer hour = fields.contains("hour") ? record.get("hour", Integer.class) : null;
-        Integer day = fields.contains("day") ? record.get("day", Integer.class) : null;
-        Integer week = fields.contains("week") ? record.get("week", Integer.class) : null;
-        Integer month = fields.contains("month") ? record.get("month", Integer.class) : null;
-        Integer year = fields.contains("year") ? record.get("year", Integer.class) : null;
+        Integer minute = fields.contains("minute") ? record.get("minute", Integer.class) : 0;
+        Integer hour = fields.contains("hour") ? record.get("hour", Integer.class) : 0;
+        Integer day = fields.contains("day") ? record.get("day", Integer.class) : 0;
+        Integer week = fields.contains("week") ? record.get("week", Integer.class) : 0;
+        Integer month = fields.contains("month") ? record.get("month", Integer.class) : 0;
+        Integer year = fields.contains("year") ? record.get("year", Integer.class) : 0;
 
         switch (groupByType) {
             case "minute" -> {

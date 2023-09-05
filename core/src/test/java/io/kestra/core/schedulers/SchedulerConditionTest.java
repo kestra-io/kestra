@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
@@ -79,7 +80,8 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             triggerState);
              Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(SchedulerConditionTest.class, execution -> {
+            Runnable assertionStop = executionQueue.receive(SchedulerConditionTest.class, either -> {
+                Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
 

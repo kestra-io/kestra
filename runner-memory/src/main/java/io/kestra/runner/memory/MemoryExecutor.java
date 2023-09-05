@@ -1,5 +1,6 @@
 package io.kestra.runner.memory;
 
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -14,6 +15,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
+import io.kestra.core.utils.Either;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -109,7 +111,13 @@ public class MemoryExecutor implements ExecutorInterface {
         this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
     }
 
-    private void executionQueue(Execution message) {
+    private void executionQueue(Either<Execution, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
+            return;
+        }
+
+        Execution message = either.getLeft();
         if (skipExecutionService.skipExecution(message.getId())) {
             log.warn("Skipping execution {}", message.getId());
             return;
@@ -297,7 +305,14 @@ public class MemoryExecutor implements ExecutorInterface {
         }
     }
 
-    private void workerTaskResultQueue(WorkerTaskResult message) {
+    private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize the worker task result: {}", either.getRight().getMessage());
+            return;
+        }
+
+        WorkerTaskResult message = either.getLeft();
+
         if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
             log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
             return;

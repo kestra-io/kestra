@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.types.Schedule;
@@ -10,6 +11,7 @@ import jakarta.inject.Inject;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.junitpioneer.jupiter.RetryingTest;
 
+import java.lang.reflect.Executable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -76,7 +78,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
              Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(execution -> {
+            Runnable assertionStop = executionQueue.receive(either -> {
+                Execution execution = either.getLeft();
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
                 assertThat(execution.getInputs().get("def"), is("awesome"));
 

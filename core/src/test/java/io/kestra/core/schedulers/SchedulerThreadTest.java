@@ -75,7 +75,8 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             AtomicReference<Execution> last = new AtomicReference<>();
 
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(SchedulerThreadTest.class, execution -> {
+            Runnable assertionStop = executionQueue.receive(SchedulerThreadTest.class, either -> {
+                Execution execution = either.getLeft();
                 last.set(execution);
 
                 assertThat(execution.getFlowId(), is(flow.getId()));

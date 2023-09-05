@@ -40,9 +40,6 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 
     @Test
     void retryFailed() throws TimeoutException {
-        List<Execution> executions = new ArrayList<>();
-        executionQueue.receive(executions::add);
-
         Execution execution = runnerUtils.runOne("io.kestra.tests", "retry-failed");
 
         assertThat(execution.getTaskRunList(), hasSize(2));

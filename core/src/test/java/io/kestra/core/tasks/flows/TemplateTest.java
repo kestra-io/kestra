@@ -53,7 +53,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
             "flows/templates/with-template.yaml")));
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(logs::add);
+        logQueue.receive(either -> logs.add(either.getLeft()));
 
 
         Execution execution = runnerUtils.runOne(
@@ -84,7 +84,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
             "flows/templates/with-failed-template.yaml")));
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(logs::add);
+        logQueue.receive(either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
 

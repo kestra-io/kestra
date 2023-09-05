@@ -35,7 +35,8 @@ public class FlowTriggerCaseTest {
         AtomicReference<Execution> flowListener = new AtomicReference<>();
         AtomicReference<Execution> flowListenerNoInput = new AtomicReference<>();
 
-        executionQueue.receive(execution -> {
+        executionQueue.receive(either -> {
+            Execution execution = either.getLeft();
             if (execution.getState().getCurrent() == State.Type.SUCCESS) {
                 if (flowListenerNoInput.get() == null && execution.getFlowId().equals("trigger-flow-listener-no-inputs")) {
                     flowListenerNoInput.set(execution);

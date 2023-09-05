@@ -1,8 +1,11 @@
 package io.kestra.runner.memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.utils.Either;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.queues.QueueService;
@@ -26,7 +29,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     private final QueueService queueService;
 
     private final Class<T> cls;
-    private final Map<String, List<Consumer<T>>> queues = new ConcurrentHashMap<>();
+    private final Map<String, List<Consumer<Either<T, DeserializationException>>>> queues = new ConcurrentHashMap<>();
 
     public MemoryQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
@@ -55,7 +58,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         this.queues
             .forEach((consumerGroup, consumers) -> {
                 poolExecutor.execute(() -> {
-                    Consumer<T> consumer;
+                    Consumer<Either<T, DeserializationException>> consumer;
 
                     synchronized (this) {
                         if (consumers.size() == 0) {
@@ -67,13 +70,15 @@ public class MemoryQueue<T> implements QueueInterface<T> {
                         }
                     }
 
-                    // we force serialization to be a the same case than an another queue with serialization
+                    // we force serialization to be at the same case than an another queue implementation with serialization
                     // this enabled debugging classLoader
+                    String source = null;
                     try {
-                        T serialized = message == null ? null : mapper.readValue(mapper.writeValueAsString(message), this.cls);
-                        consumer.accept(serialized);
+                        source = mapper.writeValueAsString(message);
+                        T serialized = message == null ? null : mapper.readValue(source, this.cls);
+                        consumer.accept(Either.left(serialized));
                     } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                        consumer.accept(Either.right(new DeserializationException(e, source)));
                     }
                 });
             });
@@ -95,12 +100,12 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(String consumerGroup, Consumer<T> consumer) {
+    public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {
         return this.receive(consumerGroup, null, consumer);
     }
 
     @Override
-    public synchronized Runnable receive(String consumerGroup, Class<?> queueType, Consumer<T> consumer) {
+    public synchronized Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
         String queueName;
         if (queueType == null) {
             queueName = UUID.randomUUID().toString();

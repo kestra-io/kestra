@@ -153,7 +153,13 @@ public abstract class AbstractScheduler implements Scheduler {
         // listen to WorkerTriggerResult from polling triggers
         this.workerTriggerResultQueue.receive(
             Scheduler.class,
-            workerTriggerResult -> {
+            either -> {
+                if (either.isRight()) {
+                    log.error("Unable to deserialize a worker trigger result: {}", either.getRight().getMessage());
+                    return;
+                }
+
+                WorkerTriggerResult workerTriggerResult = either.getLeft();
                 if (workerTriggerResult.getSuccess() && workerTriggerResult.getExecution().isPresent()) {
                     var triggerExecution = new SchedulerExecutionWithTrigger(
                         workerTriggerResult.getExecution().get(),

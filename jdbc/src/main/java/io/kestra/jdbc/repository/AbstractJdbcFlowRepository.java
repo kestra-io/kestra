@@ -69,7 +69,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .tasks(List.of())
                         .build();
                 } catch (JsonProcessingException ex) {
-                    throw new DeserializationException(ex);
+                    throw new DeserializationException(ex, source);
                 }
             }
         });

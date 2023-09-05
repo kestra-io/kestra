@@ -342,8 +342,8 @@ public class RunnerUtils {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(current -> {
-            if (predicate.test(current)) {
-                receive.set(current);
+            if (predicate.test(current.getLeft())) {
+                receive.set(current.getLeft());
             }
         });
 

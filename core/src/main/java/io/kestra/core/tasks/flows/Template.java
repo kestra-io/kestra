@@ -191,7 +191,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
     protected io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
         if (!applicationContext.containsBean(TemplateExecutorInterface.class)) {
-            throw new DeserializationException(new Exception("Templates are disabled, please check your configuration"));
+            throw new DeserializationException("Templates are disabled, please check your configuration");
         }
 
         TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);

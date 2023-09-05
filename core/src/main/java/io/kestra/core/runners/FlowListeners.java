@@ -54,7 +54,13 @@ public class FlowListeners implements FlowListenersInterface {
             if (!this.isStarted) {
                 this.isStarted = true;
 
-                this.flowQueue.receive(flow -> {
+                this.flowQueue.receive(either -> {
+                    if (either.isRight()) {
+                        log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
+                        return;
+                    }
+
+                    Flow flow = either.getLeft();
                     Optional<Flow> previous = this.previous(flow);
 
                     if (flow.isDeleted()) {

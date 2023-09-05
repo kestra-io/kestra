@@ -91,7 +91,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     public static void eachNullTest(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(logs::add);
+        logQueue.receive(either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "each-null", Duration.ofSeconds(60));
 

@@ -41,7 +41,8 @@ public class MultipleConditionTriggerCaseTest {
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
         Flow flow = flowRepository.findById("io.kestra.tests", "trigger-multiplecondition-listener").orElseThrow();
 
-        executionQueue.receive(execution -> {
+        executionQueue.receive(either -> {
+            Execution execution = either.getLeft();
             synchronized (ended) {
                 if (execution.getState().getCurrent() == State.Type.SUCCESS) {
                     if (!ended.containsKey(execution.getId())) {
@@ -89,8 +90,9 @@ public class MultipleConditionTriggerCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
 
-        executionQueue.receive(execution -> {
+        executionQueue.receive(either -> {
             synchronized (ended) {
+                Execution execution = either.getLeft();
                 if (execution.getState().getCurrent().isTerminated()) {
                     if (!ended.containsKey(execution.getId())) {
                         ended.put(execution.getId(), execution);

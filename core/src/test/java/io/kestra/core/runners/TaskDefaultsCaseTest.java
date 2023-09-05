@@ -77,7 +77,7 @@ public class TaskDefaultsCaseTest {
 
     public void invalidTaskDefaults() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(logs::add);
+        logQueue.receive(either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
 

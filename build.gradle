@@ -9,6 +9,7 @@ plugins {
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
     id "org.sonarqube" version "4.2.1.3168"
+    id 'jacoco-report-aggregation'
 
     // helper
     id "com.github.ben-manes.versions" version "0.47.0"
@@ -315,6 +316,12 @@ subprojects {
         reports {
             html.required = true
             xml.required = true
+        }
+    }
+
+    sonar {
+        properties {
+            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/codeCoverageReport/codeCoverageReport.xml"
         }
     }
 }

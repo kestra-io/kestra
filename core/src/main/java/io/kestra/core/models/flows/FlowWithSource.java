@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 @Introspected
 @ToString
-@Slf4j
+@Jacksonized
 public class FlowWithSource extends Flow {
     String source;
 

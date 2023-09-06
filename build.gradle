@@ -321,7 +321,7 @@ subprojects {
 
     sonar {
         properties {
-            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/codeCoverageReport/codeCoverageReport.xml"
+            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
         }
     }
 }
@@ -336,6 +336,10 @@ task jacoco(type: JacocoReport) {
     getSourceDirectories().setFrom(files(javaProject.sourceSets.main.allSource.srcDirs))
     getClassDirectories().setFrom(files(javaProject.sourceSets.main.output))
     getExecutionData().setFrom(files(javaProject.jacocoTestReport.executionData))
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
 }
 
 /**********************************************************************************************************************\

@@ -8,6 +8,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.util.concurrent.TimeoutException;
 
@@ -24,6 +25,7 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     private SecretService secretService;
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "SECRET_MY_SECRET", matches = ".*")
     void getSecret() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "secrets");
         assertThat(execution.getTaskRunList().get(0).getOutputs().get("value"), is("secretValue"));

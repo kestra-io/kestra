@@ -3,6 +3,7 @@ package io.kestra.core.plugins;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.beans.BeanIntrospectionReference;
 import io.micronaut.core.io.service.SoftServiceLoader;
@@ -86,6 +87,7 @@ public class PluginScanner {
         List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
         List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
+        List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<?>> controllers = new ArrayList<>();
         List<String> guides = new ArrayList<>();
 
@@ -128,6 +130,10 @@ public class PluginScanner {
                 storages.add(beanType);
             }
 
+            if (SecretPluginInterface.class.isAssignableFrom(beanType)) {
+                secrets.add(beanType);
+            }
+
             if (beanType.isAnnotationPresent(Controller.class)) {
                 controllers.add(beanType);
             }
@@ -160,6 +166,7 @@ public class PluginScanner {
             .conditions(conditions)
             .controllers(controllers)
             .storages(storages)
+            .secrets(secrets)
             .guides(guides)
             .build();
     }

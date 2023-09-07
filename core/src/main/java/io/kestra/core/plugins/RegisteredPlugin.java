@@ -2,13 +2,11 @@ package io.kestra.core.plugins;
 
 import com.github.jknack.handlebars.internal.lang3.ObjectUtils;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.exceptions.HttpStatusException;
 import lombok.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -36,10 +34,11 @@ public class RegisteredPlugin {
     private final List<Class<? extends Condition>> conditions;
     private final List<Class<?>> controllers;
     private final List<Class<? extends StorageInterface>> storages;
+    private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<String> guides;
 
     public boolean isValid() {
-        return tasks.size() > 0 || triggers.size() > 0 || conditions.size() > 0 || controllers.size() > 0 || storages.size() > 0;
+        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !controllers.isEmpty() || !storages.isEmpty() || !secrets.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -74,6 +73,10 @@ public class RegisteredPlugin {
             return StorageInterface.class;
         }
 
+        if (this.getSecrets().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return SecretPluginInterface.class;
+        }
+
         if (this.getTasks().stream().anyMatch(r -> r.getName().equals(cls))) {
             return Task.class;
         }
@@ -99,6 +102,7 @@ public class RegisteredPlugin {
         result.put("conditions", Arrays.asList(this.getConditions().toArray(Class[]::new)));
         result.put("controllers", Arrays.asList(this.getControllers().toArray(Class[]::new)));
         result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
+        result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
 
         return result;
     }
@@ -231,6 +235,12 @@ public class RegisteredPlugin {
         if (!this.getStorages().isEmpty()) {
             b.append("[Storages: ");
             b.append(this.getStorages().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getSecrets().isEmpty()) {
+            b.append("[Secrets: ");
+            b.append(this.getSecrets().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

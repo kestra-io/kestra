@@ -26,6 +26,7 @@ public class Plugin {
     private List<String> conditions;
     private List<String> controllers;
     private List<String> storages;
+    private List<String> secrets;
     private List<String> guides;
 
     public static Plugin of(RegisteredPlugin registeredPlugin) {
@@ -54,6 +55,7 @@ public class Plugin {
         plugin.conditions = className(filter(registeredPlugin.getConditions()).toArray(Class[]::new));
         plugin.controllers = className(filter(registeredPlugin.getControllers()).toArray(Class[]::new));
         plugin.storages = className(filter(registeredPlugin.getStorages()).toArray(Class[]::new));
+        plugin.secrets = className(filter(registeredPlugin.getSecrets()).toArray(Class[]::new));
 
         return plugin;
     }

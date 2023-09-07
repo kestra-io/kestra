@@ -12,6 +12,7 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.tasks.log.Log;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -84,8 +85,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().endsWith("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
-        assertThat(matchingLog, notNullValue());
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().endsWith("Can't find flow template 'io.kestra.tests.invalid'")).findFirst().orElseThrow().getLevel(), is(Level.ERROR));
     }
 
     @Test

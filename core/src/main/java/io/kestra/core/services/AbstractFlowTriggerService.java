@@ -53,7 +53,7 @@ public abstract class AbstractFlowTriggerService {
             .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)))
             .filter(flowWithFlowTrigger -> conditionService.valid(
                 flowWithFlowTrigger.getFlow(),
-                flowWithFlowTrigger.getTrigger().getConditions().stream()
+                Optional.ofNullable(flowWithFlowTrigger.getTrigger().getConditions()).stream().flatMap(Collection::stream)
                     .filter(Predicate.not(MultipleCondition.class::isInstance))
                     .toList(),
                 conditionService.conditionContext(
@@ -67,7 +67,7 @@ public abstract class AbstractFlowTriggerService {
         if (multipleConditionStorage.isPresent()) {
             List<FlowWithFlowTriggerAndMultipleCondition> flowWithMultipleConditionsToEvaluate = validTriggersBeforeMultipleConditionEval.stream()
                 .flatMap(flowWithFlowTrigger ->
-                    flowWithFlowTrigger.getTrigger().getConditions().stream()
+                    Optional.ofNullable(flowWithFlowTrigger.getTrigger().getConditions()).stream().flatMap(Collection::stream)
                         .filter(MultipleCondition.class::isInstance)
                         .map(MultipleCondition.class::cast)
                         .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(

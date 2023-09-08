@@ -66,7 +66,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             );
 
             execution = runnerUtils.awaitExecution(
-                e -> e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> !e.getFlowId().equals("trigger-flow-listener-no-condition") && e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> executionQueue.emit(restarted),
                 Duration.ofSeconds(5)
             );
@@ -81,7 +81,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             execution = runnerUtils.awaitExecution(
-                e -> e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> !e.getFlowId().equals("trigger-flow-listener-no-condition") && e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> {},
                 Duration.ofSeconds(5)
             );
@@ -104,7 +104,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
                 Duration.ofSeconds(5)
             );
 
-            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
+            assertThat("Task runs were: " + execution.getTaskRunList().toString(), execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(1L));
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count(), is(1L));
             assertThat(execution.getTaskRunList(), hasSize(1));

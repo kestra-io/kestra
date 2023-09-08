@@ -85,6 +85,8 @@ inputs:
   after: "01:00:00"
   before: "11:59:59"
   required: false
+- name: secret
+  type: SECRET
 
 tasks:
 - id: string

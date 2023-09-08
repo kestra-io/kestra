@@ -72,6 +72,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
+        .put("secret", "secret")
         .build();
 
     @Test
@@ -109,6 +110,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .addPart("instant", "2019-10-06T18:27:49Z")
             .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
+            .addPart("secret", "secret")
             .build();
     }
 

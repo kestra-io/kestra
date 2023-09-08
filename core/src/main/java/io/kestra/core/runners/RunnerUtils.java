@@ -135,31 +135,31 @@ public class RunnerUtils {
 
     private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, String current) {
         switch (input.getType()) {
-            case STRING:
+            case STRING, SECRET -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
                     current
                 ));
-
-            case INT:
+            }
+            case INT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
                     Integer.valueOf(current)
                 ));
-
-            case FLOAT:
+            }
+            case FLOAT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
                     Float.valueOf(current)
                 ));
-
-            case BOOLEAN:
+            }
+            case BOOLEAN -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
                     Boolean.valueOf(current)
                 ));
-
-            case DATETIME:
+            }
+            case DATETIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
@@ -168,8 +168,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case DATE:
+            }
+            case DATE -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
@@ -178,8 +178,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case TIME:
+            }
+            case TIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
@@ -188,8 +188,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case DURATION:
+            }
+            case DURATION -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
@@ -198,8 +198,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case FILE:
+            }
+            case FILE -> {
                 try {
                     URI uri = URI.create(current.replace(File.separator, "/"));
 
@@ -217,8 +217,8 @@ public class RunnerUtils {
                 } catch (Exception e) {
                     throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
                 }
-
-            case JSON:
+            }
+            case JSON -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
@@ -227,8 +227,8 @@ public class RunnerUtils {
                 } catch (JsonProcessingException e) {
                     throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case URI:
+            }
+            case URI -> {
                 Matcher matcher = URI_PATTERN.matcher(current);
                 if (matcher.matches()) {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
@@ -238,8 +238,8 @@ public class RunnerUtils {
                 } else {
                     throw new MissingRequiredInput("Invalid URI format for '" + input.getName() + "' for '" + current + "'");
                 }
-
-            default:
+            }
+            default ->
                 throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
         }
     }

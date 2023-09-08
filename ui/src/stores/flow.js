@@ -109,7 +109,7 @@ export default {
                     }
                 })
                 .then(flow => {
-                    dispatch("loadGraph", flow);
+                    dispatch("loadGraph", {flow});
 
                     return flow;
                 })
@@ -122,7 +122,7 @@ export default {
                     return response.data;
                 })
                 .then(flow => {
-                    dispatch("loadGraph", flow);
+                    dispatch("loadGraph", {flow});
 
                     return flow;
                 })
@@ -139,8 +139,13 @@ export default {
                 commit("setFlow", null)
             })
         },
-        loadGraph({commit}, flow) {
-            return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
+        loadGraph({commit}, options) {
+            const flow = options.flow;
+            const params = options.params ? options.params : {};
+            if (flow.revisions) {
+                params["revisions"] = flow.revisions;
+            }
+            return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)
                 commit("setFlowGraphParam", {
                     namespace: flow.namespace,

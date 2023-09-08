@@ -108,6 +108,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         throw new IllegalStateException("This task must not be run by a worker and must be run on executor side!");
     }
 
+    public String flowUid() {
+        return io.kestra.core.models.flows.Flow.uid(this.getNamespace(), this.getFlowId(), Optional.ofNullable(this.revision));
+    }
+
     @SuppressWarnings("unchecked")
     public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);

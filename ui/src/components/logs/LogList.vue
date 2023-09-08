@@ -1,5 +1,5 @@
 <template>
-    <div v-if="execution" class="log-wrapper">
+    <div v-if="logsExecution" class="log-wrapper">
         <div v-for="currentTaskRun in currentTaskRuns" :key="currentTaskRun.id">
             <template
                 v-if="displayTaskRun(currentTaskRun)"
@@ -79,7 +79,7 @@
 
                                             <outputs
                                                 :outputs="currentTaskRun.outputs"
-                                                :execution="execution"
+                                                :execution="logsExecution"
                                             />
 
                                             <restart
@@ -87,7 +87,7 @@
                                                 :key="`restart-${index}-${attempt.state.startDate}`"
                                                 is-replay
                                                 tooltip-position="left"
-                                                :execution="execution"
+                                                :execution="logsExecution"
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"
                                                 @follow="forwardEvent('follow', $event)"
@@ -96,7 +96,7 @@
                                             <change-status
                                                 component="el-dropdown-item"
                                                 :key="`change-status-${index}-${attempt.state.startDate}`"
-                                                :execution="execution"
+                                                :execution="logsExecution"
                                                 :task-run="currentTaskRun"
                                                 :attempt-index="index"
                                                 @follow="forwardEvent('follow', $event)"
@@ -106,9 +106,9 @@
                                                 component="el-dropdown-item"
                                                 :task-id="currentTaskRun.taskId"
                                                 :section="SECTIONS.TASKS"
-                                                :flow-id="execution.flowId"
-                                                :namespace="execution.namespace"
-                                                :revision="execution.flowRevision"
+                                                :flow-id="logsExecution.flowId"
+                                                :namespace="logsExecution.namespace"
+                                                :revision="logsExecution.flowRevision"
                                             />
                                             <component
                                                 :is="'el-dropdown-item'"
@@ -236,6 +236,10 @@
             logsToOpenParent: {
                 type: Array,
                 default: undefined
+            },
+            targetExecution: {
+                type: Object,
+                required: false
             }
         },
         data() {
@@ -288,8 +292,11 @@
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
             ...mapState("flow", ["flow"]),
+            logsExecution() {
+                return this.targetExecution ?? this.execution;
+            },
             currentTaskRuns() {
-                return this.execution.taskRunList.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
+                return this.logsExecution.taskRunList.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
             },
             Download() {
                 return Download
@@ -359,7 +366,7 @@
                 });
             },
             scrollToBottomFailedTask() {
-                if (this.logsToOpen.includes(this.execution.state.current)) {
+                if (this.logsToOpen.includes(this.logsExecution.state.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.attemptNumber ?? 0)
@@ -373,7 +380,7 @@
             downloadContent(currentTaskRunId) {
                 const params = this.params
                 this.$store.dispatch("execution/downloadLogs", {
-                    executionId: this.execution.id,
+                    executionId: this.logsExecution.id,
                     params: params
                 }).then((response) => {
                     const url = window.URL.createObjectURL(new Blob([response]));
@@ -385,7 +392,7 @@
                 });
             },
             downloadName(currentTaskRunId) {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}-${currentTaskRunId}.log`
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.logsExecution.id}-${currentTaskRunId}.log`
             },
             forwardEvent(type, event) {
                 this.$emit(type, event);
@@ -412,11 +419,11 @@
             loadLogs() {
                 const params = this.params
 
-                if (this.execution && this.execution.state.current === State.RUNNING) {
+                if (this.logsExecution && this.logsExecution.state.current === State.RUNNING) {
                     this.append = true
                     this.$store
                         .dispatch("execution/followLogs", {
-                            id: this.$route.params.id,
+                            id: this.logsExecution.id,
                             params: params,
                         })
                         .then((sse) => {
@@ -449,7 +456,7 @@
                         });
                 } else {
                     this.$store.dispatch("execution/loadLogs", {
-                        executionId: this.$route.params.id,
+                        executionId: this.logsExecution.id,
                         params: params,
                     }).then(r => {
                         this.logsList = r
@@ -466,7 +473,7 @@
                 }
             },
             attempts(taskRun) {
-                if (this.execution.state.current === State.RUNNING || this.attemptNumber === undefined) {
+                if (this.logsExecution.state.current === State.RUNNING || this.attemptNumber === undefined) {
                     return taskRun.attempts ?? [{state: taskRun.state}];
                 }
 

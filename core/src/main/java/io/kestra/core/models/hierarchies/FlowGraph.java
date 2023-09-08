@@ -1,9 +1,7 @@
 package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -18,18 +16,11 @@ public class FlowGraph {
     List<Cluster> clusters;
     List<String> flowables;
 
-    public static FlowGraph of(Flow flow) throws IllegalVariableEvaluationException {
-        return FlowGraph.of(flow, null);
-    }
-
-    public static FlowGraph of(Flow flow, Execution execution) throws IllegalVariableEvaluationException {
-        GraphCluster graph = GraphService.of(flow, execution);
-
+    public static FlowGraph of(GraphCluster graph) throws IllegalVariableEvaluationException {
         return FlowGraph.builder()
-            .flowables(GraphService.flowables(flow))
-            .nodes(GraphService.nodes(graph))
-            .edges(GraphService.edges(graph))
-            .clusters(GraphService.clusters(graph, new ArrayList<>())
+            .nodes(GraphUtils.nodes(graph))
+            .edges(GraphUtils.edges(graph))
+            .clusters(GraphUtils.clusters(graph, new ArrayList<>())
                 .stream()
                 .map(g -> new Cluster(g.getKey(), g.getKey().getGraph()
                     .nodes()

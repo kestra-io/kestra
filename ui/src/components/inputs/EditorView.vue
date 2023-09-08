@@ -379,9 +379,6 @@
 
     const generateGraph = async () => {
         await fetchGraph(flowYaml.value);
-        if (props.flowGraph) {
-            lowCodeEditorRef.value.generateGraph();
-        }
     }
 
     const loadingState = (value) => {

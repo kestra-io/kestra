@@ -30,7 +30,7 @@ export default [
 
     //Executions
     {name: "executions/list", path: "/executions", component: Executions},
-    {name: "executions/update", path: "/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot},
+    {name: "executions/update", path: "/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot, props: true},
 
     //TaskRuns
     {name: "taskruns/list", path: "/taskruns", component: TaskRuns},

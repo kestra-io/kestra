@@ -104,7 +104,13 @@ public class PluginScanner {
         loader.collectAll(definitions);
 
         for (BeanIntrospectionReference definition : definitions) {
-            Class beanType = definition.getBeanType();
+            Class beanType;
+            try {
+                beanType = definition.getBeanType();
+            } catch (Throwable e) {
+                log.warn("Unable to load class '{}' on plugin '{}'", definition.getName(), externalPlugin.getLocation().toString());
+                continue;
+            }
 
             if (Modifier.isAbstract(beanType.getModifiers())) {
                 continue;

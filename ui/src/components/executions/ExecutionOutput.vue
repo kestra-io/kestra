@@ -68,7 +68,7 @@
                 </template>
             </el-table-column>
 
-            <el-table-column prop="value" sortable :label="$t('value')">
+            <el-table-column prop="value" sortable :label="$t('each value')">
                 <template #default="scope">
                     <var>{{ scope.row.value }}</var>
                 </template>

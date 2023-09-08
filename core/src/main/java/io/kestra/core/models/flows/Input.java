@@ -31,6 +31,7 @@ import javax.validation.constraints.Pattern;
     @JsonSubTypes.Type(value = FloatInput.class, name = "FLOAT"),
     @JsonSubTypes.Type(value = IntInput.class, name = "INT"),
     @JsonSubTypes.Type(value = JsonInput.class, name = "JSON"),
+    @JsonSubTypes.Type(value = SecretInput.class, name = "SECRET"),
     @JsonSubTypes.Type(value = StringInput.class, name = "STRING"),
     @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
     @JsonSubTypes.Type(value = URIInput.class, name = "URI")
@@ -67,7 +68,8 @@ public abstract class Input<T> {
         DURATION(DurationInput.class.getName()),
         FILE(FileInput.class.getName()),
         JSON(JsonInput.class.getName()),
-        URI(URIInput.class.getName());
+        URI(URIInput.class.getName()),
+        SECRET(SecretInput.class.getName());
 
         private final String clsName;
 

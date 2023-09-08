@@ -108,6 +108,21 @@ class PluginControllerTest {
         });
     }
 
+    @Test
+    void docWithAlert() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+
+            DocumentationWithSchema doc = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.states.Set"),
+                DocumentationWithSchema.class
+            );
+
+            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.states.Set"));
+            assertThat(doc.getMarkdown(), containsString("::: warning\n"));
+        });
+    }
+
 
     @SuppressWarnings("unchecked")
     @Test

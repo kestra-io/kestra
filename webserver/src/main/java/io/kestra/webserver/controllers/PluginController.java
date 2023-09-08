@@ -10,6 +10,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
 import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -95,7 +96,7 @@ public class PluginController {
 
         return HttpResponse.ok()
             .body(new DocumentationWithSchema(
-                DocumentationGenerator.render(classInputDocumentation),
+                alertReplacement(DocumentationGenerator.render(classInputDocumentation)),
                 new Schema(
                     classInputDocumentation.getPropertiesSchema(),
                     null,
@@ -164,7 +165,7 @@ public class PluginController {
             allProperties
         );
 
-        var doc = DocumentationGenerator.render(classPluginDocumentation);
+        var doc = alertReplacement(DocumentationGenerator.render(classPluginDocumentation));
 
         return HttpResponse.ok()
             .body(new DocumentationWithSchema(
@@ -195,5 +196,11 @@ public class PluginController {
             .baseClass(className);
 
         return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
+    }
+
+    private String alertReplacement(@NonNull String original) {
+        // we need to replace the NuxtJS ::alert{type=} :: with the more standard ::: warning :::
+        return original.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n")
+            .replaceAll("\n::\n", "\n:::\n");
     }
 }

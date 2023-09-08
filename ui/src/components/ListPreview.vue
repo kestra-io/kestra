@@ -1,8 +1,13 @@
 <template>
     <el-table :data="value" stripe>
-        <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column" />
+      <el-table-column
+        v-for="(column, index) in generateTableColumns"
+        :key="index"
+        :prop="column"
+        :label="column === 'Value' ? 'Iteration Value' : column"
+      />
     </el-table>
-</template>
+  </template>  
 <script>
 
     export default {

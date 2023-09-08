@@ -52,7 +52,7 @@ class ErrorControllerTest {
 
         String response = exception.getResponse().getBody(String.class).get();
         assertThat(response, containsString("Invalid type: io.kestra.invalid"));
-        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow$FlowBuilderImpl[\\\"tasks\\\"] > java.util.ArrayList[0]\""));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0]\""));
         assertThat(response, containsString("Failed to convert argument"));
 
         // missing getter & setter on JsonError
@@ -82,8 +82,8 @@ class ErrorControllerTest {
         assertThat(exception.getStatus(), is(UNPROCESSABLE_ENTITY));
 
         String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response, containsString("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.Flow$FlowBuilderImpl), not marked as ignorable"));
-        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow$FlowBuilderImpl[\\\"unknown\\\"]\""));
+        assertThat(response, containsString("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.Flow), not marked as ignorable"));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"unknown\\\"]\""));
     }
 
     @Test
@@ -107,7 +107,7 @@ class ErrorControllerTest {
 
         String response = exception.getResponse().getBody(String.class).get();
         assertThat(response, containsString("Cannot deserialize value of type `org.slf4j.event.Level` from String \\\"WRONG\\\""));
-        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow$FlowBuilderImpl[\\\"tasks\\\"] > java.util.ArrayList[0] > io.kestra.core.tasks.log.Log[\\\"level\\\"]\""));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0] > io.kestra.core.tasks.log.Log[\\\"level\\\"]\""));
     }
 
 }

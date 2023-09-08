@@ -173,14 +173,14 @@ class FlowTopologyServiceTest {
 
     @Test
     public void self1() {
-        Flow flow = parse("flows/valids/trigger-multiplecondition-listener.yaml").withRevision(1);
+        Flow flow = parse("flows/valids/trigger-multiplecondition-listener.yaml").toBuilder().revision(1).build();
 
         assertThat(flowTopologyService.isChild(flow, flow), nullValue());
     }
 
     @Test
     public void self() {
-        Flow flow = parse("flows/valids/trigger-flow-listener.yaml").withRevision(1);
+        Flow flow = parse("flows/valids/trigger-flow-listener.yaml").toBuilder().revision(1).build();
 
         assertThat(flowTopologyService.isChild(flow, flow), nullValue());
     }

@@ -195,6 +195,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+        if (flow instanceof FlowWithSource) {
+            flow = ((FlowWithSource) flow).toFlow();
+        }
+
         // flow exists, return it
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
@@ -205,9 +209,9 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         List<FlowWithSource> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
         if (revisions.size() > 0) {
-            flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);
+            flow = flow.toBuilder().revision(revisions.get(revisions.size() - 1).getRevision() + 1).build();
         } else {
-            flow = flow.withRevision(1);
+            flow = flow.toBuilder().revision(1).build();
         }
 
         this.flows.put(flowId(flow), flow);
@@ -222,6 +226,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public Flow delete(Flow flow) {
+        if (flow instanceof FlowWithSource) {
+            flow = ((FlowWithSource) flow).toFlow();
+        }
+
         if (this.findById(flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision())).isEmpty()) {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
@@ -232,8 +240,9 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         this.flows.remove(flowId(deleted));
         this.revisions.put(deleted.uid(), deleted);
 
+        Flow finalFlow = flow;
         ListUtils.emptyOnNull(flow.getTriggers())
-            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(finalFlow, abstractTrigger)));
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
 

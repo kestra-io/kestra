@@ -348,6 +348,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SneakyThrows
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+        if (flow instanceof FlowWithSource) {
+            flow = ((FlowWithSource) flow).toFlow();
+        }
+
         // flow exists, return it
         Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
         if (exists.isPresent() && exists.get().isUpdatable(flow, flowSource)) {
@@ -357,9 +361,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         List<FlowWithSource> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
         if (revisions.size() > 0) {
-            flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);
+            flow = flow.toBuilder().revision(revisions.get(revisions.size() - 1).getRevision() + 1).build();
         } else {
-            flow = flow.withRevision(1);
+            flow = flow.toBuilder().revision(1).build();
         }
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
@@ -376,6 +380,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SneakyThrows
     @Override
     public Flow delete(Flow flow) {
+        if (flow instanceof FlowWithSource) {
+            flow = ((FlowWithSource) flow).toFlow();
+        }
+
         Optional<Flow> revision = this.findById(flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision()));
         if (revision.isEmpty()) {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");

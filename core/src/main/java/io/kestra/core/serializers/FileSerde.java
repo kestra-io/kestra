@@ -55,6 +55,15 @@ abstract public class FileSerde {
         }
     }
 
+    public static void reader(BufferedReader input, int maxLines, Consumer<Object> consumer) throws IOException {
+        String row;
+        int nbLines = 0;
+        while ((row = input.readLine()) != null && nbLines < maxLines) {
+            consumer.accept(convert(row));
+            nbLines ++;
+        }
+    }
+
     private static Object convert(String row) throws JsonProcessingException {
         return MAPPER.readValue(row, TYPE_REFERENCE);
     }

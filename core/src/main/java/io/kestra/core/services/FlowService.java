@@ -50,7 +50,7 @@ public class FlowService {
     }
 
     private Stream<String> deprecationTraversal(String prefix, Object object) {
-        if (ClassUtils.isPrimitiveOrWrapper(object.getClass()) || String.class.equals(object.getClass())) {
+        if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || String.class.equals(object.getClass())) {
             return Stream.empty();
         }
 

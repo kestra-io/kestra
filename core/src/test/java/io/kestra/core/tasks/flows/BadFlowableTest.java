@@ -1,11 +1,14 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -16,7 +19,7 @@ public class BadFlowableTest extends AbstractMemoryRunnerTest {
     void sequential() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "bad-flowable");
 
-        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat("Task runs were: "+ execution.getTaskRunList().stream().map(TaskRun::getTaskId).toList(), execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

@@ -2,6 +2,7 @@ package io.kestra.core.serializers;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -61,5 +62,22 @@ class FileSerdeTest {
         } else {
             assertThat(result.get("key"), is(resultValue != null ? resultValue : object.get("key")));
         }
+    }
+
+    @Test
+    void readMax() throws IOException {
+        File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".ion");
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            FileSerde.write(outputStream, Map.of("key1", "value1"));
+            FileSerde.write(outputStream, Map.of("key2", "value2"));
+            FileSerde.write(outputStream, Map.of("key3", "value3"));
+        }
+
+        BufferedReader inputStream = new BufferedReader(new FileReader(tempFile));
+
+        List<Object> list = new ArrayList<>();
+        FileSerde.reader(inputStream, 2, row -> list.add(row));
+
+        assertThat(list.size(), is(2));
     }
 }

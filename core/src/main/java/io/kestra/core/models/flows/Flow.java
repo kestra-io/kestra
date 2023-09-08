@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -29,17 +28,16 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuperBuilder(toBuilder = true)
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Introspected
 @ToString
@@ -64,7 +62,6 @@ public class Flow implements DeletedInterface {
     @Pattern(regexp = "[a-z0-9._-]+")
     String namespace;
 
-    @With
     @Min(value = 1)
     Integer revision;
 
@@ -74,7 +71,6 @@ public class Flow implements DeletedInterface {
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(implementation = Object.class, anyOf = {List.class, Map.class})
     List<Label> labels;
-
 
     @Valid
     List<Input<?>> inputs;
@@ -322,21 +318,9 @@ public class Flow implements DeletedInterface {
     }
 
     public Flow toDeleted() {
-        return new Flow(
-            this.id,
-            this.namespace,
-            this.revision + 1,
-            this.description,
-            this.labels,
-            this.inputs,
-            this.variables,
-            this.tasks,
-            this.errors,
-            this.listeners,
-            this.triggers,
-            this.taskDefaults,
-            this.disabled,
-            true
-        );
+        return this.toBuilder()
+            .revision(this.revision + 1)
+            .deleted(true)
+            .build();
     }
 }

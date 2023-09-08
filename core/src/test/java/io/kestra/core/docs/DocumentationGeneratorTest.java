@@ -7,6 +7,7 @@ import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.tasks.flows.Flow;
+import io.kestra.core.tasks.states.Set;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -129,6 +130,20 @@ class DocumentationGeneratorTest {
 
         assertThat(render, containsString("Echo"));
         assertThat(render, containsString("- \uD83D\uDD12 Deprecated"));
+    }
+
+    @Test
+    void state() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class<Set> set = scan.findClass(Set.class.getName()).orElseThrow();
+
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, set, Task.class);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render, containsString("Set"));
+        assertThat(render, containsString("::alert{type=\"warning\"}\n"));
     }
 
     @Test

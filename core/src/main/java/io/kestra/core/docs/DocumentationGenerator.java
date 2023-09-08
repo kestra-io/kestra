@@ -260,10 +260,6 @@ public class DocumentationGenerator {
         Pattern pattern = Pattern.compile("`\\{\\{(.*?)\\}\\}`", Pattern.MULTILINE);
         renderer = pattern.matcher(renderer).replaceAll("<code v-pre>{{ $1 }}</code>");
 
-        // alert
-        renderer = renderer.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n");
-        renderer = renderer.replaceAll("\n::\n", "\n:::\n");
-
         return renderer;
     }
 }

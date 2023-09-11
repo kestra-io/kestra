@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
+import io.kestra.core.repositories.WorkerHeartbeatRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -51,6 +52,9 @@ public class MiscController {
     @Nullable
     protected String environmentColor;
 
+    @Inject
+    private Optional<WorkerHeartbeatRepositoryInterface> workerHeartbeatRepositoryInterface;
+
     @Get("/ping")
     @Hidden
     public HttpResponse<?> ping() {
@@ -67,7 +71,7 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
-            .isWorkerInstanceEnabled(false)
+            .isWorkerInstanceEnabled(workerHeartbeatRepositoryInterface.isPresent())
             .isTemplateEnabled(templateRepository.isPresent());
 
         if (this.environmentName != null || this.environmentColor != null) {

@@ -17,6 +17,8 @@ import FlowMetrics from "../components/flows/FlowMetrics.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
+import Workers from "../components/admin/Workers.vue";
+
 
 export default [
     //Flows
@@ -56,6 +58,7 @@ export default [
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: Triggers},
+    {name: "admin/workers", path: "/:tenant?/admin/workers", component: Workers},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:pathMatch(.*)", component: Errors, props: {code: 404}},

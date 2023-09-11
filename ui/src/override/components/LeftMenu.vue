@@ -47,6 +47,7 @@
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
+    import AccountHardHatOutline from "vue-material-design-icons/AccountHardHatOutline.vue";
 
     export default {
         components: {
@@ -203,6 +204,14 @@
                                     element: TimerCogOutline,
                                     class: "menu-icon"
                                 }
+                            },
+                            {
+                                href: "/admin/workers",
+                                title: this.$t("workers"),
+                                icon: {
+                                    element: AccountHardHatOutline,
+                                    class: "menu-icon"
+                                },
                             }
                         ]
                     },

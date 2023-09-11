@@ -60,6 +60,7 @@ public class Worker implements Runnable, AutoCloseable {
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final QueueInterface<MetricEntry> metricEntryQueue;
     private final MetricRegistry metricRegistry;
+    private final QueueInterface<WorkerInstance> workerInstanceQueue;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
 
@@ -97,6 +98,10 @@ public class Worker implements Runnable, AutoCloseable {
             Qualifiers.byName(QueueFactoryInterface.METRIC_QUEUE)
         );
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
+        this.workerInstanceQueue = (QueueInterface<WorkerInstance>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERINSTANCE_NAMED)
+        );
 
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.executors = executorsUtils.maxCachedThreadPool(thread, "worker");

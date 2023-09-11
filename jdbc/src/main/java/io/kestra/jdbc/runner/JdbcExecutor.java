@@ -14,9 +14,9 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
+import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -24,7 +24,9 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
+import io.kestra.jdbc.repository.AbstractJdbcWorkerHeartbeatRepository;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.scheduling.annotation.Scheduled;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -120,6 +122,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractJdbcFlowTopologyRepository flowTopologyRepository;
 
+    @Inject
+    AbstractJdbcWorkerHeartbeatRepository workerHeartbeatRepository;
+
     protected List<Flow> allFlows;
 
     @Inject
@@ -196,6 +201,13 @@ public class JdbcExecutor implements ExecutorInterface {
                 );
             }
         );
+
+    }
+
+    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}"+"s")
+    protected void workersUpdate() {
+        workerHeartbeatRepository.heartbeatsStatusUpdate();
+        workerHeartbeatRepository.heartbeatsCleanup();
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -335,7 +347,6 @@ public class JdbcExecutor implements ExecutorInterface {
             this.toExecution(result);
         }
     }
-
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
         if (either.isRight()) {

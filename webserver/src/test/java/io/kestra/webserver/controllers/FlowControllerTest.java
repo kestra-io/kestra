@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Sequential;
@@ -251,7 +252,18 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         Flow get = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), String.class));
         assertThat(get.getId(), is(flow.getId()));
         assertThat(get.getInputs().get(0).getName(), is("a"));
+    }
 
+    @Test
+    void createFlowWithJsonLabels() {
+        Map<String, Object> flow = JacksonMapper.toMap(generateFlow("io.kestra.unittest", "a"));
+        flow.put("labels", Map.of("a", "b"));
+
+        Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
+
+        assertThat(result.getId(), is(flow.get("id")));
+        assertThat(result.getLabels().get(0).key(), is("a"));
+        assertThat(result.getLabels().get(0).value(), is("b"));
     }
 
     @Test

@@ -43,7 +43,7 @@ public class MultipleConditionTriggerCaseTest {
 
         executionQueue.receive(execution -> {
             synchronized (ended) {
-                if (execution.getState().getCurrent() == State.Type.SUCCESS) {
+                if (execution.getState().getCurrent() == State.Type.SUCCESS && !execution.getFlowId().equals("trigger-flow-listener-no-condition")) {
                     if (!ended.containsKey(execution.getId())) {
                         ended.put(execution.getId(), execution);
                         countDownLatch.countDown();
@@ -91,7 +91,7 @@ public class MultipleConditionTriggerCaseTest {
 
         executionQueue.receive(execution -> {
             synchronized (ended) {
-                if (execution.getState().getCurrent().isTerminated()) {
+                if (execution.getState().getCurrent().isTerminated() && !execution.getFlowId().equals("trigger-flow-listener-no-condition")) {
                     if (!ended.containsKey(execution.getId())) {
                         ended.put(execution.getId(), execution);
                         countDownLatch.countDown();

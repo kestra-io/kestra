@@ -22,22 +22,22 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuperBuilder(toBuilder = true)
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Introspected
 @ToString
@@ -62,7 +62,6 @@ public class Flow implements DeletedInterface {
     @Pattern(regexp = "[a-z0-9._-]+")
     String namespace;
 
-    @With
     @Min(value = 1)
     Integer revision;
 
@@ -70,8 +69,8 @@ public class Flow implements DeletedInterface {
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @Schema(implementation = Object.class, anyOf = {List.class, Map.class})
     List<Label> labels;
-
 
     @Valid
     List<Input<?>> inputs;
@@ -318,21 +317,9 @@ public class Flow implements DeletedInterface {
     }
 
     public Flow toDeleted() {
-        return new Flow(
-            this.id,
-            this.namespace,
-            this.revision + 1,
-            this.description,
-            this.labels,
-            this.inputs,
-            this.variables,
-            this.tasks,
-            this.errors,
-            this.listeners,
-            this.triggers,
-            this.taskDefaults,
-            this.disabled,
-            true
-        );
+        return this.toBuilder()
+            .revision(this.revision + 1)
+            .deleted(true)
+            .build();
     }
 }

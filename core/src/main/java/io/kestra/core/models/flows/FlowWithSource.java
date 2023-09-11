@@ -2,20 +2,16 @@ package io.kestra.core.models.flows;
 
 import io.kestra.core.services.FlowService;
 import io.micronaut.core.annotation.Introspected;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 
 @SuperBuilder(toBuilder = true)
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Introspected
 @ToString
-@Slf4j
 public class FlowWithSource extends Flow {
     String source;
 

@@ -27,7 +27,7 @@ public class SecretService {
                 try {
                     consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(entry.getValue()))));
                 } catch (Exception e) {
-                    log.error("Could not decode secret '{}', make sure it is Base64-encoded", entry.getKey(), e);
+                    log.error("Could not decode secret '{}', make sure it is Base64-encoded: {}", entry.getKey(), e.getMessage());
                 }
             })
             .collect(Collectors.toMap(

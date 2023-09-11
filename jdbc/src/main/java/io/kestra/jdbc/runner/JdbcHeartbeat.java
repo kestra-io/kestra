@@ -45,7 +45,7 @@ public class JdbcHeartbeat {
         );
     }
 
-    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}"+"s")
+    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}" + "s")
     public void updateHeartbeat() {
         log.trace("Heartbeat of: {}", workerHeartbeat.getWorkerUuid());
         if (workerHeartbeatRepository.heartbeatCheckUp(workerHeartbeat.getWorkerUuid().toString()).isEmpty()) {

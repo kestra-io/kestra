@@ -204,7 +204,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
     }
 
-    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}"+"s")
+    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}" + "s")
     protected void workersUpdate() {
         workerHeartbeatRepository.heartbeatsStatusUpdate();
         workerHeartbeatRepository.heartbeatsCleanup();

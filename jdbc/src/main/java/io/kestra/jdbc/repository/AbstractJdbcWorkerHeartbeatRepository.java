@@ -11,7 +11,6 @@ import org.jooq.SelectForUpdateOfStep;
 import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +55,7 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
                     if (workerHeartbeat.get().getStatus().equals(WorkerHeartbeat.Status.DEAD)) {
                         return Optional.empty();
                     }
-                    this.save(workerHeartbeat.get().toBuilder().heartbeatDate(Timestamp.from(Instant.now())).build());
+                    this.save(workerHeartbeat.get().toBuilder().heartbeatDate(Instant.now()).build());
                     return workerHeartbeat;
                 }
                 return Optional.empty();
@@ -75,7 +74,7 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
 
                 workerHeartbeat.ifPresent(heartbeat -> {
                     // We consider a heartbeat late if it's older than heartbeat missed times the frequency
-                    if (heartbeat.getHeartbeatDate().before(Timestamp.from(Instant.now().minusSeconds(getNbMissed() * getFrequency())))) {
+                    if (heartbeat.getHeartbeatDate().isBefore(Instant.now().minusSeconds(getNbMissed() * getFrequency()))) {
                         heartbeat.setStatus(WorkerHeartbeat.Status.DEAD);
                         this.jdbcRepository.persist(heartbeat, this.jdbcRepository.persistFields(heartbeat));
                     }
@@ -103,7 +102,7 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
                 workerHeartbeat.ifPresent(heartbeat -> {
                     if (heartbeat.getStatus().equals(WorkerHeartbeat.Status.DEAD)
                         // we delete worker that have dead status more than two times the times considered to be dead
-                        && heartbeat.getHeartbeatDate().before(Timestamp.from(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency())))) {
+                        && heartbeat.getHeartbeatDate().isBefore(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency()))) {
                         this.delete(heartbeat);
                     }
                 });

@@ -29,9 +29,9 @@
     </div>
 </template>
 <script>
-    import RouteContext from "kestra/src/mixins/routeContext";
-    import RefreshButton from "kestra/src/components/layout/RefreshButton.vue";
-    import Collapse from "kestra/src/components/layout/Collapse.vue";
+    import RouteContext from "../../mixins/routeContext";
+    import RefreshButton from "../../components/layout/RefreshButton.vue";
+    import Collapse from "../../components/layout/Collapse.vue";
 
     export default {
         mixins: [RouteContext],
@@ -47,6 +47,7 @@
         methods: {
             loadData() {
                 this.$store.dispatch("worker/findAll").then(workers => {
+                    console.log(workers)
                     this.workers = workers;
                 });
             }

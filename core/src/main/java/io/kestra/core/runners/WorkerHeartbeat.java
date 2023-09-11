@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 
 @Data
@@ -18,7 +17,7 @@ public class WorkerHeartbeat extends WorkerInstance {
     private Status status = Status.UP;
 
     @Builder.Default
-    private Timestamp heartbeatDate = Timestamp.from(Instant.now());
+    private Instant heartbeatDate = Instant.now();
 
     public enum Status {
         UP, DEAD

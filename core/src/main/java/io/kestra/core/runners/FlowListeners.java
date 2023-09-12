@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.flows.FlowWithException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.flows.Flow;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -26,9 +24,6 @@ import jakarta.inject.Singleton;
 @Singleton
 @Slf4j
 public class FlowListeners implements FlowListenersInterface {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final TypeReference<List<Flow>> TYPE_REFERENCE = new TypeReference<>(){};
-
     private Boolean isStarted = false;
     private final QueueInterface<Flow> flowQueue;
     private final List<Flow> flows;
@@ -42,10 +37,7 @@ public class FlowListeners implements FlowListenersInterface {
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {
         this.flowQueue = flowQueue;
-        this.flows = flowRepository.findAllForAllTenants()
-            .stream()
-            .filter(flow -> !(flow instanceof FlowWithException))
-            .collect(Collectors.toList());
+        this.flows = flowRepository.findAllForAllTenants();
     }
 
     @Override
@@ -150,6 +142,6 @@ public class FlowListeners implements FlowListenersInterface {
     @Override
     public List<Flow> flows() {
         // we forced a deep clone to avoid concurrency where instance are changed during iteration (especially scheduler).
-        return MAPPER.readValue(MAPPER.writeValueAsString(this.flows), TYPE_REFERENCE);
+        return new ArrayList<>(this.flows);
     }
 }

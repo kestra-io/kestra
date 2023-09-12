@@ -5,10 +5,7 @@ import io.kestra.core.runners.WorkerHeartbeat;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-import org.jooq.Record1;
-import org.jooq.SelectConditionStep;
-import org.jooq.SelectForUpdateOfStep;
-import org.jooq.SelectJoinStep;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.time.Instant;
@@ -47,15 +44,12 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
             .transactionResult(configuration -> {
                 SelectForUpdateOfStep<Record1<Object>> select =
                     this.heartbeatSelectQuery(configuration, workerUuid)
-                    .forUpdate();
+                        .forUpdate();
 
                 Optional<WorkerHeartbeat> workerHeartbeat = this.jdbcRepository.fetchOne(select);
 
                 if (workerHeartbeat.isPresent()) {
-                    if (workerHeartbeat.get().getStatus().equals(WorkerHeartbeat.Status.DEAD)) {
-                        return Optional.empty();
-                    }
-                    this.save(workerHeartbeat.get().toBuilder().heartbeatDate(Instant.now()).build());
+                    this.save(workerHeartbeat.get().toBuilder().status(WorkerHeartbeat.Status.UP).heartbeatDate(Instant.now()).build());
                     return workerHeartbeat;
                 }
                 return Optional.empty();
@@ -68,22 +62,22 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
             .transaction(configuration -> {
                 SelectForUpdateOfStep<Record1<Object>> select =
                     this.heartbeatSelectQuery(configuration, workerUuid)
-                    .forUpdate();
+                        .and(field("status").eq(WorkerHeartbeat.Status.UP.toString()))
+                        // We consider a heartbeat late if it's older than heartbeat missed times the frequency
+                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(getNbMissed() * getFrequency())))
+                        .forUpdate();
 
                 Optional<WorkerHeartbeat> workerHeartbeat = this.jdbcRepository.fetchOne(select);
 
                 workerHeartbeat.ifPresent(heartbeat -> {
-                    // We consider a heartbeat late if it's older than heartbeat missed times the frequency
-                    if (heartbeat.getHeartbeatDate().isBefore(Instant.now().minusSeconds(getNbMissed() * getFrequency()))) {
-                        heartbeat.setStatus(WorkerHeartbeat.Status.DEAD);
-                        this.jdbcRepository.persist(heartbeat, this.jdbcRepository.persistFields(heartbeat));
-                    }
+                    heartbeat.setStatus(WorkerHeartbeat.Status.DEAD);
+                    this.jdbcRepository.persist(heartbeat, this.jdbcRepository.persistFields(heartbeat));
                 });
             });
     }
 
     public void heartbeatsStatusUpdate() {
-        this.findAll().forEach(heartbeat -> {
+        this.findAllAlive().forEach(heartbeat -> {
                 this.heartbeatStatusUpdate(heartbeat.getWorkerUuid().toString());
             }
         );
@@ -95,22 +89,19 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
             .transaction(configuration -> {
                 SelectForUpdateOfStep<Record1<Object>> select =
                     this.heartbeatSelectQuery(configuration, workerUuid)
-                    .forUpdate();
+                        // we delete worker that have dead status more than two times the times considered to be dead
+                        .and(field("status").eq(WorkerHeartbeat.Status.DEAD.toString()))
+                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency())))
+                        .forUpdate();
 
                 Optional<WorkerHeartbeat> workerHeartbeat = this.jdbcRepository.fetchOne(select);
 
-                workerHeartbeat.ifPresent(heartbeat -> {
-                    if (heartbeat.getStatus().equals(WorkerHeartbeat.Status.DEAD)
-                        // we delete worker that have dead status more than two times the times considered to be dead
-                        && heartbeat.getHeartbeatDate().isBefore(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency()))) {
-                        this.delete(heartbeat);
-                    }
-                });
+                workerHeartbeat.ifPresent(this::delete);
             });
     }
 
     public void heartbeatsCleanup() {
-        this.findAll().forEach(heartbeat -> {
+        this.findAllDead().forEach(heartbeat -> {
                 this.heartbeatCleanUp(heartbeat.getWorkerUuid().toString());
             }
         );
@@ -122,10 +113,32 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectJoinStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable());
+                SelectWhereStep<Record1<Object>> select =
+                    this.heartbeatSelectAllQuery(configuration);
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    public List<WorkerHeartbeat> findAllAlive() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select =
+                    this.heartbeatSelectAllQuery(configuration)
+                    .where(field("status").eq(WorkerHeartbeat.Status.UP.toString()));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    public List<WorkerHeartbeat> findAllDead() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select =
+                    this.heartbeatSelectAllQuery(configuration)
+                    .where(field("status").eq(WorkerHeartbeat.Status.DEAD.toString()));
 
                 return this.jdbcRepository.fetch(select);
             });
@@ -149,6 +162,13 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
             .where(
                 field("worker_uuid").eq(workerUuid)
             );
+    }
+
+    private SelectWhereStep<Record1<Object>> heartbeatSelectAllQuery(org.jooq.Configuration configuration) {
+        return DSL
+            .using(configuration)
+            .select(field("value"))
+            .from(this.jdbcRepository.getTable());
     }
 
 }

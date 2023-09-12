@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
@@ -91,10 +92,25 @@ public class FlowController {
         @Parameter(description = "The flow revision") @QueryValue Optional<Integer> revision,
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws IllegalVariableEvaluationException {
-        return flowRepository
+        Flow flow = flowRepository
             .findById(namespace, id, revision)
-            .map(throwFunction(flow -> graphService.flowGraph(flow, subflows)))
             .orElse(null);
+
+        String flowUid = revision.isEmpty() ? Flow.uidWithoutRevision(namespace, id) : Flow.uid(namespace, id, revision);
+        if(flow == null) {
+            throw new NoSuchElementException(
+                "Unable to find flow " + flowUid
+            );
+        }
+
+        if(flow instanceof FlowWithException fwe) {
+            throw new IllegalStateException(
+                "Unable to generate graph for flow " + flowUid +
+                    " because of exception " + fwe.getException()
+            );
+        }
+
+        return graphService.flowGraph(flow, subflows);
     }
 
     @ExecuteOn(TaskExecutors.IO)

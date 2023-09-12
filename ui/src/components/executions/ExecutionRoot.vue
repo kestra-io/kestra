@@ -266,6 +266,8 @@
             this.closeSSE();
             window.removeEventListener("popstate", this.follow)
             this.$store.commit("execution/setExecution", undefined);
+            this.$store.commit("flow/setFlow", undefined);
+            this.$store.commit("flow/setFlowGraph", undefined);
         }
     };
 </script>

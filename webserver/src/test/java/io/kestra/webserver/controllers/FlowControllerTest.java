@@ -103,8 +103,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void graph() {
-        FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra" +
-            ".tests/all-flowable/graph"), FlowGraph.class);
+        FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/all-flowable/graph"), FlowGraph.class);
 
         assertThat(result.getNodes().size(), is(38));
         assertThat(result.getEdges().size(), is(42));
@@ -112,6 +111,14 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getClusters().stream().map(FlowGraph.Cluster::getCluster).toList(), Matchers.everyItem(
             Matchers.hasProperty("uid", Matchers.not(Matchers.startsWith("cluster_cluster_")))
         ));
+    }
+
+    @Test
+    void graph_FlowNotFound() {
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.tests/unknown-flow/graph")));
+
+        assertThat(exception.getStatus(), is(NOT_FOUND));
+        assertThat(exception.getMessage(), is("Not Found: Unable to find flow io.kestra.tests_unknown-flow"));
     }
 
     @Test

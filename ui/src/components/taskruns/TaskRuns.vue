@@ -27,6 +27,12 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <label-filter
+                        :model-value="$route.query.labels"
+                        @update:model-value="onDataTableValue('labels', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" />
                 </el-form-item>
             </template>
@@ -150,6 +156,7 @@
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import {stateGlobalChartTypes} from "../../utils/constants";
+    import LabelFilter from "../labels/LabelFilter.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -165,7 +172,8 @@
             StateGlobalChart,
             DateAgo,
             Kicon,
-            Id
+            Id,
+            LabelFilter
         },
         data() {
             return {

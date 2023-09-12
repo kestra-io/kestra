@@ -231,7 +231,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> states
+        @Nullable List<State.Type> states,
+        @Nullable Map<String, String> labels
     ) {
         throw new UnsupportedOperationException();
     }

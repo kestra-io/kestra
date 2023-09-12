@@ -706,6 +706,7 @@
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
         <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
         <div
+            class="topology-display"
             :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : viewType === editorViewTypes.TOPOLOGY ? 'vueflow': 'hide-view'"
         >
             <LowCodeEditor
@@ -730,6 +731,9 @@
                     <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
                 </template>
             </LowCodeEditor>
+            <el-alert v-else type="warning" :closable="false">
+                {{ $t("unable to generate graph")}}
+            </el-alert>
         </div>
         <PluginDocumentation
             v-if="viewType === editorViewTypes.SOURCE_DOC"
@@ -960,6 +964,7 @@
 
     .hide-view {
         width: 0;
+        overflow: hidden;
     }
 
     .plugin-doc {
@@ -984,5 +989,9 @@
         &:hover {
             background-color: var(--bs-secondary);
         }
+    }
+
+    .topology-display .el-alert {
+        margin-top: calc(3 * var(--spacer));
     }
 </style>

@@ -12,6 +12,9 @@
                 view-type="topology"
                 @expand-subflow="onExpandSubflow($event)"
             />
+            <el-alert v-else type="warning" :closable="false">
+                {{ $t("unable to generate graph")}}
+            </el-alert>
         </div>
     </el-card>
 </template>

@@ -7,6 +7,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -48,6 +49,9 @@ public class TemplateController {
     @Inject
     private ModelValidator modelValidator;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Templates"}, summary = "Get a template")
@@ -56,7 +60,7 @@ public class TemplateController {
         @Parameter(description = "The template id") @PathVariable String id
     ) {
         return templateRepository
-            .findById(namespace, id)
+            .findById(tenantService.resolveTenant(), namespace, id)
             .orElse(null);
     }
 
@@ -70,7 +74,7 @@ public class TemplateController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws HttpStatusException {
-        return PagedResults.of(templateRepository.find(PageableUtils.from(page, size, sort), query, namespace));
+        return PagedResults.of(templateRepository.find(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -79,7 +83,7 @@ public class TemplateController {
     public HttpResponse<Template> create(
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
-        if (templateRepository.findById(template.getNamespace(), template.getId()).isPresent()) {
+        if (templateRepository.findById(tenantService.resolveTenant(), template.getNamespace(), template.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Template id already exists",
                 template,
@@ -100,7 +104,7 @@ public class TemplateController {
         @Parameter(description = "The template id") @PathVariable String id,
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
-        Optional<Template> existingTemplate = templateRepository.findById(namespace, id);
+        Optional<Template> existingTemplate = templateRepository.findById(tenantService.resolveTenant(), namespace, id);
 
         if (existingTemplate.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -117,7 +121,7 @@ public class TemplateController {
         @Parameter(description = "The template namespace") @PathVariable String namespace,
         @Parameter(description = "The template id") @PathVariable String id
     ) {
-        Optional<Template> template = templateRepository.findById(namespace, id);
+        Optional<Template> template = templateRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (template.isPresent()) {
             templateRepository.delete(template.get());
             return HttpResponse.status(HttpStatus.NO_CONTENT);
@@ -130,7 +134,7 @@ public class TemplateController {
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Templates"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
-        return templateRepository.findDistinctNamespace();
+        return templateRepository.findDistinctNamespace(tenantService.resolveTenant());
     }
 
 
@@ -170,7 +174,7 @@ public class TemplateController {
             ))
             .collect(Collectors.toSet());
 
-        if (invalids.size() > 0) {
+        if (!invalids.isEmpty()) {
             throw new ConstraintViolationException(invalids);
         }
 
@@ -195,13 +199,13 @@ public class TemplateController {
         List<String> ids = templates
             .stream()
             .map(Template::getId)
-            .collect(Collectors.toList());
+            .toList();
 
         // delete all not in updated ids
         List<Template> deleted = new ArrayList<>();
         if (delete) {
             deleted = templateRepository
-                .findByNamespace(namespace)
+                .findByNamespace(tenantService.resolveTenant(), namespace)
                 .stream()
                 .filter(template -> !ids.contains(template.getId()))
                 .peek(template -> templateRepository.delete(template))
@@ -212,14 +216,14 @@ public class TemplateController {
         List<Template> updatedOrCreated = templates
             .stream()
             .map(item -> {
-                Optional<Template> existingTemplate = templateRepository.findById(namespace, item.getId());
+                Optional<Template> existingTemplate = templateRepository.findById(tenantService.resolveTenant(), namespace, item.getId());
                 if (existingTemplate.isPresent()) {
                     return templateRepository.update(item, existingTemplate.get());
                 } else {
                     return templateRepository.create(item);
                 }
             })
-            .collect(Collectors.toList());
+            .toList();
 
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
     }
@@ -262,7 +266,7 @@ public class TemplateController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws IOException {
-        var templates = templateRepository.find(query, namespace);
+        var templates = templateRepository.find(tenantService.resolveTenant(), query, namespace);
         var bytes = zipTemplates(templates);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
@@ -277,7 +281,7 @@ public class TemplateController {
         @Parameter(description = "A list of tuple flow ID and namespace as template identifiers") @Body List<IdWithNamespace> ids
     ) throws IOException {
         var templates = ids.stream()
-            .map(id -> templateRepository.findById(id.getNamespace(), id.getId()).orElseThrow())
+            .map(id -> templateRepository.findById(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .collect(Collectors.toList());
         var bytes = zipTemplates(templates);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
@@ -294,7 +298,7 @@ public class TemplateController {
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ){
         List<Template> list = templateRepository
-            .find(query, namespace)
+            .find(tenantService.resolveTenant(), query, namespace)
             .stream()
             .peek(templateRepository::delete)
             .collect(Collectors.toList());
@@ -313,9 +317,9 @@ public class TemplateController {
     ) {
         List<Template> list = ids
             .stream()
-            .map(id -> templateRepository.findById(id.getNamespace(), id.getId()).orElseThrow())
+            .map(id -> templateRepository.findById(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .peek(templateRepository::delete)
-            .collect(Collectors.toList());
+            .toList();
 
         return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
@@ -372,7 +376,7 @@ public class TemplateController {
     }
 
     protected void importTemplate(Template parsed) {
-        templateRepository.findById(parsed.getNamespace(), parsed.getId()).ifPresentOrElse(
+        templateRepository.findById(tenantService.resolveTenant(), parsed.getNamespace(), parsed.getId()).ifPresentOrElse(
             previous -> templateRepository.update(parsed, previous),
             () -> templateRepository.create(parsed)
         );

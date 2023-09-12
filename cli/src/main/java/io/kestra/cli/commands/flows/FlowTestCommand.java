@@ -90,7 +90,7 @@ public class FlowTestCommand extends AbstractCommand {
             runner.run();
             repositoryLoader.load(file.toFile());
 
-            List<Flow> all = flowRepository.findAll();
+            List<Flow> all = flowRepository.findAllForAllTenants();
             if (all.size() != 1) {
                 throw new IllegalArgumentException("Too many flow found, need 1, found " + all.size());
             }

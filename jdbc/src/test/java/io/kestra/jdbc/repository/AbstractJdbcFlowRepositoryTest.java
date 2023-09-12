@@ -37,19 +37,19 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
     @Test
     protected void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null, null);
+        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
-        save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null, null);
+        save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null, null, null);
         assertThat((long) save.size(), is(6L));
 
-        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, Map.of("country", "FR"));
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null, Map.of("country", "FR"));
         assertThat(save.size(), is(1));
     }
 
     @Test
     void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.core.models.conditions.types.MultipleCondition", null);
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.core.models.conditions.types.MultipleCondition", null, null);
 
         assertThat((long) search.size(), is(2L));
 
@@ -85,7 +85,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .execute();
         });
 
-        Optional<Flow> flow = flowRepository.findById("io.kestra.unittest", "invalid");
+        Optional<Flow> flow = flowRepository.findById(null, "io.kestra.unittest", "invalid");
 
         assertThat(flow.isPresent(), is(true));
         assertThat(flow.get(), instanceOf(FlowWithException.class));

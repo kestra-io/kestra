@@ -38,9 +38,9 @@ public class RestartCaseTest {
     private QueueInterface<Execution> executionQueue;
 
     public void restartFailedThenSuccess() throws Exception {
-        Flow flow = flowRepository.findById("io.kestra.tests", "restart_last_failed").orElseThrow();
+        Flow flow = flowRepository.findById(null, "io.kestra.tests", "restart_last_failed").orElseThrow();
 
-        Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+        Execution firstExecution = runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(firstExecution.getTaskRunList(), hasSize(3));
@@ -77,9 +77,9 @@ public class RestartCaseTest {
     }
 
     public void restartFailedThenFailureWithGlobalErrors() throws Exception {
-        Flow flow = flowRepository.findById("io.kestra.tests", "restart_always_failed").orElseThrow();
+        Flow flow = flowRepository.findById(null, "io.kestra.tests", "restart_always_failed").orElseThrow();
 
-        Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+        Execution firstExecution = runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(firstExecution.getTaskRunList(), hasSize(2));
@@ -112,9 +112,9 @@ public class RestartCaseTest {
     }
 
     public void restartFailedThenFailureWithLocalErrors() throws Exception {
-        Flow flow = flowRepository.findById("io.kestra.tests", "restart_local_errors").orElseThrow();
+        Flow flow = flowRepository.findById(null, "io.kestra.tests", "restart_local_errors").orElseThrow();
 
-        Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+        Execution firstExecution = runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(firstExecution.getTaskRunList(), hasSize(5));
@@ -149,9 +149,9 @@ public class RestartCaseTest {
     }
 
     public void replay() throws Exception {
-        Flow flow = flowRepository.findById("io.kestra.tests", "restart-each").orElseThrow();
+        Flow flow = flowRepository.findById(null, "io.kestra.tests", "restart-each").orElseThrow();
 
-        Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+        Execution firstExecution = runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -181,7 +181,7 @@ public class RestartCaseTest {
     }
 
     public void restartMultiple() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "failed-first");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "failed-first");
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 

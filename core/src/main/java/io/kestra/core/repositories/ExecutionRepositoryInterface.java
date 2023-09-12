@@ -24,13 +24,14 @@ import javax.validation.constraints.NotNull;
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
     Boolean isTaskRunEnabled();
 
-    Optional<Execution> findById(String id);
+    Optional<Execution> findById(String tenantId, String id);
 
-    ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable);
+    ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable);
 
     ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -41,6 +42,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Flowable<Execution> find(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -52,6 +54,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     ArrayListTotal<TaskRun> findTaskRun(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -68,6 +71,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -78,6 +82,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
@@ -97,6 +102,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     }
 
     List<ExecutionCount> executionCounts(
+        @Nullable String tenantId,
         List<Flow> flows,
         @Nullable List<State.Type> states,
         @Nullable ZonedDateTime startDate,

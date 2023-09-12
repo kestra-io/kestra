@@ -22,13 +22,14 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
     }
 
     @Override
-    public List<FlowTopology> findByFlow(String namespace, String flowId, Boolean destinationOnly) {
+    public List<FlowTopology> findByFlow(String tenantId, String namespace, String flowId, Boolean destinationOnly) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 List<Condition> ors = new ArrayList<>();
                 ors.add(
                     DSL.and(
+                        buildTenantCondition("destination", tenantId),
                         field("destination_namespace").eq(namespace),
                         field("destination_id").eq(flowId)
                     )
@@ -37,6 +38,7 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
                 if (!destinationOnly) {
                     ors.add(
                         DSL.and(
+                            buildTenantCondition("source", tenantId),
                             field("source_namespace").eq(namespace),
                             field("source_id").eq(flowId)
                         )
@@ -54,14 +56,16 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
     }
 
     @Override
-    public List<FlowTopology> findByNamespace(String namespace) {
+    public List<FlowTopology> findByNamespace(String tenantId, String namespace) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 List<Condition> ors = new ArrayList<>();
                 ors.add(
                     DSL.and(
+                        buildTenantCondition("destination", tenantId),
                         field("destination_namespace").eq(namespace),
+                        buildTenantCondition("source", tenantId),
                         field("source_namespace").eq(namespace)
                     )
                 );
@@ -86,17 +90,20 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
                     .delete(this.jdbcRepository.getTable())
                     .where(DSL.or(
                         DSL.and(
+                            buildTenantCondition("destination", flow.getTenantId()),
                             field("destination_namespace").eq(flow.getNamespace()),
                             field("destination_id").eq(flow.getId())
                         ),
                         DSL.and(
+                            buildTenantCondition("source", flow.getTenantId()),
                             field("source_namespace").eq(flow.getNamespace()),
                             field("source_id").eq(flow.getId())
                         )
                     ))
                     .execute();
 
-                if (flowTopologies.size() > 0) {context
+                if (!flowTopologies.isEmpty()) {
+                    context
                         .batch(flowTopologies
                             .stream()
                             .map(flowTopology -> context.insertInto(this.jdbcRepository.getTable())
@@ -123,5 +130,9 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
         this.jdbcRepository.persist(flowTopology, dslContext, fields);
 
         return flowTopology;
+    }
+
+    protected Condition buildTenantCondition(String prefix, String tenantId) {
+        return tenantId == null ? field(prefix + "_tenant_id").isNull() : field(prefix + "_tenant_id").eq(tenantId);
     }
 }

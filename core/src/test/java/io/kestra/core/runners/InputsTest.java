@@ -62,8 +62,8 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
-    private Map<String, Object> typedInputs(Map<String, Object> map) {
-        return typedInputs(map, flowRepository.findById("io.kestra.tests", "inputs").get());
+    private Map<String, Object> typedInputs(Map<String, String> map) {
+        return typedInputs(map, flowRepository.findById(null, "io.kestra.tests", "inputs").get());
     }
 
     private Map<String, Object> typedInputs(Map<String, Object> map, Flow flow) {
@@ -143,6 +143,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Test
     void inputFlow() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "inputs",
             null,

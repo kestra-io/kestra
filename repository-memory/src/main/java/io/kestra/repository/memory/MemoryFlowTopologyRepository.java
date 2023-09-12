@@ -11,12 +11,12 @@ import java.util.List;
 public class MemoryFlowTopologyRepository implements FlowTopologyRepositoryInterface {
 
     @Override
-    public List<FlowTopology> findByFlow(String namespace, String flowId, Boolean destinationOnly) {
+    public List<FlowTopology> findByFlow(String tenantId, String namespace, String flowId, Boolean destinationOnly) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FlowTopology> findByNamespace(String namespace) {
+    public List<FlowTopology> findByNamespace(String tenantId, String namespace) {
         throw new UnsupportedOperationException();
     }
 

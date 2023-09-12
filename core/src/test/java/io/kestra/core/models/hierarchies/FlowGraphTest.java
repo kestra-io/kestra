@@ -164,7 +164,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
 
     @Test
     void parallelWithExecution() throws TimeoutException, IllegalVariableEvaluationException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel");
 
         Flow flow = this.parse("flows/valids/parallel.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);
@@ -185,7 +185,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
 
     @Test
     void eachWithExecution() throws TimeoutException, IllegalVariableEvaluationException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential");
 
         Flow flow = this.parse("flows/valids/each-sequential.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);

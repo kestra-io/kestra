@@ -61,7 +61,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
     @BeforeEach
     protected void init() {
-        jdbcFlowRepository.findAll()
+        jdbcFlowRepository.findAll(null)
             .forEach(jdbcFlowRepository::delete);
 
         super.setup();

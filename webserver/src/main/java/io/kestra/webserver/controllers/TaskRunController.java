@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -29,6 +30,9 @@ public class TaskRunController {
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for taskruns")
@@ -47,6 +51,7 @@ public class TaskRunController {
         return PagedResults.of(executionRepository.findTaskRun(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             startDate,

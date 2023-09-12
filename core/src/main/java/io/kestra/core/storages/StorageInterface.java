@@ -153,11 +153,8 @@ public interface StorageInterface {
     }
 
     default URI uri(Flow flow, Execution execution, String inputName, String file) throws URISyntaxException {
-        return new URI(fromParts(
-            flow.getNamespace().replace(".", "/"),
-            Slugify.of(flow.getId()),
-            "executions",
-            execution.getId(),
+        return new URI("/" + fromParts(
+            executionPrefix(flow, execution),
             "inputs",
             inputName,
             file
@@ -184,7 +181,7 @@ public interface StorageInterface {
 
     default URI outputPrefix(Flow flow)  {
         try {
-            return new URI(fromParts(
+            return new URI("/" + fromParts(
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId())
             ));
@@ -195,7 +192,7 @@ public interface StorageInterface {
 
     default URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         try {
-            return new URI(fromParts(
+            return new URI("/" + fromParts(
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId()),
                 "executions",
@@ -211,7 +208,7 @@ public interface StorageInterface {
 
     default URI outputPrefix(TriggerContext triggerContext, AbstractTrigger trigger, String triggerExecutionId) {
         try {
-            return new URI(fromParts(
+            return new URI("/" + fromParts(
                 triggerContext.getNamespace().replace(".", "/"),
                 Slugify.of(triggerContext.getFlowId()),
                 "executions",

@@ -57,6 +57,7 @@ public class FlowCaseTest {
         });
 
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "task-flow",
             null,

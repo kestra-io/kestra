@@ -27,7 +27,7 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     @EnabledIfEnvironmentVariable(named = "SECRET_MY_SECRET", matches = ".*")
     void getSecret() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "secrets");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
         assertThat(execution.getTaskRunList().get(0).getOutputs().get("value"), is("secretValue"));
     }
 

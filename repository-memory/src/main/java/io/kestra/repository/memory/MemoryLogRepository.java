@@ -20,48 +20,50 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     private final List<LogEntry> logs = new ArrayList<>();
 
     @Override
-    public List<LogEntry> findByExecutionId(String id, Level minLevel) {
+    public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
         return logs
             .stream()
-            .filter(logEntry -> logEntry.getExecutionId().equals(id) && logEntry.getLevel().equals(minLevel))
+            .filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getLevel().equals(minLevel))
+            .filter(logEntry -> (tenantId == null && logEntry.getTenantId() == null) || (tenantId != null && tenantId.equals(logEntry.getTenantId())))
             .collect(Collectors.toList());
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionId(String id, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String id, Level minLevel, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
+    public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel) {
         return logs
             .stream()
             .filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getTaskId().equals(taskId) && logEntry.getLevel().equals(minLevel))
+            .filter(logEntry -> (tenantId == null && logEntry.getTenantId() == null) || (tenantId != null && tenantId.equals(logEntry.getTenantId())))
             .collect(Collectors.toList());
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel) {
+    public List<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt) {
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
@@ -69,6 +71,7 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable Level minLevel,

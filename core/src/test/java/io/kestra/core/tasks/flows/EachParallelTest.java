@@ -12,14 +12,14 @@ import static org.hamcrest.Matchers.hasSize;
 public class EachParallelTest extends AbstractMemoryRunnerTest {
     @Test
     void parallel() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @Test
     void parallelNested() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }

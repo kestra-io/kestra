@@ -236,6 +236,7 @@ public class ExecutionService {
         Boolean purgeLog,
         Boolean purgeMetric,
         Boolean purgeStorage,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime endDate,
@@ -244,6 +245,7 @@ public class ExecutionService {
         PurgeResult purgeResult = this.executionRepository
             .find(
                 null,
+                tenantId,
                 namespace,
                 flowId,
                 null,

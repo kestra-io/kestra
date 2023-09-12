@@ -147,6 +147,7 @@ public class ExecutionController {
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             startDate,
@@ -163,9 +164,10 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) throws IllegalVariableEvaluationException {
         return executionRepository
-            .findById(executionId)
+            .findById(tenantService.resolveTenant(), executionId)
             .map(throwFunction(execution -> {
                 Optional<Flow> flow = flowRepository.findById(
+                    execution.getTenantId(),
                     execution.getNamespace(),
                     execution.getFlowId(),
                     Optional.of(execution.getFlowRevision())
@@ -187,7 +189,7 @@ public class ExecutionController {
         @Body String expression
     ) throws InternalException {
         Execution execution = executionRepository
-            .findById(executionId)
+            .findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionId + "'"));
 
         TaskRun taskRun = execution
@@ -228,7 +230,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
         return executionRepository
-            .findById(executionId)
+            .findById(tenantService.resolveTenant(), executionId)
             .orElse(null);
     }
 
@@ -239,7 +241,7 @@ public class ExecutionController {
     public HttpResponse<Void> delete(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
-        Optional<Execution> execution = executionRepository.findById(executionId);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isPresent()) {
             executionRepository.delete(execution.get());
             return HttpResponse.status(HttpStatus.NO_CONTENT);
@@ -260,7 +262,7 @@ public class ExecutionController {
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
         for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(executionId);
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent()) {
                 executions.add(execution.get());
             } else {
@@ -273,7 +275,7 @@ public class ExecutionController {
                 ));
             }
         }
-        if (invalids.size() > 0) {
+        if (!invalids.isEmpty()) {
             return HttpResponse.badRequest()
                 .body(BulkErrorResponse
                     .builder()
@@ -304,6 +306,7 @@ public class ExecutionController {
         Integer count = executionRepository
             .find(
                 query,
+                tenantService.resolveTenant(),
                 namespace,
                 flowId,
                 startDate,
@@ -333,7 +336,7 @@ public class ExecutionController {
     ) {
         return PagedResults.of(
             executionRepository
-                .findByFlowId(namespace, flowId, Pageable.from(page, size))
+                .findByFlowId(tenantService.resolveTenant(), namespace, flowId, Pageable.from(page, size))
         );
     }
 
@@ -379,7 +382,7 @@ public class ExecutionController {
         String key,
         HttpRequest<String> request
     ) {
-        Optional<Flow> find = flowRepository.findById(namespace, id);
+        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (find.isEmpty()) {
             return null;
         }
@@ -443,7 +446,7 @@ public class ExecutionController {
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) {
-        Optional<Flow> find = flowRepository.findById(namespace, id, revision);
+        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id, revision);
         if (find.isEmpty()) {
             return null;
         }
@@ -513,29 +516,29 @@ public class ExecutionController {
     }
 
     protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
-        Optional<Execution> execution = executionRepository.findById(executionId);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        Optional<Flow> flow = flowRepository.findById(execution.get().getNamespace(), execution.get().getFlowId());
+        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), execution.get().getFlowId());
         if (flow.isEmpty()) {
             throw new NoSuchElementException("Unable to find flow id '" + executionId + "'");
         }
 
         String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
-        if (path.getPath().substring(1).startsWith(prefix)) {
+        if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
         // maybe state
         prefix = storageInterface.statePrefix(flow.get().getNamespace(), flow.get().getId(), null, null);
-        if (path.getPath().substring(1).startsWith(prefix)) {
+        if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
         prefix = storageInterface.statePrefix(flow.get().getNamespace(), null, null, null);
-        if (path.getPath().substring(1).startsWith(prefix)) {
+        if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
@@ -594,7 +597,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
     ) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(executionId);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             return null;
         }
@@ -619,7 +622,7 @@ public class ExecutionController {
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
         for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(executionId);
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && !execution.get().getState().isFailed()) {
                 invalids.add(ManualConstraintViolation.of(
@@ -641,7 +644,7 @@ public class ExecutionController {
                 executions.add(execution.get());
             }
         }
-        if (invalids.size() > 0) {
+        if (!invalids.isEmpty()) {
             return HttpResponse.badRequest(BulkErrorResponse
                 .builder()
                 .message("invalid bulk restart")
@@ -673,6 +676,7 @@ public class ExecutionController {
         Integer count = executionRepository
             .find(
                 query,
+                tenantService.resolveTenant(),
                 namespace,
                 flowId,
                 startDate,
@@ -700,7 +704,7 @@ public class ExecutionController {
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
     ) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(executionId);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             return null;
         }
@@ -717,6 +721,7 @@ public class ExecutionController {
     private void controlRevision(Execution execution, Integer revision) {
         if (revision != null) {
             Optional<Flow> flowRevision = this.flowRepository.findById(
+                execution.getTenantId(),
                 execution.getNamespace(),
                 execution.getFlowId(),
                 Optional.of(revision)
@@ -737,7 +742,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "the taskRun id and state to apply") @Body StateRequest stateRequest
     ) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(executionId);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             return null;
         }
@@ -764,7 +769,7 @@ public class ExecutionController {
     public HttpResponse<?> kill(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) throws InternalException {
-        Optional<Execution> maybeExecution = executionRepository.findById(executionId);
+        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
             return HttpResponse.notFound();
         }
@@ -798,7 +803,7 @@ public class ExecutionController {
     public HttpResponse<?> resume(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) throws InternalException {
-        Optional<Execution> maybeExecution = executionRepository.findById(executionId);
+        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
             return HttpResponse.notFound();
         }
@@ -825,7 +830,7 @@ public class ExecutionController {
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
         for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(executionId);
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && execution.get().getState().isTerminated()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution already finished",
@@ -847,7 +852,7 @@ public class ExecutionController {
             }
         }
 
-        if (invalids.size() > 0) {
+        if (!invalids.isEmpty()) {
             return HttpResponse.badRequest(BulkErrorResponse
                 .builder()
                 .message("invalid bulk kill")
@@ -892,6 +897,7 @@ public class ExecutionController {
         var ids = executionRepository
             .find(
                 query,
+                tenantService.resolveTenant(),
                 namespace,
                 flowId,
                 startDate,
@@ -923,7 +929,7 @@ public class ExecutionController {
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
                 Execution execution = Await.until(
-                    () -> executionRepository.findById(executionId).orElse(null),
+                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
                     Duration.ofMillis(500)
                 );
                 Flow flow = flowRepository.findByExecution(execution);

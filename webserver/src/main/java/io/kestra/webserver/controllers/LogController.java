@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Requires;
@@ -45,6 +46,9 @@ public class LogController {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     protected QueueInterface<LogEntry> logQueue;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Logs"}, summary = "Search for logs")
@@ -60,7 +64,7 @@ public class LogController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) {
         return PagedResults.of(
-            logRepository.find(PageableUtils.from(page, size, sort), query, namespace, flowId, minLevel, startDate, endDate)
+            logRepository.find(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace, flowId, minLevel, startDate, endDate)
         );
     }
 
@@ -75,14 +79,14 @@ public class LogController {
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
         if (taskId != null) {
-            return logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
+            return logRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, minLevel);
         } else if (taskRunId != null) {
             if (attempt != null) {
-                return logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, taskRunId, minLevel, attempt);
+                return logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantService.resolveTenant(), executionId, taskRunId, minLevel, attempt);
             }
-            return logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
+            return logRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, minLevel);
         } else {
-            return logRepository.findByExecutionId(executionId, minLevel);
+            return logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel);
         }
     }
 
@@ -98,15 +102,15 @@ public class LogController {
     ) {
         List<LogEntry> logEntries;
         if (taskId != null) {
-            logEntries = logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
+            logEntries = logRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, minLevel);
         } else if (taskRunId != null) {
             if (attempt != null) {
-                logEntries = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, taskRunId, minLevel, attempt);
+                logEntries = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantService.resolveTenant(), executionId, taskRunId, minLevel, attempt);
             } else {
-                logEntries = logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
+                logEntries = logRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, minLevel);
             }
         } else {
-            logEntries = logRepository.findByExecutionId(executionId, minLevel);
+            logEntries = logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel);
         }
         InputStream inputStream = new ByteArrayInputStream(logEntries.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n")).getBytes());
         return new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log");
@@ -125,7 +129,7 @@ public class LogController {
         return Flowable
             .<Event<LogEntry>>create(emitter -> {
                 // fetch repository first
-                logRepository.findByExecutionId(executionId, minLevel, null)
+                logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel, null)
                     .stream()
                     .filter(logEntry -> levels.contains(logEntry.getLevel().name()))
                     .forEach(logEntry -> emitter.onNext(Event.of(logEntry).id("progress")));

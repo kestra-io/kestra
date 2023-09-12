@@ -37,7 +37,7 @@ public class ReindexCommand extends AbstractCommand {
         if ("flow".equals(type)) {
             FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
 
-            List<FlowWithSource> flows = flowRepository.findWithSource(null, null, null);
+            List<FlowWithSource> flows = flowRepository.findWithSource(null, null, null, null);
             flows.forEach(flow -> flowRepository.update(flow.toFlow(), flow.toFlow(), flow.getSource(), flow.toFlow()));
 
             stdOut("Successfully reindex " + flows.size() + " flow(s).");

@@ -42,7 +42,7 @@ public class FlowListeners implements FlowListenersInterface {
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {
         this.flowQueue = flowQueue;
-        this.flows = flowRepository.findAll()
+        this.flows = flowRepository.findAllForAllTenants()
             .stream()
             .filter(flow -> !(flow instanceof FlowWithException))
             .collect(Collectors.toList());

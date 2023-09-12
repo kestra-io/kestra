@@ -22,7 +22,7 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     public void initTriggerEvaluateRunning() {
         // trigger evaluateRunning lock can exist when launching the scheduler, we clear it.
         // it's possible since the scheduler on jdbc must be a single node
-        this.triggerRepository.findAll().forEach(trigger -> {
+        this.triggerRepository.findAllForAllTenants().forEach(trigger -> {
             if (trigger.getEvaluateRunningDate() != null) {
                 var unlocked = trigger.toBuilder().evaluateRunningDate(null).build();
                 this.triggerRepository.save(unlocked);

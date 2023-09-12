@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Requires;
@@ -37,6 +38,9 @@ public class MetricController {
     @Named(QueueFactoryInterface.METRIC_QUEUE)
     protected QueueInterface<MetricEntry> metricQueue;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Metrics"}, summary = "Get metrics for a specific execution")
@@ -50,11 +54,11 @@ public class MetricController {
     ) {
         var pageable = PageableUtils.from(page, size, sort, metricsRepository.sortMapping());
         if (taskId != null) {
-            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(executionId, taskId, pageable));
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, pageable));
         } else if (taskRunId != null) {
-            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, pageable));
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, pageable));
         } else {
-            return PagedResults.of(metricsRepository.findByExecutionId(executionId, pageable));
+            return PagedResults.of(metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, pageable));
         }
     }
 
@@ -65,7 +69,7 @@ public class MetricController {
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId
     ) {
-        return metricsRepository.flowMetrics(namespace, flowId);
+        return metricsRepository.flowMetrics(tenantService.resolveTenant(), namespace, flowId);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -76,7 +80,7 @@ public class MetricController {
         @Parameter(description = "The flow Id") @PathVariable String flowId,
         @Parameter(description = "The flow Id") @PathVariable String taskId
     ) {
-        return metricsRepository.taskMetrics(namespace, flowId, taskId);
+        return metricsRepository.taskMetrics(tenantService.resolveTenant(), namespace, flowId, taskId);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -86,7 +90,7 @@ public class MetricController {
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId
     ) {
-        return metricsRepository.tasksWithMetrics(namespace, flowId);
+        return metricsRepository.tasksWithMetrics(tenantService.resolveTenant(), namespace, flowId);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -101,6 +105,7 @@ public class MetricController {
         @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
         return metricsRepository.aggregateByFlowId(
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             null,
@@ -124,6 +129,7 @@ public class MetricController {
         @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
         return metricsRepository.aggregateByFlowId(
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             taskId,

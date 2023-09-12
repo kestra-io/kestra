@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 class SequentialTest extends AbstractMemoryRunnerTest {
     @Test
     void sequential() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "sequential");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -22,7 +22,7 @@ class SequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void sequentialWithGlobalErrors() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "sequential-with-global-errors");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential-with-global-errors");
 
         assertThat(execution.getTaskRunList(), hasSize(6));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
@@ -30,7 +30,7 @@ class SequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void sequentialWithLocalErrors() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "sequential-with-local-errors");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential-with-local-errors");
 
         assertThat(execution.getTaskRunList(), hasSize(6));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

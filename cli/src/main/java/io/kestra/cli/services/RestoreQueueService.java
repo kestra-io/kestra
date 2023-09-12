@@ -29,9 +29,9 @@ public class RestoreQueueService {
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
 
         List<Flow> flows = flowRepository
-            .findAll()
+            .findAllForAllTenants()
             .stream()
-            .flatMap(flow -> flowRepository.findRevisions(flow.getNamespace(), flow.getId()).stream())
+            .flatMap(flow -> flowRepository.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId()).stream())
             // we can't resend FlowSource since deserialize failed & will be invalid
             .filter(flow -> !(flow instanceof FlowWithException))
             .map(FlowWithSource::toFlow)
@@ -42,14 +42,14 @@ public class RestoreQueueService {
 
     public int templates(boolean noRecreate) {
         TemplateRepositoryInterface templateRepository = applicationContext.getBean(TemplateRepositoryInterface.class);
-        List<Template> templates = new ArrayList<>(templateRepository.findAll());
+        List<Template> templates = new ArrayList<>(templateRepository.findAllForAllTenants());
 
         return this.send(templates, QueueFactoryInterface.TEMPLATE_NAMED, Template.class, noRecreate);
     }
 
     public int triggers(boolean noRecreate, boolean noTriggerExecutionId) {
         TriggerRepositoryInterface triggerRepository = applicationContext.getBean(TriggerRepositoryInterface.class);
-        List<Trigger> triggers = new ArrayList<>(triggerRepository.findAll());
+        List<Trigger> triggers = new ArrayList<>(triggerRepository.findAllForAllTenants());
 
         if (noTriggerExecutionId) {
             triggers = triggers

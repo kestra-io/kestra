@@ -55,7 +55,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
 
         flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
-        Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
+        Execution execution = runnerUtils.runOne(flow.getTenantId(), flow.getNamespace(), flow.getId());
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);

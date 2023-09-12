@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
@@ -94,7 +95,8 @@ public abstract class AbstractExecutionRepositoryTest {
 
 
     protected void inject() {
-        for (int i = 0; i < 28; i++) {
+        executionRepository.save(builder(State.Type.RUNNING, null).labels(List.of(new Label("key", "value"))).build());
+        for (int i = 1; i < 28; i++) {
             executionRepository.save(builder(
                 i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
                 i < 15 ? null : "second"
@@ -112,6 +114,9 @@ public abstract class AbstractExecutionRepositoryTest {
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
         assertThat(executions.getTotal(), is(8L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, Map.of("key", "value"));
+        assertThat(executions.getTotal(), is(1L));
     }
 
     @Test
@@ -130,9 +135,13 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findTaskRun() {
         inject();
 
-        ArrayListTotal<TaskRun> executions = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null);
-        assertThat(executions.getTotal(), is(71L));
-        assertThat(executions.size(), is(10));
+        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null);
+        assertThat(taskRuns.getTotal(), is(71L));
+        assertThat(taskRuns.size(), is(10));
+
+        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, Map.of("key", "value"));
+        assertThat(taskRuns.getTotal(), is(1L));
+        assertThat(taskRuns.size(), is(1));
     }
 
 

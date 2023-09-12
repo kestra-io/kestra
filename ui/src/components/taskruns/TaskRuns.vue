@@ -101,6 +101,12 @@
                         </template>
                     </el-table-column>
 
+                    <el-table-column prop="attempts" :label="$t('attempts')">
+                        <template #default="scope">
+                            {{ scope.row.attempts ? scope.row.attempts.length : 0 }}
+                        </template>
+                    </el-table-column>
+
                     <el-table-column prop="state.current" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
                         <template #default="scope">
                             <status :status="scope.row.state.current" size="small" />

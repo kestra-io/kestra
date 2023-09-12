@@ -496,7 +496,8 @@
     },
     "date format": "Date format",
     "timezone": "Timezone",
-    "add task": "Add a task"
+    "add task": "Add a task",
+    "attempts": "Attempt(s)"
   },
   "fr": {
     "id": "Identifiant",
@@ -987,7 +988,8 @@
     },
     "date format": "Format de date",
     "timezone": "Fuseau horaire",
-    "add task": "Ajouter une tâche"
+    "add task": "Ajouter une tâche",
+    "attempts": "Tentative(s)"
   }
 }
 

@@ -9,6 +9,7 @@
                 :flow-graph="flowGraph"
                 :source="flow?.source"
                 :execution="execution"
+                :expanded-subflows="expandedSubflows"
                 is-read-only
                 @follow="forwardEvent('follow', $event)"
                 view-type="topology"

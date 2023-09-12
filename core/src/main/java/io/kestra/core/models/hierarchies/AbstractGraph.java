@@ -13,6 +13,7 @@ import lombok.ToString;
 @Introspected
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 public abstract class AbstractGraph {
+    @Setter
     protected String uid;
     @JsonInclude
     protected String type;
@@ -31,9 +32,5 @@ public abstract class AbstractGraph {
     @JsonIgnore
     public String getLabel() {
         return this.getUid();
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
     }
 }

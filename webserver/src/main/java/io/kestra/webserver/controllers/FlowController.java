@@ -20,7 +20,6 @@ import io.kestra.core.services.GraphService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.topologies.FlowTopologyService;
-import io.kestra.core.utils.GraphUtils;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -102,11 +101,12 @@ public class FlowController {
     @Post(uri = "graph", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow source")
     public FlowGraph flowGraphSource(
-        @Parameter(description = "The flow") @Body String flow
+        @Parameter(description = "The flow") @Body String flow,
+        @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return GraphUtils.flowGraph(flowParsed, null);
+        return graphService.flowGraph(flowParsed, subflows);
     }
 
     @ExecuteOn(TaskExecutors.IO)

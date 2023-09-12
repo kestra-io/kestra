@@ -5,24 +5,27 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import lombok.Getter;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Getter
 public class GraphCluster extends AbstractGraph {
     @JsonIgnore
-    protected final Graph<AbstractGraph, Relation> graph = new Graph<>();
+    private final Graph<AbstractGraph, Relation> graph = new Graph<>();
 
-    protected RelationType relationType;
-
-    @JsonIgnore
-    protected final GraphClusterRoot root;
+    private final RelationType relationType;
 
     @JsonIgnore
-    protected final GraphClusterEnd end;
+    private final GraphClusterRoot root;
 
-    protected final AbstractGraphTask taskNode;
+    @JsonIgnore
+    private final GraphClusterEnd end;
+
+    private final AbstractGraphTask taskNode;
 
     public GraphCluster() {
         this("root");
@@ -79,6 +82,22 @@ public class GraphCluster extends AbstractGraph {
         return Optional.ofNullable(this.uid).map(u -> u + "." + uid).orElse(uid);
     }
 
+    public Map<GraphCluster, List<AbstractGraph>> allNodesByParent() {
+        Map<Boolean, List<AbstractGraph>> nodesByIsCluster = this.graph.nodes().stream().collect(Collectors.partitioningBy(n -> n instanceof GraphCluster));
+
+        Map<GraphCluster, List<AbstractGraph>> nodesByParent = new HashMap<>(Map.of(
+            this,
+            nodesByIsCluster.get(false)
+        ));
+
+        nodesByIsCluster.get(true).forEach(n -> {
+            GraphCluster cluster = (GraphCluster) n;
+            nodesByParent.putAll(cluster.allNodesByParent());
+        });
+
+        return nodesByParent;
+    }
+
     @Override
     public String getUid() {
         return "cluster_" + super.getUid();
@@ -86,7 +105,10 @@ public class GraphCluster extends AbstractGraph {
 
     @Override
     public void setUid(String uid) {
-        graph.nodes().stream().filter(node -> (!(node instanceof GraphClusterRoot) && !(node instanceof GraphClusterEnd))
+        graph.nodes().stream().filter(node ->
+                // filter other clusters' root & end to prevent setting uid multiple times
+                // this is because we need other clusters' root & end to have edges over them, but they are already managed by their own cluster
+                (!(node instanceof GraphClusterRoot) && !(node instanceof GraphClusterEnd))
                 || node.equals(this.root) || node.equals(this.end))
             .forEach(node -> node.setUid(uid + node.uid.substring(this.uid.length())));
 

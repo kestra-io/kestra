@@ -108,11 +108,6 @@ export default {
                         return response.data;
                     }
                 })
-                .then(flow => {
-                    dispatch("loadGraph", {flow});
-
-                    return flow;
-                })
         },
         updateFlowTask({commit, dispatch}, options) {
             return this.$http
@@ -180,6 +175,16 @@ export default {
                     })
 
                     return response;
+                }).catch(error => {
+                    if(error.response?.status === 404) {
+                        commit("core/setMessage", {
+                            title: "Couldn't expand subflow",
+                            message: error.response.data.message,
+                            variant: "danger"
+                        }, {root: true});
+                    }
+
+                    return Promise.reject(error);
                 })
         },
         getGraphFromSourceResponse({commit}, options) {

@@ -2,10 +2,7 @@ package io.kestra.core.services;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.hierarchies.SubflowGraphCluster;
-import io.kestra.core.models.hierarchies.SubflowGraphTask;
+import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.Rethrow;
@@ -14,12 +11,15 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
 public class GraphService {
     @Inject
     private FlowRepositoryInterface flowRepository;
+    @Inject
+    private TaskDefaultService taskDefaultService;
 
     public FlowGraph flowGraph(Flow flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException {
         return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>()));
@@ -30,30 +30,42 @@ public class GraphService {
     }
 
     public GraphCluster of(GraphCluster baseGraph, Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid) throws IllegalVariableEvaluationException {
+        flow = taskDefaultService.injectDefaults(flow);
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, null);
 
-        List<SubflowGraphTask> subflowsToReplace = graphCluster.getGraph().nodes().stream()
-            .filter(node -> node instanceof SubflowGraphTask)
-            .map(SubflowGraphTask.class::cast)
-            .filter(subflowGraphTask -> expandedSubflows.contains(subflowGraphTask.getUid()))
-            .toList();
 
-        subflowsToReplace.stream()
-            .map(Rethrow.throwFunction(subflowGraphTask -> {
+        Stream<Map.Entry<GraphCluster, SubflowGraphTask>> subflowToReplaceByParent = graphCluster.allNodesByParent().entrySet().stream()
+            .flatMap(entry -> {
+                List<SubflowGraphTask> subflowGraphTasks = entry.getValue().stream()
+                    .filter(node -> node instanceof SubflowGraphTask && expandedSubflows.contains(node.getUid()))
+                    .map(SubflowGraphTask.class::cast)
+                    .toList();
+
+                if (subflowGraphTasks.isEmpty()) {
+                    return Stream.empty();
+                }
+
+                return subflowGraphTasks.stream().map(subflowGraphTask -> Map.entry(entry.getKey(), subflowGraphTask));
+            });
+
+        subflowToReplaceByParent.map(Rethrow.throwFunction(parentWithSubflowGraphTask -> {
+                SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
                 Flow subflow = flowByUid.computeIfAbsent(
                     subflowGraphTask.getTask().flowUid(),
                     uid -> flowRepository.findById(
                         subflowGraphTask.getTask().getNamespace(),
                         subflowGraphTask.getTask().getFlowId(),
                         Optional.ofNullable(subflowGraphTask.getTask().getRevision())
-                    ).orElse(null)
+                    ).orElseThrow(() -> new NoSuchElementException(
+                        "Unable to find subflow " +
+                            (subflowGraphTask.getTask().getRevision() == null ? subflowGraphTask.getTask().flowUidWithoutRevision() : subflowGraphTask.getTask().flowUid())
+                            + " for task " + subflowGraphTask.getTask().getId()
+                    ))
                 );
+                subflow = taskDefaultService.injectDefaults(subflow);
 
-                if (subflow == null) {
-                    throw new IllegalArgumentException("Unable to find subflow " + subflowGraphTask.getTask().flowUid() + " for task " + subflowGraphTask.getTask().getId());
-                }
-
-                return Map.entry(
+                return new TaskToClusterReplacer(
+                    parentWithSubflowGraphTask.getKey(),
                     subflowGraphTask,
                     this.of(
                         new SubflowGraphCluster(subflowGraphTask.getUid(), subflowGraphTask),
@@ -63,19 +75,28 @@ public class GraphService {
                     )
                 );
             }))
-            .forEach(nodeToReplaceWithCluster -> {
-                graphCluster.addNode(nodeToReplaceWithCluster.getValue(), false);
-                graphCluster.getGraph().edges()
-                    .forEach(edge -> {
-                        if (edge.getSource().equals(nodeToReplaceWithCluster.getKey())) {
-                            graphCluster.getGraph().addEdge(nodeToReplaceWithCluster.getValue().getEnd(), edge.getTarget(), edge.getValue());
-                        } else if (edge.getTarget().equals(nodeToReplaceWithCluster.getKey())) {
-                            graphCluster.getGraph().addEdge(edge.getSource(), nodeToReplaceWithCluster.getValue().getRoot(), edge.getValue());
-                        }
-                    });
-                graphCluster.getGraph().removeNode(nodeToReplaceWithCluster.getKey());
-            });
+            .forEach(TaskToClusterReplacer::replace);
 
         return graphCluster;
+    }
+
+    private record TaskToClusterReplacer(GraphCluster parentCluster, AbstractGraph taskToReplace,
+                                         GraphCluster clusterForReplacement) {
+        public void replace() {
+            parentCluster.addNode(clusterForReplacement, false);
+            parentCluster.getGraph().edges()
+                .forEach(edge -> {
+                    if (edge.getSource().equals(taskToReplace)) {
+                        parentCluster.addEdge(clusterForReplacement.getEnd(), edge.getTarget(), edge.getValue());
+                    } else if (edge.getTarget().equals(taskToReplace)) {
+                        parentCluster.addEdge(edge.getSource(), clusterForReplacement.getRoot(), edge.getValue());
+                    }
+                });
+            parentCluster.getGraph().removeNode(taskToReplace);
+
+            if (taskToReplace.isError()) {
+                clusterForReplacement.setError(true);
+            }
+        }
     }
 }

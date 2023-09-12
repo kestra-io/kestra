@@ -64,10 +64,14 @@
         viewType: {
             type: String,
             default: undefined
+        },
+        expandedSubflows: {
+            type: Array,
+            default: () => []
         }
     })
 
-    const emit = defineEmits(["follow", "on-edit", "loading", "expand-subflow"])
+    const emit = defineEmits(["follow", "on-edit", "loading", "expand-subflow", "swapped-task"])
 
     // Vue instance variables
     const store = useStore();
@@ -271,8 +275,9 @@
         isDrawerOpen.value = true;
     }
 
-    const emitEdit = (event) => {
-        emit("on-edit", event)
+    const onSwappedTask = (event) => {
+        emit("swapped-task", event.swappedTasks);
+        emit("on-edit", event.newSource);
     }
 
     const message = (event) => {
@@ -284,9 +289,7 @@
     }
 
     const expandSubflow = (event) => {
-        if (props.isReadOnly) {
-            emit("expand-subflow", event)
-        }
+        emit("expand-subflow", event)
     }
 </script>
 
@@ -303,6 +306,7 @@
             :flowGraph="props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
+            :expanded-subflows="expandedSubflows"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask($event)"
             @delete="onDelete"
@@ -311,7 +315,7 @@
             @show-description="showDescription($event)"
             @on-add-flowable-error="onAddFlowableError($event)"
             @add-task="onCreateNewTask($event)"
-            @swapped-task="emitEdit($event)"
+            @swapped-task="onSwappedTask($event)"
             @message="message($event)"
             @expand-subflow="expandSubflow($event)"
         />

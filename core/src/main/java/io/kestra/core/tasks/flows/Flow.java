@@ -112,6 +112,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         return io.kestra.core.models.flows.Flow.uid(this.getNamespace(), this.getFlowId(), Optional.ofNullable(this.revision));
     }
 
+    public String flowUidWithoutRevision() {
+        return io.kestra.core.models.flows.Flow.uidWithoutRevision(this.getNamespace(), this.getFlowId());
+    }
+
     @SuppressWarnings("unchecked")
     public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);

@@ -64,6 +64,8 @@ public class FlowCaseTest {
         countDownLatch.await(1, TimeUnit.MINUTES);
 
         assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(fromState));
         assertThat(execution.getState().getCurrent(), is(fromState));
 
         if (outputs != null) {

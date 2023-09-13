@@ -6,6 +6,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -598,7 +599,11 @@ public class ExecutorService {
                     }
                 } catch (Exception e) {
                     workerTaskResults.add(WorkerTaskResult.builder()
-                        .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED))
+                        .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
+                            .withAttempts(Collections.singletonList(
+                                TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()
+                            ))
+                        )
                         .build()
                     );
                     executor.withException(e, "handleFlowTask");

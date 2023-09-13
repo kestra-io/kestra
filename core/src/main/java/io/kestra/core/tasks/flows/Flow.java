@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -19,11 +20,7 @@ import lombok.experimental.SuperBuilder;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -188,9 +185,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             try {
                 builder.outputs(runContext.render(workerTaskExecution.getTask().getOutputs()));
             } catch (Exception e) {
-                runContext.logger().warn("Failed to extract ouputs with error: '" + e.getMessage() + "'", e);
+                runContext.logger().warn("Failed to extract outputs with error: '" + e.getMessage() + "'", e);
                 taskRun = taskRun
                     .withState(State.Type.FAILED)
+                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()))
                     .withOutputs(builder.build().toMap());
 
                 return WorkerTaskResult.builder()
@@ -212,7 +210,9 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         }
 
         return WorkerTaskResult.builder()
-            .taskRun(taskRun)
+            .taskRun(taskRun.withAttempts(
+                Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(taskRun.getState().getCurrent())).build())
+            ))
             .build();
     }
 

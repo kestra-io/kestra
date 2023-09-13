@@ -15,6 +15,7 @@ import io.kestra.core.runners.RunContext;
 import org.slf4j.Logger;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -56,7 +57,7 @@ public class Return extends Task implements RunnableTask<Return.Output> {
         long end = System.nanoTime();
 
         runContext
-            .metric(Counter.of("length", render.length(), "format", format))
+            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0), "format", format))
             .metric(Timer.of("duration", Duration.ofNanos(end - start), "format", format));
 
         return Output.builder()

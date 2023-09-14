@@ -95,7 +95,7 @@ public class GraphService {
             parentCluster.getGraph().removeNode(taskToReplace);
 
             if (taskToReplace.isError()) {
-                clusterForReplacement.setError(true);
+                clusterForReplacement.updateErrorWithChildren(true);
             }
         }
     }

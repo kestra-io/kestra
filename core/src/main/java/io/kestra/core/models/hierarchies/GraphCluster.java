@@ -69,7 +69,7 @@ public class GraphCluster extends AbstractGraph {
 
     public void addNode(AbstractGraph node, boolean withClusterUidPrefix) {
         if (withClusterUidPrefix) {
-            node.setUid(prefixedUid(node.uid));
+            node.updateUidWithChildren(prefixedUid(node.uid));
         }
         this.getGraph().addNode(node);
     }
@@ -100,25 +100,23 @@ public class GraphCluster extends AbstractGraph {
 
     @Override
     public String getUid() {
-        return "cluster_" + super.getUid();
+        return "cluster_" + super.getUid().replace("cluster_", "");
     }
 
     @Override
-    @JsonIgnore
-    public void setUid(String uid) {
+    public void updateUidWithChildren(String uid) {
         graph.nodes().stream().filter(node ->
                 // filter other clusters' root & end to prevent setting uid multiple times
                 // this is because we need other clusters' root & end to have edges over them, but they are already managed by their own cluster
                 (!(node instanceof GraphClusterRoot) && !(node instanceof GraphClusterEnd))
                 || node.equals(this.root) || node.equals(this.end))
-            .forEach(node -> node.setUid(uid + node.uid.substring(this.uid.length())));
+            .forEach(node -> node.updateUidWithChildren(uid + node.uid.substring(this.uid.length())));
 
-        super.setUid(uid);
+        super.updateUidWithChildren(uid);
     }
 
     @Override
-    @JsonIgnore
-    public void setError(boolean error) {
+    public void updateErrorWithChildren(boolean error) {
         this.error = error;
 
         this.taskNode.error = error;

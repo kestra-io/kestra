@@ -106,9 +106,12 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra" +
             ".tests/all-flowable/graph"), FlowGraph.class);
 
-        assertThat(result.getNodes().size(), is(34));
-        assertThat(result.getEdges().size(), is(37));
-        assertThat(result.getClusters().size(), is(6));
+        assertThat(result.getNodes().size(), is(38));
+        assertThat(result.getEdges().size(), is(42));
+        assertThat(result.getClusters().size(), is(7));
+        assertThat(result.getClusters().stream().map(FlowGraph.Cluster::getCluster).toList(), Matchers.everyItem(
+            Matchers.hasProperty("uid", Matchers.not(Matchers.startsWith("cluster_cluster_")))
+        ));
     }
 
     @Test

@@ -17,6 +17,13 @@ tasks:
           - id: 1-each-2-1
             type: io.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.value}}"
+    errors:
+      - id: 1-each-seq-error
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: 1-each-seq-error-1
+            type: io.kestra.core.tasks.debugs.Return
+            format: "error {{task.id}} > {{taskrun.value}}"
 
 
   # Simple task

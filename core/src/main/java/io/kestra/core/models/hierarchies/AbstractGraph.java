@@ -33,4 +33,12 @@ public abstract class AbstractGraph {
     public String getLabel() {
         return this.getUid();
     }
+
+    public void updateUidWithChildren(String uid) {
+        this.uid = uid;
+    }
+
+    public void updateErrorWithChildren(boolean error) {
+        this.error = error;
+    }
 }

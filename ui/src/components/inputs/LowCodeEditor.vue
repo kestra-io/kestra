@@ -306,7 +306,7 @@
             :flowGraph="props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
-            :expanded-subflows="expandedSubflows"
+            :expanded-subflows="props.expandedSubflows"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask($event)"
             @delete="onDelete"

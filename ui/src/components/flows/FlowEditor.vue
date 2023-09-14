@@ -8,6 +8,8 @@
         :is-read-only="isReadOnly"
         :flow-error="flowError"
         :flow-deprecations="flowDeprecations"
+        :expanded-subflows="expandedSubflows"
+        @expand-subflow="$emit('expand-subflow', $event)"
     />
 </template>
 <script>
@@ -26,6 +28,10 @@
             isReadOnly: {
                 type: Boolean,
                 default: false
+            },
+            expandedSubflows: {
+                type: Array,
+                default: []
             }
         },
         computed: {

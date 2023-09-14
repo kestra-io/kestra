@@ -32,7 +32,7 @@
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
-    const emit = defineEmits(["follow"])
+    const emit = defineEmits(["follow", "expand-subflow"])
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
@@ -93,6 +93,10 @@
         flowDeprecations: {
             type: Array,
             default: undefined
+        },
+        expandedSubflows: {
+            type: Array,
+            default: []
         }
     })
 
@@ -163,6 +167,12 @@
 
     watch(() => store.getters["flow/taskError"], async () => {
         taskError.value = store.getters["flow/taskError"];
+    });
+
+    watch(() => props.expandedSubflows, (_, oldValue) => {
+        fetchGraph().catch(() => {
+            emit("expand-subflow", oldValue);
+        });
     });
 
     const flowHaveTasks = (source) => {
@@ -357,14 +367,13 @@
         persistEditorContent(false);
     }
 
-    const expandedSubflows = ref([]);
     const fetchGraph = () => {
         return store.dispatch("flow/loadGraphFromSource", {
             flow: flowYaml.value,
             config: {
                 params: {
                     // due to usage of axios instance instead of $http which doesn't convert arrays
-                    subflows: expandedSubflows.value.join(","),
+                    subflows: props.expandedSubflows.join(","),
                 },
                 validateStatus: (status) => {
                     return status === 200 || status === 422;
@@ -649,15 +658,11 @@
     }
 
     const onExpandSubflow = (e) => {
-        const oldExpandedSubflows = expandedSubflows.value;
-        expandedSubflows.value = e;
-        fetchGraph().catch(() => {
-            expandedSubflows.value = oldExpandedSubflows;
-        });
+        emit("expand-subflow", e);
     }
 
     const onSwappedTask = (swappedTasks) => {
-        expandedSubflows.value = expandedSubflows.value.map(expandedSubflow => {
+        emit("expand-subflow", props.expandedSubflows.map(expandedSubflow => {
             let swappedTaskSplit;
             if (expandedSubflow === swappedTasks[0]) {
                 swappedTaskSplit = swappedTasks[1].split(".");
@@ -673,7 +678,7 @@
             }
 
             return expandedSubflow;
-        });
+        }));
     }
 </script>
 
@@ -719,7 +724,7 @@
                 :source="flowYaml"
                 :is-allowed-edit="isAllowedEdit()"
                 :view-type="viewType"
-                :expanded-subflows="expandedSubflows"
+                :expanded-subflows="props.expandedSubflows"
             >
                 <template #top-bar v-if="viewType === editorViewTypes.TOPOLOGY">
                     <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />

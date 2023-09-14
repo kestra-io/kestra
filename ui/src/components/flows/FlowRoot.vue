@@ -1,7 +1,7 @@
 <template>
     <div>
         <div v-if="ready">
-            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
+            <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
             <bottom-line v-if="displayBottomLine()">
                 <ul>
                     <li>
@@ -54,7 +54,8 @@
             return {
                 tabIndex: undefined,
                 previousFlow: undefined,
-                depedenciesCount: undefined
+                depedenciesCount: undefined,
+                expandedSubflows: []
             };
         },
         watch: {
@@ -84,7 +85,6 @@
                         }
                     });
                 }
-
             },
             flowKey() {
                 return this.$route.params.namespace +  "/" + this.$route.params.id;
@@ -96,7 +96,8 @@
                         component: Topology,
                         title: this.$t("topology"),
                         props: {
-                            isReadOnly: true
+                            isReadOnly: true,
+                            expandedSubflows: this.expandedSubflows
                         }
                     },
                 ];
@@ -126,6 +127,9 @@
                         name: "editor",
                         component: FlowEditor,
                         title: this.$t("editor"),
+                        props: {
+                            expandedSubflows: this.expandedSubflows
+                        }
                     });
                 }
 
@@ -189,6 +193,9 @@
                     tab: "editor"
                 }})
             },
+            updateExpandedSubflows(expandedSubflows) {
+                this.expandedSubflows = expandedSubflows;
+            }
         },
         computed: {
             ...mapState("flow", ["flow"]),
@@ -229,7 +236,7 @@
                     return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
                 }
                 return false;
-            },
+            }
         },
         unmounted () {
             this.$store.commit("flow/setFlow", undefined)

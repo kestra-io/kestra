@@ -226,7 +226,7 @@ export default {
             return this.$http.delete("/api/v1/flows/delete/by-ids", {data: options.ids})
         },
         deleteFlowByQuery(_, options) {
-            return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
+            return this.$http.delete("/api/v1/flows/delete/by-query", {params: options})
         },
         validateFlow({commit}, options) {
             return axios.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)

@@ -1,3 +1,5 @@
+import {apiUrl} from "override/utils/route";
+
 export default {
     namespaced: true,
     state: {
@@ -6,7 +8,7 @@ export default {
 
     actions: {
         loadConfigs({commit}) {
-            return this.$http.get("/api/v1/configs").then(response => {
+            return this.$http.get(`${apiUrl(this)}/configs`).then(response => {
                 commit("setConfigs", response.data)
 
                 return response.data;

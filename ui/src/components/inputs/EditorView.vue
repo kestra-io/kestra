@@ -583,7 +583,7 @@
         const metadata = getFlowMetadata();
 
         return http
-            .get(`/api/v1/flows/${metadata.namespace}/${metadata.id}/dependencies`, {params: {destinationOnly: true}})
+            .get(`${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id}/dependencies`, {params: {destinationOnly: true}})
             .then(response => {
                 let warning = "";
 

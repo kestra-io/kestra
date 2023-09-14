@@ -1,7 +1,7 @@
 import axios from "axios";
 import YamlUtils from "../utils/yamlUtils";
 import Utils from "../utils/utils";
-import {apiRoot} from "../utils/axios";
+import {apiUrl} from "override/utils/route";
 
 const textYamlHeader = {
     headers: {
@@ -32,7 +32,7 @@ export default {
         findFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`/api/v1/flows/search${sortString}`, {
+            return this.$http.get(`${apiUrl(this)}/flows/search${sortString}`, {
                 params: options
             }).then(response => {
                 commit("setFlows", response.data.results)
@@ -45,7 +45,7 @@ export default {
         searchFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`/api/v1/flows/source${sortString}`, {
+            return this.$http.get(`${apiUrl(this)}/flows/source${sortString}`, {
                 params: options
             }).then(response => {
                 commit("setSearch", response.data.results)
@@ -55,7 +55,7 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}?source=true`,
+            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}?source=true`,
                 {
                     params: options,
                     validateStatus: (status) => {
@@ -79,7 +79,7 @@ export default {
         },
         loadTask({commit}, options) {
             return this.$http.get(
-                `/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
+                `${apiUrl(this)}/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
                 {
                     validateStatus: (status) => {
                         return status === 200 || status === 404;
@@ -98,7 +98,7 @@ export default {
         },
         saveFlow({commit, dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)
-            return this.$http.put(`/api/v1/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
+            return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
                         return Promise.reject(new Error("Server error on flow save"))
@@ -111,7 +111,7 @@ export default {
         },
         updateFlowTask({commit, dispatch}, options) {
             return this.$http
-                .patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+                .patch(`${apiUrl(this)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
                     commit("setFlow", response.data)
 
                     return response.data;
@@ -123,14 +123,14 @@ export default {
                 })
         },
         createFlow({commit}, options) {
-            return this.$http.post("/api/v1/flows", options.flow, textYamlHeader).then(response => {
+            return this.$http.post(`${apiUrl(this)}/flows`, options.flow, textYamlHeader).then(response => {
                 commit("setFlow", response.data);
 
                 return response.data;
             })
         },
         deleteFlow({commit}, flow) {
-            return this.$http.delete(`/api/v1/flows/${flow.namespace}/${flow.id}`).then(() => {
+            return this.$http.delete(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}`).then(() => {
                 commit("setFlow", null)
             })
         },
@@ -140,7 +140,7 @@ export default {
             if (flow.revisions) {
                 params["revisions"] = flow.revisions;
             }
-            return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)
                 commit("setFlowGraphParam", {
                     namespace: flow.namespace,
@@ -158,7 +158,7 @@ export default {
             if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return axios.post(`${apiRoot}flows/graph`, flowSource, {...config})
+            return axios.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => {
                     if (response.status === 422) {
                         return response;
@@ -194,17 +194,17 @@ export default {
             if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return this.$http.post("/api/v1/flows/graph", flowSource, {...config})
+            return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)
         },
         loadRevisions({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
                 commit("setRevisions", response.data)
                 return response.data;
             })
         },
         exportFlowByIds(_, options) {
-            return this.$http.post("/api/v1/flows/export/by-ids", options.ids, {responseType: "blob"})
+            return this.$http.post(`${apiUrl(this)}/flows/export/by-ids`, options.ids, {responseType: "blob"})
                 .then(response => {
                     const blob = new Blob([response.data], {type: "application/octet-stream"});
                     const url = window.URL.createObjectURL(blob)
@@ -212,34 +212,34 @@ export default {
                 });
         },
         exportFlowByQuery(_, options) {
-            return this.$http.get("/api/v1/flows/export/by-query", {params: options})
+            return this.$http.get(`${apiUrl(this)}/flows/export/by-query`, {params: options})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "flows.zip");
                 });
         },
         importFlows(_, options) {
-            return this.$http.post("/api/v1/flows/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+            return this.$http.post(`${apiUrl(this)}/flows/import`, options, {headers: {"Content-Type": "multipart/form-data"}})
         },
         disableFlowByIds(_, options) {
-            return this.$http.post("/api/v1/flows/disable/by-ids", options.ids)
+            return this.$http.post(`${apiUrl(this)}/flows/disable/by-ids`, options.ids)
         },
         disableFlowByQuery(_, options) {
-            return this.$http.post("/api/v1/flows/disable/by-query", options, {params: options})
+            return this.$http.post(`${apiUrl(this)}/flows/disable/by-query`, options, {params: options})
         },
         enableFlowByIds(_, options) {
-            return this.$http.post("/api/v1/flows/enable/by-ids", options.ids)
+            return this.$http.post(`${apiUrl(this)}/flows/enable/by-ids`, options.ids)
         },
         enableFlowByQuery(_, options) {
-            return this.$http.post("/api/v1/flows/enable/by-query", options, {params: options})
+            return this.$http.post(`${apiUrl(this)}/flows/enable/by-query`, options, {params: options})
         },
         deleteFlowByIds(_, options) {
-            return this.$http.delete("/api/v1/flows/delete/by-ids", {data: options.ids})
+            return this.$http.delete(`${apiUrl(this)}/flows/delete/by-ids`, {data: options.ids})
         },
         deleteFlowByQuery(_, options) {
-            return this.$http.delete("/api/v1/flows/delete/by-query", {params: options})
+            return this.$http.delete(`${apiUrl(this)}/flows/delete/by-query`, {params: options})
         },
         validateFlow({commit}, options) {
-            return axios.post(`${apiRoot}flows/validate`, options.flow, textYamlHeader)
+            return axios.post(`${apiUrl(this)}/flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
                     commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
                     commit("setFlowDeprecations", response.data[0] ? response.data[0].deprecationPaths : undefined)
@@ -247,42 +247,42 @@ export default {
                 })
         },
         validateTask({commit}, options) {
-            return axios.post(`${apiRoot}flows/validate/task`, options.task, {...textYamlHeader, params: {section: options.section}})
+            return axios.post(`${apiUrl(this)}/flows/validate/task`, options.task, {...textYamlHeader, params: {section: options.section}})
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
                     return response.data
                 })
         },
         loadFlowMetrics({commit}, options) {
-            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}`)
+            return this.$http.get(`${apiUrl(this)}/metrics/names/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTaskMetrics({commit}, options) {
-            return this.$http.get(`${apiRoot}metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+            return this.$http.get(`${apiUrl(this)}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
                 .then(response => {
                     commit("setMetrics", response.data)
                     return response.data
                 })
         },
         loadTasksWithMetrics({commit}, options) {
-            return this.$http.get(`${apiRoot}metrics/tasks/${options.namespace}/${options.id}`)
+            return this.$http.get(`${apiUrl(this)}/metrics/tasks/${options.namespace}/${options.id}`)
                 .then(response => {
                     commit("setTasksWithMetrics", response.data)
                     return response.data
                 })
         },
         loadFlowAggregatedMetrics({commit}, options) {
-            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+            return this.$http.get(`${apiUrl(this)}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data
                 })
         },
         loadTaskAggregatedMetrics({commit}, options) {
-            return this.$http.get(`${apiRoot}metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+            return this.$http.get(`${apiUrl(this)}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
                 .then(response => {
                     commit("setAggregatedMetric", response.data)
                     return response.data

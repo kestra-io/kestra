@@ -1,3 +1,5 @@
+import {apiUrl} from "override/utils/route";
+
 export default {
     namespaced: true,
     state: {
@@ -17,14 +19,14 @@ export default {
     },
     actions: {
         loadExecutions({commit}, options) {
-            return this.$http.get("/api/v1/executions", {params: options}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/executions`, {params: options}).then(response => {
                 commit("setExecutions", response.data.results)
                 commit("setTotal", response.data.total)
             })
         },
         restartExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/${options.executionId}/restart`,
+                `${apiUrl(this)}/executions/${options.executionId}/restart`,
                 null,
                 {
                     params: {
@@ -34,20 +36,20 @@ export default {
         },
         bulkRestartExecution(_, options) {
             return this.$http.post(
-                "/api/v1/executions/restart/by-ids",
+                `${apiUrl(this)}/executions/restart/by-ids`,
                 options.executionsId
             )
         },
         queryRestartExecution(_, options) {
             return this.$http.post(
-                "/api/v1/executions/restart/by-query",
+                `${apiUrl(this)}/executions/restart/by-query`,
                 {},
                 {params: options}
             )
         },
         replayExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/${options.executionId}/replay`,
+                `${apiUrl(this)}/executions/${options.executionId}/replay`,
                 null,
                 {
                     params: {
@@ -58,33 +60,33 @@ export default {
         },
         changeStatus(_, options) {
             return this.$http.post(
-                `/api/v1/executions/${options.executionId}/state`,
+                `${apiUrl(this)}/executions/${options.executionId}/state`,
                 {
                     taskRunId: options.taskRunId,
                     state: options.state,
                 })
         },
         kill(_, options) {
-            return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
+            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}/kill`);
         },
         bulkKill(_, options) {
-            return this.$http.delete("/api/v1/executions/kill/by-ids", {data: options.executionsId});
+            return this.$http.delete(`${apiUrl(this)}/executions/kill/by-ids`, {data: options.executionsId});
         },
         queryKill(_, options) {
-            return this.$http.delete("/api/v1/executions/kill/by-query", {params: options});
+            return this.$http.delete(`${apiUrl(this)}/executions/kill/by-query`, {params: options});
         },
         resume(_, options) {
-            return this.$http.post(`/api/v1/executions/${options.id}/resume`);
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume`);
         },
         loadExecution({commit}, options) {
-            return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
+            return this.$http.get(`${apiUrl(this)}/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)
 
                 return response.data;
             })
         },
         findExecutions({commit}, options) {
-            return this.$http.get("/api/v1/executions/search", {params: options}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/executions/search`, {params: options}).then(response => {
                 commit("setExecutions", response.data.results)
                 commit("setTotal", response.data.total)
 
@@ -92,7 +94,7 @@ export default {
             })
         },
         triggerExecution(_, options) {
-            return this.$http.post(`/api/v1/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
+            return this.$http.post(`${apiUrl(this)}/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"
@@ -103,24 +105,24 @@ export default {
             })
         },
         deleteExecution({commit}, options) {
-            return this.$http.delete(`/api/v1/executions/${options.id}`).then(() => {
+            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}`).then(() => {
                 commit("setExecution", null)
             })
         },
         bulkDeleteExecution({commit}, options) {
-            return this.$http.delete("/api/v1/executions/by-ids", {data: options.executionsId})
+            return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId})
         },
         queryDeleteExecution({commit}, options) {
-            return this.$http.delete("/api/v1/executions/by-query", {params: options})
+            return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})
         },
         followExecution(_, options) {
-            return new EventSource(`${this.$http.defaults.baseURL}api/v1/executions/${options.id}/follow`);
+            return new EventSource(`${apiUrl(this)}/executions/${options.id}/follow`);
         },
         followLogs(_, options) {
-            return new EventSource(`${this.$http.defaults.baseURL}api/v1/logs/${options.id}/follow`);
+            return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`);
         },
         loadLogs({commit}, options) {
-            return this.$http.get(`/api/v1/logs/${options.executionId}`, {
+            return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 if(options.params.page !== 1) {
@@ -132,7 +134,7 @@ export default {
             })
         },
         loadMetrics({commit}, options) {
-            return this.$http.get(`/api/v1/metrics/${options.executionId}`, {
+            return this.$http.get(`${apiUrl(this)}/metrics/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 commit("setMetrics", response.data.results)
@@ -140,14 +142,14 @@ export default {
             })
         },
         downloadLogs(_, options) {
-            return this.$http.get(`api/v1/logs/${options.executionId}/download`, {
+            return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}/download`, {
                 params: options.params
             }).then(response => {
                 return response.data
             })
         },
         filePreview({commit}, options) {
-            return this.$http.get(`api/v1/executions/${options.executionId}/file/preview`, {
+            return this.$http.get(`${apiUrl(this)}//executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
                 commit("setFilePreview", response.data)

@@ -95,6 +95,7 @@
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         components: {Markdown},
@@ -167,7 +168,7 @@
                 }
             },
             blueprintBaseUri() {
-                return "/api/v1/blueprints/" + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
+                return `${apiUrl(this.$store)}/blueprints/` + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
             }
         }
     };

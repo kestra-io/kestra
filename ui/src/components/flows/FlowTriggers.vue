@@ -63,6 +63,7 @@
     import Markdown from "../layout/Markdown.vue";
     import {mapGetters} from "vuex";
     import Kicon from "../Kicon.vue"
+    import {apiUrl} from "override/utils/route";
 
     export default {
         components: {Markdown, Kicon},
@@ -75,7 +76,7 @@
         },
         created() {
             this.$http
-                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}?source=false`)
+                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}?source=false`)
                 .then(value => this.flowData = value.data);
         },
         computed: {

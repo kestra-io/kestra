@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -95,6 +96,14 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @PluginProperty
     private final Boolean transmitFailed = false;
 
+    @Builder.Default
+    @Schema(
+        title = "Inherit labels from the calling execution",
+        description = "By default, we don't inherit any labels of the calling execution"
+    )
+    @PluginProperty
+    private final Boolean inheritLabels = false;
+
     @Schema(
         title = "Extract outputs from triggered executions.",
         description = "Allow to specify key value (with value rendered), in order to extract any outputs from " +
@@ -119,6 +128,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @SuppressWarnings("unchecked")
     public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
+        ExecutionRepositoryInterface executionRepository = runContext.getApplicationContext().getBean(ExecutionRepositoryInterface.class);
 
         Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
@@ -128,6 +138,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         }
 
         List<Label> labels = new ArrayList<>();
+        if (this.inheritLabels) {
+            Optional<Execution> currentExecution = getCurrentExecution(runContext, executionRepository);
+            labels.addAll(currentExecution.orElseThrow().getLabels());
+        }
         if (this.labels != null) {
             for (Map.Entry<String, String> entry: this.labels.entrySet()) {
                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
@@ -242,5 +256,11 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             title = "The extracted outputs from triggered executions."
         )
         private final Map<String, Object> outputs;
+    }
+
+    private Optional<Execution> getCurrentExecution(RunContext runContext, ExecutionRepositoryInterface executionRepository) {
+        final String executionId = ((Map<String, String>) runContext.getVariables().get("execution")).get("id");
+
+        return executionRepository.findById(executionId);
     }
 }

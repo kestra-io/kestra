@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -8,6 +9,8 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunnerUtils;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +61,8 @@ public class FlowCaseTest {
             "task-flow",
             null,
             (f, e) -> ImmutableMap.of("string", input),
-            Duration.ofMinutes(1)
+            Duration.ofMinutes(1),
+            List.of(new Label("executionLabel", "execFoo"))
         );
 
         countDownLatch.await(1, TimeUnit.MINUTES);
@@ -85,5 +89,7 @@ public class FlowCaseTest {
 
         assertThat(triggered.get().getTaskRunList(), hasSize(count));
         assertThat(triggered.get().getState().getCurrent(), is(triggerState));
+
+        assertThat(triggered.get().getLabels(), hasItems(new Label("executionLabel", "execFoo"), new Label("flowLabel", "flowFoo")));
     }
 }

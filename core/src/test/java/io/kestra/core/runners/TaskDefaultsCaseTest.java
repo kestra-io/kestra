@@ -13,8 +13,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.GraphService;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -112,7 +112,7 @@ public class TaskDefaultsCaseTest {
         public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
             GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
 
-            GraphService.sequential(
+            GraphUtils.sequential(
                 subGraph,
                 this.tasks,
                 this.errors,

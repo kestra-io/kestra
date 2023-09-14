@@ -16,6 +16,7 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.services.GraphService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -78,17 +79,21 @@ public class FlowController {
     @Inject
     private YamlFlowParser yamlFlowParser;
 
+    @Inject
+    private GraphService graphService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow")
     public FlowGraph flowGraph(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The flow revision") @QueryValue Optional<Integer> revision
+        @Parameter(description = "The flow revision") @QueryValue Optional<Integer> revision,
+        @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws IllegalVariableEvaluationException {
         return flowRepository
             .findById(namespace, id, revision)
-            .map(throwFunction(FlowGraph::of))
+            .map(throwFunction(flow -> graphService.flowGraph(flow, subflows)))
             .orElse(null);
     }
 
@@ -96,11 +101,12 @@ public class FlowController {
     @Post(uri = "graph", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow source")
     public FlowGraph flowGraphSource(
-        @Parameter(description = "The flow") @Body String flow
+        @Parameter(description = "The flow") @Body String flow,
+        @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return FlowGraph.of(flowParsed);
+        return graphService.flowGraph(flowParsed, subflows);
     }
 
     @ExecuteOn(TaskExecutors.IO)

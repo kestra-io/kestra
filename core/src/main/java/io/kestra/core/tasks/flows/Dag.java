@@ -12,7 +12,7 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.DagTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -101,7 +101,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
         this.controlTask();
 
-        GraphService.dag(
+        GraphUtils.dag(
             subGraph,
             this.getTasks(),
             this.errors,

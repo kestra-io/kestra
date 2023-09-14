@@ -95,7 +95,7 @@
                 });
             },
             initGuidedTour() {
-                this.$store.dispatch("flow/findFlows", {limit: 1})
+                this.$store.dispatch("flow/findFlows", {size: 1})
                     .then(flows => {
                         if (flows.total === 0 && this.$route.name === "home") {
                             this.$router.push({name: "welcome"});

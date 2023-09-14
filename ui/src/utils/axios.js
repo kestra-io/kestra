@@ -1,11 +1,7 @@
 import axios from "axios";
 import NProgress from "nprogress"
+import {baseUrl} from "override/utils/route";
 
-// eslint-disable-next-line no-undef
-let root = (import.meta.env.VITE_APP_API_URL || "") + KESTRA_BASE_PATH;
-if (!root.endsWith("/")) {
-    root = root + "/";
-}
 // nprogress
 let requestsTotal = 0
 let requestsCompleted = 0
@@ -140,7 +136,7 @@ export default (callback, store, router) => {
             return Promise.reject(errorResponse);
         })
 
-    instance.defaults.baseURL = root;
+    instance.defaults.baseURL = baseUrl;
 
     instance.defaults.paramsSerializer = {
         indexes: null
@@ -158,6 +154,3 @@ export default (callback, store, router) => {
 
     callback(instance);
 };
-
-
-export const apiRoot = `${root}api/v1/`

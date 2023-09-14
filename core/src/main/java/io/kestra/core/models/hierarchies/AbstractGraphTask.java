@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @ToString
 @Getter
@@ -18,17 +19,8 @@ public abstract class AbstractGraphTask extends AbstractGraph {
     private final List<String> values;
     private final RelationType relationType;
 
-    public AbstractGraphTask() {
-        super();
-
-        this.task = null;
-        this.taskRun = null;
-        this.values = null;
-        this.relationType = null;
-    }
-
-    public AbstractGraphTask(Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
-        super();
+    public AbstractGraphTask(String uid, Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
+        super(uid);
 
         this.task = task;
         this.taskRun = taskRun;
@@ -36,18 +28,21 @@ public abstract class AbstractGraphTask extends AbstractGraph {
         this.relationType = relationType;
     }
 
+    public AbstractGraphTask(Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
+        this(task.getId(), task, taskRun, values, relationType);
+    }
+
     @Override
     public String getLabel() {
-        return this.getUid() + (this.getTaskRun() != null ? " > " + this.getTaskRun().getValue() + " (" + this.getTaskRun().getId() + ")" : "");
+        String[] splitUid = this.getUid().split("\\.");
+        return splitUid[splitUid.length - 1] + (this.getTaskRun() != null ? " > " + this.getTaskRun().getValue() + " (" + this.getTaskRun().getId() + ")" : "");
     }
 
     @Override
     public String getUid() {
         List<String> list = new ArrayList<>();
 
-        if (this.task != null) {
-            list.add(this.task.getId());
-        }
+        list.add(this.uid);
 
         if (values != null) {
             list.addAll(values);
@@ -57,18 +52,11 @@ public abstract class AbstractGraphTask extends AbstractGraph {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) return true;
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        AbstractGraphTask that = (AbstractGraphTask) object;
 
-        if (!(o instanceof AbstractGraphTask)) {
-            return false;
-        }
-
-        return o.hashCode() == this.hashCode();
-    }
-
-    @Override
-    public int hashCode() {
-        return (this.uid + this.getClass().getName()).hashCode();
+        return Objects.equals(this.getUid(), that.getUid());
     }
 }

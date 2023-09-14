@@ -11,6 +11,7 @@ import action from "../models/action";
 import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
 import yamlUtils from "../utils/yamlUtils";
+import {apiUrl} from "override/utils/route";
 
 export default {
     mixins: [RouteContext],
@@ -128,7 +129,7 @@ export default {
             }
 
             return this.$http
-                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
                     let warning = "";
 

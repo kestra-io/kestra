@@ -41,6 +41,7 @@
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         mixins: [RouteContext],
@@ -72,9 +73,11 @@
                     return this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
                         if (this.flow) {
                             this.previousFlow = this.flowKey();
-                            this.$store.dispatch("flow/loadGraph", this.flow);
+                            this.$store.dispatch("flow/loadGraph", {
+                                flow: this.flow
+                            });
                             this.$http
-                                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
+                                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
                                 .then(response => {
                                     this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
                                 })

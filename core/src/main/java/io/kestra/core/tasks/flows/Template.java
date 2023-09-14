@@ -20,7 +20,7 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -124,7 +124,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
         io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
 
-        GraphService.sequential(
+        GraphUtils.sequential(
             subGraph,
             template.getTasks(),
             template.getErrors(),

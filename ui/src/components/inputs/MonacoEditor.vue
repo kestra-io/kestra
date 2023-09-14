@@ -41,15 +41,6 @@
         }
     });
 
-    setDiagnosticsOptions({
-        enableSchemaRequest: true,
-        hover: true,
-        completion: true,
-        validate: true,
-        format: true,
-        schemas: yamlSchemas
-    });
-
     export default defineComponent({
         props: {
             original: {
@@ -132,6 +123,15 @@
             this.monaco = monaco;
             this.$nextTick(function () {
                 _this.initMonaco(monaco);
+            });
+
+            setDiagnosticsOptions({
+                enableSchemaRequest: true,
+                hover: true,
+                completion: true,
+                validate: true,
+                format: true,
+                schemas: yamlSchemas(this.$store)
             });
         },
         beforeUnmount: function() {

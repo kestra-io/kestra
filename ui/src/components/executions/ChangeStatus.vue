@@ -107,7 +107,7 @@
                     })
                     .then(response => {
                         if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, response.data);
+                            return ExecutionUtils.waitForState(this.$http, this.$store, response.data);
                         } else {
                             return response.data;
                         }

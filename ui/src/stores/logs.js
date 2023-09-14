@@ -1,3 +1,5 @@
+import {apiUrl} from "override/utils/route";
+
 export default {
     namespaced: true,
     state: {
@@ -7,7 +9,7 @@ export default {
     },
     actions: {
         findLogs({commit}, options) {
-            return this.$http.get("/api/v1/logs/search", {params: options}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/logs/search`, {params: options}).then(response => {
                 commit("setLogs", response.data.results)
                 commit("setTotal", response.data.total)
             })

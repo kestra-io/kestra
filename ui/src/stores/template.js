@@ -1,5 +1,6 @@
 import YamlUtils from "../utils/yamlUtils";
 import Utils from "../utils/utils";
+import {apiUrl} from "override/utils/route";
 
 export default {
     namespaced: true,
@@ -13,7 +14,7 @@ export default {
         findTemplates({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`/api/v1/templates/search${sortString}`, {
+            return this.$http.get(`${apiUrl(this)}/templates/search${sortString}`, {
                 params: options
             }).then(response => {
                 commit("setTemplates", response.data.results)
@@ -23,7 +24,7 @@ export default {
             })
         },
         loadTemplate({commit}, options) {
-            return this.$http.get(`/api/v1/templates/${options.namespace}/${options.id}`).then(response => {
+            return this.$http.get(`${apiUrl(this)}/templates/${options.namespace}/${options.id}`).then(response => {
                 if (response.data.exception) {
                     commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
                     delete response.data.exception;
@@ -37,7 +38,7 @@ export default {
         },
         saveTemplate({commit}, options) {
             const template = YamlUtils.parse(options.template)
-            return this.$http.put(`/api/v1/templates/${template.namespace}/${template.id}`, template).then(response => {
+            return this.$http.put(`${apiUrl(this)}/templates/${template.namespace}/${template.id}`, template).then(response => {
                 if (response.status >= 300) {
                     return Promise.reject(new Error("Server error on template save"))
                 } else {
@@ -48,19 +49,19 @@ export default {
             })
         },
         createTemplate({commit}, options) {
-            return this.$http.post("/api/v1/templates", YamlUtils.parse(options.template)).then(response => {
+            return this.$http.post(`${apiUrl(this)}/templates`, YamlUtils.parse(options.template)).then(response => {
                 commit("setTemplate", response.data)
 
                 return response.data;
             })
         },
         deleteTemplate({commit}, template) {
-            return this.$http.delete(`/api/v1/templates/${template.namespace}/${template.id}`).then(() => {
+            return this.$http.delete(`${apiUrl(this)}/templates/${template.namespace}/${template.id}`).then(() => {
                 commit("setTemplate", null)
             })
         },
         exportTemplateByIds(_, options) {
-            return this.$http.post("/api/v1/templates/export/by-ids", options.ids, {responseType: "blob"})
+            return this.$http.post(`${apiUrl(this)}/templates/export/by-ids`, options.ids, {responseType: "blob"})
                 .then(response => {
                     const blob = new Blob([response.data], {type: "application/octet-stream"});
                     const url = window.URL.createObjectURL(blob)
@@ -68,19 +69,19 @@ export default {
                 });
         },
         exportTemplateByQuery(_, options) {
-            return this.$http.get("/api/v1/templates/export/by-query", {params: options})
+            return this.$http.get(`${apiUrl(this)}/templates/export/by-query`, {params: options})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "templates.zip");
                 });
         },
         importTemplates(_, options) {
-            return this.$http.post("/api/v1/templates/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+            return this.$http.post(`${apiUrl(this)}/templates/import`, options, {headers: {"Content-Type": "multipart/form-data"}})
         },
         deleteTemplateByIds(_, options) {
-            return this.$http.delete("/api/v1/templates/delete/by-ids", {data: options.ids})
+            return this.$http.delete(`${apiUrl(this)}/templates/delete/by-ids`, {data: options.ids})
         },
         deleteTemplateByQuery(_, options) {
-            return this.$http.delete("/api/v1/templates/delete/by-query", options, {params: options})
+            return this.$http.delete(`${apiUrl(this)}/templates/delete/by-query`, options, {params: options})
         }
     },
     mutations: {

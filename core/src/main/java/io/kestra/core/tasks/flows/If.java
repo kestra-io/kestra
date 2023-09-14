@@ -1,7 +1,6 @@
 package io.kestra.core.tasks.flows;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -18,7 +17,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -27,13 +26,12 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -113,7 +111,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.CHOICE);
 
-        GraphService.ifElse(
+        GraphUtils.ifElse(
             subGraph,
             this.then,
             this._else,

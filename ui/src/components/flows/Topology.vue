@@ -31,6 +31,10 @@
             isReadOnly: {
                 type: Boolean,
                 default: false
+            },
+            expandedSubflows: {
+                type: Array,
+                default: []
             }
         },
         computed: {
@@ -39,14 +43,9 @@
         beforeUnmount() {
             this.$store.commit("flow/setFlowError", undefined);
         },
-        data() {
-            return {
-                expandedSubflows: []
-            }
-        },
         methods: {
             onExpandSubflow(event) {
-                this.expandedSubflows = event;
+                this.$emit("expand-subflow", event);
                 this.$store.dispatch("flow/loadGraph", {
                     flow: this.flow,
                     params: {

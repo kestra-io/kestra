@@ -3,29 +3,34 @@
         <div class="vueflow">
             <low-code-editor
                 :key="execution.id"
-                v-if="execution && flowGraph"
+                v-if="execution && flowGraph && flow?.source"
                 :flow-id="execution.flowId"
                 :namespace="execution.namespace"
                 :flow-graph="flowGraph"
-                :source="flow.source"
+                :source="flow?.source"
                 :execution="execution"
+                :expanded-subflows="expandedSubflows"
                 is-read-only
                 @follow="forwardEvent('follow', $event)"
                 view-type="topology"
+                @expand-subflow="onExpandSubflow($event)"
             />
         </div>
     </el-card>
 </template>
 <script>
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
+    import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
     export default {
         components: {
             LowCodeEditor
         },
         computed: {
             ...mapState("flow", ["flow","flowGraph"]),
-            ...mapState("execution", ["execution"])
+            ...mapState("execution", ["execution"]),
+            ...mapGetters("execution", ["subflowsExecutions"])
         },
         props: {
             preventRouteInfo: {
@@ -35,34 +40,138 @@
         },
         data() {
             return {
-                previousExecutionId: undefined
+                previousExecutionId: undefined,
+                expandedSubflows: [],
+                sseBySubflow: {}
             };
         },
         watch: {
             execution() {
-                this.loadGraph();
-            },
+                this.loadData();
+            }
         },
         mounted() {
             this.loadData();
         },
+        unmounted() {
+            Object.keys(this.sseBySubflow).forEach(this.closeSSE);
+        },
         methods: {
+            closeSSE(subflow) {
+                this.sseBySubflow[subflow].close();
+                delete this.sseBySubflow[subflow];
+                this.$store.commit("execution/removeSubflowExecution", subflow)
+            },
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
             loadData(){
                 this.loadGraph();
             },
-            loadGraph() {
-                if (this.execution && (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id)) {
+            loadGraph(force) {
+                if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
                     this.previousExecutionId = this.execution.id;
                     this.$store.dispatch("flow/loadGraph", {
-                        namespace: this.execution.namespace,
-                        id: this.execution.flowId,
-                        revision: this.execution.flowRevision
+                        flow: {
+                            namespace: this.execution.namespace,
+                            id: this.execution.flowId,
+                            revision: this.execution.flowRevision
+                        },
+                        params: {
+                            subflows: this.expandedSubflows
+                        }
+                    }).then(() => {
+                        const subflowPaths = this.flowGraph.clusters
+                            ?.map(c => c.cluster)
+                            ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
+                            ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
+                            ?? [];
+                        this.flowGraph.nodes
+                            .forEach(node => {
+                                const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
+                                    .sort((a, b) => b.length - a.length)?.[0]
+
+                                if(parentSubflow) {
+                                    if(parentSubflow in this.subflowsExecutions) {
+                                        node.executionId = this.subflowsExecutions[parentSubflow].id;
+                                    }
+
+                                    return;
+                                }
+
+                                node.executionId = this.execution.id;
+                            });
+
+                        // force refresh
+                        this.$store.commit("flow/setFlowGraph", Object.assign({}, this.flowGraph));
                     })
                 }
             },
+            onExpandSubflow(expandedSubflows) {
+                this.expandedSubflows = expandedSubflows;
+
+                this.handleSubflowsSSE();
+            },
+            handleSubflowsSSE() {
+                Object.keys(this.sseBySubflow).filter(subflow => !this.expandedSubflows.includes(subflow))
+                    .forEach(this.closeSSE);
+
+                // resolve parent subflows' execution first
+                const subflowsWithoutSSE = this.expandedSubflows.filter(subflow => !(subflow in this.sseBySubflow))
+                    .sort((a, b) => (a.match(/\./g)?.length || 0) - (b.match(/\./g)?.length || 0));
+
+
+                subflowsWithoutSSE.forEach(subflow => {
+                    this.addSSE(subflow, true);
+                });
+            },
+            delaySSE(generateGraphBeforeDelay, subflow) {
+                if(generateGraphBeforeDelay) {
+                    this.loadGraph(true);
+                }
+                setTimeout(() => this.addSSE(subflow), 500);
+            },
+            addSSE(subflow, generateGraphOnWaiting) {
+                let parentExecution = this.execution;
+
+                const parentSubflows = this.expandedSubflows.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
+                    .sort((s1, s2) => s2.length - s1.length);
+
+                if(parentSubflows.length > 0) {
+                    parentExecution = this.subflowsExecutions[parentSubflows[0]];
+                }
+
+                if(!parentExecution) {
+                    this.delaySSE(generateGraphOnWaiting, subflow);
+                    return;
+                }
+
+                const executionId = parentExecution.taskRunList
+                    .filter(taskRun => taskRun.taskId === Utils.afterLastDot(subflow) && taskRun.outputs?.executionId)?.[0]?.outputs?.executionId;
+
+                if(!executionId) {
+                    this.delaySSE(generateGraphOnWaiting, subflow);
+                    return;
+                }
+
+                this.$store.dispatch("execution/followExecution", {id: executionId})
+                    .then(sse => {
+                        this.sseBySubflow[subflow] = sse;
+                        sse.onmessage = (event) => {
+                            if (event && event.lastEventId === "end") {
+                                sse.close();
+                            }
+
+                            const previousExecution = this.subflowsExecutions[subflow];
+                            this.$store.commit("execution/addSubflowExecution", {subflow, execution: JSON.parse(event.data)});
+
+                            // add subflow execution id to graph
+                            if(previousExecution === undefined) {
+                                this.loadGraph(true);
+                            }
+                        };
+                    });
+            }
         }
     };
 </script>

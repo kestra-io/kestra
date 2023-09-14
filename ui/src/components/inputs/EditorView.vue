@@ -28,6 +28,7 @@
     import {SECTIONS} from "../../utils/constants.js";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {editorViewTypes} from "../../utils/constants";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
@@ -131,7 +132,7 @@
     const isLoading = ref(false);
     const haveChange = ref(false)
     const flowYaml = ref("")
-    const triggerFlow = ref(null);
+    const triggerFlowDomElement = ref(null);
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)
     const newError = ref(null)
@@ -195,7 +196,9 @@
         // validate flow on first load
         store.dispatch("flow/validateFlow", {flow: flowYaml.value})
             .then(value => {
-                validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+                if(validationDomElement.value) {
+                    validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+                }
 
                 return value;
             });
@@ -207,7 +210,11 @@
         }
     }
 
-    const onResize = () => validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+    const onResize = () => {
+        if(validationDomElement.value) {
+            validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+        }
+    }
 
     onMounted(async () => {
         await initYamlSource();
@@ -350,9 +357,15 @@
         persistEditorContent(false);
     }
 
-    const fetchGraph = async (yaml) => {
-        await store.dispatch("flow/loadGraphFromSource", {
-            flow: yaml, config: {
+    const expandedSubflows = ref([]);
+    const fetchGraph = () => {
+        return store.dispatch("flow/loadGraphFromSource", {
+            flow: flowYaml.value,
+            config: {
+                params: {
+                    // due to usage of axios instance instead of $http which doesn't convert arrays
+                    subflows: expandedSubflows.value.join(","),
+                },
                 validateStatus: (status) => {
                     return status === 200 || status === 422;
                 }
@@ -371,17 +384,16 @@
                     generateGraph()
                 }
 
-                validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+                if(validationDomElement.value) {
+                    validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+                }
 
                 return value;
             });
     }
 
-    const generateGraph = async () => {
-        await fetchGraph(flowYaml.value);
-        if (props.flowGraph) {
-            lowCodeEditorRef.value.generateGraph();
-        }
+    const generateGraph = () => {
+        fetchGraph();
     }
 
     const loadingState = (value) => {
@@ -551,10 +563,10 @@
     };
 
     const execute = (_) => {
-        if (!triggerFlow.value) {
+        if (!triggerFlowDomElement.value) {
             return;
         }
-        triggerFlow.value.onClick();
+        triggerFlowDomElement.value.onClick();
     };
 
     const canDelete = () => {
@@ -635,6 +647,34 @@
             document.onmousemove = document.onmouseup = null;
         }
     }
+
+    const onExpandSubflow = (e) => {
+        const oldExpandedSubflows = expandedSubflows.value;
+        expandedSubflows.value = e;
+        fetchGraph().catch(() => {
+            expandedSubflows.value = oldExpandedSubflows;
+        });
+    }
+
+    const onSwappedTask = (swappedTasks) => {
+        expandedSubflows.value = expandedSubflows.value.map(expandedSubflow => {
+            let swappedTaskSplit;
+            if (expandedSubflow === swappedTasks[0]) {
+                swappedTaskSplit = swappedTasks[1].split(".");
+                swappedTaskSplit.pop();
+
+                return swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow);
+            }
+            if (expandedSubflow === swappedTasks[1]) {
+                swappedTaskSplit = swappedTasks[0].split(".");
+                swappedTaskSplit.pop();
+
+                return swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow);
+            }
+
+            return expandedSubflow;
+        });
+    }
 </script>
 
 <template>
@@ -669,6 +709,8 @@
                 @follow="forwardEvent('follow', $event)"
                 @on-edit="onEdit"
                 @loading="loadingState"
+                @expand-subflow="onExpandSubflow"
+                @swapped-task="onSwappedTask"
                 :flow-graph="flowGraph"
                 :flow-id="flowId"
                 :namespace="namespace"
@@ -677,6 +719,7 @@
                 :source="flowYaml"
                 :is-allowed-edit="isAllowedEdit()"
                 :view-type="viewType"
+                :expanded-subflows="expandedSubflows"
             >
                 <template #top-bar v-if="viewType === editorViewTypes.TOPOLOGY">
                     <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
@@ -831,7 +874,7 @@
             <li v-if="flow">
                 <trigger-flow
                     v-if="!props.isCreating"
-                    ref="triggerFlow"
+                    ref="triggerFlowDomElement"
                     type="default"
                     :disabled="flow.disabled"
                     :flow-id="flow.id"

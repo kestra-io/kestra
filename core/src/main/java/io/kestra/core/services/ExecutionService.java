@@ -19,6 +19,7 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.WorkingDirectory;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
@@ -139,7 +140,7 @@ public class ExecutionService {
         if(taskRunId != null){
             final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
-            GraphCluster graphCluster = GraphService.of(flow, execution);
+            GraphCluster graphCluster = GraphUtils.of(flow, execution);
 
             Set<String> taskRunToRestart = this.taskRunToRestart(
                 execution,
@@ -163,7 +164,7 @@ public class ExecutionService {
             );
 
             // remove all child for replay task id
-            Set<String> taskRunToRemove = GraphService.successors(graphCluster, List.of(taskRunId))
+            Set<String> taskRunToRemove = GraphUtils.successors(graphCluster, List.of(taskRunId))
                 .stream()
                 .filter(task -> task instanceof AbstractGraphTask)
                 .map(task -> ((AbstractGraphTask) task))
@@ -338,9 +339,9 @@ public class ExecutionService {
             }))
             .collect(Collectors.toSet());
 
-        GraphCluster graphCluster = GraphService.of(flow, execution);
+        GraphCluster graphCluster = GraphUtils.of(flow, execution);
 
-        return GraphService.successors(graphCluster, new ArrayList<>(workerTaskRunId))
+        return GraphUtils.successors(graphCluster, new ArrayList<>(workerTaskRunId))
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
             .map(task -> (AbstractGraphTask) task)

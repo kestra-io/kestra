@@ -1,8 +1,8 @@
 <script setup>
     // Core
-    import {getCurrentInstance, nextTick, onMounted, onBeforeMount, ref, watch} from "vue";
+    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex";
-    import {MarkerType, Position, useVueFlow} from "@vue-flow/core";
+    import {useVueFlow} from "@vue-flow/core";
 
     import TaskEdit from "../flows/TaskEdit.vue";
     import SearchField from "../layout/SearchField.vue";
@@ -18,14 +18,7 @@
     // Utils
     import {YamlUtils, VueFlowUtils} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../utils/constants";
-    import {cssVariable} from "../../utils/global";
-    import dagre from "dagre";
-    import Utils from "../../utils/utils";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import TaskEditor from "../flows/TaskEditor.vue";
-    import ValidationError from "../flows/ValidationError.vue";
     import Markdown from "../layout/Markdown.vue";
-    import yamlUtils from "../../utils/yamlUtils";
 
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
 
@@ -33,17 +26,7 @@
     // Vue flow methods to interact with Graph
     const {
         id,
-        getNodes,
-        removeNodes,
-        getEdges,
-        removeEdges,
-        fitView,
-        getElements,
-        removeSelectedElements,
-        onNodeDragStart,
-        onNodeDragStop,
-        onNodeDrag,
-        setElements,
+        fitView
     } = useVueFlow({id: vueflowId.value});
 
     // props
@@ -81,10 +64,14 @@
         viewType: {
             type: String,
             default: undefined
+        },
+        expandedSubflows: {
+            type: Array,
+            default: () => []
         }
     })
 
-    const emit = defineEmits(["follow", "on-edit", "loading"])
+    const emit = defineEmits(["follow", "on-edit", "loading", "expand-subflow", "swapped-task"])
 
     // Vue instance variables
     const store = useStore();
@@ -105,7 +92,7 @@
     const icons = ref(store.getters["plugin/getIcons"]);
     const taskObject = ref(null);
     const taskEditData = ref(null);
-    const taskEdit = ref(null);
+    const taskEditDomElement = ref(null);
     const isShowLogsOpen = ref(false);
     const logFilter = ref("");
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
@@ -119,11 +106,6 @@
         observeWidth();
     })
 
-
-    watch(() => props.flowGraph, () => {
-        generateGraph();
-    })
-
     watch(() => isDrawerOpen.value, () => {
         if (!isDrawerOpen.value) {
             isShowDescriptionOpen.value = false;
@@ -135,7 +117,6 @@
     watch(() => props.viewType, () => {
         isHorizontal.value = props.viewType === "source-topology" ? false :
             (props.viewType?.indexOf("blueprint") !== -1 ? true : localStorage.getItem("topology-orientation") === "1")
-        generateGraph();
     })
 
     // Event listeners & Watchers
@@ -143,7 +124,6 @@
         const resizeObserver = new ResizeObserver(function () {
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
-                generateGraph();
                 nextTick(() => {
                     fitView()
                 })
@@ -185,7 +165,7 @@
             action: "create_task",
             section: SECTIONS.TASKS
         };
-        taskEdit.value.$refs.taskEdit.click()
+        taskEditDomElement.value.$refs.taskEdit.click()
     }
 
     const onEditTask = (event) => {
@@ -195,7 +175,7 @@
             oldTaskId: event.task.id,
         };
         taskObject.value = event.task
-        taskEdit.value.$refs.taskEdit.click()
+        taskEditDomElement.value.$refs.taskEdit.click()
     }
 
     const onAddFlowableError = (event) => {
@@ -203,7 +183,7 @@
             action: "add_flowable_error",
             taskId: event.task.id
         };
-        taskEdit.value.$refs.taskEdit.click()
+        taskEditDomElement.value.$refs.taskEdit.click()
 
     }
 
@@ -248,7 +228,6 @@
             localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
         );
         isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
-        generateGraph();
         fitView();
     };
 
@@ -259,38 +238,21 @@
 
     const openFlow = (data) => {
         if (data.link.executionId) {
-            store
-                .dispatch("execution/loadExecution", {id: data.link.executionId})
-                .then(value => {
-                    store.commit("execution/setExecution", value);
-                    window.open(router.resolve({
-                        name: "executions/update",
-                        params: {
-                            namespace: data.link.namespace,
-                            flowId: data.link.id,
-                            tab: "topology",
-                            id: data.link.executionId,
-                        },
-                    }).href,'_blank');;
-                })
+            window.open(router.resolve({
+                name: "executions/update",
+                params: {
+                    namespace: data.link.namespace,
+                    flowId: data.link.id,
+                    tab: "topology",
+                    id: data.link.executionId,
+                },
+            }).href,'_blank');
         } else {
             window.open(router.resolve({
                 name: "flows/update",
                 params: {"namespace": data.link.namespace, "id": data.link.id, tab: "overview"},
             }).href,'_blank');
         }
-    }
-
-
-    const generateGraph = () => {
-        // VueFlowUtils.cleanGraph(vueflowId.value);
-        //
-        // nextTick(() => {
-        //     emit("loading", true);
-        //     fitView();
-        //     setElements(elements.value);
-        //     emit("loading", false);
-        // })
     }
 
     const showLogs = (event) => {
@@ -313,8 +275,9 @@
         isDrawerOpen.value = true;
     }
 
-    const emitEdit = (event) => {
-        emit("on-edit", event)
+    const onSwappedTask = (event) => {
+        emit("swapped-task", event.swappedTasks);
+        emit("on-edit", event.newSource);
     }
 
     const message = (event) => {
@@ -325,10 +288,9 @@
         });
     }
 
-    // Expose method to be triggered by parents
-    defineExpose({
-        generateGraph
-    })
+    const expandSubflow = (event) => {
+        emit("expand-subflow", event)
+    }
 </script>
 
 <template>
@@ -344,6 +306,7 @@
             :flowGraph="props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
+            :expanded-subflows="expandedSubflows"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask($event)"
             @delete="onDelete"
@@ -352,8 +315,9 @@
             @show-description="showDescription($event)"
             @on-add-flowable-error="onAddFlowableError($event)"
             @add-task="onCreateNewTask($event)"
-            @swapped-task="emitEdit($event)"
+            @swapped-task="onSwappedTask($event)"
             @message="message($event)"
+            @expand-subflow="expandSubflow($event)"
         />
 
         <!-- Drawer to create/add task -->
@@ -371,7 +335,7 @@
             :emit-only="true"
             @update:task="confirmEdit($event)"
             @close="closeEdit()"
-            ref="taskEdit"
+            ref="taskEditDomElement"
         />
 
         <!--    Drawer to task informations (logs, description, ..)   -->
@@ -398,7 +362,7 @@
                 <log-list
                     v-for="taskRun in selectedTask.taskRuns"
                     :key="taskRun.id"
-                    :execution="execution"
+                    :target-execution="selectedTask.execution"
                     :task-run-id="taskRun.id"
                     :filter="logFilter"
                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"

@@ -5,7 +5,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.Graph2DotService;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ public class FlowDotCommand extends AbstractCommand {
         YamlFlowParser parser = applicationContext.getBean(YamlFlowParser.class);
         Flow flow = parser.parse(file.toFile(), Flow.class);
 
-        GraphCluster graph = GraphService.of(flow, null);
+        GraphCluster graph = GraphUtils.of(flow, null);
 
         stdOut(Graph2DotService.dot(graph.getGraph()));
 

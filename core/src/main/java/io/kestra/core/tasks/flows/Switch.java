@@ -16,7 +16,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -130,7 +130,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.CHOICE);
 
-        GraphService.switchCase(
+        GraphUtils.switchCase(
             subGraph,
             Stream
                 .concat(

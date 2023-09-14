@@ -4,6 +4,7 @@ import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,16 +28,6 @@ public class Graph<T, V> {
     }
 
     public Graph<T, V> addEdge(T previous, T next, V value) {
-        /*
-        if (!this.graph.nodes().contains(previous)) {
-            throw new IllegalArgumentException("Unable to find previous node '" + previous + "'@" + previous.hashCode());
-        }
-
-        if (!this.graph.nodes().contains(next)) {
-            throw new IllegalArgumentException("Unable to find next node '" + next + "'" + next.hashCode());
-        }
-        */
-
         this.graph.putEdgeValue(previous, next, value);
 
         return this;
@@ -62,7 +53,12 @@ public class Graph<T, V> {
             .collect(Collectors.toSet());
     }
 
+    public void removeNode(T node) {
+        this.graph.removeNode(node);
+    }
+
     @Getter
+    @Setter
     @AllArgsConstructor
     public static class Edge<T, V> {
         T source;

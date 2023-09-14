@@ -18,7 +18,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -80,14 +80,13 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     private List<@NotNull Task> tasks;
 
     @Valid
-    @PluginProperty
-    private List<Task> errors;
+    protected List<Task> errors;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.PARALLEL);
 
-        GraphService.parallel(
+        GraphUtils.parallel(
             subGraph,
             this.tasks,
             this.errors,

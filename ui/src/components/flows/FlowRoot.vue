@@ -72,7 +72,9 @@
                     return this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
                         if (this.flow) {
                             this.previousFlow = this.flowKey();
-                            this.$store.dispatch("flow/loadGraph", this.flow);
+                            this.$store.dispatch("flow/loadGraph", {
+                                flow: this.flow
+                            });
                             this.$http
                                 .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
                                 .then(response => {

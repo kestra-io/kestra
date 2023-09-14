@@ -12,7 +12,8 @@ export default {
         },
         metrics: [],
         metricsTotal: 0,
-        filePreview: undefined
+        filePreview: undefined,
+        subflowsExecutions: {}
     },
     actions: {
         loadExecutions({commit}, options) {
@@ -160,6 +161,15 @@ export default {
         setExecution(state, execution) {
             state.execution = execution
         },
+        addSubflowExecution(state, params) {
+            state.subflowsExecutions[params.subflow] = params.execution
+        },
+        removeSubflowExecution(state, subflow) {
+            delete state.subflowsExecutions[subflow]
+        },
+        setSubflowExecutions(state, subflowsExecution) {
+            state.subflowsExecution = subflowsExecution
+        },
         setTask(state, task) {
             state.task = task
         },
@@ -198,5 +208,10 @@ export default {
                 return state.execution;
             }
         },
+        subflowsExecutions(state) {
+            if (state.subflowsExecutions) {
+                return state.subflowsExecutions;
+            }
+        }
     }
 }

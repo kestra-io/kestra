@@ -95,7 +95,7 @@
                 this.$store
                     .dispatch("execution/followExecution", this.$route.params)
                     .then(sse => {
-                        this.sse = sse
+                        this.sse = sse;
                         this.sse.onmessage = (event) => {
                             if (event && event.lastEventId === "end") {
                                 self.closeSSE();

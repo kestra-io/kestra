@@ -8,7 +8,9 @@
                 :flow-graph="flowGraph"
                 :source="flow.source"
                 :is-read-only="isReadOnly"
+                :expanded-subflows="expandedSubflows"
                 view-type="topology"
+                @expand-subflow="onExpandSubflow($event)"
             />
         </div>
     </el-card>
@@ -37,6 +39,22 @@
         beforeUnmount() {
             this.$store.commit("flow/setFlowError", undefined);
         },
+        data() {
+            return {
+                expandedSubflows: []
+            }
+        },
+        methods: {
+            onExpandSubflow(event) {
+                this.expandedSubflows = event;
+                this.$store.dispatch("flow/loadGraph", {
+                    flow: this.flow,
+                    params: {
+                        subflows: event
+                    }
+                });
+            }
+        }
     };
 </script>
 <style scoped lang="scss">

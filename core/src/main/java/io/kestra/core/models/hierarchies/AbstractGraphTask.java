@@ -34,7 +34,8 @@ public abstract class AbstractGraphTask extends AbstractGraph {
 
     @Override
     public String getLabel() {
-        return this.getUid() + (this.getTaskRun() != null ? " > " + this.getTaskRun().getValue() + " (" + this.getTaskRun().getId() + ")" : "");
+        String[] splitUid = this.getUid().split("\\.");
+        return splitUid[splitUid.length - 1] + (this.getTaskRun() != null ? " > " + this.getTaskRun().getValue() + " (" + this.getTaskRun().getId() + ")" : "");
     }
 
     @Override

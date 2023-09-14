@@ -34,10 +34,14 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a task for a list of values sequentially",
-    description = "For each `value`, the `tasks` list will be executed\n" +
-        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` or an array of valid JSON strings.\n" +
-        "The current value is available on the variable `{{ taskrun.value }}`."
+    title = "For each value in the list, execute one or more tasks sequentially.",
+    description = "The list of `tasks` will be executed for each item sequentially. " +
+        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`. \n\n" +
+        "You can access the current iteration value using the variable `{{ taskrun.value }}`. " +
+        "The task list will be executed sequentially for each item.\n\n" +
+        "We highly recommend triggering a subflow for each value. " +
+        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practice) " +
+        "and the [following Blueprint](https://demo.kestra.io/ui/blueprints/community/128) for more details."
 )
 @Plugin(
     examples = {

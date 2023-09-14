@@ -31,14 +31,18 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a task for a list of values in parallel.",
-    description = "For each `value`, the `tasks` list will be executed\n" +
-        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]`  or an array of valid JSON strings.\n" +
-        "The current value is available on the variable `{{ taskrun.value }}`.\n" +
-        "The task list will be executed in parallel, for example if you have a 3 values with 2 tasks, all the " +
-        "6 tasks will be computed in parallel without any guarantee on the order.\n" +
-        "If you want to have each value in parallel, but no concurrent task for each value, you need to wrap the tasks " +
-        "with a `Sequential` tasks"
+    title = "For each value in the list, execute one or more tasks in parallel.",
+    description = "The list of `tasks` will be executed for each item in parallel. " +
+        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`.\n" +
+        "You can access the current iteration value using the variable `{{ taskrun.value }}`.\n\n" +
+        "The task list will be executed in parallel for each item. For example, if you have a list with 3 elements and 2 tasks defined in the list of `tasks`, all " +
+        "6 tasks will be computed in parallel without any order guarantee.\n\n" +
+        "If you want to execute a group of sequential tasks for each value in parallel, you can wrap the list of `tasks` " +
+        "with the [Sequential task](https://kestra.io/plugins/core/tasks/flows/io.kestra.core.tasks.flows.sequential).\n" +
+        "If your list of values is large, you can limit the number of concurrent tasks using the `concurrent` property.\n\n" +
+        "We highly recommend triggering a subflow for each value instead of specifying many tasks wrapped in a `Sequential` task. " +
+        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practice) " +
+        "and the [following Blueprint](https://demo.kestra.io/ui/blueprints/community/128) for more details."
 )
 @Plugin(
     examples = {

@@ -8,6 +8,7 @@ export default {
 
     actions: {
         loadConfigs({commit}) {
+            console.log(apiUrl(this));
             return this.$http.get(`${apiUrl(this)}/configs`).then(response => {
                 commit("setConfigs", response.data)
 

@@ -38,7 +38,7 @@ export default {
         },
         icons({commit}) {
             return Promise.all([
-                this.$http.get("${apiUrl(this)}/plugins/icons", {}),
+                this.$http.get(`${apiUrl(this)}/plugins/icons`, {}),
                 this.dispatch("api/pluginIcons")
             ]).then(responses => {
                 const icons = responses[0].data;

@@ -1,20 +1,20 @@
-import {apiRoot} from "../../utils/axios";
+import {apiUrl} from "override/utils/route";
 
-export const yamlSchemas = [
+export const yamlSchemas = (store) => [
     {
         fileMatch: ["flow-*.yaml"],
-        uri: [`${apiRoot}plugins/schemas/flow`]
+        uri: [`${apiUrl(store)}/plugins/schemas/flow`]
     },
     {
         fileMatch: ["task-*.yaml"],
-        uri: [`${apiRoot}plugins/schemas/task`]
+        uri: [`${apiUrl(store)}/plugins/schemas/task`]
     },
     {
         fileMatch: ["template-*.yaml"],
-        uri: [`${apiRoot}plugins/schemas/template`]
+        uri: [`${apiUrl(store)}/plugins/schemas/template`]
     },
     {
         fileMatch: ["trigger-*.yaml"],
-        uri: [`${apiRoot}plugins/schemas/trigger`]
+        uri: [`${apiUrl(store)}/plugins/schemas/trigger`]
     }
 ]

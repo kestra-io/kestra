@@ -1,9 +1,10 @@
+import {apiUrl} from "override/utils/route";
 
 export default class ExecutionUtils {
-    static waitFor($http, execution, predicate) {
+    static waitFor($http, store, execution, predicate) {
         return new Promise((resolve) => {
             let callback = () => {
-                $http.get(`/api/v1/executions/${execution.id}`).then(response => {
+                $http.get(`${apiUrl(store)}/executions/${execution.id}`).then(response => {
                     const result = predicate(response.data)
 
                     if (result === true) {
@@ -27,8 +28,8 @@ export default class ExecutionUtils {
         return current.state.histories.length >= execution.state.histories.length
     }
 
-    static waitForState($http, execution) {
-        return ExecutionUtils.waitFor($http, execution, (current) => {
+    static waitForState($http, store, execution) {
+        return ExecutionUtils.waitFor($http, store, execution, (current) => {
             return ExecutionUtils.statePredicate(execution, current);
         })
     }

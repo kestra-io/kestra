@@ -24,7 +24,7 @@
 </script>
 
 <script>
-    import {apiRoot} from "../../utils/axios";
+    import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
 
     export default {
@@ -38,13 +38,13 @@
                 return typeof(value) === "string" && value.startsWith("kestra:///")
             },
             itemUrl(value) {
-                return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
+                return `${apiUrl(this.$store)}executions/${this.execution.id}/file?path=${value}`;
             }
         },
         created() {
             if (this.isFile(this.value)) {
                 this.$http(
-                    `${apiRoot}executions/${this.execution.id}/file/metas?path=${this.value}`,
+                    `${apiUrl(this.$store)}/executions/${this.execution.id}/file/metas?path=${this.value}`,
                     {
                         validateStatus: (status) => {
                             return status === 200 || status === 404 || status === 422;

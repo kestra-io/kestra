@@ -85,7 +85,7 @@
             generateMenu() {
                 return [
                     {
-                        href: "/",
+                        href: {name: "home"},
                         title: this.$t("home"),
                         icon: {
                             element: ViewDashboardVariantOutline,
@@ -93,7 +93,7 @@
                         },
                     },
                     {
-                        href: "/flows",
+                        href: {name: "flows/list"},
                         title: this.$t("flows"),
                         icon: {
                             element: FileTreeOutline,
@@ -102,7 +102,7 @@
                         exact: false,
                     },
                     {
-                        href: "/templates",
+                        href: {name: "templates/list"},
                         title: this.$t("templates"),
                         icon: {
                             element: ContentCopy,
@@ -111,7 +111,7 @@
                         hidden: !this.configs.isTemplateEnabled
                     },
                     {
-                        href: "/executions",
+                        href: {name: "executions/list"},
                         title: this.$t("executions"),
                         icon: {
                             element: TimelineClockOutline,
@@ -119,7 +119,7 @@
                         },
                     },
                     {
-                        href: "/taskruns",
+                        href: {name: "taskruns/list"},
                         title: this.$t("taskruns"),
                         icon: {
                             element: TimelineTextOutline,
@@ -128,7 +128,7 @@
                         hidden: !this.configs.isTaskRunEnabled
                     },
                     {
-                        href: "/logs",
+                        href: {name: "logs/list"},
                         title: this.$t("logs"),
                         icon: {
                             element: NotebookOutline,
@@ -136,7 +136,8 @@
                         },
                     },
                     {
-                        href: "/blueprints",
+                        href: {name: "blueprints"},
+                        routes: ["blueprints", "blueprints/view"],
                         title: this.$t("blueprints.title"),
                         icon: {
                             element: Ballot,
@@ -160,7 +161,7 @@
                                 external: true
                             },
                             {
-                                href: "/plugins",
+                                href: {name: "plugins/list"},
                                 title: this.$t("plugins.names"),
                                 icon: {
                                     element: GoogleCirclesExtended,
@@ -196,7 +197,7 @@
                         },
                         child: [
                             {
-                                href: "/admin/triggers",
+                                href: {name: "admin/triggers"},
                                 title: this.$t("triggers"),
                                 icon: {
                                     element: TimerCogOutline,
@@ -206,7 +207,7 @@
                         ]
                     },
                     {
-                        href: "/settings",
+                        href: {name: "settings"},
                         title: this.$t("settings"),
                         icon: {
                             element: CogOutline,

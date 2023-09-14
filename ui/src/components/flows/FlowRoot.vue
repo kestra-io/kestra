@@ -41,6 +41,7 @@
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         mixins: [RouteContext],
@@ -76,7 +77,7 @@
                                 flow: this.flow
                             });
                             this.$http
-                                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
+                                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
                                 .then(response => {
                                     this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
                                 })

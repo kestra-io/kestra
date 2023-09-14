@@ -22,40 +22,40 @@ export default [
     //Flows
     {name: "home", path: "/", component: Home},
     {name: "welcome", path: "/welcome", component: Welcome},
-    {name: "flows/list", path: "/flows", component: Flows},
-    {name: "flows/search", path: "/flows/search", component: FlowsSearch},
-    {name: "flows/create", path: "/flows/new", component: FlowCreate},
-    {name: "flows/update", path: "/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
-    {name: "flows/metrics", path: "/flows/metrics", component: FlowMetrics},
+    {name: "flows/list", path: "/:tenant?/flows", component: Flows},
+    {name: "flows/search", path: "/:tenant?/flows/search", component: FlowsSearch},
+    {name: "flows/create", path: "/:tenant?/flows/new", component: FlowCreate},
+    {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
+    {name: "flows/metrics", path: "/:tenant?/flows/metrics", component: FlowMetrics},
 
     //Executions
-    {name: "executions/list", path: "/executions", component: Executions},
-    {name: "executions/update", path: "/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot, props: true},
+    {name: "executions/list", path: "/:tenant?/executions", component: Executions},
+    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot, props: true},
 
     //TaskRuns
-    {name: "taskruns/list", path: "/taskruns", component: TaskRuns},
+    {name: "taskruns/list", path: "/:tenant?/taskruns", component: TaskRuns},
 
     //Blueprints
-    {name: "blueprints", path: "/blueprints", component: Blueprints, props: {topNavbar: false}},
-    {name: "blueprints/view", path: "/blueprints/:blueprintId", component: BlueprintDetail, props: true},
+    {name: "blueprints", path: "/:tenant?/blueprints", component: Blueprints, props: {topNavbar: false}},
+    {name: "blueprints/view", path: "/:tenant?/blueprints/:blueprintId", component: BlueprintDetail, props: true},
 
     //Documentation
     {name: "plugins/list", path: "/plugins", component: Plugin},
     {name: "plugins/view", path: "/plugins/:cls", component: Plugin},
 
     //Templates
-    {name: "templates/list", path: "/templates", component: Templates},
-    {name: "templates/create", path: "/templates/new", component: TemplateEdit},
-    {name: "templates/update", path: "/templates/edit/:namespace/:id", component: TemplateEdit},
+    {name: "templates/list", path: "/:tenant?/templates", component: Templates},
+    {name: "templates/create", path: "/:tenant?/templates/new", component: TemplateEdit},
+    {name: "templates/update", path: "/:tenant?/templates/edit/:namespace/:id", component: TemplateEdit},
 
     //Logs
-    {name: "logs/list", path: "/logs", component: LogsWrapper},
+    {name: "logs/list", path: "/:tenant?/logs", component: LogsWrapper},
 
     //Settings
     {name: "settings", path: "/settings", component: Settings},
 
     //Admin
-    {name: "admin/triggers", path: "/admin/triggers", component: Triggers},
+    {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: Triggers},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:pathMatch(.*)", component: Errors, props: {code: 404}},

@@ -11,10 +11,13 @@
     import {DependenciesNode} from "@kestra-io/ui-libs"
 
     import {linkedElements} from "../../utils/vueFlow"
+    import {useStore} from "vuex";
+    import {apiUrl} from "override/utils/route";
 
     const {id, addNodes, addEdges, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow();
 
     const route = useRoute();
+    const store = useStore();
     const axios = inject("axios")
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
 
@@ -29,7 +32,7 @@
     const load = (options) => {
         isLoading.value = true;
         return axios
-            .get(`/api/v1/flows/${options.namespace}/${options.id}/dependencies`)
+            .get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/dependencies`)
             .then(response => {
                 loaded.value.push(`${options.namespace}_${options.id}`)
 

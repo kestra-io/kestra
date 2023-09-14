@@ -2,7 +2,7 @@
     <blueprints-page-header v-if="!embed" />
     <div class="main-container" v-bind="$attrs">
         <blueprint-detail v-if="selectedBlueprintId" :embed="embed" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined" />
-        <blueprints-browser @loaded="$emit('loaded', $event)" :class="{'d-none': !!selectedBlueprintId}" :embed="embed" blueprint-base-uri="/api/v1/blueprints/community" @go-to-detail="blueprintId => selectedBlueprintId = blueprintId" />
+        <blueprints-browser @loaded="$emit('loaded', $event)" :class="{'d-none': !!selectedBlueprintId}" :embed="embed" :blueprint-base-uri="blueprintUri" @go-to-detail="blueprintId => selectedBlueprintId = blueprintId" />
     </div>
 </template>
 <script>
@@ -12,6 +12,7 @@
     import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
     import BlueprintsBrowser from "./BlueprintsBrowser.vue";
     import BlueprintsPageHeader from "./BlueprintsPageHeader.vue";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         mixins: [RouteContext],
@@ -39,6 +40,9 @@
                 return {
                     title: this.$t("blueprints.title")
                 };
+            },
+            blueprintUri() {
+                return `${apiUrl(this.$store)}/blueprints/community`
             }
         }
     };

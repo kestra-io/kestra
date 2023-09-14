@@ -96,6 +96,7 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Collapse from "../layout/Collapse.vue";
     import Pagination from "../layout/Pagination.vue";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         components: {
@@ -146,7 +147,7 @@
                 this.filter = undefined;
             },
             onDebugExpression(taskRunId, expression) {
-                this.$http.post(`/api/v1/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
+                this.$http.post(`${apiUrl(this)}/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
                     headers: {
                         "Content-type": "text/plain",
                     }

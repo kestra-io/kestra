@@ -6,7 +6,7 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <a :href="`${apiRoot}executions/${execution.id}`" target="_blank">
+                    <a :href="`${apiUrl}/executions/${execution.id}`" target="_blank">
                         <el-button :icon="Api" size="large" type="default">
                             {{ $t('api') }}
                         </el-button>
@@ -38,7 +38,6 @@
     import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
-    import {apiRoot} from "../../utils/axios"
 </script>
 
 <script>
@@ -57,6 +56,7 @@
 
     import State from "../../utils/state";
     import ExecutionMetric from "./ExecutionMetric.vue";
+    import {apiUrl} from "override/utils/route"
 
     export default {
         mixins: [RouteContext],
@@ -199,6 +199,9 @@
             ...mapState("flow", ["flow", "revisions"]),
             ...mapState("execution", ["execution"]),
             ...mapState("auth", ["user"]),
+            apiUrl() {
+                return apiUrl(this.$store);
+            },
             tabs() {
                 return this.getTabs();
             },

@@ -105,7 +105,7 @@
         props: {
             blueprintBaseUri: {
                 type: String,
-                default: "/api/v1/blueprints/community"
+                required: true
             },
             embed: {
                 type: Boolean,

@@ -104,6 +104,7 @@ public class GraphCluster extends AbstractGraph {
     }
 
     @Override
+    @JsonIgnore
     public void setUid(String uid) {
         graph.nodes().stream().filter(node ->
                 // filter other clusters' root & end to prevent setting uid multiple times
@@ -116,6 +117,7 @@ public class GraphCluster extends AbstractGraph {
     }
 
     @Override
+    @JsonIgnore
     public void setError(boolean error) {
         this.error = error;
 

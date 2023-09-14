@@ -63,6 +63,7 @@ public class Extension extends AbstractExtension {
         filters.put("json", new JsonFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());
+        filters.put("urldecode", new UrlDecoderFilter());
         filters.put("slugify", new SlugifyFilter());
         filters.put("substringBefore", new SubstringBeforeFilter());
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());

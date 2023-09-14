@@ -1,26 +1,25 @@
 package io.kestra.core.runners.pebble;
 
+import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
+import io.kestra.core.runners.pebble.filters.*;
+import io.kestra.core.runners.pebble.functions.CurrentEachOutputFunction;
+import io.kestra.core.runners.pebble.functions.JsonFunction;
+import io.kestra.core.runners.pebble.functions.NowFunction;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
+import io.kestra.core.runners.pebble.tests.JsonTest;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
 import io.pebbletemplates.pebble.operator.BinaryOperatorImpl;
 import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
-import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
-import io.kestra.core.runners.pebble.filters.*;
-import io.kestra.core.runners.pebble.functions.CurrentEachOutputFunction;
-import io.kestra.core.runners.pebble.functions.JsonFunction;
-import io.kestra.core.runners.pebble.functions.NowFunction;
-import io.kestra.core.runners.pebble.tests.JsonTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 
@@ -68,6 +67,7 @@ public class Extension extends AbstractExtension {
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
+        filters.put("urldecode", new UrlDecode());
 
         return filters;
     }

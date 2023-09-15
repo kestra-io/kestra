@@ -452,11 +452,19 @@ public class RunContext {
     }
 
     public InputStream uriToInputStream(URI uri) throws IOException {
+        if (uri == null) {
+            throw new IllegalArgumentException("Invalid internal storage uri, got null");
+        }
+
+        if (uri.getScheme() == null) {
+            throw new IllegalArgumentException("Invalid internal storage uri, got uri '" + uri + "'");
+        }
+
         if (uri.getScheme().equals("kestra")) {
             return this.storageInterface.get(uri);
         }
 
-        throw new IllegalArgumentException("Invalid scheme for uri '" + uri + "'");
+        throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
     }
 
     /**

@@ -157,9 +157,9 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/all-flowable.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(34));
-        assertThat(flowGraph.getEdges().size(), is(37));
-        assertThat(flowGraph.getClusters().size(), is(6));
+        assertThat(flowGraph.getNodes().size(), is(38));
+        assertThat(flowGraph.getEdges().size(), is(42));
+        assertThat(flowGraph.getClusters().size(), is(7));
     }
 
     @Test

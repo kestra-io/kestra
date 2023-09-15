@@ -280,7 +280,7 @@ public class GraphUtils {
                 graph.addNode(currentGraph);
 
                 if (relationType == RelationType.ERROR) {
-                    currentGraph.setError(true);
+                    currentGraph.updateErrorWithChildren(true);
                     if (isFirst) {
                         previous = graph.getRoot();
                     }

@@ -1,18 +1,25 @@
 package io.kestra.core.models.executions;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.With;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
-@Value
+@ToString
+@EqualsAndHashCode
+@AllArgsConstructor
+@Getter
 @Builder(toBuilder = true)
 public class TaskRun {
     @NotNull
@@ -42,6 +49,13 @@ public class TaskRun {
 
     @NotNull
     State state;
+
+    public void destroyOutputs() {
+        // DANGER ZONE: this method is only used to deals with issues with messages too big that must be stripped down
+        // to avoid crashing the platform. Don't use it for anything else.
+        this.outputs = Collections.emptyMap();
+        this.state = this.state.withState(State.Type.FAILED);
+    }
 
     public TaskRun withState(State.Type state) {
         return new TaskRun(

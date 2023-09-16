@@ -9,12 +9,12 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunnerUtils;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -44,7 +44,7 @@ public class FlowCaseTest {
     }
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
-    void run(String input, State.Type fromState, State.Type triggerState,  int count, String outputs) throws Exception {
+    void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
@@ -62,7 +62,7 @@ public class FlowCaseTest {
             null,
             (f, e) -> ImmutableMap.of("string", input),
             Duration.ofMinutes(1),
-            List.of(new Label("executionLabel", "execFoo"))
+            List.of(new Label("mainFlowExecutionLabel", "execFoo"))
         );
 
         countDownLatch.await(1, TimeUnit.MINUTES);
@@ -90,6 +90,11 @@ public class FlowCaseTest {
         assertThat(triggered.get().getTaskRunList(), hasSize(count));
         assertThat(triggered.get().getState().getCurrent(), is(triggerState));
 
-        assertThat(triggered.get().getLabels(), hasItems(new Label("executionLabel", "execFoo"), new Label("flowLabel", "flowFoo")));
+        assertThat(triggered.get().getLabels(), hasItems(
+            new Label("mainFlowExecutionLabel", "execFoo"),
+            new Label("mainFlowLabel", "flowFoo"),
+            new Label("launchTaskLabel", "launchFoo"),
+            new Label("switchFlowLabel", "switchFoo")
+        ));
     }
 }

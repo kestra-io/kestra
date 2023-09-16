@@ -6,7 +6,7 @@ inputs:
     type: STRING
 
 labels:
-  flowLabel: flowFoo
+  mainFlowLabel: flowFoo
 
 tasks:
   - id: launch
@@ -18,5 +18,7 @@ tasks:
     wait: true
     transmitFailed: true
     inheritLabels: true
+    labels:
+      launchTaskLabel: launchFoo
     outputs:
       extracted: "{{ outputs.default.value ?? outputs['error-t1'].value }}"

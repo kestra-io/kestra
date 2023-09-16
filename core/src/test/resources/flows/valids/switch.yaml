@@ -8,6 +8,9 @@ inputs:
     type: STRING
     defaults: amazing
 
+labels:
+  switchFlowLabel: switchFoo
+
 tasks:
   - id: parent-seq
     type: io.kestra.core.tasks.flows.Switch

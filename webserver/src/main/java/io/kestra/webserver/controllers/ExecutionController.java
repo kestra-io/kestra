@@ -967,10 +967,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue URI path
     ) throws IOException {
-        HttpResponse<StreamedFile> httpResponse = this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
-        if (httpResponse != null) {
-            return httpResponse;
-        }
+        this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
         InputStream fileStream = storageInterface.get(path);

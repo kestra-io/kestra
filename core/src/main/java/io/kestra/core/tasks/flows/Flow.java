@@ -13,7 +13,6 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -126,9 +125,8 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     }
 
     @SuppressWarnings("unchecked")
-    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
+    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-        ExecutionRepositoryInterface executionRepository = runContext.getApplicationContext().getBean(ExecutionRepositoryInterface.class);
 
         Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
@@ -139,8 +137,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
 
         List<Label> labels = new ArrayList<>();
         if (this.inheritLabels) {
-            Optional<Execution> currentExecution = getCurrentExecution(runContext, executionRepository);
-            labels.addAll(currentExecution.orElseThrow().getLabels());
+            labels.addAll(currentExecution.getLabels());
         }
         if (this.labels != null) {
             for (Map.Entry<String, String> entry: this.labels.entrySet()) {
@@ -256,11 +253,5 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             title = "The extracted outputs from triggered executions."
         )
         private final Map<String, Object> outputs;
-    }
-
-    private Optional<Execution> getCurrentExecution(RunContext runContext, ExecutionRepositoryInterface executionRepository) {
-        final String executionId = ((Map<String, String>) runContext.getVariables().get("execution")).get("id");
-
-        return executionRepository.findById(executionId);
     }
 }

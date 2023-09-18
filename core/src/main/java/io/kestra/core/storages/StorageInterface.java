@@ -181,7 +181,7 @@ public interface StorageInterface {
 
     default URI outputPrefix(Flow flow)  {
         try {
-            return new URI("/" + fromParts(
+            return new URI("//" + fromParts(
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId())
             ));
@@ -192,7 +192,7 @@ public interface StorageInterface {
 
     default URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         try {
-            return new URI("/" + fromParts(
+            return new URI("//" + fromParts(
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId()),
                 "executions",
@@ -208,7 +208,7 @@ public interface StorageInterface {
 
     default URI outputPrefix(TriggerContext triggerContext, AbstractTrigger trigger, String triggerExecutionId) {
         try {
-            return new URI("/" + fromParts(
+            return new URI("//" + fromParts(
                 triggerContext.getNamespace().replace(".", "/"),
                 Slugify.of(triggerContext.getFlowId()),
                 "executions",

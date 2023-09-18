@@ -150,9 +150,11 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         Optional<Integer> revision = this.revision != null ? Optional.of(this.revision) : Optional.empty();
 
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
+            flowVars.get("tenantId"),
             namespace,
             flowId,
             revision,
+            flowVars.get("tenantId"),
             flowVars.get("namespace"),
             flowVars.get("id")
         )

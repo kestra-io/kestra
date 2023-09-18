@@ -27,10 +27,11 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
     }
 
     @Override
-    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+    public Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
         Optional<Flow> find = this.allFlows
             .stream()
-            .filter(flow -> flow.getNamespace().equals(namespace) &&
+            .filter(flow -> ((flow.getTenantId() == null && tenantId == null) || flow.getTenantId().equals(tenantId)) &&
+                flow.getNamespace().equals(namespace) &&
                 flow.getId().equals(id) &&
                 (revision.isEmpty() || revision.get().equals(flow.getRevision()))
             )
@@ -39,7 +40,7 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
         if (find.isPresent()) {
             return find;
         } else {
-            return flowRepositoryInterface.findById(namespace, id, revision);
+            return flowRepositoryInterface.findById(tenantId, namespace, id, revision);
         }
     }
 

@@ -236,12 +236,23 @@ public class RunContext {
         }
 
         if (flow != null) {
-            builder
-                .put("flow", ImmutableMap.of(
-                    "id", flow.getId(),
-                    "namespace", flow.getNamespace(),
-                    "revision", flow.getRevision()
-                ));
+            if (flow.getTenantId() == null) {
+                builder
+                    .put("flow", ImmutableMap.of(
+                        "id", flow.getId(),
+                        "namespace", flow.getNamespace(),
+                        "revision", flow.getRevision()
+                    ));
+            }
+            else {
+                builder
+                    .put("flow", ImmutableMap.of(
+                        "id", flow.getId(),
+                        "tenantId", flow.getTenantId(),
+                        "namespace", flow.getNamespace(),
+                        "revision", flow.getRevision()
+                    ));
+            }
         }
 
         if (execution != null) {

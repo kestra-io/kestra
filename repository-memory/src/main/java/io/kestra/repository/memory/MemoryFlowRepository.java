@@ -74,6 +74,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             );
     }
 
+    @Override
+    public Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return findById(namespace, id, revision);
+    }
+
     private Optional<String> findSourceById(String namespace, String id) {
         return this.flowSources.containsKey(flowId(namespace, id)) ?
             Optional.of(this.flowSources.get(flowId(namespace, id))) :

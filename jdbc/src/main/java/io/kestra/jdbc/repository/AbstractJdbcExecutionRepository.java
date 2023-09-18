@@ -594,10 +594,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .get(0)
                     .result()
                     .stream()
-                    .map(records -> new ExecutionCount(
-                        records.getValue("namespace", String.class),
-                        records.getValue("flow_id", String.class),
-                        records.getValue("count", Long.class)
+                    .map(record -> new ExecutionCount(
+                        record.getValue("namespace", String.class),
+                        record.getValue("flow_id", String.class),
+                        record.getValue("count", Long.class)
                     ))
                     .collect(Collectors.toList());
             });

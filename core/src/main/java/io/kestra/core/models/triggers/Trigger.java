@@ -1,6 +1,7 @@
 package io.kestra.core.models.triggers;
 
 import io.kestra.core.models.flows.State;
+import io.kestra.core.utils.IdUtils;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
@@ -35,27 +36,30 @@ public class Trigger extends TriggerContext {
     }
 
     public static String uid(Trigger trigger) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            trigger.getTenantId(),
             trigger.getNamespace(),
             trigger.getFlowId(),
             trigger.getTriggerId()
-        ));
+        );
     }
 
     public static String uid(Execution execution) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),
             execution.getTrigger().getId()
-        ));
+        );
     }
 
     public static String uid(Flow flow, AbstractTrigger abstractTrigger) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            flow.getTenantId(),
             flow.getNamespace(),
             flow.getId(),
             abstractTrigger.getId()
-        ));
+        );
     }
 
     /**
@@ -63,6 +67,7 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(Flow flow, AbstractTrigger abstractTrigger) {
         return Trigger.builder()
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
@@ -75,6 +80,7 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(TriggerContext triggerContext) {
         return Trigger.builder()
+            .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .flowRevision(triggerContext.getFlowRevision())
@@ -90,6 +96,7 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(TriggerContext triggerContext, Execution execution) {
         return Trigger.builder()
+            .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .flowRevision(triggerContext.getFlowRevision())
@@ -107,6 +114,7 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(Execution execution, ZonedDateTime date) {
         return Trigger.builder()
+            .tenantId(execution.getTenantId())
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .flowRevision(execution.getFlowRevision())
@@ -125,6 +133,7 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(TriggerContext triggerContext, ZonedDateTime evaluateRunningDate) {
         return Trigger.builder()
+            .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .flowRevision(triggerContext.getFlowRevision())
@@ -137,6 +146,7 @@ public class Trigger extends TriggerContext {
 
     public Trigger resetExecution() {
         return Trigger.builder()
+            .tenantId(this.getTenantId())
             .namespace(this.getNamespace())
             .flowId(this.getFlowId())
             .flowRevision(this.getFlowRevision())

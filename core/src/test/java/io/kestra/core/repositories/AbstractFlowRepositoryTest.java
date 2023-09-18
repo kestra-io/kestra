@@ -93,10 +93,10 @@ public abstract class AbstractFlowRepositoryTest {
 
         Optional<Flow> full = flowRepository.findById(flow.getNamespace(), flow.getId());
         assertThat(full.isPresent(), is(true));
+        assertThat(full.get().getRevision(), is(1));
 
-        full.ifPresent(current -> {
-            assertThat(full.get().getRevision(), is(1));
-        });
+        full = flowRepository.findById(null, flow.getNamespace(), flow.getId(), Optional.empty());
+        assertThat(full.isPresent(), is(true));
     }
 
     @Test

@@ -53,10 +53,11 @@ public abstract class AbstractTemplateRepositoryTest {
 
         Optional<Template> full = templateRepository.findById(template.getNamespace(), template.getId());
         assertThat(full.isPresent(), is(true));
+        assertThat(full.get().getId(), is(template.getId()));
 
-        full.ifPresent(current -> {
-            assertThat(full.get().getId(), is(template.getId()));
-        });
+        full = templateRepository.findById(null, template.getNamespace(), template.getId());
+        assertThat(full.isPresent(), is(true));
+        assertThat(full.get().getId(), is(template.getId()));
     }
 
     @Test

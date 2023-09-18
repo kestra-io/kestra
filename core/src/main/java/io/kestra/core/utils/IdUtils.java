@@ -5,11 +5,14 @@ import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"deprecation", "UnstableApiUsage"})
 abstract public class IdUtils {
     private static final HashFunction HASH_FUNCTION = Hashing.md5();
+    private static final String ID_SEPARATOR = "_";
 
     public static String create() {
         return FriendlyId.createFriendlyId();
@@ -21,5 +24,11 @@ abstract public class IdUtils {
                 HASH_FUNCTION.hashString(from, Charsets.UTF_8).asBytes()
             )
         );
+    }
+
+    public static String fromParts(String... parts) {
+        return Arrays.stream(parts)
+            .filter(part -> part != null)
+            .collect(Collectors.joining(ID_SEPARATOR));
     }
 }

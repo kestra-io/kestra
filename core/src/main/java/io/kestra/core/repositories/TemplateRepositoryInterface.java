@@ -10,6 +10,8 @@ import javax.annotation.Nullable;
 public interface TemplateRepositoryInterface {
     Optional<Template> findById(String namespace, String id);
 
+    Optional<Template> findById(String tenantId, String namespace, String id);
+
     List<Template> findAll();
 
     ArrayListTotal<Template> find(

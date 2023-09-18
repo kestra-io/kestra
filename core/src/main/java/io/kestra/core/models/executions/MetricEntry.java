@@ -15,6 +15,8 @@ import javax.validation.constraints.NotNull;
 @Value
 @Builder(toBuilder = true)
 public class MetricEntry implements DeletedInterface {
+    String tenantId;
+
     @NotNull
     String namespace;
 
@@ -52,6 +54,7 @@ public class MetricEntry implements DeletedInterface {
 
     public static MetricEntry of(TaskRun taskRun, AbstractMetricEntry<?> metricEntry) {
         return MetricEntry.builder()
+            .tenantId(taskRun.getTenantId())
             .namespace(taskRun.getNamespace())
             .flowId(taskRun.getFlowId())
             .executionId(taskRun.getExecutionId())

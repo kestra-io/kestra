@@ -107,6 +107,7 @@ abstract public class TestsUtils {
     private static Execution mockExecution(StackTraceElement caller, Flow flow, Map<String, Object> inputs) {
         return Execution.builder()
             .id(IdUtils.create())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .inputs(inputs)

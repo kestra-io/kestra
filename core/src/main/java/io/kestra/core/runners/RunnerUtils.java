@@ -383,6 +383,7 @@ public class RunnerUtils {
     public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, List<Label> labels) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())

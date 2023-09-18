@@ -20,8 +20,10 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -52,6 +54,10 @@ public class Flow implements DeletedInterface {
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });
+
+    @Pattern(regexp = "[a-z0-9_-]+")
+    @Hidden
+    String tenantId;
 
     @NotNull
     @NotBlank
@@ -107,45 +113,46 @@ public class Flow implements DeletedInterface {
 
     @JsonIgnore
     public String uid() {
-        return Flow.uid(this.getNamespace(), this.getId(), Optional.ofNullable(this.revision));
+        return Flow.uid(this.getTenantId(), this.getNamespace(), this.getId(), Optional.ofNullable(this.revision));
     }
 
     @JsonIgnore
     public String uidWithoutRevision() {
-        return String.join("_", Arrays.asList(
-            this.getNamespace(),
-            this.getId()
-        ));
+        return Flow.uidWithoutRevision(this.getTenantId(), this.getNamespace(), this.getId());
     }
 
     public static String uid(Execution execution) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),
             String.valueOf(execution.getFlowRevision())
-        ));
+        );
     }
 
-    public static String uid(String namespace, String id, Optional<Integer> revision) {
-        return String.join("_", Arrays.asList(
+    public static String uid(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return IdUtils.fromParts(
+            tenantId,
             namespace,
             id,
             String.valueOf(revision.orElse(-1))
-        ));
+        );
     }
 
-    public static String uidWithoutRevision(String namespace, String id) {
-        return String.join("_", Arrays.asList(
+    public static String uidWithoutRevision(String tenantId, String namespace, String id) {
+        return IdUtils.fromParts(
+            tenantId,
             namespace,
             id
-        ));
+        );
     }
 
     public static String uidWithoutRevision(Execution execution) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId()
-        ));
+        );
     }
 
     public Stream<String> allTypes() {

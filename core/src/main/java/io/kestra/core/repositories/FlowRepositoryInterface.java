@@ -20,6 +20,8 @@ public interface FlowRepositoryInterface {
         return this.findById(namespace, id, revision, false);
     }
 
+    Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision);
+
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
             execution.getNamespace(),

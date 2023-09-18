@@ -41,6 +41,11 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     }
 
     @Override
+    public Optional<Template> findById(String tenantId, String namespace, String id) {
+        return findById(namespace, id);
+    }
+
+    @Override
     public List<Template> findAll() {
         return new ArrayList<>(templates.values());
     }

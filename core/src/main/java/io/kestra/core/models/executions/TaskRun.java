@@ -22,6 +22,8 @@ import javax.validation.constraints.NotNull;
 @Getter
 @Builder(toBuilder = true)
 public class TaskRun {
+    String tenantId;
+
     @NotNull
     String id;
 
@@ -59,6 +61,7 @@ public class TaskRun {
 
     public TaskRun withState(State.Type state) {
         return new TaskRun(
+            this.tenantId,
             this.id,
             this.executionId,
             this.namespace,
@@ -74,6 +77,7 @@ public class TaskRun {
 
     public TaskRun forChildExecution(Map<String, String> remapTaskRunId, String executionId, State state) {
         return TaskRun.builder()
+            .tenantId(this.getTenantId())
             .id(remapTaskRunId.get(this.getId()))
             .executionId(executionId != null ? executionId : this.getExecutionId())
             .namespace(this.getNamespace())
@@ -89,6 +93,7 @@ public class TaskRun {
 
     public static TaskRun of(Execution execution, ResolvedTask resolvedTask) {
         return TaskRun.builder()
+            .tenantId(execution.getTenantId())
             .id(IdUtils.create())
             .executionId(execution.getId())
             .namespace(execution.getNamespace())

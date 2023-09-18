@@ -10,6 +10,7 @@ import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -41,6 +42,10 @@ public class Template implements DeletedInterface {
         })
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
+    @Pattern(regexp="[a-z0-9_-]+")
+    @Setter
+    private String tenantId;
+
     @NotNull
     @NotBlank
     @Pattern(regexp = "[a-zA-Z0-9._-]+")
@@ -66,17 +71,19 @@ public class Template implements DeletedInterface {
     @JsonIgnore
     public String uid() {
         return Template.uid(
+            this.getTenantId(),
             this.getNamespace(),
             this.getId()
         );
     }
 
     @JsonIgnore
-    public static String uid(String namespace, String id) {
-        return String.join("_", Arrays.asList(
+    public static String uid(String tenantId, String namespace, String id) {
+        return IdUtils.fromParts(
+            tenantId,
             namespace,
             id
-        ));
+        );
     }
 
     public Optional<ConstraintViolationException> validateUpdate(Template updated) {
@@ -119,6 +126,7 @@ public class Template implements DeletedInterface {
 
     public Template toDeleted() {
         return new Template(
+            this.tenantId,
             this.id,
             this.namespace,
             this.description,

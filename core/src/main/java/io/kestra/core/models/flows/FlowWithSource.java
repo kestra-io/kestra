@@ -17,6 +17,7 @@ public class FlowWithSource extends Flow {
 
     public Flow toFlow() {
         return Flow.builder()
+            .tenantId(this.tenantId)
             .id(this.id)
             .namespace(this.namespace)
             .revision(this.revision)

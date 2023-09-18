@@ -51,6 +51,11 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
+    public Optional<Template> findById(String tenantId, String namespace, String id) {
+        return findById(namespace, id);
+    }
+
+    @Override
     public List<Template> findAll() {
         return this.jdbcRepository
             .getDslContextWrapper()

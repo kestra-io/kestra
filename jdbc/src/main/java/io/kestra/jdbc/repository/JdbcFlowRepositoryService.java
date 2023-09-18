@@ -14,6 +14,14 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
 public abstract class JdbcFlowRepositoryService {
     public static Table<Record> lastRevision(AbstractJdbcRepository<Flow> jdbcRepository, boolean asterisk) {
+        return lastRevision(jdbcRepository, asterisk,  List.of(field("namespace"), field("id")));
+    }
+
+    public static Table<Record> lastRevisionWithTenant(AbstractJdbcRepository<Flow> jdbcRepository, boolean asterisk) {
+        return lastRevision(jdbcRepository, asterisk, List.of(field("tenant_id"), field("namespace"), field("id")));
+    }
+
+    private static Table<Record> lastRevision(AbstractJdbcRepository<Flow> jdbcRepository, boolean asterisk, List<Field<?>> partitionBy) {
         List<SelectFieldOrAsterisk> fields = new ArrayList<>();
         if (asterisk) {
             fields.add(DSL.asterisk());
@@ -25,7 +33,7 @@ public abstract class JdbcFlowRepositoryService {
         fields.add(
             DSL.rowNumber()
                 .over()
-                .partitionBy(field("namespace"), field("id"))
+                .partitionBy(partitionBy)
                 .orderBy(field("revision").desc())
                 .as("revision_rows")
         );

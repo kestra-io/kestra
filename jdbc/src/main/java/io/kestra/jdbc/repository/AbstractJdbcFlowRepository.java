@@ -63,6 +63,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
                     return FlowWithException.builder()
                         .id(jsonNode.get("id").asText())
+                        .tenantId(jsonNode.get("tenant_id") != null ? jsonNode.get("tenant_id").asText() : null)
                         .namespace(jsonNode.get("namespace").asText())
                         .revision(jsonNode.get("revision").asInt())
                         .exception(e.getMessage())
@@ -94,7 +95,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 } else {
                     from = context
                         .select(field("value", String.class))
-                        .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                        .from(fromLastRevision(true))
                         .where(allowDeleted ? this.revisionDefaultFilter() : this.defaultFilter())
                         .and(field("namespace", String.class).eq(namespace))
                         .and(field("id", String.class).eq(id));
@@ -102,6 +103,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 return this.jdbcRepository.fetchOne(from);
             });
+    }
+
+    protected Table<Record> fromLastRevision(boolean asterisk) {
+        return JdbcFlowRepositoryService.lastRevision(jdbcRepository, asterisk);
     }
 
     protected Condition revisionDefaultFilter() {
@@ -136,7 +141,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             field("source_code", String.class),
                             field("value", String.class)
                         )
-                        .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                        .from(fromLastRevision(true))
                         .where(allowDeleted ? this.revisionDefaultFilter() :this.defaultFilter())
                         .and(field("namespace", String.class).eq(namespace))
                         .and(field("id", String.class).eq(id)));
@@ -189,7 +194,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
-                    .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                    .from(fromLastRevision(true))
                     .where(this.defaultFilter());
 
                 return this.jdbcRepository.fetch(select);
@@ -204,7 +209,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
-                    .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                    .from(fromLastRevision(true))
                     .where(field("namespace").eq(namespace))
                     .and(this.defaultFilter());
 
@@ -223,7 +228,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return (SelectConditionStep<R>) context
             .select(fields)
             .hint(context.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
-            .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, false))
+            .from(fromLastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(
                 DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
@@ -424,7 +429,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .select(field("namespace"))
-                .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                .from(fromLastRevision(true))
                 .where(this.defaultFilter())
                 .groupBy(field("namespace"))
                 .fetch()

@@ -308,7 +308,8 @@ public class Worker implements Runnable, AutoCloseable {
         WorkerTask finalWorkerTask = Failsafe
             .with(AbstractRetry.<WorkerTask>retryPolicy(workerTask.getTask().getRetry())
                 .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
-                    Objects.requireNonNull(result.getTaskRun().lastAttempt()).getState().getCurrent() == State.Type.FAILED
+                        result.getTaskRun().lastAttempt().getState().getCurrent() == State.Type.FAILED &&
+                        !killedExecution.contains(result.getTaskRun().getExecutionId())
                 )
                 .onRetry(e -> {
                     WorkerTask lastResult = e.getLastResult();
@@ -443,7 +444,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         Logger logger = runContext.logger();
 
-        if (!(workerTask.getTask() instanceof RunnableTask)) {
+        if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
             TaskRunAttempt attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
@@ -452,8 +453,6 @@ public class Worker implements Runnable, AutoCloseable {
                 "': only runnable tasks can be executed by the worker but the task is of type " + workerTask.getTask().getClass());
             return workerTask.withTaskRun(taskRun);
         }
-
-        RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State().withState(State.Type.RUNNING));
@@ -502,7 +501,7 @@ public class Worker implements Runnable, AutoCloseable {
             log.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
         }
 
-        if (runContext.metrics().size() > 0 && log.isTraceEnabled()) {
+        if (!runContext.metrics().isEmpty() && log.isTraceEnabled()) {
             log.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
 

@@ -11,7 +11,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
@@ -33,10 +32,7 @@ public class JdbcHeartbeat {
         this.applicationContext = applicationContext;
     }
 
-    @PostConstruct
-    public void initializedWorkerHeartbeat() throws UnknownHostException {
-        Worker worker = applicationContext.getBean(Worker.class);
-
+    public void registerWorkerHeartbeat(Worker worker) throws UnknownHostException {
         this.workerHeartbeat = WorkerHeartbeat.builder()
             .workerUuid(UUID.randomUUID())
             .hostname(InetAddress.getLocalHost().getHostName())
@@ -45,7 +41,7 @@ public class JdbcHeartbeat {
             .workerGroup(worker.getWorkerGroup())
             .build();
 
-        log.trace("Initialized heartbeat of: {}", workerHeartbeat.getWorkerUuid());
+        log.trace("Registered WorkerHeartbeat of: {}", workerHeartbeat.getWorkerUuid());
 
         workerHeartbeatRepository.save(
             workerHeartbeat
@@ -53,10 +49,23 @@ public class JdbcHeartbeat {
     }
 
     @Scheduled(initialDelay = "${kestra.heartbeat.frequency}" + "s", fixedDelay = "${kestra.heartbeat.frequency}" + "s")
-    public void updateHeartbeat() {
-        log.trace("Heartbeat of: {}", workerHeartbeat.getWorkerUuid());
-        if (workerHeartbeatRepository.heartbeatCheckUp(workerHeartbeat.getWorkerUuid().toString()).isEmpty()) {
-            Runtime.getRuntime().exit(1);
+    public void updateHeartbeat() throws UnknownHostException {
+        if (applicationContext.containsBean(Worker.class)) {
+            if (workerHeartbeat == null) {
+                registerWorkerHeartbeat(applicationContext.getBean(Worker.class));
+            }
+            log.trace("Heartbeat of: {}", workerHeartbeat.getWorkerUuid());
+            if (workerHeartbeatRepository.heartbeatCheckUp(workerHeartbeat.getWorkerUuid().toString()).isEmpty()) {
+                Runtime.getRuntime().exit(1);
+            }
         }
     }
+
+    public WorkerHeartbeat get() throws UnknownHostException {
+        if (workerHeartbeat == null) {
+            registerWorkerHeartbeat(applicationContext.getBean(Worker.class));
+        }
+        return workerHeartbeat;
+    }
+
 }

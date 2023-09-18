@@ -1,9 +1,6 @@
 package io.kestra.core.runners;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -18,6 +15,16 @@ public class WorkerHeartbeat extends WorkerInstance {
 
     @Builder.Default
     private Instant heartbeatDate = Instant.now();
+
+    public WorkerInstance toWorkerInstance() {
+        return WorkerInstance.builder()
+            .workerUuid(this.getWorkerUuid())
+            .hostname(this.getHostname())
+            .port(this.getPort())
+            .managementPort(this.getManagementPort())
+            .workerGroup(this.getWorkerGroup())
+            .build();
+    }
 
     public enum Status {
         UP, DEAD

@@ -1,9 +1,6 @@
 package io.kestra.core.runners;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
@@ -15,6 +12,7 @@ import java.util.UUID;
 @SuperBuilder(toBuilder = true)
 @ToString
 @NoArgsConstructor
+@Getter
 public class WorkerInstance {
     @NotNull
     private UUID workerUuid;

@@ -10,3 +10,11 @@ CREATE TABLE IF NOT EXISTS worker_heartbeat (
     status VARCHAR(10) NOT NULL GENERATED ALWAYS AS (value ->> 'status') STORED,
     heartbeat_date TIMESTAMPTZ NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'heartbeatDate')) STORED
     );
+
+/* ----------------------- worker_job_running ----------------------- */
+CREATE TABLE IF NOT EXISTS worker_job_running (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL,
+    worker_uuid VARCHAR(36) NOT NULL GENERATED ALWAYS AS (value -> 'workerInstance' ->> 'workerUuid') STORED,
+    taskrun_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value -> 'taskRun' ->> 'id') STORED
+);

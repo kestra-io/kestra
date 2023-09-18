@@ -25,6 +25,7 @@ import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerHeartbeatRepository;
+import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.scheduling.annotation.Scheduled;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -123,7 +124,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private AbstractJdbcFlowTopologyRepository flowTopologyRepository;
 
     @Inject
-    AbstractJdbcWorkerHeartbeatRepository workerHeartbeatRepository;
+    private AbstractJdbcWorkerHeartbeatRepository workerHeartbeatRepository;
 
     protected List<Flow> allFlows;
 
@@ -136,6 +137,9 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private SkipExecutionService skipExecutionService;
+
+    @Inject
+    private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
 
     @SneakyThrows
     @Override
@@ -208,6 +212,28 @@ public class JdbcExecutor implements ExecutorInterface {
     protected void workersUpdate() {
         workerHeartbeatRepository.heartbeatsStatusUpdate();
         workerHeartbeatRepository.heartbeatsCleanup();
+        this.deadWorkerTaskResubmit();
+    }
+
+    private void deadWorkerTaskResubmit() {
+        workerJobRunningRepository.getWorkerJobWithWorkerDead(workerHeartbeatRepository.findAllAlive().stream().map(workerHeartbeat -> workerHeartbeat.getWorkerUuid().toString()).collect(Collectors.toList()))
+            .forEach(workerJobRunning -> {
+                if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
+                    workerTaskQueue.emit(WorkerTask.builder()
+                        .taskRun(workerTaskRunning.getTaskRun())
+                        .task(workerTaskRunning.getTask())
+                        .runContext(workerTaskRunning.getRunContext())
+                        .build());
+                } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
+                    workerTaskQueue.emit(WorkerTrigger.builder()
+                        .trigger(workerTriggerRunning.getTrigger())
+                        .conditionContext(workerTriggerRunning.getConditionContext())
+                        .triggerContext(workerTriggerRunning.getTriggerContext())
+                        .build());
+                } else {
+                    throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");
+                }
+            });
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -373,6 +399,9 @@ public class JdbcExecutor implements ExecutorInterface {
             metricRegistry
                 .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
                 .record(message.getTaskRun().getState().getDuration());
+
+            log.trace("TaskRun terminated: {}", message.getTaskRun());
+            workerJobRunningRepository.delete(message.getTaskRun().getId());
         }
 
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {

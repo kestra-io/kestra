@@ -1,10 +1,7 @@
 package io.kestra.core.queues;
 
 import io.kestra.core.models.Setting;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;

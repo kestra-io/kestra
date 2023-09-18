@@ -129,6 +129,9 @@ kestra:
       workerheartbeat:
         cls: io.kestra.core.runners.WorkerHeartbeat
         table: "worker_heartbeat"
+      workerjobrunning:
+        cls: io.kestra.core.runners.WorkerJobRunning
+        table: "worker_job_running"
 
     queues:
       min-poll-interval: 25ms
@@ -175,5 +178,5 @@ kestra:
     fixed-delay: 1h
 
   heartbeat:
-    frequency: 10
+    frequency: 5
     heartbeat-missed: 3

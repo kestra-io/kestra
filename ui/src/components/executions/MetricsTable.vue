@@ -71,7 +71,6 @@
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
-    import {mapState} from "vuex";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
 
@@ -86,6 +85,8 @@
         data() {
             return {
                 loadInit: false,
+                metrics: undefined,
+                metricsTotal: undefined
             };
         },
         props: {
@@ -100,15 +101,16 @@
             showTask: {
                 type: Boolean,
                 default: false
+            },
+            execution: {
+                type: Object,
+                required: true
             }
         },
         watch: {
             taskRunId() {
                 this.loadData(this.onDataLoaded);
             }
-        },
-        computed: {
-            ...mapState("execution", ["execution", "metrics", "metricsTotal"]),
         },
         methods: {
             loadData(callback) {
@@ -132,10 +134,12 @@
                     params.sort = "name:asc";
                 }
 
-                this.$store.dispatch("execution/loadMetrics", {
+                this.$store.dispatch("execution/loadMetricsNoCommit", {
                     executionId: this.execution.id,
                     params: params,
-                }).then(() => {
+                }).then(metrics => {
+                    this.metrics = metrics.results;
+                    this.metricsTotal = metrics.total;
                     callback();
                 })
             },

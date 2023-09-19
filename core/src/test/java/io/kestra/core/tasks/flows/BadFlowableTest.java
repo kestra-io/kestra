@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.serializers.JacksonMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -19,7 +20,7 @@ public class BadFlowableTest extends AbstractMemoryRunnerTest {
     void sequential() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "bad-flowable");
 
-        assertThat("Task runs were: "+ execution.getTaskRunList().stream().map(TaskRun::getTaskId).toList(), execution.getTaskRunList(), hasSize(2));
+        assertThat("Task runs were: \n"+ JacksonMapper.log(execution.getTaskRunList()), execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

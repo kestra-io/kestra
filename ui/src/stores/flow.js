@@ -54,28 +54,31 @@ export default {
                 return response.data;
             })
         },
-        loadFlow({commit}, options) {
+        loadFlowNoCommit({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}?source=true`,
                 {
                     params: options,
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
-                })
-                .then(response => {
-                    if (response.data.exception) {
-                        commit("core/setMessage", {
-                            title: "Invalid source code",
-                            message: response.data.exception,
-                            variant: "danger"
-                        }, {root: true});
-                        delete response.data.exception;
-                    }
+                }).then(response => {
+                if (response.data.exception) {
+                    commit("core/setMessage", {
+                        title: "Invalid source code",
+                        message: response.data.exception,
+                        variant: "danger"
+                    }, {root: true});
+                    delete response.data.exception;
+                }
 
-                    commit("setFlow", response.data);
-                    commit("setOverallTotal", 1)
-                    return response.data;
-                })
+                return response.data;
+            })
+        },
+        loadFlow({commit, dispatch}, options) {
+            return dispatch("loadFlowNoCommit", options).then(flow => {
+                commit("setFlow", flow);
+                commit("setOverallTotal", 1)
+            });
         },
         loadTask({commit}, options) {
             return this.$http.get(
@@ -197,11 +200,16 @@ export default {
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)
         },
-        loadRevisions({commit}, options) {
+        loadRevisions({commit, dispatch}, options) {
+            return dispatch("loadRevisionsNoCommit", options).then(revisions => {
+                commit("setRevisions", revisions)
+                return revisions;
+            });
+        },
+        loadRevisionsNoCommit(_, options) {
             return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
-                commit("setRevisions", response.data)
                 return response.data;
-            })
+            });
         },
         exportFlowByIds(_, options) {
             return this.$http.post(`${apiUrl(this)}/flows/export/by-ids`, options.ids, {responseType: "blob"})

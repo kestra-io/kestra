@@ -144,16 +144,16 @@
         }
 
         .logs-wrapper {
-            border: 1px solid var(--bs-border-color);
             margin-bottom: var(--spacer);
+            border-radius: var(--bs-border-radius-lg);
+            overflow: hidden;
+
+            * + * {
+                border-top: 1px solid var(--bs-border-color);
+            }
         }
 
-        .line:nth-child(odd) {
-            background-color: var(--bs-gray-100-lighten-5);
-
-        }
-
-        .line:nth-child(even) {
+        .line {
             background-color: var(--bs-gray-100);
         }
     }

@@ -278,7 +278,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     .forEach(workerTaskExecution -> {
                         String log = "Create new execution for flow '" +
                             workerTaskExecution.getExecution()
-                                .getNamespace() + "'." + workerTaskExecution.getExecution().getFlowId() +
+                                .getNamespace() + "'.'" + workerTaskExecution.getExecution().getFlowId() +
                             "' with id '" + workerTaskExecution.getExecution()
                             .getId() + "' from task '" + workerTaskExecution.getTask().getId() +
                             "' and taskrun '" + workerTaskExecution.getTaskRun().getId() +

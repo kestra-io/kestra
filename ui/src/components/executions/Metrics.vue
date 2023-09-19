@@ -15,7 +15,7 @@
         size=""
         direction="ltr"
     >
-        <metrics-table ref="table" :task-run-id="taskRun.id" />
+        <metrics-table ref="table" :task-run-id="taskRun.id" :execution="execution" />
     </el-drawer>
 </template>
 
@@ -25,7 +25,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import MetricsTable from "./MetricsTable.vue";
 
     export default {
@@ -42,9 +41,14 @@
                 type: Boolean,
                 default: true
             },
-        },
-        computed: {
-            ...mapState("execution", ["taskRun"]),
+            taskRun: {
+                type: Object,
+                required: true
+            },
+            execution: {
+                type: Object,
+                required: true
+            }
         },
         methods: {
             onClick() {

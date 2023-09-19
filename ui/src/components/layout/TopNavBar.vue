@@ -27,7 +27,7 @@
             <a href="https://kestra.io/slack"
                target="_blank"
                class="el-button el-button--small is-text is-has-bg">
-                Live chat
+                Live help
             </a>
             <news />
             <auth />

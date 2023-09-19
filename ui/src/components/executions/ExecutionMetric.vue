@@ -1,5 +1,5 @@
 <template>
-    <metrics-table ref="table" :task-run-id="taskRunId" :show-task="true">
+    <metrics-table ref="table" :task-run-id="taskRunId" :show-task="true" :execution="execution">
         <template #navbar>
             <el-form-item>
                 <el-select

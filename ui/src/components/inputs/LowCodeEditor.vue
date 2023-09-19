@@ -335,6 +335,7 @@
             :emit-only="true"
             @update:task="confirmEdit($event)"
             @close="closeEdit()"
+            :flowSource="source"
             ref="taskEditDomElement"
         />
 
@@ -362,13 +363,12 @@
                 <log-list
                     v-for="taskRun in selectedTask.taskRuns"
                     :key="taskRun.id"
-                    :target-execution="selectedTask.execution"
+                    :target-execution-id="selectedTask.execution?.id"
                     :task-run-id="taskRun.id"
                     :filter="logFilter"
                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                     :level="logLevel"
                     @follow="forwardEvent('follow', $event)"
-                    :hide-others-on-select="true"
                 />
             </div>
             <div v-if="isShowDescriptionOpen">

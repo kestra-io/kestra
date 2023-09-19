@@ -34,7 +34,7 @@
                         show-icon
                         :closable="false"
                         class="mb-0 mt-3"
-                        v-if="revision && readOnly"
+                        v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -190,11 +190,11 @@
         methods: {
             async load(taskId) {
                 if (this.revision) {
-                    if (this.revisions[this.revision - 1] === undefined) {
-                        await this.$store
-                            .dispatch("flow/loadRevisions", {
-                                namespace: this.flow.namespace,
-                                id: this.flow.id
+                    if (this.revisions?.[this.revision - 1] === undefined) {
+                        this.revisions = await this.$store
+                            .dispatch("flow/loadRevisionsNoCommit", {
+                                namespace: this.namespace,
+                                id: this.flowId
                             });
                     }
 
@@ -267,10 +267,10 @@
                 isModalOpen: false,
                 activeTabs: this.defaultActiveTab(),
                 type: null,
+                revisions: undefined
             };
         },
         computed: {
-            ...mapState("flow", ["flow", "revisions"]),
             ...mapGetters("flow", ["taskError"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["plugin"]),

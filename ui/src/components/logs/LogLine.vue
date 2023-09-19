@@ -1,21 +1,25 @@
 <template>
     <div class="line font-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge log-level el-tag noselect">{{ log.level.padEnd(9) }}</span>
-        <span class="header-badge noselect">
-            {{ $filters.date(log.timestamp, "iso") }}
-        </span>
-        <span v-for="(meta, x) in metaWithValue" :key="x">
-            <span class="header-badge property">
-                <span>{{ meta.key }}</span>
-                <template v-if="meta.router">
-                    <router-link :to="meta.router">{{ meta.value }}</router-link>
-                </template>
-                <template v-else>
-                    {{ meta.value }}
-                </template>
-            </span>
-        </span>
-        <span class="message" v-html="message" />
+        <span :class="levelClass" class="header-badge log-level el-tag noselect">{{ log.level }}</span>
+        <div class="log-content d-inline-block">
+            <div class="header" :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}">
+                <span class="header-badge noselect">
+                    {{ $filters.date(log.timestamp, "iso") }}
+                </span>
+                <span v-for="(meta, x) in metaWithValue" :key="x">
+                    <span class="header-badge property">
+                        <span>{{ meta.key }}</span>
+                        <template v-if="meta.router">
+                            <router-link :to="meta.router">{{ meta.value }}</router-link>
+                        </template>
+                        <template v-else>
+                            {{ meta.value }}
+                        </template>
+                    </span>
+                </span>
+            </div>
+            <span class="message" v-html="message" />
+        </div>
     </div>
 </template>
 <script>
@@ -40,7 +44,7 @@
             excludeMetas: {
                 type: Array,
                 default: () => [],
-            },
+            }
         },
         computed: {
             metaWithValue() {
@@ -51,7 +55,8 @@
                     "thread",
                     "taskRunId",
                     "level",
-                    "index"
+                    "index",
+                    "attemptNumber"
                 ];
                 excludes.push.apply(excludes, this.excludeMetas);
                 for (const key in this.log) {
@@ -72,10 +77,6 @@
 
                         if (key === "flowId") {
                             meta["router"] = {name: "flows/update", params: {namespace: this.log["namespace"], id: this.log[key]}};
-                        }
-
-                        if (key === "attemptNumber") {
-                            meta.value = meta.value + 1;
                         }
 
                         metaWithValue.push(meta);
@@ -107,10 +108,30 @@
     };
 </script>
 <style scoped lang="scss">
+    @import "@kestra-io/ui-libs/src/scss/variables";
+
     div.line {
         white-space: pre-wrap;
         word-break: break-all;
-        padding: 2px 2px 0 2px;
+        padding: calc(var(--spacer) / 2);
+        display: flex;
+        align-items: start;
+        gap: $spacer;
+        line-height: 1.66;
+
+        .log-level {
+            padding: calc(var(--spacer) / 4);
+        }
+
+        .log-content {
+            .header {
+                margin-bottom: calc(var(--spacer) / 4);
+
+                > * + *{
+                    margin-left: $spacer;
+                }
+            }
+        }
 
         span {
             margin-bottom: 2px;
@@ -124,33 +145,27 @@
         .header-badge {
             display: inline-block;
             font-size: 95%;
-            padding: calc(var(--spacer) / 3) calc(var(--spacer) / 3);
-            line-height: 1;
             text-align: center;
             white-space: nowrap;
             vertical-align: baseline;
-            margin-right: calc(var(--spacer) / 3);
-            &:not(.el-tag) {
-                background-color: var(--bs-gray-300);
-            }
 
             span:first-child {
                 margin-right: 6px;
                 font-family: var(--bs-font-sans-serif);
-                color: var(--bs-gray-500);
+                color: #574F6C;
 
                 html.dark & {
-                    color: var(--bs-gray-700);
+                    color: var(--bs-gray-900);
                 }
+
                 user-select: none;
 
                 &::after{
                     content: ":";
                 }
             }
-
-            &:not(.el-tag), & a {
-                color: var(--bs-gray-700);
+            &:not(.el-tag):not(.noselect), & a {
+                color: $indigo;
                 border-radius: var(--bs-border-radius);
             }
 
@@ -161,16 +176,26 @@
             &.log-level {
                 white-space: pre;
                 border-radius: var(--bs-border-radius);
+                color: $black;
             }
-        }
-
-        .message {
-            padding: 0 calc(var(--spacer) / 2);
         }
 
         .noselect {
             user-select: none;
+            color: $white;
+
+            html:not(.dark) & {
+                color: $black;
+            }
         }
 
+        .message {
+            line-height: 1.8;
+            color: #574F6C;
+
+            html.dark & {
+                color: #C6C1D9;
+            }
+        }
     }
 </style>

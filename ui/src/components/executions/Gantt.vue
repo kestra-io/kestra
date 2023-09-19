@@ -2,62 +2,64 @@
     <el-card shadow="never" v-if="execution">
         <table>
             <thead>
-                <tr>
-                    <th>
-                        <duration :histories="execution.state.histories" />
-                    </th>
-                    <td v-for="(date, i) in dates" :key="i">
-                        {{ date }}
-                    </td>
-                </tr>
+            <tr>
+                <th>
+                    <duration :histories="execution.state.histories" />
+                </th>
+                <td v-for="(date, i) in dates" :key="i">
+                    {{ date }}
+                </td>
+            </tr>
             </thead>
             <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
-                <tr>
-                    <th>
-                        <el-tooltip placement="right" :persistent="false" transition="" :hide-after="0">
-                            <template #content>
-                                <code>{{ currentTaskRun.name }}</code>
-                                <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
-                            </template>
+            <tr>
+                <th>
+                    <el-tooltip placement="right" :persistent="false" transition="" :hide-after="0">
+                        <template #content>
                             <code>{{ currentTaskRun.name }}</code>
-                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
-                        </el-tooltip>
-                    </th>
-                    <td :colspan="dates.length">
-                        <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
-                            <template #content>
+                            <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
+                        </template>
+                        <code>{{ currentTaskRun.name }}</code>
+                        <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                    </el-tooltip>
+                </th>
+                <td :colspan="dates.length">
+                    <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
+                        <template #content>
                                 <span style="white-space: pre-wrap;">
                                     {{ currentTaskRun.tooltip }}
                                 </span>
-                            </template>
-                            <div
-                                :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
-                                class="task-progress"
-                                @click="onTaskSelect(currentTaskRun.task)"
-                            >
-                                <div class="progress">
-                                    <div
-                                        class="progress-bar"
-                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                        role="progressbar"
-                                    />
-                                </div>
+                        </template>
+                        <div
+                            :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
+                            class="task-progress"
+                            @click="onTaskSelect(currentTaskRun.task)"
+                        >
+                            <div class="progress">
+                                <div
+                                    class="progress-bar"
+                                    :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
+                                    :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
+                                    role="progressbar"
+                                />
                             </div>
-                        </el-tooltip>
-                    </td>
-                </tr>
-                <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
-                    <td :colspan="dates.length + 1" class="p-0 pb-2">
-                        <log-list
-                            :task-run-id="taskRun.id"
-                            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                            level="TRACE"
-                            @follow="forwardEvent('follow', $event)"
-                            :hide-others-on-select="true"
-                        />
-                    </td>
-                </tr>
+                        </div>
+                    </el-tooltip>
+                </td>
+            </tr>
+            <tr v-if="selectedTaskRun?.id === currentTaskRun.id">
+                <td :colspan="dates.length + 1" class="p-0 pb-2">
+                    <log-list
+                        :task-run-id="selectedTaskRun.id"
+                        :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                        level="TRACE"
+                        @follow="forwardEvent('follow', $event)"
+                        :target-execution="execution"
+                        :target-flow="flow"
+                        class="no-click-handler"
+                    />
+                </td>
+            </tr>
             </tbody>
         </table>
     </el-card>
@@ -81,6 +83,7 @@
                 dates: [],
                 duration: undefined,
                 usePartialSerie: true,
+                selectedTaskRun: undefined
             };
         },
         watch: {
@@ -102,7 +105,8 @@
             this.paint();
         },
         computed: {
-            ...mapState("execution", ["execution", "taskRun"]),
+            ...mapState("execution", ["execution"]),
+            ...mapState("flow", ["flow"]),
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
@@ -261,8 +265,12 @@
                 this.dates = dates;
             },
             onTaskSelect(taskRun) {
-                taskRun = this.taskRun && this.taskRun.id === taskRun.id ? undefined : taskRun;
-                this.$store.commit("execution/setTaskRun", taskRun);
+                if(this.selectedTaskRun?.id === taskRun.id) {
+                    this.selectedTaskRun = undefined
+                    return
+                }
+
+                this.selectedTaskRun = taskRun;
             },
             stopRealTime() {
                 this.realTime = false
@@ -287,8 +295,7 @@
         color: var(--bs-body-color);
 
         & th, td {
-            border-bottom: 1px solid var(--bs-border-color);
-            padding: 0.3rem;
+            padding: calc(var(--spacer) / 2);
         }
 
         tr:last-child th, tr:last-child td {
@@ -349,11 +356,31 @@
                     }
                 }
             }
+
+            tr:nth-child(2) td {
+                padding-bottom: 0 !important;
+            }
         }
     }
 
     :deep(.log-wrapper .attempt-wrapper) {
         margin-bottom: 0;
+        border-radius: 0;
+        border: 0;
+        border-top: 1px solid var(--bs-gray-600);
+        border-bottom: 1px solid var(--bs-gray-600);
+
+        tbody:last-child & {
+            border-bottom: 0;
+        }
+
+        .attempt-header {
+            padding: calc(var(--spacer) / 2);
+        }
+
+        .line {
+            padding-left: calc(var(--spacer) / 2);
+        }
     }
 
 </style>

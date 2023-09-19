@@ -6,7 +6,6 @@ export default {
         executions: undefined,
         execution: undefined,
         taskRun: undefined,
-        task: undefined,
         total: 0,
         logs: {
             total: 0,
@@ -121,24 +120,33 @@ export default {
         followLogs(_, options) {
             return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`);
         },
-        loadLogs({commit}, options) {
+        loadLogsNoCommit({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
-                if(options.params.page !== 1) {
-                    commit("appendLogs", response.data)
-                } else {
-                    commit("setLogs", response.data)
-                }
                 return response.data;
             })
         },
-        loadMetrics({commit}, options) {
+        loadLogs({commit, dispatch}, options) {
+            return dispatch("loadLogsNoCommit", options).then(logs => {
+                if(options.params.page !== 1) {
+                    commit("appendLogs", logs)
+                } else {
+                    commit("setLogs", logs)
+                }
+            });
+        },
+        loadMetrics({commit, dispatch}, options) {
+            return dispatch("loadMetricsNoCommit", options).then(metrics => {
+                commit("setMetrics", metrics.results)
+                commit("setMetricsTotal", metrics.total)
+            });
+        },
+        loadMetricsNoCommit({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/metrics/${options.executionId}`, {
                 params: options.params
             }).then(response => {
-                commit("setMetrics", response.data.results)
-                commit("setMetricsTotal", response.data.total)
+                return response.data
             })
         },
         downloadLogs(_, options) {
@@ -171,9 +179,6 @@ export default {
         },
         setSubflowExecutions(state, subflowsExecution) {
             state.subflowsExecution = subflowsExecution
-        },
-        setTask(state, task) {
-            state.task = task
         },
         setTaskRun(state, taskRun) {
             state.taskRun = taskRun

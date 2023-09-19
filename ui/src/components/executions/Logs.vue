@@ -19,7 +19,7 @@
                 />
             </el-form-item>
             <el-form-item>
-                <el-button @click="handleLogDisplay()">
+                <el-button @click="expandCollapseAll()">
                     {{ logDisplayButtonText }}
                 </el-button>
             </el-form-item>
@@ -35,28 +35,15 @@
         </collapse>
 
         <log-list
-            v-if="execution.state.current === State.RUNNING"
+            ref="logs"
             :level="level"
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             @follow="forwardEvent('follow', $event)"
-            @opened-taskruns-count="openedTaskrunsCounts['running'] = $event"
-            :logs-to-open-parent="logsToOpen"
+            @opened-taskruns-count="openedTaskrunsCount = $event"
+            :target-execution="execution"
+            :target-flow="flow"
         />
-        <div v-else-if="execution.state.current !== State.RUNNING">
-            <log-list
-                v-for="taskRun in taskRunList"
-                :key="taskRun.id"
-                :task-run-id="taskRun.id"
-                :attempt-number="taskRun.attempt"
-                :level="level"
-                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                :filter="filter"
-                @follow="forwardEvent('follow', $event)"
-                @opened-taskruns-count="openedTaskrunsCounts[taskRun.id] = $event"
-                :logs-to-open-parent="logsToOpen"
-            />
-        </div>
     </div>
 </template>
 
@@ -84,8 +71,7 @@
                 fullscreen: false,
                 level: undefined,
                 filter: undefined,
-                logsToOpen: undefined,
-                openedTaskrunsCounts: {}
+                openedTaskrunsCount: 0
             };
         },
         created() {
@@ -96,27 +82,13 @@
             State() {
                 return State
             },
-            ...mapState("execution", ["execution", "taskRun", "logs"]),
+            ...mapState("execution", ["execution", "logs"]),
+            ...mapState("flow", ["flow"]),
             downloadName() {
                 return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
             },
-            taskRunList() {
-                const fullList = [];
-                for (const taskRun of (this.execution.taskRunList || [])) {
-                    for (const attempt in (taskRun.attempts ?? [{}])) {
-                        fullList.push({
-                            ...taskRun,
-                            attempt: parseInt(attempt),
-                        })
-                    }
-                }
-                return fullList
-            },
-            openedTaskrunsTotal() {
-                return Object.values(this.openedTaskrunsCounts).reduce((prev, count) => prev + count, 0);
-            },
             logDisplayButtonText() {
-                return this.openedTaskrunsTotal === 0 ? this.$t("expand all") : this.$t("collapse all")
+                return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
             }
         },
         methods: {
@@ -144,12 +116,8 @@
             onChange() {
                 this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
             },
-            handleLogDisplay() {
-                if(this.openedTaskrunsTotal === 0) {
-                    this.logsToOpen = State.arrayAllStates().map(s => s.name)
-                } else {
-                    this.logsToOpen = []
-                }
+            expandCollapseAll() {
+                this.$refs.logs.toggleExpandCollapseAll();
             }
         }
     };

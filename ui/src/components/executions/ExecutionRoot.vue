@@ -81,7 +81,6 @@
         watch: {
             $route(newValue, oldValue) {
                 this.$store.commit("execution/setTaskRun", undefined);
-                this.$store.commit("execution/setTask", undefined);
                 if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
                     this.follow()
                 }

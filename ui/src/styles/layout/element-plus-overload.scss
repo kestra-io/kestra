@@ -353,6 +353,7 @@ form.ks-horizontal {
     border-radius: $border-radius-lg;
     --el-card-border-color: var(--bs-border-color);
     --el-card-border-radius: var(--bs-border-radius-lg);
+    --el-card-padding: #{$spacer};
     color: var(--bs-body-color);
     background-color: var(--card-bg);
 

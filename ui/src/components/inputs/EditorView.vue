@@ -29,6 +29,7 @@
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {editorViewTypes} from "../../utils/constants";
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
+    import {apiUrl} from "override/utils/route";
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;

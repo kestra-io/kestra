@@ -391,7 +391,7 @@ public class ExecutionController {
             .filter(w -> {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
-                    String webhookKey = runContext.render(w.getKey());
+                    String webhookKey = runContext.render(w.getKey()).trim();
                     return webhookKey.equals(key);
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook

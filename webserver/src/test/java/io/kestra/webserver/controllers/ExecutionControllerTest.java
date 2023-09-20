@@ -33,6 +33,7 @@ import io.micronaut.rxjava2.http.client.sse.RxSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.File;
 import java.time.Duration;
@@ -520,6 +521,21 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             HttpRequest
                 .GET(
                     "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
+                ),
+            Execution.class
+        );
+
+        assertThat(execution, notNullValue());
+        assertThat(execution.getId(), notNullValue());
+    }
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
+    void webhookDynamicKeyFromASecret() {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
                 ),
             Execution.class
         );

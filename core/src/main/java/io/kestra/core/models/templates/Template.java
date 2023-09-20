@@ -12,6 +12,7 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -43,7 +44,7 @@ public class Template implements DeletedInterface {
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @Pattern(regexp="[a-z0-9_-]+")
-    @Setter
+    @Hidden
     private String tenantId;
 
     @NotNull
@@ -109,7 +110,7 @@ public class Template implements DeletedInterface {
             ));
         }
 
-        if (violations.size() > 0) {
+        if (!violations.isEmpty()) {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
             return Optional.empty();

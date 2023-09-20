@@ -33,10 +33,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
         return this.query(
             tenantId,
-            field("execution_id").eq(id)
+            field("execution_id").eq(executionId)
             , pageable
         );
     }

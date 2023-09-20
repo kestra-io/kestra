@@ -96,6 +96,17 @@ public abstract class AbstractTemplateRepositoryTest {
     }
 
     @Test
+    void findAllForAllTenants() {
+        long saveCount = templateRepository.findAllForAllTenants().size();
+        Template template = builder().build();
+        templateRepository.create(template);
+        long size = templateRepository.findAllForAllTenants().size();
+        assertThat(size, greaterThan(saveCount));
+        templateRepository.delete(template);
+        assertThat((long) templateRepository.findAllForAllTenants().size(), is(saveCount));
+    }
+
+    @Test
     void find() {
         Template template1 = builder().build();
         templateRepository.create(template1);

@@ -85,10 +85,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String id, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable) {
         return this.query(
             tenantId,
-            field("execution_id").eq(id),
+            field("execution_id").eq(executionId),
             minLevel,
             pageable
         );

@@ -221,6 +221,13 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findAllForAllTenants() {
+        List<Flow> save = flowRepository.findAllForAllTenants();
+
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+    }
+
+    @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace(null, "io.kestra.tests");
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 3));

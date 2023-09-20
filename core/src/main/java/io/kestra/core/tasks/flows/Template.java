@@ -44,7 +44,7 @@ import javax.validation.constraints.NotNull;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter

@@ -149,7 +149,7 @@ export default {
             })
         },
         filePreview({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}//executions/${options.executionId}/file/preview`, {
+            return this.$http.get(`${apiUrl(this)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
                 commit("setFilePreview", response.data)

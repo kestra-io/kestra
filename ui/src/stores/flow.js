@@ -61,18 +61,23 @@ export default {
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
-                }).then(response => {
-                if (response.data.exception) {
-                    commit("core/setMessage", {
-                        title: "Invalid source code",
-                        message: response.data.exception,
-                        variant: "danger"
-                    }, {root: true});
-                    delete response.data.exception;
-                }
-
-                return response.data;
-            })
+                })
+                .then(response => {
+                    if (response.data.exception) {
+                        commit("core/setMessage", {
+                            title: "Invalid source code",
+                            message: response.data.exception,
+                            variant: "danger"
+                        }, {root: true});
+                        delete response.data.exception;
+                    }
+                    if(options.store === false) {
+                        return response.data;
+                    }
+                    commit("setFlow", response.data);
+                    commit("setOverallTotal", 1)
+                    return response.data;
+                })
         },
         loadFlow({commit, dispatch}, options) {
             return dispatch("loadFlowNoCommit", options).then(flow => {

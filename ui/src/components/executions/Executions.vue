@@ -172,13 +172,13 @@
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow">
+                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="flow.deleted">
                                 {{ $t('edit flow') }}
                             </el-button>
                         </template>
                     </li>
                     <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id"
+                        <trigger-flow v-if="flow" :disabled="flow.disabled || flow.deleted" :flow-id="flow.id"
                                       :namespace="flow.namespace" />
                     </li>
                 </template>

@@ -535,4 +535,14 @@ export default class YamlUtils {
         const tasks = yaml.parseDocument(source).contents.items.find(item => item.key.value === "tasks");
         return tasks && tasks.value.items && tasks.value.items.length >= 1;
     }
+
+    static deleteMetadata(source, metadata) {
+        const yamlDoc = yaml.parseDocument(source);
+        const item = yamlDoc.contents.items.find(e => e.key.value === metadata);
+        if (item) {
+            yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(item), 1);
+        }
+
+        return yamlDoc.toString(TOSTRING_OPTIONS);
+    }
 }

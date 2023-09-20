@@ -5,6 +5,7 @@
         :namespace="flow.namespace"
         :flow-graph="flowGraph"
         :flow="flow"
+        :is-topo-only="isTopoOnly"
         :is-read-only="isReadOnly"
         :flow-error="flowError"
         :flow-deprecations="flowDeprecations"
@@ -32,6 +33,10 @@
             expandedSubflows: {
                 type: Array,
                 default: []
+            },
+            isTopoOnly: {
+                type: Boolean,
+                default: false
             }
         },
         computed: {

@@ -135,14 +135,15 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "Include the source code") @QueryValue(defaultValue = "false") boolean source,
-        @Parameter(description = "Get latest revision by default") @Nullable @QueryValue Integer revision
+        @Parameter(description = "Get latest revision by default") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "Get flow even if deleted") @QueryValue(defaultValue = "false") boolean allowDeleted
     ) {
         return source ?
             flowRepository
-                .findByIdWithSource(namespace, id, Optional.ofNullable(revision))
+                .findByIdWithSource(namespace, id, Optional.ofNullable(revision), allowDeleted)
                 .orElse(null) :
             flowRepository
-                .findById(namespace, id, Optional.ofNullable(revision))
+                .findById(namespace, id, Optional.ofNullable(revision), allowDeleted)
                 .orElse(null);
     }
 

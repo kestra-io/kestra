@@ -69,6 +69,10 @@
             type: Boolean,
             default: false
         },
+        isTopoOnly: {
+            type: Boolean,
+            default: true
+        },
         isReadOnly: {
             type: Boolean,
             default: true
@@ -113,7 +117,7 @@
     const initViewType = () => {
         const defaultValue = editorViewTypes.SOURCE_DOC;
 
-        if (props.execution || props.isReadOnly) {
+        if (props.execution || props.isTopoOnly) {
             return editorViewTypes.TOPOLOGY;
         }
 
@@ -185,10 +189,10 @@
         flowYaml.value = props.flow.source;
 
         if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
-          await generateGraph();
+            await generateGraph();
         }
 
-        if (!props.isReadOnly) {
+        if (!props.isTopoOnly) {
             let restoredLocalStorageKey;
             const sourceFromLocalStorage = localStorage.getItem((restoredLocalStorageKey = autoRestorelocalStorageKey.value)) ?? localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
             if (sourceFromLocalStorage !== null) {
@@ -283,7 +287,7 @@
             return editorViewTypes.SOURCE;
         }
 
-        if (props.execution || props.isReadOnly) {
+        if (props.execution || props.isTopoOnly) {
             return editorViewTypes.TOPOLOGY;
         }
 
@@ -295,7 +299,7 @@
         return defaultValue;
     }
 
-    watch(() => props.isReadOnly, async () => {
+    watch(() => props.isTopoOnly, async () => {
         viewType.value = viewTypeOnReadOnly();
     });
 
@@ -699,6 +703,7 @@
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
             @restartGuidedTour="() => persistViewType(editorViewTypes.SOURCE)"
+            :read-only="isReadOnly"
         >
             <template #extends-navbar>
                 <ValidationError ref="validationDomElement" tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
@@ -722,7 +727,7 @@
                 :flow-id="flowId"
                 :namespace="namespace"
                 :execution="execution"
-                :is-read-only="isReadOnly"
+                :is-read-only="isReadOnly || isTopoOnly"
                 :source="flowYaml"
                 :is-allowed-edit="isAllowedEdit()"
                 :view-type="viewType"
@@ -813,7 +818,7 @@
             </template>
         </el-drawer>
         <switch-view
-            v-if="!isReadOnly"
+            v-if="!isTopoOnly"
             :type="viewType"
             class="to-topology-button"
             @switch-view="switchViewType"
@@ -821,9 +826,9 @@
     </el-card>
     <bottom-line v-if="!graphOnly">
         <ul>
-            <li v-if="(isAllowedEdit || canDelete) && !isReadOnly">
+            <li v-if="(isAllowedEdit || canDelete) && !isTopoOnly">
                 <el-dropdown>
-                    <el-button size="large" type="default">
+                    <el-button size="large" type="default" :disabled="flow.deleted">
                         <DotsVertical title="" />
                         {{ t("actions") }}
                     </el-button>
@@ -886,7 +891,7 @@
                     v-if="!props.isCreating"
                     ref="triggerFlowDomElement"
                     type="default"
-                    :disabled="flow.disabled"
+                    :disabled="flow.disabled || flow.deleted"
                     :flow-id="flow.id"
                     :namespace="flow.namespace"
                 />

@@ -1,18 +1,31 @@
 <template>
     <div>
         <div v-if="ready">
+            <el-card v-if="flow.deleted" class="bg-warning" body-class="warning-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="warning-text">{{ $t('flow deleted, you can restore it') }}</span>
+                    <span>
+                        <el-button size="small" class="warning-button" @click="restoreFlow()">{{ $t('restore') }}</el-button>
+                    </span>
+                </div>
+            </el-card>
             <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
             <bottom-line v-if="displayBottomLine()">
                 <ul>
                     <li>
                         <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow">
-                                {{ $t('edit flow') }}
+                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="flow.deleted">
+                                {{ $t("edit flow") }}
                             </el-button>
                         </template>
                     </li>
                     <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                        <trigger-flow
+                            v-if="flow"
+                            :disabled="flow.disabled || flow.deleted"
+                            :flow-id="flow.id"
+                            :namespace="flow.namespace"
+                        />
                     </li>
                 </ul>
             </bottom-line>
@@ -42,6 +55,7 @@
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
     import {apiUrl} from "override/utils/route";
+    import yamlUtils from "../../utils/yamlUtils";
 
     export default {
         mixins: [RouteContext],
@@ -55,7 +69,8 @@
                 tabIndex: undefined,
                 previousFlow: undefined,
                 depedenciesCount: undefined,
-                expandedSubflows: []
+                expandedSubflows: [],
+                deleted: false
             };
         },
         watch: {
@@ -71,11 +86,12 @@
         methods: {
             load() {
                 if ((this.flow === undefined || this.previousFlow !== this.flowKey())) {
-                    return this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
+                    const query = {...this.$route.query, allowDeleted: true};
+                    return this.$store.dispatch("flow/loadFlow", {...this.$route.params, ...query}).then(() => {
                         if (this.flow) {
                             this.previousFlow = this.flowKey();
                             this.$store.dispatch("flow/loadGraph", {
-                                flow: this.flow
+                                flow: this.flow,
                             });
                             this.$http
                                 .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
@@ -83,11 +99,12 @@
                                     this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
                                 })
                         }
+
                     });
                 }
             },
             flowKey() {
-                return this.$route.params.namespace +  "/" + this.$route.params.id;
+                return this.$route.params.namespace + "/" + this.$route.params.id;
             },
             getTabs() {
                 let tabs = [
@@ -109,7 +126,7 @@
                         {
                             name: undefined,
                             component: Overview,
-                            title: this.$t("overview"),
+                            title: this.$t("overview")
                         },
                     ].concat(tabs)
                 }
@@ -119,6 +136,7 @@
                         name: "executions",
                         component: FlowExecutions,
                         title: this.$t("executions"),
+                        query: this.$route.query
                     });
                 }
 
@@ -128,8 +146,9 @@
                         component: FlowEditor,
                         title: this.$t("editor"),
                         props: {
-                            expandedSubflows: this.expandedSubflows
-                        }
+                            expandedSubflows: this.expandedSubflows,
+                            isReadOnly: this.flow.deleted
+                        },
                     });
                 }
 
@@ -154,7 +173,7 @@
                     tabs.push({
                         name: "logs",
                         component: FlowLogs,
-                        title: this.$t("logs"),
+                        title: this.$t("logs")
                     });
                 }
 
@@ -162,10 +181,10 @@
                     tabs.push({
                         name: "metrics",
                         component: FlowMetrics,
-                        title: this.$t("metrics"),
+                        title: this.$t("metrics")
                     });
                 }
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)){
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
                         name: "dependencies",
                         component: FlowDependencies,
@@ -187,14 +206,23 @@
                 return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
             },
             editFlow() {
-                this.$router.push({name:"flows/update", params: {
-                    namespace: this.flow.namespace,
-                    id: this.flow.id,
-                    tab: "editor"
-                }})
+                this.$router.push({
+                    name: "flows/update", params: {
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        tab: "editor"
+                    }
+                })
             },
             updateExpandedSubflows(expandedSubflows) {
                 this.expandedSubflows = expandedSubflows;
+            },
+            restoreFlow() {
+                this.$store.dispatch("flow/createFlow", {flow: yamlUtils.deleteMetadata(this.flow.source, "deleted")})
+                    .then((response) => {
+                        this.$toast().saved(response.id);
+                        this.$store.dispatch("core/isUnsaved", false);
+                    })
             }
         },
         computed: {
@@ -232,15 +260,27 @@
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             canExecute() {
-                if(this.flow) {
+                if (this.flow) {
                     return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
                 }
                 return false;
             }
         },
-        unmounted () {
+        unmounted() {
             this.$store.commit("flow/setFlow", undefined)
             this.$store.commit("flow/setFlowGraph", undefined)
         }
     };
 </script>
+<style>
+  .warning-card {
+    padding: calc(var(--spacer)/2);
+  }
+  .warning-text {
+    font-size: 0.80rem;
+    color: var(--bs-gray-300);
+  }
+  .warning-button {
+      background-color: var(--bs-body-bg);
+  }
+</style>

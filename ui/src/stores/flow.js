@@ -140,8 +140,8 @@ export default {
         loadGraph({commit}, options) {
             const flow = options.flow;
             const params = options.params ? options.params : {};
-            if (flow.revisions) {
-                params["revisions"] = flow.revisions;
+            if (flow.revision) {
+                params["revision"] = flow.revision;
             }
             return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)

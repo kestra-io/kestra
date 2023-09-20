@@ -215,6 +215,15 @@ public class VariableRenderer {
         return result;
     }
 
+    public Set<String> render(Set<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        Set<String> result = new HashSet<>();
+        for (String inline : list) {
+            result.add(this.recursiveRender(inline, variables));
+        }
+
+        return result;
+    }
+
     @Getter
     @ConfigurationProperties("kestra.variables")
     public static class VariableConfiguration {

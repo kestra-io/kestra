@@ -35,6 +35,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 @NoArgsConstructor
 public class RunContext {
     // Injected
@@ -429,12 +431,31 @@ public class RunContext {
         return variableRenderer.render(inline, mergeVariables(variables));
     }
 
+    public Set<String> render(Set<String> inline) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, this.variables);
+    }
+
+    public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, mergeVariables(variables));
+    }
+
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeVariables(variables));
+    }
+
+    public Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException {
+        return inline
+            .entrySet()
+            .stream()
+            .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
+                this.render(entry.getKey(), mergeVariables(variables)),
+                this.render(entry.getValue(), mergeVariables(variables))
+            )))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private Map<String, Object> mergeVariables(Map<String, Object> variables) {

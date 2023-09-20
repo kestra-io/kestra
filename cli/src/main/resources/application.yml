@@ -178,5 +178,5 @@ kestra:
     fixed-delay: 1h
 
   heartbeat:
-    frequency: 5
+    frequency: 5s
     heartbeat-missed: 3

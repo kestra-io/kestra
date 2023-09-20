@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.repositories.WorkerJobRunningInterface;
 import io.kestra.core.runners.WorkerJobRunning;
-import io.kestra.core.runners.WorkerTaskRunning;
-import io.kestra.core.runners.WorkerTriggerRunning;
 import io.kestra.core.serializers.JacksonMapper;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -20,17 +18,11 @@ import java.util.Optional;
 @Singleton
 @Slf4j
 public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdbcRepository implements WorkerJobRunningInterface {
-    protected io.kestra.jdbc.AbstractJdbcRepository<WorkerJobRunning> jdbcRepository;
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    protected io.kestra.jdbc.AbstractJdbcRepository<WorkerJobRunning> jdbcRepository;
 
     public AbstractJdbcWorkerJobRunningRepository(io.kestra.jdbc.AbstractJdbcRepository<WorkerJobRunning> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
-    }
-
-    @Override
-    public WorkerJobRunning save(WorkerJobRunning workerJobRunning) {
-        this.jdbcRepository.persist(workerJobRunning, this.jdbcRepository.persistFields(workerJobRunning));
-        return workerJobRunning;
     }
 
     public WorkerJobRunning save(WorkerJobRunning workerJobRunning, DSLContext context) {
@@ -74,15 +66,10 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
                 .fetch()
                 .map(r -> {
                     WorkerJobRunning value;
-                    // TODO: find a better way to do this
                     try {
-                        value = MAPPER.readValue(r.get("value").toString(), WorkerTaskRunning.class);
+                        value = MAPPER.readValue(r.get("value").toString(), WorkerJobRunning.class);
                     } catch (JsonProcessingException e) {
-                        try {
-                            value = MAPPER.readValue(r.get("value").toString(), WorkerTriggerRunning.class);
-                        } catch (JsonProcessingException ex) {
-                            throw new RuntimeException(ex);
-                        }
+                        throw new RuntimeException(e);
                     }
                     return value;
                 })

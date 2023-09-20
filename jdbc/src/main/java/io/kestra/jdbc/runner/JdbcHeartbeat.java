@@ -48,7 +48,7 @@ public class JdbcHeartbeat {
         );
     }
 
-    @Scheduled(initialDelay = "${kestra.heartbeat.frequency}" + "s", fixedDelay = "${kestra.heartbeat.frequency}" + "s")
+    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}")
     public void updateHeartbeat() throws UnknownHostException {
         if (applicationContext.containsBean(Worker.class)) {
             if (workerHeartbeat == null) {

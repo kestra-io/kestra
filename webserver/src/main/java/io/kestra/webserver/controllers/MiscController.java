@@ -71,7 +71,6 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
-            .isWorkerInstanceEnabled(workerHeartbeatRepositoryInterface.isPresent())
             .isTemplateEnabled(templateRepository.isPresent());
 
         if (this.environmentName != null || this.environmentColor != null) {
@@ -105,9 +104,6 @@ public class MiscController {
 
         @JsonInclude
         Boolean isAnonymousUsageEnabled;
-
-        @JsonInclude
-        Boolean isWorkerInstanceEnabled;
 
         @JsonInclude
         Boolean isTemplateEnabled;

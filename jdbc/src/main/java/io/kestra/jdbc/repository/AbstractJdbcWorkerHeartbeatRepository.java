@@ -5,12 +5,17 @@ import io.kestra.core.runners.WorkerHeartbeat;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-import org.jooq.*;
+import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
+import org.jooq.SelectForUpdateOfStep;
+import org.jooq.SelectWhereStep;
 import org.jooq.impl.DSL;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
 @Getter
@@ -22,7 +27,7 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
     }
 
     @Value("${kestra.heartbeat.frequency}")
-    private Integer frequency;
+    private Duration frequency;
 
     @Value("${kestra.heartbeat.heartbeat-missed}")
     private Integer nbMissed;
@@ -64,7 +69,7 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
                     this.heartbeatSelectQuery(configuration, workerUuid)
                         .and(field("status").eq(WorkerHeartbeat.Status.UP.toString()))
                         // We consider a heartbeat late if it's older than heartbeat missed times the frequency
-                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(getNbMissed() * getFrequency())))
+                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(getNbMissed() * getFrequency().getSeconds())))
                         .forUpdate();
 
                 Optional<WorkerHeartbeat> workerHeartbeat = this.jdbcRepository.fetchOne(select);
@@ -83,7 +88,8 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
         );
     }
 
-    public void heartbeatCleanUp(String workerUuid) {
+    public Boolean heartbeatCleanUp(String workerUuid) {
+        AtomicReference<Boolean> bool = new AtomicReference<>(false);
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
@@ -91,20 +97,26 @@ public abstract class AbstractJdbcWorkerHeartbeatRepository extends AbstractJdbc
                     this.heartbeatSelectQuery(configuration, workerUuid)
                         // we delete worker that have dead status more than two times the times considered to be dead
                         .and(field("status").eq(WorkerHeartbeat.Status.DEAD.toString()))
-                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency())))
+                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency().getSeconds())))
                         .forUpdate();
 
                 Optional<WorkerHeartbeat> workerHeartbeat = this.jdbcRepository.fetchOne(select);
 
-                workerHeartbeat.ifPresent(this::delete);
+                if(workerHeartbeat.isPresent()) {
+                    this.delete(workerHeartbeat.get());
+                    bool.set(true);
+                }
             });
+        return bool.get();
     }
 
-    public void heartbeatsCleanup() {
+    public Boolean heartbeatsCleanup() {
+        AtomicReference<Boolean> bool = new AtomicReference<>(false);
         this.findAllDead().forEach(heartbeat -> {
-                this.heartbeatCleanUp(heartbeat.getWorkerUuid().toString());
+                bool.set(this.heartbeatCleanUp(heartbeat.getWorkerUuid().toString()));
             }
         );
+        return bool.get();
     }
 
 

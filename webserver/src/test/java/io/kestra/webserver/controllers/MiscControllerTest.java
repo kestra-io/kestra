@@ -30,6 +30,5 @@ class MiscControllerTest extends JdbcH2ControllerTest {
         assertThat(response.getUuid(), notNullValue());
         assertThat(response.getIsTaskRunEnabled(), is(false));
         assertThat(response.getIsAnonymousUsageEnabled(), is(true));
-        assertThat(response.getIsWorkerInstanceEnabled(), is(false));
     }
 }

@@ -1,7 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import io.kestra.core.repositories.WorkerHeartbeatRepositoryInterface;
-import io.kestra.core.runners.WorkerHeartbeat;
+import io.kestra.core.runners.WorkerInstance;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
@@ -23,7 +23,7 @@ public class WorkerInstanceController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Workers"}, summary = "Get all workers")
-    public List<WorkerHeartbeat> findAll() throws HttpStatusException {
+    public List<? extends WorkerInstance> findAll() throws HttpStatusException {
         return workerHeartbeatRepositoryInterface.findAll();
     }
 }

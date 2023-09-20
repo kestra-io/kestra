@@ -208,11 +208,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
     }
 
-    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}" + "s")
+    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}")
     protected void workersUpdate() {
         workerHeartbeatRepository.heartbeatsStatusUpdate();
-        workerHeartbeatRepository.heartbeatsCleanup();
-        this.deadWorkerTaskResubmit();
+        if (workerHeartbeatRepository.heartbeatsCleanup()) {
+            this.deadWorkerTaskResubmit();
+        }
     }
 
     private void deadWorkerTaskResubmit() {
@@ -341,7 +342,7 @@ public class JdbcExecutor implements ExecutorInterface {
             // multiple condition
             if (
                 conditionService.isTerminatedWithListeners(flow, execution) &&
-                this.deduplicateFlowTrigger(execution, executorState)
+                    this.deduplicateFlowTrigger(execution, executorState)
             ) {
                 flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
@@ -488,7 +489,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
                 );
             } catch (InternalException e) {
-                log.warn("Failed to inject template",  e);
+                log.warn("Failed to inject template", e);
             }
         }
 

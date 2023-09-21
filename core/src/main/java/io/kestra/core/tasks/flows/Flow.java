@@ -143,7 +143,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             flowVars.get("namespace"),
             flowVars.get("id")
         )
-            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "." + id + "' with revision + '" + revision + "'"));
+            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "'.'" + flowId + "' with revision + '" + revision + "'"));
 
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute disabled flow");

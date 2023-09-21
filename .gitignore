@@ -35,6 +35,7 @@ webserver/src/main/resources/ui
 yarn.lock
 ui/coverage
 ui/stats.html
+ui/.frontend-gradle-plugin
 
 ### Docker
 /.env

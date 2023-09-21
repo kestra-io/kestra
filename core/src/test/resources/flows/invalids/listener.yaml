@@ -4,8 +4,6 @@ namespace: io.kestra.tests
 listeners:
   - conditions:
       - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
-        in:
-          -
     tasks: []
 
   - tasks: []

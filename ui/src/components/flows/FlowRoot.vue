@@ -1,14 +1,7 @@
 <template>
     <div>
         <div v-if="ready">
-            <el-card v-if="flow.deleted" class="bg-warning" body-class="warning-card">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="warning-text">{{ $t('flow deleted, you can restore it') }}</span>
-                    <span>
-                        <el-button size="small" class="warning-button" @click="restoreFlow()">{{ $t('restore') }}</el-button>
-                    </span>
-                </div>
-            </el-card>
+            <FlowDeletedWarn v-if="flow.deleted" @restore-flow="restoreFlow()"/>
             <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
             <bottom-line v-if="displayBottomLine()">
                 <ul>
@@ -35,6 +28,7 @@
 
 <script setup>
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import FlowDeletedWarn from "./FlowDeletedWarn.vue";
 </script>
 
 <script>
@@ -272,15 +266,3 @@
         }
     };
 </script>
-<style>
-  .warning-card {
-    padding: calc(var(--spacer)/2);
-  }
-  .warning-text {
-    font-size: 0.80rem;
-    color: var(--bs-gray-300);
-  }
-  .warning-button {
-      background-color: var(--bs-body-bg);
-  }
-</style>

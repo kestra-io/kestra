@@ -23,7 +23,7 @@ dependencies {
     // test
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.0")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:3.0.1")
 
     testImplementation project(':jdbc')
     testImplementation project(':jdbc').sourceSets.test.output

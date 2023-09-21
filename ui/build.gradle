@@ -5,7 +5,7 @@ plugins {
 publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 
 frontend {
-    nodeVersion = '18.12.1'
+    nodeVersion = '18.18.0'
     // due to vue-chart-3: https://github.com/victorgarciaesgi/vue-chart-3/pull/138
     installScript = 'install --legacy-peer-deps'
     assembleScript = 'run build'

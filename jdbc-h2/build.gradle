@@ -5,7 +5,7 @@ dependencies {
     implementation project(":jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
-    runtimeOnly("com.h2database:h2:2.1.214")
+    runtimeOnly("com.h2database:h2:2.2.224")
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output

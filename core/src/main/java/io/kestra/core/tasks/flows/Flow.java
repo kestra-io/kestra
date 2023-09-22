@@ -95,6 +95,14 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @PluginProperty
     private final Boolean transmitFailed = false;
 
+    @Builder.Default
+    @Schema(
+        title = "Inherit labels from the calling execution",
+        description = "By default, we don't inherit any labels of the calling execution"
+    )
+    @PluginProperty
+    private final Boolean inheritLabels = false;
+
     @Schema(
         title = "Extract outputs from triggered executions.",
         description = "Allow to specify key value (with value rendered), in order to extract any outputs from " +
@@ -117,7 +125,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     }
 
     @SuppressWarnings("unchecked")
-    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
+    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
 
         Map<String, String> inputs = new HashMap<>();
@@ -128,6 +136,9 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         }
 
         List<Label> labels = new ArrayList<>();
+        if (this.inheritLabels) {
+            labels.addAll(currentExecution.getLabels());
+        }
         if (this.labels != null) {
             for (Map.Entry<String, String> entry: this.labels.entrySet()) {
                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));

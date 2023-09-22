@@ -579,7 +579,7 @@ public class ExecutorService {
                 );
 
                 try {
-                    Execution execution = flowTask.createExecution(runContext, flowExecutorInterface());
+                    Execution execution = flowTask.createExecution(runContext, flowExecutorInterface(), executor.getExecution());
 
                     WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
                         .task(flowTask)

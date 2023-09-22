@@ -10,8 +10,8 @@
                             class="task-icon me-1"
                         >
                             <task-icon
-                                :cls="taskIcon(currentTaskRun.taskId)"
-                                v-if="taskIcon(currentTaskRun.taskId)"
+                                :cls="taskIcon(currentTaskRun)"
+                                v-if="taskIcon(currentTaskRun)"
                                 only-icon
                             />
                         </div>
@@ -550,9 +550,13 @@
             uniqueTaskRunDisplayFilter(currentTaskRun) {
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);
             },
-            taskIcon(taskId) {
-                let findTaskById = FlowUtils.findTaskById(this.flow, taskId);
-                return findTaskById ? findTaskById.type : undefined;
+            taskIcon(taskRun) {
+                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                const parentTaskRunId = taskRun.parentTaskRunId;
+                if(task === undefined && parentTaskRunId) {
+                    return this.taskIcon(this.taskRunById[parentTaskRunId])
+                }
+                return task ? task.type : undefined;
             },
             loadLogs(executionId) {
                 this.$store.dispatch("execution/loadLogsNoCommit", {

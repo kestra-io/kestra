@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface FlowRepositoryInterface {
 
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
+
     default Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
         return this.findById(namespace, id, revision, false);
     }

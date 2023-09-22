@@ -277,7 +277,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void deleteFlow() {
+    void deletedFlow() {
         Flow flow = generateFlow("io.kestra.unittest", "a");
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), FlowWithSource.class);
@@ -296,6 +296,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         });
 
         assertThat(e.getStatus(), is(NOT_FOUND));
+
+        String deletedResult = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "?allowDeleted=true"), String.class);
+        Flow deletedFlow = new YamlFlowParser().parse(deletedResult, Flow.class);
+
+        assertThat(deletedFlow.isDeleted(), is(true));
     }
 
     @Test

@@ -19,10 +19,10 @@
 </script>
 
 <template>
-    <el-card body-class="warning-card">
+    <el-card class="mb-2" body-class="p-2">
         <div class="d-flex justify-content-between align-items-center">
             <span class="warning-text d-flex align-items-center">
-                <Alert class="warning-icon" />
+                <Alert class="warning-icon mx-3" />
                 {{ $t("flow deleted, you can restore it") }}
             </span>
 
@@ -40,16 +40,11 @@
         color: var(--bs-warning);
         font-size: 2rem;
     }
-    .warning-card {
-        padding: calc(var(--spacer) / 2);
-    }
-
     .warning-text {
         .html.dark & {
             color: white;
         }
     }
-
     .warning-button {
         background-color: var(--bs-body-bg);
     }

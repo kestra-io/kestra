@@ -1,13 +1,13 @@
 <template>
     <div>
         <div v-if="ready">
-            <FlowDeletedWarn v-if="flow.deleted" @restore-flow="restoreFlow()"/>
+            <FlowDeletedWarn v-if="deleted" @restore-flow="restoreFlow()"/>
             <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
             <bottom-line v-if="displayBottomLine()">
                 <ul>
                     <li>
                         <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="flow.deleted">
+                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="deleted">
                                 {{ $t("edit flow") }}
                             </el-button>
                         </template>
@@ -15,7 +15,7 @@
                     <li>
                         <trigger-flow
                             v-if="flow"
-                            :disabled="flow.disabled || flow.deleted"
+                            :disabled="flow.disabled || deleted"
                             :flow-id="flow.id"
                             :namespace="flow.namespace"
                         />
@@ -83,9 +83,10 @@
                     const query = {...this.$route.query, allowDeleted: true};
                     return this.$store.dispatch("flow/loadFlow", {...this.$route.params, ...query}).then(() => {
                         if (this.flow) {
+                            this.deleted = this.flow.deleted;
                             this.previousFlow = this.flowKey();
                             this.$store.dispatch("flow/loadGraph", {
-                                flow: this.flow,
+                                flow: this.flow
                             });
                             this.$http
                                 .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
@@ -93,7 +94,6 @@
                                     this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
                                 })
                         }
-
                     });
                 }
             },
@@ -130,7 +130,10 @@
                         name: "executions",
                         component: FlowExecutions,
                         title: this.$t("executions"),
-                        query: this.$route.query
+                        props: {
+                            expandedSubflows: this.expandedSubflows,
+                            isReadOnly: this.deleted
+                        },
                     });
                 }
 
@@ -141,7 +144,7 @@
                         title: this.$t("editor"),
                         props: {
                             expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.flow.deleted
+                            isReadOnly: this.deleted
                         },
                     });
                 }
@@ -216,6 +219,7 @@
                     .then((response) => {
                         this.$toast().saved(response.id);
                         this.$store.dispatch("core/isUnsaved", false);
+                        this.$router.go();
                     })
             }
         },

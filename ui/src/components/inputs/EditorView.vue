@@ -828,7 +828,7 @@
         <ul>
             <li v-if="(isAllowedEdit || canDelete) && !isTopoOnly">
                 <el-dropdown>
-                    <el-button size="large" type="default" :disabled="flow.deleted">
+                    <el-button size="large" type="default" :disabled="isReadOnly">
                         <DotsVertical title="" />
                         {{ t("actions") }}
                     </el-button>
@@ -891,7 +891,7 @@
                     v-if="!props.isCreating"
                     ref="triggerFlowDomElement"
                     type="default"
-                    :disabled="flow.disabled || flow.deleted"
+                    :disabled="flow.disabled || isReadOnly"
                     :flow-id="flow.id"
                     :namespace="flow.namespace"
                 />

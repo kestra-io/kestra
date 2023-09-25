@@ -19,6 +19,7 @@ import java.util.Objects;
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
@@ -47,6 +48,7 @@ class ConcatTest {
         Concat result = Concat.builder()
             .files(json ? JacksonMapper.ofJson().writeValueAsString(files) : files)
             .separator("\n")
+            .extension(".yml")
             .build();
 
         Concat.Output run = result.run(runContext);
@@ -57,6 +59,7 @@ class ConcatTest {
             CharStreams.toString(new InputStreamReader(storageInterface.get(run.getUri()))),
             is(s + "\n" + s + "\n")
         );
+        assertThat(run.getUri().getPath(), endsWith(".yml"));
     }
 
     @Test

@@ -579,6 +579,18 @@ public class ExecutorService {
                 );
 
                 try {
+                    // mark taskrun as running to avoid multiple try for failed
+                    TaskRun taskRunByTaskRunId = executor.getExecution()
+                        .findTaskRunByTaskRunId(workerTask.getTaskRun().getId());
+
+                    executor.withExecution(
+                        executor
+                            .getExecution()
+                            .withTaskRun(taskRunByTaskRunId.withState(State.Type.RUNNING)),
+                        "handleFlowTaskRunning"
+                    );
+
+                    // create the execution
                     Execution execution = flowTask.createExecution(runContext, flowExecutorInterface(), executor.getExecution());
 
                     WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()

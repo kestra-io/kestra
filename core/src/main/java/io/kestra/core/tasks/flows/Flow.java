@@ -147,10 +147,14 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
 
         Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
 
+        String namespace = runContext.render(this.namespace);
+        String flowId = runContext.render(this.flowId);
+        Optional<Integer> revision = this.revision != null ? Optional.of(this.revision) : Optional.empty();
+
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
-            runContext.render(this.namespace),
-            runContext.render(this.flowId),
-            this.revision != null ? Optional.of(this.revision) : Optional.empty(),
+            namespace,
+            flowId,
+            revision,
             flowVars.get("namespace"),
             flowVars.get("id")
         )

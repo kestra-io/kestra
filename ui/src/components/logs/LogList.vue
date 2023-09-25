@@ -317,11 +317,12 @@
 
                     if (!this.targetFlow) {
                         this.flow = await this.$store.dispatch(
-                            "flow/loadFlowNoCommit",
+                            "flow/loadFlow",
                             {
                                 namespace: newExecution.namespace,
                                 id: newExecution.flowId,
-                                revision: newExecution.flowRevision
+                                revision: newExecution.flowRevision,
+                                store: false
                             }
                         );
                     }
@@ -552,10 +553,12 @@
                 return task ? task.type : undefined;
             },
             loadLogs(executionId) {
-                this.$store.dispatch("execution/loadLogsNoCommit", {
-                    executionId, params: {
+                this.$store.dispatch("execution/loadLogs", {
+                    executionId,
+                    params: {
                         minLevel: this.level
-                    }
+                    },
+                    store: false
                 }).then(logs => {
                     this.logs = logs
                 });

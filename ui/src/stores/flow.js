@@ -54,7 +54,7 @@ export default {
                 return response.data;
             })
         },
-        loadFlowNoCommit({commit}, options) {
+        loadFlow({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}?source=true`,
                 {
                     params: options,
@@ -78,12 +78,6 @@ export default {
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
-        },
-        loadFlow({commit, dispatch}, options) {
-            return dispatch("loadFlowNoCommit", options).then(flow => {
-                commit("setFlow", flow);
-                commit("setOverallTotal", 1)
-            });
         },
         loadTask({commit}, options) {
             return this.$http.get(
@@ -205,16 +199,11 @@ export default {
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)
         },
-        loadRevisions({commit, dispatch}, options) {
-            return dispatch("loadRevisionsNoCommit", options).then(revisions => {
-                commit("setRevisions", revisions)
-                return revisions;
-            });
-        },
-        loadRevisionsNoCommit(_, options) {
+        loadRevisions({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+                commit("setRevisions", response.data)
                 return response.data;
-            });
+            })
         },
         exportFlowByIds(_, options) {
             return this.$http.post(`${apiUrl(this)}/flows/export/by-ids`, options.ids, {responseType: "blob"})

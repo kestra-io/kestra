@@ -120,34 +120,34 @@ export default {
         followLogs(_, options) {
             return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`);
         },
-        loadLogsNoCommit({commit}, options) {
+        loadLogs({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
-                return response.data;
-            })
-        },
-        loadLogs({commit, dispatch}, options) {
-            return dispatch("loadLogsNoCommit", options).then(logs => {
-                if(options.params.page !== 1) {
-                    commit("appendLogs", logs)
-                } else {
-                    commit("setLogs", logs)
+                if (options.store === false) {
+                    return response.data
                 }
+                if(options.params.page !== 1) {
+                    commit("appendLogs", response.data)
+                } else {
+                    commit("setLogs", response.data)
+                }
+
+                return response.data
             });
         },
-        loadMetrics({commit, dispatch}, options) {
-            return dispatch("loadMetricsNoCommit", options).then(metrics => {
-                commit("setMetrics", metrics.results)
-                commit("setMetricsTotal", metrics.total)
-            });
-        },
-        loadMetricsNoCommit({commit}, options) {
+        loadMetrics({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/metrics/${options.executionId}`, {
                 params: options.params
             }).then(response => {
+                if (options.store === false) {
+                    return response.data
+                }
+                commit("setMetrics", response.data.results)
+                commit("setMetricsTotal", response.data.total)
+
                 return response.data
-            })
+            });
         },
         downloadLogs(_, options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}/download`, {

@@ -94,35 +94,40 @@ public class Split extends Task implements RunnableTask<Split.Output> {
     @Override
     public Split.Output run(RunContext runContext) throws Exception {
         URI from = new URI(runContext.render(this.from));
-
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(from)));
-
-        List<Path> splited;
-
-        if (this.bytes != null) {
-            ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
-            Number convert = readableBytesTypeConverter.convert(this.bytes, Number.class)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + this.bytes + "'"));
-
-            splited = split(runContext, bufferedReader, (bytes, size) -> bytes >= convert.longValue());
-        } else if (this.partitions != null) {
-            splited = partition(runContext, bufferedReader, this.partitions);
-        } else if (this.rows != null) {
-            splited = split(runContext, bufferedReader, (bytes, size) -> size >= this.rows);
-        } else {
-            throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
+        String fromPath = from.getPath();
+        String extension = ".tmp";
+        if (fromPath.indexOf('.') >= 0) {
+            extension = fromPath.substring(fromPath.lastIndexOf('.'));
         }
 
-        return Split.Output.builder()
-            .uris(splited
-                .stream()
-                .map(throwFunction(path -> runContext.putTempFile(path.toFile())))
-                .collect(Collectors.toList())
-            )
-            .build();
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(from)))) {
+            List<Path> splited;
+
+            if (this.bytes != null) {
+                ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
+                Number convert = readableBytesTypeConverter.convert(this.bytes, Number.class)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + this.bytes + "'"));
+
+                splited = split(runContext, extension, bufferedReader, (bytes, size) -> bytes >= convert.longValue());
+            } else if (this.partitions != null) {
+                splited = partition(runContext, extension, bufferedReader, this.partitions);
+            } else if (this.rows != null) {
+                splited = split(runContext, extension, bufferedReader, (bytes, size) -> size >= this.rows);
+            } else {
+                throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
+            }
+
+            return Split.Output.builder()
+                .uris(splited
+                    .stream()
+                    .map(throwFunction(path -> runContext.putTempFile(path.toFile())))
+                    .collect(Collectors.toList())
+                )
+                .build();
+        }
     }
 
-    public List<Path> split(RunContext runContext, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate) throws IOException {
+    private List<Path> split(RunContext runContext, String extension, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate) throws IOException {
         List<Path> files = new ArrayList<>();
         RandomAccessFile write = null;
         int totalBytes = 0;
@@ -138,7 +143,7 @@ public class Split extends Task implements RunnableTask<Split.Output> {
                 totalBytes = 0;
                 totalRows = 0;
 
-                Path path = runContext.tempFile();
+                Path path = runContext.tempFile(extension);
                 files.add(path);
                 write = new RandomAccessFile(path.toFile(), "rw");
             }
@@ -158,12 +163,12 @@ public class Split extends Task implements RunnableTask<Split.Output> {
         return files;
     }
 
-    public List<Path> partition(RunContext runContext, BufferedReader bufferedReader, int partition) throws IOException {
+    private List<Path> partition(RunContext runContext, String extension, BufferedReader bufferedReader, int partition) throws IOException {
         List<Path> files = new ArrayList<>();
         List<RandomAccessFile> writers = new ArrayList<>();
 
         for (int i = 0; i < partition; i++) {
-            Path path = runContext.tempFile();
+            Path path = runContext.tempFile(extension);
             files.add(path);
 
             writers.add(new RandomAccessFile(path.toFile(), "rw"));

@@ -595,7 +595,7 @@
         }
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--bs-gray-600);
+            border-top: 1px solid var(--bs-border-color);
         }
 
         :deep(.line) {
@@ -675,7 +675,11 @@
 
         .attempt-wrapper {
             margin-bottom: var(--spacer);
-            background-color: var(--bs-gray-100);
+            background-color: var(--bs-white);
+
+            html.dark & {
+                background-color: var(--bs-gray-100);
+            }
 
             .attempt-wrapper & {
                 border-radius: .25rem;

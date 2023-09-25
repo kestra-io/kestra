@@ -118,7 +118,6 @@
         display: flex;
         align-items: start;
         gap: $spacer;
-        line-height: 1.66;
 
         .log-level {
             padding: calc(var(--spacer) / 4);
@@ -126,22 +125,18 @@
 
         .log-content {
             .header {
-                margin-bottom: calc(var(--spacer) / 4);
+                color: var(--bs-gray-400);
 
-                > * + *{
+                html.dark & {
+                    color: var(--bs-gray-600);
+                }
+
+                > * + * {
                     margin-left: $spacer;
                 }
             }
         }
 
-        span {
-            margin-bottom: 2px;
-            color: #574F6C;
-
-            html.dark & {
-                color: $white;
-            }
-        }
         .el-tag {
             border-radius: 0;
             border: 0;
@@ -158,25 +153,15 @@
             span:first-child {
                 margin-right: 6px;
                 font-family: var(--bs-font-sans-serif);
-                color: #574F6C;
-
-                html.dark & {
-                    color: var(--bs-gray-900);
-                }
-
                 user-select: none;
 
                 &::after{
                     content: ":";
                 }
             }
-            & a {
-                color: $indigo;
-                border-radius: var(--bs-border-radius);
-            }
 
-            & a:hover {
-                color: var(--bs-link-color);
+            & a {
+                border-radius: var(--bs-border-radius);
             }
 
             &.log-level {

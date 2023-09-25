@@ -135,6 +135,8 @@
     };
 </script>
 <style lang="scss" scoped>
+    @import "@kestra-io/ui-libs/src/scss/variables";
+
     .log-panel {
         > div.log-content {
             margin-bottom: var(--spacer);
@@ -147,14 +149,17 @@
             margin-bottom: var(--spacer);
             border-radius: var(--bs-border-radius-lg);
             overflow: hidden;
+            padding: $spacer;
+            background-color: var(--bs-white);
+            border: 1px solid var(--bs-border-color);
+
+            html.dark & {
+                background-color: var(--bs-gray-100);
+            }
 
             * + * {
                 border-top: 1px solid var(--bs-border-color);
             }
-        }
-
-        .line {
-            background-color: var(--bs-gray-100);
         }
     }
 </style>

@@ -69,10 +69,6 @@
             type: Boolean,
             default: false
         },
-        isTopoOnly: {
-            type: Boolean,
-            default: true
-        },
         isReadOnly: {
             type: Boolean,
             default: true
@@ -117,7 +113,7 @@
     const initViewType = () => {
         const defaultValue = editorViewTypes.SOURCE_DOC;
 
-        if (props.execution || props.isTopoOnly) {
+        if (props.execution) {
             return editorViewTypes.TOPOLOGY;
         }
 
@@ -192,7 +188,7 @@
             await generateGraph();
         }
 
-        if (!props.isTopoOnly) {
+        if (!props.isReadOnly) {
             let restoredLocalStorageKey;
             const sourceFromLocalStorage = localStorage.getItem((restoredLocalStorageKey = autoRestorelocalStorageKey.value)) ?? localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
             if (sourceFromLocalStorage !== null) {
@@ -278,30 +274,6 @@
             tourStarted: false
         });
     }
-
-
-    const viewTypeOnReadOnly = () => {
-        const defaultValue = SOURCE_TOPOLOGY_VIEW_TYPE;
-
-        if (props.isCreating) {
-            return editorViewTypes.SOURCE;
-        }
-
-        if (props.execution || props.isTopoOnly) {
-            return editorViewTypes.TOPOLOGY;
-        }
-
-        const storedValue = loadViewType();
-        if (storedValue) {
-            return storedValue;
-        }
-
-        return defaultValue;
-    }
-
-    watch(() => props.isTopoOnly, async () => {
-        viewType.value = viewTypeOnReadOnly();
-    });
 
     watch(() => props.guidedProperties, () => {
         if (localStorage.getItem("tourDoneOrSkip") !== "true") {
@@ -727,7 +699,7 @@
                 :flow-id="flowId"
                 :namespace="namespace"
                 :execution="execution"
-                :is-read-only="isReadOnly || isTopoOnly"
+                :is-read-only="isReadOnly"
                 :source="flowYaml"
                 :is-allowed-edit="isAllowedEdit()"
                 :view-type="viewType"
@@ -818,7 +790,6 @@
             </template>
         </el-drawer>
         <switch-view
-            v-if="!isTopoOnly"
             :type="viewType"
             class="to-topology-button"
             @switch-view="switchViewType"
@@ -826,7 +797,7 @@
     </el-card>
     <bottom-line v-if="!graphOnly">
         <ul>
-            <li v-if="(isAllowedEdit || canDelete) && !isTopoOnly">
+            <li v-if="isAllowedEdit || canDelete">
                 <el-dropdown>
                     <el-button size="large" type="default" :disabled="isReadOnly">
                         <DotsVertical title="" />

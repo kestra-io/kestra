@@ -5,7 +5,6 @@
             :namespace="defaultFlowTemplate.namespace"
             :is-creating="true"
             :flow-graph="flowGraph"
-            :is-topo-only="false"
             :is-read-only="false"
             :total="total"
             :guided-properties="guidedProperties"

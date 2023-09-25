@@ -1,9 +1,9 @@
 <template>
     <div class="line font-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge log-level el-tag noselect">{{ log.level }}</span>
+        <span :class="levelClass" class="header-badge log-level el-tag noselect fw-bold">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <div class="header" :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}">
-                <span class="header-badge noselect">
+                <span class="header-badge">
                     {{ $filters.date(log.timestamp, "iso") }}
                 </span>
                 <span v-for="(meta, x) in metaWithValue" :key="x">
@@ -111,6 +111,7 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     div.line {
+        cursor: text;
         white-space: pre-wrap;
         word-break: break-all;
         padding: calc(var(--spacer) / 2);
@@ -135,6 +136,11 @@
 
         span {
             margin-bottom: 2px;
+            color: #574F6C;
+
+            html.dark & {
+                color: $white;
+            }
         }
         .el-tag {
             border-radius: 0;
@@ -164,7 +170,7 @@
                     content: ":";
                 }
             }
-            &:not(.el-tag):not(.noselect), & a {
+            & a {
                 color: $indigo;
                 border-radius: var(--bs-border-radius);
             }
@@ -175,7 +181,7 @@
 
             &.log-level {
                 white-space: pre;
-                border-radius: var(--bs-border-radius);
+                border-radius: 2px;
                 color: $black;
             }
         }
@@ -191,11 +197,6 @@
 
         .message {
             line-height: 1.8;
-            color: #574F6C;
-
-            html.dark & {
-                color: #C6C1D9;
-            }
         }
     }
 </style>

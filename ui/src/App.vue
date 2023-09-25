@@ -79,11 +79,9 @@
                 this.loaded = true;
             },
             setTitleEnvSuffix() {
-                if (!this.envName) {
-                    return;
-                }
+                const envSuffix = this.envName ? ` - ${this.envName}` : "";
 
-                document.title = document.title.replace(/( - .+)?$/, ` - ${this.envName}`);
+                document.title = document.title.replace(/( - .+)?$/, envSuffix);
             },
             async loadGeneralResources() {
                 let uid = localStorage.getItem("uid");

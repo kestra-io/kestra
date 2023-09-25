@@ -56,7 +56,6 @@
                         @follow="forwardEvent('follow', $event)"
                         :target-execution="execution"
                         :target-flow="flow"
-                        class="no-click-handler"
                     />
                 </td>
             </tr>

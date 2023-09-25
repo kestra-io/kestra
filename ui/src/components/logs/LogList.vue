@@ -4,10 +4,10 @@
             <template
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
             >
-                <el-card class="attempt-wrapper" @click.stop="handleAttemptClick(currentTaskRun)">
+                <el-card class="attempt-wrapper">
                     <div class="attempt-header">
                         <div
-                            class="task-icon me-1"
+                            class="task-icon"
                         >
                             <task-icon
                                 :cls="taskIcon(currentTaskRun)"
@@ -31,11 +31,11 @@
                                     {{ $filters.humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
                                 </template>
                                 <span>
-                                        <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
-                                        <small v-if="currentTaskRun.value">
-                                            {{ currentTaskRun.value }}
-                                        </small>
-                                    </span>
+                                    <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
+                                    <small v-if="currentTaskRun.value">
+                                        {{ currentTaskRun.value }}
+                                    </small>
+                                </span>
                             </el-tooltip>
                         </div>
 
@@ -61,7 +61,7 @@
                         </el-select>
 
                         <el-button v-if="!taskRunId" class="border-0 expand-collapse" type="default" text
-                                   @click.stop="() => toggleShowAttempt(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                                   @click="() => toggleShowAttempt(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                         >
                             <ChevronDown
                                 v-if="!shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -70,7 +70,7 @@
                         </el-button>
 
                         <el-dropdown trigger="click">
-                            <el-button type="default" class="more-dropdown-button" @click.stop>
+                            <el-button type="default" class="more-dropdown-button">
                                 <DotsHorizontal title="" />
                             </el-button>
                             <template #dropdown>
@@ -405,13 +405,6 @@
             toggleExpandCollapseAll() {
                 this.shownAttemptsUid.length === 0 ? this.expandAll() : this.collapseAll();
             },
-            handleAttemptClick(taskRun) {
-                if(this.$el.classList.contains("no-click-handler")) {
-                    return;
-                }
-
-                this.toggleShowAttempt(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id]))
-            },
             autoExpandBasedOnSettings() {
                 if(this.autoExpandTaskrunStates.length === 0) {
                     return;
@@ -602,7 +595,7 @@
         }
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--bs-gray-600);
+            border-top: 1px solid var(--bs-border-color);
         }
 
         :deep(.line) {
@@ -653,13 +646,7 @@
             .task-icon {
                 width: 36px;
                 padding: 6px;
-                background: var(--bs-gray-200);
                 border-radius: $border-radius-lg;
-                border: 1px solid var(--bs-gray-300);
-
-                html.dark & {
-                    border: 1px solid var(--bs-gray-600);
-                }
             }
 
             small {
@@ -688,9 +675,14 @@
 
         .attempt-wrapper {
             margin-bottom: var(--spacer);
+            background-color: var(--bs-white);
 
-            &:not(.no-click-handler .attempt-wrapper) {
-                cursor: pointer;
+            html.dark & {
+                background-color: var(--bs-gray-100);
+            }
+
+            .attempt-wrapper & {
+                border-radius: .25rem;
             }
         }
 

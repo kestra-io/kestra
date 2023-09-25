@@ -51,7 +51,7 @@
 
                         <el-select v-model="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
                                    @change="swapDisplayedAttempt(currentTaskRun.id, $event)"
-                                   :disabled="currentTaskRun.attempts?.length <= 1"
+                                   :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
                         >
                             <el-option v-for="(_, index) in attempts(currentTaskRun)"
                                        :key="`attempt-${index}-${currentTaskRun.id}`"

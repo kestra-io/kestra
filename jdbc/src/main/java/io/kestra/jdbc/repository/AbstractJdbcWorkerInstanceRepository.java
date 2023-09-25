@@ -54,8 +54,9 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
                 Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select);
 
                 if (workerInstance.isPresent()) {
-                    this.save(workerInstance.get().toBuilder().status(WorkerInstance.Status.UP).heartbeatDate(Instant.now()).build());
-                    return workerInstance;
+                    WorkerInstance updatedWorker = workerInstance.get().toBuilder().status(WorkerInstance.Status.UP).heartbeatDate(Instant.now()).build();
+                    this.save(updatedWorker);
+                    return Optional.of(updatedWorker);
                 }
                 return Optional.empty();
             });
@@ -118,7 +119,6 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
         );
         return bool.get();
     }
-
 
     @Override
     public List<WorkerInstance> findAll() {

@@ -18,10 +18,14 @@ jackson:
     FAIL_ON_UNKNOWN_PROPERTIES: false
 
 kestra:
+  server-type: STANDALONE
   storage:
     type: local
     local:
       base-path: /tmp/unittest
+  heartbeat:
+    frequency: 10s
+    heartbeat-missed: 3
   anonymous-usage-report:
     enabled: true
     uri: https://api.kestra.io/v1/reports/usages
@@ -81,6 +85,12 @@ kestra:
       flowtopologies:
         table: "flow_topologies"
         cls: io.kestra.core.models.topologies.FlowTopology
+      workerinstance:
+        cls: io.kestra.core.runners.WorkerInstance
+        table: "worker_instance"
+      workerjobrunning:
+        cls: io.kestra.core.runners.WorkerJobRunning
+        table: "worker_job_running"
 datasources:
   h2:
     url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

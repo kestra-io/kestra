@@ -10,6 +10,7 @@ frontend {
     installScript = 'install --legacy-peer-deps'
     assembleScript = 'run build'
     checkScript = 'run test:unit'
+    maxDownloadAttempts = 5
 }
 
 tasks.named('installFrontend') {

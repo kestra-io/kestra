@@ -2,6 +2,9 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -28,8 +31,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
@@ -124,6 +127,18 @@ public abstract class JdbcRunnerTest {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(11));
+    }
+
+    @Test
+    void eachParallelWithSubflowMissing() throws TimeoutException {
+        Execution execution =  runnerUtils.runOne("io.kestra.tests", "each-parallel-subflow-notfound");
+
+        assertThat(execution, notNullValue());
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        // on JDBC, when using an each parallel, the flow is failed even if not all subtasks of the each parallel are ended as soon as
+        // there is one failed task FIXME https://github.com/kestra-io/kestra/issues/2179
+        // so instead of asserting that all tasks FAILED we assert that at least two failed (the each parallel and one of its subtasks)
+        assertThat(execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed()).count(), is(2L)); // Should be 3
     }
 
     @Test

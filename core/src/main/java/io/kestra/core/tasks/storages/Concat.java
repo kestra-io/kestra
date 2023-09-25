@@ -19,6 +19,8 @@ import java.io.FileOutputStream;
 import java.net.URI;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @SuperBuilder
@@ -89,6 +91,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         description = "Must be a `kestra://` storage urls, can be a list of string or json string"
     )
     @PluginProperty(dynamic = true)
+    @NotNull
     private Object files;
 
     @Schema(
@@ -97,10 +100,17 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
     @PluginProperty(dynamic = true)
     private String separator;
 
+    @Schema(
+        title = "The extension of the created file, default is .tmp"
+    )
+    @PluginProperty(dynamic = true)
+    @Builder.Default
+    private String extension = ".tmp";
+
     @SuppressWarnings("unchecked")
     @Override
     public Concat.Output run(RunContext runContext) throws Exception {
-        File tempFile = runContext.tempFile().toFile();
+        File tempFile = runContext.tempFile(extension).toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             List<String> finalFiles;
             if (this.files instanceof List) {

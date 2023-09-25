@@ -745,20 +745,28 @@ public class RunContext {
         return this.temporaryDirectory;
     }
 
+    /**
+     * @deprecated use {@link #tempFile(String)} instead
+     */
+    @Deprecated
     public Path tempFile() throws IOException {
         return this.tempFile(null, null);
     }
 
-    public Path tempFile(String suffix) throws IOException {
-        return this.tempFile(null, suffix);
+    public Path tempFile(String extension) throws IOException {
+        return this.tempFile(null, extension);
     }
 
+    /**
+     * @deprecated use {@link #tempFile(byte[], String)} instead
+     */
+    @Deprecated
     public Path tempFile(byte[] content) throws IOException {
         return this.tempFile(content, null);
     }
 
-    public Path tempFile(byte[] content, String suffix) throws IOException {
-        Path tempFile = Files.createTempFile(this.tempDir(), null, suffix);
+    public Path tempFile(byte[] content, String extension) throws IOException {
+        Path tempFile = Files.createTempFile(this.tempDir(), null, extension);
 
         if (content != null) {
             Files.write(tempFile, content);

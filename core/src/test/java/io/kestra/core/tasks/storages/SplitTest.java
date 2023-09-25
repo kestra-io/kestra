@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
@@ -45,6 +46,7 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size(), is(8));
+        assertThat(run.getUris().get(0).getPath(), endsWith(".yml"));
         assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n"), is(1000));
     }
 

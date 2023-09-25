@@ -559,7 +559,7 @@ public class Worker implements Runnable, AutoCloseable {
                     this.executors.shutdown();
                     this.executors.awaitTermination(5, TimeUnit.MINUTES);
                 } catch (InterruptedException e) {
-                    log.error("Failed to shutdown workers executors", e);
+                    log.error("Fail to shutdown the worker", e);
                 }
             },
             "worker-shutdown"
@@ -567,21 +567,21 @@ public class Worker implements Runnable, AutoCloseable {
 
         Await.until(
             () -> {
-                if (this.executors.isTerminated() && this.workerThreadReferences.size() == 0) {
-                    log.info("No more workers busy, shutting down!");
+                if (this.executors.isTerminated() && this.workerThreadReferences.isEmpty()) {
+                    log.info("No more worker threads busy, shutting down!");
 
                     // we ensure that last produce message are send
                     try {
                         this.workerTaskResultQueue.close();
                     } catch (IOException e) {
-                        log.error("Failed to close workerTaskResultQueue", e);
+                        log.error("Failed to close the workerTaskResultQueue", e);
                     }
 
                     return true;
                 }
 
                 log.warn(
-                    "Waiting worker with still {} thread(s) running, waiting!",
+                    "Worker still has {} thread(s) running, waiting all threads to terminate before shutdown!",
                     this.workerThreadReferences.size()
                 );
 

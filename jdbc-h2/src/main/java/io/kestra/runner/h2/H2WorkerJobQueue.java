@@ -44,7 +44,7 @@ public class H2WorkerJobQueue implements WorkerJobQueueInterface {
                 WorkerJob workerJob = either.getLeft();
                 WorkerInstance workerInstance = null;
                 try {
-                    workerInstance = jdbcHeartbeat.get().toWorkerInstance();
+                    workerInstance = jdbcHeartbeat.get();
                 } catch (UnknownHostException e) {
                     throw new RuntimeException(e);
                 }

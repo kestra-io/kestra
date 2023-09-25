@@ -24,7 +24,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
-import io.kestra.jdbc.repository.AbstractJdbcWorkerHeartbeatRepository;
+import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.scheduling.annotation.Scheduled;
@@ -124,7 +124,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private AbstractJdbcFlowTopologyRepository flowTopologyRepository;
 
     @Inject
-    private AbstractJdbcWorkerHeartbeatRepository workerHeartbeatRepository;
+    private AbstractJdbcWorkerInstanceRepository workerInstanceRepository;
 
     protected List<Flow> allFlows;
 
@@ -210,14 +210,14 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}")
     protected void workersUpdate() {
-        workerHeartbeatRepository.heartbeatsStatusUpdate();
-        if (workerHeartbeatRepository.heartbeatsCleanup()) {
+        workerInstanceRepository.heartbeatsStatusUpdate();
+        if (workerInstanceRepository.heartbeatsCleanup()) {
             this.deadWorkerTaskResubmit();
         }
     }
 
     private void deadWorkerTaskResubmit() {
-        workerJobRunningRepository.getWorkerJobWithWorkerDead(workerHeartbeatRepository.findAllAlive().stream().map(workerHeartbeat -> workerHeartbeat.getWorkerUuid().toString()).collect(Collectors.toList()))
+        workerJobRunningRepository.getWorkerJobWithWorkerDead(workerInstanceRepository.findAllAlive().stream().map(workerInstance -> workerInstance.getWorkerUuid().toString()).collect(Collectors.toList()))
             .forEach(workerJobRunning -> {
                 if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
                     workerTaskQueue.emit(WorkerTask.builder()

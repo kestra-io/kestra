@@ -1,6 +1,6 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.core.repositories.WorkerHeartbeatRepositoryInterface;
+import io.kestra.core.repositories.WorkerInstanceRepositoryInterface;
 import io.kestra.core.runners.WorkerInstance;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.MediaType;
@@ -15,15 +15,15 @@ import jakarta.inject.Inject;
 import java.util.List;
 
 @Controller("/api/v1/workers")
-@Requires(bean = WorkerHeartbeatRepositoryInterface.class)
+@Requires(bean = WorkerInstanceRepositoryInterface.class)
 public class WorkerInstanceController {
     @Inject
-    private WorkerHeartbeatRepositoryInterface workerHeartbeatRepositoryInterface;
+    private WorkerInstanceRepositoryInterface workerInstanceRepositoryInterface;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Workers"}, summary = "Get all workers")
-    public List<? extends WorkerInstance> findAll() throws HttpStatusException {
-        return workerHeartbeatRepositoryInterface.findAll();
+    public List<WorkerInstance> findAll() throws HttpStatusException {
+        return workerInstanceRepositoryInterface.findAll();
     }
 }

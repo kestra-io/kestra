@@ -1,5 +1,5 @@
-/* ----------------------- workerHeartbeat ----------------------- */
-CREATE TABLE IF NOT EXISTS worker_heartbeat (
+/* ----------------------- workerInstance ----------------------- */
+CREATE TABLE IF NOT EXISTS worker_instance (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `worker_uuid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerUuid') STORED NOT NULL,

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.core.repositories.WorkerHeartbeatRepositoryInterface;
+import io.kestra.core.repositories.WorkerInstanceRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -51,9 +51,6 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.environment.color}")
     @Nullable
     protected String environmentColor;
-
-    @Inject
-    private Optional<WorkerHeartbeatRepositoryInterface> workerHeartbeatRepositoryInterface;
 
     @Get("/ping")
     @Hidden

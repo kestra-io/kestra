@@ -9,7 +9,7 @@
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
-                :label="input.type === 'BOOLEAN' ? undefined : input.name"
+                :label="input.name"
                 :required="input.required !== false"
                 :prop="input.name"
             >
@@ -39,9 +39,6 @@
                 <el-switch
                     v-if="input.type === 'BOOLEAN'"
                     v-model="inputs[input.name]"
-                    active-value="true"
-                    :active-text="input.name"
-                    inactive-value="false"
                 />
                 <el-date-picker
                     v-if="input.type === 'DATETIME'"
@@ -149,8 +146,8 @@
             for (const input of this.flow.inputs || []) {
                 this.inputs[input.name] = input.defaults;
 
-                if(input.type === "BOOLEAN" && input.defaults){
-                    this.inputs[input.name] = (/true/i).test(input.defaults);
+                if (input.type === "BOOLEAN" && input.defaults){
+                    this.inputs[input.name] = (/true/i).test(input.defaults) || input.defaults === true;
                 }
             }
         },

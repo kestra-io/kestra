@@ -427,7 +427,7 @@ public class ExecutionController {
     public Execution trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs") @Nullable @Body Map<String, String> inputs,
+        @Parameter(description = "The inputs") @Nullable @Body Map<String, Object> inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,

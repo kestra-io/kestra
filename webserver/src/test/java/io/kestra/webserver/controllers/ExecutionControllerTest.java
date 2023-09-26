@@ -66,7 +66,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
-    public static Map<String, String> inputs = ImmutableMap.<String, String>builder()
+    public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("failed", "NO")
         .put("string", "myString")
         .put("int", "42")

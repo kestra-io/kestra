@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class InputsTest extends AbstractMemoryRunnerTest {
-    public static Map<String, String> inputs = ImmutableMap.<String, String>builder()
+    public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
         .put("int", "42")
         .put("float", "42.42")
@@ -63,11 +63,11 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
-    private Map<String, Object> typedInputs(Map<String, String> map) {
+    private Map<String, Object> typedInputs(Map<String, Object> map) {
         return typedInputs(map, flowRepository.findById("io.kestra.tests", "inputs").get());
     }
 
-    private Map<String, Object> typedInputs(Map<String, String> map, Flow flow) {
+    private Map<String, Object> typedInputs(Map<String, Object> map, Flow flow) {
         return runnerUtils.typedInputs(
             flow,
             Execution.builder()
@@ -88,7 +88,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void nonRequiredNoDefaultNoValueIsNull() {
-        HashMap<String, String> inputsWithMissingOptionalInput = new HashMap<>(inputs);
+        HashMap<String, Object> inputsWithMissingOptionalInput = new HashMap<>(inputs);
         inputsWithMissingOptionalInput.remove("bool");
 
         assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool"), is(true));
@@ -112,7 +112,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(
             CharStreams.toString(new InputStreamReader(storageInterface.get((URI) typeds.get("file")))),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
+            is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
         );
         assertThat(typeds.get("json"), is(Map.of("a", "b")));
         assertThat(typeds.get("uri"), is("https://www.google.com"));
@@ -126,6 +126,19 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("validatedDuration"), is(Duration.parse("PT15S")));
         assertThat(typeds.get("validatedFloat"), is(0.42F));
         assertThat(typeds.get("validatedTime"), is(LocalTime.parse("11:27:49")));
+    }
+
+    @Test
+    void allValidTypedInputs() throws URISyntaxException, IOException {
+        Map<String, Object> typeds = typedInputs(inputs);
+        typeds.put("int", 42);
+        typeds.put("float", 42.42F);
+        typeds.put("bool", false);
+
+        assertThat(typeds.get("string"), is("myString"));
+        assertThat(typeds.get("int"), is(42));
+        assertThat(typeds.get("float"), is(42.42F));
+        assertThat(typeds.get("bool"), is(false));
     }
 
     @Test
@@ -147,7 +160,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedStringBadValue() {
-        HashMap<String, String> map = new HashMap<>(inputs);
+        HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("validatedString", "foo");
 
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
@@ -159,14 +172,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedIntegerBadValue() {
-        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedInt", "9");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(mapMin);
         });
         assertThat(e.getMessage(), is("Invalid input '9', it must be more than '10'"));
 
-        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedInt", "21");
 
         e = assertThrows(ConstraintViolationException.class, () -> {
@@ -178,14 +191,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedDateBadValue() {
-        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDate", "2022-01-01");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(mapMin);
         });
         assertThat(e.getMessage(), is("Invalid input '2022-01-01', it must be after '2023-01-01'"));
 
-        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDate", "2024-01-01");
 
         e = assertThrows(ConstraintViolationException.class, () -> {
@@ -197,14 +210,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedDateTimeBadValue() {
-        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDateTime", "2022-01-01T00:00:00Z");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(mapMin);
         });
         assertThat(e.getMessage(), is("Invalid input '2022-01-01T00:00:00Z', it must be after '2023-01-01T00:00:00Z'"));
 
-        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDateTime", "2024-01-01T00:00:00Z");
 
         e = assertThrows(ConstraintViolationException.class, () -> {
@@ -216,14 +229,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedDurationBadValue() {
-        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDuration", "PT1S");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(mapMin);
         });
         assertThat(e.getMessage(), is("Invalid input 'PT1S', it must be more than 'PT10S'"));
 
-        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDuration", "PT30S");
 
         e = assertThrows(ConstraintViolationException.class, () -> {
@@ -235,14 +248,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedFloatBadValue() {
-        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedFloat", "0.01");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(mapMin);
         });
         assertThat(e.getMessage(), is("Invalid input '0.01', it must be more than '0.1'"));
 
-        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedFloat", "1.01");
 
         e = assertThrows(ConstraintViolationException.class, () -> {
@@ -254,14 +267,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputValidatedTimeBadValue() {
-        HashMap<String, String> mapMin = new HashMap<>(inputs);
+        HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedTime", "00:00:01");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
             Map<String, Object> typeds = typedInputs(mapMin);
         });
         assertThat(e.getMessage(), is("Invalid input '00:00:01', it must be after '01:00'"));
 
-        HashMap<String, String> mapMax = new HashMap<>(inputs);
+        HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedTime", "14:00:00");
 
         e = assertThrows(ConstraintViolationException.class, () -> {
@@ -273,7 +286,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputFailed() {
-        HashMap<String, String> map = new HashMap<>(inputs);
+        HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
 
         MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {

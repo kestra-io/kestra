@@ -58,7 +58,7 @@ public class RunnerUtils {
     @Inject
     private ConditionService conditionService;
 
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in, Publisher<StreamingFileUpload> files) {
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) {
         if (files == null) {
             return this.typedInputs(flow, execution, in);
         }
@@ -86,7 +86,7 @@ public class RunnerUtils {
             .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
             .blockingGet();
 
-        Map<String, String> merged = new HashMap<>();
+        Map<String, Object> merged = new HashMap<>();
         if (in != null) {
             merged.putAll(in);
         }
@@ -96,7 +96,7 @@ public class RunnerUtils {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in) {
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in) {
         if (flow.getInputs() == null) {
             return ImmutableMap.of();
         }
@@ -105,7 +105,7 @@ public class RunnerUtils {
             .getInputs()
             .stream()
             .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
-                String current = in == null ? null : in.get(input.getName());
+                Object current = in == null ? null : in.get(input.getName());
 
                 if (current == null && input.getDefaults() != null) {
                     current = input.getDefaults();
@@ -133,7 +133,7 @@ public class RunnerUtils {
         return handleNestedInputs(results);
     }
 
-    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, String current) {
+    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, Object current) {
         switch (input.getType()) {
             case STRING, SECRET -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
@@ -144,26 +144,26 @@ public class RunnerUtils {
             case INT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
-                    Integer.valueOf(current)
+                    current instanceof Integer ? current : Integer.valueOf((String) current)
                 ));
             }
             case FLOAT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
-                    Float.valueOf(current)
+                    current instanceof Float ? current : Float.valueOf((String) current)
                 ));
             }
             case BOOLEAN -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getName(),
-                    Boolean.valueOf(current)
+                    current instanceof Boolean ? current : Boolean.valueOf((String) current)
                 ));
             }
             case DATETIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
-                        Instant.parse(current)
+                        Instant.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
@@ -173,7 +173,7 @@ public class RunnerUtils {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
-                        LocalDate.parse(current)
+                        LocalDate.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
@@ -183,7 +183,7 @@ public class RunnerUtils {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
-                        LocalTime.parse(current)
+                        LocalTime.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
@@ -193,7 +193,7 @@ public class RunnerUtils {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
-                        Duration.parse(current)
+                        Duration.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
@@ -201,7 +201,7 @@ public class RunnerUtils {
             }
             case FILE -> {
                 try {
-                    URI uri = URI.create(current.replace(File.separator, "/"));
+                    URI uri = URI.create(((String) current).replace(File.separator, "/"));
 
                     if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
                         return Optional.of(new AbstractMap.SimpleEntry<>(
@@ -211,7 +211,7 @@ public class RunnerUtils {
                     } else {
                         return Optional.of(new AbstractMap.SimpleEntry<>(
                             input.getName(),
-                            storageInterface.from(flow, execution, input, new File(current))
+                            storageInterface.from(flow, execution, input, new File(((String) current)))
                         ));
                     }
                 } catch (Exception e) {
@@ -222,14 +222,14 @@ public class RunnerUtils {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),
-                        JacksonMapper.toObject(current)
+                        JacksonMapper.toObject(((String) current))
                     ));
                 } catch (JsonProcessingException e) {
                     throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case URI -> {
-                Matcher matcher = URI_PATTERN.matcher(current);
+                Matcher matcher = URI_PATTERN.matcher(((String) current));
                 if (matcher.matches()) {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getName(),

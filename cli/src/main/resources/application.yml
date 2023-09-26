@@ -31,6 +31,11 @@ micronaut:
       api:
         url: https://api.kestra.io
 
+      remote-api:
+        read-idle-timeout: 180s
+        connect-timeout: 180s
+        read-timeout: 180s
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false

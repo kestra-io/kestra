@@ -2,11 +2,18 @@ package io.kestra.cli;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.DefaultHttpClientConfiguration;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.HttpClientConfiguration;
+import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import picocli.CommandLine;
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +28,12 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--user"}, description = "<user:password> Server user and password")
     protected String user;
 
+    @Inject
+    @Named("remote-api")
+    private HttpClientConfiguration httpClientConfiguration;
+
     protected DefaultHttpClient client() throws URISyntaxException {
-        return new DefaultHttpClient(server.toURI());
+        return new DefaultHttpClient(server.toURI(), httpClientConfiguration);
     }
 
     protected <T> HttpRequest<T> requestOptions(MutableHttpRequest<T> request) {

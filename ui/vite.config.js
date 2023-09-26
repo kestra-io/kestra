@@ -23,6 +23,9 @@ export default defineConfig({
         devSourcemap: true
     },
     optimizeDeps: {
+        include: [
+            "lodash"
+        ],
         exclude: [
             '* > @kestra-io/ui-libs'
         ]

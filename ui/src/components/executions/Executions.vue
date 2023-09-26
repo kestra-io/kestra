@@ -21,8 +21,8 @@
                 </el-form-item>
                 <el-form-item>
                     <date-range
-                        :start-date="$route.query.startDate"
-                        :end-date="$route.query.endDate"
+                        :start-date="startDate"
+                        :end-date="endDate"
                         @update:model-value="onDataTableValue($event)"
                     />
                 </el-form-item>
@@ -303,7 +303,7 @@
             },
             isAllowedEdit() {
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
-            },
+            }
         },
         methods: {
             selectionMapper(execution) {
@@ -317,6 +317,11 @@
             },
             loadQuery(base, stats) {
                 let queryFilter = this.queryWithFilter();
+
+                if ((!queryFilter["startDate"] || !queryFilter["endDate"]) && !stats) {
+                    queryFilter["startDate"] = this.startDate;
+                    queryFilter["endDate"] = this.endDate;
+                }
 
                 if (stats) {
                     delete queryFilter["startDate"];

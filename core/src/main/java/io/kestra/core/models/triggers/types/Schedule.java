@@ -161,7 +161,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         title = "The input to pass to the triggered flow"
     )
     @PluginProperty(dynamic = true)
-    private Map<String, String> inputs;
+    private Map<String, Object> inputs;
 
     @Schema(
         title = "The maximum late delay accepted",
@@ -256,7 +256,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             output = this.trueOutputWithCondition(executionTime, conditionContext, output);
         }
 
-        Map<String, String> inputs = new HashMap<>();
+        Map<String, Object> inputs = new HashMap<>();
 
         // add flow inputs with default value
         var flow = conditionContext.getFlow();
@@ -267,9 +267,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         if (this.inputs != null) {
-            for (Map.Entry<String, String> entry: this.inputs.entrySet()) {
-                inputs.put(entry.getKey(), runContext.render(entry.getValue()));
-            }
+            inputs.putAll(runContext.render(this.inputs));
         }
 
         Map<String, Object> variables;

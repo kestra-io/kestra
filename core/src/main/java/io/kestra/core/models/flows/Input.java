@@ -52,7 +52,7 @@ public abstract class Input<T> {
     @Builder.Default
     Boolean required = true;
 
-    String defaults;
+    Object defaults;
 
     public abstract void validate(T input) throws ConstraintViolationException;
 

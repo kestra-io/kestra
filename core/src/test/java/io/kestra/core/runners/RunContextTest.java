@@ -84,7 +84,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         char[] chars = new char[1024 * 11];
         Arrays.fill(chars, 'a');
 
-        Map<String, String> inputs = new HashMap<>(InputsTest.inputs);
+        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
         inputs.put("string", new String(chars));
 
         Execution execution = runnerUtils.runOne(

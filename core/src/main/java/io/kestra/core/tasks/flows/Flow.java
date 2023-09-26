@@ -71,7 +71,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         title = "The inputs to pass to the triggered flow"
     )
     @PluginProperty(dynamic = true)
-    private Map<String, String> inputs;
+    private Map<String, Object> inputs;
 
     @Schema(
         title = "The labels to pass to the triggered flow execution"
@@ -128,11 +128,9 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
 
-        Map<String, String> inputs = new HashMap<>();
+        Map<String, Object> inputs = new HashMap<>();
         if (this.inputs != null) {
-            for (Map.Entry<String, String> entry: this.inputs.entrySet()) {
-                inputs.put(entry.getKey(), runContext.render(entry.getValue()));
-            }
+            inputs.putAll(runContext.render(this.inputs));
         }
 
         List<Label> labels = new ArrayList<>();

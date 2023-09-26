@@ -76,7 +76,7 @@ public class FlowTestCommand extends AbstractCommand {
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
 
-        Map<String, String> inputs = new HashMap<>();
+        Map<String, Object> inputs = new HashMap<>();
 
         for (int i = 0; i < this.inputs.size(); i=i+2) {
             if (this.inputs.size() <= i + 1) {

@@ -53,14 +53,18 @@
                 }
 
                 return true;
+            },
+            envName() {
+                return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
             }
         },
         async created() {
             if (this.created === false) {
-                await this.loadGeneralRessources()
-                this.displayApp()
+                await this.loadGeneralResources();
+                this.displayApp();
                 this.initGuidedTour();
             }
+            this.setTitleEnvSuffix();
         },
         methods: {
             onMenuCollapse(collapse) {
@@ -74,7 +78,12 @@
                 document.getElementById("app-container").style.display = "block";
                 this.loaded = true;
             },
-            async loadGeneralRessources() {
+            setTitleEnvSuffix() {
+                const envSuffix = this.envName ? ` - ${this.envName}` : "";
+
+                document.title = document.title.replace(/( - .+)?$/, envSuffix);
+            },
+            async loadGeneralResources() {
                 let uid = localStorage.getItem("uid");
                 if (uid === null) {
                     uid = Utils.uid();
@@ -108,6 +117,9 @@
                 if (this.user && to.name === "home" && this.overallTotal === 0) {
                     this.$router.push({name: "welcome"});
                 }
+            },
+            envName() {
+                this.setTitleEnvSuffix();
             }
         }
     };

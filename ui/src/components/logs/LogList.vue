@@ -6,9 +6,7 @@
             >
                 <el-card class="attempt-wrapper">
                     <div class="attempt-header">
-                        <div
-                            class="task-icon"
-                        >
+                        <div class="task-icon d-none d-md-inline-block me-1">
                             <task-icon
                                 :cls="taskIcon(currentTaskRun)"
                                 v-if="taskIcon(currentTaskRun)"
@@ -39,19 +37,21 @@
                             </el-tooltip>
                         </div>
 
-                        <div class="task-status">
-                            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
-                        </div>
-
-                        <div class="task-duration">
+                        <div class="task-duration d-none d-md-inline-block">
                             <small class="me-1">
                                 <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
                             </small>
                         </div>
 
-                        <el-select v-model="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                                   @change="swapDisplayedAttempt(currentTaskRun.id, $event)"
-                                   :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
+                        <div class="task-status">
+                            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+                        </div>
+
+                        <el-select
+                            class="d-none d-md-inline-block"
+                            v-model="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
+                            @change="swapDisplayedAttempt(currentTaskRun.id, $event)"
+                            :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
                         >
                             <el-option v-for="(_, index) in attempts(currentTaskRun)"
                                        :key="`attempt-${index}-${currentTaskRun.id}`"
@@ -59,15 +59,6 @@
                                        :label="`${$t('attempt')} ${index + 1}`"
                             />
                         </el-select>
-
-                        <el-button v-if="!taskRunId" class="border-0 expand-collapse" type="default" text
-                                   @click="() => toggleShowAttempt(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-                        >
-                            <ChevronDown
-                                v-if="!shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-                            />
-                            <ChevronUp v-else />
-                        </el-button>
 
                         <el-dropdown trigger="click">
                             <el-button type="default" class="more-dropdown-button">
@@ -127,6 +118,16 @@
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
+
+                        <el-button v-if="!taskRunId" class="border-0 expand-collapse" type="default" text
+                                   @click.stop="() => toggleShowAttempt(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                        >
+                            <ChevronDown
+                                v-if="!shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                            />
+                            <ChevronUp v-else />
+                        </el-button>
+
                     </div>
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun.id)"
@@ -653,7 +654,9 @@
             }
 
             small {
-                color: var(--bs-gray-500);
+                color: var(--bs-gray-600);
+                font-family: var(--bs-font-monospace);
+                font-size: var(--font-size-xs)
             }
 
             .task-duration small {
@@ -673,6 +676,7 @@
 
             .expand-collapse {
                 background-color: transparent !important;
+                padding-right: 0;
             }
         }
 

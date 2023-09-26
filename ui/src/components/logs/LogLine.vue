@@ -125,10 +125,10 @@
 
         .log-content {
             .header {
-                color: var(--bs-gray-400);
+                color: var(--bs-gray-500);
 
                 html.dark & {
-                    color: var(--bs-gray-600);
+                    color: var(--bs-gray-700);
                 }
 
                 > * + * {

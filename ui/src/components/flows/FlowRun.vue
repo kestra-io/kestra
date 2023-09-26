@@ -86,6 +86,7 @@
                 :label="$t('execution labels')"
             >
                 <label-input
+                    :key="executionLabels"
                     v-model:labels="executionLabels"
                 />
             </el-form-item>
@@ -196,9 +197,15 @@
                                 inputValue = JSON.stringify(inputValue).toString()
                             }
 
+                            if(inputValue === null) {
+                                inputValue = undefined;
+                            }
+
                             return [inputName, inputValue]
                         })
                 );
+                // add all labels except the one from flow to prevent duplicates
+                this.executionLabels = this.execution.labels.filter(label => !this.flow.labels.some(flowLabel => flowLabel.key === label.key && flowLabel.value === label.value));
             },
             onSubmit(formRef) {
                 if (this.$tours["guidedTour"].isRunning.value) {

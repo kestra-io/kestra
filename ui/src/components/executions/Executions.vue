@@ -172,13 +172,13 @@
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow">
+                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
                                 {{ $t('edit flow') }}
                             </el-button>
                         </template>
                     </li>
                     <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id"
+                        <trigger-flow v-if="flow" :disabled="flow.disabled || isReadOnly" :flow-id="flow.id"
                                       :namespace="flow.namespace" />
                     </li>
                 </template>
@@ -259,6 +259,10 @@
                 type: Array,
                 default: () => []
             },
+            isReadOnly: {
+                type: Boolean,
+                default: false
+            }
         },
         data() {
             return {

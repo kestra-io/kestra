@@ -113,7 +113,7 @@
     const initViewType = () => {
         const defaultValue = editorViewTypes.SOURCE_DOC;
 
-        if (props.execution || props.isReadOnly) {
+        if (props.execution) {
             return editorViewTypes.TOPOLOGY;
         }
 
@@ -185,7 +185,7 @@
         flowYaml.value = props.flow.source;
 
         if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
-          await generateGraph();
+            await generateGraph();
         }
 
         if (!props.isReadOnly) {
@@ -274,30 +274,6 @@
             tourStarted: false
         });
     }
-
-
-    const viewTypeOnReadOnly = () => {
-        const defaultValue = SOURCE_TOPOLOGY_VIEW_TYPE;
-
-        if (props.isCreating) {
-            return editorViewTypes.SOURCE;
-        }
-
-        if (props.execution || props.isReadOnly) {
-            return editorViewTypes.TOPOLOGY;
-        }
-
-        const storedValue = loadViewType();
-        if (storedValue) {
-            return storedValue;
-        }
-
-        return defaultValue;
-    }
-
-    watch(() => props.isReadOnly, async () => {
-        viewType.value = viewTypeOnReadOnly();
-    });
 
     watch(() => props.guidedProperties, () => {
         if (localStorage.getItem("tourDoneOrSkip") !== "true") {
@@ -699,6 +675,7 @@
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
             @restartGuidedTour="() => persistViewType(editorViewTypes.SOURCE)"
+            :read-only="isReadOnly"
         >
             <template #extends-navbar>
                 <ValidationError ref="validationDomElement" tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
@@ -813,7 +790,6 @@
             </template>
         </el-drawer>
         <switch-view
-            v-if="!isReadOnly"
             :type="viewType"
             class="to-topology-button"
             @switch-view="switchViewType"
@@ -821,9 +797,9 @@
     </el-card>
     <bottom-line v-if="!graphOnly">
         <ul>
-            <li v-if="(isAllowedEdit || canDelete) && !isReadOnly">
+            <li v-if="isAllowedEdit || canDelete">
                 <el-dropdown>
-                    <el-button size="large" type="default">
+                    <el-button size="large" type="default" :disabled="isReadOnly">
                         <DotsVertical title="" />
                         {{ t("actions") }}
                     </el-button>
@@ -886,7 +862,7 @@
                     v-if="!props.isCreating"
                     ref="triggerFlowDomElement"
                     type="default"
-                    :disabled="flow.disabled"
+                    :disabled="flow.disabled || isReadOnly"
                     :flow-id="flow.id"
                     :namespace="flow.namespace"
                 />

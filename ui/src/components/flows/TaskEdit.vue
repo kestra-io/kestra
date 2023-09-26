@@ -192,9 +192,10 @@
                 if (this.revision) {
                     if (this.revisions?.[this.revision - 1] === undefined) {
                         this.revisions = await this.$store
-                            .dispatch("flow/loadRevisionsNoCommit", {
+                            .dispatch("flow/loadRevisions", {
                                 namespace: this.namespace,
-                                id: this.flowId
+                                id: this.flowId,
+                                store: false
                             });
                     }
 

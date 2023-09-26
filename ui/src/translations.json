@@ -498,7 +498,8 @@
     "timezone": "Timezone",
     "add task": "Add a task",
     "unable to generate graph": "An issue occurred while generating the graph which prevent the topology to be displayed.",
-    "attempts": "Attempt(s)"
+    "attempts": "Attempt(s)",
+    "flow deleted, you can restore it": "Flow has been deleted and this is a read-only view, but you can still restore it."
   },
   "fr": {
     "id": "Identifiant",
@@ -991,7 +992,8 @@
     "timezone": "Fuseau horaire",
     "add task": "Ajouter une tâche",
     "unable to generate graph": "Une erreur est survenue lors de la génération du graphe empêchant l'affichage de la topologie.",
-    "attempts": "Tentative(s)"
+    "attempts": "Tentative(s)",
+    "flow deleted, you can restore it": "Le flow a été supprimé et ceci est une vue en lecture seule, mais vous pouvez toujours le restaurer."
   }
 }
 

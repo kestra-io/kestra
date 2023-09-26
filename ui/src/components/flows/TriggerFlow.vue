@@ -1,6 +1,6 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="disabled" size="large" :type="type" @click="onClick">
+        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="disabled || flow?.deleted" size="large" :type="type" @click="onClick">
             {{ $t('New execution') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
@@ -56,7 +56,7 @@
                     .dispatch("flow/loadFlow", {
                         id: this.flowId,
                         namespace: this.namespace,
-                        deleted: true
+                        allowDeleted: true
                     });
             }
         },

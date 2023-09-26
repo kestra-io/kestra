@@ -134,9 +134,10 @@
                     params.sort = "name:asc";
                 }
 
-                this.$store.dispatch("execution/loadMetricsNoCommit", {
+                this.$store.dispatch("execution/loadMetrics", {
                     executionId: this.execution.id,
                     params: params,
+                    store: false
                 }).then(metrics => {
                     this.metrics = metrics.results;
                     this.metricsTotal = metrics.total;

@@ -25,13 +25,13 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
-import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
+import java.util.*;
 
 @Singleton
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
@@ -76,7 +76,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -95,7 +95,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     from = context
                         .select(field("value", String.class))
                         .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
-                        .where(this.defaultFilter())
+                        .where(allowDeleted ? this.revisionDefaultFilter() : this.defaultFilter())
                         .and(field("namespace", String.class).eq(namespace))
                         .and(field("id", String.class).eq(id));
                 }
@@ -109,7 +109,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -132,7 +132,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             field("value", String.class)
                         )
                         .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
-                        .where(this.defaultFilter())
+                        .where(allowDeleted ? this.revisionDefaultFilter() :this.defaultFilter())
                         .and(field("namespace", String.class).eq(namespace))
                         .and(field("id", String.class).eq(id)));
                 Record2<String, String> fetched = from.fetchAny();

@@ -1,28 +1,27 @@
 package io.kestra.repository.memory;
 
-import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.utils.ListUtils;
-import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.core.value.ValueException;
-import io.micronaut.data.model.Pageable;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
-import io.reactivex.Flowable;
-import org.apache.commons.lang3.NotImplementedException;
-
+import io.kestra.core.utils.ListUtils;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.value.ValueException;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.NotImplementedException;
+
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
@@ -61,7 +60,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
         return revision
             .map(integer -> this.findRevisions(namespace, id)
                 .stream()
@@ -82,7 +81,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id);
         if (flow.isPresent() && sourceCode.isPresent()) {

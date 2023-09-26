@@ -6,14 +6,19 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.micronaut.data.model.Pageable;
 
+import javax.annotation.Nullable;
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
 
 public interface FlowRepositoryInterface {
-    Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
+
+    Optional<Flow> findById(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
+
+    default Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+        return this.findById(namespace, id, revision, false);
+    }
 
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
@@ -33,13 +38,17 @@ public interface FlowRepositoryInterface {
     }
 
     default Optional<Flow> findById(String namespace, String id) {
-        return this.findById(namespace, id, Optional.empty());
+        return this.findById(namespace, id, Optional.empty(), false);
     }
 
-    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision);
+    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
+
+    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+        return this.findByIdWithSource(namespace, id, revision, false);
+    }
 
     default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) {
-        return this.findByIdWithSource(namespace, id, Optional.empty());
+        return this.findByIdWithSource(namespace, id, Optional.empty(), false);
     }
 
     List<FlowWithSource> findRevisions(String namespace, String id);

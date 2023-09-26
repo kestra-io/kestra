@@ -14,21 +14,23 @@
             <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
             <tr>
                 <th>
-                    <el-tooltip placement="right" :persistent="false" transition="" :hide-after="0">
+                    <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0">
                         <template #content>
                             <code>{{ currentTaskRun.name }}</code>
-                            <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
+                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</small>
                         </template>
-                        <code>{{ currentTaskRun.name }}</code>
-                        <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                        <span>
+                            <code>{{ currentTaskRun.name }}</code>
+                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                        </span>
                     </el-tooltip>
                 </th>
                 <td :colspan="dates.length">
                     <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
                         <template #content>
-                                <span style="white-space: pre-wrap;">
-                                    {{ currentTaskRun.tooltip }}
-                                </span>
+                            <span style="white-space: pre-wrap;">
+                                {{ currentTaskRun.tooltip }}
+                            </span>
                         </template>
                         <div
                             :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
@@ -319,6 +321,16 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+
+            small {
+                margin-left: 5px;
+            }
+
+            small {
+                color: var(--bs-gray-600);
+                font-family: var(--bs-font-monospace);
+                font-size: var(--font-size-xs)
+            }
         }
 
         code {

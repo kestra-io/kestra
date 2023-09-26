@@ -36,10 +36,14 @@
                     v-model="inputs[input.name]"
                     :step="0.001"
                 />
-                <el-switch
+                <el-radio-group
                     v-if="input.type === 'BOOLEAN'"
                     v-model="inputs[input.name]"
-                />
+                >
+                    <el-radio-button label="true" />
+                    <el-radio-button label="false" />
+                    <el-radio-button label="undefined" />
+                </el-radio-group>
                 <el-date-picker
                     v-if="input.type === 'DATETIME'"
                     v-model="inputs[input.name]"
@@ -147,8 +151,8 @@
             for (const input of this.flow.inputs || []) {
                 this.inputs[input.name] = input.defaults;
 
-                if (input.type === "BOOLEAN" && input.defaults){
-                    this.inputs[input.name] = (/true/i).test(input.defaults) || input.defaults === true;
+                if (input.type === "BOOLEAN" && input.defaults === undefined){
+                    this.inputs[input.name] = "undefined";
                 }
             }
         },
@@ -178,6 +182,16 @@
             ...mapState("execution", ["execution"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
+            },
+            // Required to have "undefined" value for boolean
+            cleanInputs() {
+                var inputs = this.inputs
+                for (const input of this.flow.inputs || []) {
+                    if (input.type === "BOOLEAN" && inputs[input.name] === "undefined") {
+                        inputs[input.name] = undefined;
+                    }
+                }
+                return inputs;
             }
         },
         methods: {
@@ -217,7 +231,7 @@
                             return false;
                         }
 
-                        executeTask(this, this.flow, this.inputs, {
+                        executeTask(this, this.flow, this.cleanInputs, {
                             redirect: this.redirect,
                             id: this.flow.id,
                             namespace: this.flow.namespace,

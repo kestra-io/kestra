@@ -427,8 +427,8 @@
                 });
             },
             shouldDisplayLogs(taskRunId) {
-                return this.shownAttemptsUid.includes(this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])) &&
-                    this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]
+                return this.taskRunId || (this.shownAttemptsUid.includes(this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])) &&
+                    this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])])
             },
             followExecution(executionId) {
                 this.$store

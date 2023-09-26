@@ -22,8 +22,8 @@
                     </el-form-item>
                     <el-form-item>
                         <date-range
-                            :start-date="$route.query.startDate"
-                            :end-date="$route.query.endDate"
+                            :start-date="startDate"
+                            :end-date="endDate"
                             @update:model-value="onDataTableValue($event)"
                         />
                     </el-form-item>
@@ -102,6 +102,13 @@
             },
             selectedLogLevel() {
                 return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
+            },
+            endDate() {
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
+            },
+            startDate() {
+                return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
+                    .add(-7, "days").toISOString(true);
             }
         },
         methods: {
@@ -111,6 +118,11 @@
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.$route.params.namespace;
                     queryFilter["flowId"] = this.$route.params.id;
+                }
+
+                if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
+                    queryFilter["startDate"] = this.startDate;
+                    queryFilter["endDate"] = this.endDate;
                 }
 
                 delete queryFilter["level"];

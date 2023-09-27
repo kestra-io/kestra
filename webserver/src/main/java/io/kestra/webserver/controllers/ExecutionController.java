@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -918,6 +919,9 @@ public class ExecutionController {
                 );
                 Flow flow = flowRepository.findByExecution(execution);
 
+                // hide secrets from the UI
+                execution = execution.withInputs(hideSecrets(flow, execution.getInputs()));
+
                 if (this.isStopFollow(flow, execution)) {
                     emitter.onNext(Event.of(execution).id("end"));
                     emitter.onComplete();
@@ -936,6 +940,8 @@ public class ExecutionController {
 
                     Execution current = either.getLeft();
                     if (current.getId().equals(executionId)) {
+                        // hide secrets from the UI
+                        current = current.withInputs(hideSecrets(flow, current.getInputs()));
 
                         emitter.onNext(Event.of(current).id("progress"));
 
@@ -958,6 +964,18 @@ public class ExecutionController {
                     cancel.get().run();
                 }
             });
+    }
+
+    private Map<String, Object> hideSecrets(Flow flow, Map<String, Object> inputs) {
+        Map<String, Object> hiddenInputs = new HashMap<>();
+        for (Input<?> input: flow.getInputs()) {
+            if (input.getType() == Input.Type.SECRET) {
+                hiddenInputs.put(input.getName(), "******");
+            } else {
+                hiddenInputs.put(input.getName(), inputs.get(input.getName()));
+            }
+        }
+        return hiddenInputs;
     }
 
     @ExecuteOn(TaskExecutors.IO)

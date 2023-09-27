@@ -54,7 +54,6 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("validatedDuration", "PT15S")
         .put("validatedFloat", "0.42")
         .put("validatedTime", "11:27:49")
-        .put("secret", "secret")
         .build();
 
     @Inject

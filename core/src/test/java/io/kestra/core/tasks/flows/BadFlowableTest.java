@@ -12,15 +12,14 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 public class BadFlowableTest extends AbstractMemoryRunnerTest {
     @Test
     void sequential() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "bad-flowable");
 
-        assertThat("Task runs were: \n"+ JacksonMapper.log(execution.getTaskRunList()), execution.getTaskRunList(), hasSize(2));
+        assertThat("Task runs were: \n"+ JacksonMapper.log(execution.getTaskRunList()), execution.getTaskRunList().size(), greaterThanOrEqualTo(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

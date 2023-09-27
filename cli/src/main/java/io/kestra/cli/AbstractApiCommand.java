@@ -1,5 +1,6 @@
 package io.kestra.cli;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.DefaultHttpClientConfiguration;
@@ -30,10 +31,11 @@ public abstract class AbstractApiCommand extends AbstractCommand {
 
     @Inject
     @Named("remote-api")
+    @Nullable
     private HttpClientConfiguration httpClientConfiguration;
 
     protected DefaultHttpClient client() throws URISyntaxException {
-        return new DefaultHttpClient(server.toURI(), httpClientConfiguration);
+        return new DefaultHttpClient(server.toURI(), httpClientConfiguration != null ? httpClientConfiguration : new DefaultHttpClientConfiguration());
     }
 
     protected <T> HttpRequest<T> requestOptions(MutableHttpRequest<T> request) {

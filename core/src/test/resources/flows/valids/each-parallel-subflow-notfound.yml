@@ -1,0 +1,15 @@
+id: each-parallel-subflow-notfound
+namespace: io.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: io.kestra.core.tasks.flows.EachParallel
+    value:
+      - value-1
+      - value-2
+    tasks:
+      - id: subflow-not-exist
+        type: io.kestra.core.tasks.flows.Flow
+        flowId: "{{ taskrun.value }}"
+        namespace: dev
+        wait: true

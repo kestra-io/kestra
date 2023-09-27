@@ -27,7 +27,7 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.scheduling.annotation.Scheduled;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -50,6 +50,8 @@ import java.util.stream.Stream;
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
+
+    private final ScheduledExecutorService schedulerHeartbeat = Executors.newSingleThreadScheduledExecutor();
 
     private Boolean isShutdown = false;
 
@@ -141,6 +143,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
 
+    @Value("${kestra.heartbeat.frequency}")
+    private Duration frequency;
+
     @SneakyThrows
     @Override
     public void run() {
@@ -158,6 +163,13 @@ public class JdbcExecutor implements ExecutorInterface {
             this::executionDelaySend,
             0,
             1,
+            TimeUnit.SECONDS
+        );
+
+        schedulerHeartbeat.scheduleAtFixedRate(
+            this::workersUpdate,
+            frequency.toSeconds(),
+            frequency.toSeconds(),
             TimeUnit.SECONDS
         );
 
@@ -208,7 +220,6 @@ public class JdbcExecutor implements ExecutorInterface {
 
     }
 
-    @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}")
     protected void workersUpdate() {
         workerInstanceRepository.heartbeatsStatusUpdate();
         if (workerInstanceRepository.heartbeatsCleanup()) {
@@ -226,12 +237,14 @@ public class JdbcExecutor implements ExecutorInterface {
                         .task(workerTaskRunning.getTask())
                         .runContext(workerTaskRunning.getRunContext())
                         .build());
+                    log.warn("WorkTaskRunning resubmitted : '{}'", workerTaskRunning);
                 } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
                     workerTaskQueue.emit(WorkerTrigger.builder()
                         .trigger(workerTriggerRunning.getTrigger())
                         .conditionContext(workerTriggerRunning.getConditionContext())
                         .triggerContext(workerTriggerRunning.getTriggerContext())
                         .build());
+                    log.warn("WorkTriggerRunning resubmitted : '{}'", workerTriggerRunning);
                 } else {
                     throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");
                 }
@@ -604,6 +617,7 @@ public class JdbcExecutor implements ExecutorInterface {
     public void close() throws IOException {
         isShutdown = true;
         schedulerDelay.shutdown();
+        schedulerHeartbeat.shutdown();
         executionQueue.close();
         workerTaskQueue.close();
         workerTaskResultQueue.close();

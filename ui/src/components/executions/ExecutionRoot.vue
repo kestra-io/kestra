@@ -6,7 +6,7 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <a :href="`${apiUrl}/executions/${execution.id}`" target="_blank">
+                    <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
                         <el-button :icon="Api" size="large" type="default">
                             {{ $t('api') }}
                         </el-button>
@@ -198,7 +198,7 @@
             ...mapState("flow", ["flow", "revisions"]),
             ...mapState("execution", ["execution"]),
             ...mapState("auth", ["user"]),
-            apiUrl() {
+            finalApiUrl() {
                 return apiUrl(this.$store);
             },
             tabs() {

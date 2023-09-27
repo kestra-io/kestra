@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS worker_job_running (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `worker_uuid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerInstance.workerUuid') STORED NOT NULL,
-    `taskrun_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskRun.id') STORED NOT NULL
+    `taskrun_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskRun.id') STORED NOT NULL,
+    INDEX ix_worker_uuid (worker_uuid)
     ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -23,7 +23,7 @@ public class JdbcHeartbeat {
     @Inject
     AbstractJdbcWorkerInstanceRepository workerInstanceRepository;
 
-    private WorkerInstance workerInstance;
+    private volatile WorkerInstance workerInstance;
 
     private final ApplicationContext applicationContext;
 
@@ -32,20 +32,24 @@ public class JdbcHeartbeat {
         this.applicationContext = applicationContext;
     }
 
-    public void registerWorkerInstance(Worker worker) throws UnknownHostException {
-        this.workerInstance = WorkerInstance.builder()
-            .workerUuid(UUID.randomUUID())
-            .hostname(InetAddress.getLocalHost().getHostName())
-            .port(applicationContext.getEnvironment().getProperty("micronaut.server.port", Integer.class).orElse(8080))
-            .managementPort(applicationContext.getEnvironment().getProperty("endpoints.all.port", Integer.class).orElse(null))
-            .workerGroup(worker.getWorkerGroup())
-            .build();
+    private void registerWorkerInstance(Worker worker) throws UnknownHostException {
+        synchronized (this) {
+            if (workerInstance == null) {
+                this.workerInstance = WorkerInstance.builder()
+                    .workerUuid(UUID.randomUUID())
+                    .hostname(InetAddress.getLocalHost().getHostName())
+                    .port(applicationContext.getEnvironment().getProperty("micronaut.server.port", Integer.class).orElse(8080))
+                    .managementPort(applicationContext.getEnvironment().getProperty("endpoints.all.port", Integer.class).orElse(8081))
+                    .workerGroup(worker.getWorkerGroup())
+                    .build();
 
-        log.trace("Registered WorkerInstance of: {}", workerInstance.getWorkerUuid());
+                log.trace("Registered WorkerInstance of: {}", workerInstance.getWorkerUuid());
 
-        this.workerInstanceRepository.save(
-            workerInstance
-        );
+                this.workerInstanceRepository.save(
+                    workerInstance
+                );
+            }
+        }
     }
 
     @Scheduled(fixedDelay = "${kestra.heartbeat.frequency}")
@@ -67,5 +71,4 @@ public class JdbcHeartbeat {
         }
         return workerInstance;
     }
-
 }

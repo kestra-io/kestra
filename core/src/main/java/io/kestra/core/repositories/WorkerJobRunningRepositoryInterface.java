@@ -6,7 +6,7 @@ import io.kestra.core.runners.WorkerJobRunning;
 import java.util.List;
 import java.util.Optional;
 
-public interface WorkerJobRunningInterface {
+public interface WorkerJobRunningRepositoryInterface {
     Optional<WorkerJobRunning> findByTaskRunId(String taskRunId);
 
     void delete(String taskRunId);

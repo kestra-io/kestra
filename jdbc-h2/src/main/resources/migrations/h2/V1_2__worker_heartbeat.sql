@@ -18,3 +18,5 @@ CREATE TABLE IF NOT EXISTS worker_job_running (
     "worker_uuid" VARCHAR(36) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value",'.workerInstance.workerUuid')),
     "taskrun_id" VARCHAR(150) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value",'.taskRun.id'))
 );
+
+CREATE INDEX IF NOT EXISTS worker_job_running_worker_uuid ON worker_job_running ("worker_uuid");

@@ -38,7 +38,7 @@ public class MysqlWorkerJobQueue implements WorkerJobQueueInterface {
 
             eithers.forEach(either -> {
                 if (either.isRight()) {
-                    log.error("Unable to deserialize an execution: {}", either.getRight().getMessage());
+                    log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
                     return;
                 }
                 WorkerJob workerJob = either.getLeft();

@@ -1,9 +1,9 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.repositories.AbstractWorkerInstanceRepositoryTest;
 import io.kestra.core.runners.WorkerInstance;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
-public abstract class AbstractJdbcWorkerInstanceRepositoryTest extends AbstractWorkerInstanceRepositoryTest {
+@MicronautTest(transactional = false)
+public abstract class AbstractJdbcWorkerInstanceRepositoryTest {
     @Inject
     protected AbstractJdbcWorkerInstanceRepository workerInstanceRepository;
 

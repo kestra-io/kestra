@@ -1,12 +1,14 @@
 package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractApiCommand;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -21,6 +23,10 @@ import java.nio.file.Path;
 @Slf4j
 public class FlowExportCommand extends AbstractApiCommand {
     private static final String DEFAULT_FILE_NAME = "flows.zip";
+
+    // @FIXME: Keep it for bug in micronaut that need to have inject on top level command to inject on abstract classe
+    @Inject
+    private ApplicationContext applicationContext;
 
     @CommandLine.Option(names = {"--namespace"}, description = "the namespace of flows to export")
     public String namespace;

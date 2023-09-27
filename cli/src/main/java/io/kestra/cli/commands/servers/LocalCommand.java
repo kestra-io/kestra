@@ -2,15 +2,10 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -20,7 +15,7 @@ import java.util.Map;
     description = "start a local server"
 )
 public class LocalCommand extends StandAloneCommand {
-    // Keep it for bug in micronaut
+    // @FIXME: Keep it for bug in micronaut that need to have inject on top level command to inject on abstract classe
     @Inject
     private ApplicationContext applicationContext;
 

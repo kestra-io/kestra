@@ -166,6 +166,7 @@ jobs:
               io.kestra.plugin:plugin-debezium-mysql:LATEST
               io.kestra.plugin:plugin-debezium-postgres:LATEST
               io.kestra.plugin:plugin-debezium-sqlserver:LATEST
+              io.kestra.plugin:plugin-docker:LATEST
               io.kestra.plugin:plugin-elasticsearch:LATEST
               io.kestra.plugin:plugin-fivetran:LATEST
               io.kestra.plugin:plugin-fs:LATEST

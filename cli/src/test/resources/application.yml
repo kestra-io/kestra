@@ -18,3 +18,11 @@ kestra:
         url: https://repo.maven.apache.org/maven2/
       sonatype:
         url: https://s01.oss.sonatype.org/content/repositories/snapshots/
+
+micronaut:
+  http:
+    services:
+      remote-api:
+        read-idle-timeout: 180s
+        connect-timeout: 180s
+        read-timeout: 180s

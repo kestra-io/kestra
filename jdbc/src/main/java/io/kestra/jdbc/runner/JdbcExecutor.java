@@ -242,14 +242,27 @@ public class JdbcExecutor implements ExecutorInterface {
                         .task(workerTaskRunning.getTask())
                         .runContext(workerTaskRunning.getRunContext())
                         .build());
-                    log.warn("WorkTaskRunning resubmitted : '{}'", workerTaskRunning);
+
+                    log.warn(
+                        "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
+                        workerTaskRunning.getTaskRun().getNamespace(),
+                        workerTaskRunning.getTaskRun().getFlowId(),
+                        workerTaskRunning.getTaskRun().getExecutionId(),
+                        workerTaskRunning.getTaskRun().getId()
+                    );
                 } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
                     workerTaskQueue.emit(WorkerTrigger.builder()
                         .trigger(workerTriggerRunning.getTrigger())
                         .conditionContext(workerTriggerRunning.getConditionContext())
                         .triggerContext(workerTriggerRunning.getTriggerContext())
                         .build());
-                    log.warn("WorkTriggerRunning resubmitted : '{}'", workerTriggerRunning);
+
+                    log.warn(
+                        "[namespace: {}] [flow: {}] [trigger: {}] WorkerTrigger is being resend",
+                        workerTriggerRunning.getTriggerContext().getNamespace(),
+                        workerTriggerRunning.getTriggerContext().getFlowId(),
+                        workerTriggerRunning.getTriggerContext().getTriggerId()
+                    );
                 } else {
                     throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");
                 }

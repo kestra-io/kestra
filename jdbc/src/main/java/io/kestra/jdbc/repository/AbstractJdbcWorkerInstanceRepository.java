@@ -5,6 +5,7 @@ import io.kestra.core.runners.WorkerInstance;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.SelectForUpdateOfStep;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
 @Getter
+@Slf4j
 public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcRepository implements WorkerInstanceRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<WorkerInstance> jdbcRepository;
 
@@ -77,6 +79,9 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
 
                 workerInstance.ifPresent(heartbeat -> {
                     heartbeat.setStatus(WorkerInstance.Status.DEAD);
+
+                    log.warn("Detected evicted worker: {}", heartbeat);
+
                     this.jdbcRepository.persist(heartbeat, this.jdbcRepository.persistFields(heartbeat));
                 });
             });

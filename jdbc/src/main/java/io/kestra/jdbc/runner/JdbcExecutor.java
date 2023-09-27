@@ -228,7 +228,12 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private void deadWorkerTaskResubmit() {
-        List<String> aliveWorkerUuid = workerInstanceRepository.findAllAlive().stream().map(workerInstance -> workerInstance.getWorkerUuid().toString()).collect(Collectors.toList());
+        List<String> aliveWorkerUuid = workerInstanceRepository
+            .findAllAlive()
+            .stream()
+            .map(workerInstance -> workerInstance.getWorkerUuid().toString())
+            .collect(Collectors.toList());
+
         workerJobRunningRepository.getWorkerJobWithWorkerDead(aliveWorkerUuid)
             .forEach(workerJobRunning -> {
                 if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {

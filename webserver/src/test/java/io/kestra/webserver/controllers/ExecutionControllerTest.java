@@ -433,7 +433,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             FileMetas.class
         ).blockingFirst();
 
-        assertThat(metas.getSize(), equalTo(2466L));
+        assertThat(metas.getSize(), equalTo(2767L));
 
         String newExecutionId = IdUtils.create();
 

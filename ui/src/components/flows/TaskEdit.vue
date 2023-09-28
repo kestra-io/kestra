@@ -19,7 +19,7 @@
             </template>
             <template #footer>
                 <div v-loading="isLoading">
-                    <ValidationError link :error="taskError" />
+                    <ValidationError class="me-2" link :error="taskError" />
 
                     <el-button
                         :icon="ContentSave"

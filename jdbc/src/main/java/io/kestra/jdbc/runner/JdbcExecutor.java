@@ -241,7 +241,8 @@ public class JdbcExecutor implements ExecutorInterface {
                         .taskRun(workerTaskRunning.getTaskRun())
                         .task(workerTaskRunning.getTask())
                         .runContext(workerTaskRunning.getRunContext())
-                        .build());
+                        .build()
+                    );
 
                     log.warn(
                         "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
@@ -434,7 +435,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 .record(message.getTaskRun().getState().getDuration());
 
             log.trace("TaskRun terminated: {}", message.getTaskRun());
-            workerJobRunningRepository.delete(message.getTaskRun().getId());
+            workerJobRunningRepository.deleteByTaskRunId(message.getTaskRun().getId());
         }
 
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {

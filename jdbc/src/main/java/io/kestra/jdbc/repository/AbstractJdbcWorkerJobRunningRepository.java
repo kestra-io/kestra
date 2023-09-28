@@ -27,7 +27,7 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
     }
 
     @Override
-    public void delete(String taskRunId) {
+    public void deleteByTaskRunId(String taskRunId) {
         Optional<WorkerJobRunning> workerJobRunning = this.findByTaskRunId(taskRunId);
         workerJobRunning.ifPresent(jobRunning -> this.jdbcRepository.delete(jobRunning));
     }

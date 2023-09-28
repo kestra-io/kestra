@@ -3,6 +3,7 @@ package io.kestra.jdbc;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.WorkerInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
@@ -21,6 +22,9 @@ public class JdbcPostgresWorkerJobQueueService {
     private final JdbcQueue<WorkerJob> workerTaskQueue;
     private final JdbcHeartbeat jdbcHeartbeat;
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
+    private final WorkerInstanceRepositoryInterface workerInstanceRepository;
+    private Runnable queueStop;
+    private WorkerInstance workerInstance;
 
     @SuppressWarnings("unchecked")
     public JdbcPostgresWorkerJobQueueService(ApplicationContext applicationContext) {
@@ -30,10 +34,15 @@ public class JdbcPostgresWorkerJobQueueService {
         );
         this.jdbcHeartbeat = applicationContext.getBean(JdbcHeartbeat.class);
         this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningRepository.class);
+        this.workerInstanceRepository = applicationContext.getBean(WorkerInstanceRepositoryInterface.class);
     }
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
-        return workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
+        workerInstance = jdbcHeartbeat.get();
+
+        this.queueStop = workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
+            workerInstance = jdbcHeartbeat.get();
+
             eithers.forEach(either -> {
                 if (either.isRight()) {
                     log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
@@ -41,7 +50,6 @@ public class JdbcPostgresWorkerJobQueueService {
                 }
 
                 WorkerJob workerJob = either.getLeft();
-                WorkerInstance workerInstance = jdbcHeartbeat.get();
                 WorkerJobRunning workerJobRunning;
 
                 if (workerJob instanceof WorkerTask workerTask) {
@@ -69,5 +77,33 @@ public class JdbcPostgresWorkerJobQueueService {
 
             eithers.forEach(consumer);
         });
+
+        return this.queueStop;
+    }
+
+    public void pause() {
+        this.stopQueue();
+    }
+
+    private void stopQueue() {
+        synchronized (this) {
+            if (this.queueStop != null) {
+                this.queueStop.run();
+                this.queueStop = null;
+            }
+        }
+    }
+
+    public void cleanup() {
+        if (this.workerInstance != null) {
+            synchronized (this) {
+                workerInstanceRepository.delete(this.workerInstance);
+                this.workerInstance = null;
+            }
+        }
+    }
+
+    public void close() {
+        this.stopQueue();
     }
 }

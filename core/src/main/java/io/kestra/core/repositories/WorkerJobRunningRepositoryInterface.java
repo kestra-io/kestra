@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface WorkerJobRunningRepositoryInterface {
     Optional<WorkerJobRunning> findByTaskRunId(String taskRunId);
 
-    void delete(String taskRunId);
+    void deleteByTaskRunId(String taskRunId);
 
     List<WorkerJobRunning> getWorkerJobWithWorkerDead(List<String> workersAlive);
 }

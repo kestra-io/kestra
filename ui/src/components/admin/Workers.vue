@@ -15,16 +15,15 @@
             table-layout="auto"
             fixed
         >
-            <el-table-column prop="workerUuid" sortable :sort-orders="['ascending', 'descending']"
-                             :label="$t('id')" />
-            <el-table-column prop="hostname" sortable :sort-orders="['ascending', 'descending']"
-                             :label="$t('hostname')" />
-            <el-table-column prop="port"
-                             :label="$t('port')" />
-            <el-table-column prop="managementPort"
-                             :label="$t('management port')" />
-            <el-table-column prop="workerGroup" sortable :sort-orders="['ascending', 'descending']"
-                             :label="$t('worker group')" />
+            <el-table-column prop="workerUuid" sortable :sort-orders="['ascending', 'descending']" :label="$t('id')" />
+            <el-table-column prop="hostname" sortable :sort-orders="['ascending', 'descending']" :label="$t('hostname')" />
+            <el-table-column prop="workerGroup" sortable :sort-orders="['ascending', 'descending']" :label="$t('worker group')" />
+            <el-table-column prop="status" sortable :sort-orders="['ascending', 'descending']" :label="$t('state')" />
+            <el-table-column prop="heartbeatDate" sortable :sort-orders="['ascending', 'descending']" :label="$t('date')">
+                <template #default="scope">
+                    <date-ago class-name="text-muted small" :inverted="true" :date="scope.row.heartbeatDate" />
+                </template>
+            </el-table-column>
         </el-table>
     </div>
 </template>
@@ -32,10 +31,11 @@
     import RouteContext from "../../mixins/routeContext";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import Collapse from "../../components/layout/Collapse.vue";
+    import DateAgo from "../layout/DateAgo.vue";
 
     export default {
         mixins: [RouteContext],
-        components: {RefreshButton, Collapse},
+        components: {DateAgo, RefreshButton, Collapse},
         data() {
             return {
                 workers: undefined,
@@ -47,7 +47,6 @@
         methods: {
             loadData() {
                 this.$store.dispatch("worker/findAll").then(workers => {
-                    console.log(workers)
                     this.workers = workers;
                 });
             }

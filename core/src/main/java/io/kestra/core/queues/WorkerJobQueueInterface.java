@@ -11,4 +11,6 @@ public interface WorkerJobQueueInterface extends Closeable {
     Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer);
 
     void pause();
+
+    void cleanup();
 }

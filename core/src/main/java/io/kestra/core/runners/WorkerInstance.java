@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -29,6 +30,7 @@ public class WorkerInstance {
     private List<Integer> partitions = new ArrayList<>();
 
     @Builder.Default
+    @JsonInclude
     private Status status = Status.UP;
 
     @Builder.Default

@@ -10,6 +10,7 @@ services:
       - --log-bin-trust-function-creators=1
     ports:
       - 3306:3306
+    restart: on-failure
 
   postgres:
     image: postgres
@@ -19,3 +20,4 @@ services:
       POSTGRES_PASSWORD: k3str4
     ports:
       - 5432:5432
+    restart: on-failure

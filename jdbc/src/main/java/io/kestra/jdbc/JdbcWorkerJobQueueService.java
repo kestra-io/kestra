@@ -24,7 +24,6 @@ public class JdbcWorkerJobQueueService {
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
     private final WorkerInstanceRepositoryInterface workerInstanceRepository;
     private Runnable queueStop;
-    private WorkerInstance workerInstance;
 
     @SuppressWarnings("unchecked")
     public JdbcWorkerJobQueueService(ApplicationContext applicationContext) {
@@ -38,10 +37,9 @@ public class JdbcWorkerJobQueueService {
     }
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
-        workerInstance = jdbcHeartbeat.get();
 
         this.queueStop = workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
-            workerInstance = jdbcHeartbeat.get();
+            WorkerInstance workerInstance = jdbcHeartbeat.get();
 
             eithers.forEach(either -> {
                 if (either.isRight()) {
@@ -95,10 +93,9 @@ public class JdbcWorkerJobQueueService {
     }
 
     public void cleanup() {
-        if (this.workerInstance != null) {
+        if (jdbcHeartbeat.get() != null) {
             synchronized (this) {
-                workerInstanceRepository.delete(this.workerInstance);
-                this.workerInstance = null;
+                workerInstanceRepository.delete(jdbcHeartbeat.get());
             }
         }
     }

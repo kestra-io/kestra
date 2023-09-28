@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 @Singleton
 @Slf4j
-public class JdbcPostgresWorkerJobQueueService {
+public class JdbcWorkerJobQueueService {
     private final JdbcQueue<WorkerJob> workerTaskQueue;
     private final JdbcHeartbeat jdbcHeartbeat;
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
@@ -27,7 +27,7 @@ public class JdbcPostgresWorkerJobQueueService {
     private WorkerInstance workerInstance;
 
     @SuppressWarnings("unchecked")
-    public JdbcPostgresWorkerJobQueueService(ApplicationContext applicationContext) {
+    public JdbcWorkerJobQueueService(ApplicationContext applicationContext) {
         this.workerTaskQueue = (JdbcQueue<WorkerJob>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED)

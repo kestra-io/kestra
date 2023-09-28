@@ -5,6 +5,8 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,13 +53,17 @@ public abstract class AbstractJdbcWorkerInstanceRepositoryTest {
         WorkerInstance workerInstance = createWorkerInstance(UUID.randomUUID().toString());
         workerInstanceRepository.save(workerInstance);
 
-        Optional<WorkerInstance> find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
-        assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getWorkerUuid(), is(workerInstance.getWorkerUuid()));
+        dslContextWrapper.transaction(configuration -> {
+            DSLContext context = DSL.using(configuration);
 
-        workerInstanceRepository.delete(workerInstance);
-        find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
-        assertThat(find.isPresent(), is(false));
+            Optional<WorkerInstance> find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
+            assertThat(find.isPresent(), is(true));
+            assertThat(find.get().getWorkerUuid(), is(workerInstance.getWorkerUuid()));
+
+            workerInstanceRepository.delete(context, workerInstance);
+            find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
+            assertThat(find.isPresent(), is(false));
+        });
     }
 
     @Test
@@ -70,14 +76,18 @@ public abstract class AbstractJdbcWorkerInstanceRepositoryTest {
         workerInstanceRepository.save(workerInstanceAlive);
         workerInstanceRepository.save(workerInstanceDead);
 
-        List<WorkerInstance> finds = workerInstanceRepository.findAll();
-        assertThat(finds.size(), is(3));
+        dslContextWrapper.transaction(configuration -> {
+            DSLContext context = DSL.using(configuration);
 
-        finds = workerInstanceRepository.findAllAlive();
-        assertThat(finds.size(), is(2));
+            List<WorkerInstance> finds = workerInstanceRepository.findAll(context);
+            assertThat(finds.size(), is(3));
 
-        finds = workerInstanceRepository.findAllDead();
-        assertThat(finds.size(), is(1));
+            finds = workerInstanceRepository.findAllToDelete(context);
+            assertThat(finds.size(), is(1));
+
+            finds = workerInstanceRepository.findAllAlive(context);
+            assertThat(finds.size(), is(2));
+        });
     }
 
     @Test
@@ -108,22 +118,14 @@ public abstract class AbstractJdbcWorkerInstanceRepositoryTest {
         workerInstance.setHeartbeatDate(Instant.now().minusSeconds(3600));
         workerInstanceRepository.save(workerInstance);
 
-        workerInstanceRepository.heartbeatsStatusUpdate();
-        Optional<WorkerInstance> find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
-        assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getStatus(), is(WorkerInstance.Status.DEAD));
-    }
+        dslContextWrapper.transaction(configuration -> {
+            DSLContext context = DSL.using(configuration);
 
-    @Test
-    protected void heartbeatsCleanup() {
-        WorkerInstance workerInstance = createWorkerInstance(UUID.randomUUID().toString());
-        workerInstance.setHeartbeatDate(Instant.now().minusSeconds(3600));
-        workerInstance.setStatus(WorkerInstance.Status.DEAD);
-        workerInstanceRepository.save(workerInstance);
-
-        workerInstanceRepository.heartbeatsCleanup();
-        Optional<WorkerInstance> find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
-        assertThat(find.isPresent(), is(false));
+            workerInstanceRepository.heartbeatsStatusUpdate(context);
+            Optional<WorkerInstance> find = workerInstanceRepository.findByWorkerUuid(workerInstance.getWorkerUuid().toString());
+            assertThat(find.isPresent(), is(true));
+            assertThat(find.get().getStatus(), is(WorkerInstance.Status.DEAD));
+        });
     }
 
     private WorkerInstance createWorkerInstance(String workerUuid, Boolean alive) {
@@ -135,6 +137,7 @@ public abstract class AbstractJdbcWorkerInstanceRepositoryTest {
             .partitions(null)
             .port(0)
             .status(alive ? WorkerInstance.Status.UP : WorkerInstance.Status.DEAD)
+            .heartbeatDate(alive ?  Instant.now() : Instant.now().minusSeconds(3600))
             .build();
     }
 

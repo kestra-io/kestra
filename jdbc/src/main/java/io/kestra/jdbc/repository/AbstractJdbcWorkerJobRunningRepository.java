@@ -49,18 +49,14 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
             });
     }
 
-    @Override
-    public List<WorkerJobRunning> getWorkerJobWithWorkerDead(List<String> workersAlive) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
+    public List<WorkerJobRunning> getWorkerJobWithWorkerDead(DSLContext context, List<String> workersToDelete) {
+        return context
                 .select(field("value"))
                 .from(this.jdbcRepository.getTable())
-                .where(field("worker_uuid").notIn(workersAlive))
+                .where(field("worker_uuid").in(workersToDelete))
                 .forUpdate()
                 .fetch()
-                .map(r -> this.jdbcRepository.deserialize(r.get("value").toString()))
+                .map(r -> this.jdbcRepository.deserialize(r.get("value").toString())
             );
     }
 }

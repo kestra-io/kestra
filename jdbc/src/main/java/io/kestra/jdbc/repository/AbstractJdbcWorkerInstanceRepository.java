@@ -6,17 +6,14 @@ import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.Record1;
-import org.jooq.SelectConditionStep;
-import org.jooq.SelectForUpdateOfStep;
-import org.jooq.SelectWhereStep;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 @Singleton
 @Getter
@@ -39,7 +36,7 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = this.heartbeatSelectQuery(configuration, workerUuid);
+                SelectConditionStep<Record1<Object>> select = this.heartbeatSelectQuery(DSL.using(configuration), workerUuid);
 
                 return this.jdbcRepository.fetchOne(select);
             });
@@ -50,7 +47,7 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectForUpdateOfStep<Record1<Object>> select =
-                    this.heartbeatSelectQuery(configuration, workerUuid)
+                    this.heartbeatSelectQuery(DSL.using(configuration), workerUuid)
                         .forUpdate();
 
                 Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select);
@@ -64,103 +61,84 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
             });
     }
 
-    public void heartbeatStatusUpdate(String workerUuid) {
-        this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                SelectForUpdateOfStep<Record1<Object>> select =
-                    this.heartbeatSelectQuery(configuration, workerUuid)
-                        .and(field("status").eq(WorkerInstance.Status.UP.toString()))
-                        // We consider a heartbeat late if it's older than heartbeat missed times the frequency
-                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(getNbMissed() * getFrequency().getSeconds())))
-                        .forUpdate();
+    public void heartbeatStatusUpdate(String workerUuid, DSLContext context) {
+        SelectForUpdateOfStep<Record1<Object>> select =
+            this.heartbeatSelectQuery(context, workerUuid)
+                .and(field("status").eq(WorkerInstance.Status.UP.toString()))
+                // We consider a heartbeat dead if it's older than heartbeat missed times the frequency
+                .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(getNbMissed() * getFrequency().getSeconds())))
+                .forUpdate();
 
-                Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select);
+        Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select);
 
-                workerInstance.ifPresent(heartbeat -> {
-                    heartbeat.setStatus(WorkerInstance.Status.DEAD);
+        workerInstance.ifPresent(heartbeat -> {
+            heartbeat.setStatus(WorkerInstance.Status.DEAD);
 
-                    log.warn("Detected evicted worker: {}", heartbeat);
+            log.warn("Detected evicted worker: {}", heartbeat);
 
-                    this.jdbcRepository.persist(heartbeat, this.jdbcRepository.persistFields(heartbeat));
-                });
-            });
+            this.jdbcRepository.persist(heartbeat, context,  this.jdbcRepository.persistFields(heartbeat));
+        });
     }
 
-    public void heartbeatsStatusUpdate() {
-        this.findAllAlive().forEach(heartbeat -> {
-                this.heartbeatStatusUpdate(heartbeat.getWorkerUuid().toString());
+    public void heartbeatsStatusUpdate(DSLContext context) {
+        this.findAllAlive(context).forEach(heartbeat -> {
+                this.heartbeatStatusUpdate(heartbeat.getWorkerUuid().toString(), context);
             }
         );
     }
 
-    public Boolean heartbeatCleanUp(String workerUuid) {
-        AtomicReference<Boolean> bool = new AtomicReference<>(false);
+    public void lockedWorkersUpdate(Function<DSLContext, Void> function) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
-                SelectForUpdateOfStep<Record1<Object>> select =
-                    this.heartbeatSelectQuery(configuration, workerUuid)
-                        // we delete worker that have dead status more than two times the times considered to be dead
-                        .and(field("status").eq(WorkerInstance.Status.DEAD.toString()))
-                        .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency().getSeconds())))
-                        .forUpdate();
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
 
-                Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select);
+                // Update all workers status
+                heartbeatsStatusUpdate(context);
 
-                if(workerInstance.isPresent()) {
-                    this.delete(workerInstance.get());
-                    bool.set(true);
-                }
+                function.apply(context);
+
+                return null;
             });
-        return bool.get();
     }
 
-    public Boolean heartbeatsCleanup() {
-        AtomicReference<Boolean> bool = new AtomicReference<>(false);
-        this.findAllDead().forEach(heartbeat -> {
-                bool.set(this.heartbeatCleanUp(heartbeat.getWorkerUuid().toString()));
-            }
-        );
-        return bool.get();
+    public List<WorkerInstance> findAll(DSLContext context) {
+        return this.jdbcRepository.fetch(this.heartbeatSelectAllQuery(context));
     }
 
-    @Override
     public List<WorkerInstance> findAll() {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectWhereStep<Record1<Object>> select =
-                    this.heartbeatSelectAllQuery(configuration);
-
-                return this.jdbcRepository.fetch(select);
+                DSLContext context = DSL.using(configuration);
+                return this.jdbcRepository.fetch(this.heartbeatSelectAllQuery(context));
             });
     }
 
-    public List<WorkerInstance> findAllAlive() {
+    public List<WorkerInstance> findAllAlive(DSLContext context) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select =
-                    this.heartbeatSelectAllQuery(configuration)
-                    .where(field("status").eq(WorkerInstance.Status.UP.toString()));
-
-                return this.jdbcRepository.fetch(select);
-            });
+            .transactionResult(configuration -> this.jdbcRepository.fetch(
+                this.heartbeatSelectAllQuery(context)
+                    .where(field("status").eq(WorkerInstance.Status.UP.toString()))
+            ));
     }
 
-    public List<WorkerInstance> findAllDead() {
+    public List<WorkerInstance> findAllToDelete(DSLContext context) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select =
-                    this.heartbeatSelectAllQuery(configuration)
-                    .where(field("status").eq(WorkerInstance.Status.DEAD.toString()));
-
-                return this.jdbcRepository.fetch(select);
-            });
+            .transactionResult(configuration -> this.jdbcRepository.fetch(
+                this.heartbeatSelectAllQuery(context)
+                    .where(field("status").eq(WorkerInstance.Status.DEAD.toString()))
+                    .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(2 * getNbMissed() * getFrequency().getSeconds())))
+            ));
     }
 
+    public void delete(DSLContext context, WorkerInstance workerInstance) {
+        this.jdbcRepository.delete(context, workerInstance);
+    }
+
+    @Override
     public void delete(WorkerInstance workerInstance) {
         this.jdbcRepository.delete(workerInstance);
     }
@@ -171,9 +149,8 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
         return workerInstance;
     }
 
-    private SelectConditionStep<Record1<Object>> heartbeatSelectQuery(org.jooq.Configuration configuration, String workerUuid) {
-        return DSL
-            .using(configuration)
+    private SelectConditionStep<Record1<Object>> heartbeatSelectQuery(DSLContext context, String workerUuid) {
+        return context
             .select(field("value"))
             .from(this.jdbcRepository.getTable())
             .where(
@@ -181,10 +158,8 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
             );
     }
 
-    private SelectWhereStep<Record1<Object>> heartbeatSelectAllQuery(org.jooq.Configuration configuration) {
-        return DSL
-            .using(configuration)
-            .select(field("value"))
+    private SelectJoinStep<Record1<Object>> heartbeatSelectAllQuery(DSLContext dsl) {
+        return dsl.select(field("value"))
             .from(this.jdbcRepository.getTable());
     }
 

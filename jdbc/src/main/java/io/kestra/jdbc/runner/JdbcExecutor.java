@@ -35,6 +35,7 @@ import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.DSLContext;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
@@ -221,53 +222,53 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     protected void workersUpdate() {
-        workerInstanceRepository.heartbeatsStatusUpdate();
-        if (workerInstanceRepository.heartbeatsCleanup()) {
-            this.deadWorkerTaskResubmit();
-        }
-    }
+        workerInstanceRepository.lockedWorkersUpdate(context -> {
+            List<WorkerInstance> workersToDelete = workerInstanceRepository
+                .findAllToDelete(context);
+            List<String> workersToDeleteUuids = workersToDelete.stream().map(worker -> worker.getWorkerUuid().toString()).collect(Collectors.toList());
 
-    private void deadWorkerTaskResubmit() {
-        List<String> aliveWorkerUuid = workerInstanceRepository
-            .findAllAlive()
-            .stream()
-            .map(workerInstance -> workerInstance.getWorkerUuid().toString())
-            .collect(Collectors.toList());
+            // Before deleting a worker, we resubmit all his tasks
+            workerJobRunningRepository.getWorkerJobWithWorkerDead(context, workersToDeleteUuids)
+                .forEach(workerJobRunning -> {
+                    if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
+                        workerTaskQueue.emit(WorkerTask.builder()
+                            .taskRun(workerTaskRunning.getTaskRun())
+                            .task(workerTaskRunning.getTask())
+                            .runContext(workerTaskRunning.getRunContext())
+                            .build()
+                        );
 
-        workerJobRunningRepository.getWorkerJobWithWorkerDead(aliveWorkerUuid)
-            .forEach(workerJobRunning -> {
-                if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-                    workerTaskQueue.emit(WorkerTask.builder()
-                        .taskRun(workerTaskRunning.getTaskRun())
-                        .task(workerTaskRunning.getTask())
-                        .runContext(workerTaskRunning.getRunContext())
-                        .build()
-                    );
+                        log.warn(
+                            "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
+                            workerTaskRunning.getTaskRun().getNamespace(),
+                            workerTaskRunning.getTaskRun().getFlowId(),
+                            workerTaskRunning.getTaskRun().getExecutionId(),
+                            workerTaskRunning.getTaskRun().getId()
+                        );
+                    } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
+                        workerTaskQueue.emit(WorkerTrigger.builder()
+                            .trigger(workerTriggerRunning.getTrigger())
+                            .conditionContext(workerTriggerRunning.getConditionContext())
+                            .triggerContext(workerTriggerRunning.getTriggerContext())
+                            .build());
 
-                    log.warn(
-                        "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
-                        workerTaskRunning.getTaskRun().getNamespace(),
-                        workerTaskRunning.getTaskRun().getFlowId(),
-                        workerTaskRunning.getTaskRun().getExecutionId(),
-                        workerTaskRunning.getTaskRun().getId()
-                    );
-                } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
-                    workerTaskQueue.emit(WorkerTrigger.builder()
-                        .trigger(workerTriggerRunning.getTrigger())
-                        .conditionContext(workerTriggerRunning.getConditionContext())
-                        .triggerContext(workerTriggerRunning.getTriggerContext())
-                        .build());
+                        log.warn(
+                            "[namespace: {}] [flow: {}] [trigger: {}] WorkerTrigger is being resend",
+                            workerTriggerRunning.getTriggerContext().getNamespace(),
+                            workerTriggerRunning.getTriggerContext().getFlowId(),
+                            workerTriggerRunning.getTriggerContext().getTriggerId()
+                        );
+                    } else {
+                        throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");
+                    }
+                });
 
-                    log.warn(
-                        "[namespace: {}] [flow: {}] [trigger: {}] WorkerTrigger is being resend",
-                        workerTriggerRunning.getTriggerContext().getNamespace(),
-                        workerTriggerRunning.getTriggerContext().getFlowId(),
-                        workerTriggerRunning.getTriggerContext().getTriggerId()
-                    );
-                } else {
-                    throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");
-                }
+            workersToDelete.forEach(worker -> {
+                workerInstanceRepository.delete(context, worker);
             });
+
+            return null;
+        });
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {

@@ -33,7 +33,7 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <refresh-button class="float-right" @refresh="load" />
+                    <refresh-button class="float-right" @refresh="refresh" />
                 </el-form-item>
             </template>
 
@@ -269,7 +269,8 @@
                 isDefaultNamespaceAllow: true,
                 dailyReady: false,
                 dblClickRouteName: "executions/update",
-                flowTriggerDetails: undefined
+                flowTriggerDetails: undefined,
+                recomputeInterval: false
             };
         },
         computed: {
@@ -283,9 +284,13 @@
                 };
             },
             endDate() {
+                // used to be able to force refresh the base interval when auto-reloading
+                this.recomputeInterval;
                 return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
             },
             startDate() {
+                // used to be able to force refresh the base interval when auto-reloading
+                this.recomputeInterval;
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
                     .add(-30, "days").toISOString(true);
             },
@@ -306,6 +311,10 @@
             }
         },
         methods: {
+            refresh() {
+                this.recomputeInterval = !this.recomputeInterval;
+                this.load();
+            },
             selectionMapper(execution) {
                 return execution.id
             },

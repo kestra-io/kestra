@@ -28,7 +28,7 @@
                         />
                     </el-form-item>
                     <el-form-item>
-                        <refresh-button class="float-right" @refresh="load" />
+                        <refresh-button class="float-right" @refresh="refresh" />
                     </el-form-item>
                 </template>
 
@@ -87,7 +87,8 @@
             return {
                 isDefaultNamespaceAllow: true,
                 task: undefined,
-                isLoading: false
+                isLoading: false,
+                recomputeInterval: false
             };
         },
         computed: {
@@ -104,14 +105,22 @@
                 return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
             },
             endDate() {
+                // used to be able to force refresh the base interval when auto-reloading
+                this.recomputeInterval;
                 return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
             },
             startDate() {
+                // used to be able to force refresh the base interval when auto-reloading
+                this.recomputeInterval;
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
                     .add(-7, "days").toISOString(true);
             }
         },
         methods: {
+            refresh() {
+                this.recomputeInterval = !this.recomputeInterval;
+                this.load();
+            },
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 

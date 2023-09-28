@@ -1,12 +1,12 @@
 <template>
     <div class="list">
         <template v-for="[status, count] of sorted">
-            <div v-if="count > 0" :key="status" class="d-flex w-100 justify-content-between mb-2">
-                <div class="me-4 icon">
+            <div v-if="count > 0" :key="status" class="d-flex justify-content-around mb-4 column-gap-4 row-gap-2 flex-wrap">
+                <div class="icon">
                     <status :label="false" :status="status" />
                 </div>
 
-                <div class="me-4 center">
+                <div class="center">
                     <h6>
                         {{ status.toLowerCase().capitalize() }}
                     </h6>
@@ -15,7 +15,7 @@
                     </div>
                 </div>
 
-                <div class="big-number">
+                <div class="big-number text-break">
                     {{ count }}
                 </div>
             </div>
@@ -84,11 +84,9 @@
 
             .big-number {
                 vertical-align: middle;
-                font-size: 150%;
                 font-weight: bold;
             }
         }
     }
-
 </style>
 

@@ -44,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -565,6 +566,8 @@ public class Worker implements Runnable, AutoCloseable {
             "worker-shutdown"
         ).start();
 
+        AtomicBoolean cleanShutdown = new AtomicBoolean(false);
+
         Await.until(
             () -> {
                 if (this.executors.isTerminated() && this.workerThreadReferences.isEmpty()) {
@@ -577,6 +580,7 @@ public class Worker implements Runnable, AutoCloseable {
                         log.error("Failed to close the workerTaskResultQueue", e);
                     }
 
+                    cleanShutdown.set(true);;
                     return true;
                 }
 
@@ -589,6 +593,10 @@ public class Worker implements Runnable, AutoCloseable {
             },
             Duration.ofSeconds(1)
         );
+
+        if (cleanShutdown.get()) {
+            workerJobQueue.cleanup();
+        }
 
         workerJobQueue.close();
         executionKilledQueue.close();

@@ -499,7 +499,12 @@
     "add task": "Add a task",
     "unable to generate graph": "An issue occurred while generating the graph which prevent the topology to be displayed.",
     "attempts": "Attempt(s)",
-    "flow deleted, you can restore it": "Flow has been deleted and this is a read-only view, but you can still restore it."
+    "flow deleted, you can restore it": "Flow has been deleted and this is a read-only view, but you can still restore it.",
+    "workers": "Workers",
+    "worker group": "Worker Group",
+    "hostname": "Hostname",
+    "port": "Port",
+    "management port": "Management port"
   },
   "fr": {
     "id": "Identifiant",
@@ -993,7 +998,12 @@
     "add task": "Ajouter une tâche",
     "unable to generate graph": "Une erreur est survenue lors de la génération du graphe empêchant l'affichage de la topologie.",
     "attempts": "Tentative(s)",
-    "flow deleted, you can restore it": "Le flow a été supprimé et ceci est une vue en lecture seule, mais vous pouvez toujours le restaurer."
+    "flow deleted, you can restore it": "Le flow a été supprimé et ceci est une vue en lecture seule, mais vous pouvez toujours le restaurer.",
+    "workers": "Workers",
+    "worker group": "Worker Group",
+    "hostname": "Nom d'hôte",
+    "port": "Port",
+    "management port": "Port de gestion"
   }
 }
 

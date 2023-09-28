@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 public class TestMethodScopedWorker extends Worker {
     public TestMethodScopedWorker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
         super(applicationContext, thread, workerGroupKey);
+
+        applicationContext.registerSingleton(this);
     }
 
     /**

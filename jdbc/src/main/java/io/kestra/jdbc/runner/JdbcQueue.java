@@ -11,8 +11,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -20,10 +20,11 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -35,9 +36,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.sql.DataSource;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
@@ -45,7 +46,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     private static ExecutorService poolExecutor;
 
-    private final QueueService queueService;
+    protected final QueueService queueService;
 
     protected final Class<T> cls;
 
@@ -183,6 +184,31 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
+        return this.receiveImpl(
+            consumerGroup,
+            queueType,
+            (dslContext, eithers) -> {
+                eithers.forEach(consumer);
+            },
+            false
+        );
+    }
+
+    public Runnable receiveTransaction(String consumerGroup, Class<?> queueType, BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer) {
+        return this.receiveImpl(
+            consumerGroup,
+            queueType,
+            consumer,
+            true
+        );
+    }
+
+    public Runnable receiveImpl(
+        String consumerGroup,
+        Class<?> queueType,
+        BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer,
+        Boolean inTransaction
+    ) {
         String queueName = queueName(queueType);
 
         return this.poll(() -> {
@@ -192,6 +218,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName);
 
                 if (!result.isEmpty()) {
+                    if (inTransaction) {
+                        consumer.accept(ctx, this.map(result));
+                    }
 
                     this.updateGroupOffsets(
                         ctx,
@@ -204,13 +233,15 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 return result;
             });
 
-            this.send(fetch, consumer);
+            if (!inTransaction) {
+                consumer.accept(null, this.map(fetch));
+            }
 
             return fetch.size();
         });
     }
 
-    private String queueName(Class<?> queueType) {
+    protected String queueName(Class<?> queueType) {
         return CaseFormat.UPPER_CAMEL.to(
             CaseFormat.LOWER_UNDERSCORE,
             queueType.getSimpleName()
@@ -218,7 +249,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @SuppressWarnings("BusyWait")
-    private Runnable poll(Supplier<Integer> runnable) {
+    protected Runnable poll(Supplier<Integer> runnable) {
         AtomicBoolean running = new AtomicBoolean(true);
         AtomicLong sleep = new AtomicLong(configuration.getMaxPollInterval().toMillis());
         AtomicReference<ZonedDateTime> lastPoll = new AtomicReference<>(ZonedDateTime.now());
@@ -254,15 +285,19 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         };
     }
 
-    private void send(Result<Record> fetch, Consumer<Either<T, DeserializationException>> consumer) {
-        fetch
+    protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
+        return fetch
             .map(record -> {
                 try {
-                    return Either.<T, DeserializationException>left(JacksonMapper.ofJson().readValue(record.get("value", String.class), cls));
+                    return Either.left(JacksonMapper.ofJson().readValue(record.get("value", String.class), cls));
                 } catch (JsonProcessingException e) {
-                    return Either.<T, DeserializationException>right(new DeserializationException(e, record.get("value", String.class)));
+                    return Either.right(new DeserializationException(e, record.get("value", String.class)));
                 }
-            })
+            });
+    }
+
+    protected void send(Result<Record> fetch, Consumer<Either<T, DeserializationException>> consumer) {
+        this.map(fetch)
             .forEach(consumer);
     }
 

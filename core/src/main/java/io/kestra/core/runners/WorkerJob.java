@@ -12,4 +12,6 @@ public abstract class WorkerJob {
     abstract public String getType();
 
     abstract public String uid();
+
+    abstract public String taskRunId();
 }

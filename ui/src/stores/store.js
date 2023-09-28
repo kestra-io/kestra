@@ -13,6 +13,7 @@ import stat from "./stat"
 import template from "./template"
 import taskrun from "./taskruns"
 import trigger from "./trigger";
+import worker from "./worker";
 
 export default {
     modules: {
@@ -30,6 +31,7 @@ export default {
         graph,
         plugin,
         taskrun,
-        trigger
+        trigger,
+        worker
     }
 }

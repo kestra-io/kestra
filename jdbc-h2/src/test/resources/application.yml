@@ -15,6 +15,10 @@ flyway:
       out-of-order: true
 
 kestra:
+  server-type: STANDALONE
+  heartbeat:
+    frequency: 10s
+    heartbeat-missed: 3
   queue:
     type: h2
   repository:
@@ -64,6 +68,12 @@ kestra:
       flowtopologies:
         table: "flow_topologies"
         cls: io.kestra.core.models.topologies.FlowTopology
+      workerinstance:
+        cls: io.kestra.core.runners.WorkerInstance
+        table: "worker_instance"
+      workerjobrunning:
+        cls: io.kestra.core.runners.WorkerJobRunning
+        table: "worker_job_running"
 
     queues:
       min-poll-interval: 10ms

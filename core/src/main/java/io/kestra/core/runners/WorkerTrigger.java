@@ -31,4 +31,9 @@ public class WorkerTrigger extends WorkerJob {
     public String uid() {
         return triggerContext.uid();
     }
+
+    @Override
+    public String taskRunId() {
+        return triggerContext.uid();
+    }
 }

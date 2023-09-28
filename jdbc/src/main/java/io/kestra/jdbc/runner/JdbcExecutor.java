@@ -14,9 +14,9 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
+import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -24,7 +24,10 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
+import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
+import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -32,6 +35,7 @@ import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.DSLContext;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
@@ -47,6 +51,8 @@ import java.util.stream.Stream;
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
+
+    private final ScheduledExecutorService schedulerHeartbeat = Executors.newSingleThreadScheduledExecutor();
 
     private Boolean isShutdown = false;
 
@@ -120,6 +126,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractJdbcFlowTopologyRepository flowTopologyRepository;
 
+    @Inject
+    private AbstractJdbcWorkerInstanceRepository workerInstanceRepository;
+
     protected List<Flow> allFlows;
 
     @Inject
@@ -131,6 +140,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private SkipExecutionService skipExecutionService;
+
+    @Inject
+    private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
+
+    @Value("${kestra.heartbeat.frequency}")
+    private Duration frequency;
 
     @SneakyThrows
     @Override
@@ -149,6 +164,13 @@ public class JdbcExecutor implements ExecutorInterface {
             this::executionDelaySend,
             0,
             1,
+            TimeUnit.SECONDS
+        );
+
+        schedulerHeartbeat.scheduleAtFixedRate(
+            this::workersUpdate,
+            frequency.toSeconds(),
+            frequency.toSeconds(),
             TimeUnit.SECONDS
         );
 
@@ -196,6 +218,57 @@ public class JdbcExecutor implements ExecutorInterface {
                 );
             }
         );
+
+    }
+
+    protected void workersUpdate() {
+        workerInstanceRepository.lockedWorkersUpdate(context -> {
+            List<WorkerInstance> workersToDelete = workerInstanceRepository
+                .findAllToDelete(context);
+            List<String> workersToDeleteUuids = workersToDelete.stream().map(worker -> worker.getWorkerUuid().toString()).collect(Collectors.toList());
+
+            // Before deleting a worker, we resubmit all his tasks
+            workerJobRunningRepository.getWorkerJobWithWorkerDead(context, workersToDeleteUuids)
+                .forEach(workerJobRunning -> {
+                    if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
+                        workerTaskQueue.emit(WorkerTask.builder()
+                            .taskRun(workerTaskRunning.getTaskRun())
+                            .task(workerTaskRunning.getTask())
+                            .runContext(workerTaskRunning.getRunContext())
+                            .build()
+                        );
+
+                        log.warn(
+                            "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
+                            workerTaskRunning.getTaskRun().getNamespace(),
+                            workerTaskRunning.getTaskRun().getFlowId(),
+                            workerTaskRunning.getTaskRun().getExecutionId(),
+                            workerTaskRunning.getTaskRun().getId()
+                        );
+                    } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
+                        workerTaskQueue.emit(WorkerTrigger.builder()
+                            .trigger(workerTriggerRunning.getTrigger())
+                            .conditionContext(workerTriggerRunning.getConditionContext())
+                            .triggerContext(workerTriggerRunning.getTriggerContext())
+                            .build());
+
+                        log.warn(
+                            "[namespace: {}] [flow: {}] [trigger: {}] WorkerTrigger is being resend",
+                            workerTriggerRunning.getTriggerContext().getNamespace(),
+                            workerTriggerRunning.getTriggerContext().getFlowId(),
+                            workerTriggerRunning.getTriggerContext().getTriggerId()
+                        );
+                    } else {
+                        throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");
+                    }
+                });
+
+            workersToDelete.forEach(worker -> {
+                workerInstanceRepository.delete(context, worker);
+            });
+
+            return null;
+        });
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -303,7 +376,7 @@ public class JdbcExecutor implements ExecutorInterface {
             // multiple condition
             if (
                 conditionService.isTerminatedWithListeners(flow, execution) &&
-                this.deduplicateFlowTrigger(execution, executorState)
+                    this.deduplicateFlowTrigger(execution, executorState)
             ) {
                 flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(this.executionQueue::emit);
@@ -336,7 +409,6 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
         if (either.isRight()) {
             log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage());
@@ -362,6 +434,9 @@ public class JdbcExecutor implements ExecutorInterface {
             metricRegistry
                 .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
                 .record(message.getTaskRun().getState().getDuration());
+
+            log.trace("TaskRun terminated: {}", message.getTaskRun());
+            workerJobRunningRepository.deleteByTaskRunId(message.getTaskRun().getId());
         }
 
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {
@@ -448,7 +523,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     (namespace, id) -> templateExecutorInterface.get().findById(namespace, id).orElse(null)
                 );
             } catch (InternalException e) {
-                log.warn("Failed to inject template",  e);
+                log.warn("Failed to inject template", e);
             }
         }
 
@@ -562,6 +637,7 @@ public class JdbcExecutor implements ExecutorInterface {
     public void close() throws IOException {
         isShutdown = true;
         schedulerDelay.shutdown();
+        schedulerHeartbeat.shutdown();
         executionQueue.close();
         workerTaskQueue.close();
         workerTaskResultQueue.close();

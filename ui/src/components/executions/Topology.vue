@@ -90,7 +90,7 @@
                 }
 
                 const nodeExecution = nodeToCheck.executionId === this.execution?.id ? this.execution
-                    : Object.values(this.subflowsExecutions).filter(execution => execution.id === this.data?.executionId)?.[0];
+                    : Object.values(this.subflowsExecutions).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
 
                 if (!nodeExecution) {
                     return true;

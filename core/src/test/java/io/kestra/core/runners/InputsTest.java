@@ -62,7 +62,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
-    private Map<String, Object> typedInputs(Map<String, String> map) {
+    private Map<String, Object> typedInputs(Map<String, Object> map) {
         return typedInputs(map, flowRepository.findById(null, "io.kestra.tests", "inputs").get());
     }
 
@@ -111,7 +111,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(
             CharStreams.toString(new InputStreamReader(storageInterface.get(null, (URI) typeds.get("file")))),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
+            is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
         );
         assertThat(typeds.get("json"), is(Map.of("a", "b")));
         assertThat(typeds.get("uri"), is("https://www.google.com"));

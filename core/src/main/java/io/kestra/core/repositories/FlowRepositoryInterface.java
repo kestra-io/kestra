@@ -20,8 +20,6 @@ public interface FlowRepositoryInterface {
         return this.findById(tenantId, namespace, id, revision, false);
     }
 
-    Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision);
-
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
             execution.getTenantId(),
@@ -44,7 +42,7 @@ public interface FlowRepositoryInterface {
         return this.findById(tenantId, namespace, id, Optional.empty(), false);
     }
 
-    Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision);
+    Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDelete);
 
     default Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision) {
         return this.findByIdWithSource(tenantId, namespace, id, revision, false);

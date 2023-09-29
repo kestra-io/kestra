@@ -114,11 +114,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
-        return findById(namespace, id, revision);
-    }
-
-    @Override
     public Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
         return jdbcRepository
             .getDslContextWrapper()

@@ -30,6 +30,7 @@ public class GraphService {
     }
 
     public GraphCluster of(GraphCluster baseGraph, Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid) throws IllegalVariableEvaluationException {
+        String tenantId = flow.getTenantId();
         flow = taskDefaultService.injectDefaults(flow);
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, null);
 
@@ -53,6 +54,7 @@ public class GraphService {
                 Flow subflow = flowByUid.computeIfAbsent(
                     subflowGraphTask.getTask().flowUid(),
                     uid -> flowRepository.findById(
+                        tenantId,
                         subflowGraphTask.getTask().getNamespace(),
                         subflowGraphTask.getTask().getFlowId(),
                         Optional.ofNullable(subflowGraphTask.getTask().getRevision())

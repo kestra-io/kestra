@@ -96,11 +96,11 @@ public class FlowController {
         @Parameter(description = "The flow revision") @QueryValue Optional<Integer> revision,
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws IllegalVariableEvaluationException {
-        return flowRepository
+        Flow flow = flowRepository
             .findById(tenantService.resolveTenant(), namespace, id, revision)
             .orElse(null);
 
-        String flowUid = revision.isEmpty() ? Flow.uidWithoutRevision(namespace, id) : Flow.uid(namespace, id, revision);
+        String flowUid = revision.isEmpty() ? Flow.uidWithoutRevision(tenantService.resolveTenant(), namespace, id) : Flow.uid(tenantService.resolveTenant(), namespace, id, revision);
         if(flow == null) {
             throw new NoSuchElementException(
                 "Unable to find flow " + flowUid

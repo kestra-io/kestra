@@ -131,7 +131,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void eachParallelWithSubflowMissing() throws TimeoutException {
-        Execution execution =  runnerUtils.runOne("io.kestra.tests", "each-parallel-subflow-notfound");
+        Execution execution =  runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-subflow-notfound");
 
         assertThat(execution, notNullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

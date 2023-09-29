@@ -12,6 +12,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageInterface;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @SuperBuilder
@@ -51,7 +52,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
-        boolean delete = storageInterface.delete(render);
+        boolean delete = storageInterface.delete(getTenantId(runContext), render);
 
         if (errorOnMissing && !delete) {
             throw new NoSuchElementException("Unable to find file '" + render + "'");
@@ -61,6 +62,12 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
             .uri(render)
             .deleted(delete)
             .build();
+    }
+
+    private String getTenantId(RunContext runContext) {
+        Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
+        // normally only tests should not have the flow variable
+        return flow != null ? flow.get("tenantId") : null;
     }
 
     @Builder

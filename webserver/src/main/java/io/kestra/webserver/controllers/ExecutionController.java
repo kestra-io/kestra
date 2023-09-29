@@ -27,6 +27,7 @@ import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -124,6 +125,9 @@ public class ExecutionController {
 
     @Value("${kestra.server.preview.max-rows:5000}")
     private Integer maxPreviewRows;
+
+    @Inject
+    private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
@@ -525,12 +529,12 @@ public class ExecutionController {
         }
 
         // maybe state
-        prefix = storageInterface.statePrefix(flow.get().getTenantId(), flow.get().getNamespace(), flow.get().getId(), null, null);
+        prefix = storageInterface.statePrefix(flow.get().getNamespace(), flow.get().getId(), null, null);
         if (path.getPath().substring(1).startsWith(prefix)) {
             return null;
         }
 
-        prefix = storageInterface.statePrefix(flow.get().getTenantId(), flow.get().getNamespace(), null, null, null);
+        prefix = storageInterface.statePrefix(flow.get().getNamespace(), null, null, null);
         if (path.getPath().substring(1).startsWith(prefix)) {
             return null;
         }
@@ -559,7 +563,7 @@ public class ExecutionController {
             return httpResponse;
         }
 
-        InputStream fileHandler = storageInterface.get(path);
+        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), path);
         return HttpResponse.ok(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
             .attach(FilenameUtils.getName(path.toString()))
         );
@@ -578,7 +582,7 @@ public class ExecutionController {
         }
 
         return HttpResponse.ok(FileMetas.builder()
-            .size(storageInterface.size(path))
+            .size(storageInterface.size(tenantService.resolveTenant(), path))
             .build()
         );
     }
@@ -977,7 +981,7 @@ public class ExecutionController {
         this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
-        InputStream fileStream = storageInterface.get(path);
+        InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path);
 
         FileRender fileRender = FileRenderBuilder.of(
             extension,

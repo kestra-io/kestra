@@ -110,8 +110,8 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
         assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(
-            CharStreams.toString(new InputStreamReader(storageInterface.get((URI) typeds.get("file")))),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
+            CharStreams.toString(new InputStreamReader(storageInterface.get(null, (URI) typeds.get("file")))),
+            is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
         );
         assertThat(typeds.get("json"), is(Map.of("a", "b")));
         assertThat(typeds.get("uri"), is("https://www.google.com"));

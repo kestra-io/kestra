@@ -33,6 +33,7 @@ class LocalStorageTest {
 
     private URI putFile(URL resource, String path) throws Exception {
         return storageInterface.put(
+            null,
             new URI(path),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
@@ -48,13 +49,13 @@ class LocalStorageTest {
         this.putFile(resource, "/" + prefix + "/storage/get.yml");
 
         URI item = new URI("/" + prefix + "/storage/get.yml");
-        InputStream get = storageInterface.get(item);
+        InputStream get = storageInterface.get(null, item);
         assertThat(CharStreams.toString(new InputStreamReader(get)), is(content));
-        assertTrue(storageInterface.exists(item));
-        assertThat(storageInterface.size(item), is((long) content.length()));
-        assertThat(storageInterface.lastModifiedTime(item), notNullValue());
+        assertTrue(storageInterface.exists(null, item));
+        assertThat(storageInterface.size(null, item), is((long) content.length()));
+        assertThat(storageInterface.lastModifiedTime(null, item), notNullValue());
 
-        InputStream getScheme = storageInterface.get(new URI("kestra:///" + prefix + "/storage/get.yml"));
+        InputStream getScheme = storageInterface.get(null, new URI("kestra:///" + prefix + "/storage/get.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(getScheme)), is(content));
     }
 
@@ -63,7 +64,7 @@ class LocalStorageTest {
         String prefix = IdUtils.create();
 
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.get(new URI("/" + prefix + "/storage/missing.yml"));
+            storageInterface.get(null, new URI("/" + prefix + "/storage/missing.yml"));
         });
     }
 
@@ -73,7 +74,7 @@ class LocalStorageTest {
 
         URL resource = LocalStorageTest.class.getClassLoader().getResource("application.yml");
         URI put = this.putFile(resource, "/" + prefix + "/storage/put.yml");
-        InputStream get = storageInterface.get(new URI("/" + prefix + "/storage/put.yml"));
+        InputStream get = storageInterface.get(null, new URI("/" + prefix + "/storage/put.yml"));
 
         assertThat(put.toString(), is(new URI("kestra:///" + prefix + "/storage/put.yml").toString()));
         assertThat(
@@ -81,20 +82,20 @@ class LocalStorageTest {
             is(CharStreams.toString(new InputStreamReader(new FileInputStream(Objects.requireNonNull(resource).getFile()))))
         );
 
-        assertThat(storageInterface.size(new URI("/" + prefix + "/storage/put.yml")), is(77L));
+        assertThat(storageInterface.size(null, new URI("/" + prefix + "/storage/put.yml")), is(77L));
 
         assertThrows(FileNotFoundException.class, () -> {
-            assertThat(storageInterface.size(new URI("/" + prefix + "/storage/muissing.yml")), is(76L));
+            assertThat(storageInterface.size(null, new URI("/" + prefix + "/storage/muissing.yml")), is(76L));
         });
 
-        boolean delete = storageInterface.delete(put);
+        boolean delete = storageInterface.delete(null, put);
         assertThat(delete, is(true));
 
-        delete = storageInterface.delete(put);
+        delete = storageInterface.delete(null, put);
         assertThat(delete, is(false));
 
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.get(new URI("/" + prefix + "/storage/put.yml"));
+            storageInterface.get(null, new URI("/" + prefix + "/storage/put.yml"));
         });
     }
 
@@ -112,18 +113,18 @@ class LocalStorageTest {
 
         path.forEach(throwConsumer(s -> this.putFile(resource, s)));
 
-        List<URI> deleted = storageInterface.deleteByPrefix(new URI("/" + prefix + "/storage/"));
+        List<URI> deleted = storageInterface.deleteByPrefix(null, new URI("/" + prefix + "/storage/"));
 
         assertThat(deleted, containsInAnyOrder(path.stream().map(s -> URI.create("kestra://" + s)).toArray()));
 
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.get(new URI("/" + prefix + "/storage/"));
+            storageInterface.get(null, new URI("/" + prefix + "/storage/"));
         });
 
         path
             .forEach(s -> {
                 assertThrows(FileNotFoundException.class, () -> {
-                    storageInterface.get(new URI(s));
+                    storageInterface.get(null, new URI(s));
                 });
             });
     }
@@ -132,7 +133,7 @@ class LocalStorageTest {
     void deleteByPrefixNoResult() throws Exception {
         String prefix = IdUtils.create();
 
-        List<URI> deleted = storageInterface.deleteByPrefix(new URI("/" + prefix + "/storage/"));
+        List<URI> deleted = storageInterface.deleteByPrefix(null, new URI("/" + prefix + "/storage/"));
         assertThat(deleted.size(), is(0));
     }
 
@@ -153,52 +154,27 @@ class LocalStorageTest {
         prefix = storageInterface.executionPrefix(taskRun);
         assertThat(prefix, notNullValue());
         assertThat(prefix, is("/namespace/flow/executions/execution"));
-
-        var flowWithTenant = Flow.builder().id("flow").namespace("namespace").tenantId("tenant").build();
-        var executionWithTenant = Execution.builder().id("execution").namespace("namespace").flowId("flow").tenantId("tenant").build();
-        var taskRunWithTenant = TaskRun.builder().id("taskrun").namespace("namespace").flowId("flow").executionId("execution").tenantId("tenant").build();
-
-        prefix = storageInterface.executionPrefix(flowWithTenant, executionWithTenant);
-        assertThat(prefix, notNullValue());
-        assertThat(prefix, is("/tenant/namespace/flow/executions/execution"));
-
-        prefix = storageInterface.executionPrefix(executionWithTenant);
-        assertThat(prefix, notNullValue());
-        assertThat(prefix, is("/tenant/namespace/flow/executions/execution"));
-
-        prefix = storageInterface.executionPrefix(taskRunWithTenant);
-        assertThat(prefix, notNullValue());
-        assertThat(prefix, is("/tenant/namespace/flow/executions/execution"));
-
     }
 
     @Test
     void cachePrefix() {
-        var prefix = storageInterface.cachePrefix(null, "namespace", "flow", "task", null);
+        var prefix = storageInterface.cachePrefix("namespace", "flow", "task", null);
         assertThat(prefix, notNullValue());
         assertThat(prefix, is("namespace/flow/task/cache"));
 
-        prefix = storageInterface.cachePrefix(null, "namespace", "flow", "task", "value");
+        prefix = storageInterface.cachePrefix("namespace", "flow", "task", "value");
         assertThat(prefix, notNullValue());
         assertThat(prefix, startsWith("namespace/flow/task/cache/"));
-
-        prefix = storageInterface.cachePrefix("tenant", "namespace", "flow", "task", null);
-        assertThat(prefix, notNullValue());
-        assertThat(prefix, is("tenant/namespace/flow/task/cache"));
     }
 
     @Test
     void statePrefix() {
-        var prefix = storageInterface.statePrefix(null, "namespace", "flow", "name", null);
+        var prefix = storageInterface.statePrefix("namespace", "flow", "name", null);
         assertThat(prefix, notNullValue());
         assertThat(prefix, is("namespace/flow/states/name"));
 
-        prefix = storageInterface.statePrefix(null, "namespace", "flow", "name", "value");
+        prefix = storageInterface.statePrefix("namespace", "flow", "name", "value");
         assertThat(prefix, notNullValue());
         assertThat(prefix, startsWith("namespace/flow/states/name/"));
-
-        prefix = storageInterface.statePrefix("tenant", "namespace", "flow", "name", null);
-        assertThat(prefix, notNullValue());
-        assertThat(prefix, is("tenant/namespace/flow/states/name"));
     }
 }

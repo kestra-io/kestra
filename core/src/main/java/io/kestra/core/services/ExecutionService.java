@@ -267,7 +267,7 @@ public class ExecutionService {
                 }
 
                 if (purgeStorage) {
-                    builder.storagesCount(storageInterface.deleteByPrefix(URI.create("/" + storageInterface.executionPrefix(
+                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), URI.create("/" + storageInterface.executionPrefix(
                         execution))).size());
                 }
 

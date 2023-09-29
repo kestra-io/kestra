@@ -230,7 +230,7 @@ public class RunContext {
             List<Map<String, Object>> parents = execution.parents(taskRun);
 
             builder.put("parents", parents);
-            if (parents.size() > 0) {
+            if (!parents.isEmpty()) {
                 builder.put("parent", parents.get(0));
             }
         }
@@ -493,7 +493,7 @@ public class RunContext {
         }
 
         if (uri.getScheme().equals("kestra")) {
-            return this.storageInterface.get(uri);
+            return this.storageInterface.get(getTenantId(), uri);
         }
 
         throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
@@ -553,7 +553,7 @@ public class RunContext {
         URI uri = URI.create(prefix);
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.put(resolve, new BufferedInputStream(inputStream));
+        return this.storageInterface.put(getTenantId(), resolve, new BufferedInputStream(inputStream));
     }
 
     private URI putTempFile(File file, String prefix, String name) throws IOException {
@@ -573,7 +573,6 @@ public class RunContext {
         Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
 
         return "/" + this.storageInterface.statePrefix(
-            flow.get("tenantId"),
             flow.get("namespace"),
             isNamespace ? null : flow.get("id"),
             name,
@@ -590,7 +589,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-       return this.storageInterface.get(resolve);
+       return this.storageInterface.get(getTenantId(), resolve);
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
@@ -627,7 +626,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.delete(resolve);
+        return this.storageInterface.delete(getTenantId(), resolve);
     }
 
     /**
@@ -642,15 +641,13 @@ public class RunContext {
      * @return an Optional with the cache input stream or empty.
      */
     public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
-        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.get(uri)) : Optional.empty();
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.get(getTenantId(), uri)) : Optional.empty();
     }
 
     public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
-        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.lastModifiedTime(uri)) : Optional.empty();
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.lastModifiedTime(getTenantId(), uri)) : Optional.empty();
     }
 
     /**
@@ -665,22 +662,20 @@ public class RunContext {
      * @return the URI of the file inside the internal storage.
      */
     public URI putTaskCacheFile(File file, String namespace, String flowId, String taskId, String value) throws IOException {
-        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
         return this.putTempFile(
             file,
-            "/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value),
+            "/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value),
             "cache.zip"
         );
     }
 
     public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
-        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(flow.get("tenantId"), namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.delete(uri)) : Optional.empty();
+        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.delete(getTenantId(), uri)) : Optional.empty();
     }
 
     public List<URI> purgeStorageExecution() throws IOException {
-        return this.storageInterface.deleteByPrefix(this.storageExecutionPrefix);
+        return this.storageInterface.deleteByPrefix(getTenantId(), this.storageExecutionPrefix);
     }
 
     public List<AbstractMetricEntry<?>> metrics() {
@@ -815,5 +810,11 @@ public class RunContext {
             FileUtils.deleteDirectory(temporaryDirectory.toFile());
             this.temporaryDirectory = null;
         }
+    }
+
+    private String getTenantId() {
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
+        // normally only tests should not have the flow variable
+        return flow != null ? flow.get("tenantId") : null;
     }
 }

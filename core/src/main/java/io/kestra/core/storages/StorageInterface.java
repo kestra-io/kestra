@@ -28,17 +28,18 @@ import java.util.stream.Collectors;
 @Introspected
 public interface StorageInterface {
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    InputStream get(URI uri) throws IOException;
+    InputStream get(String tenantId, URI uri) throws IOException;
 
     /**
      * Whether the uri points to a file/object that exist in the internal storage.
      *
      * @param uri the URI of the file/object in the internal storage.
+     * @param tenantId the tenant identifier.
      * @return true if the uri points to a file/object that exist in the internal storage.
      */
-    default boolean exists(URI uri) {
+    default boolean exists(String tenantId, URI uri) {
         try {
-            get(uri);
+            get(tenantId, uri);
             return true;
         } catch (IOException ieo) {
             return false;
@@ -46,23 +47,22 @@ public interface StorageInterface {
     }
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    Long size(URI uri) throws IOException;
+    Long size(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    Long lastModifiedTime(URI uri) throws IOException;
+    Long lastModifiedTime(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    URI put(URI uri, InputStream data) throws IOException;
+    URI put(String tenantId, URI uri, InputStream data) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    boolean delete(URI uri) throws IOException;
+    boolean delete(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    List<URI> deleteByPrefix(URI storagePrefix) throws IOException;
+    List<URI> deleteByPrefix(String tenantId, URI storagePrefix) throws IOException;
 
     default String executionPrefix(Flow flow, Execution execution) {
         return fromParts(
-            flow.getTenantId(),
             flow.getNamespace().replace(".", "/"),
             Slugify.of(flow.getId()),
             "executions",
@@ -72,7 +72,6 @@ public interface StorageInterface {
 
     default String executionPrefix(Execution execution) {
         return fromParts(
-            execution.getTenantId(),
             execution.getNamespace().replace(".", "/"),
             Slugify.of(execution.getFlowId()),
             "executions",
@@ -82,7 +81,6 @@ public interface StorageInterface {
 
     default String executionPrefix(TaskRun taskRun) {
         return fromParts(
-            taskRun.getTenantId(),
             taskRun.getNamespace().replace(".", "/"),
             Slugify.of(taskRun.getFlowId()),
             "executions",
@@ -90,14 +88,11 @@ public interface StorageInterface {
         );
     }
 
-    default String statePrefix(String tenantId, String namespace, @Nullable String flowId, @Nullable String name, @Nullable String value) {
+    default String statePrefix(String namespace, @Nullable String flowId, @Nullable String name, @Nullable String value) {
         String namespacePrefix = namespace.replace(".", "/");
 
         ArrayList<String> paths = new ArrayList<>(
-            tenantId != null ? List.of(
-                tenantId,
-                namespacePrefix
-            ) : List.of(
+            List.of(
                 namespacePrefix
             )
         );
@@ -123,17 +118,11 @@ public interface StorageInterface {
         return String.join("/", paths);
     }
 
-    default String cachePrefix(String tenantId, String namespace, String flowId, String taskId, @Nullable String value) {
+    default String cachePrefix(String namespace, String flowId, String taskId, @Nullable String value) {
         String namespacePrefix = namespace.replace(".", "/");
 
         ArrayList<String> paths = new ArrayList<>(
-            tenantId == null ? List.of(
-                namespacePrefix,
-                Slugify.of(flowId),
-                Slugify.of(taskId),
-                "cache"
-            ) : List.of(
-                tenantId,
+            List.of(
                 namespacePrefix,
                 Slugify.of(flowId),
                 Slugify.of(taskId),
@@ -165,7 +154,6 @@ public interface StorageInterface {
 
     default URI uri(Flow flow, Execution execution, String inputName, String file) throws URISyntaxException {
         return new URI(fromParts(
-            flow.getTenantId(),
             flow.getNamespace().replace(".", "/"),
             Slugify.of(flow.getId()),
             "executions",
@@ -180,6 +168,7 @@ public interface StorageInterface {
     default URI from(Flow flow, Execution execution, String input, File file) throws IOException {
         try {
             return this.put(
+                flow.getTenantId(),
                 this.uri(flow, execution, input, file.getName()),
                 new BufferedInputStream(new FileInputStream(file))
             );
@@ -196,7 +185,6 @@ public interface StorageInterface {
     default URI outputPrefix(Flow flow)  {
         try {
             return new URI(fromParts(
-                flow.getTenantId(),
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId())
             ));
@@ -208,7 +196,6 @@ public interface StorageInterface {
     default URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         try {
             return new URI(fromParts(
-                flow.getTenantId(),
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId()),
                 "executions",
@@ -225,7 +212,6 @@ public interface StorageInterface {
     default URI outputPrefix(TriggerContext triggerContext, AbstractTrigger trigger, String triggerExecutionId) {
         try {
             return new URI(fromParts(
-                triggerContext.getTenantId(),
                 triggerContext.getNamespace().replace(".", "/"),
                 Slugify.of(triggerContext.getFlowId()),
                 "executions",

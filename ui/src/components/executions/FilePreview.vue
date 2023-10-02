@@ -18,6 +18,7 @@
             <img v-else-if="filePreview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />
             <editor v-else :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
+            <message v-if="filePreview.truncated" :text="$t('file preview truncated')" />
         </template>
     </el-drawer>
 </template>
@@ -31,9 +32,10 @@
     import ListPreview from "../ListPreview.vue";
     import {mapState} from "vuex";
     import Markdown from "../layout/Markdown.vue";
+    import Message from "../layout/Message.vue";
 
     export default {
-        components: {Markdown, ListPreview, Editor},
+        components: {Markdown, ListPreview, Editor, Message},
         props: {
             value: {
                 type: String,

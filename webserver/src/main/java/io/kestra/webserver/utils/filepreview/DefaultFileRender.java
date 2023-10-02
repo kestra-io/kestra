@@ -34,6 +34,10 @@ public class DefaultFileRender extends FileRender {
             lineCount++;
             if ((line = reader.readLine()) != null) {
                 contentBuilder.append("\n");
+
+                if(lineCount == MAX_LINES) {
+                    truncated = true;
+                }
             }
         }
 
@@ -49,6 +53,7 @@ public class DefaultFileRender extends FileRender {
 
             return content;
         }
+        truncated = true;
         byte[] truncatedBytes = new byte[maxSizeInBytes];
         System.arraycopy(inputBytes, 0, truncatedBytes, 0, maxSizeInBytes);
 

@@ -504,7 +504,8 @@
     "worker group": "Worker Group",
     "hostname": "Hostname",
     "port": "Port",
-    "management port": "Management port"
+    "management port": "Management port",
+    "file preview truncated": "Displayed content has been truncated"
   },
   "fr": {
     "id": "Identifiant",
@@ -1003,7 +1004,8 @@
     "worker group": "Worker Group",
     "hostname": "Nom d'hôte",
     "port": "Port",
-    "management port": "Port de gestion"
+    "management port": "Port de gestion",
+    "file preview truncated": "Displayed content has been truncated"
   }
 }
 

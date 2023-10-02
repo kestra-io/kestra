@@ -1,11 +1,14 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
 import java.time.Instant;
+import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
 @Value
@@ -22,4 +25,9 @@ public class ExecutionDelay {
     Instant date;
 
     @NotNull State.Type state;
+
+    @JsonIgnore
+    public String uid() {
+        return String.join("_", executionId, taskRunId);
+    }
 }

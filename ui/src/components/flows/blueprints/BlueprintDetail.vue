@@ -70,7 +70,7 @@
                         <h4>Plugins</h4>
                         <div class="plugins-container">
                             <div v-for="task in [...new Set(blueprint.includedTasks)]">
-                                <task-icon :cls="task" />
+                                <task-icon :cls="task" :icons="icons"/>
                             </div>
                         </div>
                     </el-col>
@@ -158,6 +158,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapState("plugin", ["icons"]),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

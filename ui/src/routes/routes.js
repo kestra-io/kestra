@@ -5,7 +5,7 @@ import FlowRoot from "../components/flows/FlowRoot.vue"
 import Flows from "../components/flows/Flows.vue"
 import LogsWrapper from "../components/logs/LogsWrapper.vue"
 import Plugin from "../components/plugins/Plugin.vue"
-import Settings from "../components/settings/Settings.vue"
+import Settings from "override/components/settings/Settings.vue"
 import TemplateEdit from "../components/templates/TemplateEdit.vue"
 import Templates from "../components/templates/Templates.vue"
 import FlowsSearch from "../components/flows/FlowsSearch.vue";

@@ -13,7 +13,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon :cls="item" :only-icon="true" />
+                <task-icon :cls="item" :only-icon="true" :icons="icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -21,7 +21,7 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" />
+            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="icons" />
         </template>
     </el-select>
 </template>
@@ -51,7 +51,7 @@
             this.$store.dispatch("plugin/list");
         },
         computed: {
-            ...mapState("plugin", ["plugin", "plugins"]),
+            ...mapState("plugin", ["plugin", "plugins", "icons"]),
             taskModels() {
                 const taskModels = [];
                 for (const plugin of this.plugins || []) {

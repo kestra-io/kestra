@@ -104,6 +104,11 @@
     onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
+        store.dispatch("plugin/icons").then(
+            () => {
+                icons.value = store.getters["plugin/getIcons"];
+            }
+        )
     })
 
     watch(() => isDrawerOpen.value, () => {
@@ -318,6 +323,7 @@
             @swapped-task="onSwappedTask($event)"
             @message="message($event)"
             @expand-subflow="expandSubflow($event)"
+            :icons="icons"
         />
 
         <!-- Drawer to create/add task -->

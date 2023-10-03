@@ -53,7 +53,9 @@
                             </div>
                             <div class="tasks-container">
                                 <task-icon
+                                    :icons="icons"
                                     :cls="task"
+                                    :key="task"
                                     v-for="task in [...new Set(blueprint.includedTasks)]"
                                 />
                             </div>
@@ -231,6 +233,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapState("plugin", ["icons"]),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             }

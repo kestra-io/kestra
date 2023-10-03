@@ -11,6 +11,7 @@
                                 :cls="taskIcon(currentTaskRun)"
                                 v-if="taskIcon(currentTaskRun)"
                                 only-icon
+                                :icons="icons"
                             />
                         </div>
                         <div class="task-id flex-grow-1"
@@ -193,6 +194,7 @@
     import Download from "vue-material-design-icons/Download.vue";
     import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+    import {mapState} from "vuex";
 
     export default {
         name: 'LogList',
@@ -358,6 +360,7 @@
             this.autoExpandBasedOnSettings();
         },
         computed: {
+            ...mapState("plugin", ["icons"]),
             SECTIONS() {
                 return SECTIONS
             },

@@ -23,7 +23,7 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
+                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" :icons="icons"/>
                                                 </div>
                                                 {{ cls }}
                                             </router-link>
@@ -41,6 +41,7 @@
 
 <script>
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {mapState} from "vuex";
 
     export default {
         emits: ["routerChange"],
@@ -57,6 +58,9 @@
                 type: Array,
                 required: true
             }
+        },
+        computed: {
+            ...mapState("plugin", ["plugin", "plugins", "icons"]),
         },
         methods: {
             sortedPlugins(plugins) {

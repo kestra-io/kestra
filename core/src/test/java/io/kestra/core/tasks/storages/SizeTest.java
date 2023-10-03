@@ -26,7 +26,7 @@ class SizeTest {
     @Test
     void run() throws Exception {
         RunContext runContext = runContextFactory.of();
-        URL resource = SizeTest.class.getClassLoader().getResource("application.yml");
+        URL resource = SizeTest.class.getClassLoader().getResource("application-test.yml");
 
         URI put = storageInterface.put(
             null,

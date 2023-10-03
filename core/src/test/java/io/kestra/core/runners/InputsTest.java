@@ -41,7 +41,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("date", "2019-10-06")
         .put("time", "18:27:49")
         .put("duration", "PT5M6S")
-        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
+        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application-test.yml")).getPath())
         .put("json", "{\"a\": \"b\"}")
         .put("uri", "https://www.google.com")
         .put("nested.string", "a string")
@@ -108,7 +108,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("date"), is(LocalDate.parse("2019-10-06")));
         assertThat(typeds.get("time"), is(LocalTime.parse("18:27:49")));
         assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
-        assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
+        assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml")));
         assertThat(
             CharStreams.toString(new InputStreamReader(storageInterface.get(null, (URI) typeds.get("file")))),
             is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
@@ -154,7 +154,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(
             (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
-            matchesRegex("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
+            matchesRegex("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml")
         );
     }
 

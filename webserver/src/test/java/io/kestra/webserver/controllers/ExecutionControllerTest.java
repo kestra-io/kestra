@@ -84,7 +84,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("int", "42")
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
-        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
+        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application-test.yml")).getPath())
         .build();
 
     @Test
@@ -108,7 +108,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     private MultipartBody createInputsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("application.yml")
+            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
         ).getPath());
 
         File logbackFile = new File(Objects.requireNonNull(

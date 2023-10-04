@@ -228,7 +228,7 @@ public class FlowController {
     @Post(consumes = MediaType.ALL, produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Create a flow from json object")
     public HttpResponse<Flow> create(
-        @Parameter(description = "The flow") @Body @Valid Flow flow
+        @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
         return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
@@ -380,7 +380,7 @@ public class FlowController {
     public HttpResponse<Flow> update(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The flow") @Body @Valid Flow flow
+        @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
         if (existingFlow.isEmpty()) {

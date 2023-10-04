@@ -316,20 +316,20 @@ public class ExecutorService {
         return executor.withExecution(newExecution, "onEnd");
     }
 
-    private Executor handleNext(Executor Executor) {
+    private Executor handleNext(Executor executor) {
         List<NextTaskRun> nextTaskRuns = FlowableUtils
             .resolveSequentialNexts(
-                Executor.getExecution(),
-                ResolvedTask.of(Executor.getFlow().getTasks()),
-                ResolvedTask.of(Executor.getFlow().getErrors())
+                executor.getExecution(),
+                ResolvedTask.of(executor.getFlow().getTasks()),
+                ResolvedTask.of(executor.getFlow().getErrors())
             );
 
-        if (nextTaskRuns.size() == 0) {
-            return Executor;
+        if (nextTaskRuns.isEmpty()) {
+            return executor;
         }
 
-        return Executor.withTaskRun(
-            this.saveFlowableOutput(nextTaskRuns, Executor, null),
+        return executor.withTaskRun(
+            this.saveFlowableOutput(nextTaskRuns, executor, null),
             "handleNext"
         );
     }
@@ -544,9 +544,12 @@ public class ExecutorService {
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(taskRun -> {
                 Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
-
+                RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+                if (task instanceof FlowableTask<?> flowableTask) {
+                    flowableTask.init(runContext);
+                }
                 return WorkerTask.builder()
-                    .runContext(runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun))
+                    .runContext(runContext)
                     .taskRun(taskRun)
                     .task(task)
                     .build();

@@ -317,7 +317,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
                     .forEach(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask));
 
-                // WorkerTask not flowable to workerTaskResult as Running
+                // WorkerTask flowable to workerTaskResult as Running
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isFlowable())

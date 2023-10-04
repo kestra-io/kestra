@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -28,18 +29,15 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.IntStream;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -85,6 +83,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     }
 )
 public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
+    private static final int BUFFER_SIZE = 8 * 1024; // 8KB
+    private static final String STATE_STATE = "for-each-item-state";
+    private static final String STATE_NAME = "offsets";
 
     @NotEmpty
     @PluginProperty(dynamic = true)
@@ -116,7 +117,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Schema(hidden = true)
-    private List<String> values;
+    private List<BatchOffsets> offsets;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -237,7 +238,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         // FIXME when there is a FAILED task, resolveNexts returns an empty list so allowedFailureThreshold didn't work
         List<NextTaskRun> next;
-        if (maxConcurrency == 0) {
+        if (maxConcurrency == 1) {
              next = FlowableUtils.resolveSequentialNexts(
                 execution,
                 FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), getValues(runContext)),
@@ -263,13 +264,14 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
 
     private List<String> readItems(RunContext runContext, String value) throws IllegalVariableEvaluationException {
         URI data = URI.create(runContext.render(this.items));
-        try (var reader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(data)));
-            var lines = reader.lines()) {
-            // TODO we need to read the file once and record somewhere the start and end offsets of each batch
-            // Another idea would be to build an URI with start and end offset and enhance the internal storage to be able to read part of a file
-            int batchNumber = Integer.parseInt(value);
-            int startLine = (batchNumber - 1) * maxItemsPerBatch;
-            return lines.skip(startLine).limit(maxItemsPerBatch).toList();
+        try (var bis = new BufferedInputStream(runContext.uriToInputStream(data))) {
+            BatchOffsets batchOffsets = JacksonMapper.ofJson().readValue(value, BatchOffsets.class);
+            int nbRead = batchOffsets.endOffset - batchOffsets.startOffset;
+            byte[] bytes = new byte[nbRead];
+            bis.skip(batchOffsets.startOffset);
+            bis.read(bytes);
+            String lines = new String(bytes);
+            return lines.lines().toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -294,44 +296,76 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
             .build();
     }
 
-    private List<String> getValues(RunContext runContext) throws IllegalVariableEvaluationException {
-        if (this.values == null) {
-            // try to get it from the task state
-            try (InputStream is = runContext.getTaskStateFile("tasks-states", "for-each-item")) {
-                this.values = JacksonMapper.ofJson().readValue(is, new TypeReference<>() {});
-            }
-            catch (IOException e) {
-                // FIXME if missing from the state we load it from the items, then store it in the sate
-                this.values = readValues(runContext);
-                try {
-                    byte[] content = JacksonMapper.ofJson().writeValueAsBytes(this.values);
-                    runContext.putTaskStateFile(content, "tasks-states", "for-each-item");
-                }
-                catch (IOException ioe) {
-                    throw new RuntimeException(ioe);
-                }
-            }
+    private List<String> getValues(RunContext runContext) {
+        try {
+            return getOffsets(runContext).stream().map(throwFunction(b -> JacksonMapper.ofJson().writeValueAsString(b))).toList();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-        return this.values;
     }
 
-    private List<String> readValues(RunContext runContext) throws IllegalVariableEvaluationException {
-        URI data = URI.create(runContext.render(this.items));
-        try (var reader = new LineNumberReader(new InputStreamReader(runContext.uriToInputStream(data)))) {
-            reader.skip(Integer.MAX_VALUE);
-            int lineNb = reader.getLineNumber();
-            int chunckNb = lineNb / maxItemsPerBatch;
-            if (lineNb % maxItemsPerBatch > 0) {
-                chunckNb++;
+    private List<BatchOffsets> getOffsets(RunContext runContext) {
+        if (this.offsets == null) {
+            // must be inside the state as we create it when initializing the state
+            try (InputStream is = runContext.getTaskStateFile(STATE_STATE, STATE_NAME)) {
+                this.offsets = JacksonMapper.ofJson().readValue(is, new TypeReference<>() {});
             }
-            this.values = IntStream.range(1, chunckNb + 1)
-                .mapToObj(nb -> String.valueOf(nb))
-                .toList();
-            return this.values;
+            catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
+        }
+        return this.offsets;
+    }
+
+    @Override
+    public void init(RunContext runContext) throws IllegalVariableEvaluationException {
+        this.offsets = readOffsets(runContext);
+        // TODO if the UI is not updated, add a check to limit the number of batch to avoid having a non-responsive UI
+        try {
+            byte[] content = JacksonMapper.ofJson().writeValueAsBytes(this.offsets);
+            runContext.putTaskStateFile(content, STATE_STATE, STATE_NAME);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+    private List<BatchOffsets> readOffsets(RunContext runContext) throws IllegalVariableEvaluationException {
+        List<BatchOffsets> batchOffsets = new ArrayList<>();
+
+        URI data = URI.create(runContext.render(this.items));
+        try (var bis = new BufferedInputStream(runContext.uriToInputStream(data))) {
+            int batch = 1; // file current line offset
+            int lineNb = 0;
+            int batchStartOffset = 0;
+            int batchEndOffset = 0;
+            int c;
+            while ((c = bis.read()) != -1) {
+                if (c == '\n' || c == '\r') {
+                    lineNb++;
+                }
+                if (lineNb == maxItemsPerBatch) {
+                    batchOffsets.add(new BatchOffsets(String.valueOf(batch), batchStartOffset, batchEndOffset));
+                    batch++;
+                    batchStartOffset = batchEndOffset + 1;
+                    lineNb = 0;
+                }
+
+                batchEndOffset++;
+            }
+
+            if (batchStartOffset != batchEndOffset) {
+                // there is one additional partial batch
+                batchOffsets.add(new BatchOffsets(String.valueOf(batch), batchStartOffset, batchEndOffset));
+            }
+
+            return batchOffsets;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private record BatchOffsets(String value, int startOffset, int endOffset) {}
 
     @SuperBuilder
     @ToString

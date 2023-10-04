@@ -65,4 +65,8 @@ public interface FlowableTask <T extends Output> {
     default T outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return null;
     }
+
+    default void init(RunContext runContext) throws IllegalVariableEvaluationException {
+        // by default do nothing
+    }
 }

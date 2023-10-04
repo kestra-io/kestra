@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for allows events between two specific time"
+    title = "Condition to allows events between two specific time"
 )
 @Plugin(
     examples = {
@@ -39,18 +39,24 @@ import javax.validation.constraints.NotNull;
 public class TimeBetweenCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
-        title = "The date to test",
+        title = "The time to test",
         description = "Can be any variable or any valid ISO 8601 time, default will use `{{ now(format='iso_offset_time') }}`"
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
     private final String date = "{{ now(format='iso_offset_time') }}";
 
-    @Schema(title = "The date must after this one")
+    @Schema(
+        title = "The time to test must be after this one",
+        description = "Must be a valid ISO 8601 time with offset"
+    )
     @PluginProperty
     private OffsetTime after;
 
-    @Schema(title = "The date must before this one")
+    @Schema(
+        title = "The time to test must be before this one",
+        description = "Must be a valid ISO 8601 time with offset"
+    )
     @PluginProperty
     private OffsetTime before;
 

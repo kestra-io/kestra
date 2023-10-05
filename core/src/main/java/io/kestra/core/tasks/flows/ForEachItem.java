@@ -103,9 +103,6 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     @Builder.Default
     private Integer maxConcurrency = 1;
 
-    @PluginProperty
-    private AllowedFailureThreshold allowedFailureThreshold;
-
     @NotNull
     @PluginProperty
     private SubFlow subFlow;
@@ -152,91 +149,17 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
             return Optional.of(State.Type.SUCCESS);
         }
 
-        // standard resolveState that is used on other flowable, we use it if there is no allowedFailureThreshold configured
-        if (allowedFailureThreshold == null) {
-            return FlowableUtils.resolveState(
-                execution,
-                childTasks,
-                FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-                parentTaskRun,
-                runContext
-            );
-        }
-
-        // TODO: add validation to avoid as much as possible this exception
-        if (allowedFailureThreshold.percent == null && allowedFailureThreshold.items == null) {
-            throw new IllegalArgumentException("When setting 'allowedFailureThreshold', one of 'percent' or 'items' mut be set");
-        }
-
-        // ---
-        // Starting here, the code is coming from FlowableUtils.resolveState but adapted to handle partial failure
-        // ---
-
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(childTasks, Collections.emptyList(), parentTaskRun);
-
-        if (currentTasks == null) {
-            runContext.logger().warn(
-                "No task found on flow '{}', task '{}', execution '{}'",
-                execution.getNamespace() + "." + execution.getFlowId(),
-                parentTaskRun.getTaskId(),
-                execution.getId()
-            );
-
-            return Optional.of(State.Type.FAILED);
-        } else if (!currentTasks.isEmpty()) {
-            // handle nominal case, tasks or errors flow are ready to be analysed
-            if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return guessFinalState(execution, currentTasks, parentTaskRun, allowedFailureThreshold);
-            }
-        } else {
-            // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(childTasks, parentTaskRun)) {
-                // value is the batch number, we fetch the last value to know the approximative size of the file
-                Integer maxValue = execution.findTaskRunByTasks(childTasks, parentTaskRun).stream()
-                    .map(t -> Integer.parseInt(t.getValue()))
-                    .max(Integer::compareTo)
-                    .get();
-
-                // FIXME it still stops at the first batch of failed tasks :(
-                // we first need to check if more tasks must be executed before being able to guess the final state
-                if (allowedFailureThreshold.items != null && ((long) maxValue * maxItemsPerBatch) < allowedFailureThreshold.items) {
-                    return Optional.empty();
-                }
-                // FIXME we should not read the values so many times :(
-                else if (allowedFailureThreshold.percent != null && maxValue < ((long) allowedFailureThreshold.percent * maxValue * maxItemsPerBatch / 100L)) {
-                    return Optional.empty();
-                }
-
-                // if not, we can try to guess the final state
-                return guessFinalState(execution, childTasks, parentTaskRun, allowedFailureThreshold);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private Optional<State.Type> guessFinalState(Execution execution, List<ResolvedTask> tasks, TaskRun parentTaskRun, @NotNull AllowedFailureThreshold allowedFailureThreshold) {
-        var state = execution.guessFinalState(tasks, parentTaskRun);
-        if (state == State.Type.FAILED) {
-            // We will count the number of failed task to define if the flow should end in FAILED or WARNING depending on the allowedFailureThreshold.
-            // Note that currently it approximates the number of failed items to maxItemsPerBatch * nbTasks which is wrong as if the number of items
-            // is not a multiple of the number of task the last task will have less than maxItemsPerBatch items.
-            long failed = execution.findTaskRunByTasks(tasks, parentTaskRun).stream().filter(t -> t.getState().getCurrent() == State.Type.FAILED).count() *  maxItemsPerBatch;
-            if (allowedFailureThreshold.items != null && failed > allowedFailureThreshold.items) {
-                return Optional.of(State.Type.FAILED);
-            }
-            else if (allowedFailureThreshold.percent != null && (tasks.size() * 100L / failed) > allowedFailureThreshold.percent) {
-                return Optional.of(State.Type.FAILED);
-            }
-
-            return Optional.of(State.Type.WARNING);
-        }
-        return Optional.of(state);
+        return FlowableUtils.resolveState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            parentTaskRun,
+            runContext
+        );
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        // FIXME when there is a FAILED task, resolveNexts returns an empty list so allowedFailureThreshold didn't work
         List<NextTaskRun> next;
         if (maxConcurrency == 1) {
              next = FlowableUtils.resolveSequentialNexts(
@@ -366,21 +289,6 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     }
 
     private record BatchOffsets(String value, int startOffset, int endOffset) {}
-
-    @SuperBuilder
-    @ToString
-    @EqualsAndHashCode
-    @Getter
-    @NoArgsConstructor
-    public static class AllowedFailureThreshold {
-        @Min(0) @Max(100)
-        @PluginProperty
-        private Integer percent;
-
-        @Positive
-        @PluginProperty
-        private Long items;
-    }
 
     @SuperBuilder
     @ToString

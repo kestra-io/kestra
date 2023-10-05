@@ -38,9 +38,12 @@ Try Kestra using our [live demo](https://demo.kestra.io).
 
 ## What is Kestra
 
-Kestra is an open-source, **event-driven** orchestrator that simplifies data operations and improves collaboration between engineers and business users. By bringing **Infrastructure as Code** best practices to data pipelines, Kestra allows you to build reliable workflows and manage them with confidence.
+Kestra is a universal open-source orchestrator that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable workflows and manage them with confidence.
 
-Thanks to the **declarative YAML interface** for defining orchestration logic, everyone who benefits from analytics can participate in the data pipeline creation process. The UI automatically adjusts the YAML definition any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is defined declaratively in code, even if some workflow components are modified in other ways.
+In just a few lines of code, you can [create a flow](https://kestra.io/docs/getting-started) directly from the UI. Thanks to the declarative YAML interface for defining orchestration logic, business stakeholders can participate in the workflow creation process. 
+
+Kestra offers a versatile set of **language-agnostic** developer tools while simultaneously providing an intuitive user interface tailored for business professionals. The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is always managed **declaratively in code**, even if some workflow components are modified in other ways (UI, CI/CD, Terraform, API calls).
+
 
 ![Adding new tasks in the UI](https://kestra.io/adding-tasks.gif)
 
@@ -69,6 +72,7 @@ To create your own plugins, check the [plugin developer guide](https://kestra.io
 
 Kestra provides a variety of tasks to handle both simple and complex business logic, including:
 
+- subflows
 - retries
 - timeout
 - error handling
@@ -79,30 +83,37 @@ Kestra provides a variety of tasks to handle both simple and complex business lo
 - configuring dependencies between tasks, flows and triggers
 - advanced scheduling and trigger conditions
 - backfills
+- blueprints
 - documenting your flows, tasks and triggers by adding a markdown description to any component
 - adding labels to add additional metadata to your flows such as the flow owner or team:
 
 ```yaml
-id: hello
-namespace: prod
-description: Hi from `Kestra` and a **markdown** description.
+id: getting_started
+namespace: dev
+
+description: |
+  # Getting Started
+  Let's `write` some **markdown** - [first flow](https://t.ly/Vemr0) 🚀
+
 labels:
-  owner: john-doe
-  team: data-engineering
+  owner: rick.astley
+  project: never-gonna-give-you-up
+
 tasks:
   - id: hello
     type: io.kestra.core.tasks.log.Log
     message: Hello world!
     description: a *very* important task
     disabled: false
-    timeout: 10M
+    timeout: PT10M
     retry:
       type: constant # type: string
       interval: PT15M # type: Duration
       maxDuration: PT1H # type: Duration
       maxAttempt: 5 # type: int
       warningOnRetry: true # type: boolean, default is false
-  - id: parallel
+
+- id: parallel
     type: io.kestra.core.tasks.flows.Parallel
     concurrent: 3
     tasks:
@@ -110,23 +121,24 @@ tasks:
         type: io.kestra.plugin.scripts.shell.Commands
         commands:
           - 'echo "running {{task.id}}"'
-          - 'sleep 10'
+          - 'sleep 2'
       - id: task2
         type: io.kestra.plugin.scripts.shell.Commands
         commands:
           - 'echo "running {{task.id}}"'
-          - 'sleep 10'
+          - 'sleep 1'
       - id: task3
         type: io.kestra.plugin.scripts.shell.Commands
         commands:
           - 'echo "running {{task.id}}"'
-          - 'sleep 10'
+          - 'sleep 3'
+
 triggers:
   - id: schedule
     type: io.kestra.core.models.triggers.types.Schedule
     cron: "*/15 * * * *"
     backfill:
-      start: 2023-06-25T14:00:00Z
+      start: 2023-10-05T14:00:00Z
 ```
 
 
@@ -136,12 +148,13 @@ You can write workflows directly from the UI. When writing your workflows, the U
 - autocompletion
 - syntax validation
 - embedded plugin documentation
+- example flows provided as blueprints
 - topology view (view of your dependencies in a Directed Acyclic Graph) that get updated live as you modify and add new tasks.
 
 
 ## Getting Started
 
-To get a local copy up and running, follow the steps below.
+Follow the steps below to start local development.
 
 ### Prerequisites
 
@@ -176,12 +189,12 @@ Open `http://localhost:8080` in your browser and create your first flow.
 Here is a simple example logging hello world message to the terminal:
 
 ```yaml
-id: hello
-namespace: prod
+id: getting_started
+namespace: dev
 tasks:
-  - id: hello-world
+  - id: hello_world
     type: io.kestra.core.tasks.log.Log
-    message: Hello world!
+    message: Hello World!
 ```
 
 For more information:

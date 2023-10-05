@@ -17,6 +17,6 @@ CREATE TABLE IF NOT EXISTS worker_job_running (
     value JSONB NOT NULL,
     worker_uuid VARCHAR(36) NOT NULL GENERATED ALWAYS AS (value -> 'workerInstance' ->> 'workerUuid') STORED,
     taskrun_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value -> 'taskRun' ->> 'id') STORED
-);
+    );
 
 CREATE INDEX IF NOT EXISTS worker_job_running_worker_uuid ON worker_job_running (worker_uuid);

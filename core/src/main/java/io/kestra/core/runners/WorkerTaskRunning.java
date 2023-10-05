@@ -28,9 +28,11 @@ public class WorkerTaskRunning extends WorkerJobRunning {
     @NotNull
     private RunContext runContext;
 
+    public String uid;
+
     @Override
     public String uid() {
-        return this.taskRun.getTaskId();
+        return this.taskRun.getId();
     }
 
     public static WorkerTaskRunning of(WorkerTask workerTask, WorkerInstance workerInstance, int partition) {
@@ -40,6 +42,7 @@ public class WorkerTaskRunning extends WorkerJobRunning {
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
             .runContext(workerTask.getRunContext())
+            .uid(workerTask.getTaskRun().getId())
             .build();
     }
 }

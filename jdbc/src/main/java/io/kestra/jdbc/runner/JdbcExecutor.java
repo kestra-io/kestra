@@ -35,7 +35,6 @@ import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.DSLContext;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
@@ -443,6 +442,20 @@ public class JdbcExecutor implements ExecutorInterface {
 
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
+        }
+
+        // send metrics on terminated
+        if (message.getTaskRun().getState().isTerminated()) {
+            metricRegistry
+                .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                .increment();
+
+            metricRegistry
+                .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                .record(message.getTaskRun().getState().getDuration());
+
+            log.trace("TaskRun terminated: {}", message.getTaskRun());
+            workerJobRunningRepository.deleteByKey(message.getTaskRun().getId());
         }
 
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {

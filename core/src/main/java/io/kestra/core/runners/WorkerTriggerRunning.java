@@ -29,10 +29,12 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
     @NotNull
     private ConditionContext conditionContext;
 
+    @NotNull
+    public String uid;
+
     @Override
-    public String uid() {
-        return triggerContext.uid();
-    }
+    public String uid() { return triggerContext.uid(); }
+
 
     public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance, int partition) {
         return WorkerTriggerRunning.builder()
@@ -41,6 +43,7 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
             .conditionContext(workerTrigger.getConditionContext())
             .workerInstance(workerInstance)
             .partition(partition)
+            .uid(workerTrigger.getTriggerContext().uid())
             .build();
     }
 }

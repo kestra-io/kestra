@@ -13,26 +13,22 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.runners.WorkerTriggerResult;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.TaskDefaultService;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
+import io.kestra.core.runners.*;
+import io.kestra.core.services.*;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -41,9 +37,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
 
 @Slf4j
 @Singleton
@@ -52,7 +45,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final QueueInterface<Execution> executionQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final QueueInterface<WorkerJob> workerTaskQueue;
-    private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
+    private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
@@ -85,7 +78,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.workerTaskQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
-        this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
+        this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
@@ -152,6 +145,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
         // listen to WorkerTriggerResult from polling triggers
         this.workerTriggerResultQueue.receive(
+            null,
             Scheduler.class,
             either -> {
                 if (either.isRight()) {

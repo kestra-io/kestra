@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -52,32 +51,28 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "TODO",
-    description = "TODO"
+    title = "Execute a subflow for each batch of items",
+    description = "This tasks allow to execute a subflow for each batch of items. The items must come from Kestra's internal storage."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "TODO",
+            title = "Execute a subflow for each batch of items",
             code = {
                 """
                     id: each
                     type: io.kestra.core.tasks.flows.ForEachItem
-                    values: "{{ outputs.extract.uri }}" # works with API payloads too. Kestra can detect if this output is not a file,\s
+                    items: "{{ outputs.extract.uri }}" # works with API payloads too. Kestra can detect if this output is not a file,\s
                     # and will make it to a file, split into (batches of) items
                     maxItemsPerBatch: 10
                     maxConcurrency: 5 # max 5 concurrent executions, each processing 10 items
-                    allowedFailureThreshold: # optional argument allowing to specify how many executions are allowed to fail e.g. 20% of executions are allowed,\s
-                        # or 10 Executions can fail because we know those are known outliers. can be expressed either through the percentage or number of items
-                       percent: 20 # integer value between 1 and 100
-                       items: 10 # arbitrary INTEGER value
-                    subflow: # optional
+                    subflow:
                       flowId: file
                       namespace: dev
                       inputs:
-                        file: "{{ taskrun.value }}"
-                      wait: true # wait by default
-                      transmitFailed: true # true by default"""
+                        file: "{{ taskrun.items }}" # special variable that contains the items of the batch
+                      wait: true # wait for the subflow execution
+                      transmitFailed: true # fail the task run if the subflow fail"""
             }
         )
     }
@@ -89,22 +84,28 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
 
     @NotEmpty
     @PluginProperty(dynamic = true)
+    @Schema(title = "The items, must be an URI from Kestra's internal storage")
     private String items;
 
     @Positive
     @NotNull
     @PluginProperty
     @Builder.Default
+    @Schema(title = "Maximum number of items per batch")
     private Integer maxItemsPerBatch = 10;
 
     @Min(0)
     @NotNull
     @PluginProperty
     @Builder.Default
+    @Schema(title = "Maximum subflow concurrency",
+        description = "Note that if you don't wait on the execution of subflows, the task run will respect the concurrency limit but not the subflow execution."
+    )
     private Integer maxConcurrency = 1;
 
     @NotNull
     @PluginProperty
+    @Schema(title = "The subflow that will be executed on each batch of items")
     private SubFlow subFlow;
 
     @Override

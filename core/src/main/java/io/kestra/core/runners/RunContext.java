@@ -314,6 +314,10 @@ public class RunContext {
             builder.put("value", taskRun.getValue());
         }
 
+        if(taskRun.getItems() != null) {
+            builder.put("items", taskRun.getItems());
+        }
+
         return builder.build();
     }
 

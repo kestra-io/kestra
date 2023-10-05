@@ -42,6 +42,9 @@ public class TaskRun {
     String value;
 
     @With
+    List<String> items;
+
+    @With
     List<TaskRunAttempt> attempts;
 
     @With
@@ -66,6 +69,7 @@ public class TaskRun {
             this.taskId,
             this.parentTaskRunId,
             this.value,
+            this.items,
             this.attempts,
             this.outputs,
             this.state.withState(state)
@@ -81,6 +85,7 @@ public class TaskRun {
             .taskId(this.getTaskId())
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
             .value(this.getValue())
+            .items(this.getItems())
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)
@@ -123,7 +128,7 @@ public class TaskRun {
     public TaskRun onRunningResend() {
         TaskRunBuilder taskRunBuilder = this.toBuilder();
 
-        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.size() == 0) {
+        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.isEmpty()) {
             taskRunBuilder.attempts = new ArrayList<>();
 
             taskRunBuilder.attempts.add(TaskRunAttempt.builder()

@@ -277,7 +277,8 @@ public class FlowableUtils {
                 else if(obj instanceof Map<?, ?>) {
                     //JSON or YAML map
                     values.add(runContext.render((Map) obj));
-                } else {
+                }
+                else {
                     throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
                 }
             }

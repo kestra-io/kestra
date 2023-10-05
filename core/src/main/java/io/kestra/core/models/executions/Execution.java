@@ -165,7 +165,7 @@ public class Execution implements DeletedInterface {
 
     public List<TaskRun> findTaskRunsByTaskId(String id) {
         if (this.taskRunList == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         return this.taskRunList
@@ -175,7 +175,7 @@ public class Execution implements DeletedInterface {
     }
 
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? new ArrayList<TaskRun>() : this.taskRunList)
+        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun>emptyList() : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
@@ -188,7 +188,7 @@ public class Execution implements DeletedInterface {
     }
 
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? new ArrayList<TaskRun>() : this.taskRunList)
+        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun>emptyList() : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id) && findChildsValues(taskRun, true).equals(values))
             .findFirst();
@@ -230,7 +230,7 @@ public class Execution implements DeletedInterface {
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
         if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks, parentTaskRun)) {
-            return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
+            return resolvedErrors == null ? Collections.emptyList() : resolvedErrors;
         }
 
         return resolvedTasks;
@@ -255,7 +255,7 @@ public class Execution implements DeletedInterface {
 
     public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         if (resolvedTasks == null || this.taskRunList == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         return this
@@ -615,7 +615,8 @@ public class Execution implements DeletedInterface {
 
         for (TaskRun current : this.taskRunList) {
             if (current.getOutputs() != null) {
-                result = MapUtils.merge(result, outputs(current));
+                Map<String, Object> taskRunOutput = outputs(current);
+                result.putAll(taskRunOutput);
             }
         }
 
@@ -623,39 +624,11 @@ public class Execution implements DeletedInterface {
     }
 
     private Map<String, Object> outputs(TaskRun taskRun) {
-        List<TaskRun> childs = findChilds(taskRun)
-            .stream()
-            .filter(r -> r.getValue() != null)
-            .collect(Collectors.toList());
-
-        if (childs.size() == 0) {
-            if (taskRun.getValue() == null) {
-                return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
-            } else {
-                return Map.of(taskRun.getTaskId(), Map.of(taskRun.getValue(), taskRun.getOutputs()));
-            }
+        if (taskRun.getValue() == null) {
+            return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+        } else {
+            return Map.of(taskRun.getTaskId(), Map.of(taskRun.getValue(), taskRun.getOutputs()));
         }
-
-        Map<String, Object> result = new HashMap<>();
-        Map<String, Object> current = result;
-
-        for (TaskRun t : childs) {
-            if (t.getValue() != null) {
-                HashMap<String, Object> item = new HashMap<>();
-                current.put(t.getValue(), item);
-                current = item;
-            }
-        }
-
-        if (taskRun.getOutputs() != null) {
-            if (taskRun.getValue() != null) {
-                current.put(taskRun.getValue(), taskRun.getOutputs());
-            } else {
-                current.putAll(taskRun.getOutputs());
-            }
-        }
-
-        return Map.of(taskRun.getTaskId(), result);
     }
 
 
@@ -694,7 +667,7 @@ public class Execution implements DeletedInterface {
      */
     public List<TaskRun> findChilds(TaskRun taskRun) {
         if (taskRun.getParentTaskRunId() == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         ArrayList<TaskRun> result = new ArrayList<>();

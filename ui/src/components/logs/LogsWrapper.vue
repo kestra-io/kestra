@@ -107,7 +107,7 @@
             endDate() {
                 // used to be able to force refresh the base interval when auto-reloading
                 this.recomputeInterval;
-                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
+                return this.$route.query.endDate ? this.$route.query.endDate : undefined;
             },
             startDate() {
                 // used to be able to force refresh the base interval when auto-reloading

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Kestra - VSCode</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+<body>
+<script src="vscode-web/dist/out/vs/loader.js"></script>
+<script src="vscode-web/dist/out/vs/webPackagePaths.js"></script>
+<script>
+    const queryParams = Object.fromEntries(
+        window.location.search.substring(1)
+            .split("&")
+            .map(str => str.split("="))
+    );
+    const KESTRA_UI_PATH = queryParams["KESTRA_UI_PATH"];
+    const KESTRA_BASE_PATH = queryParams["KESTRA_BASE_PATH"];
+    const THEME = queryParams["THEME"];
+    Object.keys(window.webPackagePaths).map(function (key) {
+        window.webPackagePaths[key] = `${window.location.origin}${KESTRA_UI_PATH}vscode-web/dist/node_modules/${key}/${window.webPackagePaths[key]}`;
+    });
+    require.config({
+        baseUrl: `${window.location.origin}${KESTRA_UI_PATH}vscode-web/dist/out`,
+        recordStats: true,
+        trustedTypesPolicy: window.trustedTypes?.createPolicy("amdLoader", {
+            createScriptURL(value) {
+                return value;
+            }
+        }),
+        paths: window.webPackagePaths
+    });
+
+    // used to configure VSCode startup
+    window.product = {
+        productConfiguration: {
+            nameShort: "Kestra VSCode",
+            nameLong: "Kestra VSCode",
+            // configure the VSCode marketplace
+            extensionsGallery: {
+                nlsBaseUrl: 'https://www.vscode-unpkg.net/_lp/',
+                serviceUrl: 'https://marketplace.visualstudio.com/_apis/public/gallery',
+                searchUrl: 'https://marketplace.visualstudio.com/_apis/public/gallery/searchrelevancy/extensionquery',
+                servicePPEUrl: 'https://marketplace.vsallin.net/_apis/public/gallery',
+                cacheUrl: 'https://vscode.blob.core.windows.net/gallery/index',
+                itemUrl: 'https://marketplace.visualstudio.com/items',
+                publisherUrl: 'https://marketplace.visualstudio.com/publishers',
+                resourceUrlTemplate: 'https://{publisher}.vscode-unpkg.net/{publisher}/{name}/{version}/{path}',
+                controlUrl: 'https://az764295.vo.msecnd.net/extensions/marketplace.json',
+            }
+        },
+        // scope the VSCode instance to Kestra File System Provider (defined in Kestra VSCode extension)
+        folderUri: {
+            scheme: "kestra",
+            path: "/" + queryParams["namespace"]
+        },
+        additionalBuiltinExtensions: [
+            {
+                scheme: "https",
+                path: "mathcale.vscode-unpkg.net/mathcale/theme-dracula-refined/2.24.3/extension"
+            },
+            {
+                scheme: "https",
+                path: "redhat.vscode-unpkg.net/redhat/vscode-yaml/1.14.0/extension"
+            },
+            {
+                scheme: "https",
+                path: "kestra-io.vscode-unpkg.net/kestra-io/kestra/0.1.0/extension"
+            }
+        ],
+        enabledExtensions: [
+            // to handle dark theme
+            "mathcale.theme-dracula-refined",
+            // to apply Kestra's flow validation schema
+            "redhat.vscode-yaml",
+            "kestra-io.kestra"
+        ],
+        configurationDefaults: {
+            "files.autoSave": "off",
+            "workbench.colorTheme": THEME === "dark" ? "Dracula Refined" : "Default Light Modern",
+            // provide the Kestra root URL to extension
+            "kestra.api.url": KESTRA_BASE_PATH
+        }
+    };
+</script>
+<script src="vscode-web/dist/out/vs/workbench/workbench.web.main.nls.js"></script>
+<script src="vscode-web/dist/out/vs/workbench/workbench.web.main.js"></script>
+<script src="vscode-web/dist/out/vs/code/browser/workbench/workbench.js"></script>
+</body>
+</html>

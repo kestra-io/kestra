@@ -21,6 +21,19 @@ tasks.named('installFrontend') {
 tasks.named('assembleFrontend') {
     shouldRunAfter installFrontend
 
+    copy {
+        from 'node_modules/vscode-web/dist/out'
+        into 'public/vscode-web/dist/out'
+    }
+    copy {
+        from 'node_modules/vscode-web/dist/node_modules'
+        into 'public/vscode-web/dist/node_modules'
+    }
+    copy {
+        from 'node_modules/vscode-web/dist/extensions'
+        into 'public/vscode-web/dist/extensions'
+    }
+
     inputs.dir('src')
     inputs.dir('public')
     inputs.files('vite.config.js')

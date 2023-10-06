@@ -37,6 +37,7 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import NotebookOutline from "vue-material-design-icons/NotebookOutline.vue";
     import Ballot from "vue-material-design-icons/Ballot.vue";
+    import FolderEditOutline from "vue-material-design-icons/FolderEditOutline.vue";
     import AccountSupervisorOutline from "vue-material-design-icons/AccountSupervisorOutline.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
@@ -88,6 +89,14 @@
                         title: this.$t("homeDashboard.title"),
                         icon: {
                             element: ViewDashboardVariantOutline,
+                            class: "menu-icon",
+                        },
+                    },
+                    {
+                        href: {name: "editor"},
+                        title: this.$t("editor"),
+                        icon: {
+                            element: FolderEditOutline,
                             class: "menu-icon",
                         },
                     },

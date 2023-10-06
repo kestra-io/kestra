@@ -42,6 +42,7 @@
     "nprogress": "^0.2.0",
     "prismjs": "^1.29.0",
     "throttle-debounce": "^5.0.0",
+    "vscode-web": "^1.82.0",
     "vue": "^3.3.4",
     "vue-axios": "3.5.2",
     "vue-chart-3": "^3.1.8",

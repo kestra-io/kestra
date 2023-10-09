@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for allows events between two specific datetimes"
+    title = "Condition to allows events between two specific datetime"
 )
 @Plugin(
     examples = {
@@ -31,7 +31,7 @@ import javax.validation.constraints.NotNull;
             code = {
                 "- conditions:",
                 "    - type: io.kestra.core.models.conditions.types.DateTimeBetweenCondition",
-                "      after: \"2013-09-08T16:19:12\"",
+                "      after: \"2013-09-08T16:19:12Z\"",
             }
         )
     }
@@ -46,11 +46,17 @@ public class DateTimeBetweenCondition extends Condition implements ScheduleCondi
     @PluginProperty(dynamic = true)
     private final String date = "{{ now() }}";
 
-    @Schema(title = "The date must after this one")
+    @Schema(
+        title = "The date to test must be after this one",
+        description = "Must be a valid ISO 8601 datetime with the zone identifier (use 'Z' for the default zone identifier)"
+    )
     @PluginProperty
     private ZonedDateTime after;
 
-    @Schema(title = "The date must before this one")
+    @Schema(
+        title = "The date to test must be before this one",
+        description = "Must be a valid ISO 8601 datetime with the zone identifier (use 'Z' for the default zone identifier)"
+    )
     @PluginProperty
     private ZonedDateTime before;
 

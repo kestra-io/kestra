@@ -275,6 +275,19 @@ public class Worker implements Runnable, AutoCloseable {
                 ));
         }
 
+        if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+            workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.KILLED));
+
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask);
+            this.workerTaskResultQueue.emit(workerTaskResult);
+
+            this.logTerminated(workerTask);
+
+            //FIXME should we remove it from the killedExecution set ?
+
+            return workerTaskResult;
+        }
+
         workerTask.logger().info(
             "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] [value: {}] Type {} started",
             workerTask.getTaskRun().getNamespace(),
@@ -292,20 +305,6 @@ public class Worker implements Runnable, AutoCloseable {
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING));
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
-
-        // killed cased
-        if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
-            workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.KILLED));
-
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask);
-            this.workerTaskResultQueue.emit(workerTaskResult);
-
-            this.logTerminated(workerTask);
-
-            //FIXME should we remove it from the killedExecution set ?
-
-            return workerTaskResult;
-        }
 
         AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 

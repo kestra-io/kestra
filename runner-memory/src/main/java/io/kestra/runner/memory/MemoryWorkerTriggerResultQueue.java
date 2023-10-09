@@ -12,18 +12,18 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import java.util.function.Consumer;
 
 public class MemoryWorkerTriggerResultQueue implements WorkerTriggerResultQueueInterface {
-    QueueInterface<WorkerTriggerResult> workerTrigerResultQueue;
+    QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
     @SuppressWarnings("unchecked")
     public MemoryWorkerTriggerResultQueue(ApplicationContext applicationContext) {
-        this.workerTrigerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
+        this.workerTriggerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED)
         );
     }
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
-        return workerTrigerResultQueue.receive(consumerGroup, queueType, consumer);
+        return workerTriggerResultQueue.receive(consumerGroup, queueType, consumer);
     }
 
     @Override

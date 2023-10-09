@@ -40,8 +40,8 @@ public class JdbcWorkerTriggerResultQueueService {
                 WorkerTriggerResult workerTriggerResult = either.getLeft();
                 jdbcWorkerJobRunningRepository.deleteByKey(workerTriggerResult.getTriggerContext().uid());
 
-                eithers.forEach(consumer);
             });
+            eithers.forEach(consumer);
         });
         return this.queueStop;
     }

@@ -91,7 +91,7 @@
             <div class="bottom-buttons">
                 <div class="left-align">
                     <el-form-item>
-                        <el-button v-if="execution && execution.inputs" :icon="ContentCopy" @click="fillInputsFromExecution">
+                        <el-button v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
                             {{ $t('prefill inputs') }}
                         </el-button>
                     </el-form-item>
@@ -189,7 +189,28 @@
             }
         },
         methods: {
+            getExecutionLabels() {
+                if (!this.execution.labels) {
+                    return [];
+                }
+                if (!this.flow.labels) {
+                    return this.execution.labels;
+                }
+                return this.execution.labels.filter(label => {
+                    return !this.flow.labels.some(flowLabel => flowLabel.key === label.key && flowLabel.value === label.value);
+                });
+            },
+            hasExecutionLabels() {
+                return this.getExecutionLabels().length > 0;
+            },
             fillInputsFromExecution(){
+                // Add all labels except the one from flow to prevent duplicates
+                this.executionLabels = this.getExecutionLabels();
+
+                if (!this.flow.inputs) {
+                    return;
+                }
+
                 const nonEmptyInputNames = Object.keys(this.execution.inputs);
                 this.inputs = Object.fromEntries(
                     this.flow.inputs.filter(input => nonEmptyInputNames.includes(input.name))
@@ -212,8 +233,6 @@
                             return [inputName, inputValue]
                         })
                 );
-                // add all labels except the one from flow to prevent duplicates
-                this.executionLabels = this.execution.labels.filter(label => !this.flow.labels.some(flowLabel => flowLabel.key === label.key && flowLabel.value === label.value));
             },
             onSubmit(formRef) {
                 if (this.$tours["guidedTour"].isRunning.value) {

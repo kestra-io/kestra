@@ -178,6 +178,9 @@ kestra:
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"
+    preview:
+      initial-rows: 100
+      max-rows: 5000
 
   anonymous-usage-report:
     enabled: true

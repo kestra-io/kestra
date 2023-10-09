@@ -506,7 +506,8 @@
     "hostname": "Hostname",
     "port": "Port",
     "management port": "Management port",
-    "file preview truncated": "Displayed content has been truncated"
+    "file preview truncated": "Displayed content has been truncated",
+    "show": "Show"
   },
   "fr": {
     "id": "Identifiant",
@@ -1007,7 +1008,8 @@
     "hostname": "Nom d'hôte",
     "port": "Port",
     "management port": "Port de gestion",
-    "file preview truncated": "Displayed content has been truncated"
+    "file preview truncated": "Displayed content has been truncated",
+    "show": "Voir"
   }
 }
 

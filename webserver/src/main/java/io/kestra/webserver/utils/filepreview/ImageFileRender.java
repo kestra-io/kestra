@@ -8,11 +8,10 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Base64;
 
+@Getter
 public class ImageFileRender extends FileRender {
-    public String content;
-
-    ImageFileRender(String extension, InputStream inputStream) throws IOException {
-        super(extension);
+    ImageFileRender(String extension, InputStream inputStream, Integer maxLine) throws IOException {
+        super(extension, maxLine);
         this.content =  Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream));
         this.type = Type.IMAGE;
     }

@@ -23,7 +23,7 @@ class DefaultFileRenderTest {
         }
         InputStream is = new ByteArrayInputStream(contentBuffer.toString().getBytes(StandardCharsets.UTF_8));
 
-        DefaultFileRender render = new DefaultFileRender("txt", is);
+        DefaultFileRender render = new DefaultFileRender("txt", is, 100);
 
         assertThat(render.truncated, is(truncated));
     }
@@ -39,7 +39,7 @@ class DefaultFileRenderTest {
         }
         InputStream is = new ByteArrayInputStream(contentBuffer.toString().getBytes(StandardCharsets.UTF_8));
 
-        DefaultFileRender render = new DefaultFileRender("txt", is);
+        DefaultFileRender render = new DefaultFileRender("txt", is, 100);
 
         assertThat(render.truncated, is(truncated));
     }

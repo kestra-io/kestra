@@ -52,6 +52,12 @@ public class MiscController {
     @Nullable
     protected String environmentColor;
 
+    @io.micronaut.context.annotation.Value("${kestra.server.preview.initial-rows:100}")
+    private Integer initialPreviewRows;
+
+    @io.micronaut.context.annotation.Value("${kestra.server.preview.max-rows:5000}")
+    private Integer maxPreviewRows;
+
     @Get("/ping")
     @Hidden
     public HttpResponse<?> ping() {
@@ -68,7 +74,12 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
-            .isTemplateEnabled(templateRepository.isPresent());
+            .isTemplateEnabled(templateRepository.isPresent())
+            .preview(Preview.builder()
+                .initial(this.initialPreviewRows)
+                .max(this.maxPreviewRows)
+                .build()
+            );
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -106,6 +117,8 @@ public class MiscController {
         Boolean isTemplateEnabled;
 
         Environment environment;
+
+        Preview preview;
     }
 
     @Value
@@ -113,5 +126,12 @@ public class MiscController {
     public static class Environment {
         String name;
         String color;
+    }
+
+    @Value
+    @Builder(toBuilder = true)
+    public static class Preview {
+        Integer initial;
+        Integer max;
     }
 }

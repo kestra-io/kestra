@@ -1,22 +1,23 @@
 package io.kestra.webserver.utils.filepreview;
 
+import lombok.Getter;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+@Getter
 public class DefaultFileRender extends FileRender {
-    public String content;
-
-    DefaultFileRender(String extension, InputStream filestream) throws IOException {
-        super(extension);
+    DefaultFileRender(String extension, InputStream filestream, Integer maxLine) throws IOException {
+        super(extension, maxLine);
         renderContent(filestream);
 
         this.type = Type.TEXT;
     }
 
-    DefaultFileRender(String extension, InputStream filestream, Type type) throws IOException {
-        super(extension);
+    DefaultFileRender(String extension, InputStream filestream, Type type, Integer maxLine) throws IOException {
+        super(extension, maxLine);
         renderContent(filestream);
 
         this.type = type;
@@ -29,13 +30,13 @@ public class DefaultFileRender extends FileRender {
 
         StringBuilder contentBuilder = new StringBuilder();
 
-        while (line != null && lineCount < MAX_LINES) {
+        while (line != null && lineCount < this.maxLine) {
             contentBuilder.append(line);
             lineCount++;
             if ((line = reader.readLine()) != null) {
                 contentBuilder.append("\n");
 
-                if(lineCount == MAX_LINES) {
+                if(lineCount == this.maxLine) {
                     truncated = true;
                 }
             }

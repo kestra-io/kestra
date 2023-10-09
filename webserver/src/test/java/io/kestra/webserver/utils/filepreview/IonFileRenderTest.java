@@ -23,7 +23,7 @@ class IonFileRenderTest {
         }
 
         final InputStream is = new DataInputStream(new FileInputStream(tempFile));
-        IonFileRender render = new IonFileRender("ion", is);
+        IonFileRender render = new IonFileRender("ion", is, 100);
 
         assertThat(render.truncated, is(truncated));
     }

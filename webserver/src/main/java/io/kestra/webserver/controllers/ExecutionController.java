@@ -119,6 +119,12 @@ public class ExecutionController {
     @Inject
     private RunContextFactory runContextFactory;
 
+    @Value("${kestra.server.preview.initial-rows:100}")
+    private Integer initialPreviewRows;
+
+    @Value("${kestra.server.preview.max-rows:5000}")
+    private Integer maxPreviewRows;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for executions")
@@ -965,14 +971,20 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Get file preview for an execution")
     public HttpResponse<?> filePreview(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The internal storage uri") @QueryValue URI path
+        @Parameter(description = "The internal storage uri") @QueryValue URI path,
+        @Parameter(description = "The max row returns") @QueryValue @Nullable Integer maxRows
     ) throws IOException {
         this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
         InputStream fileStream = storageInterface.get(path);
 
-        FileRender fileRender = FileRenderBuilder.of(extension, fileStream);
+        FileRender fileRender = FileRenderBuilder.of(
+            extension,
+            fileStream,
+            maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
+        );
+
         return HttpResponse.ok(fileRender);
     }
 }

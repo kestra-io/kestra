@@ -107,6 +107,9 @@ public class FlowableUtils {
             );
 
             return Optional.of(State.Type.FAILED);
+        } else if (currentTasks.stream().allMatch(t -> t.getTask().getDisabled()) && !currentTasks.isEmpty()) {
+            // if all child tasks are disabled, we end in SUCCESS
+            return Optional.of(State.Type.SUCCESS);
         } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analysed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {

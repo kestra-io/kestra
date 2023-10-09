@@ -59,12 +59,11 @@ abstract public class FileSerde {
         String row;
         int nbLines = 0;
         while ((row = input.readLine()) != null) {
-            consumer.accept(convert(row));
-
             if (nbLines >= maxLines) {
                 return true;
             }
 
+            consumer.accept(convert(row));
             nbLines ++;
         }
 

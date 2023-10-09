@@ -8,7 +8,7 @@ plugins {
 
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
-    id "org.sonarqube" version "4.3.1.3277"
+    id "org.sonarqube" version "4.4.1.3373"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -142,7 +142,7 @@ allprojects {
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.13.0'
+        api group: 'commons-io', name: 'commons-io', version: '2.14.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.13.0'
         api "io.swagger.core.v3:swagger-annotations"
     }
@@ -171,7 +171,7 @@ subprojects {
         testImplementation "io.micronaut.test:micronaut-test-junit5"
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
         testImplementation "org.junit.jupiter:junit-jupiter-params"
-        testImplementation "org.junit-pioneer:junit-pioneer:2.0.1"
+        testImplementation "org.junit-pioneer:junit-pioneer:2.1.0"
 
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'

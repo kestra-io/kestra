@@ -18,7 +18,7 @@ public class MemoryWorkerTriggerResultQueue implements WorkerTriggerResultQueueI
     public MemoryWorkerTriggerResultQueue(ApplicationContext applicationContext) {
         this.workerTriggerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
             QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED)
+            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
         );
     }
 

@@ -1,15 +1,15 @@
 package io.kestra.runner.memory;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Await;
+import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
-import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

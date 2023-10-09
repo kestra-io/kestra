@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +43,7 @@ public class TaskRun {
     String value;
 
     @With
-    List<String> items;
+    URI items;
 
     @With
     List<TaskRunAttempt> attempts;

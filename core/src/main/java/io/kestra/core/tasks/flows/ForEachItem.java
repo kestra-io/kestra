@@ -1,6 +1,5 @@
 package io.kestra.core.tasks.flows;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -22,6 +21,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -29,15 +29,18 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -78,9 +81,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     }
 )
 public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
-    private static final int BUFFER_SIZE = 8 * 1024; // 8KB
     private static final String STATE_STATE = "for-each-item-state";
     private static final String STATE_NAME = "offsets";
+    private static final String URI_FORMAT = "kestra:///%s/%s/executions/%s/tasks/%s/%s/bach-%s.ion";
 
     @NotEmpty
     @PluginProperty(dynamic = true)
@@ -115,7 +118,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Schema(hidden = true)
-    private List<BatchOffsets> offsets;
+    @Getter(AccessLevel.PRIVATE)
+    private List<String> values;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -182,23 +186,15 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
 
         // add an input for the items
         return next.stream()
-            .map(throwFunction(n -> n.withTaskRun(n.getTaskRun().withItems(readItems(runContext, n.getTaskRun().getValue())))))
+            .map(throwFunction(n -> n.withTaskRun(n.getTaskRun().withItems(readItems(execution, parentTaskRun.getId(), n.getTaskRun().getValue())))))
             .toList();
     }
 
-    private List<String> readItems(RunContext runContext, String value) throws IllegalVariableEvaluationException {
-        URI data = URI.create(runContext.render(this.items));
-        try (var bis = new BufferedInputStream(runContext.uriToInputStream(data))) {
-            BatchOffsets batchOffsets = JacksonMapper.ofJson().readValue(value, BatchOffsets.class);
-            int nbRead = batchOffsets.endOffset - batchOffsets.startOffset;
-            byte[] bytes = new byte[nbRead];
-            bis.skip(batchOffsets.startOffset);
-            bis.read(bytes);
-            String lines = new String(bytes);
-            return lines.lines().toList();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private URI readItems(Execution execution, String taskRunId, String value) {
+        // Recreate the URI from the execution context and the value.
+        // It should be kestra:///$ns/$flow/executions/$execution_id/tasks/$task_id/$taskrun_id/bach-$value.ion
+        String uri = URI_FORMAT.formatted(execution.getNamespace(), execution.getFlowId(), execution.getId(), this.id, taskRunId, value);
+        return URI.create(uri);
     }
 
     private List<Task> getTasks() {
@@ -221,32 +217,24 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     }
 
     private List<String> getValues(RunContext runContext) {
-        try {
-            return getOffsets(runContext).stream().map(throwFunction(b -> JacksonMapper.ofJson().writeValueAsString(b))).toList();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private List<BatchOffsets> getOffsets(RunContext runContext) {
-        if (this.offsets == null) {
+        if (this.values == null) {
             // must be inside the state as we create it when initializing the state
             try (InputStream is = runContext.getTaskStateFile(STATE_STATE, STATE_NAME)) {
-                this.offsets = JacksonMapper.ofJson().readValue(is, new TypeReference<>() {});
+                this.values = JacksonMapper.ofJson().readValue(is, new TypeReference<>() {});
             }
             catch (IOException ioe) {
                 throw new RuntimeException(ioe);
             }
         }
-        return this.offsets;
+        return this.values;
     }
 
     @Override
     public void init(RunContext runContext) throws IllegalVariableEvaluationException {
-        this.offsets = readOffsets(runContext);
+        this.values = readSplits(runContext);
         // TODO if the UI is not updated, add a check to limit the number of batch to avoid having a non-responsive UI
         try {
-            byte[] content = JacksonMapper.ofJson().writeValueAsBytes(this.offsets);
+            byte[] content = JacksonMapper.ofJson().writeValueAsBytes(this.values);
             runContext.putTaskStateFile(content, STATE_STATE, STATE_NAME);
 
         } catch (IOException e) {
@@ -254,42 +242,45 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
         }
     }
 
-    private List<BatchOffsets> readOffsets(RunContext runContext) throws IllegalVariableEvaluationException {
-        List<BatchOffsets> batchOffsets = new ArrayList<>();
-
+    private List<String> readSplits(RunContext runContext) throws IllegalVariableEvaluationException {
         URI data = URI.create(runContext.render(this.items));
-        try (var bis = new BufferedInputStream(runContext.uriToInputStream(data))) {
+        List<String> splits = new ArrayList<>();
+
+        try (var reader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(data)))) {
             int batch = 1; // file current line offset
             int lineNb = 0;
-            int batchStartOffset = 0;
-            int batchEndOffset = 0;
-            int c;
-            while ((c = bis.read()) != -1) {
-                if (c == '\n' || c == '\r') {
-                    lineNb++;
-                }
+            String row;
+            List<String> rows = new ArrayList<>(maxItemsPerBatch);
+            while ((row = reader.readLine()) != null) {
+                rows.add(row);
+                lineNb++;
+
                 if (lineNb == maxItemsPerBatch) {
-                    batchOffsets.add(new BatchOffsets(String.valueOf(batch), batchStartOffset, batchEndOffset));
+                    createBatchFile(runContext, rows, batch);
+                    splits.add(String.valueOf(batch));
+
                     batch++;
-                    batchStartOffset = batchEndOffset + 1;
                     lineNb = 0;
+                    rows.clear();
                 }
-
-                batchEndOffset++;
             }
 
-            if (batchStartOffset != batchEndOffset) {
-                // there is one additional partial batch
-                batchOffsets.add(new BatchOffsets(String.valueOf(batch), batchStartOffset, batchEndOffset));
+            if (!rows.isEmpty()) {
+                createBatchFile(runContext, rows, batch);
+                splits.add(String.valueOf(batch));
             }
 
-            return batchOffsets;
+            return splits;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private record BatchOffsets(String value, int startOffset, int endOffset) {}
+    private void createBatchFile(RunContext runContext, List<String> rows, int batch) throws IOException {
+        byte[] bytes = rows.stream().collect(Collectors.joining(System.lineSeparator())).getBytes();
+        File batchFile = runContext.tempFile(bytes, ".ion").toFile();
+        runContext.putTempFile(batchFile, "bach-" + batch + ".ion");
+    }
 
     @SuperBuilder
     @ToString

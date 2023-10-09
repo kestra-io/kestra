@@ -604,6 +604,12 @@ public class Worker implements Runnable, AutoCloseable {
         metricEntryQueue.close();
     }
 
+    // Used for tests
+    public void killWorker() {
+        log.warn("Kill called, shutting down");
+        this.workerThreadReferences.forEach(WorkerThread::kill);
+    }
+
     public List<WorkerTask> getWorkerThreadTasks() {
         return this.workerThreadReferences.stream().map(thread -> thread.workerTask).toList();
     }

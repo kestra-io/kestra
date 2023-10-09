@@ -55,13 +55,20 @@ abstract public class FileSerde {
         }
     }
 
-    public static void reader(BufferedReader input, int maxLines, Consumer<Object> consumer) throws IOException {
+    public static boolean reader(BufferedReader input, int maxLines, Consumer<Object> consumer) throws IOException {
         String row;
         int nbLines = 0;
-        while ((row = input.readLine()) != null && nbLines < maxLines) {
+        while ((row = input.readLine()) != null) {
             consumer.accept(convert(row));
+
+            if (nbLines >= maxLines) {
+                return true;
+            }
+
             nbLines ++;
         }
+
+        return false;
     }
 
     private static Object convert(String row) throws JsonProcessingException {

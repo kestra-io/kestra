@@ -284,7 +284,8 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         Executor result = executionRepository.lock(message.getId(), pair -> {
-            Execution execution = pair.getLeft();
+            // as tasks can be processed in parallel, we must merge the execution from the database to the one we received in the queue
+            Execution execution = mergeExecution(pair.getLeft(), message);
             ExecutorState executorState = pair.getRight();
 
             final Flow flow = transform(this.flowRepository.findByExecution(execution), execution);
@@ -296,7 +297,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
             executor = executorService.process(executor);
 
-            if (executor.getNexts().size() > 0 && deduplicateNexts(execution, executorState, executor.getNexts())) {
+            if (!executor.getNexts().isEmpty() && deduplicateNexts(execution, executorState, executor.getNexts())) {
                 executor.withExecution(
                     executorService.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
                     "onNexts"
@@ -304,7 +305,7 @@ public class JdbcExecutor implements ExecutorInterface {
             }
 
             // worker task
-            if (executor.getWorkerTasks().size() > 0) {
+            if (!executor.getWorkerTasks().isEmpty()) {
                 List<WorkerTask> workerTasksDedup = executor
                     .getWorkerTasks()
                     .stream()
@@ -326,26 +327,26 @@ public class JdbcExecutor implements ExecutorInterface {
             }
 
             // worker tasks results
-            if (executor.getWorkerTaskResults().size() > 0) {
+            if (!executor.getWorkerTaskResults().isEmpty()) {
                 executor.getWorkerTaskResults()
                     .forEach(workerTaskResultQueue::emit);
             }
 
             // schedulerDelay
-            if (executor.getExecutionDelays().size() > 0) {
+            if (!executor.getExecutionDelays().isEmpty()) {
                 executor.getExecutionDelays()
                     .forEach(executionDelay -> abstractExecutionDelayStorage.save(executionDelay));
             }
 
             // worker task execution watchers
-            if (executor.getWorkerTaskExecutions().size() > 0) {
+            if (!executor.getWorkerTaskExecutions().isEmpty()) {
                 workerTaskExecutionStorage.save(executor.getWorkerTaskExecutions());
 
                 List<WorkerTaskExecution> workerTasksExecutionDedup = executor
                     .getWorkerTaskExecutions()
                     .stream()
                     .filter(workerTaskExecution -> this.deduplicateWorkerTaskExecution(execution, executorState, workerTaskExecution.getTaskRun()))
-                    .collect(Collectors.toList());
+                    .toList();
 
                 workerTasksExecutionDedup
                     .forEach(workerTaskExecution -> {
@@ -409,6 +410,25 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
+    private Execution mergeExecution(Execution locked, Execution message) {
+        Execution newExecution = locked;
+        if (message.getTaskRunList() != null) {
+            for (TaskRun taskRun : message.getTaskRunList()) {
+                try {
+                    TaskRun existing = newExecution.findTaskRunByTaskRunId(taskRun.getId());
+                    // if the taskrun from the message is newer than the one from the execution, we replace it!
+                    if (existing != null && taskRun.getState().maxDate().isAfter(existing.getState().maxDate())) {
+                        newExecution = newExecution.withTaskRun(taskRun);
+                    }
+                }
+                catch (InternalException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return newExecution;
+    }
+
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
         if (either.isRight()) {
             log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage());
@@ -423,20 +443,6 @@ public class JdbcExecutor implements ExecutorInterface {
 
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
-        }
-
-        // send metrics on terminated
-        if (message.getTaskRun().getState().isTerminated()) {
-            metricRegistry
-                .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
-                .increment();
-
-            metricRegistry
-                .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
-                .record(message.getTaskRun().getState().getDuration());
-
-            log.trace("TaskRun terminated: {}", message.getTaskRun());
-            workerJobRunningRepository.deleteByTaskRunId(message.getTaskRun().getId());
         }
 
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {
@@ -459,10 +465,23 @@ public class JdbcExecutor implements ExecutorInterface {
                     if (newExecution != null) {
                         current = current.withExecution(newExecution, "addDynamicTaskRun");
                     }
+                    newExecution = current.getExecution().withTaskRun(message.getTaskRun());
+                    current = current.withExecution(newExecution, "joinWorkerResult");
+
+                    // send metrics on terminated
+                    if (message.getTaskRun().getState().isTerminated()) {
+                        metricRegistry
+                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .increment();
+
+                        metricRegistry
+                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .record(message.getTaskRun().getState().getDuration());
+                    }
 
                     // join worker result
                     return Pair.of(
-                        current.withExecution(current.getExecution().withTaskRun(message.getTaskRun()), "joinWorkerResult"),
+                        current,
                         pair.getRight()
                     );
                 } catch (InternalException e) {

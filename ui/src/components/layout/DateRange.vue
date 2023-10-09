@@ -23,109 +23,116 @@
                 },
                 shortcuts: [
                     {
+                        text: this.$t("datepicker.last5minutes"),
+                        value: () => ([
+                            this.$moment().add(-5, "minutes").toDate(),
+                            this.$moment().toDate()
+                        ]),
+                    },
+                    {
                         text: this.$t("datepicker.last1hour"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "hour").toDate(),
                             this.$moment().toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.last12hours"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-12, "hour").toDate(),
                             this.$moment().toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.last24hours"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "day").toDate(),
                             this.$moment().toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.today"),
-                        value: [
+                        value: () => ([
                             this.$moment().startOf("day").toDate(),
                             this.$moment().endOf("day").toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.yesterday"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "day").startOf("day").toDate(),
                             this.$moment().add(-1, "day").endOf("day").toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.dayBeforeYesterday"),
-                        onClick: () => [
+                        value: () => ([
                             this.$moment().add(-2, "day").startOf("day").toDate(),
                             this.$moment().add(-2, "day").endOf("day").toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.thisWeek"),
-                        value: [
+                        value: () => ([
                             this.$moment().startOf("isoWeek").toDate(),
                             this.$moment().endOf("isoWeek").toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.thisWeekSoFar"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "isoWeek").toDate(),
                             this.$moment().toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.previousWeek"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "week").startOf("isoWeek").toDate(),
                             this.$moment().add(-1, "week").endOf("isoWeek").toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.thisMonth"),
-                        value: [
+                        value: () => ([
                             this.$moment().startOf("month").toDate(),
                             this.$moment().endOf("month").toDate(),
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.thisMonthSoFar"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "month").toDate(),
                             this.$moment().toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.previousMonth"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "month").startOf("month").toDate(),
                             this.$moment().add(-1, "month").endOf("month").toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.thisYear"),
-                        value: [
+                        value: () => ([
                             this.$moment().startOf("year").toDate(),
                             this.$moment().endOf("year").toDate(),
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.thisYearSoFar"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "year").toDate(),
                             this.$moment().toDate()
-                        ],
+                        ]),
                     },
                     {
                         text: this.$t("datepicker.previousYear"),
-                        value: [
+                        value: () => ([
                             this.$moment().add(-1, "year").startOf("year").toDate(),
                             this.$moment().add(-1, "year").endOf("year").toDate()
-                        ],
+                        ]),
                     },
                 ],
             }
@@ -151,7 +158,7 @@
         computed: {
             date() {
                 return [new Date(this.startDate), new Date(this.endDate)];
-            }
+            },
         }
     };
 </script>

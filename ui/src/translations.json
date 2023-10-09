@@ -53,6 +53,7 @@
     "topology": "Topology",
     "date": "Date",
     "datepicker": {
+      "last5minutes": "Last 5 minutes",
       "last1hour": "Last 1 hour",
       "last12hours": "Last 12 hours",
       "last24hours": "Last 24 hours",
@@ -561,6 +562,7 @@
     "topology": "Topologie",
     "date": "Date",
     "datepicker": {
+      "last5minutes": "5 dernières minutes",
       "last1hour": "Dernière heure",
       "last12hours": "12 dernières heures",
       "last24hours": "24 dernières heures",

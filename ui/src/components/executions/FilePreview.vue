@@ -14,6 +14,9 @@
             <h3>{{ $t("preview") }}</h3>
         </template>
         <template #default>
+            <el-alert v-if="filePreview.truncated"  show-icon type="warning" :closable="false" class="mb-2">
+                {{ $t('file preview truncated') }}
+            </el-alert>
             <list-preview v-if="filePreview.type === 'LIST'" :value="filePreview.content" />
             <img v-else-if="filePreview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />

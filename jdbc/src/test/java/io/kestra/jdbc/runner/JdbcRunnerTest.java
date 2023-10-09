@@ -135,10 +135,7 @@ public abstract class JdbcRunnerTest {
 
         assertThat(execution, notNullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        // on JDBC, when using an each parallel, the flow is failed even if not all subtasks of the each parallel are ended as soon as
-        // there is one failed task FIXME https://github.com/kestra-io/kestra/issues/2179
-        // so instead of asserting that all tasks FAILED we assert that at least two failed (the each parallel and one of its subtasks)
-        assertThat(execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed()).count(), greaterThanOrEqualTo(2L)); // Should be 3
+        assertThat(execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed()).count(), is(3L));
     }
 
     @Test

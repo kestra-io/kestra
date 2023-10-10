@@ -15,7 +15,7 @@ on:
       - release
       - develop
   repository_dispatch:
-    types: [rebuild]
+    types: [ rebuild ]
   workflow_dispatch:
     inputs:
       skip-test:
@@ -164,6 +164,7 @@ jobs:
               io.kestra.plugin:plugin-aws:LATEST
               io.kestra.plugin:plugin-azure:LATEST
               io.kestra.plugin:plugin-cassandra:LATEST
+              io.kestra.plugin:plugin-cloudquery:LATEST
               io.kestra.plugin:plugin-compress:LATEST
               io.kestra.plugin:plugin-couchbase:LATEST
               io.kestra.plugin:plugin-crypto:LATEST

@@ -203,6 +203,14 @@ public class FlowController {
         ));
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{namespace}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Retrieve all flows from a given namespace")
+    public List<Flow> getFlowsByNamespace(
+        @Parameter(description = "Namespace to filter flows") @PathVariable String namespace
+    ) throws HttpStatusException {
+        return flowRepository.findByNamespace(tenantService.resolveTenant(), namespace);
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/source", produces = MediaType.TEXT_JSON)

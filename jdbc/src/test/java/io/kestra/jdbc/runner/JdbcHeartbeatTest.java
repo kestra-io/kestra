@@ -76,27 +76,32 @@ public abstract class JdbcHeartbeatTest {
         jdbcTestUtils.migrate();
 
         TestsUtils.loads(repositoryLoader);
-        runner.setSchedulerEnabled(false);
-        runner.run();
     }
 
     @Test
     void taskResubmit() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
+
         Worker worker = new Worker(applicationContext, 8, null);
+        applicationContext.registerSingleton(worker);
         worker.run();
+        runner.setSchedulerEnabled(false);
+        runner.setWorkerEnabled(false);
+        runner.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
 
-        workerJobQueue.emit(workerTask(7000));
+        workerJobQueue.emit(workerTask(12000));
+        countDownLatch.await(2, TimeUnit.SECONDS);
 
-        worker.killWorker();
+        worker.shutdown();
 
+        countDownLatch.await(10, TimeUnit.SECONDS);
         Worker newWorker = new Worker(applicationContext, 8, null);
+        applicationContext.registerSingleton(newWorker);
         newWorker.run();
 
-        countDownLatch.await(9, TimeUnit.SECONDS);
 
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(io.kestra.core.models.flows.State.Type.SUCCESS));
     }
@@ -112,7 +117,6 @@ public abstract class JdbcHeartbeatTest {
 
         workerJobQueue.emit(workerTrigger(7000));
 
-        worker.killWorker();
 
         Worker newWorker = new Worker(applicationContext, 8, null);
         newWorker.run();

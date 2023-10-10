@@ -9,6 +9,7 @@ import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +19,8 @@ import java.util.function.Consumer;
 @Slf4j
 public class JdbcWorkerTriggerResultQueueService {
     private final JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue;
-    private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
+    @Inject
+    private AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
     private Runnable queueStop;
 
     @SuppressWarnings("unchecked")
@@ -26,7 +28,6 @@ public class JdbcWorkerTriggerResultQueueService {
         this.workerTriggerResultQueue = (JdbcQueue<WorkerTriggerResult>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
-        this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningRepository.class);
     }
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {

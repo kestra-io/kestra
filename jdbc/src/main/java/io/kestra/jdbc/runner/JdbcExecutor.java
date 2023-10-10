@@ -444,20 +444,6 @@ public class JdbcExecutor implements ExecutorInterface {
             executorService.log(log, true, message);
         }
 
-        // send metrics on terminated
-        if (message.getTaskRun().getState().isTerminated()) {
-            metricRegistry
-                .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
-                .increment();
-
-            metricRegistry
-                .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
-                .record(message.getTaskRun().getState().getDuration());
-
-            log.trace("TaskRun terminated: {}", message.getTaskRun());
-            workerJobRunningRepository.deleteByKey(message.getTaskRun().getId());
-        }
-
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {
             Execution execution = pair.getLeft();
             Executor current = new Executor(execution, null);
@@ -490,6 +476,9 @@ public class JdbcExecutor implements ExecutorInterface {
                         metricRegistry
                             .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
                             .record(message.getTaskRun().getState().getDuration());
+
+                        log.trace("TaskRun terminated: {}", message.getTaskRun());
+                        workerJobRunningRepository.deleteByKey(message.getTaskRun().getId());
                     }
 
                     // join worker result

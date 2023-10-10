@@ -44,23 +44,23 @@ public abstract class JdbcHeartbeatTest {
     private StandAloneRunner runner;
 
     @Inject
+    private RunnerUtils runnerUtils;
+
+    @Inject
+    private LocalFlowRepositoryLoader repositoryLoader;
+
+    @Inject
+    private ApplicationContext applicationContext;
+
+    @Inject
     JdbcTestUtils jdbcTestUtils;
-
-    @Inject
-    protected RunnerUtils runnerUtils;
-
-    @Inject
-    protected LocalFlowRepositoryLoader repositoryLoader;
-
-    @Inject
-    protected ApplicationContext applicationContext;
 
     @Inject
     RunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    QueueInterface<WorkerJob> workerTaskQueue;
+    QueueInterface<WorkerJob> workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -89,7 +89,7 @@ public abstract class JdbcHeartbeatTest {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
 
-        workerTaskQueue.emit(workerTask(7000));
+        workerJobQueue.emit(workerTask(7000));
 
         worker.killWorker();
 
@@ -110,7 +110,7 @@ public abstract class JdbcHeartbeatTest {
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>(null);
         workerTriggerResultQueue.receive(either -> workerTriggerResult.set(either.getLeft()));
 
-        workerTaskQueue.emit(workerTrigger(7000));
+        workerJobQueue.emit(workerTrigger(7000));
 
         worker.killWorker();
 

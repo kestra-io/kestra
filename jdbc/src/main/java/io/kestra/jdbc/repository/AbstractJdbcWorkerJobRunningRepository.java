@@ -33,7 +33,7 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
     }
 
     @Override
-    public Optional<WorkerJobRunning> findByKey(String Uid) {
+    public Optional<WorkerJobRunning> findByKey(String uid) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -42,7 +42,7 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
                     .select((field("value")))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("key").eq(Uid)
+                        field("key").eq(uid)
                     );
 
                 return this.jdbcRepository.fetchOne(select);

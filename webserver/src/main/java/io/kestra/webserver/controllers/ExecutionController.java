@@ -15,6 +15,7 @@ import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -128,6 +129,9 @@ public class ExecutionController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private MultipleConditionStorageInterface multipleConditionStorageInterface;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
@@ -343,7 +347,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
-    public Execution webhookTriggerPost(
+    public HttpResponse<Execution> webhookTriggerPost(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -355,7 +359,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
-    public Execution webhookTriggerGet(
+    public HttpResponse<Execution> webhookTriggerGet(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -367,7 +371,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
-    public Execution webhookTriggerPut(
+    public HttpResponse<Execution> webhookTriggerPut(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -376,7 +380,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, request);
     }
 
-    private Execution webhook(
+    private HttpResponse<Execution> webhook(
         String namespace,
         String id,
         String key,
@@ -384,7 +388,7 @@ public class ExecutionController {
     ) {
         Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (find.isEmpty()) {
-            return null;
+            return HttpResponse.notFound();
         }
 
         var flow = find.get();
@@ -414,23 +418,29 @@ public class ExecutionController {
             .findFirst();
 
         if (webhook.isEmpty()) {
-            return null;
+            return HttpResponse.notFound();
         }
 
         Optional<Execution> execution = webhook.get().evaluate(request, flow);
 
         if (execution.isEmpty()) {
-            return null;
+            return HttpResponse.notFound();
         }
 
         var result = execution.get();
         if (flow.getLabels() != null) {
             result = result.withLabels(flow.getLabels());
         }
+
+        // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
+        if (!conditionService.isValid(webhook.get(), flow, result, multipleConditionStorageInterface)) {
+            return HttpResponse.noContent();
+        }
+
         executionQueue.emit(result);
         eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
 
-        return result;
+        return HttpResponse.ok(result);
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -31,12 +31,19 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Schema(
     title = "Trigger a flow from a webhook",
-    description = "Webhook trigger allow you to trigger a flow from a webhook url. " +
-        "The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`. " +
-        "Kestra accept `GET`, `POST` & `PUT` request on this url. " +
-        "The whole body & headers will be available as variable:\n " +
-        "- `trigger.body`\n" +
-        "- `trigger.headers`"
+    description = """
+        Webhook trigger allow you to trigger a flow from a webhook url.
+        The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/{flowId}/{key}`.
+        Kestra accept `GET`, `POST` & `PUT` request on this url.
+
+        The whole body & headers will be available as variable:
+        - `trigger.body`
+        - `trigger.headers`
+
+        The webhook response can be:
+        - A status code 404 if the namespace, flow or webhook key is not found
+        - A status code 200 if the webhook trigger an execution
+        - A status code 204 if the webhook didn't trigger an execution due to webhook conditions that didn't match"""
 )
 @Plugin(
     examples = {
@@ -47,6 +54,21 @@ import javax.validation.constraints.Size;
                 "  - id: webhook",
                 "    type: io.kestra.core.models.triggers.types.Webhook",
                 "    key: 4wjtkzwVGBM9yKnjm3yv8r"
+            },
+            full = true
+        ),
+        @Example(
+            title = """
+                Add a webhook trigger with a condition, the flow will be executed only if the condition met.`.
+                """,
+            code = {
+                "triggers:",
+                "  - id: webhook",
+                "    type: io.kestra.core.models.triggers.types.Webhook",
+                "    key: 4wjtkzwVGBM9yKnjm3yv8r",
+                "    conditions:",
+                "      - type: io.kestra.core.models.conditions.types.VariableCondition",
+                "        expression: \"{{ trigger.body.hello == 'world' }}\""
             },
             full = true
         )
@@ -60,7 +82,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         description = "The key is used for generating the url of the webhook.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
-            "Take care when using manual key, the key is the only security to protect your webhook and must be considered as a secret !\n" +
+            "Take care when choosing the key, it is the only security to protect your webhook and must be considered as a secret! We advise to use a random key generator to create the key.\n" +
             "::\n"
     )
     @PluginProperty(dynamic = true)

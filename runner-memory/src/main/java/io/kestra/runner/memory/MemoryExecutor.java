@@ -251,13 +251,17 @@ public class MemoryExecutor implements ExecutorInterface {
             // worker task execution
             if (conditionService.isTerminatedWithListeners(flow, execution) && WORKERTASKEXECUTIONS_WATCHER.containsKey(execution.getId())) {
                 WorkerTaskExecution workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
-                Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                WorkerTaskResult workerTaskResult = workerTaskExecution
-                    .getTask()
-                    .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+                // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
+                if (workerTaskExecution.getTask().getWait()) {
+                    Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                this.workerTaskResultQueue.emit(workerTaskResult);
+                    WorkerTaskResult workerTaskResult = workerTaskExecution
+                        .getTask()
+                        .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+
+                    this.workerTaskResultQueue.emit(workerTaskResult);
+                }
 
                 WORKERTASKEXECUTIONS_WATCHER.remove(execution.getId());
             }

@@ -386,13 +386,16 @@ public class JdbcExecutor implements ExecutorInterface {
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
                 workerTaskExecutionStorage.get(execution.getId())
                     .ifPresent(workerTaskExecution -> {
-                        Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
+                        // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
+                        if (workerTaskExecution.getTask().getWait()) {
+                            Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                        WorkerTaskResult workerTaskResult = workerTaskExecution
-                            .getTask()
-                            .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+                            WorkerTaskResult workerTaskResult = workerTaskExecution
+                                .getTask()
+                                .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
 
-                        this.workerTaskResultQueue.emit(workerTaskResult);
+                            this.workerTaskResultQueue.emit(workerTaskResult);
+                        }
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);
                     });

@@ -5,6 +5,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -80,7 +81,8 @@ public abstract class JdbcHeartbeatTest {
 
     @Test
     void taskResubmit() throws Exception {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+        CountDownLatch runningLatch = new CountDownLatch(1);
+        CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         Worker worker = new Worker(applicationContext, 8, null);
         applicationContext.registerSingleton(worker);
@@ -90,20 +92,28 @@ public abstract class JdbcHeartbeatTest {
         runner.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
+        workerTaskResultQueue.receive(either -> {
+            workerTaskResult.set(either.getLeft());
 
-        workerJobQueue.emit(workerTask(12000));
-        countDownLatch.await(2, TimeUnit.SECONDS);
+            if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {
+                resubmitLatch.countDown();
+            }
 
+            if (either.getLeft().getTaskRun().getState().getCurrent() == Type.RUNNING) {
+                runningLatch.countDown();
+            }
+        });
+
+        workerJobQueue.emit(workerTask(1500));
+        runningLatch.await(2, TimeUnit.SECONDS);
         worker.shutdown();
 
-        countDownLatch.await(10, TimeUnit.SECONDS);
         Worker newWorker = new Worker(applicationContext, 8, null);
         applicationContext.registerSingleton(newWorker);
         newWorker.run();
+        resubmitLatch.await(15, TimeUnit.SECONDS);
 
-
-        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(io.kestra.core.models.flows.State.Type.SUCCESS));
+        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
     }
 
     @Test

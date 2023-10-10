@@ -615,10 +615,7 @@ public class Worker implements Runnable, AutoCloseable {
 
     @VisibleForTesting
     public void shutdown() throws IOException {
-        workerJobQueue.close();
-        executionKilledQueue.close();
-        workerTaskResultQueue.close();
-        metricEntryQueue.close();
+        this.executors.shutdownNow();
     }
 
     public List<WorkerTask> getWorkerThreadTasks() {

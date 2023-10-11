@@ -52,4 +52,6 @@ public interface QueueFactoryInterface {
 
     WorkerJobQueueInterface workerJobQueue();
 
+    WorkerTriggerResultQueueInterface workerTriggerResultQueue();
+
 }

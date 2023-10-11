@@ -2,6 +2,7 @@ package io.kestra.runner.memory;
 
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.WorkerJobQueueInterface;
+import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
@@ -121,5 +122,11 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
     public WorkerJobQueueInterface workerJobQueue() {
         return new MemoryWorkerJobQueue(applicationContext);
+    }
+
+    @Override
+    @Singleton
+    public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
+        return new MemoryWorkerTriggerResultQueue(applicationContext);
     }
 }

@@ -21,6 +21,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
     @Setter private java.util.concurrent.ExecutorService poolExecutor;
     @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
     @Setter protected boolean schedulerEnabled = true;
+    @Setter protected boolean workerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -52,10 +53,12 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
         poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
 
-        Worker worker = new Worker(applicationContext, workerThread, null);
-        applicationContext.registerSingleton(worker);
-        poolExecutor.execute(worker);
-        servers.add(worker);
+        if(workerEnabled) {
+            Worker worker = new Worker(applicationContext, workerThread, null);
+            applicationContext.registerSingleton(worker);
+            poolExecutor.execute(worker);
+            servers.add(worker);
+        }
 
         if (schedulerEnabled) {
             AbstractScheduler scheduler = applicationContext.getBean(AbstractScheduler.class);

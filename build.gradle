@@ -359,12 +359,12 @@ sonar {
 /**********************************************************************************************************************\
  * Standalone
  **********************************************************************************************************************/
-task runStandalone(type: JavaExec) {
+task runLocal(type: JavaExec) {
     group = "application"
     classpath = project(":cli").sourceSets.main.runtimeClasspath
     mainClass = mainClassName
     environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'standalone', '--plugins', 'local/plugins'
+    args 'server', 'local', '--plugins', 'local/plugins'
 }
 
 /**********************************************************************************************************************\

@@ -54,11 +54,11 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
 
 - You may need to enable java annotation processors since we are using it a lot.
 - The main class is `io.kestra.cli.App` from module `kestra.cli.main`
-- Pass as program arguments the server you want to develop, for example `server standalone` will the [standalone server](https://kestra.io/docs/administrator-guide/servers/#kestra-standalone-development-environment-servers)
+- Pass as program arguments the server you want to develop, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/servers/#kestra-standalone-development-environment-servers)
 - ![Intellij Idea Configuration ](https://user-images.githubusercontent.com/2064609/161399626-1b681add-cfa8-4e0e-a843-2631cc59758d.png) Intellij Idea configuration can be found in screenshot below.
   - `MICRONAUT_ENVIRONMENTS`: can be set any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`
   - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on the startup.
-- You can also use the gradle task `./gradlew runStandalone` that will run a standalone server with `MICRONAUT_ENVIRONMENTS=override` and plugins path `local/plugins`
+- You can also use the gradle task `./gradlew runLocal` that will run a standalone server with `MICRONAUT_ENVIRONMENTS=override` and plugins path `local/plugins`
 - The server start by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
@@ -72,7 +72,7 @@ python3 -m pip install virtualenv
 #### Develop frontend
 The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` folder.
 
-- `npm install`
+- `npm install --force` (force is need because of some conflicting package)
 - create a files `ui/.env.development.local` with content `VITE_APP_API_URL=http://localhost:8080` (or your actual server url)
 - `npm run dev` will start the development server with hot reload.
 - The server start by default on port 8090 and is reachable on `http://localhost:5173`

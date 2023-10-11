@@ -15,7 +15,6 @@ import io.kestra.core.tasks.flows.Dag;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -166,7 +165,8 @@ public class FlowableUtils {
     ) {
         return resolveParallelNexts(
             execution,
-            tasks, errors,
+            tasks,
+            errors,
             parentTaskRun,
             concurrency,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
@@ -180,8 +180,8 @@ public class FlowableUtils {
                             .equals(task.getId())
                         )
                         .findFirst()
-                        .get()
-                        .getDependsOn();
+                        .map(Dag.DagTask::getDependsOn)
+                        .orElse(null);
 
                     // Check if have no dependencies OR all dependencies are terminated
                     return taskDependIds == null ||

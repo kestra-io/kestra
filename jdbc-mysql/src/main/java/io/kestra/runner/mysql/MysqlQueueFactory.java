@@ -10,6 +10,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
+import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
@@ -120,5 +121,11 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
     public WorkerJobQueueInterface workerJobQueue() {
         return new MysqlWorkerJobQueue(applicationContext);
+    }
+
+    @Override
+    @Singleton
+    public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
+        return new MysqlWorkerTriggerResultQueue(applicationContext);
     }
 }

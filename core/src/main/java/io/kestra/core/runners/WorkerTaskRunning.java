@@ -30,7 +30,7 @@ public class WorkerTaskRunning extends WorkerJobRunning {
 
     @Override
     public String uid() {
-        return this.taskRun.getTaskId();
+        return this.taskRun.getId();
     }
 
     public static WorkerTaskRunning of(WorkerTask workerTask, WorkerInstance workerInstance, int partition) {

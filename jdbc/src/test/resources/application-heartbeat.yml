@@ -1,0 +1,4 @@
+kestra:
+  heartbeat:
+    frequency: 3s
+    heartbeat-missed: 1

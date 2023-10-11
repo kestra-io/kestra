@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -555,13 +556,18 @@ public class Worker implements Runnable, AutoCloseable {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void close() throws Exception {
+        closeWorker(Duration.ofMinutes(5));
+    }
+
+    @VisibleForTesting
+    public void closeWorker(Duration awaitDuration) throws Exception {
         workerJobQueue.pause();
         executionKilledQueue.pause();
         new Thread(
             () -> {
                 try {
                     this.executors.shutdown();
-                    this.executors.awaitTermination(5, TimeUnit.MINUTES);
+                    this.executors.awaitTermination(awaitDuration.toMillis(), TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     log.error("Fail to shutdown the worker", e);
                 }
@@ -573,7 +579,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         Await.until(
             () -> {
-                if (this.executors.isTerminated() && this.workerThreadReferences.isEmpty()) {
+                if (this.executors.isTerminated() || this.workerThreadReferences.isEmpty()) {
                     log.info("No more worker threads busy, shutting down!");
 
                     // we ensure that last produce message are send
@@ -605,6 +611,11 @@ public class Worker implements Runnable, AutoCloseable {
         executionKilledQueue.close();
         workerTaskResultQueue.close();
         metricEntryQueue.close();
+    }
+
+    @VisibleForTesting
+    public void shutdown() throws IOException {
+        this.executors.shutdownNow();
     }
 
     public List<WorkerTask> getWorkerThreadTasks() {

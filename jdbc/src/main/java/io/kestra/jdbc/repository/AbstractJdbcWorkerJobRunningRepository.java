@@ -27,13 +27,13 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
     }
 
     @Override
-    public void deleteByTaskRunId(String taskRunId) {
-        Optional<WorkerJobRunning> workerJobRunning = this.findByTaskRunId(taskRunId);
+    public void deleteByKey(String uid) {
+        Optional<WorkerJobRunning> workerJobRunning = this.findByKey(uid);
         workerJobRunning.ifPresent(jobRunning -> this.jdbcRepository.delete(jobRunning));
     }
 
     @Override
-    public Optional<WorkerJobRunning> findByTaskRunId(String taskRunId) {
+    public Optional<WorkerJobRunning> findByKey(String uid) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -42,7 +42,7 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
                     .select((field("value")))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("taskrun_id").eq(taskRunId)
+                        field("key").eq(uid)
                     );
 
                 return this.jdbcRepository.fetchOne(select);

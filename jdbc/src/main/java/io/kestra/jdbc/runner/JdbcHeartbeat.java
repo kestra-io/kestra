@@ -70,7 +70,7 @@ public class JdbcHeartbeat {
             }
 
             if (log.isTraceEnabled()) {
-                log.trace("Heartbeat of: {}", workerInstance.getWorkerUuid());
+                log.error("Heartbeat of: {}", workerInstance.getWorkerUuid());
             }
 
             if (workerInstanceRepository.heartbeatCheckUp(workerInstance.getWorkerUuid().toString()).isEmpty()) {

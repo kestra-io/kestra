@@ -8,7 +8,7 @@
             :restore-url="false"
             :statuses="['FAILED', 'KILLED', 'WARNING']"
             embed
-            :hidden="['id', 'state.endDate', 'triggers', 'selection', 'labels']"
+            :hidden="['id', 'state.endDate', 'triggers', 'selection', 'labels', 'inputs', 'taskRunList.taskId']"
         />
     </el-card>
 </template>

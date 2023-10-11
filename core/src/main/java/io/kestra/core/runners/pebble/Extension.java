@@ -1,6 +1,6 @@
 package io.kestra.core.runners.pebble;
 
-import io.kestra.core.runners.pebble.functions.SecretFunction;
+import io.kestra.core.runners.pebble.functions.*;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
@@ -9,9 +9,6 @@ import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
 import io.kestra.core.runners.pebble.filters.*;
-import io.kestra.core.runners.pebble.functions.CurrentEachOutputFunction;
-import io.kestra.core.runners.pebble.functions.JsonFunction;
-import io.kestra.core.runners.pebble.functions.NowFunction;
 import io.kestra.core.runners.pebble.tests.JsonTest;
 
 import java.util.ArrayList;
@@ -28,6 +25,9 @@ import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 public class Extension extends AbstractExtension {
     @Inject
     private SecretFunction secretFunction;
+
+    @Inject
+    private ReadFileFunction readFileFunction;
 
     @Override
     public List<TokenParser> getTokenParsers() {
@@ -90,6 +90,7 @@ public class Extension extends AbstractExtension {
         tests.put("json", new JsonFunction());
         tests.put("currentEachOutput", new CurrentEachOutputFunction());
         tests.put("secret", secretFunction);
+        tests.put("read", readFileFunction);
 
         return tests;
     }

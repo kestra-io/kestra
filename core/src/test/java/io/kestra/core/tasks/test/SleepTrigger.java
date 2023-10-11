@@ -31,8 +31,14 @@ public class SleepTrigger extends AbstractTrigger implements PollingTriggerInter
     private Long duration;
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
-        Thread.sleep(duration);
+    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
+        // Try catch to avoid flakky test
+        try {
+            Thread.sleep(duration);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         return Optional.empty();
     }
 

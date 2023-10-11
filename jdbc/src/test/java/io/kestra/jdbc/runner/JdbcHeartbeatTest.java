@@ -119,19 +119,27 @@ public abstract class JdbcHeartbeatTest {
     @Test
     void triggerResubmit() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
+
         Worker worker = new Worker(applicationContext, 8, null);
+        applicationContext.registerSingleton(worker);
         worker.run();
+        runner.setSchedulerEnabled(false);
+        runner.setWorkerEnabled(false);
+        runner.run();
 
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>(null);
-        workerTriggerResultQueue.receive(either -> workerTriggerResult.set(either.getLeft()));
+        workerTriggerResultQueue.receive(either -> {
+            workerTriggerResult.set(either.getLeft());
+        });
 
         workerJobQueue.emit(workerTrigger(7000));
-
+        countDownLatch.await(2, TimeUnit.SECONDS);
+        worker.shutdown();
 
         Worker newWorker = new Worker(applicationContext, 8, null);
+        applicationContext.registerSingleton(newWorker);
         newWorker.run();
-
-        countDownLatch.await(9, TimeUnit.SECONDS);
+        countDownLatch.await(12, TimeUnit.SECONDS);
 
         assertThat(workerTriggerResult.get().getSuccess(), is(true));
     }

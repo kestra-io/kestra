@@ -32,18 +32,20 @@ import javax.validation.constraints.Size;
 @Schema(
     title = "Trigger a flow from a webhook",
     description = """
-        Webhook trigger allow you to trigger a flow from a webhook url.
-        The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/{flowId}/{key}`.
-        Kestra accept `GET`, `POST` & `PUT` request on this url.
+        Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on a presence of events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key that will secure your webhook URL. 
+        
+        The URL will then follow the following format: `https://{your_hostname}/api/v1/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values accordingly to your workflow setup.
+        
+        The webhook URL accepts `GET`, `POST` and `PUT` requests.
 
-        The whole body & headers will be available as variable:
-        - `trigger.body`
-        - `trigger.headers`
+        You can access the request body and headers sent by another application using the following template variables:
+        - `{{ trigger.body }}`
+        - `{{ trigger.headers }}`.
 
-        The webhook response can be:
-        - A status code 404 if the namespace, flow or webhook key is not found
-        - A status code 200 if the webhook trigger an execution
-        - A status code 204 if the webhook didn't trigger an execution due to webhook conditions that didn't match"""
+        The webhook response will be one of the following HTTP status codes:
+        - 404 if the namespace, flow or webhook key is not found
+        - 200 if the webhook triggers an execution
+        - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application."""
 )
 @Plugin(
     examples = {
@@ -59,7 +61,7 @@ import javax.validation.constraints.Size;
         ),
         @Example(
             title = """
-                Add a webhook trigger with a condition, the flow will be executed only if the condition met.`.
+                Add a trigger matching specific webhook event condition. The flow will be executed only if the condition is met.`.
                 """,
             code = {
                 "triggers:",
@@ -82,7 +84,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         description = "The key is used for generating the url of the webhook.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
-            "Take care when choosing the key, it is the only security to protect your webhook and must be considered as a secret! We advise to use a random key generator to create the key.\n" +
+            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n" +
             "::\n"
     )
     @PluginProperty(dynamic = true)

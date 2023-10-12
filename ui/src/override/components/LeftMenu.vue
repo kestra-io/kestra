@@ -206,7 +206,7 @@
                                 }
                             },
                             {
-                                href: "/admin/workers",
+                                href: {name: "admin/workers"},
                                 title: this.$t("workers"),
                                 icon: {
                                     element: AccountHardHatOutline,

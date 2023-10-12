@@ -102,10 +102,6 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @PluginProperty
     private String templateId;
 
-    @Hidden
-    @Setter // we have no other option here as we need to update the task inside the flow when creating it
-    private String tenantId;
-
     @Schema(
         title = "The args to pass to the template",
         description = "You can provide a list of named arguments (like function argument on dev) allowing to rename " +
@@ -201,7 +197,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
         TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);
 
-        return templateExecutor.findById(tenantId, this.namespace, this.templateId)
+        return templateExecutor.findById(null, this.namespace, this.templateId)
             .orElseThrow(() -> new IllegalVariableEvaluationException("Can't find flow template '" + this.namespace + "." + this.templateId + "'"));
     }
 

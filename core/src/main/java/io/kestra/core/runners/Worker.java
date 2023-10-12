@@ -158,11 +158,10 @@ public class Worker implements Runnable, AutoCloseable {
                     if (Boolean.TRUE.equals(currentTask.getDisabled())) {
                         continue;
                     }
-
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
                         currentTask,
-                        runContext
+                        runContext.withWorkerDirectoryTaskrun()
                     );
 
                     // all tasks will be handled immediately by the worker

@@ -426,6 +426,18 @@ public class RunContext {
         return forScheduler(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
     }
 
+    public RunContext withWorkerDirectoryTaskrun() {
+        Map<String, Object> clone = new HashMap<>(this.variables);
+
+        clone.put("workerTaskrun", clone.get("taskrun"));
+        clone.put("parents", clone.get("parents"));
+        clone.put("parent", clone.get("parent"));
+
+        this.variables = ImmutableMap.copyOf(clone);
+
+        return this;
+    }
+
     public String render(String inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }

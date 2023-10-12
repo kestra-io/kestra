@@ -514,7 +514,8 @@
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
     "show": "Show",
-    "advanced configuration": "Advanced configuration"
+    "advanced configuration": "Advanced configuration",
+    "encoding": "Encoding"
   },
   "fr": {
     "id": "Identifiant",
@@ -1021,7 +1022,8 @@
     "management port": "Port de gestion",
     "file preview truncated": "Displayed content has been truncated",
     "show": "Voir",
-    "advanced configuration": "Configuration avancée"
+    "advanced configuration": "Configuration avancée",
+    "encoding": "Encoding"
   }
 }
 

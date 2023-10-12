@@ -449,6 +449,50 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(e.getMessage(), containsString("execution id '" +  newExecutionId + "'"));
     }
 
+    @Test
+    void filePreview() throws TimeoutException {
+        Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        assertThat(defaultExecution.getTaskRunList(), hasSize(5));
+
+        String defaultPath = (String) defaultExecution.getInputs().get("file");
+
+        String defaultFile = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + defaultExecution.getId() + "/file/preview?path=" + defaultPath),
+            String.class
+        );
+
+        assertThat(defaultFile, containsString("micronaut:"));
+
+        Map<String, Object> latin1FileInputs = ImmutableMap.<String, Object>builder()
+            .put("failed", "NO")
+            .put("string", "myString")
+            .put("int", "42")
+            .put("float", "42.42")
+            .put("instant", "2019-10-06T18:27:49Z")
+            .put("file", Objects.requireNonNull(ExecutionControllerTest.class.getClassLoader().getResource("data/iso88591.txt")).getPath())
+            .build();
+
+        Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));
+        assertThat(latin1Execution.getTaskRunList(), hasSize(5));
+
+        String latin1Path = (String) latin1Execution.getInputs().get("file");
+
+        String latin1File = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=ISO-8859-1"),
+            String.class
+        );
+
+        assertThat(latin1File, containsString("Düsseldorf"));
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=foo"),
+            String.class
+        ));
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getMessage(), containsString("using encoding 'foo'"));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void webhook() {

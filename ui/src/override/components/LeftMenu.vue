@@ -37,12 +37,7 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import NotebookOutline from "vue-material-design-icons/NotebookOutline.vue";
     import Ballot from "vue-material-design-icons/Ballot.vue";
-    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
-    import FileCodeOutline from "vue-material-design-icons/FileCodeOutline.vue";
     import AccountSupervisorOutline from "vue-material-design-icons/AccountSupervisorOutline.vue";
-    import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
-    import Slack from "vue-material-design-icons/Slack.vue";
-    import Github from "vue-material-design-icons/Github.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
@@ -152,51 +147,6 @@
                             element: Ballot,
                             class: "menu-icon"
                         },
-                    },
-                    {
-                        title: this.$t("documentation.documentation"),
-                        icon: {
-                            element: BookMultipleOutline,
-                            class: "menu-icon"
-                        },
-                        child: [
-                            {
-                                href: "https://kestra.io/docs/",
-                                title: this.$t("documentation.developer"),
-                                icon: {
-                                    element: FileCodeOutline,
-                                    class: "menu-icon"
-                                },
-                                external: true
-                            },
-                            {
-                                href: {name: "plugins/list"},
-                                title: this.$t("plugins.names"),
-                                icon: {
-                                    element: GoogleCirclesExtended,
-                                    class: "menu-icon"
-                                },
-                            },
-                            {
-                                href: "https://kestra.io/slack",
-                                title: "Slack",
-                                icon: {
-                                    element: Slack,
-                                    class: "menu-icon"
-                                },
-                                external: true
-                            },
-                            {
-                                href: "https://github.com/kestra-io/kestra/issues",
-                                title: this.$t("documentation.github"),
-                                icon: {
-                                    element: Github,
-                                    class: "menu-icon"
-                                },
-                                external: true
-                            },
-
-                        ]
                     },
                     {
                         title: this.$t("administration"),

@@ -41,12 +41,6 @@
                 taskRunId: undefined
             };
         },
-        props: {
-            preventRouteInfo : {
-                type: Boolean,
-                default: false
-            }
-        },
         methods: {
             onFilter(value) {
                 this.taskRunId = value;

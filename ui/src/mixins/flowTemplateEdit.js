@@ -1,11 +1,9 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
 import {mapGetters, mapState} from "vuex";
 
-import BottomLine from "../components/layout/BottomLine.vue";
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
-import RouteContext from "./routeContext";
 import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
@@ -14,12 +12,10 @@ import yamlUtils from "../utils/yamlUtils";
 import {apiUrl} from "override/utils/route";
 
 export default {
-    mixins: [RouteContext],
     components: {
         Editor,
         ContentSave,
-        Delete,
-        BottomLine
+        Delete
     },
     data() {
         return {

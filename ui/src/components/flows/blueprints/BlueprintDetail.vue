@@ -1,7 +1,18 @@
 <template>
     <div v-loading="!blueprint">
         <template v-if="blueprint">
-            <div class="header-wrapper">
+            <top-nav-bar v-if="!embed" :title="blueprint.title" :breadcrumb="breadcrumb">
+                <template #additional-right>
+                    <ul v-if="userCanCreateFlow">
+                        <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
+                            <el-button type="primary" v-if="!embed">
+                                {{ $t('use') }}
+                            </el-button>
+                        </router-link>
+                    </ul>
+                </template>
+            </top-nav-bar>
+            <div v-else class="header-wrapper">
                 <div class="header d-flex">
                     <button class="back-button align-self-center">
                         <el-icon size="medium" @click="goBack">
@@ -11,29 +22,10 @@
                     <h2 class="blueprint-title align-self-center">
                         {{ blueprint.title }}
                     </h2>
-                    <div v-if="userCanCreateFlow" class="ms-auto align-self-center">
-                        <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
-                            <el-button size="large" type="primary" v-if="!embed">
-                                {{ $t('use') }}
-                            </el-button>
-                        </router-link>
-                    </div>
                 </div>
-                <el-breadcrumb v-if="!embed">
-                    <el-breadcrumb-item>
-                        <router-link :to="{name: 'home'}">
-                            <home-outline /> {{ $t('home') }}
-                        </router-link>
-                    </el-breadcrumb-item>
-                    <el-breadcrumb-item>
-                        <router-link :to="{name: 'blueprints', params: $route.params}">
-                            {{ $t('blueprints.title') }}
-                        </router-link>
-                    </el-breadcrumb-item>
-                </el-breadcrumb>
             </div>
 
-            <div class="blueprint-container">
+            <div :class="{'mt-3': !embed}" class="blueprint-container">
                 <el-card>
                     <div class="embedded-topology" v-if="flowGraph">
                         <low-code-editor
@@ -84,7 +76,7 @@
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
-    import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
+    import TopNavBar from "../../layout/TopNavBar.vue";
     import Utils from "../../../utils/utils";
 </script>
 <script>
@@ -105,7 +97,16 @@
                 icon: {
                     ContentCopy: shallowRef(ContentCopy)
                 },
-                blueprint: undefined
+                blueprint: undefined,
+                breadcrumb: [
+                    {
+                        label: this.$t("blueprints.title"),
+                        link: {
+                            name: 'blueprints',
+                            params: this.$route.params
+                        }
+                    }
+                ]
             }
         },
         props: {

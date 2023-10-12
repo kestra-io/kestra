@@ -1,5 +1,42 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar :title="$t('flows')">
+        <template #additional-right>
+            <ul>
+                <li>
+                    <div class="el-input el-input-file custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importFlows">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importFlows"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importFlows()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <router-link :to="{name: 'flows/search'}">
+                        <el-button :icon="TextBoxSearch">
+                            {{ $t('source search') }}
+                        </el-button>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link :to="{name: 'flows/create'}">
+                        <el-button :icon="Plus" type="primary">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
+                </li>
+            </ul>
+        </template>
+    </top-nav-bar>
+    <div class="mt-3" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -136,42 +173,6 @@
                 </template>
             </data-table>
         </div>
-
-        <bottom-line>
-            <ul>
-                <li>
-                    <div class="el-input el-input-file el-input--large custom-upload">
-                        <div class="el-input__wrapper">
-                            <label for="importFlows">
-                                <Upload />
-                                {{ $t('import') }}
-                            </label>
-                            <input
-                                id="importFlows"
-                                class="el-input__inner"
-                                type="file"
-                                @change="importFlows()"
-                                ref="file"
-                            >
-                        </div>
-                    </div>
-                </li>
-                <li>
-                    <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch" size="large">
-                            {{ $t('source search') }}
-                        </el-button>
-                    </router-link>
-                </li>
-                <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary" size="large">
-                            {{ $t('create') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -184,6 +185,12 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import Exclamation from "vue-material-design-icons/Exclamation.vue";
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
+    import FileEdit from "vue-material-design-icons/FileEdit.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
 
 <script>
@@ -193,8 +200,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
-    import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -210,10 +216,9 @@
     import LabelFilter from "../labels/LabelFilter.vue";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
+        mixins: [RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,
-            BottomLine,
             Eye,
             DataTable,
             SearchField,
@@ -224,7 +229,8 @@
             Kicon,
             Labels,
             Upload,
-            LabelFilter
+            LabelFilter,
+            TopNavBar
         },
         data() {
             return {
@@ -240,11 +246,6 @@
             ...mapState("flow", ["flows", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
-            routeInfo() {
-                return {
-                    title: this.$t("flows")
-                };
-            },
             endDate() {
                 return new Date();
             },
@@ -457,3 +458,9 @@
     };
 </script>
 
+<style lang="scss" scoped>
+    :deep(nav .dropdown-menu) {
+        display: flex;
+        width: 20rem;
+    }
+</style>

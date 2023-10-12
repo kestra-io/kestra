@@ -38,6 +38,9 @@
 
     --el-transition-duration: 0.2s;
     --el-transition-duration-fast: 0.2s;
+
+    --input-suffix-color: #574F6C;
+    --white-black-font-color: #{$black};
 }
 
 :root {
@@ -52,6 +55,7 @@
     #{--card-bg}: $card-bg;
     #{--input-bg}: $input-bg;
 
+    #{--bs-heading-color}: var(--bs-black);
     #{--bs-tertiary}: $tertiary;
 
     #{--bs-gray}: #{map.get($grays, "600")};

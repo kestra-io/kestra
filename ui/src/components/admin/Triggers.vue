@@ -1,5 +1,6 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar :title="$t('triggers')" />
+    <div class="mt-3" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -119,10 +120,10 @@
     import Kicon from "../Kicon.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import TopNavBar from "../layout/TopNavBar.vue";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
     import SearchField from "../layout/SearchField.vue";
     import DataTable from "../layout/DataTable.vue";
@@ -132,7 +133,7 @@
     import {mapState} from "vuex";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        mixins: [RestoreUrl, DataTableActions],
         components: {
             RefreshButton,
             MarkdownTooltip,
@@ -185,12 +186,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            routeInfo() {
-                return {
-                    title: this.$t("triggers")
-                }
-            }
+            ...mapState("auth", ["user"])
         }
     };
 </script>

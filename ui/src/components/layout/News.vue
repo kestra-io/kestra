@@ -1,5 +1,5 @@
 <template>
-    <el-button class="news-link" @click="show">
+    <el-button class="news-link" text @click="show">
         <bell title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </el-button>
@@ -82,11 +82,6 @@
 </script>
 
 <style lang="scss" scoped>
-    .news-link {
-        font-size: var(--font-size-lg);
-        color: var(--bs-gray-600);
-    }
-
     .new {
         font-size: calc(var(--font-size-sm) * 0.7) !important;
         color: var(--el-color-error);

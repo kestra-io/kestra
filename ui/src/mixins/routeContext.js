@@ -3,10 +3,6 @@ export default {
         topNavbar: {
             type: Boolean,
             default: true
-        },
-        preventRouteInfo: {
-            type: Boolean,
-            default: false
         }
     },
     mounted() {

@@ -1,4 +1,5 @@
 <template>
+    <top-nav-bar :title="$t('source search')" :breadcrumb="breadcrumb" />
     <div v-if="ready">
         <div>
             <data-table
@@ -52,41 +53,37 @@
 <script>
     import {mapState} from "vuex";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
     import _escape from "lodash/escape"
     import _merge from "lodash/merge";
+    import TopNavBar from "../layout/TopNavBar.vue";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        mixins: [RestoreUrl, DataTableActions],
         components: {
             NamespaceSelect,
             DataTable,
             SearchField,
+            TopNavBar
         },
         data() {
             return {
                 isDefaultNamespaceAllow: true,
+                breadcrumb: [
+                    {
+                        label: this.$t("flows"),
+                        link: {
+                            name: "flows/list",
+                        }
+                    },
+                ]
             };
         },
         computed: {
-            ...mapState("flow", ["search", "total"]),
-            routeInfo() {
-                return {
-                    title: this.$t("source search"),
-                    breadcrumb: [
-                        {
-                            label: this.$t("flows"),
-                            link: {
-                                name: "flows/list",
-                            }
-                        },
-                    ]
-                };
-            }
+            ...mapState("flow", ["search", "total"])
         },
         methods: {
             sanitize(content) {

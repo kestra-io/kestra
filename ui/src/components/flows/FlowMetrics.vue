@@ -110,12 +110,6 @@
         created() {
             this.loadMetrics();
         },
-        props: {
-            preventRouteInfo: {
-                type: Boolean,
-                default: false
-            }
-        },
         computed: {
             ...mapState("flow", ["flow", "metrics", "aggregatedMetric","tasksWithMetrics"]),
             theme() {

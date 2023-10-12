@@ -1,5 +1,6 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar :title="$t('taskruns')" />
+    <div class="mt-3" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
                 <el-form-item>
@@ -141,7 +142,7 @@
     import DataTable from "../layout/DataTable.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
     import Status from "../Status.vue";
-    import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -159,7 +160,7 @@
     import LabelFilter from "../labels/LabelFilter.vue";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        mixins: [RestoreUrl, DataTableActions],
         components: {
             Status,
             Eye,
@@ -173,7 +174,8 @@
             DateAgo,
             Kicon,
             Id,
-            LabelFilter
+            LabelFilter,
+            TopNavBar
         },
         data() {
             return {
@@ -184,11 +186,6 @@
         computed: {
             ...mapState("taskrun", ["taskruns", "total", "maxTaskRunSetting"]),
             ...mapState("stat", ["taskRunDaily"]),
-            routeInfo() {
-                return {
-                    title: this.$t("taskruns")
-                };
-            },
             stateGlobalChartTypes() {
                 return stateGlobalChartTypes;
             },

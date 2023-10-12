@@ -1,5 +1,5 @@
 <template>
-    <executions :restore-url="false" :prevent-route-info="true" />
+    <executions :restore-url="false" embed />
 </template>
 
 <script>

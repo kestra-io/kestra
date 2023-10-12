@@ -1,4 +1,34 @@
 <template>
+    <top-nav-bar :title="$t('templates')">
+        <template #additional-right v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
+            <ul>
+                <li>
+                    <div class="el-input el-input-file el-input--large custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importTemplates">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importTemplates"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importTemplates()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <router-link :to="{name: 'templates/create'}">
+                        <el-button :icon="Plus" type="primary" size="large">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
+                </li>
+            </ul>
+        </template>
+    </top-nav-bar>
     <templates-deprecated />
     <div v-if="ready">
         <div>
@@ -86,36 +116,6 @@
                 </template>
             </data-table>
         </div>
-
-
-        <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
-            <ul>
-                <li>
-                    <div class="el-input el-input-file el-input--large custom-upload">
-                        <div class="el-input__wrapper">
-                            <label for="importTemplates">
-                                <Upload />
-                                {{ $t('import') }}
-                            </label>
-                            <input
-                                id="importTemplates"
-                                class="el-input__inner"
-                                type="file"
-                                @change="importTemplates()"
-                                ref="file"
-                            >
-                        </div>
-                    </div>
-                </li>
-                <li>
-                    <router-link :to="{name: 'templates/create'}">
-                        <el-button :icon="Plus" type="primary" size="large">
-                            {{ $t('create') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -134,8 +134,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
-    import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
@@ -147,16 +146,16 @@
     import SelectTableActions from "../../mixins/selectTableActions";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
+        mixins: [RestoreUrl, DataTableActions, SelectTableActions],
         components: {
-            BottomLine,
             Eye,
             DataTable,
             SearchField,
             NamespaceSelect,
             Kicon,
             MarkdownTooltip,
-            Upload
+            Upload,
+            TopNavBar
         },
         data() {
             return {
@@ -169,11 +168,6 @@
             ...mapState("template", ["templates", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
-            routeInfo() {
-                return {
-                    title: this.$t("templates")
-                };
-            },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ);
             },

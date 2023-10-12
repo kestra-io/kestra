@@ -6,7 +6,7 @@
                 <div class="d-flex sub-nav">
                     <slot name="nav" />
                     <el-form-item>
-                        <search-field :embed="embed" placeholder="search blueprint" @search="s => q = s" />
+                        <search-field :router="!embed" placeholder="search blueprint" @search="s => q = s" />
                     </el-form-item>
                 </div>
                 <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">

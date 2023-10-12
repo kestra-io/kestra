@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <top-nav-bar :title="$t('workers')" />
+    <div class="mt-3">
         <nav>
             <collapse>
                 <el-form-item>
@@ -28,14 +29,13 @@
     </div>
 </template>
 <script>
-    import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import Collapse from "../../components/layout/Collapse.vue";
     import DateAgo from "../layout/DateAgo.vue";
 
     export default {
-        mixins: [RouteContext],
-        components: {DateAgo, RefreshButton, Collapse},
+        components: {DateAgo, RefreshButton, Collapse, TopNavBar},
         data() {
             return {
                 workers: undefined,
@@ -49,13 +49,6 @@
                 this.$store.dispatch("worker/findAll").then(workers => {
                     this.workers = workers;
                 });
-            }
-        },
-        computed: {
-            routeInfo() {
-                return {
-                    title: this.$t("workers")
-                }
             }
         }
     };

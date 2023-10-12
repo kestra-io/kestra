@@ -54,15 +54,9 @@
                         @change="onDisplayColumnsChange($event)"
                     >
                         <el-option
-                            v-for="col in mandatoryColumns"
-                            :key="col.label"
-                            :label="col.label"
-                            :value="col.prop"
-                        />
-                        <el-option
                             v-for="col in optionalColumns"
                             :key="col.label"
-                            :label="col.label"
+                            :label="$t(col.label)"
                             :value="col.prop"
                         />
                     </el-select>
@@ -122,7 +116,7 @@
                         </bulk-select>
                     </template>
                     <template #default>
-                        <el-table-column prop="id" v-if="displayColumn('id')" sortable="custom"
+                        <el-table-column prop="id" sortable="custom"
                                          :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <id :value="scope.row.id" :shrink="true" />
@@ -194,7 +188,7 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="flowRevision" v-if="displayColumn('triggers')" :label="$t('revision')"
+                        <el-table-column prop="flowRevision" v-if="displayColumn('flowRevision')" :label="$t('revision')"
                                          class-name="shrink">
                             <template #default="scope">
                                 <code>{{ scope.row.flowRevision }}</code>
@@ -219,7 +213,10 @@
                                 </el-tooltip>
                             </template>
                             <template #default="scope">
-                                <code>{{ `${scope.row.taskRunList.slice(-1)[0].taskId}(${scope.row.taskRunList.slice(-1)[0].attempts.length})` }}</code>
+                                <code>
+                                    {{ scope.row.taskRunList.slice(-1)[0].taskId }}
+                                    {{ scope.row.taskRunList.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList.slice(-1)[0].attempts.length})` : '' }}
+                                </code>
                             </template>
                         </el-table-column>
 
@@ -278,6 +275,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -321,12 +319,6 @@
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined,
                 recomputeInterval: false,
-                mandatoryColumns: [
-                    {
-                        label: "id",
-                        prop: "id"
-                    }
-                ],
                 optionalColumns: [
                     {
                         label: "start date",
@@ -373,12 +365,18 @@
                         prop: "taskRunList.taskId"
                     }
                 ],
-                displayColumns: []
+                displayColumns: [],
+                storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS
             };
         },
         created() {
-            this.displayColumns = localStorage.getItem("displayExecutionsColumns").split(",")
-                || this.optionalColumns.map(col => col.prop).concat(this.mandatoryColumns.map(col => col.prop));
+            // allow to have different storage key for flow executions list
+            if (this.$route.name === "flows/update") {
+                this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
+                this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
+            }
+            this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
+                || this.optionalColumns.map(col => col.prop);
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
@@ -419,10 +417,8 @@
         },
         methods: {
             onDisplayColumnsChange(event) {
-                // prevent from removing mandatory field
-                const newColumns = [...new Set(event.concat(this.mandatoryColumns.map(col => col.prop)))];
-                localStorage.setItem("displayExecutionsColumns", newColumns);
-                this.displayColumns = newColumns;
+                localStorage.setItem("displayExecutionsColumns", event);
+                this.displayColumns = event;
             },
             displayColumn(column) {
                 return this.hidden ? !this.hidden.includes(column) : this.displayColumns.includes(column);

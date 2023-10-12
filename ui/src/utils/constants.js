@@ -23,3 +23,8 @@ export const editorViewTypes = {
     TOPOLOGY: "topology",
     SOURCE_BLUEPRINTS: "source-blueprints"
 }
+
+export const storageKeys = {
+    DISPLAY_EXECUTIONS_COLUMNS: "displayExecutionsColumns",
+    DISPLAY_FLOW_EXECUTIONS_COLUMNS: "displayFlowExecutionsColumns"
+}

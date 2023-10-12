@@ -8,74 +8,96 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MapUtils {
     public static Map<String, Object> merge(Map<String, Object> a, Map<String, Object> b) {
-        if (a == null && b == null)
+        if (a == null && b == null) {
             return null;
-        if (a == null || a.size() == 0)
+        }
+
+        if (a == null || a.isEmpty()) {
             return copyMap(b);
-        if (b == null || b.size() == 0)
+        }
+
+        if (b == null || b.isEmpty()) {
             return copyMap(a);
+        }
+
         Map copy = copyMap(a);
 
-        copy.putAll(
-            b
-                .keySet()
-                .stream()
-                .collect(
-                    Collectors.toMap(
-                        key -> key,
-                        key -> {
-                            Object original = copy.get(key);
-                            Object value = b.get(key);
-                            if (value == null && original == null)
-                                return null;
-                            if (value == null)
-                                return original;
-                            if (original == null)
-                                return value;
-                            if (value instanceof Map && original instanceof Map)
-                                return merge((Map) original, (Map) value);
-                            else if (value instanceof Collection
-                                && original instanceof Collection) {
-                                try {
-                                    Collection merge =
-                                        copyCollection(
+
+        Map<String, Object> copyMap = b
+            .entrySet()
+            .stream()
+            .collect(
+                HashMap::new,
+                (m, v) -> {
+                    Object original = copy.get(v.getKey());
+                    Object value = v.getValue();
+                    Object found;
+
+                    if (value == null && original == null) {
+                        found = null;
+                    } else if (value == null) {
+                        found = original;
+                    } else if (original == null) {
+                        found = value;
+                    } else if (value instanceof Map && original instanceof Map) {
+                        found = merge((Map) original, (Map) value);
+                    } else if (value instanceof Collection
+                        && original instanceof Collection) {
+                        try {
+                            Collection merge =
+                                copyCollection(
+                                    (Collection) original,
+                                    (List) Lists
+                                        .newArrayList(
                                             (Collection) original,
-                                            (List) Lists
-                                                .newArrayList(
-                                                    (Collection) original,
-                                                    (Collection) value
-                                                )
-                                                .stream()
-                                                .flatMap(Collection::stream)
-                                                .collect(Collectors.toList())
-                                        );
-                                    return merge;
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                            return value;
+                                            (Collection) value
+                                        )
+                                        .stream()
+                                        .flatMap(Collection::stream)
+                                        .collect(Collectors.toList())
+                                );
+                            found = merge;
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
                         }
-                    )));
+                    } else {
+                        found = value;
+                    }
+
+
+                    m.put(v.getKey(), found);
+                },
+                HashMap::putAll
+            );
+
+        copy.putAll(copyMap);
+
         return copy;
     }
 
     private static Map copyMap(Map original) {
-        return (Map) original
-            .keySet()
+        return ((Map<?, ?>) original)
+            .entrySet()
             .stream()
             .collect(
-                Collectors.toMap(
-                    key -> key,
-                    key -> {
-                        Object value = original.get(key);
-                        if (value instanceof Map)
-                            return copyMap((Map) value);
-                        if (value instanceof Collection)
-                            return copyCollection((Collection) value, (Collection) value);
-                        return value;
+                HashMap::new,
+                (map, entry) -> {
+                    Object value = entry.getValue();
+                    Object found;
+
+                    if (value instanceof Map) {
+                        found = copyMap((Map) value);
+                    } else if (value instanceof Collection) {
+                        found = copyCollection((Collection) value, (Collection) value);
+                    } else {
+                        found = value;
                     }
-                ));
+
+                    map.put(entry.getKey(), found);
+
+                },
+                Map::putAll
+            );
     }
 
     private static Collection copyCollection(Collection collection, Collection elements) {

@@ -38,46 +38,46 @@ public abstract class AbstractLogRepositoryTest {
     void all() {
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
 
-        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null);
+        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null, null);
         assertThat(find.size(), is(0));
 
         LogEntry save = logRepository.save(builder.build());
 
-        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        find = logRepository.find(Pageable.UNPAGED,  "doe", null, null, Level.WARN,null,  null);
+        find = logRepository.find(Pageable.UNPAGED,  "doe", null, null, null, Level.WARN,null,  null);
         assertThat(find.size(), is(0));
 
-        find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null, null, null, null, null);
+        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null, null, null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        List<LogEntry> list = logRepository.findByExecutionId(save.getExecutionId(), null);
+        List<LogEntry> list = logRepository.findByExecutionId(null, save.getExecutionId(), null);
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        list = logRepository.findByExecutionIdAndTaskId(save.getExecutionId(), save.getTaskId(), null);
+        list = logRepository.findByExecutionIdAndTaskId(null, save.getExecutionId(), save.getTaskId(), null);
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        list = logRepository.findByExecutionIdAndTaskRunId(save.getExecutionId(), save.getTaskRunId(), null);
+        list = logRepository.findByExecutionIdAndTaskRunId(null, save.getExecutionId(), save.getTaskRunId(), null);
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        list = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(save.getExecutionId(), save.getTaskRunId(), null, 0);
+        list = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(null, save.getExecutionId(), save.getTaskRunId(), null, 0);
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
 
         Integer countDeleted = logRepository.purge(Execution.builder().id(save.getExecutionId()).build());
         assertThat(countDeleted, is(1));
 
-        list = logRepository.findByExecutionIdAndTaskId(save.getExecutionId(), save.getTaskId(), null);
+        list = logRepository.findByExecutionIdAndTaskId(null, save.getExecutionId(), save.getTaskId(), null);
         assertThat(list.size(), is(0));
     }
 
@@ -97,32 +97,32 @@ public abstract class AbstractLogRepositoryTest {
             logRepository.save(builder.build());
         }
 
-        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(executionId, null, Pageable.from(1, 50));
+        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, executionId, null, Pageable.from(1, 50));
 
         assertThat(find.size(), is(50));
         assertThat(find.getTotal(), is(101L));
 
-        find = logRepository.findByExecutionId(executionId, null, Pageable.from(3, 50));
+        find = logRepository.findByExecutionId(null, executionId, null, Pageable.from(3, 50));
 
         assertThat(find.size(), is(1));
         assertThat(find.getTotal(), is(101L));
 
-        find = logRepository.findByExecutionIdAndTaskId(executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
+        find = logRepository.findByExecutionIdAndTaskId(null, executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
 
         assertThat(find.size(), is(21));
         assertThat(find.getTotal(), is(21L));
 
-        find = logRepository.findByExecutionIdAndTaskRunId(executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
+        find = logRepository.findByExecutionIdAndTaskRunId(null, executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
 
         assertThat(find.size(), is(10));
         assertThat(find.getTotal(), is(21L));
 
-        find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
+        find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(null, executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
 
         assertThat(find.size(), is(10));
         assertThat(find.getTotal(), is(21L));
 
-        find = logRepository.findByExecutionIdAndTaskRunId(executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
+        find = logRepository.findByExecutionIdAndTaskRunId(null, executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
 
         assertThat(find.size(), is(0));
     }

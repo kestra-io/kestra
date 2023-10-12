@@ -14,13 +14,13 @@ public interface TriggerRepositoryInterface {
 
     Optional<Trigger> findByExecution(Execution execution);
 
-    List<Trigger> findAll();
+    List<Trigger> findAllForAllTenants();
 
     Trigger save(Trigger trigger);
 
     void delete(Trigger trigger);
 
-    ArrayListTotal<Trigger> find(Pageable from, String query, String namespace);
+    ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();

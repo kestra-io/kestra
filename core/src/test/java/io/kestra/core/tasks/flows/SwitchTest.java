@@ -15,6 +15,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     @Test
     void switchFirst() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "switch",
             null,
@@ -29,6 +30,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     @Test
     void switchSecond() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "switch",
             null,
@@ -44,6 +46,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     @Test
     void switchThird() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "switch",
             null,
@@ -60,6 +63,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     @Test
     void switchDefault() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "switch",
             null,
@@ -74,6 +78,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     @Test
     void switchImpossible() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "switch-impossible",
             null,

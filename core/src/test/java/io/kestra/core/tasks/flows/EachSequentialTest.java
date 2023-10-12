@@ -31,7 +31,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void sequential() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
@@ -39,7 +39,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void object() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-object");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-object");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -48,7 +48,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void objectInList() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-object-in-list");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-object-in-list");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -57,7 +57,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void sequentialNested() throws TimeoutException, InternalException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
 
         assertThat(execution.getTaskRunList(), hasSize(23));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -78,7 +78,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void eachEmpty() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-empty");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-empty");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -93,7 +93,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-null", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
@@ -103,7 +103,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     @Test
     void eachSwitch() throws TimeoutException, InternalException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-switch");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-switch");
 
         assertThat(execution.getTaskRunList(), hasSize(12));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

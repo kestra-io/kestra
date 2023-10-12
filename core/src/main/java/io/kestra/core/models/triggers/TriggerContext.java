@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,7 +8,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
@@ -16,6 +16,8 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @Introspected
 public class TriggerContext {
+    private String tenantId;
+
     @NotNull
     private String namespace;
 
@@ -36,10 +38,11 @@ public class TriggerContext {
     }
 
     public static String uid(TriggerContext trigger) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            trigger.getTenantId(),
             trigger.getNamespace(),
             trigger.getFlowId(),
             trigger.getTriggerId()
-        ));
+        );
     }
 }

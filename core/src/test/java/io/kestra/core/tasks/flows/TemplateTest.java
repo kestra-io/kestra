@@ -57,6 +57,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
 
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "with-template",
             null,
@@ -86,7 +87,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

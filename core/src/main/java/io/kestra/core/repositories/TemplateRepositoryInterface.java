@@ -8,23 +8,27 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 public interface TemplateRepositoryInterface {
-    Optional<Template> findById(String namespace, String id);
+    Optional<Template> findById(String tenantId, String namespace, String id);
 
-    List<Template> findAll();
+    List<Template> findAll(String tenantId);
+
+    List<Template> findAllForAllTenants();
 
     ArrayListTotal<Template> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace
     );
 
     // Should normally be TemplateWithSource but it didn't exist yet
     List<Template> find(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace
     );
 
-    List<Template> findByNamespace(String namespace);
+    List<Template> findByNamespace(String tenantId, String namespace);
 
     Template create(Template template);
 
@@ -32,5 +36,5 @@ public interface TemplateRepositoryInterface {
 
     void delete(Template template);
 
-    List<String> findDistinctNamespace();
+    List<String> findDistinctNamespace(String tenantId);
 }

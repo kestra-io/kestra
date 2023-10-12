@@ -25,7 +25,7 @@ public abstract class JdbcFlowRepositoryService {
         fields.add(
             DSL.rowNumber()
                 .over()
-                .partitionBy(field("namespace"), field("id"))
+                .partitionBy(List.of(field("tenant_id"), field("namespace"), field("id")))
                 .orderBy(field("revision").desc())
                 .as("revision_rows")
         );

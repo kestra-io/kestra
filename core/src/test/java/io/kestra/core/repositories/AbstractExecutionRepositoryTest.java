@@ -108,14 +108,14 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
         assertThat(executions.getTotal(), is(8L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, Map.of("key", "value"));
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value"));
         assertThat(executions.getTotal(), is(1L));
     }
 
@@ -123,11 +123,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findWithSort() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null);
         assertThat(executions.getTotal(), is(8L));
     }
 
@@ -135,11 +135,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findTaskRun() {
         inject();
 
-        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null);
+        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, null);
         assertThat(taskRuns.getTotal(), is(71L));
         assertThat(taskRuns.size(), is(10));
 
-        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, Map.of("key", "value"));
+        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, Map.of("key", "value"));
         assertThat(taskRuns.getTotal(), is(1L));
         assertThat(taskRuns.size(), is(1));
     }
@@ -149,7 +149,7 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findById() {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
         assertThat(full.isPresent(), is(true));
 
         full.ifPresent(current -> {
@@ -161,12 +161,12 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void purge() {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
         assertThat(full.isPresent(), is(true));
 
         executionRepository.purge(ExecutionFixture.EXECUTION_1);
 
-        full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
         assertThat(full.isPresent(), is(false));
     }
 
@@ -174,12 +174,12 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void delete() {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
         assertThat(full.isPresent(), is(true));
 
         executionRepository.delete(ExecutionFixture.EXECUTION_1);
 
-        full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
         assertThat(full.isPresent(), is(false));
     }
 
@@ -188,7 +188,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_2);
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        ArrayListTotal<Execution> page1 = executionRepository.findByFlowId(NAMESPACE, FLOW, Pageable.from(1, 10));
+        ArrayListTotal<Execution> page1 = executionRepository.findByFlowId(null, NAMESPACE, FLOW, Pageable.from(1, 10));
 
         assertThat(page1.size(), is(2));
     }
@@ -206,6 +206,7 @@ public abstract class AbstractExecutionRepositoryTest {
         Thread.sleep(500);
 
         Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
+            null,
             null,
             null,
             null,
@@ -238,6 +239,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             true
@@ -254,6 +256,7 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
 
         result = executionRepository.dailyGroupByFlowStatistics(
+            null,
             null,
             null,
             null,
@@ -284,6 +287,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
@@ -309,6 +313,7 @@ public abstract class AbstractExecutionRepositoryTest {
         }
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            null,
             null,
             null,
             null,
@@ -341,11 +346,12 @@ public abstract class AbstractExecutionRepositoryTest {
         Thread.sleep(500);
 
         List<ExecutionCount> result = executionRepository.executionCounts(
+            null,
             List.of(
-                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "first"),
-                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "second"),
-                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "third"),
-                new Flow(NAMESPACE, "missing")
+                new io.kestra.core.models.executions.statistics.Flow(null, NAMESPACE, "first"),
+                new io.kestra.core.models.executions.statistics.Flow(null,NAMESPACE, "second"),
+                new io.kestra.core.models.executions.statistics.Flow(null,NAMESPACE, "third"),
+                new Flow(null,NAMESPACE, "missing")
             ),
             null,
             ZonedDateTime.now().minusDays(10),

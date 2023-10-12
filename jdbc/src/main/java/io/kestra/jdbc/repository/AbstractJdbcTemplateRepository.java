@@ -34,7 +34,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
-    public Optional<Template> findById(String namespace, String id) {
+    public Optional<Template> findById(String tenantId, String namespace, String id) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -42,7 +42,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter())
+                    .where(this.defaultFilter(tenantId))
                     .and(field("namespace").eq(namespace))
                     .and(field("id").eq(id));
 
@@ -51,7 +51,22 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
-    public List<Template> findAll() {
+    public List<Template> findAll(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
+    public List<Template> findAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -70,6 +85,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public ArrayListTotal<Template> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace
     ) {
         return this.jdbcRepository
@@ -83,7 +99,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     )
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 if (query != null) {
                     select.and(this.findCondition(query));
@@ -98,7 +114,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
-    public List<Template> find(@Nullable String query, @Nullable String namespace) {
+    public List<Template> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -110,7 +126,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     )
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 if (query != null) {
                     select.and(this.findCondition(query));
@@ -125,7 +141,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
-    public List<Template> findByNamespace(String namespace) {
+    public List<Template> findByNamespace(String tenantId, String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -134,7 +150,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(field("namespace").eq(namespace))
-                    .and(this.defaultFilter());
+                    .and(this.defaultFilter(tenantId));
 
                 return this.jdbcRepository.fetch(select);
             });
@@ -152,7 +168,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
     public Template update(Template template, Template previous) throws ConstraintViolationException {
         this
-            .findById(previous.getNamespace(), previous.getId())
+            .findById(previous.getTenantId(), previous.getNamespace(), previous.getId())
             .map(current -> current.validateUpdate(template))
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -170,7 +186,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
     @Override
     public void delete(Template template) {
-        if (this.findById(template.getNamespace(), template.getId()).isEmpty()) {
+        if (this.findById(template.getTenantId(), template.getNamespace(), template.getId()).isEmpty()) {
             throw new IllegalStateException("Template " + template.getId() + " doesn't exists");
         }
 
@@ -183,14 +199,14 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
-    public List<String> findDistinctNamespace() {
+    public List<String> findDistinctNamespace(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .select(field("namespace"))
                 .from(this.jdbcRepository.getTable())
-                .where(this.defaultFilter())
+                .where(this.defaultFilter(tenantId))
                 .groupBy(field("namespace"))
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))

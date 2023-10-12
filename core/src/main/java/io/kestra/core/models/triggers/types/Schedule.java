@@ -281,6 +281,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         Execution execution = Execution.builder()
             .id(runContext.getTriggerExecutionId())
+            .tenantId(context.getTenantId())
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())

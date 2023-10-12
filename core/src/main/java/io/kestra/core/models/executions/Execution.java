@@ -37,6 +37,9 @@ import javax.validation.constraints.NotNull;
 @Builder(toBuilder = true)
 @Slf4j
 public class Execution implements DeletedInterface {
+    @With
+    String tenantId;
+
     @NotNull
     String id;
 
@@ -99,6 +102,7 @@ public class Execution implements DeletedInterface {
 
     public Execution withState(State.Type state) {
         return new Execution(
+            this.tenantId,
             this.id,
             this.namespace,
             this.flowId,
@@ -129,6 +133,7 @@ public class Execution implements DeletedInterface {
         }
 
         return new Execution(
+            this.tenantId,
             this.id,
             this.namespace,
             this.flowId,
@@ -147,6 +152,7 @@ public class Execution implements DeletedInterface {
 
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList, State state) {
         return new Execution(
+            this.tenantId,
             childExecutionId != null ? childExecutionId : this.getId(),
             this.namespace,
             this.flowId,
@@ -531,7 +537,7 @@ public class Execution implements DeletedInterface {
     }
 
     /**
-     * Create a new attemps for failed worker execution
+     * Create a new attempt for failed worker execution
      *
      * @param taskRun the task run where we need to add an attempt
      * @param e the exception raise
@@ -685,7 +691,7 @@ public class Execution implements DeletedInterface {
     }
 
     /**
-     * Find all childs from this {@link TaskRun}. The list is starting from deeper child and end on closest child, so
+     * Find all children from this {@link TaskRun}. The list is starting from deeper child and end on closest child, so
      * first element is the task that start first.
      * This method don't return the current tasks
      *

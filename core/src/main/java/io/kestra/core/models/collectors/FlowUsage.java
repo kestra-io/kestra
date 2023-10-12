@@ -25,7 +25,7 @@ public class FlowUsage {
     private final Map<String, Long> triggerTypeCount;
 
     public static FlowUsage of(FlowRepositoryInterface flowRepository) {
-        List<Flow> allFlows = flowRepository.findAll();
+        List<Flow> allFlows = flowRepository.findAllForAllTenants();
 
         return FlowUsage.builder()
             .count(count(allFlows))

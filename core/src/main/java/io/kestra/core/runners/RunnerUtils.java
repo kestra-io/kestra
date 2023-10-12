@@ -262,30 +262,30 @@ public class RunnerUtils {
         return result;
     }
 
-    public Execution runOne(String namespace, String flowId) throws TimeoutException {
-        return this.runOne(namespace, flowId, null, null, null, null);
+    public Execution runOne(String tenantId, String namespace, String flowId) throws TimeoutException {
+        return this.runOne(tenantId, namespace, flowId, null, null, null, null);
     }
 
-    public Execution runOne(String namespace, String flowId, Integer revision) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, null, null, null);
+    public Execution runOne(String tenantId, String namespace, String flowId, Integer revision) throws TimeoutException {
+        return this.runOne(tenantId, namespace, flowId, revision, null, null, null);
     }
 
-    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, inputs, null, null);
+    public Execution runOne(String tenantId, String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
+        return this.runOne(tenantId, namespace, flowId, revision, inputs, null, null);
     }
 
-    public Execution runOne(String namespace, String flowId, Duration duration) throws TimeoutException {
-        return this.runOne(namespace, flowId, null, null, duration, null);
+    public Execution runOne(String tenantId, String namespace, String flowId, Duration duration) throws TimeoutException {
+        return this.runOne(tenantId, namespace, flowId, null, null, duration, null);
     }
 
-    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
-        return this.runOne(namespace, flowId, revision, inputs, duration, null);
+    public Execution runOne(String tenantId, String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOne(tenantId, namespace, flowId, revision, inputs, duration, null);
     }
 
-    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels) throws TimeoutException {
+    public Execution runOne(String tenantId, String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels) throws TimeoutException {
         return this.runOne(
             flowRepository
-                .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
+                .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
             duration,
@@ -312,14 +312,14 @@ public class RunnerUtils {
         }, duration);
     }
 
-    public Execution runOneUntilPaused(String namespace, String flowId) throws TimeoutException {
-        return this.runOneUntilPaused(namespace, flowId, null, null, null);
+    public Execution runOneUntilPaused(String tenantId, String namespace, String flowId) throws TimeoutException {
+        return this.runOneUntilPaused(tenantId, namespace, flowId, null, null, null);
     }
 
-    public Execution runOneUntilPaused(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+    public Execution runOneUntilPaused(String tenantId, String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         return this.runOneUntilPaused(
             flowRepository
-                .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
+                .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
             duration
@@ -383,6 +383,7 @@ public class RunnerUtils {
     public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, List<Label> labels) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())

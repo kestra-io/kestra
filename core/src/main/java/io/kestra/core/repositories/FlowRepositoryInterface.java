@@ -14,14 +14,15 @@ import java.util.Optional;
 
 public interface FlowRepositoryInterface {
 
-    Optional<Flow> findById(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
+    Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
 
-    default Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
-        return this.findById(namespace, id, revision, false);
+    default Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return this.findById(tenantId, namespace, id, revision, false);
     }
 
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
+            execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),
             Optional.of(execution.getFlowRevision())
@@ -37,42 +38,46 @@ public interface FlowRepositoryInterface {
         }
     }
 
-    default Optional<Flow> findById(String namespace, String id) {
-        return this.findById(namespace, id, Optional.empty(), false);
+    default Optional<Flow> findById(String tenantId, String namespace, String id) {
+        return this.findById(tenantId, namespace, id, Optional.empty(), false);
     }
 
-    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
+    Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDelete);
 
-    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
-        return this.findByIdWithSource(namespace, id, revision, false);
+    default Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return this.findByIdWithSource(tenantId, namespace, id, revision, false);
     }
 
-    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) {
-        return this.findByIdWithSource(namespace, id, Optional.empty(), false);
+    default Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id) {
+        return this.findByIdWithSource(tenantId, namespace, id, Optional.empty(), false);
     }
 
-    List<FlowWithSource> findRevisions(String namespace, String id);
+    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id);
 
-    List<Flow> findAll();
+    List<Flow> findAll(String tenantId);
 
-    List<Flow> findByNamespace(String namespace);
+    List<Flow> findAllForAllTenants();
+
+    List<Flow> findByNamespace(String tenantId, String namespace);
 
     ArrayListTotal<Flow> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     );
 
     List<FlowWithSource> findWithSource(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     );
 
-    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace);
+    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace);
 
-    List<String> findDistinctNamespace();
+    List<String> findDistinctNamespace(String tenantId);
 
     FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults);
 

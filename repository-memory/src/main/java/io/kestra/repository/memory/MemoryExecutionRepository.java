@@ -29,17 +29,17 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Execution> find(Pageable pageable, String query, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels) {
+    public ArrayListTotal<Execution> find(Pageable pageable, String query, String tenantId, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Flowable<Execution> find(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels) {
+    public Flowable<Execution> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels) {
         return null;
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels) {
+    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels) {
         throw new UnsupportedOperationException();
     }
 
@@ -54,12 +54,12 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public Optional<Execution> findById(String executionId) {
+    public Optional<Execution> findById(String tenantId, String executionId) {
         return executions.containsKey(executionId) ? Optional.of(executions.get(executionId)) : Optional.empty();
     }
 
     @Override
-    public ArrayListTotal<Execution> findByFlowId(String namespace, String flowId, Pageable pageable) {
+    public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String flowId, Pageable pageable) {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
@@ -71,6 +71,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
             .filter(e -> e.getNamespace().equals(namespace))
             .filter(e -> Objects.nonNull(e.getFlowId()))
             .filter(e -> e.getFlowId().equals(flowId))
+            .filter(e -> (tenantId == null && e.getTenantId() == null) || (tenantId != null && tenantId.equals(e.getTenantId())))
             .collect(Collectors.toList());
 
         return ArrayListTotal.of(pageable, filteredExecutions);
@@ -84,6 +85,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
@@ -96,6 +98,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
 
     @Override
     public List<ExecutionCount> executionCounts(
+        @Nullable String tenantId,
         List<Flow> flows,
         @Nullable List<State.Type> states,
         @Nullable ZonedDateTime startDate,
@@ -107,6 +110,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     @Override
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,

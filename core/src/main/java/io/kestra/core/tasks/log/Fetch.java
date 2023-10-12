@@ -85,11 +85,14 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
         File tempFile = runContext.tempFile(".ion").toFile();
         AtomicLong count = new AtomicLong();
 
+        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
+        String tenantId = flowVars.get("tenantId");
+
         try (OutputStream output = new FileOutputStream(tempFile)) {
             if (this.tasksId != null) {
                 for (String taskId : tasksId) {
                     logRepository
-                        .findByExecutionIdAndTaskId(executionId, taskId, level)
+                        .findByExecutionIdAndTaskId(tenantId, executionId, taskId, level)
                         .forEach(throwConsumer(log -> {
                             count.incrementAndGet();
                             FileSerde.write(output, log);
@@ -97,7 +100,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
                 }
             } else {
                 logRepository
-                    .findByExecutionId(executionId, level)
+                    .findByExecutionId(tenantId, executionId, level)
                     .forEach(throwConsumer(log -> {
                         count.incrementAndGet();
                         FileSerde.write(output, log);

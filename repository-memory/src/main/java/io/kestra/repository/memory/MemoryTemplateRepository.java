@@ -33,7 +33,7 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     private ApplicationEventPublisher<CrudEvent<Template>> eventPublisher;
 
     @Override
-    public Optional<Template> findById(String namespace, String id) {
+    public Optional<Template> findById(String tenantId, String namespace, String id) {
         return templates
             .values()
             .stream()
@@ -41,34 +41,41 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     }
 
     @Override
-    public List<Template> findAll() {
+    public List<Template> findAll(String tenantId) {
         return new ArrayList<>(templates.values());
     }
 
     @Override
-    public ArrayListTotal<Template> find(Pageable pageable, String query, String namespace) {
+    public List<Template> findAllForAllTenants() {
+        return new ArrayList<>(templates.values());
+    }
+
+    @Override
+    public ArrayListTotal<Template> find(Pageable pageable, String query, String tenantId, String namespace) {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
 
-        List<Template> filteredTemplates = find(query, namespace);
+        List<Template> filteredTemplates = find(query, tenantId, namespace);
 
         return ArrayListTotal.of(pageable, filteredTemplates);
     }
 
     @Override
-    public List<Template> find(@Nullable String query, @Nullable String namespace) {
+    public List<Template> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace) {
         return templates.values()
             .stream()
-            .filter(flow -> namespace == null || flow.getNamespace().equals(namespace))
+            .filter(template -> namespace == null || template.getNamespace().equals(namespace))
+            .filter(template -> (tenantId == null && template.getTenantId() == null) || (tenantId != null && tenantId.equals(template.getTenantId())))
             .collect(Collectors.toList());
     }
 
     @Override
-    public List<Template> findByNamespace(String namespace) {
+    public List<Template> findByNamespace(String tenantId, String namespace) {
         return templates.values()
             .stream()
             .filter(template -> template.getNamespace().equals(namespace))
+            .filter(template -> (tenantId == null && template.getTenantId() == null) || (tenantId != null && tenantId.equals(template.getTenantId())))
             .collect(Collectors.toList());
     }
 
@@ -85,7 +92,7 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     @Override
     public Template update(Template template, Template previous) {
         this
-            .findById(previous.getNamespace(), previous.getId())
+            .findById(previous.getTenantId(), previous.getNamespace(), previous.getId())
             .map(current -> current.validateUpdate(template))
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -116,9 +123,9 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     }
 
     @Override
-    public List<String> findDistinctNamespace() {
+    public List<String> findDistinctNamespace(String tenantId) {
         HashSet<String> namespaces = new HashSet<>();
-        for (Template t : this.findAll()) {
+        for (Template t : this.findAll(tenantId)) {
             namespaces.add(t.getNamespace());
         }
 

@@ -117,11 +117,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     }
 
     public String flowUid() {
-        return io.kestra.core.models.flows.Flow.uid(this.getNamespace(), this.getFlowId(), Optional.ofNullable(this.revision));
+        // as the Flow task can only be used in the same tenant we can hardcode null here
+        return io.kestra.core.models.flows.Flow.uid(null, this.getNamespace(), this.getFlowId(), Optional.ofNullable(this.revision));
     }
 
     public String flowUidWithoutRevision() {
-        return io.kestra.core.models.flows.Flow.uidWithoutRevision(this.getNamespace(), this.getFlowId());
+        // as the Flow task can only be used in the same tenant we can hardcode null here
+        return io.kestra.core.models.flows.Flow.uidWithoutRevision(null, this.getNamespace(), this.getFlowId());
     }
 
     @SuppressWarnings("unchecked")
@@ -150,9 +152,11 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         Optional<Integer> revision = this.revision != null ? Optional.of(this.revision) : Optional.empty();
 
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
+            flowVars.get("tenantId"),
             namespace,
             flowId,
             revision,
+            flowVars.get("tenantId"),
             flowVars.get("namespace"),
             flowVars.get("id")
         )

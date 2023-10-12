@@ -230,18 +230,29 @@ public class RunContext {
             List<Map<String, Object>> parents = execution.parents(taskRun);
 
             builder.put("parents", parents);
-            if (parents.size() > 0) {
+            if (!parents.isEmpty()) {
                 builder.put("parent", parents.get(0));
             }
         }
 
         if (flow != null) {
-            builder
-                .put("flow", ImmutableMap.of(
-                    "id", flow.getId(),
-                    "namespace", flow.getNamespace(),
-                    "revision", flow.getRevision()
-                ));
+            if (flow.getTenantId() == null) {
+                builder
+                    .put("flow", ImmutableMap.of(
+                        "id", flow.getId(),
+                        "namespace", flow.getNamespace(),
+                        "revision", flow.getRevision()
+                    ));
+            }
+            else {
+                builder
+                    .put("flow", ImmutableMap.of(
+                        "id", flow.getId(),
+                        "tenantId", flow.getTenantId(),
+                        "namespace", flow.getNamespace(),
+                        "revision", flow.getRevision()
+                    ));
+            }
         }
 
         if (execution != null) {
@@ -482,7 +493,7 @@ public class RunContext {
         }
 
         if (uri.getScheme().equals("kestra")) {
-            return this.storageInterface.get(uri);
+            return this.storageInterface.get(getTenantId(), uri);
         }
 
         throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
@@ -542,7 +553,7 @@ public class RunContext {
         URI uri = URI.create(prefix);
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.put(resolve, new BufferedInputStream(inputStream));
+        return this.storageInterface.put(getTenantId(), resolve, new BufferedInputStream(inputStream));
     }
 
     private URI putTempFile(File file, String prefix, String name) throws IOException {
@@ -559,10 +570,11 @@ public class RunContext {
     @SuppressWarnings("unchecked")
     private String taskStateFilePathPrefix(String name, Boolean isNamespace, Boolean useTaskRun) {
         Map<String, String> taskrun = (Map<String, String>) this.getVariables().get("taskrun");
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
 
         return "/" + this.storageInterface.statePrefix(
-            ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
-            isNamespace ? null : ((Map<String, String>) this.getVariables().get("flow")).get("id"),
+            flow.get("namespace"),
+            isNamespace ? null : flow.get("id"),
             name,
             taskrun != null && useTaskRun ? taskrun.getOrDefault("value", null) : null
         );
@@ -577,7 +589,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-       return this.storageInterface.get(resolve);
+       return this.storageInterface.get(getTenantId(), resolve);
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
@@ -614,7 +626,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.delete(resolve);
+        return this.storageInterface.delete(getTenantId(), resolve);
     }
 
     /**
@@ -630,12 +642,12 @@ public class RunContext {
      */
     public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.get(uri)) : Optional.empty();
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.get(getTenantId(), uri)) : Optional.empty();
     }
 
     public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.lastModifiedTime(uri)) : Optional.empty();
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.lastModifiedTime(getTenantId(), uri)) : Optional.empty();
     }
 
     /**
@@ -659,11 +671,11 @@ public class RunContext {
 
     public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(uri) ? Optional.of(this.storageInterface.delete(uri)) : Optional.empty();
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.delete(getTenantId(), uri)) : Optional.empty();
     }
 
     public List<URI> purgeStorageExecution() throws IOException {
-        return this.storageInterface.deleteByPrefix(this.storageExecutionPrefix);
+        return this.storageInterface.deleteByPrefix(getTenantId(), this.storageExecutionPrefix);
     }
 
     public List<AbstractMetricEntry<?>> metrics() {
@@ -798,5 +810,11 @@ public class RunContext {
             FileUtils.deleteDirectory(temporaryDirectory.toFile());
             this.temporaryDirectory = null;
         }
+    }
+
+    private String getTenantId() {
+        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
+        // normally only tests should not have the flow variable
+        return flow != null ? flow.get("tenantId") : null;
     }
 }

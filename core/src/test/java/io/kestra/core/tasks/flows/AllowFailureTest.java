@@ -16,7 +16,7 @@ import static org.hamcrest.Matchers.is;
 class AllowFailureTest extends AbstractMemoryRunnerTest {
     @Test
     void success() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "allow-failure", Duration.ofSeconds(120));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "allow-failure", Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(9));
         control(execution);
@@ -28,6 +28,7 @@ class AllowFailureTest extends AbstractMemoryRunnerTest {
     @Test
     void failed() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "allow-failure",
             null,

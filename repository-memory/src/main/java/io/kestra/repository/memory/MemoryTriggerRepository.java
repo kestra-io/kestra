@@ -28,7 +28,7 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     }
 
     @Override
-    public List<Trigger> findAll() {
+    public List<Trigger> findAllForAllTenants() {
         return this.triggers;
     }
 
@@ -45,7 +45,7 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Trigger> find(Pageable from, String query, String namespace) {
+    public ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace) {
         throw new UnsupportedOperationException();
     }
 }

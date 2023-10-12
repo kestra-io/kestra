@@ -10,7 +10,9 @@ import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -23,7 +25,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -40,6 +42,10 @@ public class Template implements DeletedInterface {
             }
         })
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+
+    @Pattern(regexp="[a-z0-9_-]+")
+    @Hidden
+    private String tenantId;
 
     @NotNull
     @NotBlank
@@ -66,17 +72,19 @@ public class Template implements DeletedInterface {
     @JsonIgnore
     public String uid() {
         return Template.uid(
+            this.getTenantId(),
             this.getNamespace(),
             this.getId()
         );
     }
 
     @JsonIgnore
-    public static String uid(String namespace, String id) {
-        return String.join("_", Arrays.asList(
+    public static String uid(String tenantId, String namespace, String id) {
+        return IdUtils.fromParts(
+            tenantId,
             namespace,
             id
-        ));
+        );
     }
 
     public Optional<ConstraintViolationException> validateUpdate(Template updated) {
@@ -102,7 +110,7 @@ public class Template implements DeletedInterface {
             ));
         }
 
-        if (violations.size() > 0) {
+        if (!violations.isEmpty()) {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
             return Optional.empty();
@@ -119,6 +127,7 @@ public class Template implements DeletedInterface {
 
     public Template toDeleted() {
         return new Template(
+            this.tenantId,
             this.id,
             this.namespace,
             this.description,

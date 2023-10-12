@@ -57,7 +57,7 @@ public class DefaultScheduler extends AbstractScheduler {
             Execution execution = either.getLeft();
             if (execution.getTrigger() != null) {
                 Trigger trigger = Await.until(()  -> watchingTrigger.get(execution.getId()), Duration.ofSeconds(5));
-                var flow = flowRepository.findById(execution.getNamespace(), execution.getFlowId()).orElse(null);
+                var flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElse(null);
                 if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
                     triggerState.save(trigger.resetExecution());
                     watchingTrigger.remove(execution.getId());

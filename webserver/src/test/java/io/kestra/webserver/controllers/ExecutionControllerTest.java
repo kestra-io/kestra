@@ -175,7 +175,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         triggerExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
         // Wait for execution indexation
-        Await.until(() -> executionRepositoryInterface.findByFlowId(namespace, flowId, Pageable.from(1)).size() == 1);
+        Await.until(() -> executionRepositoryInterface.findByFlowId(null, namespace, flowId, Pageable.from(1)).size() == 1);
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)
@@ -215,7 +215,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void eval() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
 
         ExecutionController.EvalResult result = this.eval(execution, "my simple string", 0);
         assertThat(result.getResult(), is("my simple string"));
@@ -238,7 +238,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "unknownTaskId";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -256,7 +256,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String flowId = "restart_with_inputs";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -275,9 +275,9 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "instant";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
-        Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+        Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
 
         assertThat(flow.isPresent(), is(true));
 
@@ -325,10 +325,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "2_end";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
-        Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+        Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent(), is(true));
 
         // Run child execution starting from a specific task and wait until it finishes
@@ -357,13 +357,13 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, null);
+        Execution firstExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, null);
 
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
 
         // Update task's command to make second execution successful
-        Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+        Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent(), is(true));
 
         // Restart execution and wait until it finishes
@@ -416,7 +416,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void downloadFile() throws TimeoutException {
-        Execution execution = runnerUtils.runOne(TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList(), hasSize(5));
 
         String path = (String) execution.getInputs().get("file");
@@ -452,7 +452,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void webhook() {
-        Flow webhook = flowRepositoryInterface.findById(TESTS_FLOW_NS, "webhook").orElseThrow();
+        Flow webhook = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, "webhook").orElseThrow();
         String key = ((Webhook) webhook.getTriggers().get(0)).getKey();
 
         Execution execution = client.toBlocking().retrieve(
@@ -545,7 +545,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
-        Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
 
         // resume the execution
@@ -564,7 +564,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void killPaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
-        Execution pausedExecution = runnerUtils.runOneUntilPaused(TESTS_FLOW_NS, "pause");
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
 
         // resume the execution

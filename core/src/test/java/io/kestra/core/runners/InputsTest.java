@@ -63,7 +63,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     private StorageInterface storageInterface;
 
     private Map<String, Object> typedInputs(Map<String, Object> map) {
-        return typedInputs(map, flowRepository.findById("io.kestra.tests", "inputs").get());
+        return typedInputs(map, flowRepository.findById(null, "io.kestra.tests", "inputs").get());
     }
 
     private Map<String, Object> typedInputs(Map<String, Object> map, Flow flow) {
@@ -110,7 +110,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
         assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(
-            CharStreams.toString(new InputStreamReader(storageInterface.get((URI) typeds.get("file")))),
+            CharStreams.toString(new InputStreamReader(storageInterface.get(null, (URI) typeds.get("file")))),
             is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
         );
         assertThat(typeds.get("json"), is(Map.of("a", "b")));
@@ -143,6 +143,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Test
     void inputFlow() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "inputs",
             null,

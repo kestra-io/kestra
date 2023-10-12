@@ -32,18 +32,19 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.function.TriFunction;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
@@ -100,6 +101,10 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     )
     @PluginProperty
     private String templateId;
+
+    @Hidden
+    @Setter // we have no other option here as we need to update the task inside the flow when creating it
+    private String tenantId;
 
     @Schema(
         title = "The args to pass to the template",
@@ -196,7 +201,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
         TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);
 
-        return templateExecutor.findById(this.namespace, this.templateId)
+        return templateExecutor.findById(tenantId, this.namespace, this.templateId)
             .orElseThrow(() -> new IllegalVariableEvaluationException("Can't find flow template '" + this.namespace + "." + this.templateId + "'"));
     }
 
@@ -226,7 +231,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         }
     }
 
-    public static Flow injectTemplate(Flow flow, Execution execution, BiFunction<String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
+    public static Flow injectTemplate(Flow flow, Execution execution, TriFunction<String, String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
         AtomicReference<Flow> flowReference = new AtomicReference<>(flow);
 
         boolean haveTemplate = true;
@@ -235,11 +240,12 @@ public class Template extends Task implements FlowableTask<Template.Output> {
                 .filter(task -> task instanceof Template)
                 .map(task -> (Template) task)
                 .filter(t -> !(t instanceof ExecutorTemplate))
-                .collect(Collectors.toList());
+                .toList();
 
             templates
                 .forEach(throwConsumer(templateTask -> {
                     io.kestra.core.models.templates.Template template = provider.apply(
+                        execution.getTenantId(),
                         templateTask.getNamespace(),
                         templateTask.getTemplateId()
                     );
@@ -284,7 +290,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     }
 
     public interface TemplateExecutorInterface {
-        Optional<io.kestra.core.models.templates.Template> findById(String namespace, String templateId);
+        Optional<io.kestra.core.models.templates.Template> findById(String tenantId, String namespace, String templateId);
     }
 
     @TemplateEnabled
@@ -292,8 +298,9 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         @Inject
         private TemplateRepositoryInterface templateRepository;
 
-        public Optional<io.kestra.core.models.templates.Template> findById(String namespace, String templateId) {
-            return this.templateRepository.findById(namespace, templateId);
+        @Override
+        public Optional<io.kestra.core.models.templates.Template> findById(String tenantId, String namespace, String templateId) {
+            return this.templateRepository.findById(tenantId, namespace, templateId);
         }
     }
 

@@ -48,7 +48,7 @@ public class FlowTriggerCaseTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "trigger-flow");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "trigger-flow");
 
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

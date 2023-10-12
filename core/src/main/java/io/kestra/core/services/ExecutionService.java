@@ -236,6 +236,7 @@ public class ExecutionService {
         Boolean purgeLog,
         Boolean purgeMetric,
         Boolean purgeStorage,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime endDate,
@@ -244,6 +245,7 @@ public class ExecutionService {
         PurgeResult purgeResult = this.executionRepository
             .find(
                 null,
+                tenantId,
                 namespace,
                 flowId,
                 null,
@@ -267,7 +269,7 @@ public class ExecutionService {
                 }
 
                 if (purgeStorage) {
-                    builder.storagesCount(storageInterface.deleteByPrefix(URI.create("/" + storageInterface.executionPrefix(
+                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), URI.create("/" + storageInterface.executionPrefix(
                         execution))).size());
                 }
 

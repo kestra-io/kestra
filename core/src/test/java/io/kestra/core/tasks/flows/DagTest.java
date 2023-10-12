@@ -30,6 +30,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
     @Test
     void dag() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "dag",
             null,

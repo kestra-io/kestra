@@ -17,6 +17,15 @@ public abstract class AbstractJdbcRepository {
         return field("deleted", Boolean.class).eq(false);
     }
 
+    protected Condition defaultFilter(String tenantId) {
+        var tenant = buildTenantCondition(tenantId) ;
+        return tenant.and(field("deleted", Boolean.class).eq(false));
+    }
+
+    protected Condition buildTenantCondition(String tenantId) {
+        return tenantId == null ? field("tenant_id").isNull() : field("tenant_id").eq(tenantId);
+    }
+
     public static Field<Object> field(String name) {
         return DSL.field(DSL.quotedName(name));
     }

@@ -31,7 +31,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
 
     @Test
     void recursiveVars() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "variables");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.findTaskRunsByTaskId("variable").get(0).getOutputs().get("value"), is("1 > 2 > 3"));
@@ -44,7 +44,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "variables-invalid");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables-invalid");
 
 
         assertThat(execution.getTaskRunList(), hasSize(2));
@@ -59,7 +59,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
 
     @Test
     void failedFirst() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "failed-first");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "failed-first");
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));

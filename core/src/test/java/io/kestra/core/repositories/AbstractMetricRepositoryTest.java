@@ -33,16 +33,17 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(counter);
         metricRepository.save(timer);
 
-        List<MetricEntry> results = metricRepository.findByExecutionId(executionId, Pageable.from(1, 10));
+        List<MetricEntry> results = metricRepository.findByExecutionId(null, executionId, Pageable.from(1, 10));
         assertThat(results.size(), is(2));
 
-        results = metricRepository.findByExecutionIdAndTaskId(executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
+        results = metricRepository.findByExecutionIdAndTaskId(null, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
         assertThat(results.size(), is(2));
 
-        results = metricRepository.findByExecutionIdAndTaskRunId(executionId, taskRun1.getId(), Pageable.from(1, 10));
+        results = metricRepository.findByExecutionIdAndTaskRunId(null, executionId, taskRun1.getId(), Pageable.from(1, 10));
         assertThat(results.size(), is(1));
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
+            null,
             "namespace",
             "flow",
             null,
@@ -56,6 +57,7 @@ public abstract class AbstractMetricRepositoryTest {
         assertThat(aggregationResults.getGroupBy(), is("day"));
 
         aggregationResults = metricRepository.aggregateByFlowId(
+            null,
             "namespace",
             "flow",
             null,
@@ -83,9 +85,9 @@ public abstract class AbstractMetricRepositoryTest {
          metricRepository.save(counter2);
 
 
-         List<String> flowMetricsNames = metricRepository.flowMetrics("namespace", "flow");
-         List<String> taskMetricsNames = metricRepository.taskMetrics("namespace", "flow", "task");
-         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics("namespace", "flow");
+         List<String> flowMetricsNames = metricRepository.flowMetrics(null, "namespace", "flow");
+         List<String> taskMetricsNames = metricRepository.taskMetrics(null, "namespace", "flow", "task");
+         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(null, "namespace", "flow");
 
          assertThat(flowMetricsNames.size(), is(2));
          assertThat(taskMetricsNames.size(), is(1));

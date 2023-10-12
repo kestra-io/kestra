@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 @Value
 @Builder(toBuilder = true)
 public class LogEntry implements DeletedInterface {
+    String tenantId;
+
     @NotNull
     String namespace;
 
@@ -66,6 +68,7 @@ public class LogEntry implements DeletedInterface {
 
     public static LogEntry of(Execution execution) {
         return LogEntry.builder()
+            .tenantId(execution.getTenantId())
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .executionId(execution.getId())
@@ -74,6 +77,7 @@ public class LogEntry implements DeletedInterface {
 
     public static LogEntry of(TaskRun taskRun) {
         return LogEntry.builder()
+            .tenantId(taskRun.getTenantId())
             .namespace(taskRun.getNamespace())
             .flowId(taskRun.getFlowId())
             .taskId(taskRun.getTaskId())
@@ -85,6 +89,7 @@ public class LogEntry implements DeletedInterface {
 
     public static LogEntry of(Flow flow, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId(abstractTrigger.getId())
@@ -93,6 +98,7 @@ public class LogEntry implements DeletedInterface {
 
     public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
+            .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .triggerId(abstractTrigger.getId())

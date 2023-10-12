@@ -41,7 +41,7 @@ public abstract class AbstractFlowTopologyRepositoryTest {
             createSimpleFlowTopology("flow-a", "flow-b")
         );
 
-        List<FlowTopology> list = flowTopologyRepository.findByFlow("io.kestra.tests", "flow-a", false);
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
 
         assertThat(list.size(), is(1));
     }

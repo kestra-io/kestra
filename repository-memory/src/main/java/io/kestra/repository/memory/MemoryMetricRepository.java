@@ -20,38 +20,41 @@ public class MemoryMetricRepository implements MetricRepositoryInterface {
     private final List<MetricEntry> metrics = new ArrayList<>();
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String id, Pageable pageable) {
-        var results = metrics.stream().filter(metrics -> metrics.getExecutionId().equals(id)).collect(Collectors.toList());
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable) {
+        var results = metrics.stream()
+            .filter(metric -> metric.getExecutionId().equals(id))
+            .filter(metric -> (tenantId == null && metric.getTenantId() == null) || (tenantId != null && tenantId.equals(metric.getTenantId())))
+            .collect(Collectors.toList());
         return new ArrayListTotal<>(results, results.size());
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<String> flowMetrics(String namespace, String flowId) {
+    public List<String> flowMetrics(String tenantId, String namespace, String flowId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<String> taskMetrics(String namespace, String flowId, String taskId) {
+    public List<String> taskMetrics(String tenantId, String namespace, String flowId, String taskId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<String> tasksWithMetrics(String namespace, String flowId) {
+    public List<String> tasksWithMetrics(String tenantId, String namespace, String flowId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public MetricAggregations aggregateByFlowId(String namespace, String flowId, @Nullable String taskId, String metric, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, String aggregation) {
+    public MetricAggregations aggregateByFlowId(String tenantId, String namespace, String flowId, @Nullable String taskId, String metric, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, String aggregation) {
         throw new UnsupportedOperationException();
     }
 

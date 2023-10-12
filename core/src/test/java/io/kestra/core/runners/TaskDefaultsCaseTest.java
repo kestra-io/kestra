@@ -56,7 +56,7 @@ public class TaskDefaultsCaseTest {
     private QueueInterface<LogEntry> logQueue;
 
     public void taskDefaults() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "task-defaults", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(8));
 
@@ -79,14 +79,14 @@ public class TaskDefaultsCaseTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.receive(either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("Unrecognized field \"invalid\""));
         assertThat(matchingLog, notNullValue());
 
         ConstraintViolationException constraintViolationException = assertThrows(ConstraintViolationException.class, () -> taskDefaultService.injectDefaults(flowRepository
-            .findById("io.kestra.tests", "invalid-task-defaults", Optional.empty())
+            .findById(null, "io.kestra.tests", "invalid-task-defaults", Optional.empty())
             .orElseThrow()));
 
         assertThat(constraintViolationException.getConstraintViolations().size(), is(1));

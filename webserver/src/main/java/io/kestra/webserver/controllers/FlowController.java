@@ -20,6 +20,7 @@ import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.GraphService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
@@ -83,6 +84,9 @@ public class FlowController {
     @Inject
     private GraphService graphService;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow")
@@ -93,10 +97,10 @@ public class FlowController {
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws IllegalVariableEvaluationException {
         Flow flow = flowRepository
-            .findById(namespace, id, revision)
+            .findById(tenantService.resolveTenant(), namespace, id, revision)
             .orElse(null);
 
-        String flowUid = revision.isEmpty() ? Flow.uidWithoutRevision(namespace, id) : Flow.uid(namespace, id, revision);
+        String flowUid = revision.isEmpty() ? Flow.uidWithoutRevision(tenantService.resolveTenant(), namespace, id) : Flow.uid(tenantService.resolveTenant(), namespace, id, revision);
         if(flow == null) {
             throw new NoSuchElementException(
                 "Unable to find flow " + flowUid
@@ -140,10 +144,10 @@ public class FlowController {
     ) {
         return source ?
             flowRepository
-                .findByIdWithSource(namespace, id, Optional.ofNullable(revision), allowDeleted)
+                .findByIdWithSource(tenantService.resolveTenant(), namespace, id, Optional.ofNullable(revision), allowDeleted)
                 .orElse(null) :
             flowRepository
-                .findById(namespace, id, Optional.ofNullable(revision), allowDeleted)
+                .findById(tenantService.resolveTenant(), namespace, id, Optional.ofNullable(revision), allowDeleted)
                 .orElse(null);
     }
 
@@ -154,7 +158,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id
     ) {
-        return flowRepository.findRevisions(namespace, id);
+        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -167,7 +171,7 @@ public class FlowController {
         @Parameter(description = "The flow revision") @Nullable @QueryValue Integer revision
     ) {
         return flowRepository
-            .findById(namespace, id, Optional.ofNullable(revision))
+            .findById(tenantService.resolveTenant(), namespace, id, Optional.ofNullable(revision))
             .flatMap(flow -> {
                 try {
                     return Optional.of(flow.findTaskByTaskId(taskId));
@@ -193,6 +197,7 @@ public class FlowController {
         return PagedResults.of(flowRepository.find(
             PageableUtils.from(page, size, sort),
             query,
+            tenantService.resolveTenant(),
             namespace,
             RequestUtils.toMap(labels)
         ));
@@ -209,7 +214,7 @@ public class FlowController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws HttpStatusException {
-        return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, namespace));
+        return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace));
     }
 
 
@@ -221,7 +226,7 @@ public class FlowController {
     ) throws ConstraintViolationException {
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
+        return HttpResponse.ok(create(flowParsed, flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -230,7 +235,11 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
-        return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
+        return HttpResponse.ok(create(flow, flow.generateSource()).toFlow());
+    }
+
+    protected FlowWithSource create(Flow flow, String source) {
+        return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -299,7 +308,7 @@ public class FlowController {
             ))
             .collect(Collectors.toSet());
 
-        if (invalids.size() > 0) {
+        if (!invalids.isEmpty()) {
             throw new ConstraintViolationException(invalids);
         }
 
@@ -330,7 +339,7 @@ public class FlowController {
         List<FlowWithSource> deleted = new ArrayList<>();
         if (delete) {
             deleted = flowRepository
-                .findByNamespace(namespace)
+                .findByNamespace(tenantService.resolveTenant(), namespace)
                 .stream()
                 .filter(flow -> !ids.contains(flow.getId()))
                 .map(flow -> {
@@ -344,11 +353,11 @@ public class FlowController {
         List<FlowWithSource> updatedOrCreated = flows.stream()
             .map(flowWithSource -> {
                 Flow flow = flowWithSource.toFlow();
-                Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
+                Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, flow.getId());
                 if (existingFlow.isPresent()) {
                     return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 } else {
-                    return flowRepository.create(flow, flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
+                    return create(flow, flowWithSource.getSource());
                 }
             })
             .toList();
@@ -364,14 +373,14 @@ public class FlowController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
-        Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+        Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (existingFlow.isEmpty()) {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
+        return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
@@ -382,12 +391,16 @@ public class FlowController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
-        Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+        Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
+        return HttpResponse.ok(update(flow, existingFlow.get(), flow.generateSource()).toFlow());
+    }
+
+    protected FlowWithSource update(Flow current, Flow previous, String source) {
+        return flowRepository.update(current, previous, source, taskDefaultService.injectDefaults(current));
     }
 
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
@@ -399,7 +412,7 @@ public class FlowController {
         @Parameter(description = "The task id") @PathVariable String taskId,
         @Parameter(description = "The task") @Valid @Body Task task
     ) throws ConstraintViolationException {
-        Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+        Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
 
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -426,7 +439,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id
     ) {
-        Optional<Flow> flow = flowRepository.findById(namespace, id);
+        Optional<Flow> flow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (flow.isPresent()) {
             flowRepository.delete(flow.get());
             return HttpResponse.status(HttpStatus.NO_CONTENT);
@@ -439,7 +452,7 @@ public class FlowController {
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
-        return flowRepository.findDistinctNamespace();
+        return flowRepository.findDistinctNamespace(tenantService.resolveTenant());
     }
 
 
@@ -451,7 +464,7 @@ public class FlowController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly
     ) {
-        List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(namespace, id, destinationOnly);
+        List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(tenantService.resolveTenant(), namespace, id, destinationOnly);
 
         return flowTopologyService.graph(
             flowTopologies.stream(),
@@ -529,7 +542,7 @@ public class FlowController {
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) throws IOException {
-        var flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
+        var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels));
         var bytes = zipFlows(flows);
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
@@ -545,7 +558,7 @@ public class FlowController {
         @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
     ) throws IOException {
         var flows = ids.stream()
-            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .collect(Collectors.toList());
         var bytes = zipFlows(flows);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
@@ -579,7 +592,7 @@ public class FlowController {
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) {
         List<Flow> list = flowRepository
-            .findWithSource(query, namespace, RequestUtils.toMap(labels))
+            .findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels))
             .stream()
             .peek(flowRepository::delete)
             .collect(Collectors.toList());
@@ -598,7 +611,7 @@ public class FlowController {
     ) {
         List<Flow> list = ids
             .stream()
-            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .peek(flowRepository::delete)
             .collect(Collectors.toList());
 
@@ -702,7 +715,7 @@ public class FlowController {
 
     protected void importFlow(String source, Flow parsed) {
         flowRepository
-            .findById(parsed.getNamespace(), parsed.getId())
+            .findById(tenantService.resolveTenant(), parsed.getNamespace(), parsed.getId())
             .ifPresentOrElse(
                 previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
                 () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
@@ -712,7 +725,7 @@ public class FlowController {
     protected List<FlowWithSource> setFlowsDisableByIds(List<IdWithNamespace> ids, boolean disable) {
         return ids
             .stream()
-            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
             .peek(flow -> {
                 FlowWithSource flowUpdated = flow.toBuilder()
@@ -732,7 +745,7 @@ public class FlowController {
 
     protected List<FlowWithSource> setFlowsDisableByQuery(String query, String namespace, List<String> labels, boolean disable) {
         return flowRepository
-            .findWithSource(query, namespace, RequestUtils.toMap(labels))
+            .findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels))
             .stream()
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
             .peek(flow -> {

@@ -49,7 +49,7 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
 
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
-        templateRepository.findAll()
+        templateRepository.findAll(null)
             .forEach(templateRepository::delete);
 
         super.setup();

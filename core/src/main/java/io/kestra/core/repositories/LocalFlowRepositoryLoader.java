@@ -84,7 +84,7 @@ public class LocalFlowRepositoryLoader {
                 if (!update) {
                     this.createFlow(flowSource, parse);
                 } else {
-                    Optional<Flow> find = flowRepository.findById(parse.getNamespace(), parse.getId());
+                    Optional<Flow> find = flowRepository.findById(parse.getTenantId(), parse.getNamespace(), parse.getId());
 
                     if (find.isEmpty()) {
                         this.createFlow(flowSource, parse);

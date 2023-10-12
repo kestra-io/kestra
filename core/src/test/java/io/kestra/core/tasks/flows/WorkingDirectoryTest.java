@@ -49,7 +49,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         StorageInterface storageInterface;
 
         public void success(RunnerUtils runnerUtils) throws TimeoutException {
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory", null,
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory", null,
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 
@@ -59,7 +59,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         public void failed(RunnerUtils runnerUtils) throws TimeoutException {
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory", null,
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory", null,
                 (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60)
             );
 
@@ -69,7 +69,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         public void each(RunnerUtils runnerUtils) throws TimeoutException {
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory-each", Duration.ofSeconds(60));
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-each", Duration.ofSeconds(60));
 
             assertThat(execution.getTaskRunList(), hasSize(8));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -79,16 +79,16 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist
             URI cache = URI.create(storageInterface.cachePrefix("io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");
-            storageInterface.delete(cache);
+            storageInterface.delete(null, cache);
 
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory-cache");
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
             assertThat(execution.getTaskRunList(), hasSize(2));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertTrue(storageInterface.exists(cache));
+            assertTrue(storageInterface.exists(null, cache));
 
             // a second run should use the cache so the execution failed as the localfile cannot create the file as it already exist
-            execution = runnerUtils.runOne("io.kestra.tests", "working-directory-cache");
+            execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
             assertThat(execution.getTaskRunList(), hasSize(2));
             assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

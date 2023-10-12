@@ -80,7 +80,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public Optional<Execution> findById(String id) {
+    public Optional<Execution> findById(String tenantId, String id) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -88,7 +88,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter())
+                    .where(this.defaultFilter(tenantId))
                     .and(field("key").eq(id));
 
                 return this.jdbcRepository.fetchOne(from);
@@ -106,6 +106,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -121,6 +122,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 SelectConditionStep<Record1<Object>> select = this.findSelect(
                     context,
                     query,
+                    tenantId,
                     namespace,
                     flowId,
                     startDate,
@@ -136,6 +138,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public Flowable<Execution> find(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -152,6 +155,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     SelectConditionStep<Record1<Object>> select = this.findSelect(
                         context,
                         query,
+                        tenantId,
                         namespace,
                         flowId,
                         startDate,
@@ -173,6 +177,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     private SelectConditionStep<Record1<Object>> findSelect(
         DSLContext context,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -186,7 +191,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             )
             .hint(context.configuration().dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter());
+            .where(this.defaultFilter(tenantId));
 
         select = filteringQuery(select, namespace, flowId, null, query, labels);
 
@@ -206,7 +211,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable) {
+    public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -215,7 +220,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter())
+                    .where(this.defaultFilter(tenantId))
                     .and(field("namespace").eq(namespace))
                     .and(field("flow_id").eq(id));
 
@@ -227,6 +232,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public ArrayListTotal<TaskRun> findTaskRun(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -245,6 +251,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -261,6 +268,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 field("state_current", String.class)
             ),
             query,
+            tenantId,
             namespace,
             flowId,
             null,
@@ -310,6 +318,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     private Results dailyStatisticsQuery(
         List<Field<?>> fields,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -338,7 +347,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 SelectConditionStep<?> select = context
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter())
+                    .where(this.defaultFilter(tenantId))
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
@@ -390,6 +399,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
@@ -409,6 +419,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Results results = dailyStatisticsQuery(
             fields,
             query,
+            tenantId,
             namespace,
             flowId,
             flows,
@@ -543,6 +554,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     public List<ExecutionCount> executionCounts(
+        @Nullable String tenantId,
         List<Flow> flows,
         @Nullable List<State.Type> states,
         @Nullable ZonedDateTime startDate,
@@ -563,7 +575,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         DSL.count().as("count")
                     ))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter())
+                    .where(this.defaultFilter(tenantId))
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
@@ -594,10 +606,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .get(0)
                     .result()
                     .stream()
-                    .map(records -> new ExecutionCount(
-                        records.getValue("namespace", String.class),
-                        records.getValue("flow_id", String.class),
-                        records.getValue("count", Long.class)
+                    .map(record -> new ExecutionCount(
+                        record.getValue("namespace", String.class),
+                        record.getValue("flow_id", String.class),
+                        record.getValue("count", Long.class)
                     ))
                     .collect(Collectors.toList());
             });
@@ -639,7 +651,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @SneakyThrows
     @Override
     public Execution delete(Execution execution) {
-        Optional<Execution> revision = this.findById(execution.getId());
+        Optional<Execution> revision = this.findById(execution.getTenantId(), execution.getId());
         if (revision.isEmpty()) {
             throw new IllegalStateException("Execution " + execution.getId() + " doesn't exists");
         }

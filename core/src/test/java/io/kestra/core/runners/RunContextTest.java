@@ -56,7 +56,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         LogEntry matchingLog;
         workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
 
@@ -88,6 +88,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         inputs.put("string", new String(chars));
 
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "inputs-large",
             null,
@@ -106,7 +107,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void variables() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "return");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "return");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
 
@@ -144,7 +145,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         p.destroy();
 
         URI uri = runContext.putTempFile(path.toFile());
-        assertThat(storageInterface.size(uri), is(size + 1));
+        assertThat(storageInterface.size(null, uri), is(size + 1));
     }
 
     @Test

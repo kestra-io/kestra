@@ -9,12 +9,13 @@ import java.util.Optional;
 public interface FlowExecutorInterface {
     Collection<Flow> allLastVersion();
 
-    Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
+    Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision);
 
     Boolean isReady();
 
-    default Optional<Flow> findByIdFromFlowTask(String namespace, String id, Optional<Integer> revision, String fromNamespace, String fromId) {
+    default Optional<Flow> findByIdFromFlowTask(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant, String fromNamespace, String fromId) {
         return this.findById(
+            tenantId,
             namespace,
             id,
             revision
@@ -23,6 +24,7 @@ public interface FlowExecutorInterface {
 
     default Optional<Flow> findByExecution(Execution execution) {
         return this.findById(
+            execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),
             Optional.of(execution.getFlowRevision())

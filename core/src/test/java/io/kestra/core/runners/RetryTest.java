@@ -22,7 +22,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 
     @Test
     void retrySuccess() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "retry-success");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-success");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
         assertThat(execution.getTaskRunList(), hasSize(1));
@@ -31,7 +31,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 
     @Test
     void retrySuccessAtFirstAttempt() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "retry-success-first-attempt");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-success-first-attempt");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
@@ -40,7 +40,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 
     @Test
     void retryFailed() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "retry-failed");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-failed");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));

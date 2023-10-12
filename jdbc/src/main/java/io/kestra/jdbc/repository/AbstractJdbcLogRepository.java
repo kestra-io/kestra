@@ -29,6 +29,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable Level minLevel,
@@ -44,7 +45,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .select(field("value"))
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 if (namespace != null) {
                     select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
@@ -75,33 +76,37 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public List<LogEntry> findByExecutionId(String id, Level minLevel) {
+    public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
         return this.query(
-            field("execution_id").eq(id),
+            tenantId,
+            field("execution_id").eq(executionId),
             minLevel
         );
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionId(String id, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable) {
         return this.query(
-            field("execution_id").eq(id),
+            tenantId,
+            field("execution_id").eq(executionId),
             minLevel,
             pageable
         );
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
+    public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("task_id").eq(taskId)),
             minLevel
         );
     }
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("task_id").eq(taskId)),
             minLevel,
@@ -110,8 +115,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel) {
+    public List<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId)),
             minLevel
@@ -119,8 +125,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId)),
             minLevel,
@@ -129,8 +136,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt) {
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId))
                 .and(field("attempt_number").eq(attempt)),
@@ -139,8 +147,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId))
                 .and(field("attempt_number").eq(attempt)),
@@ -178,7 +187,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return logEntry;
     }
 
-    private ArrayListTotal<LogEntry> query(Condition condition, Level minLevel, Pageable pageable) {
+    private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -188,7 +197,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .select(field("value"))
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 select = select.and(condition);
 
@@ -201,7 +210,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             });
     }
 
-    private List<LogEntry> query(Condition condition, Level minLevel) {
+    private List<LogEntry> query(String tenantId, Condition condition, Level minLevel) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -209,7 +218,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 select = select.and(condition);
 

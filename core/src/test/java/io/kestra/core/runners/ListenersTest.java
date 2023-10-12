@@ -28,6 +28,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     @Test
     void success() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "listeners",
             null,
@@ -42,6 +43,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     @Test
     void failed() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "listeners",
             null,
@@ -56,6 +58,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     @Test
     void flowableExecution() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "listeners-flowable",
             null,
@@ -71,6 +74,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     @Test
     void multipleListeners() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "listeners-multiple"
         );
@@ -83,6 +87,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     @Test
     void failedListeners() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "listeners-failed"
         );
@@ -96,6 +101,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     @Test
     void failedMultipleListeners() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            null,
             "io.kestra.tests",
             "listeners-multiple-failed"
         );

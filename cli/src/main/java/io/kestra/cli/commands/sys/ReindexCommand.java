@@ -2,6 +2,7 @@ package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.TaskDefaultService;
@@ -37,10 +38,13 @@ public class ReindexCommand extends AbstractCommand {
         if ("flow".equals(type)) {
             FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
 
-            List<FlowWithSource> flows = flowRepository.findWithSource(null, null, null);
-            flows.forEach(flow -> flowRepository.update(flow.toFlow(), flow.toFlow(), flow.getSource(), flow.toFlow()));
+            List<Flow> allFlow = flowRepository.findAllForAllTenants();
+            allFlow.stream()
+                .map(flow -> flowRepository.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()).orElse(null))
+                .filter(flow -> flow != null)
+                .forEach(flow -> flowRepository.update(flow.toFlow(), flow.toFlow(), flow.getSource(), flow.toFlow()));
 
-            stdOut("Successfully reindex " + flows.size() + " flow(s).");
+            stdOut("Successfully reindex " + allFlow.size() + " flow(s).");
         }
         else {
             throw new IllegalArgumentException("Reindexing type '" + type + "' is not supported");

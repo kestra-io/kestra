@@ -33,7 +33,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void restartSimple() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "restart_last_failed");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "restart_last_failed");
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
@@ -51,11 +51,11 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void restartSimpleRevision() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "restart_last_failed");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "restart_last_failed");
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
-        Flow flow = flowRepository.findById("io.kestra.tests", "restart_last_failed").orElseThrow();
+        Flow flow = flowRepository.findById(null, "io.kestra.tests", "restart_last_failed").orElseThrow();
         flowRepository.update(
             flow,
             flow.updateTask(
@@ -85,7 +85,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @RetryingTest(5)
     void restartFlowable() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         Execution restart = executionService.restart(execution, null);
@@ -99,7 +99,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @RetryingTest(5)
     void restartFlowable2() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         Execution restart = executionService.restart(execution, null);
@@ -113,7 +113,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void restartDynamic() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
@@ -127,7 +127,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replayFromBeginning() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -147,7 +147,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replaySimple() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -165,7 +165,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replayFlowable() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "NO"));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "NO"));
         assertThat(execution.getTaskRunList(), hasSize(20));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -182,7 +182,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replayParallel() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel-nested");
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -200,7 +200,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replayEachSeq() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
         assertThat(execution.getTaskRunList(), hasSize(23));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -218,7 +218,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replayEachSeq2() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
         assertThat(execution.getTaskRunList(), hasSize(23));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -236,7 +236,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void replayEachPara() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested");
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -254,7 +254,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void markAsEachPara() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested");
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -282,7 +282,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void resumePausedToRunning() throws TimeoutException, InternalException {
-        Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause");
+        Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause");
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 
@@ -299,7 +299,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Test
     void resumePausedToKilling() throws TimeoutException, InternalException {
-        Execution execution = runnerUtils.runOneUntilPaused("io.kestra.tests", "pause");
+        Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause");
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 

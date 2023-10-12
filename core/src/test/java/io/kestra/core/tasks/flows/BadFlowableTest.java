@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.*;
 public class BadFlowableTest extends AbstractMemoryRunnerTest {
     @Test
     void sequential() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "bad-flowable");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "bad-flowable");
 
         assertThat("Task runs were: \n"+ JacksonMapper.log(execution.getTaskRunList()), execution.getTaskRunList().size(), greaterThanOrEqualTo(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
@@ -25,7 +25,7 @@ public class BadFlowableTest extends AbstractMemoryRunnerTest {
 
     @Test // this test is a non-reg for an infinite loop in the executor
     void flowableWithParentFail() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "flowable-with-parent-fail");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "flowable-with-parent-fail");
 
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

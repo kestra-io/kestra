@@ -14,6 +14,8 @@ public class FlowNode {
     @NotNull
     String uid;
 
+    String tenantId;
+
     String namespace;
 
     String id;
@@ -21,6 +23,7 @@ public class FlowNode {
     public static FlowNode of(Flow flow) {
         return FlowNode.builder()
             .uid(flow.uidWithoutRevision())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .id(flow.getId())
             .build();

@@ -31,6 +31,7 @@ class DeleteTest {
         URL resource = DeleteTest.class.getClassLoader().getResource("application.yml");
 
         URI put = storageInterface.put(
+            null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );

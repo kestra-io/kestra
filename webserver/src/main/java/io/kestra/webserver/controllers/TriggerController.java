@@ -4,6 +4,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -28,6 +29,9 @@ public class TriggerController {
     @Inject
     private QueueInterface<Trigger> triggerQueue;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Triggers"}, summary = "Search for triggers")
@@ -41,6 +45,7 @@ public class TriggerController {
         return PagedResults.of(triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             query,
+            tenantService.resolveTenant(),
             namespace
         ));
     }
@@ -54,6 +59,7 @@ public class TriggerController {
         @Parameter(description = "The trigger id") @PathVariable String triggerId
     ) throws HttpStatusException {
         Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+            .tenantId(tenantService.resolveTenant())
             .namespace(namespace)
             .flowId(flowId)
             .triggerId(triggerId)

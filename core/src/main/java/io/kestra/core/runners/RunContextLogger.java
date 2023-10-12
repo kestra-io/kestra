@@ -60,6 +60,7 @@ public class RunContextLogger {
         for (String s : split) {
             result.add(LogEntry.builder()
                 .namespace(logEntry.getNamespace())
+                .tenantId(logEntry.getTenantId())
                 .flowId(logEntry.getFlowId())
                 .taskId(logEntry.getTaskId())
                 .executionId(logEntry.getExecutionId())

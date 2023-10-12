@@ -33,6 +33,7 @@ public class ExecutionUsage {
                 null,
                 null,
                 null,
+                null,
                 startDate,
                 ZonedDateTime.now(),
                 DateUtils.GroupType.DAY,
@@ -44,6 +45,7 @@ public class ExecutionUsage {
 
         return ExecutionUsage.builder()
             .dailyExecutionsCount(executionRepository.dailyStatistics(
+                null,
                 null,
                 null,
                 null,

@@ -89,49 +89,49 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void full() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "full", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "full", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
     @Test
     void logs() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(3));
     }
 
     @Test
     void errors() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "errors", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "errors", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }
 
     @Test
     void sequential() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "sequential", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }
 
     @Test
     void parallel() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @RetryingTest(5)
     void parallelNested() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }
 
     @Test
     void eachParallelWithSubflowMissing() throws TimeoutException {
-        Execution execution =  runnerUtils.runOne("io.kestra.tests", "each-parallel-subflow-notfound");
+        Execution execution =  runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-subflow-notfound");
 
         assertThat(execution, notNullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
@@ -140,21 +140,21 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void eachSequentialNested() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(23));
     }
 
     @Test
     void eachParallel() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @Test
     void eachParallelNested() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }
@@ -248,7 +248,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void executionDate() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "execution-start-date", null, null, Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "execution-start-date", null, null, Duration.ofSeconds(60));
 
         assertThat((String) execution.getTaskRunList().get(0).getOutputs().get("value"), matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
     }

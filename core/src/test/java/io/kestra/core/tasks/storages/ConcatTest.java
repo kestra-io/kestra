@@ -39,6 +39,7 @@ class ConcatTest {
             .toURI());
 
         URI put = storageInterface.put(
+            null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
@@ -56,7 +57,7 @@ class ConcatTest {
 
 
         assertThat(
-            CharStreams.toString(new InputStreamReader(storageInterface.get(run.getUri()))),
+            CharStreams.toString(new InputStreamReader(storageInterface.get(null, run.getUri()))),
             is(s + "\n" + s + "\n")
         );
         assertThat(run.getUri().getPath(), endsWith(".yml"));

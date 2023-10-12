@@ -57,7 +57,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
-    public List<Trigger> findAll() {
+    public List<Trigger> findAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -92,7 +92,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
-    public ArrayListTotal<Trigger> find(Pageable pageable, String query, String namespace) {
+    public ArrayListTotal<Trigger> find(Pageable pageable, String query, String tenantId, String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -103,7 +103,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .hint(context.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.fullTextCondition(query))
-                    .and(this.defaultFilter());
+                    .and(this.defaultFilter(tenantId));
 
                 if (namespace != null) {
                     select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
@@ -117,6 +117,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
     protected Condition fullTextCondition(String query) {
         return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
+    }
+
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId) ;
     }
 
     @Override

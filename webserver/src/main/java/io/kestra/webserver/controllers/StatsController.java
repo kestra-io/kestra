@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.tenant.TenantService;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
@@ -25,6 +26,9 @@ public class StatsController {
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
 
+    @Inject
+    private TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
@@ -38,6 +42,7 @@ public class StatsController {
         // @TODO: seems to be converted back to utc by micronaut
         return executionRepository.dailyStatistics(
             q,
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
@@ -59,6 +64,7 @@ public class StatsController {
     ) {
         return executionRepository.dailyStatistics(
             q,
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
@@ -82,6 +88,7 @@ public class StatsController {
     ) {
         return executionRepository.dailyGroupByFlowStatistics(
             q,
+            tenantService.resolveTenant(),
             namespace,
             flowId,
             flows != null && flows.get(0).getNamespace() != null && flows.get(0).getId() != null ? flows : null,

@@ -33,16 +33,18 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String id, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
         return this.query(
-            field("execution_id").eq(id)
+            tenantId,
+            field("execution_id").eq(executionId)
             , pageable
         );
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("task_id").eq(taskId)),
             pageable
@@ -50,8 +52,9 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
         return this.query(
+            tenantId,
             field("execution_id").eq(executionId)
                 .and(field("taskrun_id").eq(taskRunId)),
             pageable
@@ -60,10 +63,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public List<String> flowMetrics(
+        String tenantId,
         String namespace,
         String flowId
     ) {
         return this.queryDistinct(
+            tenantId,
             field("flow_id").eq(flowId)
                 .and(field("namespace").eq(namespace)),
             "metric_name"
@@ -72,11 +77,13 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public List<String> taskMetrics(
+        String tenantId,
         String namespace,
         String flowId,
         String taskId
     ) {
         return this.queryDistinct(
+            tenantId,
             field("flow_id").eq(flowId)
                 .and(field("namespace").eq(namespace))
                 .and(field("task_id").eq(taskId)),
@@ -86,10 +93,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public List<String> tasksWithMetrics(
+        String tenantId,
         String namespace,
         String flowId
     ) {
         return this.queryDistinct(
+            tenantId,
             field("flow_id").eq(flowId)
                 .and(field("namespace").eq(namespace)),
             "task_id"
@@ -98,6 +107,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public MetricAggregations aggregateByFlowId(
+        String tenantId,
         String namespace,
         String flowId,
         @Nullable String taskId,
@@ -116,6 +126,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             .builder()
             .aggregations(
                 this.aggregate(
+                    tenantId,
                     conditions,
                     startDate,
                     endDate,
@@ -154,7 +165,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return metric;
     }
 
-    private List<String> queryDistinct(Condition condition, String field) {
+    private List<String> queryDistinct(String tenantId, Condition condition, String field) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -163,7 +174,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     .using(configuration)
                     .selectDistinct(field(field))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 select = select.and(condition);
 
@@ -171,7 +182,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             });
     }
 
-    private ArrayListTotal<MetricEntry> query(Condition condition, Pageable pageable) {
+    private ArrayListTotal<MetricEntry> query(String tenantId, Condition condition, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -180,7 +191,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 select = select.and(condition);
 
@@ -189,6 +200,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     private List<MetricAggregation> aggregate(
+        String tenantId,
         Condition condition,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
@@ -206,7 +218,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                         aggregate(aggregation)
                     )
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
+                    .where(this.defaultFilter(tenantId));
 
                 select = select.and(condition);
 

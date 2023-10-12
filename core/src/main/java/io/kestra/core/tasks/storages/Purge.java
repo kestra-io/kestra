@@ -14,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -99,11 +100,14 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     public Purge.Output run(RunContext runContext) throws Exception {
         ExecutionService executionService = runContext.getApplicationContext().getBean(ExecutionService.class);
 
+        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
+
         ExecutionService.PurgeResult purgeResult = executionService.purge(
             purgeExecution,
             purgeLog,
             purgeMetric,
             purgeStorage,
+            flowVars.get("tenantId"),
             namespace,
             flowId,
             ZonedDateTime.parse(runContext.render(endDate)),

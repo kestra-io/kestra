@@ -27,14 +27,14 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     @EnabledIfEnvironmentVariable(named = "SECRET_MY_SECRET", matches = ".*")
     void getSecret() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "secrets");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
         assertThat(execution.getTaskRunList().get(0).getOutputs().get("value"), is("secretValue"));
     }
 
     @Test
     void getUnknownSecret() {
         IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
-            secretService.findSecret(null, "unknown_secret_key")
+            secretService.findSecret(null, null, "unknown_secret_key")
         );
 
         assertThat(exception.getMessage(), containsString("Unable to find secret 'unknown_secret_key'"));

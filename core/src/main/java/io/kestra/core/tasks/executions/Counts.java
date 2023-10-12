@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -118,7 +119,9 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
             .getApplicationContext()
             .getBean(ExecutionRepositoryInterface.class);
 
+        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(
+            flowVars.get("tenantId"),
             flows,
             this.states,
             startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,

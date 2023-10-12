@@ -18,7 +18,7 @@ public class FetchTest extends AbstractMemoryRunnerTest {
 
     @Test
     void fetch() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "get-log");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "get-log");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(3));
@@ -28,7 +28,7 @@ public class FetchTest extends AbstractMemoryRunnerTest {
 
     @Test
     void fetchWithTaskId() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "get-log-taskid");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "get-log-taskid");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(3));
@@ -38,7 +38,7 @@ public class FetchTest extends AbstractMemoryRunnerTest {
 
     @Test
     void fetchWithExecutionId() throws Exception {
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "get-log-executionid");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "get-log-executionid");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(3));

@@ -23,49 +23,47 @@ public class LocalStorage implements StorageInterface {
     LocalConfig config;
 
     @Inject
-    public LocalStorage(LocalConfig config) {
+    public LocalStorage(LocalConfig config) throws IOException {
         this.config = config;
-        this.createDirectory(null);
-    }
 
-    private Path getPath(URI uri) {
-        return Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.toString());
-    }
-
-    private void createDirectory(URI append) {
-        File file;
-
-        if (append != null) {
-            Path path = Paths.get(config.getBasePath().toAbsolutePath().toString(), append.getPath());
-            file = path.getParent().toFile();
-        } else {
-            file = new File(config.getBasePath().toUri());
+        if (!Files.exists(config.getBasePath())) {
+            Files.createDirectories(config.getBasePath());
         }
+    }
 
-        if (!file.exists()) {
-            if (!file.mkdirs()) {
-                throw new RuntimeException("Cannot create directory: " + file.getAbsolutePath());
+    private Path getPath(String tenantId, URI uri) {
+        return tenantId == null ? Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.toString())
+            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId, uri.toString());
+    }
+
+    private void createDirectory(String tenantId, URI append) {
+        Path path = getPath(tenantId, append);
+        File directory = path.getParent().toFile();
+
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                throw new RuntimeException("Cannot create directory: " + directory.getAbsolutePath());
             }
         }
     }
 
     @Override
-    public InputStream get(URI uri) throws IOException {
-        return new BufferedInputStream(new FileInputStream(getPath(URI.create(uri.getPath()))
+    public InputStream get(String tenantId, URI uri) throws IOException {
+        return new BufferedInputStream(new FileInputStream(getPath(tenantId, URI.create(uri.getPath()))
             .toAbsolutePath()
             .toString())
         );
     }
 
     @Override
-    public boolean exists(URI uri) {
-        return Files.exists(getPath(uri));
+    public boolean exists(String tenantId, URI uri) {
+        return Files.exists(getPath(tenantId, uri));
     }
 
     @Override
-    public Long size(URI uri) throws IOException {
+    public Long size(String tenantId, URI uri) throws IOException {
         try {
-            return Files.size(getPath(URI.create(uri.getPath())));
+            return Files.size(getPath(tenantId, URI.create(uri.getPath())));
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException("Unable to find file at '" + uri + "'");
         } catch (IOException e) {
@@ -74,16 +72,16 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public Long lastModifiedTime(URI uri) throws IOException {
-        FileTime lastModifiedTime = Files.getLastModifiedTime(getPath(uri));
+    public Long lastModifiedTime(String tenantId, URI uri) throws IOException {
+        FileTime lastModifiedTime = Files.getLastModifiedTime(getPath(tenantId, uri));
         return lastModifiedTime.toMillis();
     }
 
     @Override
-    public URI put(URI uri, InputStream data) throws IOException {
-        this.createDirectory(uri);
+    public URI put(String tenantId, URI uri, InputStream data) throws IOException {
+        this.createDirectory(tenantId, uri);
 
-        try (data; OutputStream outStream = new FileOutputStream(getPath(uri).toFile())) {
+        try (data; OutputStream outStream = new FileOutputStream(getPath(tenantId, uri).toFile())) {
             byte[] buffer = new byte[8 * 1024];
             int bytesRead;
             while ((bytesRead = data.read(buffer)) != -1) {
@@ -95,8 +93,8 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public boolean delete(URI uri) throws IOException {
-        File file = getPath(URI.create(uri.getPath())).toFile();
+    public boolean delete(String tenantId, URI uri) throws IOException {
+        File file = getPath(tenantId, URI.create(uri.getPath())).toFile();
         if (!file.exists()) {
             return false;
         }
@@ -106,8 +104,8 @@ public class LocalStorage implements StorageInterface {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    public List<URI> deleteByPrefix(URI storagePrefix) throws IOException {
-        Path path = this.getPath(storagePrefix);
+    public List<URI> deleteByPrefix(String tenantId, URI storagePrefix) throws IOException {
+        Path path = this.getPath(tenantId, storagePrefix);
 
         if (!path.toFile().exists()) {
             return List.of();

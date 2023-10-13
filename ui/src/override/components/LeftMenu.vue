@@ -83,6 +83,9 @@
                         return r;
                     })
             },
+            routeStartWith(route) {
+                return this.$router.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
+            },
             generateMenu() {
                 return [
                     {
@@ -95,6 +98,7 @@
                     },
                     {
                         href: {name: "flows/list"},
+                        routes: this.routeStartWith("flows"),
                         title: this.$t("flows"),
                         icon: {
                             element: FileTreeOutline,
@@ -104,6 +108,7 @@
                     },
                     {
                         href: {name: "templates/list"},
+                        routes: this.routeStartWith("templates"),
                         title: this.$t("templates"),
                         icon: {
                             element: ContentCopy,
@@ -113,6 +118,7 @@
                     },
                     {
                         href: {name: "executions/list"},
+                        routes: this.routeStartWith("executions"),
                         title: this.$t("executions"),
                         icon: {
                             element: TimelineClockOutline,
@@ -121,6 +127,7 @@
                     },
                     {
                         href: {name: "taskruns/list"},
+                        routes: this.routeStartWith("taskruns"),
                         title: this.$t("taskruns"),
                         icon: {
                             element: TimelineTextOutline,
@@ -130,6 +137,7 @@
                     },
                     {
                         href: {name: "logs/list"},
+                        routes: this.routeStartWith("logs"),
                         title: this.$t("logs"),
                         icon: {
                             element: NotebookOutline,
@@ -138,7 +146,7 @@
                     },
                     {
                         href: {name: "blueprints"},
-                        routes: ["blueprints", "blueprints/view"],
+                        routes: this.routeStartWith("blueprints"),
                         title: this.$t("blueprints.title"),
                         icon: {
                             element: Ballot,
@@ -192,6 +200,7 @@
                     },
                     {
                         title: this.$t("administration"),
+                        routes: this.routeStartWith("admin"),
                         icon: {
                             element: AccountSupervisorOutline,
                             class: "menu-icon"
@@ -199,6 +208,7 @@
                         child: [
                             {
                                 href: {name: "admin/triggers"},
+                                routes: this.routeStartWith("admin/triggers"),
                                 title: this.$t("triggers"),
                                 icon: {
                                     element: TimerCogOutline,
@@ -207,6 +217,7 @@
                             },
                             {
                                 href: {name: "admin/workers"},
+                                routes: this.routeStartWith("admin/workers"),
                                 title: this.$t("workers"),
                                 icon: {
                                     element: AccountHardHatOutline,
@@ -217,6 +228,7 @@
                     },
                     {
                         href: {name: "settings"},
+                        routes: this.routeStartWith("admin/settings"),
                         title: this.$t("settings"),
                         icon: {
                             element: CogOutline,

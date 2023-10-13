@@ -149,7 +149,7 @@ public class Worker implements Runnable, AutoCloseable {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
-            RunContext runContext = workerTask.getRunContext().forWorker(applicationContext, workerTask);
+            RunContext runContext = workerTask.getRunContext().forWorkerDirectory(applicationContext, workerTask);
 
             try {
                 workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
@@ -161,7 +161,7 @@ public class Worker implements Runnable, AutoCloseable {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
                         currentTask,
-                        runContext.withWorkerDirectoryTaskrun()
+                        runContext
                     );
 
                     // all tasks will be handled immediately by the worker

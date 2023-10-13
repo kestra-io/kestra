@@ -426,12 +426,18 @@ public class RunContext {
         return forScheduler(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
     }
 
-    public RunContext withWorkerDirectoryTaskrun() {
+    public RunContext forWorkerDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
+        forWorker(applicationContext, workerTask);
+
         Map<String, Object> clone = new HashMap<>(this.variables);
 
         clone.put("workerTaskrun", clone.get("taskrun"));
-        clone.put("parents", clone.get("parents"));
-        clone.put("parent", clone.get("parent"));
+        if (clone.containsKey("parents")) {
+            clone.put("parents", clone.get("parents"));
+        }
+        if (clone.containsKey("parent")) {
+            clone.put("parent", clone.get("parent"));
+        }
 
         this.variables = ImmutableMap.copyOf(clone);
 

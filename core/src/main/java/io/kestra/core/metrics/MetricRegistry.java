@@ -1,6 +1,7 @@
 package io.kestra.core.metrics;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.WorkerTask;
@@ -60,6 +61,7 @@ public class MetricRegistry {
     public final static String TAG_STATE = "state";
     public final static String TAG_ATTEMPT_COUNT = "attempt_count";
     public final static String TAG_WORKER_GROUP = "worker_group";
+    public final static String TAG_TENANT_ID = "tenant_id";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -126,14 +128,14 @@ public class MetricRegistry {
 
     /**
      * Return tags for current {@link WorkerTask}.
-     * We don't include current state since it will breakup the values per state and it's make no sense.
+     * We don't include current state since it will break up the values per state which make no sense.
      *
      * @param workerTask the current WorkerTask
      * @param workerGroup the worker group, optional
      * @return tags to applied to metrics
      */
     public String[] tags(WorkerTask workerTask, String workerGroup, String... tags) {
-        var finalTags = ArrayUtils.addAll(
+        var baseTags = ArrayUtils.addAll(
             ArrayUtils.addAll(
                 this.tags(workerTask.getTask()),
                 tags
@@ -141,7 +143,8 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, workerTask.getTaskRun().getNamespace(),
             TAG_FLOW_ID, workerTask.getTaskRun().getFlowId()
         );
-        return workerGroup != null ? ArrayUtils.addAll(finalTags, TAG_WORKER_GROUP, workerGroup) : finalTags;
+        baseTags = workerGroup == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_WORKER_GROUP, workerGroup);
+        return workerTask.getTaskRun().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTask.getTaskRun().getTenantId());
     }
 
     /**
@@ -151,12 +154,13 @@ public class MetricRegistry {
      * @return tags to applied to metrics
      */
     public String[] tags(WorkerTaskResult workerTaskResult, String... tags) {
-        return ArrayUtils.addAll(
+        var baseTags = ArrayUtils.addAll(
             tags,
             TAG_NAMESPACE_ID, workerTaskResult.getTaskRun().getNamespace(),
             TAG_FLOW_ID, workerTaskResult.getTaskRun().getFlowId(),
             TAG_STATE, workerTaskResult.getTaskRun().getState().getCurrent().name()
         );
+        return workerTaskResult.getTaskRun().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTaskResult.getTaskRun().getTenantId());
     }
 
     /**
@@ -178,11 +182,12 @@ public class MetricRegistry {
      * @return tags to applied to metrics
      */
     public String[] tags(Execution execution) {
-        return new String[]{
+        var baseTags = new String[]{
             TAG_FLOW_ID, execution.getFlowId(),
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
         };
+        return execution.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, execution.getTenantId());
     }
 
     /**
@@ -193,11 +198,12 @@ public class MetricRegistry {
      * @return tags to applied to metrics
      */
     public String[] tags(TriggerContext triggerContext, String workerGroup) {
-        var finalTags = new String[]{
+        var baseTags = new String[]{
             TAG_FLOW_ID, triggerContext.getFlowId(),
             TAG_NAMESPACE_ID, triggerContext.getNamespace()
         };
-        return workerGroup != null ? ArrayUtils.addAll(finalTags, TAG_WORKER_GROUP, workerGroup) : finalTags;
+        baseTags =  workerGroup == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_WORKER_GROUP, workerGroup);
+        return triggerContext.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, triggerContext.getTenantId());
     }
 
     /**
@@ -207,10 +213,7 @@ public class MetricRegistry {
      * @return tags to applied to metrics
      */
     public String[] tags(TriggerContext triggerContext) {
-        return new String[]{
-            TAG_FLOW_ID, triggerContext.getFlowId(),
-            TAG_NAMESPACE_ID, triggerContext.getNamespace(),
-        };
+        return tags(triggerContext, null);
     }
 
     /**

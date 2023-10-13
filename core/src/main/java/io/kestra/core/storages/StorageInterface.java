@@ -30,6 +30,10 @@ public interface StorageInterface {
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(String tenantId, URI uri) throws IOException;
 
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    List<FileAttributes> list(String tenantId, URI uri) throws IOException;
+
+
     /**
      * Whether the uri points to a file/object that exist in the internal storage.
      *
@@ -46,17 +50,41 @@ public interface StorageInterface {
         }
     }
 
+    /**
+     * @deprecated
+     * Use {@link #getAttributes(URI)} instead of individual call for every attribute
+     * @param uri
+     * @return
+     * @throws IOException
+     */
+    @Deprecated
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     Long size(String tenantId, URI uri) throws IOException;
 
+    /**
+     * @deprecated
+     * Use {@link #getAttributes(URI)} instead of individual call for every attribute
+     * @param uri
+     * @return
+     * @throws IOException
+     */
+    @Deprecated
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     Long lastModifiedTime(String tenantId, URI uri) throws IOException;
+
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    FileAttributes getAttributes(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
     URI put(String tenantId, URI uri, InputStream data) throws IOException;
 
     @Retryable(includes = {IOException.class})
     boolean delete(String tenantId, URI uri) throws IOException;
+
+    URI createDirectory(String tenantId, URI uri) throws IOException;
+
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    URI move(String tenantId, URI from, URI to) throws IOException;
 
     @Retryable(includes = {IOException.class})
     List<URI> deleteByPrefix(String tenantId, URI storagePrefix) throws IOException;
@@ -139,6 +167,13 @@ public interface StorageInterface {
         }
 
         return String.join("/", paths);
+    }
+
+    default String namespaceFilePrefix(String namespace) {
+        return String.join("/", List.of(
+            namespace,
+            "files"
+        ));
     }
 
     default Optional<String> extractExecutionId(URI path) {

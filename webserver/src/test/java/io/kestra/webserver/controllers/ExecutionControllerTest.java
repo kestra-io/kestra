@@ -543,6 +543,34 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void webhookWithCondition() {
+        record Hello(String hello) {}
+
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    new Hello("world")
+                ),
+            Execution.class
+        );
+
+        assertThat(execution, notNullValue());
+        assertThat(execution.getId(), notNullValue());
+
+        HttpResponse<Execution> response = client.toBlocking().exchange(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    new Hello("webhook")
+                ),
+            Execution.class
+        );
+        assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
+        assertThat(response.body(), nullValue());
+    }
+
+    @Test
     void resumePaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");

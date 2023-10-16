@@ -11,15 +11,18 @@
 
 ---
 
-### Example Flow Code used during QA
+### How the changes have been QAed?
+
 
 <!-- Include example code that shows how this PR has been QAed. The code should present a complete yet easily reproducible flow. This can be the same flow you used during your QA process.
-
-Note that this is not a replacement for unit tests but rather a way to demonstrate how the changes integrate with the live system, as an end-user would experience it. -->
 
 ```yaml
 # Your example flow code here
 ```
+
+Note that this is not a replacement for unit tests but rather a way to demonstrate how the changes integrate with the live system, as an end-user would experience it.
+
+Remove this section if this change applies to all flows or to the documentation only. -->
 
 ---
 

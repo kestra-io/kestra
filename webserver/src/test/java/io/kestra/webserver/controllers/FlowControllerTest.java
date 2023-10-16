@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -135,6 +136,16 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     void findAll() {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), equalTo(Helpers.FLOWS_COUNT));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void getFlowsByNamespace() throws IOException, URISyntaxException {
+        TestsUtils.loads(repositoryLoader, FlowControllerTest.class.getClassLoader().getResource("flows/getflowsbynamespace"));
+
+        List<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.flowsbynamespace"), Argument.listOf(Flow.class));
+        assertThat(flows.size(), equalTo(2));
+        assertThat(flows.stream().map(Flow::getId).toList(), containsInAnyOrder("getbynamespace-test-flow", "getbynamespace-test-flow2"));
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")

@@ -1,0 +1,12 @@
+id: getbynamespace-test-flow2
+# Comment i added
+namespace: io.kestra.unittest.flowsbynamespace
+inputs:
+  - name: a
+    type: STRING
+tasks:
+  - id: getbynamespace-test2
+    type: io.kestra.core.tasks.debugs.Return
+    format: test
+disabled: false
+deleted: false

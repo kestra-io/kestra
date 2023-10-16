@@ -387,11 +387,19 @@ public class ExecutionController {
         HttpRequest<String> request
     ) {
         Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
-        if (find.isEmpty()) {
+        return webhook(find, key, request);
+    }
+
+    protected HttpResponse<Execution> webhook(
+        Optional<Flow> maybeFlow,
+        String key,
+        HttpRequest<String> request
+    ) {
+        if (maybeFlow.isEmpty()) {
             return HttpResponse.notFound();
         }
 
-        var flow = find.get();
+        var flow = maybeFlow.get();
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute disabled flow");
         }

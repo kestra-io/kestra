@@ -711,9 +711,13 @@ public class RunContext {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder();
 
         if (this.variables.containsKey("flow")) {
+            var flowVars = ((Map<String, String>) this.variables.get("flow"));
             builder
-                .put(MetricRegistry.TAG_FLOW_ID, ((Map<String, String>) this.variables.get("flow")).get("id"))
-                .put(MetricRegistry.TAG_NAMESPACE_ID, ((Map<String, String>) this.variables.get("flow")).get("namespace"));
+                .put(MetricRegistry.TAG_FLOW_ID, flowVars.get("id"))
+                .put(MetricRegistry.TAG_NAMESPACE_ID, flowVars.get("namespace"));
+            if (flowVars.containsKey("tenantId")) {
+                builder.put(MetricRegistry.TAG_TENANT_ID, flowVars.get("tenantId"));
+            }
         }
 
         return builder.build();

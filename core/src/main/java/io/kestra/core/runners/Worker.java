@@ -332,8 +332,7 @@ public class Worker implements Runnable, AutoCloseable {
                             MetricRegistry.METRIC_WORKER_RETRYED_COUNT,
                             metricRegistry.tags(
                                 current.get(),
-                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount()),
-                                MetricRegistry.TAG_WORKER_GROUP, workerGroup
+                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount())
                             )
                         )
                         .increment();
@@ -663,8 +662,7 @@ public class Worker implements Runnable, AutoCloseable {
                                     MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
                                     metricRegistry.tags(
                                         this.workerTask,
-                                        MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount()),
-                                        MetricRegistry.TAG_WORKER_GROUP, workerGroup
+                                        MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
                                     )
                                 )
                                 .increment()

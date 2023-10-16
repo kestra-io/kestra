@@ -435,7 +435,7 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         WorkerTaskResult message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getTaskRun().getTaskId())) {
+        if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
             log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
             return;
         }

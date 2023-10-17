@@ -21,10 +21,6 @@
             EditorView,
         },
         props: {
-            preventRouteInfo: {
-                type: Boolean,
-                default: false
-            },
             isReadOnly: {
                 type: Boolean,
                 default: false

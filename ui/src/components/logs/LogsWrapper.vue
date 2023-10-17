@@ -1,5 +1,6 @@
 <template>
-    <div class="log-panel">
+    <top-nav-bar v-if="!embed" :title="routeInfo.title" />
+    <div :class="{'mt-3': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
                 <template #navbar v-if="embed === false">
@@ -60,6 +61,7 @@
     import LogLine from "../logs/LogLine.vue";
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -72,16 +74,12 @@
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
-        components: {DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton},
+        components: {DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton, TopNavBar},
         props: {
             logLevel: {
                 type: String,
                 default: undefined
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            },
+            }
         },
         data() {
             return {

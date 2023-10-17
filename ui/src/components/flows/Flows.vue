@@ -1,5 +1,42 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar :title="routeInfo.title">
+        <template #additional-right>
+            <ul>
+                <li>
+                    <div class="el-input el-input-file custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importFlows">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importFlows"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importFlows()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <router-link :to="{name: 'flows/search'}">
+                        <el-button :icon="TextBoxSearch">
+                            {{ $t('source search') }}
+                        </el-button>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link :to="{name: 'flows/create'}">
+                        <el-button :icon="Plus" type="primary">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
+                </li>
+            </ul>
+        </template>
+    </top-nav-bar>
+    <div class="mt-3" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -136,42 +173,6 @@
                 </template>
             </data-table>
         </div>
-
-        <bottom-line>
-            <ul>
-                <li>
-                    <div class="el-input el-input-file el-input--large custom-upload">
-                        <div class="el-input__wrapper">
-                            <label for="importFlows">
-                                <Upload />
-                                {{ $t('import') }}
-                            </label>
-                            <input
-                                id="importFlows"
-                                class="el-input__inner"
-                                type="file"
-                                @change="importFlows()"
-                                ref="file"
-                            >
-                        </div>
-                    </div>
-                </li>
-                <li>
-                    <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch" size="large">
-                            {{ $t('source search') }}
-                        </el-button>
-                    </router-link>
-                </li>
-                <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary" size="large">
-                            {{ $t('create') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -193,7 +194,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
@@ -213,7 +214,6 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,
-            BottomLine,
             Eye,
             DataTable,
             SearchField,
@@ -224,7 +224,8 @@
             Kicon,
             Labels,
             Upload,
-            LabelFilter
+            LabelFilter,
+            TopNavBar
         },
         data() {
             return {
@@ -457,3 +458,9 @@
     };
 </script>
 
+<style lang="scss" scoped>
+    :deep(nav .dropdown-menu) {
+        display: flex;
+        width: 20rem;
+    }
+</style>

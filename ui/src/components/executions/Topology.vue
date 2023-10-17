@@ -35,12 +35,6 @@
             ...mapState("execution", ["execution"]),
             ...mapGetters("execution", ["subflowsExecutions"])
         },
-        props: {
-            preventRouteInfo: {
-                type: Boolean,
-                default: false
-            }
-        },
         data() {
             return {
                 previousExecutionId: undefined,
@@ -226,7 +220,7 @@
 </script>
 <style scoped lang="scss">
     .el-card {
-        height: calc(100vh - 300px);
+        height: calc(100vh - 174px);
         position: relative;
 
         :deep(.el-card__body) {

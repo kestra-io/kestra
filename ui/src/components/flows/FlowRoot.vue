@@ -1,34 +1,45 @@
 <template>
-    <div>
-        <div v-if="ready">
-            <FlowDeletedWarn v-if="deleted" @restore-flow="restoreFlow()"/>
-            <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
-            <bottom-line v-if="displayBottomLine()">
+    <template v-if="ready">
+        <top-nav-bar :breadcrumb="routeInfo.breadcrumb">
+            <template #title>
+                <template v-if="deleted"><Alert class="text-warning me-2" />Deleted: </template>
+                <Lock v-else-if="!isAllowedEdit" class="me-2 gray-700" />
+                <span :class="{'body-color': deleted}">{{ routeInfo.title }}</span>
+            </template>
+            <template #additional-right v-if="displayButtons()">
                 <ul>
-                    <li>
-                        <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="deleted">
-                                {{ $t("edit flow") }}
-                            </el-button>
-                        </template>
+                    <li v-if="deleted">
+                        <el-button :icon="BackupRestore" @click="restoreFlow()">
+                            {{ $t("restore") }}
+                        </el-button>
                     </li>
-                    <li>
+                    <li v-if="isAllowedEdit && !deleted && activeTabName !== 'editor'">
+                        <el-button :icon="Pencil" @click="editFlow" :disabled="deleted">
+                            {{ $t("edit flow") }}
+                        </el-button>
+                    </li>
+                    <li v-if="flow && !deleted">
                         <trigger-flow
-                            v-if="flow"
-                            :disabled="flow.disabled || deleted"
+                            type="primary"
+                            :disabled="flow.disabled"
                             :flow-id="flow.id"
                             :namespace="flow.namespace"
                         />
                     </li>
                 </ul>
-            </bottom-line>
+            </template>
+        </top-nav-bar>
+        <div class="mt-3">
+            <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
         </div>
-    </div>
+    </template>
 </template>
 
 <script setup>
     import Pencil from "vue-material-design-icons/Pencil.vue";
-    import FlowDeletedWarn from "./FlowDeletedWarn.vue";
+    import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
+    import Alert from "vue-material-design-icons/Alert.vue";
+    import Lock from "vue-material-design-icons/Lock.vue";
 </script>
 
 <script>
@@ -37,11 +48,11 @@
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
-    import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
@@ -54,9 +65,9 @@
     export default {
         mixins: [RouteContext],
         components: {
-            BottomLine,
             TriggerFlow,
-            Tabs
+            Tabs,
+            TopNavBar
         },
         data() {
             return {
@@ -144,7 +155,7 @@
                         title: this.$t("editor"),
                         props: {
                             expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted
+                            isReadOnly: this.deleted || !this.isAllowedEdit
                         },
                     });
                 }
@@ -198,9 +209,9 @@
 
                 return null;
             },
-            displayBottomLine() {
+            displayButtons() {
                 const name = this.activeTabName();
-                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
+                return name != null && this.canExecute;
             },
             editFlow() {
                 this.$router.push({
@@ -252,9 +263,13 @@
                 return this.getTabs();
             },
             ready() {
-                return this.flow !== undefined;
+                return this.user !== undefined && this.flow !== undefined;
             },
             isAllowedEdit() {
+                if(!this.flow || !this.user) {
+                    return false;
+                }
+
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             canExecute() {
@@ -270,3 +285,11 @@
         }
     };
 </script>
+<style lang="scss" scoped>
+    .gray-700 {
+        color: var(--bs-secondary-color);
+    }
+    .body-color {
+        color: var(--bs-body-color);
+    }
+</style>

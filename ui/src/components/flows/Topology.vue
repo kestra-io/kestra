@@ -27,10 +27,6 @@
             LowCodeEditor,
         },
         props: {
-            preventRouteInfo: {
-                type: Boolean,
-                default: false
-            },
             isReadOnly: {
                 type: Boolean,
                 default: false
@@ -61,7 +57,7 @@
 </script>
 <style scoped lang="scss">
     .el-card {
-        height: calc(100vh - 300px);
+        height: calc(100vh - 174px);
         position: relative;
 
         :deep(.el-card__body) {

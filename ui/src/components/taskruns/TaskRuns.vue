@@ -1,5 +1,6 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar :title="routeInfo.title" />
+    <div class="mt-3" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
                 <el-form-item>
@@ -142,6 +143,7 @@
     import Eye from "vue-material-design-icons/Eye.vue";
     import Status from "../Status.vue";
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -173,7 +175,8 @@
             DateAgo,
             Kicon,
             Id,
-            LabelFilter
+            LabelFilter,
+            TopNavBar
         },
         data() {
             return {

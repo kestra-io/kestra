@@ -1,5 +1,24 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar v-if="!embed" :title="routeInfo.title">
+        <template #additional-right v-if="displayButtons">
+            <ul>
+                <template v-if="$route.name === 'flows/update'">
+                    <li>
+                        <template v-if="isAllowedEdit">
+                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
+                                {{ $t('edit flow') }}
+                            </el-button>
+                        </template>
+                    </li>
+                    <li>
+                        <trigger-flow v-if="flow" :disabled="flow.disabled || isReadOnly" :flow-id="flow.id"
+                                      :namespace="flow.namespace" />
+                    </li>
+                </template>
+            </ul>
+        </template>
+    </top-nav-bar>
+    <div :class="{'mt-3': !embed}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="embed === false">
                 <el-form-item>
@@ -166,24 +185,6 @@
                 </select-table>
             </template>
         </data-table>
-
-        <bottom-line v-if="displayBottomBar">
-            <ul>
-                <template v-if="$route.name === 'flows/update'">
-                    <li>
-                        <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
-                                {{ $t('edit flow') }}
-                            </el-button>
-                        </template>
-                    </li>
-                    <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled || isReadOnly" :flow-id="flow.id"
-                                      :namespace="flow.namespace" />
-                    </li>
-                </template>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -203,6 +204,7 @@
     import Eye from "vue-material-design-icons/Eye.vue";
     import Status from "../Status.vue";
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
     import SearchField from "../layout/SearchField.vue";
@@ -220,7 +222,6 @@
     import State from "../../utils/state";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
-    import BottomLine from "../layout/BottomLine.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
@@ -243,14 +244,10 @@
             Kicon,
             Labels,
             Id,
-            BottomLine,
-            TriggerFlow
+            TriggerFlow,
+            TopNavBar
         },
         props: {
-            embed: {
-                type: Boolean,
-                default: false
-            },
             hidden: {
                 type: Array,
                 default: () => []
@@ -294,7 +291,7 @@
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
                     .add(-30, "days").toISOString(true);
             },
-            displayBottomBar() {
+            displayButtons() {
                 return (this.$route.name === "flows/update");
             },
             canCheck() {

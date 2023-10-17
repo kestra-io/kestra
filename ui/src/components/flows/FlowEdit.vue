@@ -1,7 +1,6 @@
 <template>
-    <div class="edit-flow-div">
-        <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
-        <bottom-line v-if="canSave || canDelete || canExecute">
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+        <template #additional-right v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
                     <el-button :icon="icon.Delete" size="large" v-if="canDelete" @click="deleteFile">
@@ -27,7 +26,10 @@
                     </el-button>
                 </li>
             </ul>
-        </bottom-line>
+        </template>
+    </top-nav-bar>
+    <div class="mt-3 edit-flow-div">
+        <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <div id="guided-right" />
     </div>
 </template>
@@ -40,10 +42,12 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import {shallowRef} from "vue";
+    import TopNavBar from "../layout/TopNavBar.vue"
 
     export default {
         components: {
             TriggerFlow,
+            TopNavBar
         },
         mixins: [flowTemplateEdit],
         data() {

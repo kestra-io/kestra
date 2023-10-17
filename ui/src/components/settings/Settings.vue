@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <top-nav-bar :title="routeInfo.title" />
+    <div class="mt-3">
         <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
                 <el-select :model-value="lang" @update:model-value="onLang">
@@ -135,6 +136,7 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
@@ -150,6 +152,7 @@
         components: {
             NamespaceSelect,
             LogLevelSelector,
+            TopNavBar
         },
         data() {
             return {

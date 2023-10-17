@@ -11,8 +11,6 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
 
-    import BottomLine from "../layout/BottomLine.vue";
-    import TriggerFlow from "../flows/TriggerFlow.vue";
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
@@ -680,9 +678,80 @@
             <template #extends-navbar>
                 <ValidationError ref="validationDomElement" tooltip-placement="bottom-start" size="small" class="ms-2" :error="flowError" :warnings="flowWarnings" />
             </template>
+            <template #buttons>
+                <ul>
+                    <li v-if="isAllowedEdit || canDelete">
+                        <el-dropdown>
+                            <el-button type="default" :disabled="isReadOnly">
+                                <DotsVertical title="" />
+                                {{ $t("actions") }}
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu class="m-dropdown-menu">
+                                    <el-dropdown-item
+                                        v-if="!props.isCreating && canDelete"
+                                        :icon="Delete"
+                                        size="large"
+                                        @click="deleteFlow"
+                                    >
+                                        {{ $t("delete") }}
+                                    </el-dropdown-item>
+
+                                    <el-dropdown-item
+                                        v-if="!props.isCreating"
+                                        :icon="ContentCopy"
+                                        size="large"
+                                        @click="() => router.push({name: 'flows/create', query: {copy: true}})"
+                                    >
+                                        {{ $t("copy") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="isAllowedEdit"
+                                        :icon="Exclamation"
+                                        size="large"
+                                        @click="isNewErrorOpen = true;"
+                                        :disabled="!flowHaveTasks()"
+                                    >
+                                        {{ $t("add global error handler") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="isAllowedEdit"
+                                        :icon="LightningBolt"
+                                        size="large"
+                                        @click="isNewTriggerOpen = true;"
+                                        :disabled="!flowHaveTasks()"
+                                    >
+                                        {{ $t("add trigger") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="isAllowedEdit"
+                                        :icon="FileEdit"
+                                        size="large"
+                                        @click="isEditMetadataOpen = true;"
+                                    >
+                                        {{ $t("edit metadata") }}
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </li>
+                    <li>
+                        <el-button
+                            :icon="ContentSave"
+                            @click="save"
+                            v-if="isAllowedEdit"
+                            :type="flowError ? 'danger' : 'primary'"
+                            :disabled="!haveChange && !isCreating"
+                            class="edit-flow-save-button"
+                        >
+                            {{ $t("save") }}
+                        </el-button>
+                    </li>
+                </ul>
+            </template>
         </editor>
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" :top-navbar="false" prevent-route-info />
+        <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
         <div
             class="topology-display"
             :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : viewType === editorViewTypes.TOPOLOGY ? 'vueflow': 'hide-view'"
@@ -795,98 +864,11 @@
             @switch-view="switchViewType"
         />
     </el-card>
-    <bottom-line v-if="!graphOnly">
-        <ul>
-            <li v-if="isAllowedEdit || canDelete">
-                <el-dropdown>
-                    <el-button size="large" type="default" :disabled="isReadOnly">
-                        <DotsVertical title="" />
-                        {{ t("actions") }}
-                    </el-button>
-                    <template #dropdown>
-                        <el-dropdown-menu class="dropdown-menu">
-                            <el-dropdown-item
-                                v-if="!props.isCreating && canDelete"
-                                class="dropdown-button"
-                                :icon="Delete"
-                                size="large"
-                                @click="deleteFlow"
-                            >
-                                {{ $t("delete") }}
-                            </el-dropdown-item>
-
-                            <el-dropdown-item
-                                v-if="!props.isCreating"
-                                class="dropdown-button"
-                                :icon="ContentCopy"
-                                size="large"
-                                @click="() => router.push({name: 'flows/create', query: {copy: true}})"
-                            >
-                                {{ $t("copy") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item
-                                v-if="isAllowedEdit"
-                                class="dropdown-button"
-                                :icon="Exclamation"
-                                size="large"
-                                @click="isNewErrorOpen = true;"
-                                :disabled="!flowHaveTasks()"
-                            >
-                                {{ $t("add global error handler") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item
-                                v-if="isAllowedEdit"
-                                class="dropdown-button"
-                                :icon="LightningBolt"
-                                size="large"
-                                @click="isNewTriggerOpen = true;"
-                                :disabled="!flowHaveTasks()"
-                            >
-                                {{ $t("add trigger") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item
-                                v-if="isAllowedEdit"
-                                class="dropdown-button"
-                                :icon="FileEdit"
-                                size="large"
-                                @click="isEditMetadataOpen = true;"
-                            >
-                                {{ $t("edit metadata") }}
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
-            </li>
-            <li v-if="flow">
-                <trigger-flow
-                    v-if="!props.isCreating"
-                    ref="triggerFlowDomElement"
-                    type="default"
-                    :disabled="flow.disabled || isReadOnly"
-                    :flow-id="flow.id"
-                    :namespace="flow.namespace"
-                />
-            </li>
-            <li>
-                <el-button
-                    :icon="ContentSave"
-                    size="large"
-                    @click="save"
-                    v-if="isAllowedEdit"
-                    :type="flowError ? 'danger' : 'primary'"
-                    :disabled="!haveChange && !isCreating"
-                    class="edit-flow-save-button"
-                >
-                    {{ $t("save") }}
-                </el-button>
-            </li>
-        </ul>
-    </bottom-line>
 </template>
 
 <style lang="scss" scoped>
     .el-card {
-        height: calc(100vh - 300px);
+        height: calc(100vh - 174px);
         position: relative;
 
         :deep(.el-card__body) {
@@ -946,12 +928,6 @@
 
     .plugin-doc {
         overflow-x: hidden;
-    }
-
-    .dropdown-menu {
-        display: flex;
-        flex-direction: column;
-        width: 20rem;
     }
 
     .slider {

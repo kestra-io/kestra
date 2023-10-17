@@ -1,5 +1,6 @@
 <template>
-    <div v-if="ready">
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <div class="mt-3" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -59,6 +60,7 @@
     import SearchField from "../layout/SearchField.vue";
     import _escape from "lodash/escape"
     import _merge from "lodash/merge";
+    import TopNavBar from "../layout/TopNavBar.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -66,10 +68,11 @@
             NamespaceSelect,
             DataTable,
             SearchField,
+            TopNavBar
         },
         data() {
             return {
-                isDefaultNamespaceAllow: true,
+                isDefaultNamespaceAllow: true
             };
         },
         computed: {

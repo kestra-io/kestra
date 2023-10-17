@@ -1,36 +1,51 @@
 <template>
-    <div>
-        <div v-if="ready">
-            <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
-        </div>
-        <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
+    <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+        <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
-                        <el-button :icon="Api" size="large" type="default">
-                            {{ $t('api') }}
+                    <el-dropdown>
+                        <el-button type="default">
+                            <DotsVertical title="" />
+                            {{ $t("actions") }}
                         </el-button>
-                    </a>
-                </li>
-                <li>
-                    <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteExecution">
-                        {{ $t('delete') }}
-                    </el-button>
+                        <template #dropdown>
+                            <el-dropdown-menu class="m-dropdown-menu">
+                                <a class="el-dropdown-menu__item d-flex gap-2" :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
+                                    <Api /> {{ $t('api') }}
+                                </a>
+                                <el-dropdown-item
+                                    v-if="canDelete"
+                                    :icon="Delete"
+                                    size="large"
+                                    @click="deleteExecution"
+                                >
+                                    {{ $t('delete') }}
+                                </el-dropdown-item>
+
+                                <el-dropdown-item
+                                    v-if="isAllowedEdit"
+                                    :icon="Pencil"
+                                    size="large"
+                                    @click="editFlow"
+                                >
+                                    {{ $t('edit flow') }}
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
                 </li>
                 <li>
                     <template v-if="isAllowedTrigger">
-                        <trigger-flow type="default" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
-                    </template>
-                </li>
-                <li>
-                    <template v-if="isAllowedEdit">
-                        <el-button :icon="Pencil" type="default" size="large" @click="editFlow">
-                            {{ $t('edit flow') }}
-                        </el-button>
+                        <trigger-flow type="primary" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                     </template>
                 </li>
             </ul>
-        </bottom-line>
+        </template>
+    </top-nav-bar>
+    <div class="mt-3">
+        <div v-if="ready">
+            <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
+        </div>
     </div>
 </template>
 
@@ -38,6 +53,7 @@
     import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
 
 <script>
@@ -46,9 +62,9 @@
     import Logs from "./Logs.vue";
     import Topology from "./Topology.vue";
     import ExecutionOutput from "./ExecutionOutput.vue";
-    import BottomLine from "../layout/BottomLine.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -61,9 +77,9 @@
     export default {
         mixins: [RouteContext],
         components: {
-            BottomLine,
             TriggerFlow,
             Tabs,
+            TopNavBar
         },
         data() {
             return {

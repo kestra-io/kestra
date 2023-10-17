@@ -3,9 +3,17 @@
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
+        :readonly="readonly"
     >
+        <template #prefix>
+            <slot name="prefix" />
+        </template>
         <template #suffix>
-            <magnify />
+            <div class="shortcut d-flex">
+                <slot name="suffix">
+                    <magnify />
+                </slot>
+            </div>
         </template>
     </el-input>
 </template>
@@ -30,9 +38,8 @@
                 required: false,
                 default: 'search'
             },
-            embed: {
-                type: Boolean,
-                default: false
+            readonly: {
+                type: Boolean
             }
         },
         watch: {
@@ -49,13 +56,13 @@
         },
         methods: {
             init() {
-                if (this.$route.query.q) {
+                if (this.$route.query.q && this.router) {
                     this.search = this.$route.query.q;
                 }
                 this.searchDebounce = debounce(300, () => {
                     this.$emit("search", this.search);
 
-                    if (this.router && !this.embed) {
+                    if (this.router) {
                         const query = {...this.$route.query, q: this.search, page: 1};
                         if (!this.search) {
                             delete query.q;
@@ -73,3 +80,16 @@
         }
     };
 </script>
+<style lang="scss" scoped>
+    .shortcut {
+        font-size: 0.75rem;
+        line-height: 1.25rem;
+        gap: calc(var(--spacer) / 4);
+    }
+
+    .el-input {
+        :deep(.el-input__prefix), :deep(input)::placeholder {
+            color: var(--bs-body-color);
+        }
+    }
+</style>

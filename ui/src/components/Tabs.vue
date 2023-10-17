@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="tabs-nav">
         <el-tabs class="nav-tabs-flow-root router-link" v-model="activeName">
             <el-tab-pane
                 v-for="tab in tabs"
@@ -17,10 +17,11 @@
             </el-tab-pane>
         </el-tabs>
         <component
-            v-bind="{...activeTab.props, ...$attrs}"
+            v-bind="{...activeTab.props, ...attrsWithoutClass}"
+            v-on="activeTab['v-on'] ?? {}"
             ref="tabContent"
             :is="activeTab.component"
-            :prevent-route-info="true"
+            embed
         />
     </div>
 </template>
@@ -97,6 +98,14 @@
                 return this.tabs
                     .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];
             },
+            // Those are passed to the rendered component
+            // We need to exclude class as it's already applied to this component root div
+            attrsWithoutClass() {
+                return Object.fromEntries(
+                    Object.entries(this.$attrs)
+                        .filter(([key]) => key !== "class")
+                );
+            }
         }
     };
 </script>
@@ -104,7 +113,6 @@
 <style lang="scss" scoped>
     :deep(.el-tabs) {
         .el-tabs__item.is-disabled {
-
             &:after {
                 top: 0;
                 content: "";

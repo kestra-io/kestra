@@ -43,6 +43,10 @@
             color: var(--bs-white) !important;
         }
     }
+
+    &.no-focus {
+        outline: none !important;
+    }
 }
 
 .el-input-group__append, .el-input-group__prepend {
@@ -85,11 +89,7 @@
         display: flex;
         cursor: pointer;
         margin-left: 10px;
-        line-height: 30px;
-
-        .material-design-icon {
-            margin-right: 6px;
-        }
+        gap: calc(var(--spacer) / 2);
     }
 
     input[type="file"] {
@@ -187,12 +187,9 @@ form.ks-horizontal {
         text-align: right;
 
         .el-form-item__content {
-            max-width: 100%;
-            flex: 0 0 100%;
-        }
-
-        .el-button {
-            margin-left: auto;
+            justify-content: end;
+            max-width: unset;
+            flex: 1;
         }
     }
 }
@@ -396,6 +393,10 @@ form.ks-horizontal {
 .el-popper {
     border-radius: $border-radius-lg;
 
+    &.hide-arrow .el-popper__arrow {
+        display: none;
+    }
+
     &.is-light {
         border: 1px solid var(--bs-border-color);
 
@@ -451,8 +452,35 @@ form.ks-horizontal {
 
 // dropdown
 .el-dropdown__popper {
+    font-size: var(--el-font-size-small);
     --el-dropdown-menuItem-hover-fill: var(--bs-gray-300);
     --el-dropdown-menuItem-hover-color: var(--bs-body-color);
+
+    &.separator-m-0 .el-dropdown-menu__item--divided {
+        margin: 0;
+    }
+
+    .m-dropdown-menu {
+        display: flex;
+        flex-direction: column;
+        width: 20rem;
+    }
+
+    // no longer require focus to get hover effect on dropdowns
+    .el-dropdown-menu__item {
+        &:is(li) {
+            display: flex;
+            gap: calc(var(--spacer) / 2);
+
+            i {
+                margin-right: 0;
+            }
+        }
+
+        &:not(.is-disabled):hover {
+            background-color: var(--el-dropdown-menuItem-hover-fill);
+        }
+    }
 }
 
 // drawer

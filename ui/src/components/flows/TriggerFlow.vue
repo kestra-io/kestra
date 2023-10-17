@@ -1,7 +1,7 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="disabled || flow?.deleted" size="large" :type="type" @click="onClick">
-            {{ $t('New execution') }}
+        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="disabled || flow?.deleted" :type="type" @click="onClick">
+            {{ $t('execute') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
             <template #header>

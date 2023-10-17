@@ -26,7 +26,7 @@
         </nav>
 
         <div class="editor-container" ref="container" :class="containerClass">
-            <div ref="editorContainer" class="editor-wrapper">
+            <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor
                     ref="monacoEditor"
                     :theme="themeComputed"
@@ -46,6 +46,9 @@
                     @click="onPlaceholderClick"
                 >
                     {{ placeholder }}
+                </div>
+                <div class="position-absolute bottom-right">
+                    <slot name="buttons" />
                 </div>
             </div>
         </div>
@@ -393,11 +396,11 @@
             display: flex;
 
             &.full-height {
-                height: calc(100vh - 379px);
+                height: calc(100vh - 249px);
             }
 
             &.diff {
-                height: calc(100vh - 435px);
+                height: calc(100vh - 305px);
             }
 
             &.single-line {
@@ -450,6 +453,18 @@
                 }
             }
 
+            .bottom-right {
+                bottom: var(--spacer);
+                right: var(--spacer);
+
+                ul {
+                    display: flex;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    gap: calc(var(--spacer) / 2);
+                }
+            }
         }
     }
 

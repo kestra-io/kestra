@@ -1,5 +1,18 @@
 <template>
-    <div class="home" v-loading="!dailyReady">
+    <top-nav-bar v-if="!embed" :title="routeInfo.title">
+        <template #additional-right>
+            <ul>
+                <li>
+                    <router-link :to="{name: 'flows/create'}">
+                        <el-button :icon="Plus" type="primary">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
+                </li>
+            </ul>
+        </template>
+    </top-nav-bar>
+    <div :class="{'mt-3': !embed}" class="home" v-loading="!dailyReady">
         <div v-if="displayCharts">
             <collapse>
                 <el-form-item v-if="!flowId && !namespaceRestricted">
@@ -105,7 +118,7 @@
                     <trigger-flow v-if="flowId" :disabled="!isAllowedTrigger" :flow-id="flowId" :namespace="namespace" />
                     <router-link v-else :to="{name: 'flows/list'}">
                         <el-button size="large" type="primary">
-                            {{ $t('New execution') }}
+                            {{ $t('execute') }}
                         </el-button>
                     </router-link>
                 </el-row>
@@ -114,6 +127,11 @@
         </div>
     </div>
 </template>
+
+<script setup>
+    import Plus from "vue-material-design-icons/Plus.vue";
+</script>
+
 <script>
     import Collapse from "../layout/Collapse.vue";
     import RouteContext from "../../mixins/routeContext";
@@ -133,6 +151,7 @@
     import action from "../../models/action";
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import DateRange from "../layout/DateRange.vue";
+    import TopNavBar from "../layout/TopNavBar.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -147,7 +166,8 @@
             HomeSummaryLog,
             HomeSummaryNamespace,
             HomeDescription,
-            TriggerFlow
+            TriggerFlow,
+            TopNavBar
         },
         props: {
             namespace: {
@@ -161,7 +181,7 @@
             description: {
                 type: String,
                 default: undefined
-            },
+            }
         },
         created() {
             this.loadStats();
@@ -367,6 +387,8 @@
 </script>
 
 <style lang="scss" scoped>
+    @import "@kestra-io/ui-libs/src/scss/variables";
+
     .home {
         .auto-height {
             .el-card {

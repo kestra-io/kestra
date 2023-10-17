@@ -1,8 +1,6 @@
 <template>
-    <templates-deprecated />
-    <div>
-        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
-        <bottom-line v-if="canSave || canDelete">
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+        <template #additional-right v-if="canSave || canDelete">
             <ul>
                 <li>
                     <el-button :icon="Delete" size="large" type="default" v-if="canDelete" @click="deleteFile">
@@ -16,7 +14,11 @@
                     </template>
                 </li>
             </ul>
-        </bottom-line>
+        </template>
+    </top-nav-bar>
+    <templates-deprecated />
+    <div class="mt-3">
+        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
     </div>
 </template>
 
@@ -24,6 +26,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import TemplatesDeprecated from "./TemplatesDeprecated.vue";
+    import TopNavBar from "../layout/TopNavBar.vue"
 </script>
 
 <script>

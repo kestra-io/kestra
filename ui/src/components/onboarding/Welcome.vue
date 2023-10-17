@@ -1,5 +1,5 @@
 <template>
-    <el-col class="mt-4">
+    <el-col class="m-5">
         <div>
             <h1>{{ $t('welcome aboard') }}</h1>
             <h4>

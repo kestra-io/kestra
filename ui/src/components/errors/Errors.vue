@@ -1,5 +1,6 @@
 <template>
-    <div class="errors">
+    <top-nav-bar :title="routeInfo.title"/>
+    <div class="mt-3 errors">
         <div class="img" />
         <h2>{{ $t("errors." + code + ".title") }}</h2>
 
@@ -11,9 +12,11 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
 
     export default {
         mixins: [RouteContext],
+        components: {TopNavBar},
         props: {
             code: {
                 type: Number,

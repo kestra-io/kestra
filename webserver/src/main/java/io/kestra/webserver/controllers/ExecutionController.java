@@ -130,9 +130,6 @@ public class ExecutionController {
     @Inject
     private TenantService tenantService;
 
-    @Inject
-    private MultipleConditionStorageInterface multipleConditionStorageInterface;
-
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for executions")
@@ -441,7 +438,8 @@ public class ExecutionController {
         }
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
-        if (!conditionService.isValid(webhook.get(), flow, result, multipleConditionStorageInterface)) {
+        var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
+        if (!conditionService.isValid(flow, webhook.get(), conditionContext)) {
             return HttpResponse.noContent();
         }
 

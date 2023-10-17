@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.validations.WebhookValidation;
 import io.micronaut.http.HttpRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -32,10 +33,10 @@ import javax.validation.constraints.Size;
 @Schema(
     title = "Trigger a flow from a webhook",
     description = """
-        Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on a presence of events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key that will secure your webhook URL. 
-        
+        Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on a presence of events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key that will secure your webhook URL.
+
         The URL will then follow the following format: `https://{your_hostname}/api/v1/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values accordingly to your workflow setup.
-        
+
         The webhook URL accepts `GET`, `POST` and `PUT` requests.
 
         You can access the request body and headers sent by another application using the following template variables:
@@ -45,7 +46,9 @@ import javax.validation.constraints.Size;
         The webhook response will be one of the following HTTP status codes:
         - 404 if the namespace, flow or webhook key is not found
         - 200 if the webhook triggers an execution
-        - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application."""
+        - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application.
+
+        A Webhook trigger can have conditions but it didn't support conditions of type `MultipleCondition`."""
 )
 @Plugin(
     examples = {
@@ -76,6 +79,7 @@ import javax.validation.constraints.Size;
         )
     }
 )
+@WebhookValidation
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
     @Size(max = 256)
     @NotNull

@@ -6,22 +6,21 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.types.Schedule;
+import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.log.Log;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,6 +62,11 @@ class LocalStorageTest {
     }
 
     @Test
+    void getNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.get(null, new URI("/storage/level1/..")));
+    }
+
+    @Test
     void missing() {
         String prefix = IdUtils.create();
 
@@ -101,6 +105,10 @@ class LocalStorageTest {
             storageInterface.get(null, new URI("/" + prefix + "/storage/put.yml"));
         });
     }
+    @Test
+    void putNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.put(null, new URI("/storage/level1/.."), null));
+    }
 
     @Test
     void deleteByPrefix() throws Exception {
@@ -138,6 +146,11 @@ class LocalStorageTest {
 
         List<URI> deleted = storageInterface.deleteByPrefix(null, new URI("/" + prefix + "/storage/"));
         assertThat(deleted.size(), is(0));
+    }
+
+    @Test
+    void deleteByPrefixNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.deleteByPrefix(null, new URI("/storage/level1/..")));
     }
 
     @Test
@@ -200,5 +213,155 @@ class LocalStorageTest {
         prefix = storageInterface.outputPrefix(triggerContext, trigger, "execution");
         assertThat(prefix, notNullValue());
         assertThat(prefix.toString(), is("///namespace/flow/executions/execution/trigger/trigger"));
+    }
+
+    @Test
+    void list() throws Exception {
+        String prefix = IdUtils.create();
+
+        URL resource = LocalStorageTest.class.getClassLoader().getResource("application.yml");
+
+        List<String> path = Arrays.asList(
+            "/" + prefix + "/storage/root.yml",
+            "/" + prefix + "/storage/root2.yml",
+            "/" + prefix + "/storage/level1/1.yml",
+            "/" + prefix + "/storage/level1/level2/1.yml"
+        );
+        path.forEach(throwConsumer(s -> this.putFile(resource, s)));
+
+        List<FileAttributes> files = storageInterface.list(null, new URI("/" + prefix + "/storage/"));
+
+        assertThat(files,
+            containsInAnyOrder(
+                allOf(
+                    hasProperty("fileName", is("root.yml")),
+                    hasProperty("type", is(FileAttributes.FileType.File))
+                ),
+                allOf(
+                    hasProperty("fileName", is("root2.yml")),
+                    hasProperty("type", is(FileAttributes.FileType.File))
+                ),
+                allOf(
+                    hasProperty("fileName", is("level1")),
+                    hasProperty("type", is(FileAttributes.FileType.Directory))
+                )
+            )
+        );
+    }
+
+    @Test
+    void listNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.list(null, new URI("/storage/level1/..")));
+    }
+
+    @Test
+    void list_NotFound() {
+        assertThrows(FileNotFoundException.class, () -> storageInterface.list(null, new URI("/unknown.yml")));
+    }
+
+    @Test
+    void getAttributes() throws Exception {
+        String prefix = IdUtils.create();
+
+        URL resource = LocalStorageTest.class.getClassLoader().getResource("application.yml");
+
+        List<String> path = Arrays.asList(
+            "/" + prefix + "/storage/root.yml",
+            "/" + prefix + "/storage/level1/1.yml"
+        );
+        path.forEach(throwConsumer(s -> this.putFile(resource, s)));
+        FileAttributes rootyml = storageInterface.getAttributes(null, new URI("/" + prefix + "/storage/root.yml"));
+        assertThat(rootyml.getFileName(), is("root.yml"));
+        assertThat(rootyml.getType(), is(FileAttributes.FileType.File));
+
+        FileAttributes level1 = storageInterface.getAttributes(null, new URI("/" + prefix + "/storage/level1"));
+        assertThat(level1.getFileName(), is("level1"));
+        assertThat(level1.getType(), is(FileAttributes.FileType.Directory));
+    }
+
+    @Test
+    void getAttributesNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.getAttributes(null, new URI("/storage/level1/..")));
+    }
+
+    @Test
+    void getAttributes_NotFound() {
+        assertThrows(FileNotFoundException.class, () -> storageInterface.getAttributes(null, new URI("/unknown.yml")));
+    }
+
+    @Test
+    void createDirectory() throws URISyntaxException, IOException {
+        String prefix = IdUtils.create();
+        storageInterface.createDirectory(null, new URI("/" + prefix + "/storage"));
+        FileAttributes level1 = storageInterface.getAttributes(null, new URI("/" + prefix + "/storage"));
+        assertThat(level1.getFileName(), is("storage"));
+        assertThat(level1.getType(), is(FileAttributes.FileType.Directory));
+    }
+
+    @Test
+    void createDirectoryNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.createDirectory(null, new URI("/storage/level1/..")));
+    }
+
+    @Test
+    void move() throws Exception {
+        String prefix = IdUtils.create();
+
+        URL resource = LocalStorageTest.class.getClassLoader().getResource("application.yml");
+
+        List<String> path = Arrays.asList(
+            "/" + prefix + "/storage/root.yml",
+            "/" + prefix + "/storage/root2.yml",
+            "/" + prefix + "/storage/level1/1.yml",
+            "/" + prefix + "/storage/level1/level2/1.yml"
+        );
+        path.forEach(throwConsumer(s -> this.putFile(resource, s)));
+
+        storageInterface.move(null, new URI("/" + prefix + "/storage/level1"), new URI("/" + prefix + "/storage/lvl1"));
+        FileAttributes level1 = storageInterface.getAttributes(null, new URI("/" + prefix + "/storage/lvl1"));
+        assertThat(level1.getFileName(), is("lvl1"));
+        assertThat(level1.getType(), is(FileAttributes.FileType.Directory));
+
+        assertThat(storageInterface.exists(null, new URI("/" + prefix + "/storage/lvl1/1.yml")), is(true));
+        assertThat(storageInterface.exists(null, new URI("/" + prefix + "/storage/level1")), is(false));
+        assertThat(storageInterface.exists(null, new URI("/" + prefix + "/storage/level1/1.yml")), is(false));
+    }
+
+    @Test
+    void moveNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.move(null, new URI("/storage/level1/.."), new URI("/storage/level1/")));
+    }
+
+    @Test
+    void move_NotFound() {
+        assertThrows(FileNotFoundException.class, () -> storageInterface.move(null, new URI("/unknown.yml"), new URI("/unknown2.yml")));
+    }
+
+    @Test
+    void delete() throws Exception {
+        String prefix = IdUtils.create();
+
+        URL resource = LocalStorageTest.class.getClassLoader().getResource("application.yml");
+
+        List<String> path = Arrays.asList(
+            "/" + prefix + "/storage/level1/1.yml",
+            "/" + prefix + "/storage/level1/level2/1.yml"
+        );
+        path.forEach(throwConsumer(s -> this.putFile(resource, s)));
+        storageInterface.delete(null, new URI("/" + prefix + "/storage/level1"));
+
+        assertThat(storageInterface.exists(null, new URI("/" + prefix + "/storage/level1")), is(false));
+        assertThat(storageInterface.exists(null, new URI("/" + prefix + "/storage/level1/1.yml")), is(false));
+        assertThat(storageInterface.exists(null, new URI("/" + prefix + "/storage/level1/level2")), is(false));
+    }
+
+    @Test
+    void deleteNoTraversal() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> storageInterface.delete(null, new URI("/storage/level1/..")));
+    }
+
+    @Test
+    void delete_NotFound_DoesNotThrow() throws URISyntaxException, IOException {
+        storageInterface.delete(null, new URI("/unknown.yml"));
     }
 }

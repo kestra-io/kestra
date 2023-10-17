@@ -47,6 +47,7 @@
     import FlowRevisions from "./FlowRevisions.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
@@ -62,6 +63,7 @@
     import yamlUtils from "../../utils/yamlUtils";
 
     export default {
+        mixins: [RouteContext],
         components: {
             TriggerFlow,
             Tabs,

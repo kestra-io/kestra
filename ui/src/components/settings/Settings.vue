@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="$t('settings')" />
+    <top-nav-bar :title="routeInfo.title" />
     <div class="mt-3">
         <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
@@ -135,6 +135,7 @@
 </script>
 
 <script>
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
@@ -147,6 +148,7 @@
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
     export default {
+        mixins: [RouteContext],
         components: {
             NamespaceSelect,
             LogLevelSelector,
@@ -299,6 +301,11 @@
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("auth", ["user"]),
             ...mapGetters("misc", ["configs"]),
+            routeInfo() {
+                return {
+                    title: this.$t("settings")
+                };
+            },
             langOptions() {
                 return [
                     {value: "en", text: "English"},

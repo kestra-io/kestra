@@ -868,7 +868,7 @@
 
 <style lang="scss" scoped>
     .el-card {
-        height: calc(100vh - 158px);
+        height: calc(100vh - 174px);
         position: relative;
 
         :deep(.el-card__body) {

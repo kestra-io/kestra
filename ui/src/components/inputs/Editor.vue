@@ -396,11 +396,11 @@
             display: flex;
 
             &.full-height {
-                height: calc(100vh - 233px);
+                height: calc(100vh - 249px);
             }
 
             &.diff {
-                height: calc(100vh - 289px);
+                height: calc(100vh - 305px);
             }
 
             &.single-line {

@@ -7,7 +7,7 @@
             :filters="filters"
             :restore-url="false"
             log-level="WARN"
-            :embed="true"
+            embed
         />
     </el-card>
 </template>

@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="$t('home')">
+    <top-nav-bar v-if="!embed" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -134,6 +134,7 @@
 
 <script>
     import Collapse from "../layout/Collapse.vue";
+    import RouteContext from "../../mixins/routeContext";
     import StateGlobalChart from "../stats/StateGlobalChart.vue";
     import {mapState} from "vuex";
     import _cloneDeep from "lodash/cloneDeep"
@@ -153,7 +154,7 @@
     import TopNavBar from "../layout/TopNavBar.vue";
 
     export default {
-        mixins: [RestoreUrl],
+        mixins: [RouteContext, RestoreUrl],
         components: {
             DateRange,
             OnboardingBottom,
@@ -180,9 +181,6 @@
             description: {
                 type: String,
                 default: undefined
-            },
-            embed: {
-                type: Boolean
             }
         },
         created() {
@@ -328,6 +326,11 @@
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
             ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("home"),
+                };
+            },
             defaultFilters() {
                 return {
                     startDate: this.$moment(this.startDate).toISOString(true),

@@ -1,6 +1,6 @@
 <template>
-    <top-nav-bar :title="$t('source search')" :breadcrumb="breadcrumb" />
-    <div v-if="ready">
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <div class="mt-3" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -53,6 +53,7 @@
 <script>
     import {mapState} from "vuex";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
@@ -62,7 +63,7 @@
     import TopNavBar from "../layout/TopNavBar.vue";
 
     export default {
-        mixins: [RestoreUrl, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             NamespaceSelect,
             DataTable,
@@ -71,19 +72,24 @@
         },
         data() {
             return {
-                isDefaultNamespaceAllow: true,
-                breadcrumb: [
-                    {
-                        label: this.$t("flows"),
-                        link: {
-                            name: "flows/list",
-                        }
-                    },
-                ]
+                isDefaultNamespaceAllow: true
             };
         },
         computed: {
-            ...mapState("flow", ["search", "total"])
+            ...mapState("flow", ["search", "total"]),
+            routeInfo() {
+                return {
+                    title: this.$t("source search"),
+                    breadcrumb: [
+                        {
+                            label: this.$t("flows"),
+                            link: {
+                                name: "flows/list",
+                            }
+                        },
+                    ]
+                };
+            }
         },
         methods: {
             sanitize(content) {

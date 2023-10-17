@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="$t('templates')">
+    <top-nav-bar :title="routeInfo.title">
         <template #additional-right v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
                 <li>
@@ -30,7 +30,7 @@
         </template>
     </top-nav-bar>
     <templates-deprecated />
-    <div v-if="ready">
+    <div class="mt-3" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -134,6 +134,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
@@ -146,7 +147,7 @@
     import SelectTableActions from "../../mixins/selectTableActions";
 
     export default {
-        mixins: [RestoreUrl, DataTableActions, SelectTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             Eye,
             DataTable,
@@ -168,6 +169,11 @@
             ...mapState("template", ["templates", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("templates")
+                };
+            },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ);
             },

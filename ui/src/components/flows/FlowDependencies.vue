@@ -186,7 +186,7 @@
 
 <style lang="scss" scoped>
     .el-card {
-        height: calc(100vh - 300px);
+        height: calc(100vh - 174px);
         :deep(.el-card__body) {
             height: 100%;
         }

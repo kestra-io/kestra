@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <div>
+    <div class="mt-3">
         <el-row :gutter="15">
             <el-col :span="18" class="markdown" v-loading="isLoading">
                 <markdown v-if="plugin && $route.params.cls" :source="plugin.markdown" :permalink="true" />
@@ -18,12 +18,14 @@
 </template>
 
 <script>
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import Markdown from "../layout/Markdown.vue"
     import Toc from "./Toc.vue"
     import {mapState} from "vuex";
 
     export default {
+        mixins: [RouteContext],
         components: {
             Markdown,
             Toc,
@@ -33,7 +35,7 @@
             ...mapState("plugin", ["plugin", "plugins"]),
             routeInfo() {
                 return {
-                    title: this.$route.params.cls ? this.$route.params.cls : this.$t('plugins.names'),
+                    title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
                     breadcrumb: [
                         {
                             label: this.$t("plugins.names"),

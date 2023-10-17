@@ -56,7 +56,7 @@
         },
         methods: {
             init() {
-                if (this.$route.query.q) {
+                if (this.$route.query.q && this.router) {
                     this.search = this.$route.query.q;
                 }
                 this.searchDebounce = debounce(300, () => {

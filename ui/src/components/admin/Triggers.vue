@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="$t('triggers')" />
+    <top-nav-bar :title="routeInfo.title" />
     <div class="mt-3" v-if="ready">
         <div>
             <data-table
@@ -124,6 +124,7 @@
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
     import SearchField from "../layout/SearchField.vue";
     import DataTable from "../layout/DataTable.vue";
@@ -133,7 +134,7 @@
     import {mapState} from "vuex";
 
     export default {
-        mixins: [RestoreUrl, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             RefreshButton,
             MarkdownTooltip,
@@ -186,7 +187,12 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"])
+            ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("triggers")
+                }
+            }
         }
     };
 </script>

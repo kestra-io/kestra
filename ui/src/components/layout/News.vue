@@ -1,5 +1,5 @@
 <template>
-    <el-button class="news-link" text @click="show">
+    <el-button class="news-link" @click="show">
         <bell title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </el-button>

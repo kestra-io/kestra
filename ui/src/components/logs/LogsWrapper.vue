@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="$t('logs')" />
+    <top-nav-bar v-if="!embed" :title="routeInfo.title" />
     <div :class="{'mt-3': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
@@ -60,6 +60,7 @@
 <script>
     import LogLine from "../logs/LogLine.vue";
     import {mapState} from "vuex";
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
@@ -72,17 +73,13 @@
     import _merge from "lodash/merge";
 
     export default {
-        mixins: [RestoreUrl, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton, TopNavBar},
         props: {
             logLevel: {
                 type: String,
                 default: undefined
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            },
+            }
         },
         data() {
             return {
@@ -94,6 +91,11 @@
         },
         computed: {
             ...mapState("log", ["logs", "total", "level"]),
+            routeInfo() {
+                return {
+                    title: this.$t("logs"),
+                };
+            },
             isFlowEdit() {
                 return this.$route.name === "flows/update"
             },

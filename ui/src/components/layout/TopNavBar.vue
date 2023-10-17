@@ -19,7 +19,7 @@
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons">
                 <el-dropdown popper-class="hide-arrow overflow-hidden">
-                    <el-button text class="no-focus dropdown-button">
+                    <el-button class="no-focus dropdown-button">
                         <HelpBox />
                     </el-button>
                     <template #dropdown>

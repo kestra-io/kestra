@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="$t('blueprints.title')" />
+    <top-nav-bar v-if="!embed" :title="routeInfo.title" />
     <blueprints-page-header v-if="!embed" class="ms-0 mw-100"/>
     <div :class="{'mt-3': !embed}" class="main-container" v-bind="$attrs">
         <blueprint-detail v-if="selectedBlueprintId" :embed="embed" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined" />
@@ -7,6 +7,7 @@
     </div>
 </template>
 <script>
+    import RouteContext from "../../../../mixins/routeContext";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import SearchField from "../../../../components/layout/SearchField.vue";
     import DataTable from "../../../../components/layout/DataTable.vue";
@@ -16,6 +17,7 @@
     import {apiUrl} from "override/utils/route";
 
     export default {
+        mixins: [RouteContext],
         inheritAttrs: false,
         components: {
             SearchField,
@@ -30,13 +32,12 @@
                 selectedBlueprintId: undefined
             }
         },
-        props: {
-            embed: {
-                type: Boolean,
-                default: false
-            }
-        },
         computed: {
+            routeInfo() {
+                return {
+                    title: this.$t("blueprints.title")
+                };
+            },
             blueprintUri() {
                 return `${apiUrl(this.$store)}/blueprints/community`
             }

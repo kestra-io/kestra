@@ -28,7 +28,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div class="edit-flow-div">
+    <div class="mt-3 edit-flow-div">
         <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
         <div id="guided-right" />
     </div>

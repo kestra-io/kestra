@@ -54,8 +54,6 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
 </script>
 
 <script>
@@ -65,6 +63,7 @@
     import Topology from "./Topology.vue";
     import ExecutionOutput from "./ExecutionOutput.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
@@ -76,6 +75,7 @@
     import {apiUrl} from "override/utils/route"
 
     export default {
+        mixins: [RouteContext],
         components: {
             TriggerFlow,
             Tabs,

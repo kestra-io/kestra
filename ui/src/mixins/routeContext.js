@@ -1,23 +1,21 @@
 export default {
     props: {
-        topNavbar: {
+        embed: {
             type: Boolean,
-            default: true
+            default: false
         }
     },
     mounted() {
-        this.handleBreadcrumb()
+        this.handleTitle()
     },
     watch: {
         $route() {
-            this.handleBreadcrumb()
+            this.handleTitle()
         }
     },
     methods: {
-        handleBreadcrumb() {
-            if (!this.preventRouteInfo) {
-                this.$store.commit("layout/setTopNavbar", this.topNavbar ? this.routeInfo : undefined);
-
+        handleTitle() {
+            if(!this.embed) {
                 let baseTitle;
 
                 if (document.title.lastIndexOf("|") > 0) {

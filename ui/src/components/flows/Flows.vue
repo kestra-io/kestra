@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="$t('flows')">
+    <top-nav-bar :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -185,12 +185,6 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Exclamation from "vue-material-design-icons/Exclamation.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import FileEdit from "vue-material-design-icons/FileEdit.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
 
 <script>
@@ -201,6 +195,7 @@
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -216,7 +211,7 @@
     import LabelFilter from "../labels/LabelFilter.vue";
 
     export default {
-        mixins: [RestoreUrl, DataTableActions, SelectTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,
             Eye,
@@ -246,6 +241,11 @@
             ...mapState("flow", ["flows", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("flows")
+                };
+            },
             endDate() {
                 return new Date();
             },

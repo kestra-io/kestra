@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="$t('flows')" />
+    <top-nav-bar :title="routeInfo.title" />
     <div class="mt-3">
         <editor-view
             :flow-id="defaultFlowTemplate.id"
@@ -20,9 +20,11 @@
 <script>
     import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapState} from "vuex";
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
 
     export default {
+        mixins: [RouteContext],
         components: {
             EditorView,
             TopNavBar
@@ -52,6 +54,11 @@ tasks:
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flow", "flowError", "flowDeprecations"]),
+            routeInfo() {
+                return {
+                    title: this.$t("flows")
+                };
+            },
         },
         beforeRouteLeave(to, from, next) {
             this.$store.commit("flow/setFlow", null);

@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="$t('executions')">
+    <top-nav-bar v-if="!embed" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'flows/update'">
@@ -203,6 +203,7 @@
     import DataTable from "../layout/DataTable.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
     import Status from "../Status.vue";
+    import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
@@ -226,7 +227,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
     export default {
-        mixins: [RestoreUrl, DataTableActions, SelectTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             Status,
             Eye,
@@ -247,10 +248,6 @@
             TopNavBar
         },
         props: {
-            embed: {
-                type: Boolean,
-                default: false
-            },
             hidden: {
                 type: Array,
                 default: () => []
@@ -278,6 +275,11 @@
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
+            routeInfo() {
+                return {
+                    title: this.$t("executions")
+                };
+            },
             endDate() {
                 // used to be able to force refresh the base interval when auto-reloading
                 this.recomputeInterval;

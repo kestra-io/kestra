@@ -147,7 +147,7 @@
                 this.filter = undefined;
             },
             onDebugExpression(taskRunId, expression) {
-                this.$http.post(`${apiUrl(this)}/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
+                this.$http.post(`${apiUrl(this.$store)}/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
                     headers: {
                         "Content-type": "text/plain",
                     }

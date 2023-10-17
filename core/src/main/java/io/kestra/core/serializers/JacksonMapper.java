@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactoryBuilder;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -84,6 +83,10 @@ abstract public class JacksonMapper {
 
     public static Object toObject(String json) throws JsonProcessingException {
         return MAPPER.readValue(json, TYPE_REFERENCE_OBJECT);
+    }
+
+    public static <T> T cast(Object object, Class<T> cls) throws JsonProcessingException {
+        return MAPPER.readValue(MAPPER.writeValueAsString(object), cls);
     }
 
     public static <T> String log(T Object) {

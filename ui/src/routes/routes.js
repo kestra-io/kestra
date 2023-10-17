@@ -22,8 +22,8 @@ import Workers from "../components/admin/Workers.vue";
 
 export default [
     //Flows
-    {name: "home", path: "/", component: Home},
-    {name: "welcome", path: "/welcome", component: Welcome},
+    {name: "home", path: "/:tenant?/", component: Home},
+    {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},
     {name: "flows/search", path: "/:tenant?/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/:tenant?/flows/new", component: FlowCreate},

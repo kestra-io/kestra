@@ -9,3 +9,5 @@ export const baseUrl = root;
 export const basePath = () => `/api/v1`
 
 export const apiUrl = () => `${baseUrl}${basePath()}`
+
+export const apiUrlWithoutTenants = () => `${baseUrl}/api/v1`

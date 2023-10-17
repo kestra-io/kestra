@@ -152,6 +152,13 @@ You can write workflows directly from the UI. When writing your workflows, the U
 - topology view (view of your dependencies in a Directed Acyclic Graph) that get updated live as you modify and add new tasks.
 
 
+## Stay up to date
+
+We release new versions every month. Give the repository a star to stay up to date with the latest releases and get notified about future updates.
+
+![Star the repo](https://kestra.io/star.gif)
+
+
 ## Getting Started
 
 Follow the steps below to start local development.

@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import io.kestra.core.models.conditions.types.MultipleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
@@ -47,7 +48,7 @@ public abstract class AbstractFlowTriggerService {
             // prevent recursive flow triggers
             .filter(flow -> flowService.removeUnwanted(flow, execution))
             // ensure flow & triggers are enabled
-            .filter(flow -> !flow.isDisabled())
+            .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             // validate flow triggers conditions excluding multiple conditions
             .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)))

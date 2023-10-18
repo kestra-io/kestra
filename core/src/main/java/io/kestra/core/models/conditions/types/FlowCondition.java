@@ -21,7 +21,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a specific flow"
+    title = "Condition for a specific flow. Note that this condition is deprecated, use `ExecutionFlowCondition` instead.",
 )
 @Plugin(
     examples = {

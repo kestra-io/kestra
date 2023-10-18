@@ -13,7 +13,7 @@
                             {{ $t("restore") }}
                         </el-button>
                     </li>
-                    <li v-if="isAllowedEdit && !deleted && activeTabName !== 'editor'">
+                    <li v-if="isAllowedEdit && !deleted && activeTabName() !== 'editor'">
                         <el-button :icon="Pencil" @click="editFlow" :disabled="deleted">
                             {{ $t("edit flow") }}
                         </el-button>

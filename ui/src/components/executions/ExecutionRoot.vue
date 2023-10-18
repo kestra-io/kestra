@@ -2,42 +2,25 @@
     <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
-                <li>
-                    <el-dropdown>
-                        <el-button type="default">
-                            <DotsVertical title="" />
-                            {{ $t("actions") }}
+                <li v-if="isAllowedEdit">
+                    <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
+                        <el-button :icon="Api">
+                            {{ $t('api') }}
                         </el-button>
-                        <template #dropdown>
-                            <el-dropdown-menu class="m-dropdown-menu">
-                                <a class="el-dropdown-menu__item d-flex gap-2" :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
-                                    <Api /> {{ $t('api') }}
-                                </a>
-                                <el-dropdown-item
-                                    v-if="canDelete"
-                                    :icon="Delete"
-                                    size="large"
-                                    @click="deleteExecution"
-                                >
-                                    {{ $t('delete') }}
-                                </el-dropdown-item>
-
-                                <el-dropdown-item
-                                    v-if="isAllowedEdit"
-                                    :icon="Pencil"
-                                    size="large"
-                                    @click="editFlow"
-                                >
-                                    {{ $t('edit flow') }}
-                                </el-dropdown-item>
-                            </el-dropdown-menu>
-                        </template>
-                    </el-dropdown>
+                    </a>
                 </li>
-                <li>
-                    <template v-if="isAllowedTrigger">
-                        <trigger-flow type="primary" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
-                    </template>
+                <li v-if="canDelete">
+                    <el-button :icon="Delete" @click="deleteExecution">
+                        {{ $t('delete') }}
+                    </el-button>
+                </li>
+                <li v-if="isAllowedEdit">
+                    <el-button :icon="Pencil" @click="editFlow">
+                        {{ $t("edit flow") }}
+                    </el-button>
+                </li>
+                <li v-if="isAllowedTrigger">
+                    <trigger-flow type="primary" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
             </ul>
         </template>
@@ -53,7 +36,6 @@
     import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
 
 <script>

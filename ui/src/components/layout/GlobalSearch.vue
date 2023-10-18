@@ -1,5 +1,5 @@
 <template>
-    <el-dropdown trigger="click" popper-class="hide-arrow overflow-hidden separator-m-0 global-search-popper">
+    <el-dropdown class="flex-shrink-0" trigger="click" popper-class="hide-arrow overflow-hidden separator-m-0 global-search-popper">
         <search-field class="align-items-center" @search="search" :router="false" ref="search" placeholder="jump to...">
             <template #prefix>
                 <magnify />

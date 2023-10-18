@@ -2,11 +2,13 @@ package io.kestra.core.validations;
 
 import com.cronutils.model.Cron;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.conditions.types.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.tasks.flows.Dag;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.tasks.flows.WorkingDirectory;
@@ -277,6 +279,25 @@ public class ValidationFactory {
 
             context.messageTemplate("Worker Group is an Enterprise Edition functionality");
             return false;
+        };
+    }
+
+    @Singleton
+    ConstraintValidator<WebhookValidation, Webhook> webhookValidator() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            if (value.getConditions() != null) {
+                if (value.getConditions().stream().anyMatch(condition -> condition instanceof MultipleCondition)) {
+                    context.messageTemplate("invalid webhook: conditions of type MultipleCondition are not supported");
+
+                    return false;
+                }
+            }
+
+            return true;
         };
     }
 }

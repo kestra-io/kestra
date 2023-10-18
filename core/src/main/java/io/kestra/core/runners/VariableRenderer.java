@@ -97,6 +97,11 @@ public class VariableRenderer {
             return null;
         }
 
+        if (inline.indexOf('{') == -1) {
+            // it's not a Pebble template so we short-circuit rendering
+            return inline;
+        }
+
         // pre-process raw tags
         Matcher rawMatcher = RAW_PATTERN.matcher(inline);
         Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));

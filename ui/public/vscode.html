@@ -61,12 +61,13 @@
                 path: "mathcale.vscode-unpkg.net/mathcale/theme-dracula-refined/2.24.3/extension"
             },
             {
-                scheme: "https",
-                path: "redhat.vscode-unpkg.net/redhat/vscode-yaml/1.14.0/extension"
+                scheme: window.location.protocol.replace(":", ""),
+                authority: window.location.host,
+                path: KESTRA_UI_PATH + "yamlExt"
             },
             {
                 scheme: "https",
-                path: "kestra-io.vscode-unpkg.net/kestra-io/kestra/0.1.0/extension"
+                path: "kestra-io.vscode-unpkg.net/kestra-io/kestra/0.1.1/extension"
             }
         ],
         enabledExtensions: [
@@ -80,7 +81,7 @@
             "files.autoSave": "off",
             "workbench.colorTheme": THEME === "dark" ? "Dracula Refined" : "Default Light Modern",
             // provide the Kestra root URL to extension
-            "kestra.api.url": KESTRA_BASE_PATH
+            "kestra.root.url": KESTRA_BASE_PATH
         }
     };
 </script>

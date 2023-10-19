@@ -46,6 +46,22 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <el-select
+                        v-model="displayColumns"
+                        multiple
+                        collapse-tags
+                        collapse-tags-tooltip
+                        @change="onDisplayColumnsChange($event)"
+                    >
+                        <el-option
+                            v-for="col in optionalColumns"
+                            :key="col.label"
+                            :label="$t(col.label)"
+                            :value="col.prop"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
                     <label-filter
                         :model-value="$route.query.labels"
                         @update:model-value="onDataTableValue('labels', $event)"
@@ -78,7 +94,7 @@
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
-                    :selectable="!hidden.includes('selection') && canCheck"
+                    :selectable="!hidden?.includes('selection') && canCheck"
                 >
                     <template #select-actions>
                         <bulk-select
@@ -100,14 +116,14 @@
                         </bulk-select>
                     </template>
                     <template #default>
-                        <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom"
+                        <el-table-column prop="id" sortable="custom"
                                          :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <id :value="scope.row.id" :shrink="true" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.startDate" v-if="!hidden.includes('state.startDate')"
+                        <el-table-column prop="state.startDate" v-if="displayColumn('state.startDate')"
                                          sortable="custom"
                                          :sort-orders="['ascending', 'descending']" :label="$t('start date')">
                             <template #default="scope">
@@ -115,31 +131,32 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.endDate" v-if="!hidden.includes('state.endDate')" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('end date')">
+                        <el-table-column prop="state.endDate" v-if="displayColumn('state.endDate')" sortable="custom"
+                                         :sort-orders="['ascending', 'descending']"
+:label="$t('end date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.state.endDate" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.duration" v-if="!hidden.includes('state.duration')"
+                        <el-table-column prop="state.duration" v-if="displayColumn('state.duration')"
                                          sortable="custom"
                                          :sort-orders="['ascending', 'descending']" :label="$t('duration')">
                             <template #default="scope">
                                 <span v-if="isRunning(scope.row)">{{
                                         $filters.humanizeDuration(durationFrom(scope.row))
-                                    }}</span>
+                                }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>
 
-                        <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')"
+                        <el-table-column v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
                                          prop="namespace"
                                          sortable="custom" :sort-orders="['ascending', 'descending']"
                                          :label="$t('namespace')"
                                          :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
-                        <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')"
+                        <el-table-column v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
                                          prop="flowId"
                                          sortable="custom" :sort-orders="['ascending', 'descending']"
                                          :label="$t('flow')">
@@ -151,23 +168,55 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column v-if="!hidden.includes('labels')" :label="$t('labels')">
+                        <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
                                 <labels :labels="scope.row.labels" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.current" v-if="!hidden.includes('state.current')" sortable="custom"
+                        <el-table-column prop="state.current" v-if="displayColumn('state.current')" sortable="custom"
                                          :sort-orders="['ascending', 'descending']" :label="$t('state')">
                             <template #default="scope">
                                 <status :status="scope.row.state.current" size="small" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="triggers" v-if="!hidden.includes('triggers')" :label="$t('triggers')"
+                        <el-table-column prop="triggers" v-if="displayColumn('triggers')" :label="$t('triggers')"
                                          class-name="shrink">
                             <template #default="scope">
                                 <trigger-avatar :execution="scope.row" />
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column prop="flowRevision" v-if="displayColumn('flowRevision')" :label="$t('revision')"
+                                         class-name="shrink">
+                            <template #default="scope">
+                                <code>{{ scope.row.flowRevision }}</code>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column prop="inputs" v-if="displayColumn('inputs')" :label="$t('inputs')" align="center">
+                            <template #default="scope" >
+                                <el-tooltip>
+                                    <template #content>
+                                        <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, '\t') }}</pre>
+                                    </template>
+                                    <Import v-if="scope.row.inputs" class="fs-5"/>
+                                </el-tooltip>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column prop="taskRunList.taskId" v-if="displayColumn('taskRunList.taskId')" :label="$t('task id')">
+                            <template #header="scope">
+                                <el-tooltip :content="$t('taskid column details')">
+                                    {{ scope.column.label }}
+                                </el-tooltip>
+                            </template>
+                            <template #default="scope">
+                                <code>
+                                    {{ scope.row.taskRunList.slice(-1)[0].taskId }}
+                                    {{ scope.row.taskRunList.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList.slice(-1)[0].attempts.length})` : '' }}
+                                </code>
                             </template>
                         </el-table-column>
 
@@ -195,6 +244,7 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Import from "vue-material-design-icons/Import.vue";
     import Utils from "../../utils/utils";
 </script>
 
@@ -225,6 +275,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -250,7 +301,7 @@
         props: {
             hidden: {
                 type: Array,
-                default: () => []
+                default: null
             },
             statuses: {
                 type: Array,
@@ -267,8 +318,65 @@
                 dailyReady: false,
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined,
-                recomputeInterval: false
+                recomputeInterval: false,
+                optionalColumns: [
+                    {
+                        label: "start date",
+                        prop: "state.startDate"
+                    },
+                    {
+                        label: "end date",
+                        prop: "state.endDate"
+                    },
+                    {
+                        label: "duration",
+                        prop: "state.duration"
+                    },
+                    {
+                        label: "state",
+                        prop: "state.current"
+                    },
+                    {
+                        label: "triggers",
+                        prop: "triggers"
+                    },
+                    {
+                        label: "labels",
+                        prop: "labels"
+                    },
+                    {
+                        label: "inputs",
+                        prop: "inputs"
+                    },
+                    {
+                        label: "namespace",
+                        prop: "namespace"
+                    },
+                    {
+                        label: "flow",
+                        prop: "flowId"
+                    },
+                    {
+                        label: "revision",
+                        prop: "flowRevision"
+                    },
+                    {
+                        label: "task id",
+                        prop: "taskRunList.taskId"
+                    }
+                ],
+                displayColumns: [],
+                storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS
             };
+        },
+        created() {
+            // allow to have different storage key for flow executions list
+            if (this.$route.name === "flows/update") {
+                this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
+                this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
+            }
+            this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
+                || this.optionalColumns.map(col => col.prop);
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
@@ -308,6 +416,13 @@
             }
         },
         methods: {
+            onDisplayColumnsChange(event) {
+                localStorage.setItem("displayExecutionsColumns", event);
+                this.displayColumns = event;
+            },
+            displayColumn(column) {
+                return this.hidden ? !this.hidden.includes(column) : this.displayColumns.includes(column);
+            },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
                 this.load();

@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +42,11 @@ public class TaskRun {
 
     String parentTaskRunId;
 
+    @With
     String value;
+
+    @With
+    URI items;
 
     @With
     List<TaskRunAttempt> attempts;
@@ -69,6 +74,7 @@ public class TaskRun {
             this.taskId,
             this.parentTaskRunId,
             this.value,
+            this.items,
             this.attempts,
             this.outputs,
             this.state.withState(state)
@@ -85,6 +91,7 @@ public class TaskRun {
             .taskId(this.getTaskId())
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
             .value(this.getValue())
+            .items(this.getItems())
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)
@@ -128,7 +135,7 @@ public class TaskRun {
     public TaskRun onRunningResend() {
         TaskRunBuilder taskRunBuilder = this.toBuilder();
 
-        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.size() == 0) {
+        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.isEmpty()) {
             taskRunBuilder.attempts = new ArrayList<>();
 
             taskRunBuilder.attempts.add(TaskRunAttempt.builder()
@@ -172,7 +179,7 @@ public class TaskRun {
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
-            ", attemps=" + this.getAttempts() +
+            ", attempts=" + this.getAttempts() +
             ")";
     }
 

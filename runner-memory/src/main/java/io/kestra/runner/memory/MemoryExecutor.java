@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -250,18 +251,31 @@ public class MemoryExecutor implements ExecutorInterface {
 
             // worker task execution
             if (conditionService.isTerminatedWithListeners(flow, execution) && WORKERTASKEXECUTIONS_WATCHER.containsKey(execution.getId())) {
-                WorkerTaskExecution workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
+                WorkerTaskExecution<?> workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
 
                 // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
                 if (workerTaskExecution.getTask().getWait()) {
                     Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                    WorkerTaskResult workerTaskResult = workerTaskExecution
-                        .getTask()
-                        .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+                    ExecutableTask<?> executableTask = workerTaskExecution.getTask();
+
+                RunContext runContext = runContextFactory.of(
+                    workerTaskFlow,
+                    workerTaskExecution.getTask(),
+                        execution,
+                    workerTaskExecution.getTaskRun()
+                );
+                try {
+                    WorkerTaskResult workerTaskResult = executableTask
+                        .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
 
                     this.workerTaskResultQueue.emit(workerTaskResult);
                 }
+                catch (Exception e) {
+                    // TODO maybe create a FAILED Worker Task Result instead<>
+                    log.error("Unable to create the Worker Task Result", e);
+                }
+
 
                 WORKERTASKEXECUTIONS_WATCHER.remove(execution.getId());
             }

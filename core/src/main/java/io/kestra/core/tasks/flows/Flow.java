@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -11,14 +12,13 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
@@ -46,7 +46,7 @@ import java.util.*;
         )
     }
 )
-public class Flow extends Task implements RunnableTask<Flow.Output> {
+public class Flow extends Task implements ExecutableTask<Flow.Output> {
     @NotNull
     @Schema(
         title = "The namespace of the flow that should be executed as a subflow"
@@ -112,11 +112,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @PluginProperty(dynamic = true)
     private Map<String, Object> outputs;
 
-    @Override
-    public Flow.Output run(RunContext runContext) throws Exception {
-        throw new IllegalStateException("This task should not be executed by a worker and must run on executor side.");
-    }
-
     public String flowUid() {
         // as the Flow task can only be used in the same tenant we can hardcode null here
         return io.kestra.core.models.flows.Flow.uid(null, this.getNamespace(), this.getFlowId(), Optional.ofNullable(this.revision));
@@ -128,7 +123,8 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     }
 
     @SuppressWarnings("unchecked")
-    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws Exception {
+    @Override
+    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws InternalException {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
 
         Map<String, Object> inputs = new HashMap<>();
@@ -189,27 +185,26 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             );
     }
 
+    @Override
+    public List<TaskRun> createTaskRun(RunContext runContext, Execution currentExecution, TaskRun executionTaskRun) {
+        return List.of(executionTaskRun);
+    }
+
+    @Override
     public WorkerTaskResult createWorkerTaskResult(
-        @Nullable RunContextFactory runContextFactory,
-        WorkerTaskExecution workerTaskExecution,
-        @Nullable io.kestra.core.models.flows.Flow flow,
+        RunContext runContext,
+        WorkerTaskExecution<?> workerTaskExecution,
+        io.kestra.core.models.flows.Flow flow,
         Execution execution
     ) {
         TaskRun taskRun = workerTaskExecution.getTaskRun();
 
         Output.OutputBuilder builder = Output.builder()
-            .executionId(execution.getId());
-
-        if (workerTaskExecution.getTask().getOutputs() != null && runContextFactory != null) {
-            RunContext runContext = runContextFactory.of(
-                flow,
-                workerTaskExecution.getTask(),
-                execution,
-                workerTaskExecution.getTaskRun()
-            );
-
+            .executionId(execution.getId())
+            .state(execution.getState().getCurrent());
+        if (this.getOutputs() != null) {
             try {
-                builder.outputs(runContext.render(workerTaskExecution.getTask().getOutputs()));
+                builder.outputs(runContext.render(this.getOutputs()));
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '" + e.getMessage() + "'", e);
                 taskRun = taskRun
@@ -223,23 +218,16 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
-        builder.state(execution.getState().getCurrent());
-
         taskRun = taskRun.withOutputs(builder.build().toMap());
 
-        if (transmitFailed &&
-            (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
-        ) {
-            taskRun = taskRun.withState(execution.getState().getCurrent());
-        } else {
-            taskRun = taskRun.withState(State.Type.SUCCESS);
-        }
+        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed));
 
-        return WorkerTaskResult.builder()
-            .taskRun(taskRun.withAttempts(
-                Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(taskRun.getState().getCurrent())).build())
-            ))
-            .build();
+        return ExecutableUtils.workerTaskResult(taskRun);
+    }
+
+    @Override
+    public boolean waitForExecution() {
+        return this.wait;
     }
 
     @Builder

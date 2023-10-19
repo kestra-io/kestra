@@ -9,6 +9,8 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.ExecutableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -317,7 +319,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
                     .forEach(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask));
 
-                // WorkerTask not flowable to workerTaskResult as Running
+                // WorkerTask flowable to workerTaskResult as Running
                 workerTasksDedup
                     .stream()
                     .filter(workerTask -> workerTask.getTask().isFlowable())
@@ -353,7 +355,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             workerTaskExecution.getExecution()
                                 .getNamespace() + "'.'" + workerTaskExecution.getExecution().getFlowId() +
                             "' with id '" + workerTaskExecution.getExecution()
-                            .getId() + "' from task '" + workerTaskExecution.getTask().getId() +
+                            .getId() + "' from task '" + ((Task) workerTaskExecution.getTask()).getId() +
                             "' and taskrun '" + workerTaskExecution.getTaskRun().getId() +
                             (workerTaskExecution.getTaskRun()
                                 .getValue() != null ? " (" + workerTaskExecution.getTaskRun()
@@ -390,11 +392,23 @@ public class JdbcExecutor implements ExecutorInterface {
                         if (workerTaskExecution.getTask().getWait()) {
                             Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                            WorkerTaskResult workerTaskResult = workerTaskExecution
-                                .getTask()
-                                .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+                            ExecutableTask<?> executableTask = (ExecutableTask<?>) workerTaskExecution.getTask();
+
+                        RunContext runContext = runContextFactory.of(
+                            workerTaskFlow,
+                            workerTaskExecution.getTask(),
+                                execution,
+                            workerTaskExecution.getTaskRun()
+                        );
+                        try {
+                            WorkerTaskResult workerTaskResult = executableTask
+                                .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
 
                             this.workerTaskResultQueue.emit(workerTaskResult);
+                        }
+                        catch (Exception e) {
+                            // TODO maybe create a FAILED Worker Task Result instead
+                            log.error("Unable to create the Worker Task Result", e);
                         }
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);
@@ -620,7 +634,8 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
-        String deduplicationKey = taskRun.getId();
+        // FIXME we fake multiple executions by passing the same taskrun with different value/items so we deduplicate with the value
+        String deduplicationKey = taskRun.getId() + "-" + taskRun.getValue();
         State.Type current = executorState.getWorkerTaskExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {

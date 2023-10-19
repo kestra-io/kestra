@@ -184,7 +184,7 @@ Alternatively, you can use `wget https://raw.githubusercontent.com/kestra-io/kes
 Start Kestra:
 
 ```sh
-docker-compose up
+docker compose up
 ```
 
 

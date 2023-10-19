@@ -107,7 +107,7 @@ public abstract class AbstractExecutionServiceTest {
 
         assertThat(purge.getExecutionsCount(), is(1));
         assertThat(purge.getLogsCount(), is(10));
-        assertThat(purge.getStoragesCount(), is(1));
+        assertThat(purge.getStoragesCount(), is(5));
 
 
         purge = executionService.purge(

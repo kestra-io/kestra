@@ -5,7 +5,6 @@ import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
 import java.net.URI;
@@ -14,7 +13,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -35,8 +33,8 @@ public class LocalStorage implements StorageInterface {
 
     private Path getPath(String tenantId, URI uri) {
         parentTraversalGuard(uri);
-        return tenantId == null ? Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.toString())
-            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId, uri.toString());
+        return tenantId == null ? Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.getPath())
+            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId, uri.getPath());
     }
 
     @Override
@@ -112,17 +110,15 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public FileAttributes getAttributes(String tenantId, URI uri) throws IOException {
-        BasicFileAttributes basicFileAttributes;
         Path path = getPath(tenantId, uri);
         try {
-            basicFileAttributes = Files.readAttributes(path, BasicFileAttributes.class);
+            return LocalFileAttributes.builder()
+                .fileName(path.getFileName().toString())
+                .basicFileAttributes(Files.readAttributes(path, BasicFileAttributes.class))
+                .build();
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException(e.getMessage());
         }
-        return LocalFileAttributes.builder()
-            .fileName(path.getFileName().toString())
-            .basicFileAttributes(basicFileAttributes)
-            .build();
     }
 
     @Override
@@ -155,7 +151,7 @@ public class LocalStorage implements StorageInterface {
         Path path = getPath(tenantId, URI.create(uri.getPath()));
         File file = path.toFile();
 
-        if(file.isDirectory()) {
+        if (file.isDirectory()) {
             FileUtils.deleteDirectory(file);
             return true;
         }
@@ -174,12 +170,18 @@ public class LocalStorage implements StorageInterface {
 
         try (Stream<Path> walk = Files.walk(path)) {
             return walk.sorted(Comparator.reverseOrder())
-                .map(r -> Pair.of(r.toFile(), r.toFile().isFile()))
-                .peek(r -> r.getLeft().delete())
-                .filter(Pair::getRight)
-                .map(r -> URI.create("kestra://" + r.getLeft().toURI().getPath().substring(config.getBasePath().toAbsolutePath().toString().length())))
-                .collect(Collectors.toList());
+                .map(Path::toFile)
+                .peek(File::delete)
+                .map(r -> getKestraUri(tenantId, r.toPath()))
+                .toList();
         }
+    }
+
+    private URI getKestraUri(String tenantId, Path path) {
+        Path prefix = (tenantId == null) ?
+            config.getBasePath().toAbsolutePath() :
+            Path.of(config.getBasePath().toAbsolutePath().toString(), tenantId);
+        return URI.create("kestra:///" + prefix.relativize(path));
     }
 
     private void parentTraversalGuard(URI uri) {

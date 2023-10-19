@@ -28,7 +28,7 @@ export default [
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
 
     //Namespace file editor
-    {name: "editor", path: "/:namespace?/editor", component: Editor},
+    {name: "editor", path: "/:tenant?/editor/:namespace?", component: Editor},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},

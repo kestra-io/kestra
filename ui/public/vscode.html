@@ -16,7 +16,7 @@
             .map(str => str.split("="))
     );
     const KESTRA_UI_PATH = queryParams["KESTRA_UI_PATH"];
-    const KESTRA_BASE_PATH = queryParams["KESTRA_BASE_PATH"];
+    const KESTRA_API_URL = queryParams["KESTRA_API_URL"];
     const THEME = queryParams["THEME"];
     Object.keys(window.webPackagePaths).map(function (key) {
         window.webPackagePaths[key] = `${window.location.origin}${KESTRA_UI_PATH}vscode-web/dist/node_modules/${key}/${window.webPackagePaths[key]}`;
@@ -67,7 +67,7 @@
             },
             {
                 scheme: "https",
-                path: "kestra-io.vscode-unpkg.net/kestra-io/kestra/0.1.1/extension"
+                path: "kestra-io.vscode-unpkg.net/kestra-io/kestra/0.1.2/extension"
             }
         ],
         enabledExtensions: [
@@ -81,7 +81,7 @@
             "files.autoSave": "off",
             "workbench.colorTheme": THEME === "dark" ? "Dracula Refined" : "Default Light Modern",
             // provide the Kestra root URL to extension
-            "kestra.root.url": KESTRA_BASE_PATH
+            "kestra.api.url": KESTRA_API_URL
         }
     };
 </script>

@@ -23,7 +23,7 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
-    import {baseUrl} from "override/utils/route";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -47,7 +47,7 @@
             },
             vscodeIndexUrl() {
                 const uiSubpath = KESTRA_UI_PATH === "./" ? "/" : KESTRA_UI_PATH;
-                return `${uiSubpath}vscode.html?KESTRA_UI_PATH=${uiSubpath}&KESTRA_BASE_PATH=${baseUrl}&THEME=${this.theme}&namespace=${this.namespace}`;
+                return `${uiSubpath}vscode.html?KESTRA_UI_PATH=${uiSubpath}&KESTRA_API_URL=${apiUrl(this.$store)}&THEME=${this.theme}&namespace=${this.namespace}`;
             },
             namespace() {
                 return this.$route.params.namespace;

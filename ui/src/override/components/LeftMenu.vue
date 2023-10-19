@@ -85,7 +85,7 @@
                 return [
                     {
                         href: {name: "home"},
-                        title: this.$t("home"),
+                        title: this.$t("homeDashboard.title"),
                         icon: {
                             element: ViewDashboardVariantOutline,
                             class: "menu-icon",

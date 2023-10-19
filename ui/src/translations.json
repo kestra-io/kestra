@@ -282,6 +282,7 @@
     },
     "cancel": "Cancel",
     "homeDashboard": {
+      "title": "Dashboard",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -798,6 +799,7 @@
     },
     "cancel": "Annuler",
     "homeDashboard": {
+      "title": "Tableau de bord",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "last28Days": "Dernier 28 jours",

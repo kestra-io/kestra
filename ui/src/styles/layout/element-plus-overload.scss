@@ -483,6 +483,41 @@ form.ks-horizontal {
     }
 }
 
+// autocomplete
+.el-autocomplete {
+
+    .el-input {
+        height: 100%;
+    }
+
+    .el-input__prefix, .el-input__inner, .el-input__inner::placeholder {
+        color: var(--bs-body-color);
+    }
+
+    .el-input__suffix-inner {
+        gap: calc(var(--spacer) / 2);
+
+        > span:not(.material-design-icon) {
+            font-size: 0.75rem;
+            line-height: 1.25rem;
+        }
+    }
+}
+.el-autocomplete-suggestion {
+    .el-autocomplete-suggestion__wrap {
+        max-height: 40vh;
+    }
+    li {
+        --el-fill-color-light: var(--bs-gray-300);
+        padding: 0 var(--spacer);
+
+        a {
+            color: var(--bs-body-color);
+            justify-content: space-between;
+        }
+    }
+}
+
 // drawer
 .el-drawer {
     &.ltr,

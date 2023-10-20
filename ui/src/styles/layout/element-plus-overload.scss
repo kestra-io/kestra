@@ -464,6 +464,11 @@ form.ks-horizontal {
         display: flex;
         flex-direction: column;
         width: 20rem;
+        padding: 0;
+    }
+    
+    .el-dropdown-menu {
+        padding: 0;
     }
 
     // no longer require focus to get hover effect on dropdowns

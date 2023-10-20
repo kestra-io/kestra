@@ -14,7 +14,7 @@
                 </slot>
             </h1>
         </div>
-        <div class="d-flex side gap-2">
+        <div class="d-flex side gap-2 flex-shrink-0">
             <global-search />
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons">
@@ -123,9 +123,9 @@
 
         h1 {
             line-height: 1.6;
-            max-width: 40ch;
             flex-wrap: wrap;
             white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .side {

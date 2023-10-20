@@ -22,7 +22,8 @@ import Workers from "../components/admin/Workers.vue";
 
 export default [
     //Flows
-    {name: "home", path: "/:tenant?/", component: Home},
+    {name: "root", path: '/', redirect: {name: 'home'}},
+    {name: "home", path: "/:tenant?/dashboard", component: Home},
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},
     {name: "flows/search", path: "/:tenant?/flows/search", component: FlowsSearch},
@@ -42,8 +43,8 @@ export default [
     {name: "blueprints/view", path: "/:tenant?/blueprints/:blueprintId", component: BlueprintDetail, props: true},
 
     //Documentation
-    {name: "plugins/list", path: "/plugins", component: Plugin},
-    {name: "plugins/view", path: "/plugins/:cls", component: Plugin},
+    {name: "plugins/list", path: "/:tenant?/plugins", component: Plugin},
+    {name: "plugins/view", path: "/:tenant?/plugins/:cls", component: Plugin},
 
     //Templates
     {name: "templates/list", path: "/:tenant?/templates", component: Templates},
@@ -54,7 +55,7 @@ export default [
     {name: "logs/list", path: "/:tenant?/logs", component: LogsWrapper},
 
     //Settings
-    {name: "settings", path: "/settings", component: Settings},
+    {name: "settings", path: "/:tenant?/settings", component: Settings},
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: Triggers},

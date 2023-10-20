@@ -328,7 +328,7 @@
             ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
-                    title: this.$t("home"),
+                    title: this.$t("homeDashboard.title"),
                 };
             },
             defaultFilters() {

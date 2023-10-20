@@ -60,6 +60,7 @@ public class Extension extends AbstractExtension {
         filters.put("timestampMicro", new TimestampMicroFilter());
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
+        filters.put("sh", new ShFilter());
         filters.put("json", new JsonFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());

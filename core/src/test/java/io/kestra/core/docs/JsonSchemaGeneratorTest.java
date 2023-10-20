@@ -17,6 +17,7 @@ import io.kestra.core.tasks.flows.Dag;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -185,7 +186,8 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         System.out.println(generate);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(3));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(4));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
     }
 
     @SuppressWarnings("unchecked")
@@ -198,7 +200,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    private static class TaskWithEnum extends Task implements RunnableTask<VoidOutput>  {
+    private static class TaskWithEnum extends ParentClass implements RunnableTask<VoidOutput>  {
 
         @PluginProperty
         @Schema(title = "Title from the attribute")
@@ -230,5 +232,16 @@ class JsonSchemaGeneratorTest {
             @Schema(title = "Test property")
             public String testProperty;
         }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    private static abstract class ParentClass extends Task {
+        @PluginProperty
+        @Builder.Default
+        private String stringWithDefault = "default";
     }
 }

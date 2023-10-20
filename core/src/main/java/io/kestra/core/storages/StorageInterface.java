@@ -37,7 +37,7 @@ public interface StorageInterface {
     /**
      * Whether the uri points to a file/object that exist in the internal storage.
      *
-     * @param uri the URI of the file/object in the internal storage.
+     * @param uri      the URI of the file/object in the internal storage.
      * @param tenantId the tenant identifier.
      * @return true if the uri points to a file/object that exist in the internal storage.
      */
@@ -51,22 +51,20 @@ public interface StorageInterface {
     }
 
     /**
-     * @deprecated
-     * Use {@link #getAttributes(URI)} instead of individual call for every attribute
      * @param uri
      * @return
      * @throws IOException
+     * @deprecated Use {@link #getAttributes(URI)} instead of individual call for every attribute
      */
     @Deprecated
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     Long size(String tenantId, URI uri) throws IOException;
 
     /**
-     * @deprecated
-     * Use {@link #getAttributes(URI)} instead of individual call for every attribute
      * @param uri
      * @return
      * @throws IOException
+     * @deprecated Use {@link #getAttributes(URI)} instead of individual call for every attribute
      */
     @Deprecated
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
@@ -81,6 +79,7 @@ public interface StorageInterface {
     @Retryable(includes = {IOException.class})
     boolean delete(String tenantId, URI uri) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     URI createDirectory(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
@@ -125,7 +124,7 @@ public interface StorageInterface {
             )
         );
 
-        if(flowId != null) {
+        if (flowId != null) {
             paths.add(Slugify.of(flowId));
         }
 
@@ -214,7 +213,7 @@ public interface StorageInterface {
         return this.from(flow, execution, input.getName(), file);
     }
 
-    default URI outputPrefix(Flow flow)  {
+    default URI outputPrefix(Flow flow) {
         try {
             return new URI("//" + fromParts(
                 flow.getNamespace().replace(".", "/"),

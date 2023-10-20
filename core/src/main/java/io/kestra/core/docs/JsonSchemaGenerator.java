@@ -1,6 +1,7 @@
 package io.kestra.core.docs;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.members.HierarchicType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -451,17 +452,15 @@ public class JsonSchemaGenerator {
         // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
-            Class<?> abstractBaseCls = baseCls;
-            Optional<Map.Entry<Class<?>, Object>> derivedOne = defaultInstances
-                .entrySet()
+            // we must retrieve the instance class that leads to this field in this abstract class.
+            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overriden)
+            Optional<HierarchicType> concreteCls = target.getDeclaringTypeMembers().mainTypeAndOverrides()
                 .stream()
-                .filter(e -> !Modifier.isAbstract(e.getKey().getModifiers()))
-                .filter(e -> abstractBaseCls.isAssignableFrom(e.getKey()))
+                .filter(type -> !type.isMixin())
                 .findFirst();
 
-            if (derivedOne.isPresent()) {
-                defaultInstances.put(baseCls, derivedOne.get());
-                baseCls = derivedOne.get().getKey();
+            if (concreteCls.isPresent()) {
+                baseCls = concreteCls.get().getErasedType();
             }
         }
 

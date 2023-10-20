@@ -176,6 +176,11 @@ public class ValidationFactory {
                 return false;
             }
 
+            if (value.getTasks().stream().anyMatch(task -> task.getWorkerGroup() != null)) {
+                context.messageTemplate("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level");
+                return false;
+            }
+
             return true;
         };
     }

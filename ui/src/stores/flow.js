@@ -25,7 +25,8 @@ export default {
         taskError: undefined,
         metrics: [],
         aggregatedMetrics: undefined,
-        tasksWithMetrics: []
+        tasksWithMetrics: [],
+        executeFlow: false
     },
 
     actions: {
@@ -333,6 +334,9 @@ export default {
             flow.triggers.splice(index, 1);
 
             state.flow = {...flow}
+        },
+        executeFlow(state, value) {
+            state.executeFlow = value;
         },
         addTrigger(state, trigger) {
             let flow = state.flow;

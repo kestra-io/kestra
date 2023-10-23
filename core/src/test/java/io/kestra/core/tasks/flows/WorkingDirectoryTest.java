@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -41,6 +42,11 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     @Test
     void cache() throws TimeoutException, IOException {
         suite.cache(runnerUtils);
+    }
+
+    @Test
+    void taskrun() throws TimeoutException {
+        suite.taskRun(runnerUtils);
     }
 
     @Singleton
@@ -92,6 +98,15 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(2));
             assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        }
+
+        public void taskRun(RunnerUtils runnerUtils) throws TimeoutException {
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun");
+
+            assertThat(execution.getTaskRunList(), hasSize(6));
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            assertThat(((String) execution.getTaskRunList().get(5).getOutputs().get("value")), containsString("{\"taskrun\":{\"value\":\"1\"}}"));
+
         }
     }
 }

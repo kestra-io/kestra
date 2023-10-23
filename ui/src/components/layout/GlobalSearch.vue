@@ -3,6 +3,7 @@
         ref="search"
         class="flex-shrink-0"
         v-model="filter"
+        @select="goTo($event)"
         :fetch-suggestions="search"
         popper-class="hide-arrow overflow-hidden separator-m-0 global-search-popper"
         :placeholder="$t('jump to...')"
@@ -14,12 +15,13 @@
         <template #suffix>
             <keyboard /><span>Ctrl/Cmd + K</span>
         </template>
-        <template #default="{ item }">
+        <template #default="{item}">
             <router-link
                 :to="item.href"
-                class="d-flex gap-2">
+                class="d-flex gap-2"
+            >
                 <div class="d-flex gap-2 nav-item-title">
-                    <component :is="item.icon.element" class="align-middle" /> {{ item.title }}
+                    <component :is="{...item.icon.element}" class="align-middle" /> {{ item.title }}
                 </div>
                 <arrow-right class="is-justify-end" />
             </router-link>
@@ -46,7 +48,7 @@
         },
         data() {
             return {
-                filter: ''
+                filter: ""
             }
         },
         methods: {
@@ -61,6 +63,9 @@
             },
             search(query, cb) {
                 cb(this.navItems.filter(item => item.title.toLowerCase().includes(query.toLowerCase())));
+            },
+            goTo(item) {
+                this.$router.push(item.href);
             }
         },
         mounted() {

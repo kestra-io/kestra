@@ -7,8 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 </head>
 <body>
-<script src="vscode-web/dist/out/vs/loader.js"></script>
-<script src="vscode-web/dist/out/vs/webPackagePaths.js"></script>
 <script>
     const queryParams = Object.fromEntries(
         window.location.search.substring(1)
@@ -18,9 +16,20 @@
     const KESTRA_UI_PATH = queryParams["KESTRA_UI_PATH"];
     const KESTRA_API_URL = queryParams["KESTRA_API_URL"];
     const THEME = queryParams["THEME"];
+
+    const style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = 'html { background-color: ' + (THEME === 'dark' ? '#21242E' : '#F5F5FF') + '; }';
+    document.getElementsByTagName('head')[0].appendChild(style);
+</script>
+
+<script src="vscode-web/dist/out/vs/loader.js"></script>
+<script src="vscode-web/dist/out/vs/webPackagePaths.js"></script>
+<script>
     Object.keys(window.webPackagePaths).map(function (key) {
         window.webPackagePaths[key] = `${window.location.origin}${KESTRA_UI_PATH}vscode-web/dist/node_modules/${key}/${window.webPackagePaths[key]}`;
     });
+
     require.config({
         baseUrl: `${window.location.origin}${KESTRA_UI_PATH}vscode-web/dist/out`,
         recordStats: true,
@@ -37,18 +46,12 @@
         productConfiguration: {
             nameShort: "Kestra VSCode",
             nameLong: "Kestra VSCode",
-            // configure the VSCode marketplace
-            extensionsGallery: {
-                nlsBaseUrl: 'https://www.vscode-unpkg.net/_lp/',
-                serviceUrl: 'https://marketplace.visualstudio.com/_apis/public/gallery',
-                searchUrl: 'https://marketplace.visualstudio.com/_apis/public/gallery/searchrelevancy/extensionquery',
-                servicePPEUrl: 'https://marketplace.vsallin.net/_apis/public/gallery',
-                cacheUrl: 'https://vscode.blob.core.windows.net/gallery/index',
-                itemUrl: 'https://marketplace.visualstudio.com/items',
-                publisherUrl: 'https://marketplace.visualstudio.com/publishers',
-                resourceUrlTemplate: 'https://{publisher}.vscode-unpkg.net/{publisher}/{name}/{version}/{path}',
-                controlUrl: 'https://az764295.vo.msecnd.net/extensions/marketplace.json',
-            }
+            // configure the open sx marketplace
+            "extensionsGallery": {
+                "serviceUrl": "https://open-vsx.org/vscode/gallery",
+                "itemUrl": "https://open-vsx.org/vscode/item",
+                "resourceUrlTemplate": "https://openvsxorg.blob.core.windows.net/resources/{publisher}/{name}/{version}/{path}"
+            },
         },
         // scope the VSCode instance to Kestra File System Provider (defined in Kestra VSCode extension)
         folderUri: {
@@ -58,7 +61,8 @@
         additionalBuiltinExtensions: [
             {
                 scheme: "https",
-                path: "mathcale.vscode-unpkg.net/mathcale/theme-dracula-refined/2.24.3/extension"
+                authority: "openvsxorg.blob.core.windows.net",
+                path: "/resources/PROxZIMA/sweetdracula/1.0.9/extension"
             },
             {
                 scheme: window.location.protocol.replace(":", ""),
@@ -67,19 +71,25 @@
             },
             {
                 scheme: "https",
-                path: "kestra-io.vscode-unpkg.net/kestra-io/kestra/0.1.2/extension"
-            }
+                authority: "openvsxorg.blob.core.windows.net",
+                path: "/resources/kestra-io/kestra/0.1.2/extension"
+            },
+        ],
+        "linkProtectionTrustedDomains": [
+            "https://open-vsx.org",
+            "https://openvsxorg.blob.core.windows.net"
         ],
         enabledExtensions: [
             // to handle dark theme
-            "mathcale.theme-dracula-refined",
+            "proxzima.sweetdracula",
             // to apply Kestra's flow validation schema
             "redhat.vscode-yaml",
             "kestra-io.kestra"
         ],
         configurationDefaults: {
             "files.autoSave": "off",
-            "workbench.colorTheme": THEME === "dark" ? "Dracula Refined" : "Default Light Modern",
+            "editor.fontSize": 12,
+            "workbench.colorTheme": THEME === "dark" ? "Sweet Dracula" : "Default Light Modern",
             // provide the Kestra root URL to extension
             "kestra.api.url": KESTRA_API_URL
         }

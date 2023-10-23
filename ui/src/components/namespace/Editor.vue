@@ -7,7 +7,13 @@
                               @update:model-value="namespaceUpdate"/>
         </template>
     </top-nav-bar>
-    <iframe v-if="namespace" class="vscode-editor" :src="vscodeIndexUrl" />
+    <iframe
+        style="visibility:hidden;"
+        onload="this.style.visibility = 'visible';"
+        v-if="namespace"
+        class="vscode-editor"
+        :src="vscodeIndexUrl"
+    />
     <div v-else class="m-3 mw-100">
         <el-alert type="info" :closable="false">
             {{ $t("namespace choice") }}

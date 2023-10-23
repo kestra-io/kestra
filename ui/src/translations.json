@@ -460,6 +460,7 @@
     "metric": "Metric",
     "aggregation": "Aggregation",
     "metric choice": "Please choose a metric and an aggregation",
+    "namespace choice": "Please choose a namespace to start using the editor",
     "of": "of",
     "save draft": {
       "message": "Draft saved",

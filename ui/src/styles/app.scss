@@ -45,7 +45,7 @@ main {
     }
 
     // apply start & end margin for top-bar neighbours
-    .top-bar ~ * {
+    .top-bar ~ *:not(iframe) {
         margin-left: var(--offset-from-menu);
         max-width: calc(100% - 2 * var(--offset-from-menu));
     }

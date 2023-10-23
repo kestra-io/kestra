@@ -18,6 +18,7 @@ import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
 import Workers from "../components/admin/Workers.vue";
+import Editor from "../components/namespace/Editor.vue";
 
 
 export default [
@@ -25,6 +26,11 @@ export default [
     {name: "root", path: '/', redirect: {name: 'home'}},
     {name: "home", path: "/:tenant?/dashboard", component: Home},
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
+
+    //Namespace file editor
+    {name: "editor", path: "/:tenant?/editor/:namespace?", component: Editor},
+
+    //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},
     {name: "flows/search", path: "/:tenant?/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/:tenant?/flows/new", component: FlowCreate},

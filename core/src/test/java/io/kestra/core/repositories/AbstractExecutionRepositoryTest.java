@@ -348,10 +348,10 @@ public abstract class AbstractExecutionRepositoryTest {
         List<ExecutionCount> result = executionRepository.executionCounts(
             null,
             List.of(
-                new io.kestra.core.models.executions.statistics.Flow(null, NAMESPACE, "first"),
-                new io.kestra.core.models.executions.statistics.Flow(null,NAMESPACE, "second"),
-                new io.kestra.core.models.executions.statistics.Flow(null,NAMESPACE, "third"),
-                new Flow(null,NAMESPACE, "missing")
+                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "first"),
+                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "second"),
+                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "third"),
+                new Flow(NAMESPACE, "missing")
             ),
             null,
             ZonedDateTime.now().minusDays(10),

@@ -80,6 +80,11 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         boolean isTaskRun
     );
 
+    List<Execution> lastExecutions(
+        @Nullable String tenantId,
+        @Nullable List<FlowFilter> flows
+    );
+
     Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
         @Nullable String tenantId,

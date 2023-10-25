@@ -632,6 +632,41 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .collect(Collectors.toList());
     }
 
+    public List<Execution> lastExecutions(
+        @Nullable String tenantId,
+        List<FlowFilter> flows
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(field("end_date").isNotNull());
+
+                // add flow & namespace filters
+                select = select.and(DSL.or(
+                    flows
+                        .stream()
+                        .map(flow -> DSL.and(
+                            field("namespace").eq(flow.getNamespace()),
+                            field("flow_id").eq(flow.getId())
+                        ))
+                        .collect(Collectors.toList())
+                ));
+                return select.qualify(DSL.rowNumber().over(
+                    DSL.partitionBy(
+                        field("namespace"),
+                        field("flow_id")
+                    ).orderBy(field("end_date").desc())).eq(1))
+                    .fetch()
+                    .map(this.jdbcRepository::map);
+            });
+    }
+
     @Override
     public Execution save(Execution execution) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);

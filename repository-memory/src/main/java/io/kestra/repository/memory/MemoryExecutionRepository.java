@@ -122,6 +122,14 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
+    public List<Execution> lastExecutions(
+        @Nullable String tenantId,
+        List<FlowFilter> flows
+    ) {
+        return List.of();
+    }
+
+    @Override
     public Integer maxTaskRunSetting() {
         throw new UnsupportedOperationException();
     }

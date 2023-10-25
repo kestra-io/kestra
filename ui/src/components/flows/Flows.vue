@@ -135,6 +135,22 @@
                                              :label="$t('namespace')"
                                              :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
+                            <el-table-column prop="state.startDate"
+                                            :label="$t('last execution')"
+                                            v-if="user.hasAny(permission.EXECUTION)">
+                                <template #default="scope">
+                                    <date-ago :inverted="true" :date=getLastExecution(scope.row).state.startDate />
+                                </template>
+                            </el-table-column>
+
+                            <el-table-column prop="state.current"
+                                            :label="$t('last execution')"
+                                            v-if="user.hasAny(permission.EXECUTION)">
+                                <template #default="scope">
+                                    <status v-if="lastExecutionByFlowReady" :status=getLastExecution(scope.row).state.current size="small" />
+                                </template>
+                            </el-table-column>
+
                             <el-table-column
                                 prop="state"
                                 :label="$t('execution statistics')"
@@ -197,12 +213,14 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
+    import DateAgo from "../layout/DateAgo.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
     import StateChart from "../stats/StateChart.vue";
     import StateGlobalChart from "../stats/StateGlobalChart.vue";
+    import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import Kicon from "../Kicon.vue"
@@ -216,9 +234,11 @@
             NamespaceSelect,
             Eye,
             DataTable,
+            DateAgo,
             SearchField,
             StateChart,
             StateGlobalChart,
+            Status,
             TriggerAvatar,
             MarkdownTooltip,
             Kicon,
@@ -233,13 +253,14 @@
                 permission: permission,
                 action: action,
                 dailyGroupByFlowReady: false,
+                lastExecutionByFlowReady: false,
                 dailyReady: false,
                 file: undefined,
             };
         },
         computed: {
             ...mapState("flow", ["flows", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily"]),
+            ...mapState("stat", ["dailyGroupByFlow", "daily", "lastExecutions"]),
             ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
@@ -404,6 +425,18 @@
                     return [];
                 }
             },
+            getLastExecution(row) {
+                if (this.lastExecutions) {
+                    console.log(this.lastExecutions);
+                    let filteredFlowExec = this.lastExecutions.filter((executedFlow) => executedFlow.flowId == row.id && executedFlow.namespace == row.namespace)
+                    if (filteredFlowExec.length > 0) {
+                        return filteredFlowExec[0]
+                    }
+                }
+                else {
+                    return null;
+                }
+            },
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
@@ -431,7 +464,7 @@
                     }))
                     .then(flows => {
                         this.dailyGroupByFlowReady = false;
-                        callback();
+                        this.lastExecutionByFlowReady = false;
 
                         if (flows.results && flows.results.length > 0) {
                             if (this.user && this.user.hasAny(permission.EXECUTION)) {
@@ -447,6 +480,18 @@
                                     .then(() => {
                                         this.dailyGroupByFlowReady = true
                                     })
+
+                                this.$store
+                                    .dispatch("stat/lastExecutions", {
+                                        flows: flows.results
+                                            .map(flow => {
+                                                return {namespace: flow.namespace, id: flow.id}
+                                            }),
+                                    })
+                                    .then(() => {
+                                        this.lastExecutionByFlowReady = true
+                                    })
+                                    .finally(callback);
                             }
                         }
                     })

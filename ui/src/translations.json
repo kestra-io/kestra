@@ -216,6 +216,7 @@
       "names": "Plugins",
       "please": "Please choose a task on the right to see its documentation"
     },
+    "last execution": "Last execution",
     "last X days count": "{count} in last {days} days",
     "date range count": "{count} between the {startDate} and the {endDate}",
     "date count": "{count} on the {date}",
@@ -736,6 +737,7 @@
       "please": "Veuillez choisir une tache sur la droite afin de voir sa documentation"
     },
     "last X days count": "{count} lors des {days} derniers jours",
+    "last execution": "Dernière execution",
     "date range count": "{count} entre le {startDate} et le {endDate}",
     "date count": "{count} le {date}",
     "revisions": "Révisions",

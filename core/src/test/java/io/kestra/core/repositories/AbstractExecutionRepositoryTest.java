@@ -23,6 +23,7 @@ import java.util.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -269,6 +270,28 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.size(), is(1));
         assertThat(result.get("io.kestra.unittest").size(), is(1));
         assertThat(result.get("io.kestra.unittest").get(FLOW).size(), is(11));
+    }
+
+    @Test
+    protected void lastExecutions() throws InterruptedException {
+        for (int i = 0; i < 28; i++) {
+            executionRepository.save(builder(
+                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                    i < 15 ? null : "second"
+            ).build());
+        }
+
+        // mysql need some time ...
+        Thread.sleep(500);
+
+        List<Execution> result = executionRepository.lastExecutions(
+                null,
+                List.of(
+                        ExecutionRepositoryInterface.FlowFilter.builder().id("second").build()
+                        )
+        );
+
+        assertThat(result, isNotNull());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,7 +47,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void taskrun() throws TimeoutException {
+    void taskrun() throws TimeoutException, InternalException {
         suite.taskRun(runnerUtils);
     }
 
@@ -100,12 +102,12 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         }
 
-        public void taskRun(RunnerUtils runnerUtils) throws TimeoutException {
+        public void taskRun(RunnerUtils runnerUtils) throws TimeoutException, InternalException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun");
 
             assertThat(execution.getTaskRunList(), hasSize(6));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(((String) execution.getTaskRunList().get(5).getOutputs().get("value")), containsString("{\"taskrun\":{\"value\":\"1\"}}"));
+            assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-workerparent", List.of("1")).getOutputs().get("value")), containsString("{\"taskrun\":{\"value\":\"1\"}}"));
 
         }
     }

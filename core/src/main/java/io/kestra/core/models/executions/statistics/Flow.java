@@ -6,8 +6,6 @@ import javax.validation.constraints.NotNull;
 
 @Value
 public class Flow {
-    String tenantId;
-
     @NotNull
     String namespace;
 

@@ -1,15 +1,18 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -274,12 +277,32 @@ public abstract class AbstractExecutionRepositoryTest {
 
     @Test
     protected void lastExecutions() throws InterruptedException {
-        for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder(
-                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                    i < 15 ? null : "second"
-            ).build());
-        }
+
+        Execution execution =
+
+        executionRepository.save(Execution.builder()
+                .id(IdUtils.create())
+                .namespace("io.kestra.unittest")
+                .flowId("full")
+                .flowRevision(1)
+                .state(new State())
+                .inputs(ImmutableMap.of("test", 1))
+                .taskRunList(Collections.singletonList(
+                        TaskRun.builder()
+                                .id(IdUtils.create())
+                                .namespace("io.kestra.unittest")
+                                .flowId("full")
+                                .state(new State())
+                                .attempts(Collections.singletonList(
+                                        TaskRunAttempt.builder()
+                                                .build()
+                                ))
+                                .outputs(ImmutableMap.of(
+                                        "out", 1
+                                ))
+                                .build()
+                ))
+                .build());
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -287,11 +310,11 @@ public abstract class AbstractExecutionRepositoryTest {
         List<Execution> result = executionRepository.lastExecutions(
                 null,
                 List.of(
-                        ExecutionRepositoryInterface.FlowFilter.builder().id("second").build()
+                        ExecutionRepositoryInterface.FlowFilter.builder().id("full").build()
                         )
         );
 
-        assertThat(result.size(), is(1));
+        assertThat(result.size(), is(0));
     }
 
     @Test

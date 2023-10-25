@@ -427,7 +427,6 @@
             },
             getLastExecution(row) {
                 if (this.lastExecutions) {
-                    console.log(this.lastExecutions);
                     let filteredFlowExec = this.lastExecutions.filter((executedFlow) => executedFlow.flowId == row.id && executedFlow.namespace == row.namespace)
                     if (filteredFlowExec.length > 0) {
                         return filteredFlowExec[0]

@@ -136,7 +136,7 @@
                                              :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
 
                             <el-table-column prop="state.startDate"
-                                            :label="$t('last execution')"
+                                            :label="$t('last execution date')"
                                             v-if="user.hasAny(permission.EXECUTION)">
                                 <template #default="scope">
                                     <date-ago :inverted="true" :date=getLastExecution(scope.row).state.startDate />
@@ -144,7 +144,7 @@
                             </el-table-column>
 
                             <el-table-column prop="state.current"
-                                            :label="$t('last execution')"
+                                            :label="$t('last execution status')"
                                             v-if="user.hasAny(permission.EXECUTION)">
                                 <template #default="scope">
                                     <status v-if="lastExecutionByFlowReady" :status=getLastExecution(scope.row).state.current size="small" />

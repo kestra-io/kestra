@@ -1,6 +1,5 @@
 package io.kestra.core.models.tasks;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -13,15 +12,29 @@ import io.kestra.core.runners.WorkerTaskResult;
 import java.util.List;
 import java.util.Optional;
 
-public interface ExecutableTask<T extends Output>  {
-    List<TaskRun> createTaskRun(RunContext runContext, Execution currentExecution, TaskRun executionTaskRun);
+/**
+ * Interface for tasks that generates subflow execution(s). Those tasks are handled in the Executor.
+ */
+public interface ExecutableTask {
+    /**
+     * Creates a list of WorkerTaskExecution for this task definition.
+     * Each WorkerTaskExecution will generate a subflow execution.
+     */
+    List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
+                                     FlowExecutorInterface flowExecutorInterface,
+                                     Flow currentFlow, Execution currentExecution,
+                                     TaskRun currentTaskRun) throws InternalException;
 
-    Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws InternalException;
+    /**
+     * Creates a WorkerTaskResult for a given WorkerTaskExecution
+     */
+    Optional<WorkerTaskResult> createWorkerTaskResult(RunContext runContext,
+                                                      WorkerTaskExecution<?> workerTaskExecution,
+                                                      Flow flow,
+                                                      Execution execution);
 
-    WorkerTaskResult createWorkerTaskResult(RunContext runContext,
-                                                     WorkerTaskExecution<?> workerTaskExecution,
-                                                     Flow flow,
-                                                     Execution execution);
-
+    /**
+     * Whether to wait for the execution(s) of the subflow before terminating this tasks
+     */
     boolean waitForExecution();
 }

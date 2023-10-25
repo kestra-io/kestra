@@ -88,7 +88,7 @@ public class ExecutorService {
             executor = this.handleChildWorkerTaskResult(executor);
 
             // search for flow task
-            executor = this.handleFlowTask(executor);
+            executor = this.handleExecutableTask(executor);
         } catch (Exception e) {
             return executor.withException(e, "process");
         }
@@ -559,17 +559,17 @@ public class ExecutorService {
         return executor.withWorkerTasks(workerTasks, "handleWorkerTask");
     }
 
-    private Executor handleFlowTask(final Executor executor) {
+    private Executor handleExecutableTask(final Executor executor) {
         List<WorkerTaskExecution<?>> executions = new ArrayList<>();
         List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
 
         boolean haveFlows = executor.getWorkerTasks()
             .removeIf(workerTask -> {
-                if (!(workerTask.getTask() instanceof ExecutableTask<?>)) {
+                if (!(workerTask.getTask() instanceof ExecutableTask)) {
                     return false;
                 }
 
-                var executableTask = (Task & ExecutableTask<?>) workerTask.getTask();
+                var executableTask = (Task & ExecutableTask) workerTask.getTask();
                 try {
                     // mark taskrun as running to avoid multiple try for failed
                     TaskRun executableTaskRun = executor.getExecution()
@@ -578,44 +578,37 @@ public class ExecutorService {
                         executor
                             .getExecution()
                             .withTaskRun(executableTaskRun.withState(State.Type.RUNNING)),
-                        "handleFlowTaskRunning"
+                        "handleExecutableTaskRunning"
                     );
 
-                    // create the task run
-                    RunContext executableRunContext = runContextFactory.of(
+                    RunContext runContext = runContextFactory.of(
                         executor.getFlow(),
                         executableTask,
                         executor.getExecution(),
                         executableTaskRun
                     );
-                    List<TaskRun> taskRuns = executableTask.createTaskRun(executableRunContext, executor.getExecution(), executableTaskRun);
-
-                    for (TaskRun taskRun : taskRuns) {
-                        // create the execution
-                        RunContext runContext = runContextFactory.of(
-                            executor.getFlow(),
-                            executableTask,
-                            executor.getExecution(),
-                            taskRun
+                    List<WorkerTaskExecution<?>> workerTaskExecutions = executableTask.createWorkerTaskExecutions(runContext, flowExecutorInterface(), executor.getFlow(), executor.getExecution(), executableTaskRun);
+                    if (workerTaskExecutions.isEmpty()) {
+                        // if no executions we move the task to SUCCESS immediately
+                        executor.withExecution(
+                            executor
+                                .getExecution()
+                                .withTaskRun(executableTaskRun.withState(State.Type.SUCCESS)),
+                            "handleExecutableTaskRunning.noExecution"
                         );
-                        Execution execution = executableTask.createExecution(runContext, flowExecutorInterface(), executor.getExecution());
-
-                        WorkerTaskExecution<?> workerTaskExecution = WorkerTaskExecution.builder()
-                            .task(executableTask)
-                            .taskRun(taskRun)
-                            .execution(execution)
-                            .build();
-
-                        executions.add(workerTaskExecution);
-
+                    }
+                    else {
+                        executions.addAll(workerTaskExecutions);
                         if (!executableTask.waitForExecution()) {
-                            WorkerTaskResult workerTaskResult = executableTask.createWorkerTaskResult(
-                                runContext,
-                                workerTaskExecution,
-                                executor.getFlow(),
-                                execution
-                            );
-                            workerTaskResults.add(workerTaskResult);
+                            for (WorkerTaskExecution<?> workerTaskExecution : workerTaskExecutions) {
+                                Optional<WorkerTaskResult> workerTaskResult = executableTask.createWorkerTaskResult(
+                                    runContext,
+                                    workerTaskExecution,
+                                    executor.getFlow(),
+                                    workerTaskExecution.getExecution()
+                                );
+                                workerTaskResult.ifPresent(result -> workerTaskResults.add(result));
+                            }
                         }
                     }
                 }
@@ -628,7 +621,7 @@ public class ExecutorService {
                         )
                         .build()
                     );
-                    executor.withException(e, "handleFlowTask");
+                    executor.withException(e, "handleExecutableTask");
                 }
                 return true;
             });
@@ -637,10 +630,10 @@ public class ExecutorService {
             return executor;
         }
 
-        Executor resultExecutor = executor.withWorkerTaskExecutions(executions, "handleFlowTask");
+        Executor resultExecutor = executor.withWorkerTaskExecutions(executions, "handleExecutableTask");
 
         if (!workerTaskResults.isEmpty()) {
-            resultExecutor = executor.withWorkerTaskResults(workerTaskResults, "handleFlowTaskWorkerTaskResults");
+            resultExecutor = executor.withWorkerTaskResults(workerTaskResults, "handleExecutableTaskWorkerTaskResults");
         }
 
         return resultExecutor;

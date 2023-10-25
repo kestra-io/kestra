@@ -46,7 +46,7 @@ import java.util.*;
         )
     }
 )
-public class Flow extends Task implements ExecutableTask<Flow.Output> {
+public class Flow extends Task implements ExecutableTask {
     @NotNull
     @Schema(
         title = "The namespace of the flow that should be executed as a subflow"
@@ -124,7 +124,11 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws InternalException {
+    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
+                                                                   FlowExecutorInterface flowExecutorInterface,
+                                                                   io.kestra.core.models.flows.Flow currentFlow,
+                                                                   Execution currentExecution,
+                                                                   TaskRun currentTaskRun) throws InternalException {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
 
         Map<String, Object> inputs = new HashMap<>();
@@ -142,20 +146,18 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
             }
         }
 
-        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
-
         String namespace = runContext.render(this.namespace);
         String flowId = runContext.render(this.flowId);
         Optional<Integer> revision = this.revision != null ? Optional.of(this.revision) : Optional.empty();
 
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
-            flowVars.get("tenantId"),
+            currentExecution.getTenantId(),
             namespace,
             flowId,
             revision,
-            flowVars.get("tenantId"),
-            flowVars.get("namespace"),
-            flowVars.get("id")
+            currentExecution.getTenantId(),
+            currentFlow.getNamespace(),
+            currentFlow.getId()
         )
             .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "'.'" + flowId + "' with revision + '" + revision + "'"));
 
@@ -167,7 +169,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        return runnerUtils
+        Execution execution = runnerUtils
             .newExecution(
                 flow,
                 (f, e) -> runnerUtils.typedInputs(f, e, inputs),
@@ -176,22 +178,24 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
                 .id(this.getId())
                 .type(this.getType())
                 .variables(ImmutableMap.of(
-                    "executionId", ((Map<String, Object>) runContext.getVariables().get("execution")).get("id"),
-                    "namespace", flowVars.get("namespace"),
-                    "flowId", flowVars.get("id"),
-                    "flowRevision", flowVars.get("revision")
+                    "executionId", currentExecution.getId(),
+                    "namespace", currentFlow.getNamespace(),
+                    "flowId", currentFlow.getId(),
+                    "flowRevision", currentFlow.getRevision()
                 ))
                 .build()
             );
+        WorkerTaskExecution<?> workerTaskExecution = WorkerTaskExecution.builder()
+            .task(this)
+            .taskRun(currentTaskRun)
+            .execution(execution)
+            .build();
+
+        return List.of(workerTaskExecution);
     }
 
     @Override
-    public List<TaskRun> createTaskRun(RunContext runContext, Execution currentExecution, TaskRun executionTaskRun) {
-        return List.of(executionTaskRun);
-    }
-
-    @Override
-    public WorkerTaskResult createWorkerTaskResult(
+    public Optional<WorkerTaskResult> createWorkerTaskResult(
         RunContext runContext,
         WorkerTaskExecution<?> workerTaskExecution,
         io.kestra.core.models.flows.Flow flow,
@@ -212,9 +216,9 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
                     .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()))
                     .withOutputs(builder.build().toMap());
 
-                return WorkerTaskResult.builder()
+                return Optional.of(WorkerTaskResult.builder()
                     .taskRun(taskRun)
-                    .build();
+                    .build());
             }
         }
 
@@ -222,7 +226,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
 
         taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed));
 
-        return ExecutableUtils.workerTaskResult(taskRun);
+        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
     }
 
     @Override

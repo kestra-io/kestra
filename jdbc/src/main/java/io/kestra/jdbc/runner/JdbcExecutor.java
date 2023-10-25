@@ -392,7 +392,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         if (workerTaskExecution.getTask().getWait()) {
                             Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                            ExecutableTask<?> executableTask = (ExecutableTask<?>) workerTaskExecution.getTask();
+                            ExecutableTask executableTask = (ExecutableTask) workerTaskExecution.getTask();
 
                         RunContext runContext = runContextFactory.of(
                             workerTaskFlow,
@@ -401,10 +401,10 @@ public class JdbcExecutor implements ExecutorInterface {
                             workerTaskExecution.getTaskRun()
                         );
                         try {
-                            WorkerTaskResult workerTaskResult = executableTask
+                            Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
                                 .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
 
-                            this.workerTaskResultQueue.emit(workerTaskResult);
+                            maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
                         }
                         catch (Exception e) {
                             // TODO maybe create a FAILED Worker Task Result instead
@@ -634,7 +634,7 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
-        // FIXME we fake multiple executions by passing the same taskrun with different value/items so we deduplicate with the value
+        // There can be multiple executions for the same task, so we need to deduplicated with the taskrun.value
         String deduplicationKey = taskRun.getId() + "-" + taskRun.getValue();
         State.Type current = executorState.getWorkerTaskExecutionDeduplication().get(deduplicationKey);
 

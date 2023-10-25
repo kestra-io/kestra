@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MemoryExecutor implements ExecutorInterface {
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, WorkerTaskExecution<?>> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 
@@ -65,9 +65,6 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
-
-    @Inject
-    private FlowService flowService;
 
     @Inject
     private TaskDefaultService taskDefaultService;
@@ -124,7 +121,7 @@ public class MemoryExecutor implements ExecutorInterface {
             return;
         }
 
-        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.getState().isCreated()) {
+        if (message.getTaskRunList() == null || message.getTaskRunList().isEmpty() || message.getState().isCreated()) {
             this.handleExecution(saveExecution(message));
         }
     }
@@ -229,7 +226,7 @@ public class MemoryExecutor implements ExecutorInterface {
             }
 
 
-            if (executor.getWorkerTaskExecutions().size() > 0) {
+            if (!executor.getWorkerTaskExecutions().isEmpty()) {
                 executor.getWorkerTaskExecutions()
                     .forEach(workerTaskExecution -> {
                         WORKERTASKEXECUTIONS_WATCHER.put(workerTaskExecution.getExecution().getId(), workerTaskExecution);
@@ -257,7 +254,7 @@ public class MemoryExecutor implements ExecutorInterface {
                 if (workerTaskExecution.getTask().getWait()) {
                     Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                    ExecutableTask<?> executableTask = workerTaskExecution.getTask();
+                    ExecutableTask executableTask = workerTaskExecution.getTask();
 
                 RunContext runContext = runContextFactory.of(
                     workerTaskFlow,
@@ -266,10 +263,10 @@ public class MemoryExecutor implements ExecutorInterface {
                     workerTaskExecution.getTaskRun()
                 );
                 try {
-                    WorkerTaskResult workerTaskResult = executableTask
+                    Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
                         .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
 
-                    this.workerTaskResultQueue.emit(workerTaskResult);
+                    maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
                 }
                 catch (Exception e) {
                     // TODO maybe create a FAILED Worker Task Result instead<>

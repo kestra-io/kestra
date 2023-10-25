@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
-public class WorkerTaskExecution<T extends Task & ExecutableTask<?>> {
+public class WorkerTaskExecution<T extends Task & ExecutableTask> {
     @NotNull
     private TaskRun taskRun;
 

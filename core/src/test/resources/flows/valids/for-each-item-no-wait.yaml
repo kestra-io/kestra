@@ -1,4 +1,4 @@
-id: for-each-item
+id: for-each-item-no-wait
 namespace: io.kestra.tests
 
 inputs:
@@ -13,5 +13,5 @@ tasks:
     subflow:
       namespace: io.kestra.tests
       flowId: for-each-item-subflow
-      wait: true
+      wait: false
       transmitFailed: true

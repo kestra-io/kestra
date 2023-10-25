@@ -10,7 +10,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,9 +45,6 @@ public class TaskRun {
     String value;
 
     @With
-    URI items;
-
-    @With
     List<TaskRunAttempt> attempts;
 
     @With
@@ -74,7 +70,6 @@ public class TaskRun {
             this.taskId,
             this.parentTaskRunId,
             this.value,
-            this.items,
             this.attempts,
             this.outputs,
             this.state.withState(state)
@@ -91,7 +86,6 @@ public class TaskRun {
             .taskId(this.getTaskId())
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
             .value(this.getValue())
-            .items(this.getItems())
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)

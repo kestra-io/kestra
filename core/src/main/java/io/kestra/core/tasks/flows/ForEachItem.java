@@ -10,10 +10,10 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
@@ -43,6 +43,8 @@ import java.util.stream.IntStream;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -75,7 +77,7 @@ import javax.validation.constraints.Positive;
         )
     }
 )
-public class ForEachItem extends Task implements ExecutableTask<VoidOutput> {
+public class ForEachItem extends Task implements ExecutableTask {
     private static final String URI_FORMAT = "kestra:///%s/%s/executions/%s/tasks/%s/%s/bach-%s.ion";
 
     @NotEmpty
@@ -93,109 +95,113 @@ public class ForEachItem extends Task implements ExecutableTask<VoidOutput> {
     @NotNull
     @PluginProperty
     @Schema(title = "The subflow that will be executed on each batch of items")
-    private SubFlow subFlow;
+    private ForEachItem.Subflow subflow;
 
     @Override
-    public List<TaskRun> createTaskRun(RunContext runContext, Execution currentExecution, TaskRun executionTaskRun) {
-        try {
-            int splits = readSplits(runContext);
+    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
+                                            FlowExecutorInterface flowExecutorInterface,
+                                            Flow currentFlow,
+                                            Execution currentExecution,
+                                            TaskRun currentTaskRun) throws InternalException {
+        int splits = readSplits(runContext);
 
-            return IntStream.range(1, splits + 1)
-                .mapToObj( split -> executionTaskRun
-                    .withItems(readItems(currentExecution, executionTaskRun.getId(), split))
-                    .withValue(String.valueOf(split))
-                    .withOutputs(ImmutableMap.of(
-                        "currentIteration", split,
-                        "maxIteration", splits
-                    ))
-                )
-                .toList();
+        return IntStream.range(1, splits + 1).boxed()
+            .<WorkerTaskExecution<?>>map(throwFunction(
+                 split -> {
+                    //FIXME duplicated with the flow task
+                    RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
 
-        } catch (IllegalVariableEvaluationException e) {
-            throw new RuntimeException(e);
-        }
+                    Map<String, Object> inputs = new HashMap<>();
+                    if (this.subflow.inputs != null) {
+                        inputs.putAll(runContext.render(this.subflow.inputs));
+                    }
+
+                    List<Label> labels = new ArrayList<>();
+                    if (this.subflow.inheritLabels) {
+                        labels.addAll(currentExecution.getLabels());
+                    }
+                    if (this.subflow.labels != null) {
+                        for (Map.Entry<String, String> entry: this.subflow.labels.entrySet()) {
+                            labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
+                        }
+                    }
+
+                    String namespace = runContext.render(this.subflow.namespace);
+                    String flowId = runContext.render(this.subflow.flowId);
+                    Optional<Integer> revision = this.subflow.revision != null ? Optional.of(this.subflow.revision) : Optional.empty();
+
+                    io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
+                            currentExecution.getTenantId(),
+                            namespace,
+                            flowId,
+                            revision,
+                            currentExecution.getTenantId(),
+                            currentFlow.getNamespace(),
+                            currentFlow.getId()
+                        )
+                        .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "'.'" + flowId + "' with revision + '" + revision + "'"));
+
+                    if (flow.isDisabled()) {
+                        throw new IllegalStateException("Cannot execute disabled flow");
+                    }
+
+                    if (flow instanceof FlowWithException fwe) {
+                        throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+                    }
+
+                    Execution execution = runnerUtils
+                        .newExecution(
+                            flow,
+                            (f, e) -> runnerUtils.typedInputs(f, e, inputs),
+                            labels)
+                        .withTrigger(ExecutionTrigger.builder()
+                            .id(this.getId())
+                            .type(this.getType())
+                            .variables(ImmutableMap.of(
+                                "executionId", currentExecution.getId(),
+                                "namespace", currentFlow.getNamespace(),
+                                "flowId", currentFlow.getId(),
+                                "flowRevision", currentFlow.getRevision(),
+                                "items", readItems(currentExecution, currentTaskRun.getId(), split)
+                            ))
+                            .build()
+                        );
+
+                     return WorkerTaskExecution.builder()
+                         .task(this)
+                         .taskRun(currentTaskRun
+                             .withValue(String.valueOf(split))
+                             .withOutputs(ImmutableMap.of(
+                                 "currentIteration", split,
+                                 "maxIterations", splits
+                             )))
+                         .execution(execution)
+                         .build();
+                }
+            ))
+            .toList();
     }
 
     @Override
-    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface, Execution currentExecution) throws InternalException {
-        //FIXME duplicated with the flow task
-        RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-
-        Map<String, Object> inputs = new HashMap<>();
-        if (this.subFlow.inputs != null) {
-            inputs.putAll(runContext.render(this.subFlow.inputs));
-        }
-
-        List<Label> labels = new ArrayList<>();
-        if (this.subFlow.inheritLabels) {
-            labels.addAll(currentExecution.getLabels());
-        }
-        if (this.subFlow.labels != null) {
-            for (Map.Entry<String, String> entry: this.subFlow.labels.entrySet()) {
-                labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-            }
-        }
-
-        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
-
-        String namespace = runContext.render(this.subFlow.namespace);
-        String flowId = runContext.render(this.subFlow.flowId);
-        Optional<Integer> revision = this.subFlow.revision != null ? Optional.of(this.subFlow.revision) : Optional.empty();
-
-        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
-                flowVars.get("tenantId"),
-                namespace,
-                flowId,
-                revision,
-                flowVars.get("tenantId"),
-                flowVars.get("namespace"),
-                flowVars.get("id")
-            )
-            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "'.'" + flowId + "' with revision + '" + revision + "'"));
-
-        if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute disabled flow");
-        }
-
-        if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
-        }
-
-        return runnerUtils
-            .newExecution(
-                flow,
-                (f, e) -> runnerUtils.typedInputs(f, e, inputs),
-                labels)
-            .withTrigger(ExecutionTrigger.builder()
-                .id(this.getId())
-                .type(this.getType())
-                .variables(ImmutableMap.of(
-                    "executionId", ((Map<String, Object>) runContext.getVariables().get("execution")).get("id"),
-                    "namespace", flowVars.get("namespace"),
-                    "flowId", flowVars.get("id"),
-                    "flowRevision", flowVars.get("revision")
-                ))
-                .build()
-            );
-    }
-
-    @Override
-    public WorkerTaskResult createWorkerTaskResult(
+    public Optional<WorkerTaskResult> createWorkerTaskResult(
         RunContext runContext,
         WorkerTaskExecution<?> workerTaskExecution,
-        io.kestra.core.models.flows.Flow flow,
+        Flow flow,
         Execution execution
     ) {
         TaskRun taskRun = workerTaskExecution.getTaskRun();
 
-        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.subFlow.transmitFailed));
+        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.subflow.transmitFailed));
 
-        return ExecutableUtils.workerTaskResult(taskRun);
+        int currentIteration = (Integer) taskRun.getOutputs().get("currentIteration");
+        int maxIterations = (Integer) taskRun.getOutputs().get("maxIterations");
+
+        return currentIteration == maxIterations ? Optional.of(ExecutableUtils.workerTaskResult(taskRun)) : Optional.empty();
     }
 
     @Override
     public boolean waitForExecution() {
-        return this.subFlow.wait;
+        return this.subflow.wait;
     }
 
     private URI readItems(Execution execution, String taskRunId, int split) {
@@ -248,7 +254,7 @@ public class ForEachItem extends Task implements ExecutableTask<VoidOutput> {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class SubFlow {
+    public static class Subflow {
         @NotEmpty
         @Schema(
             title = "The namespace of the flow to trigger"

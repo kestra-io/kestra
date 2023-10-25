@@ -33,43 +33,43 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @DagTaskValidation
 @Schema(
-    title = "Create a directed acyclic graph (DAG) flow without bothering with the graph structure.",
-    description = "List your tasks and their dependencies, and Kestra will figure out the rest.\n" +
-        "Task can only depends on task from the DAG tasks.\n" +
-        "For technical reasons, low-code interaction with this Task is disabled for now."
+    title = "Create a directed acyclic graph (DAG) of tasks without explicitly specifying the order in which the tasks need to run.",
+    description = "List your tasks and their dependencies, and Kestra will figure out the execution sequence.\n" +
+        "Each task can only depend on other tasks from the DAG task.\n" +
+        "For technical reasons, low-code interaction via UI forms is disabled for now when using this task."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Five tasks for which the execution order is defined by their upstream dependencies.",
+            title = "Run a series of tasks for which the execution order is defined by their upstream dependencies.",
             code = """
                   tasks:
                     - task:
                         id: task1
                         type: io.kestra.core.tasks.log.Log
-                        message: I'm the task 1
+                        message: task 1
                     - task:
                         id: task2
                         type: io.kestra.core.tasks.log.Log
-                        message: I'm the task 2
+                        message: task 2
                       dependsOn:
                         - task1
                     - task:
                         id: task3
                         type: io.kestra.core.tasks.log.Log
-                        message: I'm the task 3
+                        message: task 3
                       dependsOn:
                         - task1
                     - task:
                         id: task4
                         type: io.kestra.core.tasks.log.Log
-                        message: I'm the task 4
+                        message: task 4
                       dependsOn:
                         - task2
                     - task:
                         id: task5
                         type: io.kestra.core.tasks.log.Log
-                        message: I'm the task 5
+                        message: task 5
                       dependsOn:
                         - task4
                         - task3
@@ -83,7 +83,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks",
-        description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
+        description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time"
     )
     @PluginProperty
     private final Integer concurrent = 0;

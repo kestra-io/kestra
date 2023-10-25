@@ -291,7 +291,7 @@ public abstract class AbstractExecutionRepositoryTest {
                         )
         );
 
-        assertThat(result, isNotNull());
+        assertThat(result.size(), is(1));
     }
 
     @Test

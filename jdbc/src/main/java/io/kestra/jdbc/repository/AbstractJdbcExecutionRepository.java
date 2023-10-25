@@ -641,31 +641,39 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
+                Select<Record2<Object, Integer>> subquery = context
+                    .select(
+                        field("value"),
+                        DSL.rowNumber().over(
+                            DSL.partitionBy(
+                                field("flow_id")
+                            ).orderBy(field("end_date").desc())
+                        ).as("row_num")
+                    )
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
-                    .and(field("end_date").isNotNull());
+                    .and(field("end_date").isNotNull())
+                    .and(DSL.or(
+                        flows
+                            .stream()
+                            .map(flow -> DSL.and(
+                                field("namespace").eq(flow.getNamespace()),
+                                field("flow_id").eq(flow.getId())
+                            ))
+                            .collect(Collectors.toList())
+                    ));
 
-                // add flow & namespace filters
-                select = select.and(DSL.or(
-                    flows
-                        .stream()
-                        .map(flow -> DSL.and(
-                            field("namespace").eq(flow.getNamespace()),
-                            field("flow_id").eq(flow.getId())
-                        ))
-                        .collect(Collectors.toList())
-                ));
-                return select.qualify(DSL.rowNumber().over(
-                    DSL.partitionBy(
-                        field("namespace"),
-                        field("flow_id")
-                    ).orderBy(field("end_date").desc())).eq(1))
-                    .fetch()
-                    .map(this.jdbcRepository::map);
+                Table<Record2<Object, Integer>> cte = subquery.asTable("cte");
+
+               SelectConditionStep<? extends Record1<?>> mainQuery = context
+                    .select(cte.field("value"))
+                    .from(cte)
+                    .where(field("row_num").eq(1));
+                return mainQuery.fetch().map(this.jdbcRepository::map);
             });
     }
+
+
 
     @Override
     public Execution save(Execution execution) {

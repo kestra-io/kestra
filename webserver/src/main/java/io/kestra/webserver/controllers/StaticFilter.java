@@ -17,8 +17,14 @@ import org.reactivestreams.Publisher;
 
 import java.io.IOException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import io.micronaut.core.annotation.Nullable;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Filter("/ui/**")
 public class StaticFilter implements HttpServerFilter {
@@ -37,39 +43,47 @@ public class StaticFilter implements HttpServerFilter {
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         return Publishers
-            .map(chain.proceed(request), response -> {
-                boolean first = response.getBody(NettyStreamedFileCustomizableResponseType.class)
-                    .filter(n -> n.getMediaType().getName().equals(MediaType.TEXT_HTML))
-                    .isPresent();
+            .map(chain.proceed(request), (MutableHttpResponse<?> response) -> {
+                try {
+                    Optional<? extends MutableHttpResponse<?>> alteredResponse = Stream
+                        .of(
+                            // jar mode
+                            response.getBody(NettyStreamedFileCustomizableResponseType.class)
+                                .filter(n -> n.getMediaType().getName().equals(MediaType.TEXT_HTML))
+                                .map(throwFunction(n -> IOUtils.toString(n.getInputStream(), StandardCharsets.UTF_8))),
+                            // debug mode
+                            response.getBody(NettySystemFileCustomizableResponseType.class)
+                                .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
+                                .map(throwFunction(n -> IOUtils.toString(
+                                    Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
+                                    Charsets.UTF_8
+                                )))
+                        )
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(s -> {
+                            String finalBody = replace(s);
 
-                boolean second = response.getBody(NettySystemFileCustomizableResponseType.class)
-                    .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
-                    .isPresent();
+                            return (MutableHttpResponse<?>) HttpResponse
+                                .ok()
+                                .body(finalBody)
+                                .contentType(MediaType.TEXT_HTML)
+                                .contentLength(finalBody.length());
+                        })
+                        .findFirst();
 
-                if (first || second) {
-                    try {
-                        String content = IOUtils.toString(
-                            Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
-                            Charsets.UTF_8
-                        );
-
-                        String finalBody = replace(content);
-
-                        return HttpResponse
-                            .<String>ok()
-                            .body(finalBody)
-                            .contentType(MediaType.TEXT_HTML)
-                            .contentLength(finalBody.length());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    return alteredResponse.isPresent() ? alteredResponse.get() : response;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-
-                return response;
             });
     }
 
     private String replace(String line) {
+        if (!line.contains("KESTRA_UI_PATH")) {
+            return line;
+        }
+
         line = line.replace("./", (basePath != null ? basePath : "") + "/ui/");
 
         if (googleAnalytics != null) {

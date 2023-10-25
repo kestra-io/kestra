@@ -25,30 +25,36 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Log a message in the task logs"
+    title = "Log a message to the console"
 )
 @Plugin(
     examples = {
         @Example(
             code = {
-                "level: WARN",
+                "level: DEBUG",
                 "message: \"{{task.id}} > {{taskrun.startDate}}\""
             }
         ),
         @Example(
-            code = {
-                "level: WARN",
-                "message: " +
-                "   - 'Task id : \"{{task.id}}\"'" +
-                "   - 'Start date: \"{{taskrun.startDate}}\"'"
-            }
-        )
+            title = "Log one or more messages to the console",
+            full = true,
+            code = """
+                id: hello_world
+                namespace: dev
+
+                tasks:
+                  - id: greeting
+                    type: io.kestra.core.tasks.log.Log
+                    message:
+                      - Kestra team wishes you a great day 👋
+                      - If you need some help, reach out via Slack"""
+        ),
     }
 )
 public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "The message(s) to log",
-        description = "Can be a string or an array of string",
+        title = "One or more message(s) to be sent to the backend as logs",
+        description = "It can be a string or an array of strings.",
         anyOf = {
             String.class,
             String[].class
@@ -60,7 +66,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     private Object message;
 
     @Schema(
-        title = "The log level"
+        title = "The log level. If not specified, it defaults to INFO."
     )
     @Builder.Default
     @PluginProperty

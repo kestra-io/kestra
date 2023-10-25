@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process some tasks conditionally depending on a contextual value",
+    title = "Process tasks conditionally depending on a contextual value",
     description = "Allow some workflow based on context variables, for example branch a flow based on a previous task."
 )
 @Plugin(
@@ -60,11 +60,11 @@ import java.util.stream.Stream;
                 "    type: io.kestra.core.tasks.flows.If",
                 "    condition: \"{{inputs.string == 'Condition'}}\"",
                 "    then:",
-                "      - id: when-true",
+                "      - id: when_true",
                 "        type: io.kestra.core.tasks.log.Log",
                 "        message: 'Condition was true'",
                 "    else:",
-                "      - id: when-false",
+                "      - id: when_false",
                 "        type: io.kestra.core.tasks.log.Log",
                 "        message: 'Condition was false'",
             }
@@ -74,15 +74,15 @@ import java.util.stream.Stream;
 public class If extends Task implements FlowableTask<VoidOutput> {
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "If condition, must coerce to a boolean.",
-        description = "Boolean coercion allows 0, -0, null and '' to coerce to false,  all other values to coerce to true."
+        title = "The `If` condition which can be any expression that evaluates to a boolean value.",
+        description = "Boolean coercion allows 0, -0, null and '' to evaluate to false, all other values will evaluate to true."
     )
     private String condition;
 
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute when the condition is true."
+        title = "List of tasks to execute if the condition is true."
     )
     @NotEmpty
     private List<Task> then;
@@ -90,7 +90,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute when the condition is false."
+        title = "List of tasks to execute if the condition is false."
     )
     @JsonProperty("else")
     private List<Task> _else;
@@ -98,7 +98,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute in case of errors on a child task."
+        title = "List of tasks to execute in case of errors of a child task."
     )
     private List<Task> errors;
 

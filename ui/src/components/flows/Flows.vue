@@ -139,7 +139,7 @@
                                             :label="$t('last execution date')"
                                             v-if="user.hasAny(permission.EXECUTION)">
                                 <template #default="scope">
-                                    <date-ago :inverted="true" :date=getLastExecution(scope.row).state.startDate />
+                                    <date-ago v-if="lastExecutionByFlowReady" :inverted="true" :date=getLastExecution(scope.row).state.startDate />
                                 </template>
                             </el-table-column>
 

@@ -218,6 +218,8 @@
                     this.editor.onDidFocusEditorText(() => {
                         this.focus = true;
                     })
+
+                    this.$refs.monacoEditor.focus();
                 }
 
                 this.editor.addAction({

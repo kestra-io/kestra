@@ -43,7 +43,7 @@
                 }
 
                 return `id: hello-world
-namespace: dev
+namespace: company.team
 tasks:
   - id: hello
     type: io.kestra.core.tasks.log.Log

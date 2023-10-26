@@ -16,6 +16,7 @@ import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -33,6 +34,11 @@ public class PauseTest extends AbstractMemoryRunnerTest {
     @RetryingTest(maxAttempts = 10, suspendForMs = 10)
     void delay() throws Exception {
         suite.runDelay(runnerUtils);
+    }
+
+    @Test
+    void parallelDelay() throws Exception {
+        suite.runParallelDelay(runnerUtils);
     }
 
     @Test
@@ -89,6 +95,13 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(2L));
             assertThat(execution.getTaskRunList(), hasSize(3));
+        }
+
+        public void runParallelDelay(RunnerUtils runnerUtils) throws TimeoutException {
+            Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-pause", Duration.ofMinutes(5));
+
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            assertThat(execution.getTaskRunList(), hasSize(7));
         }
 
 

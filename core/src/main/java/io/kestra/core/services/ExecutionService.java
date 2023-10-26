@@ -215,7 +215,7 @@ public class ExecutionService {
             if (!isFlowable || s.equals(taskRunId)) {
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
-                if (originalTaskRun.getAttempts() != null && originalTaskRun.getAttempts().size() > 0) {
+                if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
                     ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
                     attempts.set(attempts.size() - 1, attempts.get(attempts.size() - 1).withState(newState));
                     newTaskRun = newTaskRun.withAttempts(attempts);
@@ -227,6 +227,11 @@ public class ExecutionService {
             }
         }
 
+
+        if (newExecution.getTaskRunList().stream().anyMatch(t -> t.getState().getCurrent() == State.Type.PAUSED)) {
+            // there is still some tasks paused, this can occur with parallel pause
+            return newExecution;
+        }
         return newExecution
             .withState(State.Type.RESTARTED);
     }

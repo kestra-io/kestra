@@ -20,7 +20,7 @@
     </top-nav-bar>
     <div :class="{'mt-3': !embed}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
-            <template #navbar v-if="embed === false">
+            <template #navbar v-if="embed === false || filter">
                 <el-form-item>
                     <search-field />
                 </el-form-item>
@@ -214,8 +214,8 @@
                             </template>
                             <template #default="scope">
                                 <code>
-                                    {{ scope.row.taskRunList.slice(-1)[0].taskId }}
-                                    {{ scope.row.taskRunList.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList.slice(-1)[0].attempts.length})` : '' }}
+                                    {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
+                                    {{ scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : '' }}
                                 </code>
                             </template>
                         </el-table-column>
@@ -308,6 +308,14 @@
                 default: () => []
             },
             isReadOnly: {
+                type: Boolean,
+                default: false
+            },
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            filter: {
                 type: Boolean,
                 default: false
             }

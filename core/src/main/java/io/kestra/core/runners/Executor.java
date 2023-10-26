@@ -10,6 +10,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor
@@ -27,7 +28,8 @@ public class Executor {
     private final List<ExecutionDelay> executionDelays = new ArrayList<>();
     private WorkerTaskResult joined;
     private final List<WorkerTaskExecution> workerTaskExecutions = new ArrayList<>();
-    private boolean queued = false;
+    private ExecutionsRunning executionsRunning;
+    private ExecutionQueued executionQueued;
 
     public Executor(Execution execution, Long offset) {
         this.execution = execution;
@@ -99,8 +101,14 @@ public class Executor {
         return this;
     }
 
-    public Executor queued() {
-        this.queued = true;
+    public Executor withExecutionQueued(ExecutionQueued executionQueued) {
+        this.executionQueued = executionQueued;
+
+        return this;
+    }
+
+    public Executor withExecutionsRunning(ExecutionsRunning executionsRunning) {
+        this.executionsRunning = executionsRunning;
 
         return this;
     }

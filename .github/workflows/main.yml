@@ -221,6 +221,7 @@ jobs:
               io.kestra.plugin:plugin-soda:LATEST
               io.kestra.plugin:plugin-spark:LATEST
               io.kestra.plugin:plugin-surrealdb:LATEST
+              io.kestra.plugin:plugin-terraform:LATEST
               io.kestra.plugin:plugin-tika:LATEST
               io.kestra.plugin:plugin-weaviate:LATEST
               io.kestra.storage:storage-azure:LATEST

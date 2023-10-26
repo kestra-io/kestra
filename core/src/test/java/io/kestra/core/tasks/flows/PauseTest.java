@@ -98,7 +98,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         }
 
         public void runParallelDelay(RunnerUtils runnerUtils) throws TimeoutException {
-            Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-pause", Duration.ofMinutes(5));
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-pause", Duration.ofMinutes(5));
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
             assertThat(execution.getTaskRunList(), hasSize(7));

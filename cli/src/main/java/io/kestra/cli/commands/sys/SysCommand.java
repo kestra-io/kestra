@@ -11,8 +11,6 @@ import picocli.CommandLine;
     description = "handle systems maintenance",
     mixinStandardHelpOptions = true,
     subcommands = {
-        RestoreQueueCommand.class,
-        FlowListenersRestoreCommand.class,
         ReindexCommand.class
     }
 )

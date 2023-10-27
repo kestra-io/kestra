@@ -203,7 +203,6 @@
     "blueprints": {
       "title": "Blueprints",
       "header": {
-        "welcome": "Welcome to the blueprints gallery!",
         "catch phrase": {
           "1": "The first step is always the hardest.",
           "2": "Explore blueprints to kick-start your next flow."
@@ -722,7 +721,6 @@
     "blueprints": {
       "title": "Blueprints",
       "header": {
-        "welcome": "Bienvenue dans la galerie de blueprints !",
         "catch phrase": {
           "1": "La première étape est toujours la plus difficile.",
           "2": "Explorez les blueprints pour créer rapidement vos flows."

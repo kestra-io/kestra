@@ -1,0 +1,11 @@
+id: flow-concurrency-fail
+namespace: io.kestra.tests
+
+concurrencyLimit:
+  behavior: FAIL
+  maxConcurrency: 1
+
+tasks:
+  - id: sleep
+    type: io.kestra.core.tasks.test.Sleep
+    duration: 100

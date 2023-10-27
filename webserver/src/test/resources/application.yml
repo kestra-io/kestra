@@ -91,6 +91,9 @@ kestra:
       workerjobrunning:
         cls: io.kestra.core.runners.WorkerJobRunning
         table: "worker_job_running"
+      executionqueued:
+        table: "execution_queued"
+        cls: io.kestra.core.runners.ExecutionQueued
 datasources:
   h2:
     url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

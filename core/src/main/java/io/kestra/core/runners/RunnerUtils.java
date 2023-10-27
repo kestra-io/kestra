@@ -338,6 +338,32 @@ public class RunnerUtils {
         }, duration);
     }
 
+    public Execution runOneUntilRunning(String tenantId, String namespace, String flowId) throws TimeoutException {
+        return this.runOneUntilRunning(tenantId, namespace, flowId, null, null, null);
+    }
+
+    public Execution runOneUntilRunning(String tenantId, String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        return this.runOneUntilRunning(
+            flowRepository
+                .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+            inputs,
+            duration
+        );
+    }
+
+    public Execution runOneUntilRunning(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        if (duration == null) {
+            duration = Duration.ofSeconds(15);
+        }
+
+        Execution execution = this.newExecution(flow, inputs, null);
+
+        return this.awaitExecution(isRunningExecution(execution), () -> {
+            this.executionQueue.emit(execution);
+        }, duration);
+    }
+
     public Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
@@ -374,6 +400,10 @@ public class RunnerUtils {
 
     public Predicate<Execution> isPausedExecution(Execution execution) {
         return e -> e.getId().equals(execution.getId()) && e.getState().isPaused() && e.getTaskRunList().stream().anyMatch(t -> t.getState().isPaused());
+    }
+
+    public Predicate<Execution> isRunningExecution(Execution execution) {
+        return e -> e.getId().equals(execution.getId()) && e.getState().isRunning() && e.getTaskRunList().stream().anyMatch(t -> t.getState().isRunning());
     }
 
     private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {

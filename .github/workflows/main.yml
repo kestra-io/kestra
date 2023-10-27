@@ -161,6 +161,7 @@ jobs:
             plugins: >-
               io.kestra.plugin:plugin-airbyte:LATEST
               io.kestra.plugin:plugin-amqp:LATEST
+              io.kestra.plugin:plugin-ansible:LATEST
               io.kestra.plugin:plugin-aws:LATEST
               io.kestra.plugin:plugin-azure:LATEST
               io.kestra.plugin:plugin-cassandra:LATEST

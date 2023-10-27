@@ -1,16 +1,13 @@
 package io.kestra.core.tasks.flows;
 
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
-import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
@@ -127,8 +124,6 @@ public class Flow extends Task implements ExecutableTask {
                                                                    io.kestra.core.models.flows.Flow currentFlow,
                                                                    Execution currentExecution,
                                                                    TaskRun currentTaskRun) throws InternalException {
-        RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-
         Map<String, Object> inputs = new HashMap<>();
         if (this.inputs != null) {
             inputs.putAll(runContext.render(this.inputs));
@@ -146,50 +141,21 @@ public class Flow extends Task implements ExecutableTask {
 
         String namespace = runContext.render(this.namespace);
         String flowId = runContext.render(this.flowId);
-        Optional<Integer> revision = this.revision != null ? Optional.of(this.revision) : Optional.empty();
 
-        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
-            currentExecution.getTenantId(),
+        return List.of(ExecutableUtils.workerTaskExecution(
+            runContext,
+            flowExecutorInterface,
+            currentExecution,
+            currentFlow,
+            this,
+            currentTaskRun,
             namespace,
             flowId,
-            revision,
-            currentExecution.getTenantId(),
-            currentFlow.getNamespace(),
-            currentFlow.getId()
-        )
-            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "'.'" + flowId + "' with revision + '" + revision + "'"));
-
-        if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute a flow which is disabled");
-        }
-
-        if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
-        }
-
-        Execution execution = runnerUtils
-            .newExecution(
-                flow,
-                (f, e) -> runnerUtils.typedInputs(f, e, inputs),
-                labels)
-            .withTrigger(ExecutionTrigger.builder()
-                .id(this.getId())
-                .type(this.getType())
-                .variables(ImmutableMap.of(
-                    "executionId", currentExecution.getId(),
-                    "namespace", currentFlow.getNamespace(),
-                    "flowId", currentFlow.getId(),
-                    "flowRevision", currentFlow.getRevision()
-                ))
-                .build()
-            );
-        WorkerTaskExecution<?> workerTaskExecution = WorkerTaskExecution.builder()
-            .task(this)
-            .taskRun(currentTaskRun)
-            .execution(execution)
-            .build();
-
-        return List.of(workerTaskExecution);
+            this.revision,
+            inputs,
+            labels,
+            Map.of()
+        ));
     }
 
     @Override

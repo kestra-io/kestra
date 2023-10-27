@@ -8,16 +8,13 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.WorkerTaskExecution;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -108,9 +105,6 @@ public class ForEachItem extends Task implements ExecutableTask {
         return IntStream.range(1, splits + 1).boxed()
             .<WorkerTaskExecution<?>>map(throwFunction(
                  split -> {
-                    //FIXME duplicated with the flow task
-                    RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-
                     Map<String, Object> inputs = new HashMap<>();
                     if (this.subflow.inputs != null) {
                         inputs.putAll(runContext.render(this.subflow.inputs));
@@ -128,55 +122,26 @@ public class ForEachItem extends Task implements ExecutableTask {
 
                     String namespace = runContext.render(this.subflow.namespace);
                     String flowId = runContext.render(this.subflow.flowId);
-                    Optional<Integer> revision = this.subflow.revision != null ? Optional.of(this.subflow.revision) : Optional.empty();
 
-                    io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
-                            currentExecution.getTenantId(),
-                            namespace,
-                            flowId,
-                            revision,
-                            currentExecution.getTenantId(),
-                            currentFlow.getNamespace(),
-                            currentFlow.getId()
-                        )
-                        .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "'.'" + flowId + "' with revision + '" + revision + "'"));
-
-                    if (flow.isDisabled()) {
-                        throw new IllegalStateException("Cannot execute disabled flow");
-                    }
-
-                    if (flow instanceof FlowWithException fwe) {
-                        throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
-                    }
-
-                    Execution execution = runnerUtils
-                        .newExecution(
-                            flow,
-                            (f, e) -> runnerUtils.typedInputs(f, e, inputs),
-                            labels)
-                        .withTrigger(ExecutionTrigger.builder()
-                            .id(this.getId())
-                            .type(this.getType())
-                            .variables(ImmutableMap.of(
-                                "executionId", currentExecution.getId(),
-                                "namespace", currentFlow.getNamespace(),
-                                "flowId", currentFlow.getId(),
-                                "flowRevision", currentFlow.getRevision(),
-                                "items", readItems(currentExecution, currentTaskRun.getId(), split)
-                            ))
-                            .build()
-                        );
-
-                     return WorkerTaskExecution.builder()
-                         .task(this)
-                         .taskRun(currentTaskRun
+                     return ExecutableUtils.workerTaskExecution(
+                         runContext,
+                         flowExecutorInterface,
+                         currentExecution,
+                         currentFlow,
+                         this,
+                         currentTaskRun
                              .withValue(String.valueOf(split))
                              .withOutputs(ImmutableMap.of(
                                  "currentIteration", split,
                                  "maxIterations", splits
-                             )))
-                         .execution(execution)
-                         .build();
+                             )),
+                         namespace,
+                         flowId,
+                         this.subflow.revision,
+                         inputs,
+                         labels,
+                         Map.of("items", readItems(currentExecution, currentTaskRun.getId(), split))
+                     );
                 }
             ))
             .toList();

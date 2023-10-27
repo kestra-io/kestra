@@ -6,6 +6,8 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.statistics.ExecutionCount;
+import io.kestra.core.models.flows.ConcurrencyLimit;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
@@ -36,11 +38,13 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -116,7 +120,10 @@ public class JdbcExecutor implements ExecutorInterface {
     private ExecutionService executionService;
 
     @Inject
-    private AbstractJdbcExecutionDelayStorage abstractExecutionDelayStorage;
+    private AbstractJdbcExecutionDelayStorage executionDelayStorage;
+
+    @Inject
+    private AbstractJdbcExecutionQueuedStorage executionQueuedStorage;
 
     @Inject
     private AbstractJdbcExecutorStateStorage executorStateStorage;
@@ -292,10 +299,57 @@ public class JdbcExecutor implements ExecutorInterface {
             final Flow flow = transform(this.flowRepository.findByExecution(execution), execution);
             Executor executor = new Executor(execution, null).withFlow(flow);
 
+            // queue execution if needed (limit concurrency)
+            if (execution.getState().isCreated() && flow.getConcurrencyLimit() != null) {
+                ExecutionCount count = executionRepository.executionCounts(
+                    flow.getTenantId(),
+                    List.of(new io.kestra.core.models.executions.statistics.Flow(flow.getNamespace(), flow.getId())),
+                    List.of(State.Type.RUNNING),
+                    null,
+                    null
+                ).get(0);
+
+                if (count.getCount() >= flow.getConcurrencyLimit().getMaxConcurrency()) {
+                    return switch(flow.getConcurrencyLimit().getBehavior()) {
+                        case QUEUE -> {
+                            ExecutionQueued executionQueued = ExecutionQueued.builder()
+                                .tenantId(flow.getTenantId())
+                                .namespace(flow.getNamespace())
+                                .flowId(flow.getId())
+                                .date(Instant.now())
+                                .execution(execution)
+                                .build();
+
+                            // when max concurrency is reached, we throttle the execution and stop processing
+                            flow.logger().info(
+                                "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded",
+                                execution.getNamespace(),
+                                execution.getFlowId(),
+                                execution.getId()
+                            );
+                            executionQueuedStorage.save(executionQueued);
+                            // return the execution so it is created
+                            yield Pair.of(
+                                executor,
+                                executorState
+                            );
+                        }
+                        case CANCEL -> Pair.of(
+                            executor.withExecution(execution.withState(State.Type.CANCELLED), "Executor.executionQueue"),
+                            executorState
+                        );
+                        case FAIL -> Pair.of(
+                            executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "Executor.executionQueue"),
+                            executorState
+                        );
+                    };
+                }
+            }
+
+            // process the execution
             if (log.isDebugEnabled()) {
                 executorService.log(log, true, executor);
             }
-
             executor = executorService.process(executor);
 
             if (!executor.getNexts().isEmpty() && deduplicateNexts(execution, executorState, executor.getNexts())) {
@@ -336,7 +390,7 @@ public class JdbcExecutor implements ExecutorInterface {
             // schedulerDelay
             if (!executor.getExecutionDelays().isEmpty()) {
                 executor.getExecutionDelays()
-                    .forEach(executionDelay -> abstractExecutionDelayStorage.save(executionDelay));
+                    .forEach(executionDelay -> executionDelayStorage.save(executionDelay));
             }
 
             // worker task execution watchers
@@ -384,7 +438,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     .forEach(this.executionQueue::emit);
             }
 
-            // worker task execution
+            // when terminated: handle worker task execution and execution throttled
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
                 workerTaskExecutionStorage.get(execution.getId())
                     .ifPresent(workerTaskExecution -> {
@@ -413,6 +467,15 @@ public class JdbcExecutor implements ExecutorInterface {
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);
                     });
+
+                if (flow.getConcurrencyLimit() != null && flow.getConcurrencyLimit().getBehavior() == ConcurrencyLimit.Behavior.QUEUE) {
+                    // as the execution is terminated, we can check if there exist a queued execution and submit it to the execution queue
+                    executionQueuedStorage.pop(flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        queued -> executionQueue.emit(queued)
+                    );
+                }
             }
 
             return Pair.of(
@@ -573,7 +636,7 @@ public class JdbcExecutor implements ExecutorInterface {
             return;
         }
 
-        abstractExecutionDelayStorage.get(executionDelay -> {
+        executionDelayStorage.get(executionDelay -> {
             Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
 

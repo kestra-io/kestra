@@ -108,6 +108,8 @@ public class Flow implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
+    ConcurrencyLimit concurrencyLimit;
+
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
     }

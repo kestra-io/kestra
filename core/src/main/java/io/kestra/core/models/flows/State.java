@@ -156,10 +156,11 @@ public class State {
         SUCCESS,
         WARNING,
         FAILED,
-        KILLED;
+        KILLED,
+        CANCELLED;
 
         public boolean isTerminated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this ==  Type.CANCELLED;
         }
 
         public boolean isCreated() {

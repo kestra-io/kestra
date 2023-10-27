@@ -140,6 +140,9 @@ kestra:
       workerjobrunning:
         cls: io.kestra.core.runners.WorkerJobRunning
         table: "worker_job_running"
+      executionqueued:
+        table: "execution_queued"
+        cls: io.kestra.core.runners.ExecutionQueued
 
     queues:
       min-poll-interval: 25ms

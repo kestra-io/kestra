@@ -27,6 +27,7 @@ public class Executor {
     private final List<ExecutionDelay> executionDelays = new ArrayList<>();
     private WorkerTaskResult joined;
     private final List<WorkerTaskExecution> workerTaskExecutions = new ArrayList<>();
+    private boolean queued = false;
 
     public Executor(Execution execution, Long offset) {
         this.execution = execution;
@@ -94,6 +95,12 @@ public class Executor {
     public Executor withWorkerTaskExecutions(List<WorkerTaskExecution<?>> newExecutions, String from) {
         this.workerTaskExecutions.addAll(newExecutions);
         this.from.add(from);
+
+        return this;
+    }
+
+    public Executor queued() {
+        this.queued = true;
 
         return this;
     }

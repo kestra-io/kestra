@@ -72,7 +72,7 @@ public class ExecutorService {
             // if all tasks are  killed or terminated, set the execution to killed
             executor = this.handleKilling(executor);
 
-            // killing, so no more nexts
+            // process next task if not killing or killed
             if (executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED) {
                 executor = this.handleNext(executor);
                 executor = this.handleChildNext(executor);

@@ -53,7 +53,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Schema(
     title = "Execute a subflow for each batch of items",
-    description = "This tasks allow to execute a subflow for each batch of items. The items must come from Kestra's internal storage."
+    description = "Execute a subflow for each batch of items. The `items` value must be internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type."
 )
 @Plugin(
     examples = {
@@ -72,7 +72,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                       inputs:
                         file: "{{ taskrun.items }}" # special variable that contains the items of the batch
                       wait: true # wait for the subflow execution
-                      transmitFailed: true # fail the task run if the subflow fail"""
+                      transmitFailed: true # fail the task run if the subflow execution fails"""
             }
         )
     }
@@ -82,7 +82,7 @@ public class ForEachItem extends Task implements ExecutableTask {
 
     @NotEmpty
     @PluginProperty(dynamic = true)
-    @Schema(title = "The items, must be an URI from Kestra's internal storage")
+    @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI, e.g. output from a previous task in the format `{{ outputs.task_id.uri }}` or an input parameter of FILE type e.g. `{{ inputs.myfile }}`.")
     private String items;
 
     @Positive
@@ -94,7 +94,7 @@ public class ForEachItem extends Task implements ExecutableTask {
 
     @NotNull
     @PluginProperty
-    @Schema(title = "The subflow that will be executed on each batch of items")
+    @Schema(title = "The subflow that will be executed for each batch of items")
     private ForEachItem.Subflow subflow;
 
     @Override
@@ -257,56 +257,56 @@ public class ForEachItem extends Task implements ExecutableTask {
     public static class Subflow {
         @NotEmpty
         @Schema(
-            title = "The namespace of the flow to trigger"
+            title = "The namespace of the subflow to be executed"
         )
         @PluginProperty(dynamic = true)
         private String namespace;
 
         @NotEmpty
         @Schema(
-            title = "The identifier of the flow to trigger"
+            title = "The identifier of the subflow to be executed"
         )
         @PluginProperty(dynamic = true)
         private String flowId;
 
         @Schema(
-            title = "The revision of the flow to trigger",
-            description = "By default, we trigger the last version."
+            title = "The revision of the subflow to be executed",
+            description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
         )
         @PluginProperty
         private Integer revision;
 
         @Schema(
-            title = "The inputs to pass to the triggered flow"
+            title = "The inputs to pass to the subflow to be executed"
         )
         @PluginProperty(dynamic = true)
         private Map<String, Object> inputs;
 
         @Schema(
-            title = "The labels to pass to the triggered flow execution"
+            title = "The labels to pass to the subflow to be executed"
         )
         @PluginProperty(dynamic = true)
         private Map<String, String> labels;
 
         @Builder.Default
         @Schema(
-            title = "Wait the end of the execution."
+            title = "Whether to wait for the subflows execution to finish before continuing the current execution."
         )
         @PluginProperty
         private final Boolean wait = true;
 
         @Builder.Default
         @Schema(
-            title = "Fail the current execution if the waited execution is failed or killed.",
-            description = "`wait` need to be true to make it work"
+            title = "Whether to fail the current execution if the subflow execution fails or is killed",
+            description = "Note that this option works only if `wait` is set to `true`."
         )
         @PluginProperty
         private final Boolean transmitFailed = true;
 
         @Builder.Default
         @Schema(
-            title = "Inherit labels from the calling execution",
-            description = "By default, we don't inherit any labels of the calling execution"
+            title = "Whether the subflow should inherit labels from this execution that triggered it.",
+            description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
         )
         @PluginProperty
         private final Boolean inheritLabels = false;

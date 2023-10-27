@@ -49,41 +49,40 @@ import java.util.*;
 public class Flow extends Task implements ExecutableTask {
     @NotNull
     @Schema(
-        title = "The namespace of the flow that should be executed as a subflow"
+        title = "The namespace of the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
     @Schema(
-        title = "The identifier of the flow that should be executed as a subflow"
+        title = "The identifier of the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
-        title = "The revision of the flow that should be executed as a subflow",
-        description = "By default, the last i.e. the most recent revision of the flow is triggered."
+        title = "The revision of the subflow to be executed",
+        description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
     )
     @PluginProperty(dynamic = true)
     private Integer revision;
 
     @Schema(
-        title = "The inputs to pass to the subflow"
+        title = "The inputs to pass to the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The labels to pass to the subflow execution"
+        title = "The labels to pass to the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private Map<String, String> labels;
 
     @Builder.Default
     @Schema(
-        title = "Whether to wait for the subflow execution to finish before continuing the current execution",
-        description = "By default, the subflow will be executed in a fire-and-forget manner without waiting for the subflow execution to finish. If you set this option to `true`, the current execution will wait for the subflow execution to finish before continuing with the next task."
+        title = "Whether to wait for the subflow execution to finish before continuing the current execution."
     )
     @PluginProperty
     private final Boolean wait = false;
@@ -91,7 +90,7 @@ public class Flow extends Task implements ExecutableTask {
     @Builder.Default
     @Schema(
         title = "Whether to fail the current execution if the subflow execution fails or is killed",
-        description = "Note that this option only has an effect if `wait` is set to `true`."
+        description = "Note that this option works only if `wait` is set to `true`."
     )
     @PluginProperty
     private final Boolean transmitFailed = false;
@@ -106,8 +105,7 @@ public class Flow extends Task implements ExecutableTask {
 
     @Schema(
         title = "Outputs from the subflow executions.",
-        description = "Allows to specify key-value pairs (with the value rendered) in order to extract any outputs from the " +
-            "subflow execution."
+        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution."
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> outputs;

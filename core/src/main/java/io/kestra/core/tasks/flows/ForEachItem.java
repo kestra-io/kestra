@@ -78,7 +78,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     }
 )
 public class ForEachItem extends Task implements ExecutableTask {
-    private static final String URI_FORMAT = "kestra:///%s/%s/executions/%s/tasks/%s/%s/bach-%s.ion";
+    private static final String URI_FORMAT = "kestra:///%s/%s/executions/%s/tasks/%s/%s/batch-%s.ion";
 
     @NotEmpty
     @PluginProperty(dynamic = true)
@@ -246,7 +246,7 @@ public class ForEachItem extends Task implements ExecutableTask {
     private void createBatchFile(RunContext runContext, List<String> rows, int batch) throws IOException {
         byte[] bytes = rows.stream().collect(Collectors.joining(System.lineSeparator())).getBytes();
         File batchFile = runContext.tempFile(bytes, ".ion").toFile();
-        runContext.putTempFile(batchFile, "bach-" + batch + ".ion");
+        runContext.putTempFile(batchFile, "batch-" + (batch + 1) + ".ion");
     }
 
     @SuperBuilder

@@ -67,6 +67,7 @@ public class ForEachItemCaseTest {
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow"));
+        assertThat((String) triggered.get().getTrigger().getVariables().get("item"), matchesRegex("kestra:///io\\.kestra\\.tests/for-each-item/executions/.*/tasks/.*/.*/bach-.*\\.ion"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 
@@ -99,6 +100,7 @@ public class ForEachItemCaseTest {
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow"));
+        assertThat((String) triggered.get().getTrigger().getVariables().get("item"), matchesRegex("kestra:///io\\.kestra\\.tests/for-each-item/executions/.*/tasks/.*/.*/bach-.*\\.ion"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 

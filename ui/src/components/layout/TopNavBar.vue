@@ -1,6 +1,6 @@
 <template>
     <nav class="d-flex w-100 gap-3 top-bar" v-if="displayNavBar">
-        <div class="d-flex flex-column flex-grow-1">
+        <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
                 <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x">
                     <router-link :to="item.link">
@@ -8,22 +8,24 @@
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-flex">
+            <h1 class="h5 fw-semibold m-0 d-inline-fle">
                 <slot name="title">
                     {{ title }}
                 </slot>
             </h1>
         </div>
         <div class="d-flex side gap-2 flex-shrink-0">
-            <global-search />
+            <div class="d-none d-lg-flex align-items-center">
+                <global-search />
+            </div>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons">
-                <el-dropdown popper-class="hide-arrow overflow-hidden">
+                <el-dropdown popper-class="">
                     <el-button class="no-focus dropdown-button">
                         <HelpBox />
                     </el-button>
                     <template #dropdown>
-                        <el-dropdown-menu class="bg-transparent p-0">
+                        <el-dropdown-menu>
                             <a href="https://kestra.io/slack"
                                target="_blank"
                                class="d-flex gap-2 el-dropdown-menu__item">
@@ -121,11 +123,28 @@
         border-bottom: 1px solid var(--bs-border-color);
         background: var(--card-bg);
 
+        .top-title, h1, .el-breadcrumb {
+            white-space: nowrap;
+            max-width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
         h1 {
             line-height: 1.6;
-            flex-wrap: wrap;
-            white-space: pre-wrap;
-            word-break: break-all;
+            display: block !important;
+        }
+
+        :deep(.el-breadcrumb__item) {
+            display: inline-block;
+        }
+
+
+        :deep(.el-breadcrumb__inner) {
+            white-space: nowrap;
+            max-width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
         .side {

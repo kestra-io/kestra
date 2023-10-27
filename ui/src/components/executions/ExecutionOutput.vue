@@ -83,6 +83,7 @@
             <el-table-column prop="task" :sort-orders="['ascending', 'descending']" :label="$t('output')">
                 <template #default="scope">
                     <var-value :execution="execution" :value="scope.row.output" />
+                    <sub-flow-link class="ms-2" v-if="scope.row.key == 'executionId'" :execution-id="scope.row.output" />
                 </template>
             </el-table-column>
         </el-table>
@@ -97,9 +98,11 @@
     import Collapse from "../layout/Collapse.vue";
     import Pagination from "../layout/Pagination.vue";
     import {apiUrl} from "override/utils/route";
+    import SubFlowLink from "../flows/SubFlowLink.vue";
 
     export default {
         components: {
+            SubFlowLink,
             Pagination,
             VarValue,
             Editor,

@@ -52,7 +52,7 @@
                     </div>
                     <div class="flex-shrink-1">
                         <el-button-group class="d-flex flex-nowrap">
-                            <el-button :icon="Eye" @click="selectInput(input, index)" />
+                            <el-button :icon="TextSearch" @click="selectInput(input, index)" />
                             <el-button :icon="Plus" @click="addInput" />
                             <el-button
                                 :icon="Minus"
@@ -68,7 +68,7 @@
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TaskRoot from "./tasks/TaskRoot.vue";
 </script>

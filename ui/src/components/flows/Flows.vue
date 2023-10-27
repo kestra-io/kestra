@@ -163,7 +163,7 @@
                                     <router-link
                                         :to="{name: 'flows/update', params : {namespace: scope.row.namespace, id: scope.row.id}}">
                                         <kicon :tooltip="$t('details')" placement="left">
-                                            <eye />
+                                            <TextSearch />
                                         </kicon>
                                     </router-link>
                                 </template>
@@ -193,7 +193,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
@@ -214,7 +214,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,
-            Eye,
+            TextSearch,
             DataTable,
             SearchField,
             StateChart,

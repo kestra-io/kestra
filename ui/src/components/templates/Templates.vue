@@ -106,7 +106,7 @@
                                     <router-link
                                         :to="{name: 'templates/update', params : {namespace: scope.row.namespace, id: scope.row.id}}">
                                         <kicon :tooltip="$t('details')" placement="left">
-                                            <eye />
+                                            <TextSearch />
                                         </kicon>
                                     </router-link>
                                 </template>
@@ -133,7 +133,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
@@ -149,7 +149,7 @@
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
-            Eye,
+            TextSearch,
             DataTable,
             SearchField,
             NamespaceSelect,

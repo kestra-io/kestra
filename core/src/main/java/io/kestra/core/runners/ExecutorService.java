@@ -21,8 +21,10 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +58,36 @@ public class ExecutorService {
         }
 
         return this.flowExecutorInterface;
+    }
+
+    public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
+        if (count >= flow.getConcurrencyLimit().getMaxConcurrency()) {
+            return switch(flow.getConcurrencyLimit().getBehavior()) {
+                case QUEUE -> {
+                    ExecutionQueued executionQueued = ExecutionQueued.builder()
+                        .tenantId(flow.getTenantId())
+                        .namespace(flow.getNamespace())
+                        .flowId(flow.getId())
+                        .date(Instant.now())
+                        .execution(execution)
+                        .build();
+
+                    // when max concurrency is reached, we throttle the execution and stop processing
+                    flow.logger().info(
+                        "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded",
+                        execution.getNamespace(),
+                        execution.getFlowId(),
+                        execution.getId()
+                    );
+                    // return the execution queued
+                    yield executor.withExecutionQueued(executionQueued);
+                }
+                case CANCEL -> executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
+                case FAIL -> executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
+            };
+        }
+
+        return executor;
     }
 
     public Executor process(Executor executor) {

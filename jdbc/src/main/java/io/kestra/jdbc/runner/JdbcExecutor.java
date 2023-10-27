@@ -309,40 +309,21 @@ public class JdbcExecutor implements ExecutorInterface {
                     null
                 ).get(0);
 
-                if (count.getCount() >= flow.getConcurrencyLimit().getMaxConcurrency()) {
-                    return switch(flow.getConcurrencyLimit().getBehavior()) {
-                        case QUEUE -> {
-                            ExecutionQueued executionQueued = ExecutionQueued.builder()
-                                .tenantId(flow.getTenantId())
-                                .namespace(flow.getNamespace())
-                                .flowId(flow.getId())
-                                .date(Instant.now())
-                                .execution(execution)
-                                .build();
-
-                            // when max concurrency is reached, we throttle the execution and stop processing
-                            flow.logger().info(
-                                "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded",
-                                execution.getNamespace(),
-                                execution.getFlowId(),
-                                execution.getId()
-                            );
-                            executionQueuedStorage.save(executionQueued);
-                            // return the execution so it is created
-                            yield Pair.of(
-                                executor,
-                                executorState
-                            );
-                        }
-                        case CANCEL -> Pair.of(
-                            executor.withExecution(execution.withState(State.Type.CANCELLED), "Executor.executionQueue"),
-                            executorState
-                        );
-                        case FAIL -> Pair.of(
-                            executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "Executor.executionQueue"),
-                            executorState
-                        );
-                    };
+                executor = executorService.checkConcurrencyLimit(executor, flow, execution, count.getCount());
+                if (executor.getExecutionQueued() != null) {
+                    // the execution has been queued, we save the queued execution and stops here
+                    executionQueuedStorage.save(executor.getExecutionQueued());
+                    return Pair.of(
+                        executor,
+                        executorState
+                    );
+                }
+                if (executor.getExecution().getState().isTerminated()) {
+                    // the execution has been moved to FAILED or CANCELLED, we stop here
+                    return Pair.of(
+                        executor,
+                        executorState
+                    );
                 }
             }
 

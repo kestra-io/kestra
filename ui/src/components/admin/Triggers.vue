@@ -105,11 +105,9 @@
                 </template>
                 {{ $t("unlock trigger.warning") }}
                 <template #footer>
-                    <el-form-item class="submit">
-                        <el-button :icon="LockOff" @click="unlock" type="primary">
-                            {{ $t('unlock trigger.button') }}
-                        </el-button>
-                    </el-form-item>
+                    <el-button :icon="LockOff" @click="unlock" type="primary">
+                        {{ $t('unlock trigger.button') }}
+                    </el-button>
                 </template>
             </el-dialog>
         </div>

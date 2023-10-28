@@ -41,8 +41,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process some tasks conditionally depending on a contextual value",
-    description = "Allow some workflow based on context variables, for example branch a flow based on a previous task."
+    title = "Run tasks conditionally, i.e. decide which branch of tasks should be executed based on a given value",
+    description = "This task runs a set of tasks based on a given value.\n" +
+        "The value is evaluated at runtime and compared to the list of cases.\n" +
+        "If the value matches a case, the corresponding tasks are executed.\n" +
+        "If the value does not match any case, the default tasks are executed."
 )
 @Plugin(
     examples = {
@@ -96,7 +99,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     // @FIXME: @Valid break on io.micronaut.validation.validator.DefaultValidator#cascadeToOne with "Cannot validate java.util.ArrayList"
     // @Valid
     @Schema(
-        title = "The case switch, as map with key the value, value the list of tasks"
+        title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key."
     )
     @PluginProperty
     private Map<String, List<Task>> cases;

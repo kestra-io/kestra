@@ -135,7 +135,6 @@
     const isLoading = ref(false);
     const haveChange = ref(false)
     const flowYaml = ref("")
-    const triggerFlowDomElement = ref(null);
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)
     const newError = ref(null)
@@ -547,10 +546,7 @@
     };
 
     const execute = (_) => {
-        if (!triggerFlowDomElement.value) {
-            return;
-        }
-        triggerFlowDomElement.value.onClick();
+        store.commit("flow/executeFlow", true);
     };
 
     const canDelete = () => {

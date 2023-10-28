@@ -24,7 +24,7 @@
             <template #default="scope">
                 <a href="#" @click="triggerId = scope.row.id; isOpen = true">
                     <kicon :tooltip="$t('details')" placement="left">
-                        <eye />
+                        <TextSearch />
                     </kicon>
                 </a>
             </template>
@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Vars from "../executions/Vars.vue";
 </script>
 

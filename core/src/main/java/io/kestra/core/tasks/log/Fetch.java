@@ -30,47 +30,43 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Output execution logs in a file.",
-    description = "This task is useful to propagate your logs."
+    title = "Fetch execution logs and store them in a file.",
+    description = "This task is useful to automate moving logs between various systems and environments"
 )
 @Plugin(
     examples = {
         @Example(
             code = {
-                "level: ERROR",
+                "level: INFO",
+                "executionId: \"{{trigger.executionId}}\""
             }
         ),
         @Example(
             code = {
                 "level: WARN",
+                "executionId: \"{{execution.id}}\"",
                 "tasksId: ",
-                "  - \"previous-task-id\""
-            }
-        ),
-        @Example(
-            code = {
-                "level: WARN",
-                "executionId: \"{{execution.id}}\""
+                "  - \"previous_task_id\""
             }
         )
     }
 )
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(
-        title = "Filter on specific execution",
-        description = "If not set, will use the current execution"
+        title = "Filter for a specific execution",
+        description = "If not set, the task will use the ID of the current execution."
     )
     @PluginProperty(dynamic = true)
     private String executionId;
 
     @Schema(
-        title = "Filter on specific task(s)"
+        title = "Filter for one or more task(s)"
     )
     @PluginProperty
     private Collection<String> tasksId;
 
     @Schema(
-        title = "Minimum log level you want to fetch"
+        title = "The lowest log level that you want to fetch"
     )
     @Builder.Default
     @PluginProperty
@@ -119,13 +115,13 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The size of the fetched rows"
+            title = "The number of fetched rows"
         )
         private Long size;
 
         @Schema(
-            title = "The uri of stored results",
-            description = "File format is ion"
+            title = "Internal storage uri of stored results",
+            description = "Stored as Amazon ION file in a row per row format."
         )
         private URI uri;
     }

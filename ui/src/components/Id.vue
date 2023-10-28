@@ -3,11 +3,11 @@
         <template #content>
             <code>{{ value }}</code>
         </template>
-        <code :id="uuid" class="text-nowrap">
+        <code :id="uuid" @click="onClick" class="text-nowrap" :class="{'link': hasClickListener}">
             {{ transformValue }}
         </code>
     </el-tooltip>
-    <code v-else :id="uuid" class="text-nowrap">
+    <code v-else :id="uuid" class="text-nowrap" @click="onClick">
         {{ transformValue }}
     </code>
 </template>
@@ -38,7 +38,17 @@
                 uuid: Utils.uid(),
             };
         },
+        methods: {
+            onClick() {
+                if (this.hasClickListener) {
+                    this.$attrs.onClick();
+                }
+            }
+        },
         computed: {
+            hasClickListener() {
+                return (this.$attrs && this.$attrs.onClick)
+            },
             hasTooltip() {
                 return this.shrink && this.value && this.value.length > this.size;
             },
@@ -57,3 +67,12 @@
         }
     };
 </script>
+
+<style lang="scss" scoped>
+    code.link {
+        cursor: pointer;
+        &:hover {
+            color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1));
+        }
+    }
+</style>

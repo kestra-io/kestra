@@ -157,7 +157,7 @@ public class MemoryExecutor implements ExecutorInterface {
 
             executor = executorService.process(executor);
 
-            if (executor.getNexts().size() > 0 && deduplicateNexts(execution, executor.getNexts())) {
+            if (!executor.getNexts().isEmpty() && deduplicateNexts(execution, executor.getNexts())) {
                 executor.withExecution(
                     executorService.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
                     "onNexts"
@@ -170,10 +170,10 @@ public class MemoryExecutor implements ExecutorInterface {
                 toExecution(executor);
             }
 
-            if (executor.getWorkerTasks().size() > 0) {
+            if (!executor.getWorkerTasks().isEmpty()) {
                 List<WorkerTask> workerTasksDedup = executor.getWorkerTasks().stream()
                     .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
-                    .collect(Collectors.toList());
+                    .toList();
 
                 // Send WorkerTask not flowable to the worker
                 workerTasksDedup
@@ -189,12 +189,12 @@ public class MemoryExecutor implements ExecutorInterface {
                     .forEach(workerTaskResultQueue::emit);
             }
 
-            if (executor.getWorkerTaskResults().size() > 0) {
+            if (!executor.getWorkerTaskResults().isEmpty()) {
                 executor.getWorkerTaskResults()
                     .forEach(workerTaskResultQueue::emit);
             }
 
-            if (executor.getExecutionDelays().size() > 0) {
+            if (!executor.getExecutionDelays().isEmpty()) {
                 executor.getExecutionDelays()
                     .forEach(workerTaskResultDelay -> {
                         long between = ChronoUnit.MICROS.between(Instant.now(), workerTaskResultDelay.getDate());
@@ -214,7 +214,7 @@ public class MemoryExecutor implements ExecutorInterface {
                                             workerTaskResultDelay.getTaskRunId(),
                                             workerTaskResultDelay.getState()
                                         );
-
+                                        EXECUTIONS.put(workerTaskResultDelay.getExecutionId(), executionState.from(markAsExecution));
                                         executionQueue.emit(markAsExecution);
                                     }
                                 } catch (Exception e) {

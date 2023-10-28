@@ -1,0 +1,15 @@
+id: each-parallel-pause
+namespace: io.kestra.tests
+
+tasks:
+  - id: each
+    type: io.kestra.core.tasks.flows.EachParallel
+    value: ["toto", "tata", "titi"]
+    tasks:
+      - id: pause
+        type: io.kestra.core.tasks.flows.Pause
+        delay: PT1S
+        tasks:
+          - id: log
+            type: io.kestra.core.tasks.log.Log
+            message: Hello World

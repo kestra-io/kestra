@@ -38,7 +38,7 @@ public class QueueService {
         } else if (object.getClass() == WorkerTaskExecution.class) {
             return ((WorkerTaskExecution) object).getExecution().getId();
         } else if (object.getClass() == ExecutionDelay.class) {
-            return ((ExecutionDelay) object).getExecutionId();
+            return ((ExecutionDelay) object).uid();
         } else if (object.getClass() == ExecutorState.class) {
             return ((ExecutorState) object).getExecutionId();
         } else if (object.getClass() == Setting.class) {

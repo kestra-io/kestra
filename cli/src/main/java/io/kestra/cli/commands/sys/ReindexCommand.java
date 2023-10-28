@@ -1,12 +1,8 @@
 package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.TaskDefaultService;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +13,7 @@ import java.util.List;
 @CommandLine.Command(
     name = "reindex",
     description = "reindex all records of a type: read them from the database then update them",
-    mixinStandardHelpOptions = true,
-    subcommands = {
-        RestoreQueueCommand.class,
-        FlowListenersRestoreCommand.class
-    }
+    mixinStandardHelpOptions = true
 )
 @Slf4j
 public class ReindexCommand extends AbstractCommand {

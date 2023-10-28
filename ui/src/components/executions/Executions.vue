@@ -20,7 +20,7 @@
     </top-nav-bar>
     <div :class="{'mt-3': !embed}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
-            <template #navbar v-if="embed === false">
+            <template #navbar v-if="embed === false || filter">
                 <el-form-item>
                     <search-field />
                 </el-form-item>
@@ -119,7 +119,7 @@
                         <el-table-column prop="id" sortable="custom"
                                          :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
-                                <id :value="scope.row.id" :shrink="true" />
+                                <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(scope.row)" />
                             </template>
                         </el-table-column>
 
@@ -214,8 +214,8 @@
                             </template>
                             <template #default="scope">
                                 <code>
-                                    {{ scope.row.taskRunList.slice(-1)[0].taskId }}
-                                    {{ scope.row.taskRunList.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList.slice(-1)[0].attempts.length})` : '' }}
+                                    {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
+                                    {{ scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : '' }}
                                 </code>
                             </template>
                         </el-table-column>
@@ -225,7 +225,7 @@
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
                                     <kicon :tooltip="$t('details')" placement="left">
-                                        <eye />
+                                        <TextSearch />
                                     </kicon>
                                 </router-link>
                             </template>
@@ -251,7 +251,7 @@
 <script>
     import {mapState} from "vuex";
     import DataTable from "../layout/DataTable.vue";
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -281,7 +281,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             Status,
-            Eye,
+            TextSearch,
             DataTable,
             SearchField,
             NamespaceSelect,
@@ -308,6 +308,14 @@
                 default: () => []
             },
             isReadOnly: {
+                type: Boolean,
+                default: false
+            },
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            filter: {
                 type: Boolean,
                 default: false
             }

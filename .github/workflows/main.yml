@@ -161,6 +161,7 @@ jobs:
             plugins: >-
               io.kestra.plugin:plugin-airbyte:LATEST
               io.kestra.plugin:plugin-amqp:LATEST
+              io.kestra.plugin:plugin-ansible:LATEST
               io.kestra.plugin:plugin-aws:LATEST
               io.kestra.plugin:plugin-azure:LATEST
               io.kestra.plugin:plugin-cassandra:LATEST
@@ -194,6 +195,8 @@ jobs:
               io.kestra.plugin:plugin-jdbc-trino:LATEST
               io.kestra.plugin:plugin-jdbc-vectorwise:LATEST
               io.kestra.plugin:plugin-jdbc-vertica:LATEST
+              io.kestra.plugin:plugin-jdbc-dremio:LATEST
+              io.kestra.plugin:plugin-jdbc-arrow-flight:LATEST
               io.kestra.plugin:plugin-kafka:LATEST
               io.kestra.plugin:plugin-kubernetes:LATEST
               io.kestra.plugin:plugin-malloy:LATEST
@@ -221,6 +224,7 @@ jobs:
               io.kestra.plugin:plugin-soda:LATEST
               io.kestra.plugin:plugin-spark:LATEST
               io.kestra.plugin:plugin-surrealdb:LATEST
+              io.kestra.plugin:plugin-terraform:LATEST
               io.kestra.plugin:plugin-tika:LATEST
               io.kestra.plugin:plugin-weaviate:LATEST
               io.kestra.storage:storage-azure:LATEST

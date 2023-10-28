@@ -63,7 +63,7 @@
                 >
                     <el-table-column prop="executionId" :label="$t('execution')">
                         <template #default="scope">
-                            <id :value="scope.row.executionId" :shrink="true" />
+                            <id :value="scope.row.executionId" :shrink="true" @click="onRowDoubleClick(scope.row)" />
                         </template>
                     </el-table-column>
 
@@ -124,7 +124,7 @@
                         <template #default="scope">
                             <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}">
                                 <kicon :tooltip="$t('details')" placement="left">
-                                    <eye />
+                                    <TextSearch />
                                 </kicon>
                             </router-link>
                         </template>
@@ -140,7 +140,7 @@
 <script>
     import {mapState} from "vuex";
     import DataTable from "../layout/DataTable.vue";
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -164,7 +164,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Status,
-            Eye,
+            TextSearch,
             DataTable,
             SearchField,
             NamespaceSelect,

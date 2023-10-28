@@ -81,10 +81,10 @@ class JsonSchemaGeneratorTest {
             var bash = definitions.get("io.kestra.core.tasks.log.Log-1");
             assertThat((List<String>) bash.get("required"), not(contains("level")));
             assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
-            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("message").get("markdownDescription")).startsWith("Can be a string"), is(true));
+            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("message").get("markdownDescription")).contains("can be a string"), is(true));
             assertThat(((Map<String, Map<String, Object>>) bash.get("properties")).get("type").containsKey("pattern"), is(false));
             assertThat((String) bash.get("markdownDescription"), containsString("##### Examples"));
-            assertThat((String) bash.get("markdownDescription"), containsString("level: WARN"));
+            assertThat((String) bash.get("markdownDescription"), containsString("level: DEBUG"));
 
             var bashType = definitions.get("io.kestra.core.tasks.log.Log-2");
             assertThat(bashType, is(notNullValue()));

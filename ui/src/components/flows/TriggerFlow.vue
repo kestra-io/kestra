@@ -1,6 +1,6 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="disabled || flow?.deleted" :type="type" @click="onClick">
+        <el-button class="edit-flow-trigger-button" :icon="icon.Flash" :disabled="isDisabled()" :type="type" @click="onClick">
             {{ $t('execute') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
@@ -76,13 +76,15 @@
                 }
                 this.isOpen = !this.isOpen
             },
-
             closeModal() {
                 this.isOpen = false;
+            },
+            isDisabled() {
+                return this.disabled || this.flow?.deleted;
             }
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapState("flow", ["flow", "executeFlow"]),
             ...mapState("core", ["guidedProperties"]),
         },
         watch: {
@@ -93,6 +95,14 @@
                     }
                 },
                 deep: true
+            },
+            executeFlow: {
+                handler() {
+                    if (this.executeFlow && !this.isDisabled()) {
+                        this.$store.commit("flow/executeFlow", false);
+                        this.onClick();
+                    }
+                }
             }
         }
     };

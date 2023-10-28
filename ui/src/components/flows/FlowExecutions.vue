@@ -1,5 +1,5 @@
 <template>
-    <executions :restore-url="false" embed />
+    <executions :restore-url="false" filter embed/>
 </template>
 
 <script>

@@ -4,7 +4,7 @@
         :disabled="true"
     >
         <template #append>
-            <el-button :icon="Eye" @click="isOpen = true" />
+            <el-button :icon="TextSearch" @click="isOpen = true" />
         </template>
     </el-input>
 
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 

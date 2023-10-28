@@ -1,18 +1,15 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -20,13 +17,14 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -278,31 +276,35 @@ public abstract class AbstractExecutionRepositoryTest {
     @Test
     protected void lastExecutions() throws InterruptedException {
 
-        Execution execution =
+        Instant executionNow = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
-        executionRepository.save(Execution.builder()
-                .id(IdUtils.create())
-                .namespace("io.kestra.unittest")
-                .flowId("full")
-                .flowRevision(1)
-                .state(new State())
-                .inputs(ImmutableMap.of("test", 1))
-                .taskRunList(Collections.singletonList(
-                        TaskRun.builder()
-                                .id(IdUtils.create())
-                                .namespace("io.kestra.unittest")
-                                .flowId("full")
-                                .state(new State())
-                                .attempts(Collections.singletonList(
-                                        TaskRunAttempt.builder()
-                                                .build()
-                                ))
-                                .outputs(ImmutableMap.of(
-                                        "out", 1
-                                ))
-                                .build()
-                ))
-                .build());
+        Execution executionOld = builder(State.Type.SUCCESS, FLOW)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(new State.History(
+                    State.Type.SUCCESS,
+                    executionNow.minus(1, ChronoUnit.DAYS)
+                )))
+            ).build();
+
+        Execution executionFailed = builder(State.Type.FAILED, FLOW)
+            .state(State.of(
+                State.Type.FAILED,
+                List.of(new State.History(
+                    State.Type.FAILED,
+                    executionNow.minus(1, ChronoUnit.HOURS)
+                )))
+            ).build();
+
+        Execution executionRunning = builder(State.Type.RUNNING, FLOW)
+            .state(State.of(
+                State.Type.RUNNING,
+                List.of(new State.History(State.Type.RUNNING, executionNow)))
+            ).build();
+
+        executionRepository.save(executionOld);
+        executionRepository.save(executionFailed);
+        executionRepository.save(executionRunning);
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -310,11 +312,14 @@ public abstract class AbstractExecutionRepositoryTest {
         List<Execution> result = executionRepository.lastExecutions(
                 null,
                 List.of(
-                        ExecutionRepositoryInterface.FlowFilter.builder().id("full").build()
-                        )
+                    ExecutionRepositoryInterface.FlowFilter.builder()
+                        .id(FLOW)
+                        .namespace(NAMESPACE).build()
+                )
         );
 
-        assertThat(result.size(), is(0));
+        assertThat(result.size(), is(1));
+        assertThat(result.get(0).getState(), is(executionFailed.getState()));
     }
 
     @Test

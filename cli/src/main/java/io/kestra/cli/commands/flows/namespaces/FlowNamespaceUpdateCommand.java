@@ -57,7 +57,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
             }
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST("/api/v1/flows/" + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/") + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

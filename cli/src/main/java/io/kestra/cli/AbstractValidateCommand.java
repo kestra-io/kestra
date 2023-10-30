@@ -102,7 +102,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
 
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST("/api/v1/flows/validate", body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/validate"), body).contentType(MediaType.APPLICATION_YAML);
 
                 List<ValidateConstraintViolation> validations = client.toBlocking().retrieve(
                     this.requestOptions(request),

@@ -42,7 +42,7 @@ public class TemplateExportCommand extends AbstractApiCommand {
 
         try(DefaultHttpClient client = client()) {
             MutableHttpRequest<Object> request = HttpRequest
-                .GET("/api/v1/templates/export/by-query" + (namespace != null ? "?namespace=" + namespace : ""))
+                .GET(apiUri("/templates/export/by-query") + (namespace != null ? "?namespace=" + namespace : ""))
                 .accept(MediaType.APPLICATION_OCTET_STREAM);
 
             HttpResponse<byte[]> response = client.toBlocking().exchange(this.requestOptions(request), byte[].class);

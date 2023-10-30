@@ -4,9 +4,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.DefaultHttpClientConfiguration;
-import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.HttpClientConfiguration;
-import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -14,7 +12,6 @@ import picocli.CommandLine;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +25,9 @@ public abstract class AbstractApiCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {"--user"}, description = "<user:password> Server user and password")
     protected String user;
+
+    @CommandLine.Option(names = {"--tenant"}, description = "Tenant identifier (EE only, when multi-tenancy is enabled)")
+    protected String tenantId;
 
     @Inject
     @Named("remote-api")
@@ -52,5 +52,13 @@ public abstract class AbstractApiCommand extends AbstractCommand {
         }
 
         return request;
+    }
+
+    protected String apiUri(String path) {
+        if (path == null || !path.startsWith("/")) {
+            throw new IllegalArgumentException("'path' must be non-null and start with '/'");
+        }
+
+        return tenantId == null ? "/api/v1" + path : "/api/v1/" + tenantId + path;
     }
 }

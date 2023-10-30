@@ -30,7 +30,7 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getMessage(), containsString(": Invalid Flow: Recursive call to flow [recursive-flow]"));
+        assertThat(validate.get().getMessage(), containsString(": Invalid Flow: Recursive call to flow [io.kestra.tests.recursive-flow]"));
     }
 
     private Flow parse(String path) {

@@ -6,6 +6,7 @@
                 data-type="flow"
                 :value="namespace"
                 @update:model-value="namespaceUpdate"
+                allow-create
             />
             <trigger-flow
                 :disabled="!flow"

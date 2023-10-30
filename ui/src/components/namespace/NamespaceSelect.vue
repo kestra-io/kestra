@@ -6,6 +6,7 @@
         :placeholder="$t('Select namespace')"
         :persistent="false"
         filterable
+        :allow-create="allowCreate"
     >
         <el-option
             v-for="item in groupedNamespaces"
@@ -29,6 +30,10 @@
             value: {
                 type: String,
                 default: undefined
+            },
+            allowCreate: {
+                type: Boolean,
+                default: false
             }
         },
         emits: ["update:modelValue"],

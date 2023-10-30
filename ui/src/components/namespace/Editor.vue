@@ -1,10 +1,17 @@
 <template>
     <top-nav-bar :title="routeInfo.title">
         <template #additional-right>
-            <namespace-select class="fit-content"
+            <namespace-select
+                class="fit-content"
                 data-type="flow"
-                              :value="namespace"
-                              @update:model-value="namespaceUpdate"/>
+                :value="namespace"
+                @update:model-value="namespaceUpdate"
+            />
+            <trigger-flow
+                :disabled="!flow"
+                :flow-id="flow"
+                :namespace="namespace"
+            />
         </template>
     </top-nav-bar>
     <iframe
@@ -13,6 +20,7 @@
         v-if="namespace"
         class="vscode-editor"
         :src="vscodeIndexUrl"
+        ref="vscodeIde"
     />
     <div v-else class="m-3 mw-100">
         <el-alert type="info" :closable="false">
@@ -24,6 +32,7 @@
 <script setup>
     import NamespaceSelect from "./NamespaceSelect.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import TriggerFlow from "../flows/TriggerFlow.vue";
 </script>
 
 <script>
@@ -41,6 +50,23 @@
                     }
                 });
             }
+        },
+        data() {
+            return {
+                flow: null
+            }
+        },
+        mounted() {
+            window.addEventListener("message", (event) => {
+                if (event.data.type === "kestra.tabFileChanged") {
+                    const path = `/${this.namespace}/_flows/`;
+                    if (event.data.filePath.path.startsWith(path)) {
+                        this.flow = event.data.filePath.path.split(path)[1].replace(".yml", "");
+                    } else {
+                        this.flow = null;
+                    }
+                }
+            });
         },
         computed: {
             routeInfo() {

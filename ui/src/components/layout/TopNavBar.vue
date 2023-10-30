@@ -34,7 +34,7 @@
                             <a href="https://kestra.io/docs"
                                target="_blank"
                                class="d-flex gap-2 el-dropdown-menu__item">
-                                <BookMultipleOutline class="align-middle" /> {{ $t("documentation") }}
+                                <BookMultipleOutline class="align-middle" /> {{ $t("documentation.documentation") }}
                             </a>
                             <router-link
                                 :to="{name: 'plugins/list'}"

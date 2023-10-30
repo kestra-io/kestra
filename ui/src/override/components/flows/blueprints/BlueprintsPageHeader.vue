@@ -14,9 +14,11 @@
 
     .header {
         background: url("../../../../assets/dot-bg.jpg") no-repeat;
+        background-size: cover;
         text-align: center;
         padding-top: calc(4 * var(--spacer));
-        padding-bottom: calc(6 * var(--spacer));
+        padding-bottom: calc(5 * var(--spacer));
+        border-bottom: 1px solid var(--bs-border-color);
 
         .catch-phrase {
             color: $white;

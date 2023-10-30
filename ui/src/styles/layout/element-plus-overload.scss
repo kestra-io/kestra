@@ -466,7 +466,7 @@ form.ks-horizontal {
         width: 20rem;
         padding: 0;
     }
-    
+
     .el-dropdown-menu {
         padding: 0;
     }
@@ -592,7 +592,7 @@ form.ks-horizontal {
         font-size: var(--font-size-lg);
 
         html.dark & {
-            background-color: var(--bs-gray-200);
+            background-color: var(--bs-gray-100);
         }
     }
 }
@@ -716,7 +716,7 @@ form.ks-horizontal {
         background-color: var(--bs-gray-300);
 
         html.dark & {
-            background-color: var(--bs-gray-200);
+            background-color: var(--bs-gray-100);
         }
 
         margin-right: 0;
@@ -726,6 +726,10 @@ form.ks-horizontal {
         html.dark & {
             color: var(--bs-white)
         }
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+        color: var(--bs-primary);
     }
 }
 

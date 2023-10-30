@@ -56,6 +56,12 @@
                 flow: null
             }
         },
+        created() {
+            const namespace = localStorage.getItem("defaultNamespace");
+            if (namespace) {
+                this.namespaceUpdate(namespace);
+            }
+        },
         mounted() {
             window.addEventListener("message", (event) => {
                 if (event.data.type === "kestra.tabFileChanged") {

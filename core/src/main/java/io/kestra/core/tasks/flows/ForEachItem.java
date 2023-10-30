@@ -169,6 +169,11 @@ public class ForEachItem extends Task implements ExecutableTask {
         return this.subflow.wait;
     }
 
+    @Override
+    public SubflowId subflowId() {
+        return new SubflowId(subflow.namespace, subflow.flowId, Optional.ofNullable(subflow.revision));
+    }
+
     private URI readItems(Execution execution, String taskRunId, int split) {
         // Recreate the URI from the execution context and the value.
         // It should be kestra:///$ns/$flow/executions/$execution_id/tasks/$task_id/$taskrun_id/bach-$value.ion

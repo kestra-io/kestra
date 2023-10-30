@@ -107,16 +107,6 @@ public class Flow extends Task implements ExecutableTask {
     @PluginProperty(dynamic = true)
     private Map<String, Object> outputs;
 
-    public String flowUid() {
-        // as the Flow task can only be used in the same tenant we can hardcode null here
-        return io.kestra.core.models.flows.Flow.uid(null, this.getNamespace(), this.getFlowId(), Optional.ofNullable(this.revision));
-    }
-
-    public String flowUidWithoutRevision() {
-        // as the Flow task can only be used in the same tenant we can hardcode null here
-        return io.kestra.core.models.flows.Flow.uidWithoutRevision(null, this.getNamespace(), this.getFlowId());
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
@@ -196,6 +186,11 @@ public class Flow extends Task implements ExecutableTask {
     @Override
     public boolean waitForExecution() {
         return this.wait;
+    }
+
+    @Override
+    public SubflowId subflowId() {
+        return new SubflowId(this.namespace, this.flowId, Optional.ofNullable(this.revision));
     }
 
     @Builder

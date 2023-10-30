@@ -37,4 +37,21 @@ public interface ExecutableTask {
      * Whether to wait for the execution(s) of the subflow before terminating this tasks
      */
     boolean waitForExecution();
+
+    /**
+     * @return the subflow identifier, used by the flow topology and related dependency code.
+     */
+    SubflowId subflowId();
+
+    record SubflowId(String namespace, String flowId, Optional<Integer> revision) {
+        public String flowUid() {
+            // as the Flow task can only be used in the same tenant we can hardcode null here
+            return io.kestra.core.models.flows.Flow.uid(null, this.namespace, this.flowId, this.revision);
+        }
+
+        public String flowUidWithoutRevision() {
+            // as the Flow task can only be used in the same tenant we can hardcode null here
+            return io.kestra.core.models.flows.Flow.uidWithoutRevision(null, this.namespace, this.flowId);
+        }
+    }
 }

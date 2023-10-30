@@ -52,15 +52,15 @@ public class GraphService {
         subflowToReplaceByParent.map(Rethrow.throwFunction(parentWithSubflowGraphTask -> {
                 SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
                 Flow subflow = flowByUid.computeIfAbsent(
-                    subflowGraphTask.getTask().flowUid(),
+                    subflowGraphTask.getExecutableTask().subflowId().flowUid(),
                     uid -> flowRepository.findById(
                         tenantId,
-                        subflowGraphTask.getTask().getNamespace(),
-                        subflowGraphTask.getTask().getFlowId(),
-                        Optional.ofNullable(subflowGraphTask.getTask().getRevision())
+                        subflowGraphTask.getExecutableTask().subflowId().namespace(),
+                        subflowGraphTask.getExecutableTask().subflowId().flowId(),
+                        subflowGraphTask.getExecutableTask().subflowId().revision()
                     ).orElseThrow(() -> new NoSuchElementException(
                         "Unable to find subflow " +
-                            (subflowGraphTask.getTask().getRevision() == null ? subflowGraphTask.getTask().flowUidWithoutRevision() : subflowGraphTask.getTask().flowUid())
+                            (subflowGraphTask.getExecutableTask().subflowId().revision().isEmpty() ? subflowGraphTask.getExecutableTask().subflowId().flowUidWithoutRevision() : subflowGraphTask.getExecutableTask().subflowId().flowUid())
                             + " for task " + subflowGraphTask.getTask().getId()
                     ))
                 );

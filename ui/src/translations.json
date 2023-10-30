@@ -198,7 +198,10 @@
     "input": "Input",
     "variables": "Variables",
     "download": "Download",
-    "github issue": "Open a GitHub issue",
+    "documentation": {
+      "documentation": "Documentation",
+      "github": "Open a GitHub issue"
+    },
     "blueprints": {
       "title": "Blueprints",
       "header": {
@@ -713,8 +716,6 @@
     "download": "Télécharger",
     "documentation": {
       "documentation": "Documentation",
-      "examples": "Examples de Flow",
-      "developer": "Guide développeur",
       "github": "Bugs GitHub"
     },
     "blueprints": {

@@ -139,7 +139,7 @@
                                             :label="$t('last execution date')"
                                             v-if="user.hasAny(permission.EXECUTION)">
                                 <template #default="scope">
-                                    <date-ago v-if="lastExecutionByFlowReady" :inverted="true" :date=getLastExecution(scope.row).state.startDate />
+                                    <date-ago v-if="lastExecutionByFlowReady" :inverted="true" :date=getLastExecution(scope.row).startDate />
                                 </template>
                             </el-table-column>
 
@@ -147,7 +147,7 @@
                                             :label="$t('last execution status')"
                                             v-if="user.hasAny(permission.EXECUTION)">
                                 <template #default="scope">
-                                    <status v-if="lastExecutionByFlowReady" :status=getLastExecution(scope.row).state.current size="small" />
+                                    <status v-if="lastExecutionByFlowReady" :status=getLastExecution(scope.row).lastStatus size="small" />
                                 </template>
                             </el-table-column>
 
@@ -426,14 +426,20 @@
                 }
             },
             getLastExecution(row) {
-                if (this.lastExecutions) {
+                if (this.lastExecutions && this.lastExecutions.length > 0) {
                     let filteredFlowExec = this.lastExecutions.filter((executedFlow) => executedFlow.flowId == row.id && executedFlow.namespace == row.namespace)
                     if (filteredFlowExec.length > 0) {
-                        return filteredFlowExec[0]
+                        return {
+                            lastStatus: filteredFlowExec[0].state.current,
+                            startDate: filteredFlowExec[0].state.startDate
+                        }
                     }
                 }
                 else {
-                    return null;
+                    return {
+                        state: null,
+                        startDate: null
+                    }
                 }
             },
             loadQuery(base) {

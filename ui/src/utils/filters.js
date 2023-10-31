@@ -1,7 +1,7 @@
 import Utils from "./utils";
 import {getCurrentInstance} from "vue";
-import {DATE_FORMAT_STORAGE_KEY} from "../components/settings/Settings.vue";
-import {TIMEZONE_STORAGE_KEY} from "../components/settings/Settings.vue";
+import {DATE_FORMAT_STORAGE_KEY} from "../components/settings/BasicSettings.vue";
+import {TIMEZONE_STORAGE_KEY} from "../components/settings/BasicSettings.vue";
 import moment from "moment-timezone";
 
 export default {

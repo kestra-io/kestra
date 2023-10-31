@@ -197,6 +197,7 @@ jobs:
               io.kestra.plugin:plugin-jdbc-vertica:LATEST
               io.kestra.plugin:plugin-jdbc-dremio:LATEST
               io.kestra.plugin:plugin-jdbc-arrow-flight:LATEST
+              io.kestra.plugin:plugin-jdbc-sqlite:LATEST
               io.kestra.plugin:plugin-kafka:LATEST
               io.kestra.plugin:plugin-kubernetes:LATEST
               io.kestra.plugin:plugin-malloy:LATEST
@@ -227,6 +228,7 @@ jobs:
               io.kestra.plugin:plugin-terraform:LATEST
               io.kestra.plugin:plugin-tika:LATEST
               io.kestra.plugin:plugin-weaviate:LATEST
+              io.kestra.plugin:plugin-sqlmesh:LATEST
               io.kestra.storage:storage-azure:LATEST
               io.kestra.storage:storage-gcs:LATEST
               io.kestra.storage:storage-minio:LATEST

@@ -56,7 +56,6 @@
                 this.tabsNotSaved = this.tabsNotSaved.concat(tabs.dirty)
                 // Removed tabs closed
                 this.tabsNotSaved = this.tabsNotSaved.filter(e => !tabs.closed.includes(e))
-                console.log(this.tabsNotSaved)
                 this.$store.dispatch("core/isUnsaved", this.tabsNotSaved.length > 0);
             }
         },

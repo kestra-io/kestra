@@ -70,6 +70,8 @@ window.product = {
         "files.autoSave": "off",
         "editor.fontSize": 12,
         "workbench.colorTheme": THEME === "dark" ? "Sweet Dracula" : "Default Light Modern",
+        "workbench.startupEditor": "readme",
+        // "workbench.activityBar.visible": false,
         // provide the Kestra root URL to extension
         "kestra.api.url": KESTRA_API_URL
     }

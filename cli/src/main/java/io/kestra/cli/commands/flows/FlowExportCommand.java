@@ -40,7 +40,7 @@ public class FlowExportCommand extends AbstractApiCommand {
 
         try(DefaultHttpClient client = client()) {
             MutableHttpRequest<Object> request = HttpRequest
-                .GET("/api/v1/flows/export/by-query" + (namespace != null ? "?namespace=" + namespace : ""))
+                .GET(apiUri("/flows/export/by-query") + (namespace != null ? "?namespace=" + namespace : ""))
                 .accept(MediaType.APPLICATION_OCTET_STREAM);
 
             HttpResponse<byte[]> response = client.toBlocking().exchange(this.requestOptions(request), byte[].class);

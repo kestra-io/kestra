@@ -258,8 +258,8 @@
                         let sorted = data.sort((a, b) => {
                             return new Date(b.date) - new Date(a.date);
                         });
-                        this.today = sorted.shift();
-                        this.yesterday = sorted.shift();
+                        this.today = sorted.at(sorted.length - 1);
+                        this.yesterday = sorted.length >= 2 ? sorted.at(sorted.length - 2) : {};
                         this.alls = this.mergeStats(sorted);
                         this.dailyReady = true;
                     });

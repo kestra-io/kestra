@@ -44,7 +44,7 @@
                             <a href="https://github.com/kestra-io/kestra/issues"
                                target="_blank"
                                class="d-flex gap-2 el-dropdown-menu__item">
-                                <Github class="align-middle" /> {{ $t("github issue") }}
+                                <Github class="align-middle" /> {{ $t("documentation.github") }}
                             </a>
                             <a href="https://kestra.io/slack"
                                target="_blank"

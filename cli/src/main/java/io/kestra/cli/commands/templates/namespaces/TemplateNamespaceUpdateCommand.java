@@ -47,7 +47,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
 
             try (DefaultHttpClient client = client()) {
                 MutableHttpRequest<List<Template>> request = HttpRequest
-                    .POST("/api/v1/templates/" + namespace + "?delete=" + delete, templates);
+                    .POST(apiUri("/templates/") + namespace + "?delete=" + delete, templates);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

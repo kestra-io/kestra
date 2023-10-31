@@ -50,10 +50,10 @@ window.product = {
             path: KESTRA_UI_PATH + "yamlExt"
         },
         {
-            scheme: window.location.protocol.replace(":", ""),
-            authority: window.location.host,
-            path: KESTRA_UI_PATH + "yamlKestra"
-        },
+            scheme: "https",
+            authority: "openvsxorg.blob.core.windows.net",
+            path: "/resources/kestra-io/kestra/0.1.4/extension"
+        }
     ],
     "linkProtectionTrustedDomains": [
         "https://open-vsx.org",

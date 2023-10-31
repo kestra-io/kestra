@@ -103,6 +103,18 @@
                         this.onClick();
                     }
                 }
+            },
+            flowId: {
+                handler() {
+                    if ((!this.flow || this.flow.id !== this.flowId) && this.flowId && this.namespace) {
+                        this.$store
+                            .dispatch("flow/loadFlow", {
+                                id: this.flowId,
+                                namespace: this.namespace,
+                                allowDeleted: true
+                            });
+                    }
+                }
             }
         }
     };

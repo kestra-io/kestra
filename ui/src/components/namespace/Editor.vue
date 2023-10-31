@@ -1,10 +1,18 @@
 <template>
     <top-nav-bar :title="routeInfo.title">
         <template #additional-right>
-            <namespace-select class="fit-content"
+            <namespace-select
+                class="fit-content"
                 data-type="flow"
-                              :value="namespace"
-                              @update:model-value="namespaceUpdate"/>
+                :value="namespace"
+                @update:model-value="namespaceUpdate"
+                allow-create
+            />
+            <trigger-flow
+                :disabled="!flow"
+                :flow-id="flow"
+                :namespace="namespace"
+            />
         </template>
     </top-nav-bar>
     <iframe
@@ -13,6 +21,7 @@
         v-if="namespace"
         class="vscode-editor"
         :src="vscodeIndexUrl"
+        ref="vscodeIde"
     />
     <div v-else class="m-3 mw-100">
         <el-alert type="info" :closable="false">
@@ -24,6 +33,7 @@
 <script setup>
     import NamespaceSelect from "./NamespaceSelect.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import TriggerFlow from "../flows/TriggerFlow.vue";
 </script>
 
 <script>
@@ -40,7 +50,42 @@
                         namespace
                     }
                 });
+            },
+            handleTabsDirty(tabs) {
+                // Add tabs not saved
+                this.tabsNotSaved = this.tabsNotSaved.concat(tabs.dirty)
+                // Removed tabs closed
+                this.tabsNotSaved = this.tabsNotSaved.filter(e => !tabs.closed.includes(e))
+                console.log(this.tabsNotSaved)
+                this.$store.dispatch("core/isUnsaved", this.tabsNotSaved.length > 0);
             }
+        },
+        data() {
+            return {
+                flow: null,
+                tabsNotSaved: []
+            }
+        },
+        created() {
+            const namespace = localStorage.getItem("defaultNamespace");
+            if (namespace) {
+                this.namespaceUpdate(namespace);
+            }
+        },
+        mounted() {
+            window.addEventListener("message", (event) => {
+                const message = event.data;
+                if (message.type === "kestra.tabFileChanged") {
+                    const path = `/${this.namespace}/_flows/`;
+                    if (message.filePath.path.startsWith(path)) {
+                        this.flow = message.filePath.path.split(path)[1].replace(".yml", "");
+                    } else {
+                        this.flow = null;
+                    }
+                } else if (message.type === "kestra.tabsChanged") {
+                    this.handleTabsDirty(message.tabs);
+                }
+            });
         },
         computed: {
             routeInfo() {

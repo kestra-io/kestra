@@ -50,11 +50,20 @@
                         namespace
                     }
                 });
+            },
+            handleTabsDirty(tabs) {
+                // Add tabs not saved
+                this.tabsNotSaved = this.tabsNotSaved.concat(tabs.dirty)
+                // Removed tabs closed
+                this.tabsNotSaved = this.tabsNotSaved.filter(e => !tabs.closed.includes(e))
+                console.log(this.tabsNotSaved)
+                this.$store.dispatch("core/isUnsaved", this.tabsNotSaved.length > 0);
             }
         },
         data() {
             return {
-                flow: null
+                flow: null,
+                tabsNotSaved: []
             }
         },
         created() {
@@ -65,13 +74,16 @@
         },
         mounted() {
             window.addEventListener("message", (event) => {
-                if (event.data.type === "kestra.tabFileChanged") {
+                const message = event.data;
+                if (message.type === "kestra.tabFileChanged") {
                     const path = `/${this.namespace}/_flows/`;
-                    if (event.data.filePath.path.startsWith(path)) {
-                        this.flow = event.data.filePath.path.split(path)[1].replace(".yml", "");
+                    if (message.filePath.path.startsWith(path)) {
+                        this.flow = message.filePath.path.split(path)[1].replace(".yml", "");
                     } else {
                         this.flow = null;
                     }
+                } else if (message.type === "kestra.tabsChanged") {
+                    this.handleTabsDirty(message.tabs);
                 }
             });
         },

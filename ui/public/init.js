@@ -33,12 +33,8 @@ window.product = {
     commands: [
         {
             id: "custom.postMessage",
-            handler: async (filePath) => {
-                window.parent.postMessage(
-                    {
-                        type: "kestra.tabFileChanged",
-                        filePath: filePath
-                    }, "*")
+            handler: async (data) => {
+                window.parent.postMessage(data, "*")
             }
         }
     ],

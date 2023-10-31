@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -49,23 +50,24 @@ public final class ExecutableUtils {
         Flow currentFlow,
         T currentTask,
         TaskRun currentTaskRun,
-        String subflowNamespace,
-        String subflowId,
-        Integer subflowRevision,
         Map<String, Object> inputs,
         List<Label> labels,
         Map<String, Object> additionalVariables
-    ) {
+    ) throws IllegalVariableEvaluationException {
+        String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
+        String subflowId = runContext.render(currentTask.subflowId().flowId());
+        Optional<Integer> subflowRevision = currentTask.subflowId().revision();
+
         io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
                 currentExecution.getTenantId(),
                 subflowNamespace,
                 subflowId,
-                Optional.ofNullable(subflowRevision),
+                subflowRevision,
                 currentExecution.getTenantId(),
                 currentFlow.getNamespace(),
                 currentFlow.getId()
             )
-            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision + '" + subflowRevision + "'"));
+            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision + '" + subflowRevision.orElse(0) + "'"));
 
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a flow which is disabled");

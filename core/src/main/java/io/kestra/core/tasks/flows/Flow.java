@@ -129,9 +129,6 @@ public class Flow extends Task implements ExecutableTask {
             }
         }
 
-        String namespace = runContext.render(this.namespace);
-        String flowId = runContext.render(this.flowId);
-
         return List.of(ExecutableUtils.workerTaskExecution(
             runContext,
             flowExecutorInterface,
@@ -139,9 +136,6 @@ public class Flow extends Task implements ExecutableTask {
             currentFlow,
             this,
             currentTaskRun,
-            namespace,
-            flowId,
-            this.revision,
             inputs,
             labels,
             Map.of()

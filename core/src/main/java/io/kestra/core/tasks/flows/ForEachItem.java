@@ -120,9 +120,6 @@ public class ForEachItem extends Task implements ExecutableTask {
                         }
                     }
 
-                    String namespace = runContext.render(this.subflow.namespace);
-                    String flowId = runContext.render(this.subflow.flowId);
-
                      return ExecutableUtils.workerTaskExecution(
                          runContext,
                          flowExecutorInterface,
@@ -135,9 +132,6 @@ public class ForEachItem extends Task implements ExecutableTask {
                                  "currentIteration", split,
                                  "maxIterations", splits
                              )),
-                         namespace,
-                         flowId,
-                         this.subflow.revision,
                          inputs,
                          labels,
                          Map.of("items", readItems(currentExecution, currentTaskRun.getId(), split))

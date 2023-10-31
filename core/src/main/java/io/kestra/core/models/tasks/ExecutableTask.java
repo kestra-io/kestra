@@ -46,12 +46,12 @@ public interface ExecutableTask {
     record SubflowId(String namespace, String flowId, Optional<Integer> revision) {
         public String flowUid() {
             // as the Flow task can only be used in the same tenant we can hardcode null here
-            return io.kestra.core.models.flows.Flow.uid(null, this.namespace, this.flowId, this.revision);
+            return Flow.uid(null, this.namespace, this.flowId, this.revision);
         }
 
         public String flowUidWithoutRevision() {
             // as the Flow task can only be used in the same tenant we can hardcode null here
-            return io.kestra.core.models.flows.Flow.uidWithoutRevision(null, this.namespace, this.flowId);
+            return Flow.uidWithoutRevision(null, this.namespace, this.flowId);
         }
     }
 }

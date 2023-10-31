@@ -9,6 +9,7 @@ import lombok.With;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
+import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +57,8 @@ public class TaskRun {
     @With
     String items;
 
+    Level logLevel;
+
     public void destroyOutputs() {
         // DANGER ZONE: this method is only used to deals with issues with messages too big that must be stripped down
         // to avoid crashing the platform. Don't use it for anything else.
@@ -76,7 +79,8 @@ public class TaskRun {
             this.attempts,
             this.outputs,
             this.state.withState(state),
-            this.items
+            this.items,
+            this.logLevel
         );
     }
 
@@ -94,6 +98,7 @@ public class TaskRun {
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)
             .items(this.getItems())
+            .logLevel(this.getLogLevel())
             .build();
     }
 
@@ -108,6 +113,7 @@ public class TaskRun {
             .parentTaskRunId(resolvedTask.getParentId())
             .value(resolvedTask.getValue())
             .state(new State())
+            .logLevel(resolvedTask.getTask().getLogLevel())
             .build();
     }
 

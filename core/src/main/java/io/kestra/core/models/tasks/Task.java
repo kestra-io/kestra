@@ -13,6 +13,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -52,6 +53,8 @@ abstract public class Task {
 
     @Valid
     private WorkerGroup workerGroup;
+
+    private Level logLevel;
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

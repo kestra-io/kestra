@@ -58,7 +58,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
 
-        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getTaskRunList(), hasSize(4));
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(0).getId()));
         assertThat(matchingLog, notNullValue());
@@ -74,6 +74,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(matchingLog, notNullValue());
         assertThat(matchingLog.getLevel(), is(Level.ERROR));
         assertThat(matchingLog.getMessage(), is("third logs"));
+
+        matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(3).getId()));
+        assertThat(matchingLog, nullValue());
     }
 
     @Test

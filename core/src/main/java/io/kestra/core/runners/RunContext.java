@@ -142,7 +142,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(taskRun)
+            LogEntry.of(taskRun),
+            taskRun.getLogLevel()
         );
     }
 
@@ -153,7 +154,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(execution)
+            LogEntry.of(execution),
+            null
         );
     }
 
@@ -164,7 +166,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(triggerContext, trigger)
+            LogEntry.of(triggerContext, trigger),
+            trigger.getMinLogLevel()
         );
     }
 
@@ -175,7 +178,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(flow, trigger)
+            LogEntry.of(flow, trigger),
+            trigger.getMinLogLevel()
         );
     }
 

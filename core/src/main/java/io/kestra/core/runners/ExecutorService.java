@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
@@ -272,11 +273,8 @@ public class ExecutorService {
                         t.getTaskRun()
                     );
 
-                    taskRun = taskRun.withOutputs(
-                        flowableTask.outputs(runContext, executor.getExecution(), parentTaskRun) != null ?
-                            flowableTask.outputs(runContext, executor.getExecution(), parentTaskRun).toMap() :
-                            ImmutableMap.of()
-                    );
+                    Output outputs = flowableTask.outputs(runContext, executor.getExecution(), parentTaskRun);
+                    taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
                 } catch (Exception e) {
                     executor.getFlow().logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }

@@ -296,7 +296,6 @@ public class Execution implements DeletedInterface {
             .findFirst();
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     public Optional<TaskRun> findLastNotTerminated() {
         if (this.taskRunList == null) {
             return Optional.empty();
@@ -308,37 +307,29 @@ public class Execution implements DeletedInterface {
         );
     }
 
-    @SuppressWarnings("UnstableApiUsage")
-    public Optional<TaskRun> findLastByState(List<ResolvedTask> resolvedTasks, State.Type state, TaskRun taskRun) {
-        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+    public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
+        return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
         );
     }
 
-    @SuppressWarnings("UnstableApiUsage")
-    public Optional<TaskRun> findLastCreated(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
-        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+    public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().isCreated())
         );
     }
 
-    @SuppressWarnings("UnstableApiUsage")
-    public Optional<TaskRun> findLastRunning(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
-        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+    public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().isRunning())
         );
     }
 
-    public Optional<TaskRun> findLastTerminated(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
-        List<TaskRun> taskRuns = this.findTaskRunByTasks(resolvedTasks, taskRun);
-
-        ArrayList<TaskRun> reverse = new ArrayList<>(taskRuns);
-        Collections.reverse(reverse);
-
-        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+    public Optional<TaskRun> findLastTerminated(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().isTerminated())
         );
@@ -421,19 +412,20 @@ public class Execution implements DeletedInterface {
     }
 
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun) {
+        List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
         return this
-            .findLastByState(currentTasks, State.Type.KILLED, parentTaskRun)
+            .findLastByState(taskRuns, State.Type.KILLED)
             .map(taskRun -> taskRun.getState().getCurrent())
             .or(() -> this
-                .findLastByState(currentTasks, State.Type.FAILED, parentTaskRun)
+                .findLastByState(taskRuns, State.Type.FAILED)
                 .map(taskRun -> taskRun.getState().getCurrent())
             )
             .or(() -> this
-                .findLastByState(currentTasks, State.Type.WARNING, parentTaskRun)
+                .findLastByState(taskRuns, State.Type.WARNING)
                 .map(taskRun -> taskRun.getState().getCurrent())
             )
             .or(() -> this
-                .findLastByState(currentTasks, State.Type.PAUSED, parentTaskRun)
+                .findLastByState(taskRuns, State.Type.PAUSED)
                 .map(taskRun -> taskRun.getState().getCurrent())
             )
             .orElse(State.Type.SUCCESS);

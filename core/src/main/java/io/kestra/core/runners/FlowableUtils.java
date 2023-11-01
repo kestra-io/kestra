@@ -64,19 +64,19 @@ public class FlowableUtils {
         }
 
         // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
+        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
         if (lastCreated.isPresent()) {
             return Collections.emptyList();
         }
 
         // have running, leave
-        Optional<TaskRun> lastRunning = execution.findLastRunning(currentTasks, parentTaskRun);
+        Optional<TaskRun> lastRunning = execution.findLastRunning(taskRuns);
         if (lastRunning.isPresent()) {
             return Collections.emptyList();
         }
 
         // last success, find next
-        Optional<TaskRun> lastTerminated = execution.findLastTerminated(currentTasks, parentTaskRun);
+        Optional<TaskRun> lastTerminated = execution.findLastTerminated(taskRuns);
         if (lastTerminated.isPresent()) {
             int lastIndex = taskRuns.indexOf(lastTerminated.get());
 
@@ -236,7 +236,7 @@ public class FlowableUtils {
         }
 
         // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
+        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
 
         if (!notFinds.isEmpty() && lastCreated.isEmpty()) {
             Stream<NextTaskRun> nextTaskRunStream = notFinds

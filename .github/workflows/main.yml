@@ -157,6 +157,7 @@ jobs:
           - name: ""
             plugins: ""
             packages: ""
+            python-libs: ""
           - name: "-full"
             plugins: >-
               io.kestra.plugin:plugin-airbyte:LATEST
@@ -234,7 +235,8 @@ jobs:
               io.kestra.storage:storage-gcs:LATEST
               io.kestra.storage:storage-minio:LATEST
               io.kestra.storage:storage-s3:LATEST
-            packages: python3 python3-venv python-is-python3 nodejs npm curl zip unzip
+            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+            python-libs: kestra
     steps:
       - uses: actions/checkout@v4
 
@@ -296,6 +298,7 @@ jobs:
           build-args: |
             KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
             APT_PACKAGES=${{ matrix.image.packages }}
+            PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
 
   maven:
     name: Publish to Maven

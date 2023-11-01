@@ -201,6 +201,7 @@ jobs:
               io.kestra.plugin:plugin-kafka:LATEST
               io.kestra.plugin:plugin-kubernetes:LATEST
               io.kestra.plugin:plugin-malloy:LATEST
+              io.kestra.plugin:plugin-modal:LATEST
               io.kestra.plugin:plugin-mongodb:LATEST
               io.kestra.plugin:plugin-mqtt:LATEST
               io.kestra.plugin:plugin-nats:LATEST

@@ -332,7 +332,7 @@
             is-hidden
             :emit-task-only="true"
             class="node-action"
-            :section="SECTIONS.TASKS"
+            :section="taskEditData?.section"
             :task="taskObject"
             :flow-id="flowId"
             size="small"

@@ -426,6 +426,7 @@
                 }
             },
             getLastExecution(row) {
+                let noState = { state: null, startDate: null }
                 if (this.lastExecutions && this.lastExecutions.length > 0) {
                     let filteredFlowExec = this.lastExecutions.filter((executedFlow) => executedFlow.flowId == row.id && executedFlow.namespace == row.namespace)
                     if (filteredFlowExec.length > 0) {
@@ -434,12 +435,10 @@
                             startDate: filteredFlowExec[0].state?.startDate
                         }
                     }
+                    return noState
                 }
                 else {
-                    return {
-                        state: null,
-                        startDate: null
-                    }
+                    return noState
                 }
             },
             loadQuery(base) {

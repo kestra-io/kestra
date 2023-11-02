@@ -10,7 +10,6 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
@@ -153,12 +152,12 @@ public class ForEachItem extends Task implements ExecutableTask {
     ) {
         TaskRun taskRun = workerTaskExecution.getTaskRun();
 
+        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.subflow.transmitFailed));
+
         int currentIteration = (Integer) taskRun.getOutputs().get("currentIteration");
         int maxIterations = (Integer) taskRun.getOutputs().get("maxIterations");
 
-        State.Type taskState =  currentIteration == maxIterations ? ExecutableUtils.guessState(execution, this.subflow.transmitFailed) : State.Type.RUNNING;
-        taskRun = taskRun.withState(taskState);
-        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
+        return currentIteration == maxIterations ? Optional.of(ExecutableUtils.workerTaskResult(taskRun)) : Optional.empty();
     }
 
     @Override

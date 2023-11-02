@@ -40,7 +40,7 @@ jobs:
         with:
           python-version: '3.x'
           architecture: 'x64'
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           check-latest: true
@@ -157,6 +157,7 @@ jobs:
           - name: ""
             plugins: ""
             packages: ""
+            python-libs: ""
           - name: "-full"
             plugins: >-
               io.kestra.plugin:plugin-airbyte:LATEST
@@ -197,9 +198,11 @@ jobs:
               io.kestra.plugin:plugin-jdbc-vertica:LATEST
               io.kestra.plugin:plugin-jdbc-dremio:LATEST
               io.kestra.plugin:plugin-jdbc-arrow-flight:LATEST
+              io.kestra.plugin:plugin-jdbc-sqlite:LATEST
               io.kestra.plugin:plugin-kafka:LATEST
               io.kestra.plugin:plugin-kubernetes:LATEST
               io.kestra.plugin:plugin-malloy:LATEST
+              io.kestra.plugin:plugin-modal:LATEST
               io.kestra.plugin:plugin-mongodb:LATEST
               io.kestra.plugin:plugin-mqtt:LATEST
               io.kestra.plugin:plugin-nats:LATEST
@@ -223,6 +226,7 @@ jobs:
               io.kestra.plugin:plugin-singer:LATEST
               io.kestra.plugin:plugin-soda:LATEST
               io.kestra.plugin:plugin-spark:LATEST
+              io.kestra.plugin:plugin-sqlmesh:LATEST
               io.kestra.plugin:plugin-surrealdb:LATEST
               io.kestra.plugin:plugin-terraform:LATEST
               io.kestra.plugin:plugin-tika:LATEST
@@ -231,7 +235,8 @@ jobs:
               io.kestra.storage:storage-gcs:LATEST
               io.kestra.storage:storage-minio:LATEST
               io.kestra.storage:storage-s3:LATEST
-            packages: python3 python3-venv python-is-python3 nodejs npm curl zip unzip
+            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+            python-libs: kestra
     steps:
       - uses: actions/checkout@v4
 
@@ -293,6 +298,7 @@ jobs:
           build-args: |
             KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
             APT_PACKAGES=${{ matrix.image.packages }}
+            PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
 
   maven:
     name: Publish to Maven

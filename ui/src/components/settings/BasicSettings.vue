@@ -126,6 +126,7 @@
                     show-alpha
                 />
             </el-form-item>
+            <slot name="form-items"/>
         </el-form>
     </div>
 </template>

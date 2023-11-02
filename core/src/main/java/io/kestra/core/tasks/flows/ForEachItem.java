@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.validation.constraints.NotEmpty;
@@ -75,8 +76,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     }
 )
 public class ForEachItem extends Task implements ExecutableTask {
-    private static final String URI_FORMAT = "kestra:///%s/%s/executions/%s/tasks/%s/%s/batch-%s.ion";
-
     @NotEmpty
     @PluginProperty(dynamic = true)
     @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI, e.g. output from a previous task in the format `{{ outputs.task_id.uri }}` or an input parameter of FILE type e.g. `{{ inputs.myfile }}`.")
@@ -100,9 +99,10 @@ public class ForEachItem extends Task implements ExecutableTask {
                                             Flow currentFlow,
                                             Execution currentExecution,
                                             TaskRun currentTaskRun) throws InternalException {
-        int splits = readSplits(runContext);
+        List<URI> splits = readSplits(runContext);
+        AtomicInteger currentIteration = new AtomicInteger(1);
 
-        return IntStream.range(1, splits + 1).boxed()
+        return splits.stream()
             .<WorkerTaskExecution<?>>map(throwFunction(
                  split -> {
                     Map<String, Object> inputs = new HashMap<>();
@@ -129,12 +129,12 @@ public class ForEachItem extends Task implements ExecutableTask {
                          currentTaskRun
                              .withValue(String.valueOf(split))
                              .withOutputs(ImmutableMap.of(
-                                 "currentIteration", split,
-                                 "maxIterations", splits
+                                 "currentIteration", currentIteration.getAndIncrement(),
+                                 "maxIterations", splits.size()
                              )),
                          inputs,
                          labels,
-                         Map.of("items", readItems(currentExecution, currentTaskRun.getId(), split))
+                         Map.of("items", split.toString())
                      );
                 }
             ))
@@ -168,14 +168,7 @@ public class ForEachItem extends Task implements ExecutableTask {
         return new SubflowId(subflow.namespace, subflow.flowId, Optional.ofNullable(subflow.revision));
     }
 
-    private URI readItems(Execution execution, String taskRunId, int split) {
-        // Recreate the URI from the execution context and the value.
-        // It should be kestra:///$ns/$flow/executions/$execution_id/tasks/$task_id/$taskrun_id/bach-$value.ion
-        String uri = URI_FORMAT.formatted(execution.getNamespace(), execution.getFlowId(), execution.getId(), this.id, taskRunId, split);
-        return URI.create(uri);
-    }
-
-    private int readSplits(RunContext runContext) throws IllegalVariableEvaluationException {
+    private List<URI> readSplits(RunContext runContext) throws IllegalVariableEvaluationException {
         URI data = URI.create(runContext.render(this.items));
 
         try (var reader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(data)))) {
@@ -183,12 +176,13 @@ public class ForEachItem extends Task implements ExecutableTask {
             int lineNb = 0;
             String row;
             List<String> rows = new ArrayList<>(maxItemsPerBatch);
+            List<URI> uris = new ArrayList<>();
             while ((row = reader.readLine()) != null) {
                 rows.add(row);
                 lineNb++;
 
                 if (lineNb == maxItemsPerBatch) {
-                    createBatchFile(runContext, rows, batches);
+                    uris.add(createBatchFile(runContext, rows, batches));
 
                     batches++;
                     lineNb = 0;
@@ -197,20 +191,19 @@ public class ForEachItem extends Task implements ExecutableTask {
             }
 
             if (!rows.isEmpty()) {
-                createBatchFile(runContext, rows, batches);
-                batches++;
+                uris.add(createBatchFile(runContext, rows, batches));
             }
 
-            return batches;
+            return uris;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void createBatchFile(RunContext runContext, List<String> rows, int batch) throws IOException {
+    private URI createBatchFile(RunContext runContext, List<String> rows, int batch) throws IOException {
         byte[] bytes = rows.stream().collect(Collectors.joining(System.lineSeparator())).getBytes();
         File batchFile = runContext.tempFile(bytes, ".ion").toFile();
-        runContext.putTempFile(batchFile, "batch-" + (batch + 1) + ".ion");
+        return runContext.putTempFile(batchFile, "batch-" + (batch + 1) + ".ion");
     }
 
     @SuperBuilder

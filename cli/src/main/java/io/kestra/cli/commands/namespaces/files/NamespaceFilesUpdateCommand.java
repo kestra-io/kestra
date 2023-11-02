@@ -34,7 +34,7 @@ public class NamespaceFilesUpdateCommand extends AbstractServiceNamespaceUpdateC
 
         try (var files = Files.walk(directory); DefaultHttpClient client = client()) {
             if (delete) {
-                client.toBlocking().exchange(this.requestOptions(HttpRequest.DELETE(apiUri("/files/namespaces/") + namespace + "?path=/", null)));
+                client.toBlocking().exchange(this.requestOptions(HttpRequest.DELETE(apiUri("/namespaces/") + namespace + "/files?path=/", null)));
             }
 
             GitIgnore gitIgnore = parseKestraIgnore(directory);
@@ -52,7 +52,7 @@ public class NamespaceFilesUpdateCommand extends AbstractServiceNamespaceUpdateC
                 client.toBlocking().exchange(
                     this.requestOptions(
                         HttpRequest.POST(
-                            "/api/v1/files/namespaces/" + namespace + "?path=/" + dest,
+                            "/api/v1/namespaces/" + namespace + "/files?path=/" + dest,
                             body
                         ).contentType(MediaType.MULTIPART_FORM_DATA)
                     )

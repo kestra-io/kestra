@@ -25,7 +25,7 @@ import java.util.Optional;
 
 @Slf4j
 @Validated
-@Controller("/api/v1/files/namespaces")
+@Controller("/api/v1/namespaces")
 public class NamespaceFileController {
     @Inject
     private StorageInterface storageInterface;
@@ -33,7 +33,7 @@ public class NamespaceFileController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "{namespace}/files", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = {"Files"}, summary = "Get namespace file content")
     public StreamedFile file(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -44,7 +44,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/stats", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/files/stats", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Files"}, summary = "Get namespace file stats such as size, creation & modification dates and type")
     public FileAttributes stats(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -58,7 +58,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/directory", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/files/directory", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Files"}, summary = "List directory content")
     public List<FileAttributes> list(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -68,7 +68,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}/directory")
+    @Post(uri = "{namespace}/files/directory")
     @Operation(tags = {"Files"}, summary = "Create a directory")
     public void createDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -78,7 +78,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "{namespace}/files", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Files"}, summary = "Create a file")
     public void createFile(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -89,7 +89,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "{namespace}")
+    @Put(uri = "{namespace}/files")
     @Operation(tags = {"Files"}, summary = "Move a file or directory")
     public void move(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -100,7 +100,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "{namespace}")
+    @Delete(uri = "{namespace}/files")
     @Operation(tags = {"Files"}, summary = "Delete a file or directory")
     public void delete(
         @Parameter(description = "The namespace id") @PathVariable String namespace,

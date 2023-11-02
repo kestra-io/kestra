@@ -52,7 +52,7 @@ window.product = {
         {
             scheme: "https",
             authority: "openvsxorg.blob.core.windows.net",
-            path: "/resources/kestra-io/kestra/0.1.4/extension"
+            path: "/resources/kestra-io/kestra/0.1.5/extension"
         }
     ],
     "linkProtectionTrustedDomains": [

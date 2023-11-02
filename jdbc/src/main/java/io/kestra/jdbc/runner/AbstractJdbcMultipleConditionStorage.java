@@ -33,6 +33,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
                     .from(this.jdbcRepository.getTable())
                     .where(
                         field("namespace").eq(flow.getNamespace())
+                            .and(buildTenantCondition(flow.getTenantId()))
                             .and(field("flow_id").eq(flow.getId()))
                             .and(field("condition_id").eq(conditionId))
                     );
@@ -42,7 +43,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
     }
 
     @Override
-    public List<MultipleConditionWindow> expired() {
+    public List<MultipleConditionWindow> expired(String tenantId) {
         ZonedDateTime now = ZonedDateTime.now();
 
         return this.jdbcRepository
@@ -55,6 +56,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
                     .where(
                         field("start_date").lt(now.toOffsetDateTime())
                             .and(field("end_date").lt(now.toOffsetDateTime()))
+                            .and(buildTenantCondition(tenantId))
                     );
 
                 return this.jdbcRepository.fetch(select);

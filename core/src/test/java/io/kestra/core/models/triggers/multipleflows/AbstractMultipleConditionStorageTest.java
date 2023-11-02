@@ -130,12 +130,12 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         assertThat(window.getResults().get("a"), is(true));
 
-        List<MultipleConditionWindow> expired = multipleConditionStorage.expired();
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
         assertThat(expired.size(), is(0));
 
         Thread.sleep(2005);
 
-        expired = multipleConditionStorage.expired();
+        expired = multipleConditionStorage.expired(null);
         assertThat(expired.size(), is(1));
     }
 

@@ -130,7 +130,7 @@ public abstract class AbstractFlowTriggerService {
                         .map(Map::size)
                         .orElse(0))
                     .map(Map.Entry::getValue),
-                multipleConditionStorage.get().expired().stream()
+                multipleConditionStorage.get().expired(execution.getTenantId()).stream()
             ).forEach(multipleConditionStorage.get()::delete);
         }
 

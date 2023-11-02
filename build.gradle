@@ -145,6 +145,9 @@ allprojects {
         api group: 'commons-io', name: 'commons-io', version: '2.14.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.13.0'
         api "io.swagger.core.v3:swagger-annotations"
+
+        // gitignore
+        implementation 'nl.basjes.gitignore:gitignore-reader:0.3.1'
     }
 }
 

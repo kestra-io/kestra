@@ -389,26 +389,26 @@ public class JdbcExecutor implements ExecutorInterface {
                 workerTaskExecutionStorage.get(execution.getId())
                     .ifPresent(workerTaskExecution -> {
                         // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                        if (workerTaskExecution.getTask().getWait()) {
+                        if (((ExecutableTask)workerTaskExecution.getTask()).waitForExecution()) {
                             Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
                             ExecutableTask executableTask = (ExecutableTask) workerTaskExecution.getTask();
 
-                        RunContext runContext = runContextFactory.of(
-                            workerTaskFlow,
-                            workerTaskExecution.getTask(),
+                            RunContext runContext = runContextFactory.of(
+                                workerTaskFlow,
+                                workerTaskExecution.getTask(),
                                 execution,
-                            workerTaskExecution.getTaskRun()
-                        );
-                        try {
-                            Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
-                                .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
+                                workerTaskExecution.getTaskRun()
+                            );
+                            try {
+                                Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
+                                    .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
 
-                            maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
-                        }
-                        catch (Exception e) {
-                            // TODO maybe create a FAILED Worker Task Result instead
-                            log.error("Unable to create the Worker Task Result", e);
+                                maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
+                            } catch (Exception e) {
+                                // TODO maybe create a FAILED Worker Task Result instead
+                                log.error("Unable to create the Worker Task Result", e);
+                            }
                         }
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);

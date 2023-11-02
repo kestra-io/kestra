@@ -20,7 +20,7 @@
     </top-nav-bar>
     <div :class="{'mt-3': !embed}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
-            <template #navbar v-if="embed === false || filter">
+            <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
                     <search-field />
                 </el-form-item>
@@ -72,7 +72,7 @@
                 </el-form-item>
             </template>
 
-            <template #top v-if="embed === false">
+            <template #top v-if="isDisplayedTop">
                 <state-global-chart
                     v-if="daily"
                     class="mb-4"
@@ -421,6 +421,9 @@
             },
             isAllowedEdit() {
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+            },
+            isDisplayedTop() {
+                return this.embed === false || this.filter
             }
         },
         methods: {
@@ -465,7 +468,7 @@
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
-                if (this.embed === false) {
+                if (this.isDisplayedTop) {
                     this.dailyReady = false;
 
                     this.$store

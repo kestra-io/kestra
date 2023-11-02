@@ -106,9 +106,10 @@ public class ForEachItem extends Task implements ExecutableTask {
         return splits.stream()
             .<WorkerTaskExecution<?>>map(throwFunction(
                  split -> {
+                     Map<String, Object> intemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
                      Map<String, Object> inputs = new HashMap<>();
                      if (this.subflow.inputs != null) {
-                         inputs.putAll(runContext.render(this.subflow.inputs));
+                         inputs.putAll(runContext.render(this.subflow.inputs, intemsVariable));
                      }
 
                      List<Label> labels = new ArrayList<>();
@@ -133,10 +134,10 @@ public class ForEachItem extends Task implements ExecutableTask {
                              .withOutputs(ImmutableMap.of(
                                  "currentIteration", interation,
                                  "maxIterations", splits.size()
-                             )),
+                             ))
+                             .withItems(split.toString()),
                          inputs,
-                         labels,
-                         Map.of("items", split.toString())
+                         labels
                      );
                 }
             ))

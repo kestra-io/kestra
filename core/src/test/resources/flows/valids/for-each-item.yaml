@@ -15,3 +15,5 @@ tasks:
       flowId: for-each-item-subflow
       wait: true
       transmitFailed: true
+      inputs:
+        items: "{{ taskrun.items }}"

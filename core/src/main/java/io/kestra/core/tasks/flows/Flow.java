@@ -137,8 +137,7 @@ public class Flow extends Task implements ExecutableTask {
             this,
             currentTaskRun,
             inputs,
-            labels,
-            Map.of()
+            labels
         ));
     }
 

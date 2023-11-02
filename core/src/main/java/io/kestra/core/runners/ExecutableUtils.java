@@ -51,8 +51,7 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        List<Label> labels,
-        Map<String, Object> additionalVariables
+        List<Label> labels
     ) throws IllegalVariableEvaluationException {
         String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
         String subflowId = runContext.render(currentTask.subflowId().flowId());
@@ -77,15 +76,12 @@ public final class ExecutableUtils {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        Map<String, Object> variables = new HashMap<>(
-            ImmutableMap.of(
-                "executionId", currentExecution.getId(),
-                "namespace", currentFlow.getNamespace(),
-                "flowId", currentFlow.getId(),
-                "flowRevision", currentFlow.getRevision()
-            )
+        Map<String, Object> variables = ImmutableMap.of(
+            "executionId", currentExecution.getId(),
+            "namespace", currentFlow.getNamespace(),
+            "flowId", currentFlow.getId(),
+            "flowRevision", currentFlow.getRevision()
         );
-        variables.putAll(additionalVariables);
 
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
         Execution execution = runnerUtils

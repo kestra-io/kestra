@@ -53,6 +53,9 @@ public class TaskRun {
     @NotNull
     State state;
 
+    @With
+    String items;
+
     public void destroyOutputs() {
         // DANGER ZONE: this method is only used to deals with issues with messages too big that must be stripped down
         // to avoid crashing the platform. Don't use it for anything else.
@@ -72,7 +75,8 @@ public class TaskRun {
             this.value,
             this.attempts,
             this.outputs,
-            this.state.withState(state)
+            this.state.withState(state),
+            this.items
         );
     }
 
@@ -89,6 +93,7 @@ public class TaskRun {
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)
+            .items(this.getItems())
             .build();
     }
 

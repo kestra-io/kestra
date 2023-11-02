@@ -430,8 +430,8 @@
                     let filteredFlowExec = this.lastExecutions.filter((executedFlow) => executedFlow.flowId == row.id && executedFlow.namespace == row.namespace)
                     if (filteredFlowExec.length > 0) {
                         return {
-                            lastStatus: filteredFlowExec[0].state.current,
-                            startDate: filteredFlowExec[0].state.startDate
+                            lastStatus: filteredFlowExec[0].state?.current,
+                            startDate: filteredFlowExec[0].state?.startDate
                         }
                     }
                 }

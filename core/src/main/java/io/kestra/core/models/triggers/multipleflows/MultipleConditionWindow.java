@@ -2,6 +2,7 @@ package io.kestra.core.models.triggers.multipleflows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.utils.IdUtils;
 import lombok.Builder;
 import lombok.Value;
 
@@ -13,6 +14,8 @@ import java.util.Map;
 @Value
 @Builder
 public class MultipleConditionWindow {
+    String tenantId;
+
     String namespace;
 
     String flowId;
@@ -27,19 +30,21 @@ public class MultipleConditionWindow {
 
     @JsonIgnore
     public String uid() {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            this.tenantId,
             this.namespace,
             this.flowId,
             this.conditionId
-        ));
+        );
     }
 
     public static String uid(Flow flow, String conditionId) {
-        return String.join("_", Arrays.asList(
+        return IdUtils.fromParts(
+            flow.getTenantId(),
             flow.getNamespace(),
             flow.getId(),
             conditionId
-        ));
+        );
     }
 
     public boolean isValid(ZonedDateTime now) {
@@ -60,6 +65,7 @@ public class MultipleConditionWindow {
             .forEach(e -> finalResults.put(e.getKey(), true));
 
         return new MultipleConditionWindow(
+            this.tenantId,
             this.namespace,
             this.flowId,
             this.conditionId,

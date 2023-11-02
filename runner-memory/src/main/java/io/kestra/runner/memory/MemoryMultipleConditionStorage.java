@@ -38,7 +38,7 @@ public class MemoryMultipleConditionStorage implements MultipleConditionStorageI
     }
 
     @Override
-    public List<MultipleConditionWindow> expired() {
+    public List<MultipleConditionWindow> expired(String tenantId) {
         ZonedDateTime now = ZonedDateTime.now();
 
         return map

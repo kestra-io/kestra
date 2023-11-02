@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
@@ -105,21 +106,22 @@ public class ForEachItem extends Task implements ExecutableTask {
         return splits.stream()
             .<WorkerTaskExecution<?>>map(throwFunction(
                  split -> {
-                    Map<String, Object> inputs = new HashMap<>();
-                    if (this.subflow.inputs != null) {
-                        inputs.putAll(runContext.render(this.subflow.inputs));
-                    }
+                     Map<String, Object> inputs = new HashMap<>();
+                     if (this.subflow.inputs != null) {
+                         inputs.putAll(runContext.render(this.subflow.inputs));
+                     }
 
-                    List<Label> labels = new ArrayList<>();
-                    if (this.subflow.inheritLabels) {
-                        labels.addAll(currentExecution.getLabels());
-                    }
-                    if (this.subflow.labels != null) {
-                        for (Map.Entry<String, String> entry: this.subflow.labels.entrySet()) {
-                            labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-                        }
-                    }
+                     List<Label> labels = new ArrayList<>();
+                     if (this.subflow.inheritLabels) {
+                         labels.addAll(currentExecution.getLabels());
+                     }
+                     if (this.subflow.labels != null) {
+                         for (Map.Entry<String, String> entry: this.subflow.labels.entrySet()) {
+                             labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
+                         }
+                     }
 
+                     int interation = currentIteration.getAndIncrement();
                      return ExecutableUtils.workerTaskExecution(
                          runContext,
                          flowExecutorInterface,
@@ -127,9 +129,9 @@ public class ForEachItem extends Task implements ExecutableTask {
                          currentFlow,
                          this,
                          currentTaskRun
-                             .withValue(String.valueOf(split))
+                             .withValue(String.valueOf(interation))
                              .withOutputs(ImmutableMap.of(
-                                 "currentIteration", currentIteration.getAndIncrement(),
+                                 "currentIteration", interation,
                                  "maxIterations", splits.size()
                              )),
                          inputs,
@@ -150,12 +152,12 @@ public class ForEachItem extends Task implements ExecutableTask {
     ) {
         TaskRun taskRun = workerTaskExecution.getTaskRun();
 
-        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.subflow.transmitFailed));
-
         int currentIteration = (Integer) taskRun.getOutputs().get("currentIteration");
         int maxIterations = (Integer) taskRun.getOutputs().get("maxIterations");
 
-        return currentIteration == maxIterations ? Optional.of(ExecutableUtils.workerTaskResult(taskRun)) : Optional.empty();
+        State.Type taskState =  currentIteration == maxIterations ? ExecutableUtils.guessState(execution, this.subflow.transmitFailed) : State.Type.RUNNING;
+        taskRun = taskRun.withState(taskState);
+        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.conditions.types.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
@@ -216,10 +217,10 @@ public class ValidationFactory {
                 .stream()
                 .forEach(
                     task -> {
-                        if (task instanceof io.kestra.core.tasks.flows.Flow taskFlow
-                            && value.getId().equals(taskFlow.getFlowId())
-                            && value.getNamespace().equals(taskFlow.getNamespace())) {
-                            violations.add("Recursive call to flow [" + value.getId() + "]");
+                        if (task instanceof ExecutableTask executableTask
+                            && value.getId().equals(executableTask.subflowId().flowId())
+                            && value.getNamespace().equals(executableTask.subflowId().namespace())) {
+                            violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]");
                         }
                     }
                 );

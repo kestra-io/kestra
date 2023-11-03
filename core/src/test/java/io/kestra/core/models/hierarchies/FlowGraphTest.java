@@ -236,7 +236,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(flowGraph.getEdges().size(), is(20));
         assertThat(flowGraph.getClusters().size(), is(3));
 
-        assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).getTask().getFlowId(), is("switch"));
+        assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).getExecutableTask().subflowId().flowId(), is("switch"));
         SubflowGraphTask subflowGraphTask = (SubflowGraphTask) nodeByUid(flowGraph, "root.launch");
         assertThat(subflowGraphTask.getTask(), instanceOf(io.kestra.core.tasks.flows.Flow.class));
         assertThat(subflowGraphTask.getRelationType(), is(RelationType.SEQUENTIAL));

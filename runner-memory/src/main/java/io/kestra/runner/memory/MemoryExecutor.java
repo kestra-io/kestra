@@ -8,6 +8,8 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.ExecutableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -39,7 +41,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MemoryExecutor implements ExecutorInterface {
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, WorkerTaskExecution<?>> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 
@@ -64,9 +66,6 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
-
-    @Inject
-    private FlowService flowService;
 
     @Inject
     private TaskDefaultService taskDefaultService;
@@ -123,7 +122,7 @@ public class MemoryExecutor implements ExecutorInterface {
             return;
         }
 
-        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.getState().isCreated()) {
+        if (message.getTaskRunList() == null || message.getTaskRunList().isEmpty() || message.getState().isCreated()) {
             this.handleExecution(saveExecution(message));
         }
     }
@@ -228,7 +227,7 @@ public class MemoryExecutor implements ExecutorInterface {
             }
 
 
-            if (executor.getWorkerTaskExecutions().size() > 0) {
+            if (!executor.getWorkerTaskExecutions().isEmpty()) {
                 executor.getWorkerTaskExecutions()
                     .forEach(workerTaskExecution -> {
                         WORKERTASKEXECUTIONS_WATCHER.put(workerTaskExecution.getExecution().getId(), workerTaskExecution);
@@ -250,17 +249,30 @@ public class MemoryExecutor implements ExecutorInterface {
 
             // worker task execution
             if (conditionService.isTerminatedWithListeners(flow, execution) && WORKERTASKEXECUTIONS_WATCHER.containsKey(execution.getId())) {
-                WorkerTaskExecution workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
+                WorkerTaskExecution<?> workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
 
                 // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                if (workerTaskExecution.getTask().getWait()) {
+                if (workerTaskExecution.getTask().waitForExecution()) {
+
                     Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-                    WorkerTaskResult workerTaskResult = workerTaskExecution
-                        .getTask()
-                        .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+                    ExecutableTask executableTask = workerTaskExecution.getTask();
 
-                    this.workerTaskResultQueue.emit(workerTaskResult);
+                    RunContext runContext = runContextFactory.of(
+                        workerTaskFlow,
+                        workerTaskExecution.getTask(),
+                        execution,
+                        workerTaskExecution.getTaskRun()
+                    );
+                    try {
+                        Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
+                            .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
+
+                        maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
+                    } catch (Exception e) {
+                        // TODO maybe create a FAILED Worker Task Result instead<>
+                        log.error("Unable to create the Worker Task Result", e);
+                    }
                 }
 
                 WORKERTASKEXECUTIONS_WATCHER.remove(execution.getId());

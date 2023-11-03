@@ -12,6 +12,7 @@ import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.*;
 import io.kestra.core.tasks.flows.EachSequentialTest;
 import io.kestra.core.tasks.flows.FlowCaseTest;
+import io.kestra.core.tasks.flows.ForEachItemCaseTest;
 import io.kestra.core.tasks.flows.PauseTest;
 import io.kestra.core.tasks.flows.WorkingDirectoryTest;
 import io.kestra.core.utils.TestsUtils;
@@ -76,6 +77,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private SkipExecutionCaseTest skipExecutionCaseTest;
+
+    @Inject
+    private ForEachItemCaseTest forEachItemCaseTest;
 
     @BeforeAll
     void init() throws IOException, URISyntaxException {
@@ -261,5 +265,15 @@ public abstract class JdbcRunnerTest {
     @Test
     void skipExecution() throws TimeoutException, InterruptedException {
         skipExecutionCaseTest.skipExecution();
+    }
+
+    @Test
+    void forEachItem() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+        forEachItemCaseTest.forEachItem();
+    }
+
+    @Test
+    void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+        forEachItemCaseTest.forEachItemNoWait();
     }
 }

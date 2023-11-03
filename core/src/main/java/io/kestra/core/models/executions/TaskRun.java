@@ -41,6 +41,7 @@ public class TaskRun {
 
     String parentTaskRunId;
 
+    @With
     String value;
 
     @With
@@ -51,6 +52,9 @@ public class TaskRun {
 
     @NotNull
     State state;
+
+    @With
+    String items;
 
     public void destroyOutputs() {
         // DANGER ZONE: this method is only used to deals with issues with messages too big that must be stripped down
@@ -71,7 +75,8 @@ public class TaskRun {
             this.value,
             this.attempts,
             this.outputs,
-            this.state.withState(state)
+            this.state.withState(state),
+            this.items
         );
     }
 
@@ -88,6 +93,7 @@ public class TaskRun {
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)
+            .items(this.getItems())
             .build();
     }
 
@@ -128,7 +134,7 @@ public class TaskRun {
     public TaskRun onRunningResend() {
         TaskRunBuilder taskRunBuilder = this.toBuilder();
 
-        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.size() == 0) {
+        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.isEmpty()) {
             taskRunBuilder.attempts = new ArrayList<>();
 
             taskRunBuilder.attempts.add(TaskRunAttempt.builder()
@@ -172,7 +178,7 @@ public class TaskRun {
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
-            ", attemps=" + this.getAttempts() +
+            ", attempts=" + this.getAttempts() +
             ")";
     }
 

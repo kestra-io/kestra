@@ -4,7 +4,7 @@
         <el-tag
             v-for="(value, key) in labelMap"
             :key="key"
-            :type="checked(key) ? 'info' : ''"
+            :type="checked(key, value) ? 'info' : ''"
             class="me-1 labels"
             size="small"
             disable-transitions
@@ -31,16 +31,13 @@
         },
         // this is needed as flows uses a Map and Execution a List of Labels.
         // if we align both of them this can be removed
-        mounted() {
-            if (Array.isArray(this.labels)) {
-                this.labelMap = Object.fromEntries(this.labels.map(label => [label.key, label.value]))
-            } else {
-                this.labelMap = this.labels;
-            }
-        },
-        data() {
-            return {
-                labelMap: {}
+        computed: {
+            labelMap() {
+                if (Array.isArray(this.labels)) {
+                    return Object.fromEntries(this.labels.map(label => [label.key, label.value]));
+                } else {
+                    return this.labels;
+                }
             }
         },
         methods: {
@@ -58,8 +55,8 @@
 
                 return labels;
             },
-            checked(key) {
-                return this.getLabelsFromQuery().has(key);
+            checked(key, value) {
+                return this.getLabelsFromQuery().has(key) && this.getLabelsFromQuery().get(key) === value;
             },
             link(key, value) {
                 const labels = this.getLabelsFromQuery();

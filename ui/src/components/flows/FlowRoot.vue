@@ -197,7 +197,7 @@
                         name: "dependencies",
                         component: FlowDependencies,
                         title: this.$t("dependencies"),
-                        count: this.depedenciesCount
+                        count: this.depedenciesCount-1
                     })
                 }
                 return tabs;

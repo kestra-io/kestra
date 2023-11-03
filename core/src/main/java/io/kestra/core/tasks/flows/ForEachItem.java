@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
@@ -64,13 +63,12 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     items: "{{ outputs.extract.uri }}" # works with API payloads too. Kestra can detect if this output is not a file,\s
                     # and will make it to a file, split into (batches of) items
                     maxItemsPerBatch: 10
-                    subflow:
-                      flowId: file
-                      namespace: dev
-                      inputs:
-                        file: "{{ taskrun.items }}" # special variable that contains the items of the batch
-                      wait: true # wait for the subflow execution
-                      transmitFailed: true # fail the task run if the subflow execution fails"""
+                    flowId: file
+                    namespace: dev
+                    inputs:
+                      file: "{{ taskrun.items }}" # special variable that contains the items of the batch
+                    wait: true # wait for the subflow execution
+                    transmitFailed: true # fail the task run if the subflow execution fails"""
             }
         )
     }
@@ -88,17 +86,70 @@ public class ForEachItem extends Task implements ExecutableTask {
     @Schema(title = "Maximum number of items per batch")
     private Integer maxItemsPerBatch = 10;
 
-    @NotNull
+    @NotEmpty
+    @Schema(
+        title = "The namespace of the subflow to be executed"
+    )
+    @PluginProperty(dynamic = true)
+    private String namespace;
+
+    @NotEmpty
+    @Schema(
+        title = "The identifier of the subflow to be executed"
+    )
+    @PluginProperty(dynamic = true)
+    private String flowId;
+
+    @Schema(
+        title = "The revision of the subflow to be executed",
+        description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
+    )
     @PluginProperty
-    @Schema(title = "The subflow that will be executed for each batch of items")
-    private ForEachItem.Subflow subflow;
+    private Integer revision;
+
+    @Schema(
+        title = "The inputs to pass to the subflow to be executed"
+    )
+    @PluginProperty(dynamic = true)
+    private Map<String, Object> inputs;
+
+    @Schema(
+        title = "The labels to pass to the subflow to be executed"
+    )
+    @PluginProperty(dynamic = true)
+    private Map<String, String> labels;
+
+    @Builder.Default
+    @Schema(
+        title = "Whether to wait for the subflows execution to finish before continuing the current execution."
+    )
+    @PluginProperty
+    private final Boolean wait = true;
+
+    @Builder.Default
+    @Schema(
+        title = "Whether to fail the current execution if the subflow execution fails or is killed",
+        description = "Note that this option works only if `wait` is set to `true`."
+    )
+    @PluginProperty
+    private final Boolean transmitFailed = true;
+
+    @Builder.Default
+    @Schema(
+        title = "Whether the subflow should inherit labels from this execution that triggered it.",
+        description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
+    )
+    @PluginProperty
+    private final Boolean inheritLabels = false;
 
     @Override
-    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
-                                            FlowExecutorInterface flowExecutorInterface,
-                                            Flow currentFlow,
-                                            Execution currentExecution,
-                                            TaskRun currentTaskRun) throws InternalException {
+    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(
+        RunContext runContext,
+        FlowExecutorInterface flowExecutorInterface,
+        Flow currentFlow,
+        Execution currentExecution,
+        TaskRun currentTaskRun
+    ) throws InternalException {
         List<URI> splits = readSplits(runContext);
         AtomicInteger currentIteration = new AtomicInteger(1);
 
@@ -107,16 +158,16 @@ public class ForEachItem extends Task implements ExecutableTask {
                  split -> {
                      Map<String, Object> intemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
                      Map<String, Object> inputs = new HashMap<>();
-                     if (this.subflow.inputs != null) {
-                         inputs.putAll(runContext.render(this.subflow.inputs, intemsVariable));
+                     if (this.inputs != null) {
+                         inputs.putAll(runContext.render(this.inputs, intemsVariable));
                      }
 
                      List<Label> labels = new ArrayList<>();
-                     if (this.subflow.inheritLabels) {
+                     if (this.inheritLabels) {
                          labels.addAll(currentExecution.getLabels());
                      }
-                     if (this.subflow.labels != null) {
-                         for (Map.Entry<String, String> entry: this.subflow.labels.entrySet()) {
+                     if (this.labels != null) {
+                         for (Map.Entry<String, String> entry: this.labels.entrySet()) {
                              labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
                          }
                      }
@@ -152,7 +203,7 @@ public class ForEachItem extends Task implements ExecutableTask {
     ) {
         TaskRun taskRun = workerTaskExecution.getTaskRun();
 
-        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.subflow.transmitFailed));
+        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed));
 
         int currentIteration = (Integer) taskRun.getOutputs().get("currentIteration");
         int maxIterations = (Integer) taskRun.getOutputs().get("maxIterations");
@@ -162,12 +213,12 @@ public class ForEachItem extends Task implements ExecutableTask {
 
     @Override
     public boolean waitForExecution() {
-        return this.subflow.wait;
+        return this.wait;
     }
 
     @Override
     public SubflowId subflowId() {
-        return new SubflowId(subflow.namespace, subflow.flowId, Optional.ofNullable(subflow.revision));
+        return new SubflowId(namespace, flowId, Optional.ofNullable(revision));
     }
 
     private List<URI> readSplits(RunContext runContext) throws IllegalVariableEvaluationException {
@@ -206,68 +257,5 @@ public class ForEachItem extends Task implements ExecutableTask {
         byte[] bytes = rows.stream().collect(Collectors.joining(System.lineSeparator())).getBytes();
         File batchFile = runContext.tempFile(bytes, ".ion").toFile();
         return runContext.putTempFile(batchFile, "batch-" + (batch + 1) + ".ion");
-    }
-
-    @SuperBuilder
-    @ToString
-    @EqualsAndHashCode
-    @Getter
-    @NoArgsConstructor
-    public static class Subflow {
-        @NotEmpty
-        @Schema(
-            title = "The namespace of the subflow to be executed"
-        )
-        @PluginProperty(dynamic = true)
-        private String namespace;
-
-        @NotEmpty
-        @Schema(
-            title = "The identifier of the subflow to be executed"
-        )
-        @PluginProperty(dynamic = true)
-        private String flowId;
-
-        @Schema(
-            title = "The revision of the subflow to be executed",
-            description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
-        )
-        @PluginProperty
-        private Integer revision;
-
-        @Schema(
-            title = "The inputs to pass to the subflow to be executed"
-        )
-        @PluginProperty(dynamic = true)
-        private Map<String, Object> inputs;
-
-        @Schema(
-            title = "The labels to pass to the subflow to be executed"
-        )
-        @PluginProperty(dynamic = true)
-        private Map<String, String> labels;
-
-        @Builder.Default
-        @Schema(
-            title = "Whether to wait for the subflows execution to finish before continuing the current execution."
-        )
-        @PluginProperty
-        private final Boolean wait = true;
-
-        @Builder.Default
-        @Schema(
-            title = "Whether to fail the current execution if the subflow execution fails or is killed",
-            description = "Note that this option works only if `wait` is set to `true`."
-        )
-        @PluginProperty
-        private final Boolean transmitFailed = true;
-
-        @Builder.Default
-        @Schema(
-            title = "Whether the subflow should inherit labels from this execution that triggered it.",
-            description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
-        )
-        @PluginProperty
-        private final Boolean inheritLabels = false;
     }
 }

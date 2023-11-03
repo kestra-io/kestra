@@ -9,7 +9,8 @@ tasks:
   - id: each
     type: io.kestra.core.tasks.flows.ForEachItem
     items: "{{ inputs.file }}"
-    maxItemsPerBatch: 4
+    batch:
+      rows: 4
     namespace: io.kestra.tests
     flowId: for-each-item-subflow
     wait: true

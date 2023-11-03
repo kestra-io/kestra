@@ -5,6 +5,7 @@ import io.kestra.core.models.conditions.types.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.Graph;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -161,10 +162,10 @@ public class FlowTopologyService {
             return parent
                 .allTasksWithChilds()
                 .stream()
-                .filter(t -> t instanceof io.kestra.core.tasks.flows.Flow)
-                .map(t -> (io.kestra.core.tasks.flows.Flow) t)
+                .filter(t -> t instanceof ExecutableTask)
+                .map(t -> (ExecutableTask) t)
                 .anyMatch(t ->
-                    t.getNamespace().equals(child.getNamespace()) && t.getFlowId().equals(child.getId())
+                    t.subflowId().namespace().equals(child.getNamespace()) && t.subflowId().flowId().equals(child.getId())
                 );
         } catch (Exception e) {
             log.warn("Failed to detect flow task on namespace:'" + parent.getNamespace() + "', flowId:'" + parent.getId()  + "'", e);

@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -270,7 +271,7 @@ public class GraphUtils {
                 // detect kids
                 if (currentTask instanceof FlowableTask<?> flowableTask) {
                     currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
-                } else if (currentTask instanceof io.kestra.core.tasks.flows.Flow subflowTask) {
+                } else if (currentTask instanceof ExecutableTask subflowTask) {
                     currentGraph = new SubflowGraphTask(subflowTask, currentTaskRun, parentValues, relationType);
                 } else {
                     currentGraph = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);

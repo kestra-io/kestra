@@ -1,0 +1,19 @@
+id: for-each-item
+namespace: io.kestra.tests
+
+inputs:
+  - name: file
+    type: FILE
+
+tasks:
+  - id: each
+    type: io.kestra.core.tasks.flows.ForEachItem
+    items: "{{ inputs.file }}"
+    maxItemsPerBatch: 4
+    subflow:
+      namespace: io.kestra.tests
+      flowId: for-each-item-subflow
+      wait: true
+      transmitFailed: true
+      inputs:
+        items: "{{ taskrun.items }}"

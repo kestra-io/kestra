@@ -91,7 +91,7 @@ public class Executor {
         return this;
     }
 
-    public Executor withWorkerTaskExecutions(List<WorkerTaskExecution> newExecutions, String from) {
+    public Executor withWorkerTaskExecutions(List<WorkerTaskExecution<?>> newExecutions, String from) {
         this.workerTaskExecutions.addAll(newExecutions);
         this.from.add(from);
 

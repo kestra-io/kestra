@@ -1,7 +1,6 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -17,6 +16,8 @@ import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTaskExecution;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.services.StorageService;
+import io.kestra.core.storages.StorageSplitInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -25,10 +26,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
@@ -62,7 +59,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     type: io.kestra.core.tasks.flows.ForEachItem
                     items: "{{ outputs.extract.uri }}" # works with API payloads too. Kestra can detect if this output is not a file,\s
                     # and will make it to a file, split into (batches of) items
-                    maxItemsPerBatch: 10
+                    batch:
+                      rows: 10
                     flowId: file
                     namespace: dev
                     inputs:
@@ -83,8 +81,8 @@ public class ForEachItem extends Task implements ExecutableTask {
     @NotNull
     @PluginProperty
     @Builder.Default
-    @Schema(title = "Maximum number of items per batch")
-    private Integer maxItemsPerBatch = 10;
+    @Schema(title = "The batch split size")
+    private ForEachItem.Batch batch = Batch.builder().build();
 
     @NotEmpty
     @Schema(
@@ -150,48 +148,54 @@ public class ForEachItem extends Task implements ExecutableTask {
         Execution currentExecution,
         TaskRun currentTaskRun
     ) throws InternalException {
-        List<URI> splits = readSplits(runContext);
-        AtomicInteger currentIteration = new AtomicInteger(1);
+        try {
+            List<URI> splits = StorageService.split(runContext, this.batch, URI.create(runContext.render(this.items)));
 
-        return splits.stream()
-            .<WorkerTaskExecution<?>>map(throwFunction(
-                 split -> {
-                     Map<String, Object> intemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
-                     Map<String, Object> inputs = new HashMap<>();
-                     if (this.inputs != null) {
-                         inputs.putAll(runContext.render(this.inputs, intemsVariable));
-                     }
+            AtomicInteger currentIteration = new AtomicInteger(1);
 
-                     List<Label> labels = new ArrayList<>();
-                     if (this.inheritLabels) {
-                         labels.addAll(currentExecution.getLabels());
-                     }
-                     if (this.labels != null) {
-                         for (Map.Entry<String, String> entry: this.labels.entrySet()) {
-                             labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-                         }
-                     }
+            return splits.stream()
+                .<WorkerTaskExecution<?>>map(throwFunction(
+                    split -> {
+                        Map<String, Object> intemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
+                        Map<String, Object> inputs = new HashMap<>();
+                        if (this.inputs != null) {
+                            inputs.putAll(runContext.render(this.inputs, intemsVariable));
+                        }
 
-                     int interation = currentIteration.getAndIncrement();
-                     return ExecutableUtils.workerTaskExecution(
-                         runContext,
-                         flowExecutorInterface,
-                         currentExecution,
-                         currentFlow,
-                         this,
-                         currentTaskRun
-                             .withValue(String.valueOf(interation))
-                             .withOutputs(ImmutableMap.of(
-                                 "currentIteration", interation,
-                                 "maxIterations", splits.size()
-                             ))
-                             .withItems(split.toString()),
-                         inputs,
-                         labels
-                     );
-                }
-            ))
-            .toList();
+                        List<Label> labels = new ArrayList<>();
+                        if (this.inheritLabels) {
+                            labels.addAll(currentExecution.getLabels());
+                        }
+                        if (this.labels != null) {
+                            for (Map.Entry<String, String> entry: this.labels.entrySet()) {
+                                labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
+                            }
+                        }
+
+                        int interation = currentIteration.getAndIncrement();
+                        return ExecutableUtils.workerTaskExecution(
+                            runContext,
+                            flowExecutorInterface,
+                            currentExecution,
+                            currentFlow,
+                            this,
+                            currentTaskRun
+                                .withValue(String.valueOf(interation))
+                                .withOutputs(ImmutableMap.of(
+                                    "currentIteration", interation,
+                                    "maxIterations", splits.size()
+                                ))
+                                .withItems(split.toString()),
+                            inputs,
+                            labels
+                        );
+                    }
+                ))
+                .toList();
+        } catch (IOException e) {
+            throw new InternalException(e);
+        }
+
     }
 
     @Override
@@ -221,41 +225,20 @@ public class ForEachItem extends Task implements ExecutableTask {
         return new SubflowId(namespace, flowId, Optional.ofNullable(revision));
     }
 
-    private List<URI> readSplits(RunContext runContext) throws IllegalVariableEvaluationException {
-        URI data = URI.create(runContext.render(this.items));
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class Batch implements StorageSplitInterface {
+        private String bytes;
 
-        try (var reader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(data)))) {
-            int batches = 0;
-            int lineNb = 0;
-            String row;
-            List<String> rows = new ArrayList<>(maxItemsPerBatch);
-            List<URI> uris = new ArrayList<>();
-            while ((row = reader.readLine()) != null) {
-                rows.add(row);
-                lineNb++;
+        private Integer partitions;
 
-                if (lineNb == maxItemsPerBatch) {
-                    uris.add(createBatchFile(runContext, rows, batches));
+        @Builder.Default
+        private Integer rows = 1;
 
-                    batches++;
-                    lineNb = 0;
-                    rows.clear();
-                }
-            }
-
-            if (!rows.isEmpty()) {
-                uris.add(createBatchFile(runContext, rows, batches));
-            }
-
-            return uris;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private URI createBatchFile(RunContext runContext, List<String> rows, int batch) throws IOException {
-        byte[] bytes = rows.stream().collect(Collectors.joining(System.lineSeparator())).getBytes();
-        File batchFile = runContext.tempFile(bytes, ".ion").toFile();
-        return runContext.putTempFile(batchFile, "batch-" + (batch + 1) + ".ion");
+        @Builder.Default
+        private String separator = "\n";
     }
 }

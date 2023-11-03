@@ -6,6 +6,8 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.StorageService;
+import io.kestra.core.storages.StorageSplitInterface;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -57,134 +59,29 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         ),
     }
 )
-public class Split extends Task implements RunnableTask<Split.Output> {
+public class Split extends Task implements RunnableTask<Split.Output>, StorageSplitInterface {
     @Schema(
         title = "The file to be split."
     )
     @PluginProperty(dynamic = true)
     private String from;
 
-    @Schema(
-        title = "Split by file size.",
-        description = "Can be provided as a string like \"10MB\" or \"200KB\", or the number of bytes. " +
-            "Since we divide storage per line, it's not an hard requirements and files can be a larger."
-    )
-    @PluginProperty(dynamic = true)
     private String bytes;
 
-    @Schema(
-        title = "Split by a fixed number of files."
-    )
-    @PluginProperty(dynamic = true)
     private Integer partitions;
 
-    @Schema(
-        title = "Split by file rows count."
-    )
-    @PluginProperty(dynamic = true)
     private Integer rows;
 
-    @Schema(
-        title = "The separator to used between rows"
-    )
-    @PluginProperty
     @Builder.Default
     private String separator = "\n";
 
     @Override
     public Split.Output run(RunContext runContext) throws Exception {
         URI from = new URI(runContext.render(this.from));
-        String fromPath = from.getPath();
-        String extension = ".tmp";
-        if (fromPath.indexOf('.') >= 0) {
-            extension = fromPath.substring(fromPath.lastIndexOf('.'));
-        }
 
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(from)))) {
-            List<Path> splited;
-
-            if (this.bytes != null) {
-                ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
-                Number convert = readableBytesTypeConverter.convert(this.bytes, Number.class)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + this.bytes + "'"));
-
-                splited = split(runContext, extension, bufferedReader, (bytes, size) -> bytes >= convert.longValue());
-            } else if (this.partitions != null) {
-                splited = partition(runContext, extension, bufferedReader, this.partitions);
-            } else if (this.rows != null) {
-                splited = split(runContext, extension, bufferedReader, (bytes, size) -> size >= this.rows);
-            } else {
-                throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
-            }
-
-            return Split.Output.builder()
-                .uris(splited
-                    .stream()
-                    .map(throwFunction(path -> runContext.putTempFile(path.toFile())))
-                    .collect(Collectors.toList())
-                )
-                .build();
-        }
-    }
-
-    private List<Path> split(RunContext runContext, String extension, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate) throws IOException {
-        List<Path> files = new ArrayList<>();
-        RandomAccessFile write = null;
-        int totalBytes = 0;
-        int totalRows = 0;
-        String row;
-
-        while ((row = bufferedReader.readLine()) != null) {
-            if (write == null || predicate.apply(totalBytes, totalRows)) {
-                if (write != null) {
-                    write.close();
-                }
-
-                totalBytes = 0;
-                totalRows = 0;
-
-                Path path = runContext.tempFile(extension);
-                files.add(path);
-                write = new RandomAccessFile(path.toFile(), "rw");
-            }
-
-            byte[] bytes = (row + this.separator).getBytes(StandardCharsets.UTF_8);
-
-            write.getChannel().write(ByteBuffer.wrap(bytes));
-
-            totalBytes = totalBytes + bytes.length;
-            totalRows = totalRows + 1;
-        }
-
-        if (write != null) {
-            write.close();
-        }
-
-        return files;
-    }
-
-    private List<Path> partition(RunContext runContext, String extension, BufferedReader bufferedReader, int partition) throws IOException {
-        List<Path> files = new ArrayList<>();
-        List<RandomAccessFile> writers = new ArrayList<>();
-
-        for (int i = 0; i < partition; i++) {
-            Path path = runContext.tempFile(extension);
-            files.add(path);
-
-            writers.add(new RandomAccessFile(path.toFile(), "rw"));
-        }
-
-        String row;
-        int index = 0;
-        while ((row = bufferedReader.readLine()) != null) {
-            writers.get(index).getChannel().write(ByteBuffer.wrap((row + this.separator).getBytes(StandardCharsets.UTF_8)));
-
-            index = index >= writers.size() - 1 ? 0 : index + 1;
-        }
-
-        writers.forEach(throwConsumer(RandomAccessFile::close));
-
-        return files;
+        return Split.Output.builder()
+            .uris(StorageService.split(runContext, this, from))
+            .build();
     }
 
     @Builder

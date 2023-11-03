@@ -2,15 +2,18 @@ package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Builder;
 import lombok.Value;
 import org.slf4j.event.Level;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +21,9 @@ import java.util.stream.Collectors;
 
 @Value
 @Builder(toBuilder = true)
-public class LogEntry implements DeletedInterface {
+public class LogEntry implements DeletedInterface, TenantInterface {
+    @Hidden
+    @Pattern(regexp = "[a-z0-9_-]+")
     String tenantId;
 
     @NotNull

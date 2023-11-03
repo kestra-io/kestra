@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -45,7 +46,7 @@ import javax.validation.constraints.*;
 @ToString
 @EqualsAndHashCode
 @FlowValidation
-public class Flow implements DeletedInterface {
+public class Flow implements DeletedInterface, TenantInterface {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
@@ -55,8 +56,8 @@ public class Flow implements DeletedInterface {
             }
         });
 
-    @Pattern(regexp = "[a-z0-9_-]+")
     @Hidden
+    @Pattern(regexp = "[a-z0-9_-]+")
     String tenantId;
 
     @NotNull

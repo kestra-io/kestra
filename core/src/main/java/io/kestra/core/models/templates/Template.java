@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
@@ -32,7 +33,7 @@ import javax.validation.constraints.Pattern;
 @Introspected
 @ToString
 @EqualsAndHashCode
-public class Template implements DeletedInterface {
+public class Template implements DeletedInterface, TenantInterface {
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
@@ -43,8 +44,8 @@ public class Template implements DeletedInterface {
         })
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
-    @Pattern(regexp="[a-z0-9_-]+")
     @Hidden
+    @Pattern(regexp = "[a-z0-9_-]+")
     private String tenantId;
 
     @NotNull

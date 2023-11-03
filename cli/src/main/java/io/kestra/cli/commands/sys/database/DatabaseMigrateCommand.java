@@ -1,0 +1,40 @@
+package io.kestra.cli.commands.sys.database;
+
+import ch.qos.logback.classic.Level;
+import io.kestra.cli.AbstractCommand;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
+
+import java.util.Map;
+
+@CommandLine.Command(
+    name = "migrate",
+    description = "Force database schema migration.\nKestra uses Flyway to manage database schema evolution, this command will run Flyway then exit.",
+    mixinStandardHelpOptions = true
+)
+@Slf4j
+public class DatabaseMigrateCommand extends AbstractCommand {
+
+    static {
+        // Force enable Flyway logs
+        ch.qos.logback.classic.Logger flywayLogger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("org.flywaydb");
+        flywayLogger.setLevel(Level.INFO);
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        // Flyway will run automatically
+        super.call();
+        stdOut("Successfully run the database schema migration.");
+        return 0;
+    }
+
+    public static Map<String, Object> propertiesOverrides() {
+        // Forcing the props to enabled Flyway: it allows to disable Flyway globally and still using this command.
+        return Map.of(
+            "flyway.datasources.postgres.enabled", "true",
+            "flyway.datasources.mysql.enabled", "true",
+            "flyway.datasources.h2.enabled", "true"
+        );
+    }
+}

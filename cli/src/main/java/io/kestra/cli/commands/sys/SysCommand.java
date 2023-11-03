@@ -1,5 +1,6 @@
 package io.kestra.cli.commands.sys;
 
+import io.kestra.cli.commands.sys.database.DatabaseCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
@@ -11,7 +12,8 @@ import picocli.CommandLine;
     description = "handle systems maintenance",
     mixinStandardHelpOptions = true,
     subcommands = {
-        ReindexCommand.class
+        ReindexCommand.class,
+        DatabaseCommand.class
     }
 )
 @Slf4j

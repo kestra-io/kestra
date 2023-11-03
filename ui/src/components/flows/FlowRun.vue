@@ -130,6 +130,10 @@
             redirect: {
                 type: Boolean,
                 default: true
+            },
+            newTab: {
+                type: Boolean,
+                default: false
             }
         },
         data() {
@@ -246,6 +250,7 @@
 
                         executeTask(this, this.flow, this.cleanInputs, {
                             redirect: this.redirect,
+                            newTab: this.newTab,
                             id: this.flow.id,
                             namespace: this.flow.namespace,
                             labels: this.executionLabels

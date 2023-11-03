@@ -513,7 +513,8 @@
     "port": "Port",
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Show"
+    "show": "Show",
+    "advanced configuration": "Advanced configuration"
   },
   "fr": {
     "id": "Identifiant",
@@ -1019,7 +1020,8 @@
     "port": "Port",
     "management port": "Port de gestion",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Voir"
+    "show": "Voir",
+    "advanced configuration": "Configuration avancée"
   }
 }
 

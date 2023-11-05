@@ -34,7 +34,8 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
                     .and(field("namespace").eq(namespace))
                     .and(field("flow_id").eq(flowId))
                     .orderBy(field("date").asc())
-                    .limit(1);
+                    .limit(1)
+                    .forUpdate();
 
                 Optional<ExecutionQueued> maybeExecution = this.jdbcRepository.fetchOne(select);
                 if (maybeExecution.isPresent()) {

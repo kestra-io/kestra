@@ -5,29 +5,25 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.is;
 
 @Singleton
 public class FlowConcurrencyCaseTest {
     @Inject
     private RunnerUtils runnerUtils;
-
-    @Inject
-    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -36,59 +32,79 @@ public class FlowConcurrencyCaseTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
-    public void flowConcurrencyCancel() throws TimeoutException {
+    public void flowConcurrencyCancel() throws TimeoutException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-cancel");
 
-        assertTrue(execution1.getState().isRunning());
+        assertThat(execution1.getState().isRunning(), is(true));
         assertThat(execution2.getState().getCurrent(), is(State.Type.CANCELLED));
 
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution1.getTenantId(), execution1.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.SUCCESS;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(1)
-        );
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
 
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution2.getTenantId(), execution2.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.CANCELLED;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(1)
-        );
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.CANCELLED) {
+                    latch2.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.CANCELLED));
     }
 
-    public void flowConcurrencyFail() throws TimeoutException {
+    public void flowConcurrencyFail() throws TimeoutException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-fail");
 
-        assertTrue(execution1.getState().isRunning());
+        assertThat(execution1.getState().isRunning(), is(true));
         assertThat(execution2.getState().getCurrent(), is(State.Type.FAILED));
 
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution1.getTenantId(), execution1.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.SUCCESS;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(1)
-        );
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
 
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution2.getTenantId(), execution2.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.FAILED;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(1)
-        );
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.FAILED) {
+                    latch2.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.FAILED));
     }
 
-    public void flowConcurrencyQueue() throws TimeoutException {
+    public void flowConcurrencyQueue() throws TimeoutException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-queue", Optional.empty())
@@ -96,35 +112,40 @@ public class FlowConcurrencyCaseTest {
         Execution execution2 = runnerUtils.newExecution(flow, null, null);
         executionQueue.emit(execution2);
 
-        assertTrue(execution1.getState().isRunning());
+        assertThat(execution1.getState().isRunning(), is(true));
         assertThat(execution2.getState().getCurrent(), is(State.Type.CREATED));
 
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution1.getTenantId(), execution1.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.SUCCESS;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(1)
-        );
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
 
-        // soon it will be running as the previous execution is terminated, so it should go out of the queue
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution2.getTenantId(), execution2.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.RUNNING;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(2)
-        );
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        CountDownLatch latch3 = new CountDownLatch(1);
 
-        Await.until(
-            () -> {
-                Execution execution = executionRepository.findById(execution2.getTenantId(), execution2.getId()).orElseThrow();
-                return execution.getState().getCurrent() == State.Type.SUCCESS;
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(1)
-        );
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.RUNNING) {
+                    latch2.countDown();
+                }
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch3.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+        latch3.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

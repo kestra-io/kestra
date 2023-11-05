@@ -279,17 +279,17 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void concurrencyCancel() throws TimeoutException {
+    void concurrencyCancel() throws TimeoutException, InterruptedException {
         flowConcurrencyCaseTest.flowConcurrencyCancel();
     }
 
     @Test
-    void concurrencyFail() throws TimeoutException {
+    void concurrencyFail() throws TimeoutException, InterruptedException  {
         flowConcurrencyCaseTest.flowConcurrencyFail();
     }
 
     @Test
-    void concurrencyQueue() throws TimeoutException {
+    void concurrencyQueue() throws TimeoutException, InterruptedException  {
         flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 }

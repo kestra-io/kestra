@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.flows.ConcurrencyLimit;
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
@@ -38,13 +38,11 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -300,7 +298,7 @@ public class JdbcExecutor implements ExecutorInterface {
             Executor executor = new Executor(execution, null).withFlow(flow);
 
             // queue execution if needed (limit concurrency)
-            if (execution.getState().isCreated() && flow.getConcurrencyLimit() != null) {
+            if (execution.getState().isCreated() && flow.getConcurrency() != null) {
                 ExecutionCount count = executionRepository.executionCounts(
                     flow.getTenantId(),
                     List.of(new io.kestra.core.models.executions.statistics.Flow(flow.getNamespace(), flow.getId())),
@@ -449,7 +447,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         workerTaskExecutionStorage.delete(workerTaskExecution);
                     });
 
-                if (flow.getConcurrencyLimit() != null && flow.getConcurrencyLimit().getBehavior() == ConcurrencyLimit.Behavior.QUEUE) {
+                if (flow.getConcurrency() != null && flow.getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                     // as the execution is terminated, we can check if there exist a queued execution and submit it to the execution queue
                     executionQueuedStorage.pop(flow.getTenantId(),
                         flow.getNamespace(),

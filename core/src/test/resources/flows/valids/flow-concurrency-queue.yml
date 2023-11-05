@@ -1,11 +1,11 @@
 id: flow-concurrency-queue
 namespace: io.kestra.tests
 
-concurrencyLimit:
+concurrency:
   behavior: QUEUE
-  maxConcurrency: 1
+  maximum: 1
 
 tasks:
   - id: sleep
     type: io.kestra.core.tasks.test.Sleep
-    duration: 500
+    duration: 2000

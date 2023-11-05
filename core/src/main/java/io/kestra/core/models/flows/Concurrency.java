@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows;
 
+import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,10 +12,11 @@ import javax.validation.constraints.Positive;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-public class ConcurrencyLimit {
+@Introspected
+public class Concurrency {
     @Positive
     @NotNull
-    private Integer maxConcurrency;
+    private Integer maximum;
 
     @NotNull
     @Builder.Default

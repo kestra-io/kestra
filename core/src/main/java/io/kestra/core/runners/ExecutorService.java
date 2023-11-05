@@ -21,7 +21,6 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
 import java.time.Instant;
@@ -61,8 +60,8 @@ public class ExecutorService {
     }
 
     public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
-        if (count >= flow.getConcurrencyLimit().getMaxConcurrency()) {
-            return switch(flow.getConcurrencyLimit().getBehavior()) {
+        if (count >= flow.getConcurrency().getMaximum()) {
+            return switch(flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
                     ExecutionQueued executionQueued = ExecutionQueued.builder()
                         .tenantId(flow.getTenantId())

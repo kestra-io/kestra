@@ -126,7 +126,6 @@ export default {
                 })
         },
         createFlow({commit}, options) {
-            console.log(`${apiUrl(this)}/flows`);
             return this.$http.post(`${apiUrl(this)}/flows`, options.flow, textYamlHeader).then(response => {
                 commit("setFlow", response.data);
 

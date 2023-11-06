@@ -98,7 +98,7 @@ class ReadFileFunctionTest {
         );
 
         var exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables));
-        assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
+        assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
 
         // test for an un-authorized execution with a trigger of type execution
         Map<String, Object> executionTriggerVariables = Map.of(
@@ -114,7 +114,7 @@ class ReadFileFunctionTest {
         );
 
         exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", executionTriggerVariables));
-        assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
+        assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
 
         // test for an un-authorized execution with a trigger of another type
         Map<String, Object> triggerVariables = Map.of(
@@ -129,6 +129,6 @@ class ReadFileFunctionTest {
         );
 
         exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", triggerVariables));
-        assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
+        assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
     }
 }

@@ -129,6 +129,7 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import Markdown from "../layout/Markdown.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
+    import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
 
     export default {
         components: {Editor, LabelInput},
@@ -136,10 +137,6 @@
             redirect: {
                 type: Boolean,
                 default: true
-            },
-            newTab: {
-                type: Boolean,
-                default: false
             }
         },
         data() {
@@ -148,7 +145,8 @@
                 inputNewLabel: "",
                 executionLabels: [],
                 inputVisible: false,
-                collapseName: undefined
+                collapseName: undefined,
+                newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB
             };
         },
         emits: ["executionTrigger"],

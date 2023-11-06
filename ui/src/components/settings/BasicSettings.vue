@@ -126,6 +126,16 @@
                     show-alpha
                 />
             </el-form-item>
+            <el-form-item :label="$t('execute flow behaviour')">
+                <el-select :model-value="executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
+                    <el-option
+                        v-for="item in Object.values(executeFlowBehaviours)"
+                        :key="item"
+                        :label="$t(`open in ${item}`)"
+                        :value="item"
+                    />
+                </el-select>
+            </el-form-item>
             <slot name="form-items"/>
         </el-form>
     </div>
@@ -133,6 +143,7 @@
 
 <script setup>
     import Download from "vue-material-design-icons/Download.vue";
+    import {executeFlowBehaviours} from "../../utils/constants";
 </script>
 
 <script>
@@ -144,7 +155,7 @@
     import {mapGetters, mapState, useStore} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {logDisplayTypes} from "../../utils/constants";
+    import {logDisplayTypes, storageKeys} from "../../utils/constants";
 
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
@@ -177,6 +188,7 @@
                 logDisplay: undefined,
                 editorFontSize: undefined,
                 editorFontFamily: undefined,
+                executeFlowBehaviour: undefined,
                 now: this.$moment(),
                 envName: undefined,
                 envColor: undefined
@@ -198,6 +210,7 @@
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
             this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
+            this.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
         },
@@ -294,6 +307,13 @@
                 if (value !== this.configs?.environment?.color) {
                     this.$store.commit("layout/setEnvColor", value);
                 }
+
+                this.$toast().saved();
+            },
+            onExecuteFlowBehaviourChange(value) {
+                this.executeFlowBehaviour = value;
+
+                localStorage.setItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value);
 
                 this.$toast().saved();
             }

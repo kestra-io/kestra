@@ -85,7 +85,7 @@ const STATE = Object.freeze({
     },
     CANCELLED: {
         name: "CANCELLED",
-        colorClass: "red",
+        colorClass: "gray",
         icon: StopCircleOutline,
         isRunning: false,
         isKillable: false,

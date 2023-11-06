@@ -157,7 +157,8 @@ public class State {
         WARNING,
         FAILED,
         KILLED,
-        CANCELLED;
+        CANCELLED,
+        QUEUED;
 
         public boolean isTerminated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this ==  Type.CANCELLED;

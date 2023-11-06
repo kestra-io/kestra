@@ -63,23 +63,28 @@ public class ExecutorService {
         if (count >= flow.getConcurrency().getLimit()) {
             return switch(flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
+                    var newExecution = execution.withState(State.Type.QUEUED);
+
                     ExecutionQueued executionQueued = ExecutionQueued.builder()
                         .tenantId(flow.getTenantId())
                         .namespace(flow.getNamespace())
                         .flowId(flow.getId())
                         .date(Instant.now())
-                        .execution(execution)
+                        .execution(newExecution)
                         .build();
 
                     // when max concurrency is reached, we throttle the execution and stop processing
                     flow.logger().info(
-                        "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded",
-                        execution.getNamespace(),
-                        execution.getFlowId(),
-                        execution.getId()
+                        "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded, {} running(s)",
+                        newExecution.getNamespace(),
+                        newExecution.getFlowId(),
+                        newExecution.getId(),
+                        count
                     );
                     // return the execution queued
-                    yield executor.withExecutionQueued(executionQueued);
+                    yield executor
+                        .withExecutionQueued(executionQueued)
+                        .withExecution(newExecution, "checkConcurrencyLimit");
                 }
                 case CANCEL -> executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
                 case FAIL -> executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
@@ -104,7 +109,7 @@ public class ExecutorService {
             executor = this.handleKilling(executor);
 
             // process next task if not killing or killed
-            if (executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED) {
+            if (executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED && executor.getExecution().getState().getCurrent() != State.Type.QUEUED) {
                 executor = this.handleNext(executor);
                 executor = this.handleChildNext(executor);
             }

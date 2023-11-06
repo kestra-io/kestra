@@ -147,5 +147,8 @@ public class FlowConcurrencyCaseTest {
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getHistories().get(0).getState(), is(State.Type.CREATED));
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.QUEUED));
+        assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
     }
 }

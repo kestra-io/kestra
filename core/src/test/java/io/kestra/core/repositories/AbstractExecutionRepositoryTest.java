@@ -223,14 +223,14 @@ public abstract class AbstractExecutionRepositoryTest {
         DailyExecutionStatistics second = result.get("io.kestra.unittest").get("second").get(10);
 
         assertThat(full.getDuration().getAvg().toMillis(), greaterThan(0L));
-        assertThat(full.getExecutionCounts().size(), is(9));
+        assertThat(full.getExecutionCounts().size(), is(11));
         assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
         assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
         assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(7L));
         assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
 
         assertThat(second.getDuration().getAvg().toMillis(), greaterThan(0L));
-        assertThat(second.getExecutionCounts().size(), is(9));
+        assertThat(second.getExecutionCounts().size(), is(11));
         assertThat(second.getExecutionCounts().get(State.Type.SUCCESS), is(13L));
         assertThat(second.getExecutionCounts().get(State.Type.CREATED), is(0L));
 
@@ -249,7 +249,7 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.get("io.kestra.unittest").size(), is(1));
         full = result.get("io.kestra.unittest").get("*").get(10);
         assertThat(full.getDuration().getAvg().toMillis(), greaterThan(0L));
-        assertThat(full.getExecutionCounts().size(), is(9));
+        assertThat(full.getExecutionCounts().size(), is(11));
         assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
         assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
         assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(20L));
@@ -295,7 +295,7 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().size(), is(9));
+        assertThat(result.get(10).getExecutionCounts().size(), is(11));
         assertThat(result.get(10).getDuration().getAvg().toMillis(), greaterThan(0L));
 
         assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L));
@@ -324,7 +324,7 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().size(), is(9));
+        assertThat(result.get(10).getExecutionCounts().size(), is(11));
         assertThat(result.get(10).getDuration().getAvg().toMillis(), greaterThan(0L));
 
         assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L * 2));

@@ -98,6 +98,8 @@ public class Flow implements DeletedInterface, TenantInterface {
     @Valid
     List<AbstractTrigger> triggers;
 
+
+    @Valid
     List<TaskDefault> taskDefaults;
 
     @NotNull
@@ -107,6 +109,9 @@ public class Flow implements DeletedInterface, TenantInterface {
     @NotNull
     @Builder.Default
     boolean deleted = false;
+
+    @Valid
+    Concurrency concurrency;
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);

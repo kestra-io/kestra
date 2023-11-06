@@ -6,6 +6,8 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.statistics.ExecutionCount;
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
@@ -116,7 +118,10 @@ public class JdbcExecutor implements ExecutorInterface {
     private ExecutionService executionService;
 
     @Inject
-    private AbstractJdbcExecutionDelayStorage abstractExecutionDelayStorage;
+    private AbstractJdbcExecutionDelayStorage executionDelayStorage;
+
+    @Inject
+    private AbstractJdbcExecutionQueuedStorage executionQueuedStorage;
 
     @Inject
     private AbstractJdbcExecutorStateStorage executorStateStorage;
@@ -292,10 +297,38 @@ public class JdbcExecutor implements ExecutorInterface {
             final Flow flow = transform(this.flowRepository.findByExecution(execution), execution);
             Executor executor = new Executor(execution, null).withFlow(flow);
 
+            // queue execution if needed (limit concurrency)
+            if (execution.getState().isCreated() && flow.getConcurrency() != null) {
+                ExecutionCount count = executionRepository.executionCounts(
+                    flow.getTenantId(),
+                    List.of(new io.kestra.core.models.executions.statistics.Flow(flow.getNamespace(), flow.getId())),
+                    List.of(State.Type.RUNNING),
+                    null,
+                    null
+                ).get(0);
+
+                executor = executorService.checkConcurrencyLimit(executor, flow, execution, count.getCount());
+                if (executor.getExecutionQueued() != null) {
+                    // the execution has been queued, we save the queued execution and stops here
+                    executionQueuedStorage.save(executor.getExecutionQueued());
+                    return Pair.of(
+                        executor,
+                        executorState
+                    );
+                }
+                if (executor.getExecution().getState().isTerminated()) {
+                    // the execution has been moved to FAILED or CANCELLED, we stop here
+                    return Pair.of(
+                        executor,
+                        executorState
+                    );
+                }
+            }
+
+            // process the execution
             if (log.isDebugEnabled()) {
                 executorService.log(log, true, executor);
             }
-
             executor = executorService.process(executor);
 
             if (!executor.getNexts().isEmpty() && deduplicateNexts(execution, executorState, executor.getNexts())) {
@@ -336,7 +369,7 @@ public class JdbcExecutor implements ExecutorInterface {
             // schedulerDelay
             if (!executor.getExecutionDelays().isEmpty()) {
                 executor.getExecutionDelays()
-                    .forEach(executionDelay -> abstractExecutionDelayStorage.save(executionDelay));
+                    .forEach(executionDelay -> executionDelayStorage.save(executionDelay));
             }
 
             // worker task execution watchers
@@ -384,7 +417,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     .forEach(this.executionQueue::emit);
             }
 
-            // worker task execution
+            // when terminated: handle worker task execution and execution throttled
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
                 workerTaskExecutionStorage.get(execution.getId())
                     .ifPresent(workerTaskExecution -> {
@@ -413,6 +446,15 @@ public class JdbcExecutor implements ExecutorInterface {
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);
                     });
+
+                if (flow.getConcurrency() != null && flow.getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
+                    // as the execution is terminated, we can check if there exist a queued execution and submit it to the execution queue
+                    executionQueuedStorage.pop(flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        queued -> executionQueue.emit(queued)
+                    );
+                }
             }
 
             return Pair.of(
@@ -573,7 +615,7 @@ public class JdbcExecutor implements ExecutorInterface {
             return;
         }
 
-        abstractExecutionDelayStorage.get(executionDelay -> {
+        executionDelayStorage.get(executionDelay -> {
             Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
 

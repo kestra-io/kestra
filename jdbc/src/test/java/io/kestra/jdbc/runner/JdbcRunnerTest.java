@@ -2,8 +2,6 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -80,6 +78,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private ForEachItemCaseTest forEachItemCaseTest;
+
+    @Inject
+    private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
 
     @BeforeAll
     void init() throws IOException, URISyntaxException {
@@ -275,5 +276,20 @@ public abstract class JdbcRunnerTest {
     @Test
     void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemNoWait();
+    }
+
+    @Test
+    void concurrencyCancel() throws TimeoutException, InterruptedException {
+        flowConcurrencyCaseTest.flowConcurrencyCancel();
+    }
+
+    @Test
+    void concurrencyFail() throws TimeoutException, InterruptedException  {
+        flowConcurrencyCaseTest.flowConcurrencyFail();
+    }
+
+    @Test
+    void concurrencyQueue() throws TimeoutException, InterruptedException  {
+        flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 }

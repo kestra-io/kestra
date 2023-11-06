@@ -23,6 +23,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,6 +59,36 @@ public class ExecutorService {
         return this.flowExecutorInterface;
     }
 
+    public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
+        if (count >= flow.getConcurrency().getLimit()) {
+            return switch(flow.getConcurrency().getBehavior()) {
+                case QUEUE -> {
+                    ExecutionQueued executionQueued = ExecutionQueued.builder()
+                        .tenantId(flow.getTenantId())
+                        .namespace(flow.getNamespace())
+                        .flowId(flow.getId())
+                        .date(Instant.now())
+                        .execution(execution)
+                        .build();
+
+                    // when max concurrency is reached, we throttle the execution and stop processing
+                    flow.logger().info(
+                        "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded",
+                        execution.getNamespace(),
+                        execution.getFlowId(),
+                        execution.getId()
+                    );
+                    // return the execution queued
+                    yield executor.withExecutionQueued(executionQueued);
+                }
+                case CANCEL -> executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
+                case FAIL -> executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
+            };
+        }
+
+        return executor;
+    }
+
     public Executor process(Executor executor) {
         // previous failed (flow join can fail), just forward
         if (!executor.canBeProcessed()) {
@@ -72,7 +103,7 @@ public class ExecutorService {
             // if all tasks are  killed or terminated, set the execution to killed
             executor = this.handleKilling(executor);
 
-            // killing, so no more nexts
+            // process next task if not killing or killed
             if (executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED) {
                 executor = this.handleNext(executor);
                 executor = this.handleChildNext(executor);

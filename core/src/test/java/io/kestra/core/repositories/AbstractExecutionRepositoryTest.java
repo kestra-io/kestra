@@ -348,20 +348,35 @@ public abstract class AbstractExecutionRepositoryTest {
         List<ExecutionCount> result = executionRepository.executionCounts(
             null,
             List.of(
-                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "first"),
-                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "second"),
-                new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "third"),
+                new Flow(NAMESPACE, "first"),
+                new Flow(NAMESPACE, "second"),
+                new Flow(NAMESPACE, "third"),
                 new Flow(NAMESPACE, "missing")
             ),
             null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now()
         );
-
         assertThat(result.size(), is(4));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("missing")).findFirst().get().getCount(), is(0L));
+
+        result = executionRepository.executionCounts(
+            null,
+            List.of(
+                new Flow(NAMESPACE, "first"),
+                new Flow(NAMESPACE, "second"),
+                new Flow(NAMESPACE, "third")
+            ),
+            List.of(State.Type.SUCCESS),
+            null,
+            null
+        );
+        assertThat(result.size(), is(3));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
     }
 }

@@ -1,0 +1,151 @@
+package io.kestra.core.runners;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+@Singleton
+public class FlowConcurrencyCaseTest {
+    @Inject
+    private RunnerUtils runnerUtils;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    protected QueueInterface<Execution> executionQueue;
+
+    public void flowConcurrencyCancel() throws TimeoutException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-cancel");
+
+        assertThat(execution1.getState().isRunning(), is(true));
+        assertThat(execution2.getState().getCurrent(), is(State.Type.CANCELLED));
+
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
+
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.CANCELLED) {
+                    latch2.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.CANCELLED));
+    }
+
+    public void flowConcurrencyFail() throws TimeoutException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-fail");
+
+        assertThat(execution1.getState().isRunning(), is(true));
+        assertThat(execution2.getState().getCurrent(), is(State.Type.FAILED));
+
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
+
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.FAILED) {
+                    latch2.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    public void flowConcurrencyQueue() throws TimeoutException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository
+            .findById(null, "io.kestra.tests", "flow-concurrency-queue", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = runnerUtils.newExecution(flow, null, null);
+        executionQueue.emit(execution2);
+
+        assertThat(execution1.getState().isRunning(), is(true));
+        assertThat(execution2.getState().getCurrent(), is(State.Type.CREATED));
+
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
+
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        CountDownLatch latch3 = new CountDownLatch(1);
+
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.RUNNING) {
+                    latch2.countDown();
+                }
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch3.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+        latch3.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+}

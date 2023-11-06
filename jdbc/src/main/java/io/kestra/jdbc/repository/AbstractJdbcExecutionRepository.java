@@ -575,13 +575,18 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         DSL.count().as("count")
                     ))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
-                    .and(field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
+                    .where(this.defaultFilter(tenantId));
+
+                if (startDate != null) {
+                    select = select.and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()));
+                }
+
+                if (endDate != null) {
+                    select = select.and(field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
+                }
 
                 if (states != null) {
-                    select = select.and(field("state_current")
-                        .in(states.stream().map(Enum::name).collect(Collectors.toList())));
+                    select = select.and(this.statesFilter(states));
                 }
 
                 // add flow & namespace filters

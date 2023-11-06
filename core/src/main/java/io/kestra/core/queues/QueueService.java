@@ -55,6 +55,8 @@ public class QueueService {
             return ((WorkerTriggerRunning) object).getTriggerContext().uid();
         } else if (object.getClass() == WorkerTriggerResult.class) {
             return ((WorkerTriggerResult) object).getTriggerContext().uid();
+        } else if (object.getClass() == ExecutionQueued.class) {
+            return ((ExecutionQueued) object).uid();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

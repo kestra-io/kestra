@@ -40,6 +40,7 @@
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
     import {apiUrl} from "override/utils/route";
+    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -65,12 +66,6 @@
                 tabsNotSaved: []
             }
         },
-        created() {
-            const namespace = localStorage.getItem("defaultNamespace");
-            if (namespace) {
-                this.namespaceUpdate(namespace);
-            }
-        },
         mounted() {
             window.addEventListener("message", (event) => {
                 const message = event.data;
@@ -85,8 +80,19 @@
                     this.handleTabsDirty(message.tabs);
                 }
             });
+
+            // Setup namespace
+            const namespace = localStorage.getItem("defaultNamespace");
+            if (namespace) {
+                this.namespaceUpdate(namespace);
+            } else if (this.namespaces?.length > 0) {
+                this.namespaceUpdate(this.namespaces[0]);
+            } else if (localStorage.getItem("tourDoneOrSkip") !== "true") {
+                this.$router.push({name: "flows/create"});
+            }
         },
         computed: {
+            ...mapState("namespace", ["namespaces"]),
             routeInfo() {
                 return {
                     title: this.$t("editor")

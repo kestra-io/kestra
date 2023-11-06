@@ -103,7 +103,7 @@ public abstract class JdbcRunnerTest {
     void logs() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs", null, null, Duration.ofSeconds(60));
 
-        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getTaskRunList(), hasSize(4));
     }
 
     @Test

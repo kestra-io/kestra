@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.slf4j.event.Level;
 
 import java.util.List;
 import javax.validation.Valid;
@@ -52,4 +53,6 @@ abstract public class AbstractTrigger {
 
     @Valid
     private WorkerGroup workerGroup;
+
+    private Level minLogLevel;
 }

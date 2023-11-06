@@ -11,6 +11,7 @@ import lombok.With;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
+import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.Collections;

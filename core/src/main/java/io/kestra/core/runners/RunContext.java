@@ -83,7 +83,7 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.initBean(applicationContext);
         this.initContext(flow, task, execution, taskRun);
-        this.initLogger(taskRun);
+        this.initLogger(taskRun, task);
     }
 
     /**
@@ -136,13 +136,14 @@ public class RunContext {
     }
 
     @SuppressWarnings("unchecked")
-    private void initLogger(TaskRun taskRun) {
+    private void initLogger(TaskRun taskRun, Task task) {
         this.runContextLogger = new RunContextLogger(
             applicationContext.findBean(
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(taskRun)
+            LogEntry.of(taskRun),
+            task.getLogLevel()
         );
     }
 
@@ -153,7 +154,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(execution)
+            LogEntry.of(execution),
+            null
         );
     }
 
@@ -164,7 +166,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(triggerContext, trigger)
+            LogEntry.of(triggerContext, trigger),
+            trigger.getMinLogLevel()
         );
     }
 
@@ -175,7 +178,8 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            LogEntry.of(flow, trigger)
+            LogEntry.of(flow, trigger),
+            trigger.getMinLogLevel()
         );
     }
 
@@ -406,7 +410,7 @@ public class RunContext {
 
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
         this.initBean(applicationContext);
-        this.initLogger(workerTask.getTaskRun());
+        this.initLogger(workerTask.getTaskRun(), workerTask.getTask());
 
         Map<String, Object> clone = new HashMap<>(this.variables);
 

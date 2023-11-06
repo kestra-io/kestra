@@ -26,13 +26,14 @@ public class RunContextLogger {
     private Logger logger;
     private QueueInterface<LogEntry> logQueue;
     private LogEntry logEntry;
+    private Level loglevel;
 
     @VisibleForTesting
     public RunContextLogger() {
         this.loggerName = "unit-test";
     }
 
-    public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
+    public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry, org.slf4j.event.Level loglevel) {
         if (logEntry.getExecutionId() != null) {
             this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + (logEntry.getTaskRunId() != null ? "." + logEntry.getTaskRunId() : "");
         } else {
@@ -40,6 +41,7 @@ public class RunContextLogger {
         }
         this.logQueue = logQueue;
         this.logEntry = logEntry;
+        this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
     }
 
     private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, LogEntry logEntry) {
@@ -138,7 +140,7 @@ public class RunContextLogger {
             forwardAppender.start();
             this.logger.addAppender(forwardAppender);
 
-            this.logger.setLevel(Level.TRACE);
+            this.logger.setLevel(this.loglevel);
             this.logger.setAdditive(true);
         }
 

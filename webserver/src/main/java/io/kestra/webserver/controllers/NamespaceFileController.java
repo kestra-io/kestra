@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.ImmutableFileAttributes;
 import io.kestra.core.storages.StorageInterface;
@@ -19,7 +20,10 @@ import jakarta.inject.Inject;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -33,6 +37,8 @@ public class NamespaceFileController {
     private StorageInterface storageInterface;
     @Inject
     private TenantService tenantService;
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     private final List<StaticFile> staticFiles;
 
@@ -153,6 +159,23 @@ public class NamespaceFileController {
         ensureWritableFile(path);
 
         storageInterface.delete(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "files/distinct-namespaces", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Files"}, summary = "List existing namespace folders")
+    public List<String> distinctNamespaces() throws IOException, URISyntaxException {
+        List<String> storageNamespaces =  distinctNamespacesFiles();
+        List<String> flowNamespaces = flowRepository.findDistinctNamespace(tenantService.resolveTenant());
+
+        return Stream.concat(storageNamespaces.stream(), flowNamespaces.stream()).distinct().toList();
+    }
+
+    protected List<String> distinctNamespacesFiles() throws IOException, URISyntaxException {
+        return storageInterface.list(tenantService.resolveTenant(), new URI(""))
+            .stream()
+            .filter(fileAttributes -> fileAttributes.getType().equals(FileAttributes.FileType.Directory))
+            .map(FileAttributes::getFileName).toList();
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

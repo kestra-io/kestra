@@ -3,7 +3,7 @@
         <template #additional-right>
             <namespace-select
                 class="fit-content"
-                data-type="flow"
+                data-type="namespaces/file"
                 :value="namespace"
                 @update:model-value="namespaceUpdate"
                 allow-create

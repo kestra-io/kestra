@@ -100,7 +100,7 @@ public class StatsController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/latest/by-flow", produces = MediaType.TEXT_JSON)
+    @Post(uri = "executions/latest/group-by-flow", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get latest execution by flows")
     public List<Execution> lastExecutions(
         @Parameter(description = "A list of flows filter") @Nullable List<ExecutionRepositoryInterface.FlowFilter> flows

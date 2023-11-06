@@ -31,7 +31,7 @@ export default {
             })
         },
         lastExecutions({commit}, payload) {
-            return this.$http.post(`${apiUrl(this)}/stats/executions/latest/by-flow`, payload).then(response => {
+            return this.$http.post(`${apiUrl(this)}/stats/executions/latest/group-by-flow`, payload).then(response => {
                 commit("setLastExecutions", response.data)
 
                 return response.data;

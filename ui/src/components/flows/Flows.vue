@@ -147,7 +147,7 @@
                                             :label="$t('last execution status')"
                                             v-if="user.hasAny(permission.EXECUTION)">
                                 <template #default="scope">
-                                    <status v-if="lastExecutionByFlowReady" :status=getLastExecution(scope.row).lastStatus size="small" />
+                                    <status v-if="lastExecutionByFlowReady && getLastExecution(scope.row).lastStatus" :status=getLastExecution(scope.row).lastStatus size="small" />
                                 </template>
                             </el-table-column>
 

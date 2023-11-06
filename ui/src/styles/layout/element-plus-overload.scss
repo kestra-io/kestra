@@ -169,16 +169,22 @@ form.ks-horizontal {
         }
 
         @include res(sm) {
+            $label-size: math.div(1, 24) * 4 * 100 * 1%;
+            --label-size: #{$label-size};
+            &.small {
+                --label-size: calc(#{$label-size} / 2);
+            }
+
             .el-form-item__label {
-                max-width: (math.div(1, 24) * 4 * 100) * 1%;
-                flex: 0 0 (math.div(1, 24) * 4 * 100) * 1%;
+                max-width: var(--label-size);
+                flex: 0 0 var(--label-size);
                 text-align: right;
             }
 
             .el-form-item__content {
                 align-items: flex-start;
-                max-width: (math.div(1, 24) * 20 * 100) * 1%;
-                flex: 0 0 (math.div(1, 24) * 20 * 100) * 1%;
+                max-width: calc(100% - var(--label-size));
+                flex: 0 0 calc(100% - var(--label-size));
             }
         }
     }

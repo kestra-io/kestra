@@ -52,6 +52,8 @@ class ReadFileFunctionTest {
         String executionId = IdUtils.create();
         URI internalStorageURI = URI.create("/" + namespace + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
         URI internalStorageFile = storageInterface.put(null, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+
+        // test for an authorized execution
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", flowId,
@@ -61,15 +63,33 @@ class ReadFileFunctionTest {
 
         String render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
         assertThat(render, is("Hello from a task output"));
+
+        // test for an authorized parent execution (execution trigger)
+        variables = Map.of(
+            "flow", Map.of(
+                "id", "subflow",
+                "namespace", namespace),
+            "execution", Map.of("id", IdUtils.create()),
+            "trigger", Map.of(
+                "flowId", flowId,
+                "namespace", namespace,
+                "executionId", executionId
+            )
+        );
+
+        render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
+        assertThat(render, is("Hello from a task output"));
     }
 
     @Test
-    void readUnauthorizedInternalStorageFile() throws IOException, IllegalVariableEvaluationException {
+    void readUnauthorizedInternalStorageFile() throws IOException {
         String namespace = "namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
         URI internalStorageURI = URI.create("/" + namespace + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
         URI internalStorageFile = storageInterface.put(null, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+
+        // test for an un-authorized execution with no trigger
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "notme",
@@ -78,6 +98,37 @@ class ReadFileFunctionTest {
         );
 
         var exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables));
+        assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
+
+        // test for an un-authorized execution with a trigger of type execution
+        Map<String, Object> executionTriggerVariables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme"),
+            "execution", Map.of("id", "notme"),
+            "trigger", Map.of(
+                "flowId", "notme",
+                "namespace", "notme",
+                "executionId", "notme"
+            )
+        );
+
+        exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", executionTriggerVariables));
+        assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
+
+        // test for an un-authorized execution with a trigger of another type
+        Map<String, Object> triggerVariables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme"),
+            "execution", Map.of("id", "notme"),
+            "trigger", Map.of(
+                "date", "somedate",
+                "row", "somerow"
+            )
+        );
+
+        exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", triggerVariables));
         assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
     }
 }

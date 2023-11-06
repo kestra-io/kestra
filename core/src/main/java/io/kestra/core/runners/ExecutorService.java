@@ -60,7 +60,7 @@ public class ExecutorService {
     }
 
     public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
-        if (count >= flow.getConcurrency().getMaximum()) {
+        if (count >= flow.getConcurrency().getLimit()) {
             return switch(flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
                     ExecutionQueued executionQueued = ExecutionQueued.builder()

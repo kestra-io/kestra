@@ -16,7 +16,7 @@ import javax.validation.constraints.Positive;
 public class Concurrency {
     @Positive
     @NotNull
-    private Integer maximum;
+    private Integer limit;
 
     @NotNull
     @Builder.Default

@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 concurrency:
   behavior: QUEUE
-  maximum: 1
+  limit: 1
 
 tasks:
   - id: sleep

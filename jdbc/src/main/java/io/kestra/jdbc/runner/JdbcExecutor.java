@@ -298,7 +298,7 @@ public class JdbcExecutor implements ExecutorInterface {
             Executor executor = new Executor(execution, null).withFlow(flow);
 
             // queue execution if needed (limit concurrency)
-            if (execution.getState().isCreated() && flow.getConcurrency() != null) {
+            if (execution.getState().getCurrent() == State.Type.CREATED && flow.getConcurrency() != null) {
                 ExecutionCount count = executionRepository.executionCounts(
                     flow.getTenantId(),
                     List.of(new io.kestra.core.models.executions.statistics.Flow(flow.getNamespace(), flow.getId())),
@@ -308,16 +308,18 @@ public class JdbcExecutor implements ExecutorInterface {
                 ).get(0);
 
                 executor = executorService.checkConcurrencyLimit(executor, flow, execution, count.getCount());
+
+                // the execution has been queued, we save the queued execution and stops here
                 if (executor.getExecutionQueued() != null) {
-                    // the execution has been queued, we save the queued execution and stops here
                     executionQueuedStorage.save(executor.getExecutionQueued());
                     return Pair.of(
                         executor,
                         executorState
                     );
                 }
+
+                // the execution has been moved to FAILED or CANCELLED, we stop here
                 if (executor.getExecution().getState().isTerminated()) {
-                    // the execution has been moved to FAILED or CANCELLED, we stop here
                     return Pair.of(
                         executor,
                         executorState
@@ -452,7 +454,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     executionQueuedStorage.pop(flow.getTenantId(),
                         flow.getNamespace(),
                         flow.getId(),
-                        queued -> executionQueue.emit(queued)
+                        queued -> executionQueue.emit(queued.withState(State.Type.RUNNING))
                     );
                 }
             }

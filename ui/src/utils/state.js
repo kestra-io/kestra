@@ -8,6 +8,7 @@ import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue
 import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
 import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue";
 import {cssVariable} from "./global"
+import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
 
 const STATE = Object.freeze({
     CREATED: {
@@ -81,6 +82,14 @@ const STATE = Object.freeze({
         isRunning: true,
         isKillable: true,
         isFailed: false,
+    },
+    CANCELLED: {
+        name: "CANCELLED",
+        colorClass: "gray",
+        icon: StopCircleOutline,
+        isRunning: false,
+        isKillable: false,
+        isFailed: true,
     }
 });
 
@@ -119,6 +128,10 @@ export default class State {
 
     static get PAUSED() {
         return STATE.PAUSED.name;
+    }
+
+    static get CANCELLED() {
+        return STATE.CANCELLED.name;
     }
 
     static isRunning(state) {

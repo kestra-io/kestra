@@ -5,7 +5,7 @@
             {{ $t('disabled flow desc') }}
         </el-alert>
 
-        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="onSubmit($refs.form)">
+        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
@@ -80,14 +80,20 @@
 
                 <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
             </el-form-item>
-            <el-form-item
-                :label="$t('execution labels')"
-            >
-                <label-input
-                    :key="executionLabels"
-                    v-model:labels="executionLabels"
-                />
-            </el-form-item>
+
+            <el-collapse class="mt-4" v-model="collapseName">
+                <el-collapse-item :title="$t('advanced configuration')" name="advanced">
+                    <el-form-item
+                        :label="$t('execution labels')"
+                    >
+                        <label-input
+                            :key="executionLabels"
+                            v-model:labels="executionLabels"
+                        />
+                    </el-form-item>
+                </el-collapse-item>
+            </el-collapse>
+
             <div class="bottom-buttons">
                 <div class="left-align">
                     <el-form-item>
@@ -130,6 +136,10 @@
             redirect: {
                 type: Boolean,
                 default: true
+            },
+            newTab: {
+                type: Boolean,
+                default: false
             }
         },
         data() {
@@ -137,7 +147,8 @@
                 inputs: {},
                 inputNewLabel: "",
                 executionLabels: [],
-                inputVisible: false
+                inputVisible: false,
+                collapseName: undefined
             };
         },
         emits: ["executionTrigger"],
@@ -246,6 +257,7 @@
 
                         executeTask(this, this.flow, this.cleanInputs, {
                             redirect: this.redirect,
+                            newTab: this.newTab,
                             id: this.flow.id,
                             namespace: this.flow.namespace,
                             labels: this.executionLabels
@@ -351,5 +363,15 @@
 
     :deep(.el-switch__label) {
         color: var(--el-text-color-regular);
+    }
+
+
+    :deep(.el-collapse) {
+        border-radius: var(--bs-border-radius);
+        .el-collapse-item__header {
+            border: 0;
+            font-size: var(--el-font-size-extra-small);
+            background: transparent;
+        }
     }
 </style>

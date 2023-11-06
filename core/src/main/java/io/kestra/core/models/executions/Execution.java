@@ -10,8 +10,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.TenantInterface;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -32,12 +34,15 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 @Value
 @Builder(toBuilder = true)
 @Slf4j
-public class Execution implements DeletedInterface {
+public class Execution implements DeletedInterface, TenantInterface {
     @With
+    @Hidden
+    @Pattern(regexp = "[a-z0-9_-]+")
     String tenantId;
 
     @NotNull

@@ -114,7 +114,7 @@
                                         :icon="Download"
                                         @click="downloadContent(currentTaskRun.id)"
                                     >
-                                        {{ $t("download") }}
+                                        {{ $t("download logs") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>

@@ -244,6 +244,7 @@
     "Total": "Total",
     "sub flow": "Sub-flow",
     "execute": "Execute",
+    "execute new tab": "Execute in new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
     "Default namespace": "Default namespace",
@@ -514,7 +515,8 @@
     "port": "Port",
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Show"
+    "show": "Show",
+    "advanced configuration": "Advanced configuration"
   },
   "fr": {
     "id": "Identifiant",
@@ -762,6 +764,7 @@
     "Total": "Total",
     "sub flow": "Sous-flow",
     "execute": "Exécuter",
+    "execute new tab": "Exécuter dans un nouvel onglet",
     "execute the flow": "Exécuter le flow <code>{id}</code>",
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
     "Default namespace": "Espace de nom par défaut",
@@ -1021,7 +1024,8 @@
     "port": "Port",
     "management port": "Port de gestion",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Voir"
+    "show": "Voir",
+    "advanced configuration": "Configuration avancée"
   }
 }
 

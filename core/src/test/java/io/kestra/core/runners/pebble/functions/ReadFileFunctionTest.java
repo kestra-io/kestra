@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 class ReadFileFunctionTest {
@@ -26,7 +28,7 @@ class ReadFileFunctionTest {
     StorageInterface storageInterface;
 
     @Test
-    void readFile() throws IllegalVariableEvaluationException, IOException {
+    void readNamespaceFile() throws IllegalVariableEvaluationException, IOException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
         storageInterface.createDirectory(null, URI.create(storageInterface.namespaceFilePrefix(namespace)));
@@ -37,8 +39,45 @@ class ReadFileFunctionTest {
     }
 
     @Test
-    void readUnknownFile() {
-        IllegalVariableEvaluationException illegalVariableEvaluationException = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
+    void readUnknownNamespaceFile() {
+        IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
         assertThat(illegalVariableEvaluationException.getCause().getCause().getClass(), is(FileNotFoundException.class));
+    }
+
+    @Test
+    void readInternalStorageFile() throws IOException, IllegalVariableEvaluationException {
+        // task output URI format: 'kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
+        String namespace = "namespace";
+        String flowId = "flow";
+        String executionId = IdUtils.create();
+        URI internalStorageURI = URI.create("/" + namespace + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
+        URI internalStorageFile = storageInterface.put(null, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", flowId,
+                "namespace", namespace),
+            "execution", Map.of("id", executionId)
+        );
+
+        String render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
+        assertThat(render, is("Hello from a task output"));
+    }
+
+    @Test
+    void readUnauthorizedInternalStorageFile() throws IOException, IllegalVariableEvaluationException {
+        String namespace = "namespace";
+        String flowId = "flow";
+        String executionId = IdUtils.create();
+        URI internalStorageURI = URI.create("/" + namespace + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
+        URI internalStorageFile = storageInterface.put(null, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme"),
+            "execution", Map.of("id", "notme")
+        );
+
+        var exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables));
+        assertThat(exception.getMessage(), is("Unable to read a file that didn't belong to the current execution"));
     }
 }

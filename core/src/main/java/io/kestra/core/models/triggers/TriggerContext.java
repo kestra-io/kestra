@@ -1,7 +1,9 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.TenantInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -9,13 +11,16 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 @SuperBuilder(toBuilder = true)
 @ToString
 @Getter
 @NoArgsConstructor
 @Introspected
-public class TriggerContext {
+public class TriggerContext implements TenantInterface {
+    @Hidden
+    @Pattern(regexp = "[a-z0-9_-]+")
     private String tenantId;
 
     @NotNull

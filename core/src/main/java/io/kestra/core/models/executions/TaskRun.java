@@ -1,5 +1,7 @@
 package io.kestra.core.models.executions;
 
+import io.kestra.core.models.TenantInterface;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -15,13 +17,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 @ToString
 @EqualsAndHashCode
 @AllArgsConstructor
 @Getter
 @Builder(toBuilder = true)
-public class TaskRun {
+public class TaskRun implements TenantInterface {
+    @Hidden
+    @Pattern(regexp = "[a-z0-9_-]+")
     String tenantId;
 
     @NotNull

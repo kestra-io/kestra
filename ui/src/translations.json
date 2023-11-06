@@ -513,9 +513,10 @@
     "port": "Port",
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Show",
+    "row count": "Row count",
     "encoding": "Encoding",
-    "advanced configuration": "Advanced configuration",
+    "show": "Show",
+    "advanced configuration": "Advanced configuration"
   },
   "fr": {
     "id": "Identifiant",
@@ -1021,9 +1022,10 @@
     "port": "Port",
     "management port": "Port de gestion",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Voir",
+    "show": "Afficher",
     "advanced configuration": "Configuration avancée",
-    "encoding": "Encoding"
+    "row count": "Nombre de lignes",
+    "encoding": "Encodage"
   }
 }
 

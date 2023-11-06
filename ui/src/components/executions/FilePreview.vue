@@ -22,7 +22,7 @@
             <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />
             <editor v-else :full-height="false" :input="true" :navbar="false" :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
             <el-form class="ks-horizontal max-size mt-3">
-                <el-form-item :label="$t('show')">
+                <el-form-item :label="$t('row count')">
                     <el-select
                         v-model="maxPreview"
                         filterable

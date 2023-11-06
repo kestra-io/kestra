@@ -1,18 +1,11 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-dropdown class="edit-flow-trigger-button" split-button :icon="icon.Flash" :disabled=isDisabled() :type="type" @click="onClick(false)">
-            <Flash /> <span class="mx-2">{{ $t('execute') }}</span>
-            <template #dropdown>
-                <el-dropdown-menu>
-                    <el-button :icon="icon.FlashAlert" :type="type" @click="onClick(true)">{{ $t('execute new tab') }}</el-button>
-                </el-dropdown-menu>
-            </template>
-        </el-dropdown>
+        <el-button :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">{{ $t("execute") }}</el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <flow-run @execution-trigger="closeModal" :redirect="true" :new-tab="newTab" />
+            <flow-run @execution-trigger="closeModal" :redirect="true" />
         </el-dialog>
     </div>
 </template>
@@ -22,14 +15,12 @@
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
-    import FlashAlert from "vue-material-design-icons/FlashAlert.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
         components: {
-            FlowRun,
-            Flash
+            FlowRun
         },
         props: {
             flowId: {
@@ -52,9 +43,8 @@
         data() {
             return {
                 isOpen: false,
-                newTab: false,
                 icon: {
-                    FlashAlert: shallowRef(FlashAlert)
+                    Flash: shallowRef(Flash)
                 }
             };
         },
@@ -69,7 +59,7 @@
             }
         },
         methods: {
-            onClick(newTab) {
+            onClick() {
                 if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow) {
                     this.$store.dispatch("api/events", {
                         type: "ONBOARDING",
@@ -82,8 +72,7 @@
                     this.$tours["guidedTour"].nextStep();
                     return;
                 }
-                this.newTab = newTab;
-                this.isOpen = !this.isOpen
+                this.isOpen = !this.isOpen;
             },
             closeModal() {
                 this.isOpen = false;

@@ -15,20 +15,22 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.tasks.log.Log;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -115,6 +117,31 @@ class TaskDefaultServiceTest {
         Flow injected = taskDefaultService.injectDefaults(flow);
 
         assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(123));
+    }
+
+    // This test is to validate that if you force a default value in a task
+    // it shouldnt be override by taskDefaults
+    @Test
+    public void taskValueOverTaskDefaults() {
+        var task = Log.builder()
+            .id("log")
+            .type(Log.class.getName())
+            .message("testing")
+            .level(Level.INFO)
+            .build();
+
+        Flow flow = Flow.builder()
+            .tasks(Collections.singletonList(task))
+            .taskDefaults(List.of(
+                new TaskDefault(Log.class.getName(), false, ImmutableMap.of(
+                    "level", Level.WARN
+                ))
+            ))
+            .build();
+
+        Flow injected = taskDefaultService.injectDefaults(flow);
+
+        assertThat(((Log) injected.getTasks().get(0)).getLevel(), is(Level.INFO));
     }
 
     @SuperBuilder

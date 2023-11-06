@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.Slugify;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -62,11 +63,11 @@ public class ReadFileFunction implements Function {
                 // if there is a trigger of type execution, we also allow accessing a file from the parent execution
                 Map<String, String> trigger = (Map<String, String>) context.getVariable("trigger");
                 if (!validateFileUri(trigger.get("namespace"), trigger.get("flowId"), trigger.get("executionId"), path)) {
-                    throw new IllegalArgumentException("Unable to read a file that didn't belong to the current execution");
+                    throw new IllegalArgumentException("Unable to read the file '" + path + "' as it didn't belong to the current execution");
                 }
             }
             else {
-                throw new IllegalArgumentException("Unable to read a file that didn't belong to the current execution");
+                throw new IllegalArgumentException("Unable to read the file '" + path + "' as it didn't belong to the current execution");
             }
         }
         URI internalStorageFile = URI.create(path);
@@ -76,7 +77,11 @@ public class ReadFileFunction implements Function {
     private boolean validateFileUri(String namespace, String flowId, String executionId, String path) {
         // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion
         // We check that the file is for the given flow execution
-        String authorizedBasePath = KESTRA_SCHEME + namespace + "/" + flowId + "/executions/" + executionId + "/";
+        if (namespace == null || flowId == null || executionId == null) {
+            return false;
+        }
+        
+        String authorizedBasePath = KESTRA_SCHEME + Slugify.of(namespace) + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
         return path.startsWith(authorizedBasePath);
     }
 }

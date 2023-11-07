@@ -14,6 +14,10 @@ public interface FileAttributes {
 
     long getSize();
 
+    default boolean isReadOnly() {
+        return false;
+    }
+
     enum FileType {
         File,
         Directory

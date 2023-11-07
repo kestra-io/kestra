@@ -1,0 +1,15 @@
+id: flow-concurrency-queue-pause
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: pause
+    type: io.kestra.core.tasks.flows.Pause
+    delay: PT1S
+    tasks:
+      - id: post-pause
+        type: io.kestra.core.tasks.log.Log
+        message: Post-pause

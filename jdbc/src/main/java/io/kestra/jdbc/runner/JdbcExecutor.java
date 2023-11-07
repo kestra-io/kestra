@@ -302,7 +302,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 ExecutionCount count = executionRepository.executionCounts(
                     flow.getTenantId(),
                     List.of(new io.kestra.core.models.executions.statistics.Flow(flow.getNamespace(), flow.getId())),
-                    List.of(State.Type.RUNNING),
+                    List.of(State.Type.RUNNING, State.Type.PAUSED),
                     null,
                     null
                 ).get(0);

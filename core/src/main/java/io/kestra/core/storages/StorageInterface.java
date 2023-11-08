@@ -163,10 +163,10 @@ public interface StorageInterface {
     }
 
     default String namespaceFilePrefix(String namespace) {
-        return String.join("/", List.of(
+        return fromParts(
             namespace,
             "files"
-        ));
+        );
     }
 
     default Optional<String> extractExecutionId(URI path) {

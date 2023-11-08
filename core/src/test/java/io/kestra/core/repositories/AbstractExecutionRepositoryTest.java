@@ -17,7 +17,9 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -269,6 +271,55 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.size(), is(1));
         assertThat(result.get("io.kestra.unittest").size(), is(1));
         assertThat(result.get("io.kestra.unittest").get(FLOW).size(), is(11));
+    }
+
+    @Test
+    protected void lastExecutions() throws InterruptedException {
+
+        Instant executionNow = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+        Execution executionOld = builder(State.Type.SUCCESS, FLOW)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(new State.History(
+                    State.Type.SUCCESS,
+                    executionNow.minus(1, ChronoUnit.DAYS)
+                )))
+            ).build();
+
+        Execution executionFailed = builder(State.Type.FAILED, FLOW)
+            .state(State.of(
+                State.Type.FAILED,
+                List.of(new State.History(
+                    State.Type.FAILED,
+                    executionNow.minus(1, ChronoUnit.HOURS)
+                )))
+            ).build();
+
+        Execution executionRunning = builder(State.Type.RUNNING, FLOW)
+            .state(State.of(
+                State.Type.RUNNING,
+                List.of(new State.History(State.Type.RUNNING, executionNow)))
+            ).build();
+
+        executionRepository.save(executionOld);
+        executionRepository.save(executionFailed);
+        executionRepository.save(executionRunning);
+
+        // mysql need some time ...
+        Thread.sleep(500);
+
+        List<Execution> result = executionRepository.lastExecutions(
+                null,
+                List.of(
+                    ExecutionRepositoryInterface.FlowFilter.builder()
+                        .id(FLOW)
+                        .namespace(NAMESPACE).build()
+                )
+        );
+
+        assertThat(result.size(), is(1));
+        assertThat(result.get(0).getState(), is(executionFailed.getState()));
     }
 
     @Test

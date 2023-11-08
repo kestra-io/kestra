@@ -217,6 +217,8 @@
       "names": "Plugins",
       "please": "Please choose a task on the right to see its documentation"
     },
+    "last execution date": "Last execution date",
+    "last execution status": "Last status",
     "last X days count": "{count} in last {days} days",
     "date range count": "{count} between the {startDate} and the {endDate}",
     "date count": "{count} on the {date}",
@@ -642,7 +644,7 @@
     "prefill inputs": "Pré-remplir",
     "current": "actuel",
     "change status": "Changer le statut",
-    "change status done": "Le statut de la tâche a était mis à jour",
+    "change status done": "Le statut de la tâche a été mis à jour",
     "change status confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
     "change status hint": {
       "WARNING": [
@@ -740,6 +742,8 @@
       "please": "Veuillez choisir une tache sur la droite afin de voir sa documentation"
     },
     "last X days count": "{count} lors des {days} derniers jours",
+    "last execution date": "Dernière execution",
+    "last execution status": "Dernier statut",
     "date range count": "{count} entre le {startDate} et le {endDate}",
     "date count": "{count} le {date}",
     "revisions": "Révisions",

@@ -5,7 +5,8 @@ export default {
     state: {
         dailyGroupByFlow: undefined,
         daily: undefined,
-        taskRunDaily: undefined
+        taskRunDaily: undefined,
+        lastExecutions: undefined
     },
     actions: {
         dailyGroupByFlow({commit}, payload) {
@@ -29,6 +30,13 @@ export default {
                 return response.data;
             })
         },
+        lastExecutions({commit}, payload) {
+            return this.$http.post(`${apiUrl(this)}/stats/executions/latest/group-by-flow`, payload).then(response => {
+                commit("setLastExecutions", response.data)
+
+                return response.data;
+            })
+        }
     },
     mutations: {
         setDailyGroupByFlow(state, stats) {
@@ -39,6 +47,9 @@ export default {
         },
         setTaskRunDaily(state, stats) {
             state.taskRunDaily = stats
+        },
+        setLastExecutions(state, stats) {
+            state.lastExecutions = stats
         }
     },
     getters: {}

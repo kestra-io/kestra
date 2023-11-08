@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.tenant.TenantService;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
@@ -95,6 +96,18 @@ public class StatsController {
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             namespaceOnly != null && namespaceOnly
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/latest/group-by-flow", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Stats"}, summary = "Get latest execution by flows")
+    public List<Execution> lastExecutions(
+        @Parameter(description = "A list of flows filter") @Nullable List<ExecutionRepositoryInterface.FlowFilter> flows
+    ) {
+        return executionRepository.lastExecutions(
+            tenantService.resolveTenant(),
+            flows != null && flows.get(0).getNamespace() != null && flows.get(0).getId() != null ? flows : null
         );
     }
 }

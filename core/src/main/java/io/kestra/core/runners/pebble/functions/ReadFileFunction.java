@@ -23,8 +23,6 @@ public class ReadFileFunction implements Function {
 
     @Inject
     private StorageInterface storageInterface;
-    @Inject
-    private TenantService tenantService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -49,7 +47,7 @@ public class ReadFileFunction implements Function {
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         URI namespaceFile = URI.create(storageInterface.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
-        return new String(storageInterface.get(tenantService.resolveTenant(), namespaceFile).readAllBytes(), StandardCharsets.UTF_8);
+        return new String(storageInterface.get(flow.get("tenantId"), namespaceFile).readAllBytes(), StandardCharsets.UTF_8);
     }
 
     private String readFromInternalStorageUri(EvaluationContext context, String path) throws IOException {
@@ -71,7 +69,7 @@ public class ReadFileFunction implements Function {
             }
         }
         URI internalStorageFile = URI.create(path);
-        return new String(storageInterface.get(tenantService.resolveTenant(), internalStorageFile).readAllBytes(), StandardCharsets.UTF_8);
+        return new String(storageInterface.get(flow.get("tenantId"), internalStorageFile).readAllBytes(), StandardCharsets.UTF_8);
     }
 
     private boolean validateFileUri(String namespace, String flowId, String executionId, String path) {
@@ -80,7 +78,7 @@ public class ReadFileFunction implements Function {
         if (namespace == null || flowId == null || executionId == null) {
             return false;
         }
-        
+
         String authorizedBasePath = KESTRA_SCHEME + Slugify.of(namespace) + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
         return path.startsWith(authorizedBasePath);
     }

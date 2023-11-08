@@ -6,25 +6,26 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 @Getter
 public class DefaultFileRender extends FileRender {
-    DefaultFileRender(String extension, InputStream filestream, Integer maxLine) throws IOException {
+    DefaultFileRender(String extension, InputStream filestream, Charset charset, Integer maxLine) throws IOException {
         super(extension, maxLine);
-        renderContent(filestream);
+        renderContent(filestream, charset);
 
         this.type = Type.TEXT;
     }
 
-    DefaultFileRender(String extension, InputStream filestream, Type type, Integer maxLine) throws IOException {
+    DefaultFileRender(String extension, InputStream filestream, Charset charset, Type type, Integer maxLine) throws IOException {
         super(extension, maxLine);
-        renderContent(filestream);
+        renderContent(filestream, charset);
 
         this.type = type;
     }
 
-    private void renderContent(InputStream fileStream) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fileStream));
+    private void renderContent(InputStream fileStream, Charset charset) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(fileStream, charset));
         String line = reader.readLine();
         int lineCount = 0;
 

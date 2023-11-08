@@ -14,7 +14,7 @@
             <h3>{{ $t("preview") }}</h3>
         </template>
         <template #default>
-            <el-alert v-if="filePreview.truncated"  show-icon type="warning" :closable="false" class="mb-2">
+            <el-alert v-if="filePreview.truncated" show-icon type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
             </el-alert>
             <list-preview v-if="filePreview.type === 'LIST'" :value="filePreview.content" />
@@ -22,7 +22,7 @@
             <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />
             <editor v-else :full-height="false" :input="true" :navbar="false" :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
             <el-form class="ks-horizontal max-size mt-3">
-                <el-form-item :label="$t('show')">
+                <el-form-item :label="$t('row count')">
                     <el-select
                         v-model="maxPreview"
                         filterable
@@ -36,6 +36,23 @@
                             :key="item"
                             :label="item"
                             :value="item"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item :label="$t('encoding')">
+                    <el-select
+                        v-model="encoding"
+                        filterable
+                        clearable
+                        :required="true"
+                        :persistent="false"
+                        @change="getFilePreview"
+                    >
+                        <el-option
+                            v-for="item in encodingOptions"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value"
                         />
                     </el-select>
                 </el-form-item>
@@ -71,10 +88,21 @@
                 isPreviewOpen: false,
                 selectedPreview: null,
                 maxPreview: undefined,
+                encoding: undefined,
+                encodingOptions: [
+                    {value: "UTF-8", label: "UTF-8"},
+                    {value: "ISO-8859-1", label: "ISO-8859-1/Latin-1"},
+                    {value: "Cp1250", label: "Windows 1250"},
+                    {value: "Cp1251", label: "Windows 1251"},
+                    {value: "Cp1252", label: "Windows 1252"},
+                    {value: "UTF-16", label: "UTF-16"},
+                    {value: "Cp500", label: "EBCDIC IBM-500"},
+                ]
             }
         },
         mounted() {
             this.maxPreview = this.configs.preview.initial;
+            this.encoding = this.encodingOptions[0];
         },
         computed: {
             ...mapState("execution", ["filePreview"]),
@@ -113,7 +141,8 @@
                     .dispatch("execution/filePreview", {
                         executionId: this.executionId,
                         path: this.value,
-                        maxRows: this.maxPreview
+                        maxRows: this.maxPreview,
+                        encoding: this.encoding
                     })
                     .then(() => {
                         this.isPreviewOpen = true;

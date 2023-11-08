@@ -515,6 +515,8 @@
     "port": "Port",
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
+    "row count": "Row count",
+    "encoding": "Encoding",
     "show": "Show",
     "advanced configuration": "Advanced configuration"
   },
@@ -1024,8 +1026,10 @@
     "port": "Port",
     "management port": "Port de gestion",
     "file preview truncated": "Displayed content has been truncated",
-    "show": "Voir",
-    "advanced configuration": "Configuration avancée"
+    "show": "Afficher",
+    "advanced configuration": "Configuration avancée",
+    "row count": "Nombre de lignes",
+    "encoding": "Encodage"
   }
 }
 

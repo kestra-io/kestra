@@ -74,6 +74,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -998,16 +1001,25 @@ public class ExecutionController {
     public HttpResponse<?> filePreview(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue URI path,
-        @Parameter(description = "The max row returns") @QueryValue @Nullable Integer maxRows
+        @Parameter(description = "The max row returns") @QueryValue @Nullable Integer maxRows,
+        @Parameter(description = "The file encoding as Java charset name. Defaults to UTF-8", example = "ISO-8859-1") @QueryValue @Nullable String encoding
     ) throws IOException {
         this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
         InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path);
+        Optional<Charset> charset;
+
+        try {
+            charset = Optional.ofNullable(encoding).map(Charset::forName);
+        } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
+            throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
+        }
 
         FileRender fileRender = FileRenderBuilder.of(
             extension,
             fileStream,
+            charset,
             maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
         );
 

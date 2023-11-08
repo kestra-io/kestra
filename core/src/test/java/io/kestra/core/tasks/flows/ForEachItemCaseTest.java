@@ -63,6 +63,13 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("iterations"), notNullValue());
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("max"), is(3));
+        assertThat(iterations.get("CREATED"), is(0));
+        assertThat(iterations.get("RUNNING"), is(0));
+        assertThat(iterations.get("SUCCESS"), is(3));
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -90,6 +97,14 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("iterations"), notNullValue());
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("max"), is(3));
+        assertThat(iterations.get("CREATED"), is(0));
+        assertThat(iterations.get("RUNNING"), nullValue()); // if we didn't wait we will only observe CREATED and SUCCESS
+        assertThat(iterations.get("SUCCESS"), is(3));
+
         // assert that not all subflows ran (depending on the speed of execution there can be some)
         // be careful that it's racy.
         assertThat(countDownLatch.getCount(), greaterThan(0L));
@@ -101,6 +116,43 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow"));
         assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-no-wait/executions/.*/tasks/each/.*\\.txt"));
+        assertThat(triggered.get().getTaskRunList(), hasSize(1));
+    }
+
+    public void forEachItemFailed() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
+        CountDownLatch countDownLatch = new CountDownLatch(3);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        executionQueue.receive(either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("for-each-item-subflow-failed") && execution.getState().getCurrent().isTerminated()) {
+                countDownLatch.countDown();
+                triggered.set(execution);
+            }
+        });
+
+        URI file = storageUpload(10);
+        Map<String, Object> inputs = Map.of("file", file.toString());
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-failed", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+
+        // we should have triggered 3 subflows
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+
+        // assert on the main flow execution
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("iterations"), notNullValue());
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("max"), is(3));
+        assertThat(iterations.get("CREATED"), is(0));
+        assertThat(iterations.get("RUNNING"), is(0));
+        assertThat(iterations.get("FAILED"), is(3));
+
+        // assert on the last subflow execution
+        assertThat(triggered.get().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(triggered.get().getFlowId(), is("for-each-item-subflow-failed"));
+        assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-failed/executions/.*/tasks/each/.*\\.txt"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 

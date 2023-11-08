@@ -1,0 +1,10 @@
+id: for-each-item-subflow-failed
+namespace: io.kestra.tests
+
+inputs:
+  - name: items
+    type: STRING
+
+tasks:
+  - id: per-item
+    type: io.kestra.core.tasks.executions.Fail

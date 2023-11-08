@@ -1,6 +1,5 @@
 package io.kestra.core.tasks.flows;
 
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -9,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -77,7 +76,6 @@ public class ForEachItem extends Task implements ExecutableTask {
     @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI, e.g. output from a previous task in the format `{{ outputs.task_id.uri }}` or an input parameter of FILE type e.g. `{{ inputs.myfile }}`.")
     private String items;
 
-    @Positive
     @NotNull
     @PluginProperty
     @Builder.Default
@@ -156,10 +154,10 @@ public class ForEachItem extends Task implements ExecutableTask {
             return splits.stream()
                 .<WorkerTaskExecution<?>>map(throwFunction(
                     split -> {
-                        Map<String, Object> intemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
+                        Map<String, Object> itemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
                         Map<String, Object> inputs = new HashMap<>();
                         if (this.inputs != null) {
-                            inputs.putAll(runContext.render(this.inputs, intemsVariable));
+                            inputs.putAll(runContext.render(this.inputs, itemsVariable));
                         }
 
                         List<Label> labels = new ArrayList<>();
@@ -172,7 +170,7 @@ public class ForEachItem extends Task implements ExecutableTask {
                             }
                         }
 
-                        int interation = currentIteration.getAndIncrement();
+                        int iteration = currentIteration.getAndIncrement();
                         return ExecutableUtils.workerTaskExecution(
                             runContext,
                             flowExecutorInterface,
@@ -180,10 +178,9 @@ public class ForEachItem extends Task implements ExecutableTask {
                             currentFlow,
                             this,
                             currentTaskRun
-                                .withValue(String.valueOf(interation))
-                                .withOutputs(ImmutableMap.of(
-                                    "currentIteration", interation,
-                                    "maxIterations", splits.size()
+                                .withValue(String.valueOf(iteration))
+                                .withOutputs(Map.of(
+                                    "iterations", Map.of("max", splits.size())
                                 ))
                                 .withItems(split.toString()),
                             inputs,
@@ -195,24 +192,17 @@ public class ForEachItem extends Task implements ExecutableTask {
         } catch (IOException e) {
             throw new InternalException(e);
         }
-
     }
 
     @Override
     public Optional<WorkerTaskResult> createWorkerTaskResult(
         RunContext runContext,
-        WorkerTaskExecution<?> workerTaskExecution,
+        TaskRun taskRun,
         Flow flow,
         Execution execution
     ) {
-        TaskRun taskRun = workerTaskExecution.getTaskRun();
-
-        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed));
-
-        int currentIteration = (Integer) taskRun.getOutputs().get("currentIteration");
-        int maxIterations = (Integer) taskRun.getOutputs().get("maxIterations");
-
-        return currentIteration == maxIterations ? Optional.of(ExecutableUtils.workerTaskResult(taskRun)) : Optional.empty();
+        // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list
+        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
     }
 
     @Override

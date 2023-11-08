@@ -636,10 +636,11 @@ public class ExecutorService {
                     else {
                         executions.addAll(workerTaskExecutions);
                         if (!executableTask.waitForExecution()) {
+                            // send immediately all workerTaskResult to ends the executable task
                             for (WorkerTaskExecution<?> workerTaskExecution : workerTaskExecutions) {
                                 Optional<WorkerTaskResult> workerTaskResult = executableTask.createWorkerTaskResult(
                                     runContext,
-                                    workerTaskExecution,
+                                    workerTaskExecution.getTaskRun().withState(State.Type.SUCCESS),
                                     executor.getFlow(),
                                     workerTaskExecution.getExecution()
                                 );

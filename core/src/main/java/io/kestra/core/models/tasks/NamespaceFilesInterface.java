@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public interface NamespaceFilesInterface {
     @Schema(
         title = "Inject namespace files",
-        description = "Inject namespace file on this task. Inject all namespaces files when enabled or use filter to limit injected files."
+        description = "Inject namespace files to this task. When enabled, it will, by default, load all namespace files into the working directory. However, you can use the `include` or `exclude` properties to limit which namespace files will be injected."
     )
     @PluginProperty
     NamespaceFiles getNamespaceFiles();

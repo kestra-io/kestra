@@ -41,16 +41,19 @@ export default {
                 },
                 saved: function(name, title, options) {
                     ElNotification.closeAll();
+                    const message = options && options?.genericQualifier
+                        ? self.$t("generic saved done")
+                        : self.$t("saved done", { name: name });
                     ElNotification({
                         ...{
                             title: title || self.$t("saved"),
-                            message: this._wrap(self.$t("saved done", {name: name})),
+                            message: this._wrap(message),
                             position: 'top-right',
                             offset: 65,
                             type: "success",
                         },
                         ...(options || {})
-                    })
+                    });
                 },
                 deleted: function(name, title, options) {
                     ElNotification({
@@ -102,16 +105,6 @@ export default {
                         ...(options || {})
                     })
                 },
-                settingsSaved: function() {
-                    ElNotification.closeAll();
-                    ElNotification({
-                        title: self.$t("saved"),
-                        message: this._wrap(self.$t("Settings have been saved")),
-                        position: 'top-right',
-                        offset: 65,
-                        type: "success",
-                    });
-                }
             }
         }
     }

@@ -223,7 +223,7 @@
                 } else {
                     localStorage.removeItem("defaultNamespace")
                 }
-                this.$toast().settingsSaved();
+                this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onLevelChange(value) {
                 this.defaultLogLevel = value;
@@ -233,39 +233,39 @@
                 } else {
                     localStorage.removeItem("defaultLogLevel")
                 }
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onLang(value) {
                 localStorage.setItem("lang", value);
                 this.$moment.locale(value);
                 this.$i18n.locale = value;
                 this.lang = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onTheme(value) {
                 Utils.switchTheme(value)
                 this.theme = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onDateFormat(value) {
                 localStorage.setItem(DATE_FORMAT_STORAGE_KEY, value);
                 this.dateFormat = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onTimezone(value) {
                 localStorage.setItem(TIMEZONE_STORAGE_KEY, value);
                 this.timezone = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onEditorTheme(value) {
                 localStorage.setItem("editorTheme", value);
                 this.editorTheme = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onAutofoldTextEditor(value) {
                 localStorage.setItem("autofoldTextEditor", value);
                 this.autofoldTextEditor = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             exportFlows() {
                 return this.$store
@@ -284,38 +284,38 @@
             onLogDisplayChange(value) {
                 localStorage.setItem("logDisplay", value);
                 this.logDisplay = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onFontSize(value) {
                 localStorage.setItem("editorFontSize", value);
                 this.editorFontSize = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onFontFamily(value) {
                 localStorage.setItem("editorFontFamily", value);
                 this.editorFontFamily = value;
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onEnvNameChange(value) {
                 if (value !== this.configs?.environment?.name) {
                     this.$store.commit("layout/setEnvName", value);
                 }
 
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onEnvColorChange(value) {
                 if (value !== this.configs?.environment?.color) {
                     this.$store.commit("layout/setEnvColor", value);
                 }
 
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             },
             onExecuteFlowBehaviourChange(value) {
                 this.executeFlowBehaviour = value;
 
                 localStorage.setItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value);
 
-                this.$toast().settingsSaved();
+               this.$toast().saved(undefined,undefined,{genericQualifier: true});
             }
         },
         computed: {

@@ -29,7 +29,7 @@ public interface ExecutableTask {
      * Creates a WorkerTaskResult for a given WorkerTaskExecution
      */
     Optional<WorkerTaskResult> createWorkerTaskResult(RunContext runContext,
-                                                      WorkerTaskExecution<?> workerTaskExecution,
+                                                      TaskRun taskRun,
                                                       Flow flow,
                                                       Execution execution);
 

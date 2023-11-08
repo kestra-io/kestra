@@ -279,6 +279,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    void forEachItemFailed() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+        forEachItemCaseTest.forEachItemFailed();
+    }
+
+    @Test
     void concurrencyCancel() throws TimeoutException, InterruptedException {
         flowConcurrencyCaseTest.flowConcurrencyCancel();
     }

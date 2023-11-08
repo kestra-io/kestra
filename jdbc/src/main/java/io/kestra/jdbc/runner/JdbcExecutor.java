@@ -22,6 +22,7 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
+import io.kestra.core.tasks.flows.ForEachItem;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
@@ -402,6 +403,11 @@ public class JdbcExecutor implements ExecutorInterface {
                         );
 
                         executionQueue.emit(workerTaskExecution.getExecution());
+
+                        // send a running worker task result to track running vs created status
+                        if (((ExecutableTask) workerTaskExecution.getTask()).waitForExecution()) {
+                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING));
+                        }
                     });
             }
 
@@ -419,26 +425,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 workerTaskExecutionStorage.get(execution.getId())
                     .ifPresent(workerTaskExecution -> {
                         // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                        if (((ExecutableTask)workerTaskExecution.getTask()).waitForExecution()) {
-                            Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
-
-                            ExecutableTask executableTask = (ExecutableTask) workerTaskExecution.getTask();
-
-                            RunContext runContext = runContextFactory.of(
-                                workerTaskFlow,
-                                workerTaskExecution.getTask(),
-                                execution,
-                                workerTaskExecution.getTaskRun()
-                            );
-                            try {
-                                Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
-                                    .createWorkerTaskResult(runContext, workerTaskExecution, workerTaskFlow, execution);
-
-                                maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
-                            } catch (Exception e) {
-                                // TODO maybe create a FAILED Worker Task Result instead
-                                log.error("Unable to create the Worker Task Result", e);
-                            }
+                        if (((ExecutableTask) workerTaskExecution.getTask()).waitForExecution()) {
+                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING).withState(execution.getState().getCurrent()));
                         }
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);
@@ -462,6 +450,28 @@ public class JdbcExecutor implements ExecutorInterface {
 
         if (result != null) {
             this.toExecution(result);
+        }
+    }
+
+    private void sendWorkerTaskResultForWorkerTaskExecution(Execution execution, WorkerTaskExecution<?> workerTaskExecution, TaskRun taskRun) {
+        Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
+
+        ExecutableTask executableTask = workerTaskExecution.getTask();
+
+        RunContext runContext = runContextFactory.of(
+            workerTaskFlow,
+            workerTaskExecution.getTask(),
+            execution,
+            workerTaskExecution.getTaskRun()
+        );
+        try {
+            Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
+                .createWorkerTaskResult(runContext, taskRun, workerTaskFlow, execution);
+
+            maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
+        } catch (Exception e) {
+            // TODO maybe create a FAILED Worker Task Result instead
+            log.error("Unable to create the Worker Task Result", e);
         }
     }
 
@@ -510,31 +520,42 @@ public class JdbcExecutor implements ExecutorInterface {
 
             if (execution.hasTaskRunJoinable(message.getTaskRun())) {
                 try {
-                    // dynamic task
+                    Flow flow = flowRepository.findByExecution(current.getExecution());
+
+                    // dynamic tasks
                     Execution newExecution = executorService.addDynamicTaskRun(
                         current.getExecution(),
-                        flowRepository.findByExecution(current.getExecution()),
+                        flow,
                         message
                     );
-
                     if (newExecution != null) {
                         current = current.withExecution(newExecution, "addDynamicTaskRun");
                     }
-                    newExecution = current.getExecution().withTaskRun(message.getTaskRun());
+
+                    // iterative tasks
+                    Task task = flow.findTaskByTaskId(message.getTaskRun().getTaskId());
+                    TaskRun taskRun;
+                    if (task instanceof ForEachItem forEachItem) {
+                        taskRun = ExecutableUtils.manageIterations(message.getTaskRun(), current.getExecution(), forEachItem.getTransmitFailed());
+                    } else {
+                        taskRun = message.getTaskRun();
+                    }
+
+                    newExecution = current.getExecution().withTaskRun(taskRun);
                     current = current.withExecution(newExecution, "joinWorkerResult");
 
                     // send metrics on terminated
-                    if (message.getTaskRun().getState().isTerminated()) {
+                    if (taskRun.getState().isTerminated()) {
                         metricRegistry
                             .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
                             .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
-                            .record(message.getTaskRun().getState().getDuration());
+                            .record(taskRun.getState().getDuration());
 
-                        log.trace("TaskRun terminated: {}", message.getTaskRun());
-                        workerJobRunningRepository.deleteByKey(message.getTaskRun().getId());
+                        log.trace("TaskRun terminated: {}", taskRun);
+                        workerJobRunningRepository.deleteByKey(taskRun.getId());
                     }
 
                     // join worker result

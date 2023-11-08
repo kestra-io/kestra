@@ -3,10 +3,11 @@
         <template #additional-right>
             <namespace-select
                 class="fit-content"
-                data-type="namespaces/file"
+                data-type="editor"
                 :value="namespace"
                 @update:model-value="namespaceUpdate"
                 allow-create
+                :is-filter="false"
             />
             <trigger-flow
                 :disabled="!flow"

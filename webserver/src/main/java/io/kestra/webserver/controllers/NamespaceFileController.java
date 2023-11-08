@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.ImmutableFileAttributes;
 import io.kestra.core.storages.StorageInterface;
@@ -37,8 +36,6 @@ public class NamespaceFileController {
     private StorageInterface storageInterface;
     @Inject
     private TenantService tenantService;
-    @Inject
-    private FlowRepositoryInterface flowRepository;
 
     private final List<StaticFile> staticFiles;
 
@@ -165,15 +162,9 @@ public class NamespaceFileController {
     @Get(uri = "files/distinct-namespaces", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Files"}, summary = "List existing namespace folders")
     public List<String> distinctNamespaces() throws IOException, URISyntaxException {
-        List<String> storageNamespaces =  distinctNamespacesFiles();
-        List<String> flowNamespaces = flowRepository.findDistinctNamespace(tenantService.resolveTenant());
-
-        return Stream.concat(storageNamespaces.stream(), flowNamespaces.stream()).distinct().toList();
-    }
-
-    protected List<String> distinctNamespacesFiles() throws IOException, URISyntaxException {
-        return storageInterface.list(tenantService.resolveTenant(), new URI(""))
+        return storageInterface.list(tenantService.resolveTenant(), null)
             .stream()
+            .distinct()
             .filter(fileAttributes -> fileAttributes.getType().equals(FileAttributes.FileType.Directory))
             .map(FileAttributes::getFileName).toList();
     }

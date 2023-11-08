@@ -305,7 +305,7 @@
                         }),
                     },
                     {
-                        target: ".edit-flow-trigger-button",
+                        target: ".trigger-flow-guided-step",
                         header: {
                             title: this.$t("onboarding-content.step12.title"),
                         },

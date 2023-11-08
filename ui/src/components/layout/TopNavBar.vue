@@ -16,7 +16,7 @@
         </div>
         <div class="d-flex side gap-2 flex-shrink-0">
             <div class="d-none d-lg-flex align-items-center">
-                <global-search />
+                <global-search class="trigger-flow-guided-step" />
             </div>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons">

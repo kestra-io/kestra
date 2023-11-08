@@ -152,8 +152,19 @@ public class Worker implements Runnable, AutoCloseable {
             RunContext runContext = workerTask.getRunContext().forWorkerDirectory(applicationContext, workerTask);
 
             try {
-                workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
+                // preExecuteTasks
+                try {
+                    workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
+                } catch (Exception e) {
+                    runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+                    workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.FAILED));
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                    this.logTerminated(workerTask);
 
+                    return;
+                }
+
+                // execute all tasks
                 for (Task currentTask : workingDirectory.getTasks()) {
                     if (Boolean.TRUE.equals(currentTask.getDisabled())) {
                         continue;

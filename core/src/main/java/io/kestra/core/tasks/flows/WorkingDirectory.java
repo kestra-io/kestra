@@ -8,8 +8,11 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.NamespaceFiles;
+import io.kestra.core.models.tasks.NamespaceFilesInterface;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.utils.IdUtils;
@@ -186,7 +189,7 @@ import javax.validation.constraints.NotNull;
     }
 )
 @WorkingDirectoryTaskValidation
-public class WorkingDirectory extends Sequential {
+public class WorkingDirectory extends Sequential implements NamespaceFilesInterface {
 
     @Schema(
         title = "Cache configuration",
@@ -197,6 +200,8 @@ public class WorkingDirectory extends Sequential {
     )
     @PluginProperty
     private Cache cache;
+
+    private NamespaceFiles namespaceFiles;
 
     @Getter(AccessLevel.PRIVATE)
     private transient long cacheDownloadedTime = 0L;
@@ -230,12 +235,8 @@ public class WorkingDirectory extends Sequential {
             .build();
     }
 
-    public void preExecuteTasks(RunContext runContext, TaskRun taskRun) {
-        if (cache == null) {
-            return;
-        }
-
-        try {
+    public void preExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
+        if (cache != null) {
             // first, check if we need to delete the file
             if (cache.ttl != null) {
                 var maybeLastModifiedTime = runContext.getTaskCacheFileLastModifiedTime(taskRun.getNamespace(), taskRun.getFlowId(), this.getId(), taskRun.getValue());
@@ -271,8 +272,11 @@ public class WorkingDirectory extends Sequential {
                 // Set the cacheDownloadedTime so that we can check if files has been updated later
                 cacheDownloadedTime = System.currentTimeMillis();
             }
-        } catch (IOException e) {
-            runContext.logger().error("Unable to execute WorkingDirectory pre actions", e);
+        }
+
+        if (this.namespaceFiles != null ) {
+            NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
+            namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.tempDir(), this.namespaceFiles);
         }
     }
 

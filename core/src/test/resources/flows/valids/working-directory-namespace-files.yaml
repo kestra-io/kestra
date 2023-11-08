@@ -1,0 +1,26 @@
+id: working-directory-namespace-files
+namespace: io.kestra.tests
+
+tasks:
+  - id: allow
+    type: io.kestra.core.tasks.flows.AllowFailure
+    tasks:
+      - id: worker
+        type: io.kestra.core.tasks.flows.WorkingDirectory
+        namespaceFiles:
+          enabled: true
+          exclude:
+            - /ignore/**
+        tasks:
+          - id: t1
+            type: io.kestra.core.tasks.test.Read
+            path: "/test/a/b/c/1.txt"
+          - id: t2
+            type: io.kestra.core.tasks.test.Read
+            path: "/a/b/c/2.txt"
+          - id: t3
+            type: io.kestra.core.tasks.test.Read
+            path: "/a/b/3.txt"
+          - id: t4
+            type: io.kestra.core.tasks.test.Read
+            path: "/ignore/4.txt"

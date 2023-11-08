@@ -105,6 +105,16 @@ export default {
                         ...(options || {})
                     })
                 },
+                settingsSaved: function() {
+                    ElNotification.closeAll();
+                    ElNotification({
+                        title: self.$t("saved"),
+                        message: this._wrap(self.$t("Settings have been saved")), // 显示 "Settings have been saved" 的通知
+                        position: 'top-right',
+                        offset: 65,
+                        type: "success",
+                    });
+                }
             }
         }
     }

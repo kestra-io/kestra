@@ -105,16 +105,6 @@ export default {
                         ...(options || {})
                     })
                 },
-                settingsSaved: function() {
-                    ElNotification.closeAll();
-                    ElNotification({
-                        title: self.$t("saved"),
-                        message: this._wrap(self.$t("Settings have been saved")),
-                        position: 'top-right',
-                        offset: 65,
-                        type: "success",
-                    });
-                }
             }
         }
     }

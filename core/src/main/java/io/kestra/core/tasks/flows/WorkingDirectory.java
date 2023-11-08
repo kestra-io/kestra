@@ -201,7 +201,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @PluginProperty
     private Cache cache;
 
-    private Object namespaceFiles;
+    private NamespaceFiles namespaceFiles;
 
     @Getter(AccessLevel.PRIVATE)
     private transient long cacheDownloadedTime = 0L;

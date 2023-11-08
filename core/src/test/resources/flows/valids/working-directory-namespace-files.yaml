@@ -8,6 +8,7 @@ tasks:
       - id: worker
         type: io.kestra.core.tasks.flows.WorkingDirectory
         namespaceFiles:
+          enabled: true
           exclude:
             - /ignore/**
         tasks:

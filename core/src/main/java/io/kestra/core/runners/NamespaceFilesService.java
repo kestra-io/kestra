@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.tasks.NamespaceFiles;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.annotation.Nullable;
@@ -17,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,36 +29,30 @@ public class NamespaceFilesService {
     @Inject
     private StorageInterface storageInterface;
 
-    public List<URI> inject(RunContext runContext, String tenantId, String namespace, Path basePath, Object namespaceFiles) throws Exception {
-        if (namespaceFiles instanceof Boolean && !((Boolean) namespaceFiles)) {
-            return null;
+    public List<URI> inject(RunContext runContext, String tenantId, String namespace, Path basePath, NamespaceFiles namespaceFiles) throws Exception {
+        if (!namespaceFiles.getEnabled()) {
+            return Collections.emptyList();
         }
 
         List<URI> list = new ArrayList<>();
         list.addAll(recursiveList(tenantId, namespace, null));
 
-        if (namespaceFiles instanceof Boolean && ((Boolean) namespaceFiles)) {
-            copy(tenantId, namespace, basePath, list);
-            return list;
-        }
-
-        NamespaceFiles filter = JacksonMapper.cast(namespaceFiles, NamespaceFiles.class);
 
         list = list
             .stream()
             .filter(throwPredicate(f -> {
                 var file = f.getPath();
 
-                if (filter.getExclude() != null) {
-                    boolean b = match(runContext.render(filter.getExclude()), file);
+                if (namespaceFiles.getExclude() != null) {
+                    boolean b = match(runContext.render(namespaceFiles.getExclude()), file);
 
                     if (b) {
                         return false;
                     }
                 }
 
-                if (filter.getInclude() != null) {
-                    boolean b = match(filter.getInclude(), file);
+                if (namespaceFiles.getInclude() != null) {
+                    boolean b = match(namespaceFiles.getInclude(), file);
 
                     if (!b) {
                         return false;
@@ -112,12 +106,12 @@ public class NamespaceFilesService {
 
     private void copy(String tenantId, String namespace, Path basePath, List<URI> files) throws IOException {
         files
-            .parallelStream()
             .forEach(throwConsumer(f -> {
                 InputStream inputStream = storageInterface.get(tenantId, uri(namespace, f));
                 Path destination = Paths.get(basePath.toString(), f.getPath());
 
                 if (!destination.getParent().toFile().exists()) {
+                    //noinspection ResultOfMethodCallIgnored
                     destination.getParent().toFile().mkdirs();
                 }
 

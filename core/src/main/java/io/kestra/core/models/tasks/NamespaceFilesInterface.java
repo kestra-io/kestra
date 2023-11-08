@@ -6,9 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public interface NamespaceFilesInterface {
     @Schema(
         title = "Inject namespace files",
-        description = "Inject namespace file on this task. If true, inject all namespaces files or use filter to limit injected files.",
-        anyOf = {Boolean.class, NamespaceFiles.class}
+        description = "Inject namespace file on this task. Inject all namespaces files when enabled or use filter to limit injected files."
     )
     @PluginProperty
-    Object getNamespaceFiles();
+    NamespaceFiles getNamespaceFiles();
 }

@@ -41,7 +41,16 @@ class NamespaceFilesServiceTest {
         put(null, namespace, "/a/1.sql", "2");
         put(null, namespace, "/b/c/d/1.sql", "3");
 
-        List<URI> injected = namespaceFilesService.inject(runContextFactory.of(),null, namespace, basePath, true);
+        List<URI> injected = namespaceFilesService.inject(
+            runContextFactory.of(),
+            null,
+            namespace,
+            basePath,
+            NamespaceFiles
+                .builder()
+                .enabled(true)
+                .build()
+        );
 
         assertThat(injected.size(), is(3));
 
@@ -84,14 +93,32 @@ class NamespaceFilesServiceTest {
         put("tenant2", namespace, "/a/b/c/1.sql", "2");
 
         RunContext runContext = runContextFactory.of();
-        List<URI> injected = namespaceFilesService.inject(runContextFactory.of(),"tenant1", namespace, runContext.tempDir(), true);
+        List<URI> injected = namespaceFilesService.inject(
+            runContextFactory.of(),
+            "tenant1",
+            namespace,
+            runContext.tempDir(),
+            NamespaceFiles
+                .builder()
+                .enabled(true)
+                .build()
+        );
         assertThat(injected.size(), is(1));
 
         String content = Files.walk(runContext.tempDir()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
         assertThat(content, is("1"));
 
         runContext = runContextFactory.of();
-        injected = namespaceFilesService.inject(runContextFactory.of(),"tenant2", namespace, runContext.tempDir(), true);
+        injected = namespaceFilesService.inject(
+            runContextFactory.of(),
+            "tenant2",
+            namespace,
+            runContext.tempDir(),
+            NamespaceFiles
+                .builder()
+                .enabled(true)
+                .build()
+        );
         assertThat(injected.size(), is(1));
 
         content = Files.walk(runContext.tempDir()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();

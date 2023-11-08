@@ -742,6 +742,17 @@ public abstract class StorageTestSuite {
         assertThat(attr.getType(), is(FileAttributes.FileType.Directory));
         assertThat(attr.getLastModifiedTime(), notNullValue());
     }
+
+    @Test
+    void createDirectoryShouldBeRecursive() throws IOException {
+        String prefix = IdUtils.create();
+        storageInterface.createDirectory(null, URI.create("/" + prefix + "/first/second/third"));
+
+        List<FileAttributes> list = storageInterface.list(null, URI.create("/" + prefix));
+        assertThat(list, contains(
+            hasProperty("fileName", is("first"))
+        ));
+    }
     //endregion
 
     //region test MOVE

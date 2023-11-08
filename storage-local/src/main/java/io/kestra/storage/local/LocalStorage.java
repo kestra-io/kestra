@@ -32,14 +32,19 @@ public class LocalStorage implements StorageInterface {
     }
 
     private Path getPath(String tenantId, URI uri) {
+        Path basePath = tenantId == null ? config.getBasePath().toAbsolutePath()
+            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId);
+        if(uri == null) {
+            return basePath;
+        }
+
         parentTraversalGuard(uri);
-        return tenantId == null ? Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.getPath())
-            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId, uri.getPath());
+        return Paths.get(basePath.toString(), uri.getPath());
     }
 
     @Override
     public InputStream get(String tenantId, URI uri) throws IOException {
-        return new BufferedInputStream(new FileInputStream(getPath(tenantId, URI.create(uri.getPath()))
+        return new BufferedInputStream(new FileInputStream(getPath(tenantId, uri)
             .toAbsolutePath()
             .toString())
         );
@@ -52,11 +57,11 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public List<FileAttributes> list(String tenantId, URI uri) throws IOException {
-        try (Stream<Path> stream = Files.list(getPath(tenantId, URI.create(uri.getPath())))) {
+        try (Stream<Path> stream = Files.list(getPath(tenantId, uri))) {
             return stream
                 .map(throwFunction(file -> {
                     URI relative = URI.create(
-                        getPath(tenantId, URI.create("")).relativize(
+                        getPath(tenantId, null).relativize(
                             Path.of(file.toUri())
                         ).toString()
                     );
@@ -71,7 +76,7 @@ public class LocalStorage implements StorageInterface {
     @Override
     public Long size(String tenantId, URI uri) throws IOException {
         try {
-            return Files.size(getPath(tenantId, URI.create(uri.getPath())));
+            return Files.size(getPath(tenantId, uri));
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException("Unable to find file at '" + uri + "'");
         } catch (IOException e) {
@@ -148,7 +153,7 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public boolean delete(String tenantId, URI uri) throws IOException {
-        Path path = getPath(tenantId, URI.create(uri.getPath()));
+        Path path = getPath(tenantId, uri);
         File file = path.toFile();
 
         if (file.isDirectory()) {

@@ -106,7 +106,7 @@ export default {
                     ElNotification.closeAll();
                     ElNotification({
                         title: self.$t("saved"),
-                        message: this._wrap(self.$t("Settings have been saved")), // 显示 "Settings have been saved" 的通知
+                        message: this._wrap(self.$t("Settings have been saved")),
                         position: 'top-right',
                         offset: 65,
                         type: "success",

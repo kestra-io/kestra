@@ -223,7 +223,7 @@
                 } else {
                     localStorage.removeItem("defaultNamespace")
                 }
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onLevelChange(value) {
                 this.defaultLogLevel = value;
@@ -233,39 +233,39 @@
                 } else {
                     localStorage.removeItem("defaultLogLevel")
                 }
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onLang(value) {
                 localStorage.setItem("lang", value);
                 this.$moment.locale(value);
                 this.$i18n.locale = value;
                 this.lang = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onTheme(value) {
                 Utils.switchTheme(value)
                 this.theme = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onDateFormat(value) {
                 localStorage.setItem(DATE_FORMAT_STORAGE_KEY, value);
                 this.dateFormat = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onTimezone(value) {
                 localStorage.setItem(TIMEZONE_STORAGE_KEY, value);
                 this.timezone = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onEditorTheme(value) {
                 localStorage.setItem("editorTheme", value);
                 this.editorTheme = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onAutofoldTextEditor(value) {
                 localStorage.setItem("autofoldTextEditor", value);
                 this.autofoldTextEditor = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             exportFlows() {
                 return this.$store
@@ -284,38 +284,38 @@
             onLogDisplayChange(value) {
                 localStorage.setItem("logDisplay", value);
                 this.logDisplay = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onFontSize(value) {
                 localStorage.setItem("editorFontSize", value);
                 this.editorFontSize = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onFontFamily(value) {
                 localStorage.setItem("editorFontFamily", value);
                 this.editorFontFamily = value;
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onEnvNameChange(value) {
                 if (value !== this.configs?.environment?.name) {
                     this.$store.commit("layout/setEnvName", value);
                 }
 
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onEnvColorChange(value) {
                 if (value !== this.configs?.environment?.color) {
                     this.$store.commit("layout/setEnvColor", value);
                 }
 
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             },
             onExecuteFlowBehaviourChange(value) {
                 this.executeFlowBehaviour = value;
 
                 localStorage.setItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value);
 
-                this.$toast().saved();
+                this.$toast().settingsSaved();
             }
         },
         computed: {

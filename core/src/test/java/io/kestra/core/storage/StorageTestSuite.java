@@ -214,8 +214,10 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
-        List<FileAttributes> list = storageInterface.list(tenantId, new URI("/" + prefix + "/storage"));
+        List<FileAttributes> list = storageInterface.list(tenantId, null);
+        assertThat(list.stream().map(FileAttributes::getFileName).toList(), hasItem(prefix));
 
+        list = storageInterface.list(tenantId, new URI("/" + prefix + "/storage"));
         assertThat(list.stream().map(FileAttributes::getFileName).toList(), containsInAnyOrder("root.yml", "level1", "another"));
     }
     //endregion

@@ -41,8 +41,8 @@ export default {
                 },
                 saved: function(name, title, options) {
                     ElNotification.closeAll();
-                    const message = options && options?.genericQualifier
-                        ? self.$t("generic saved done")
+                    const message = options?.multiple
+                        ? self.$t("multiple saved done", {name})
                         : self.$t("saved done", { name: name });
                     ElNotification({
                         ...{

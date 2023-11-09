@@ -25,7 +25,7 @@
     "save": "Save",
     "saved": "Successfully saved",
     "saved done": "<em>{name}</em> is successfully saved",
-    "generic saved done": "Settings have been saved",
+    "multiple saved done": "{name} have been saved",
     "delete": "Delete",
     "deleted": "Successfully deleted",
     "deleted confirm": "<em>{name}</em> is successfully deleted!",

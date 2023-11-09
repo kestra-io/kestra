@@ -256,6 +256,7 @@ public class ExecutionService {
                 null,
                 endDate,
                 state,
+                null,
                 null
             )
             .map(execution -> {

@@ -46,7 +46,8 @@ public class TaskRunController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
     ) {
         return PagedResults.of(executionRepository.findTaskRun(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
@@ -57,7 +58,8 @@ public class TaskRunController {
             startDate,
             endDate,
             state,
-            RequestUtils.toMap(labels)
+            RequestUtils.toMap(labels),
+            parentId
         ));
     }
 

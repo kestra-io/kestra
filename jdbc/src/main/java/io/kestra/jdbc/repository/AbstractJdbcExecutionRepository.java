@@ -112,7 +112,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
-        @Nullable Map<String, String> labels
+        @Nullable Map<String, String> labels,
+        @Nullable String parentId
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -128,7 +129,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     startDate,
                     endDate,
                     state,
-                    labels
+                    labels,
+                    parentId
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -144,7 +146,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
-        @Nullable Map<String, String> labels
+        @Nullable Map<String, String> labels,
+        @Nullable String parentId
     ) {
         return Flowable.create(
             emitter -> this.jdbcRepository
@@ -161,7 +164,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         startDate,
                         endDate,
                         state,
-                        labels
+                        labels,
+                        parentId
                     );
 
                     select.fetch()
@@ -183,7 +187,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
-        @Nullable Map<String, String> labels
+        @Nullable Map<String, String> labels,
+        @Nullable String parentId
     ) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -193,7 +198,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
 
-        select = filteringQuery(select, namespace, flowId, null, query, labels);
+        select = filteringQuery(select, namespace, flowId, null, query, labels, parentId);
 
         if (startDate != null) {
             select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -238,7 +243,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states,
-        @Nullable Map<String, String> labels
+        @Nullable Map<String, String> labels,
+        @Nullable String parentId
     ) {
         throw new UnsupportedOperationException();
     }
@@ -351,7 +357,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                select = filteringQuery(select, namespace, flowId, flows, query, null);
+                select = filteringQuery(select, namespace, flowId, flows, query, null, null);
 
                 List<Field<?>> groupFields = new ArrayList<>(fields);
 
@@ -370,7 +376,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
         @Nullable String query,
-        @Nullable Map<String, String> labels) {
+        @Nullable Map<String, String> labels,
+        @Nullable String parentId
+    ) {
         if (flowId != null && namespace != null) {
             select = select.and(field("namespace").eq(namespace));
             select = select.and(field("flow_id").eq(flowId));
@@ -380,6 +388,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (query != null || labels != null) {
             select = select.and(this.findCondition(query, labels));
+        }
+
+        if (parentId != null) {
+            select = select.and(field("parent_id").eq(parentId));
         }
 
         if (flows != null) {

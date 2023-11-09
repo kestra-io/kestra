@@ -146,7 +146,8 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
     ) {
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
@@ -157,7 +158,8 @@ public class ExecutionController {
             startDate,
             endDate,
             state,
-            RequestUtils.toMap(labels)
+            RequestUtils.toMap(labels),
+            parentId
         ));
     }
 
@@ -305,7 +307,8 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
     ) {
         Integer count = executionRepository
             .find(
@@ -316,7 +319,8 @@ public class ExecutionController {
                 startDate,
                 endDate,
                 state,
-                RequestUtils.toMap(labels)
+                RequestUtils.toMap(labels),
+                parentId
             )
             .map(e -> {
                 executionRepository.delete(e);
@@ -690,7 +694,8 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
     ) {
         Integer count = executionRepository
             .find(
@@ -701,7 +706,8 @@ public class ExecutionController {
                 startDate,
                 endDate,
                 state,
-                RequestUtils.toMap(labels)
+                RequestUtils.toMap(labels),
+                parentId
             )
             .map(e -> {
                 Execution restart = executionService.restart(e, null);
@@ -911,7 +917,8 @@ public class ExecutionController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
     ) {
         var ids = executionRepository
             .find(
@@ -922,7 +929,8 @@ public class ExecutionController {
                 startDate,
                 endDate,
                 state,
-                RequestUtils.toMap(labels)
+                RequestUtils.toMap(labels),
+                parentId
             )
             .map(execution -> execution.getId())
             .toList()

@@ -26,6 +26,7 @@
     import {mapGetters, mapState} from "vuex";
     import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants";
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
+    import STATE from "../../utils/state";
     export default {
         components: {
             LowCodeEditor
@@ -189,10 +190,17 @@
                     return;
                 }
 
-                const executionId = parentExecution.taskRunList
-                    .filter(taskRun => taskRun.taskId === Utils.afterLastDot(subflow) && taskRun.outputs?.executionId)?.[0]?.outputs?.executionId;
+                const taskIdMatchingTaskrun = parentExecution.taskRunList
+                    .filter(taskRun => taskRun.taskId === Utils.afterLastDot(subflow))?.[0];
+                const executionId = taskIdMatchingTaskrun?.outputs?.executionId;
 
                 if(!executionId) {
+                    if(taskIdMatchingTaskrun?.state?.current === STATE.SUCCESS) {
+                        // Generating more than 1 subflow execution, we're not showing anything
+                        this.loadGraph(true);
+                        return;
+                    }
+
                     this.delaySSE(generateGraphOnWaiting, subflow);
                     return;
                 }

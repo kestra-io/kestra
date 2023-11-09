@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 @CommandLine.Command(
     name = "update",
@@ -52,7 +51,7 @@ public class NamespaceFilesUpdateCommand extends AbstractServiceNamespaceUpdateC
                 client.toBlocking().exchange(
                     this.requestOptions(
                         HttpRequest.POST(
-                            "/api/v1/namespaces/" + namespace + "/files?path=/" + dest,
+                            apiUri("/namespaces/") + namespace + "/files?path=/" + dest,
                             body
                         ).contentType(MediaType.MULTIPART_FORM_DATA)
                     )

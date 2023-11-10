@@ -15,6 +15,7 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,8 +52,7 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        List<Label> labels,
-        Integer iteration
+        List<Label> labels
     ) throws IllegalVariableEvaluationException {
         String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
         String subflowId = runContext.render(currentTask.subflowId().flowId());
@@ -101,26 +101,24 @@ public final class ExecutableUtils {
             .task(currentTask)
             .taskRun(currentTaskRun.withState(State.Type.RUNNING))
             .execution(execution)
-            .iteration(iteration)
             .build();
     }
 
     public static TaskRun manageIterations(TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure) throws InternalException {
-        if (taskRun.getOutputs() != null && taskRun.getOutputs().containsKey("iterations")) {
-            Map<String, Integer> taskRunIteration = (Map<String, Integer>) taskRun.getOutputs().get("iterations");
-            int maxIterations = taskRunIteration.get("max");
+        if (taskRun.getOutputs() != null && taskRun.getOutputs().containsKey("numberOfBatches")) {
+            Integer numberOfBatches = (Integer) taskRun.getOutputs().get("numberOfBatches");
 
             var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());
             if (previousTaskRun != null) {
-                // search for the previous iteration, if not found, we init it with the current iteration
-                Map<String, Integer> iterations = previousTaskRun.getOutputs() != null ? (Map<String, Integer>) previousTaskRun.getOutputs().get("iterations") : taskRunIteration;
+                // search for the previous iterations, if not found, we init it with an empty map
+                Map<String, Integer> iterations = previousTaskRun.getOutputs() != null ? (Map<String, Integer>) previousTaskRun.getOutputs().get("iterations") : new HashMap<>();
                 State.Type currentState = taskRun.getState().getCurrent();
                 Optional<State.Type> previousState = taskRun.getState().getHistories().size() > 1 ? Optional.of(taskRun.getState().getHistories().get(taskRun.getState().getHistories().size() - 2).getState()) : Optional.empty();
 
                 int currentStateIteration = iterations.getOrDefault(currentState.toString(),  0);
                 iterations.put(currentState.toString(), currentStateIteration + 1);
                 if (previousState.isPresent() && previousState.get() != currentState) {
-                    int previousStateIterations = iterations.getOrDefault(previousState.get() .toString(),  maxIterations);
+                    int previousStateIterations = iterations.getOrDefault(previousState.get() .toString(),  numberOfBatches);
                     iterations.put(previousState.get().toString(), previousStateIterations - 1);
                 }
 
@@ -130,17 +128,17 @@ public final class ExecutableUtils {
                     iterations.getOrDefault(State.Type.KILLED.toString(), 0) +
                     iterations.getOrDefault(State.Type.WARNING.toString(), 0) +
                     iterations.getOrDefault(State.Type.CANCELLED.toString(), 0);
-                if (terminatedIterations != maxIterations && taskRun.getState().isTerminated()) {
+                if (terminatedIterations != numberOfBatches && taskRun.getState().isTerminated()) {
                     // there will be n terminated task runs, but we should only set it to terminated for the last one
                     // the final state should be computed based on the iterations
-                    return previousTaskRun.withOutputs(Map.of("iterations", iterations));
-                } else if (terminatedIterations == maxIterations && taskRun.getState().isTerminated()) {
-                    var state = transmitFailed ? findTerminalState(iterations, allowFailure) : State.Type.SUCCESS;
-                    return previousTaskRun.withOutputs(Map.of("iterations", iterations))
+                    return previousTaskRun.withOutputs(Map.of("iterations", iterations, "numberOfBatches", numberOfBatches));
+                } else if (terminatedIterations == numberOfBatches && taskRun.getState().isTerminated()) {
+                    var state = transmitFailed ? findTerminalState(iterations) : State.Type.SUCCESS;
+                    return previousTaskRun.withOutputs(Map.of("iterations", iterations, "numberOfBatches", numberOfBatches))
                         .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                         .withState(state);
                 }
-                return taskRun.withOutputs(Map.of("iterations", iterations));
+                return taskRun.withOutputs(Map.of("iterations", iterations, "numberOfBatches", numberOfBatches));
             }
         }
 
@@ -160,8 +158,8 @@ public final class ExecutableUtils {
         return State.Type.SUCCESS;
     }
 
-    private static int getIterationCounter(Map<String, Integer> iterations, State.Type state, int maxIterations) {
+    private static int getIterationCounter(Map<String, Integer> iterations, State.Type state, int numberOfBatches) {
         // if the state is created and there is no existing counter, it means it's the first time we iterate so we init created to the number of iterations
-        return iterations.getOrDefault(state.toString(), state == State.Type.CREATED ? maxIterations : 0);
+        return iterations.getOrDefault(state.toString(), state == State.Type.CREATED ? numberOfBatches : 0);
     }
 }

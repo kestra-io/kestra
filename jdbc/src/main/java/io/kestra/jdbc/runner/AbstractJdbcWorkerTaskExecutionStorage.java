@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class AbstractJdbcWorkerTaskExecutionStorage extends AbstractJdbcRepository {
-    protected io.kestra.jdbc.AbstractJdbcRepository<WorkerTaskExecution> jdbcRepository;
+    protected io.kestra.jdbc.AbstractJdbcRepository<WorkerTaskExecution<?>> jdbcRepository;
 
-    public AbstractJdbcWorkerTaskExecutionStorage(io.kestra.jdbc.AbstractJdbcRepository<WorkerTaskExecution> jdbcRepository) {
+    public AbstractJdbcWorkerTaskExecutionStorage(io.kestra.jdbc.AbstractJdbcRepository jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 
-    public Optional<WorkerTaskExecution> get(String executionId) {
+    public Optional<WorkerTaskExecution<?>> get(String executionId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -35,12 +35,13 @@ public abstract class AbstractJdbcWorkerTaskExecutionStorage extends AbstractJdb
             });
     }
 
-    public void save(List<WorkerTaskExecution> workerTaskExecutions) {
+    public void save(List<WorkerTaskExecution<?>> workerTaskExecutions) {
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
+                // TODO batch insert
                 workerTaskExecutions.forEach(workerTaskExecution -> {
                     Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(workerTaskExecution);
                     this.jdbcRepository.persist(workerTaskExecution, context, fields);
@@ -48,7 +49,7 @@ public abstract class AbstractJdbcWorkerTaskExecutionStorage extends AbstractJdb
             });
     }
 
-    public void delete(WorkerTaskExecution workerTaskExecution) {
+    public void delete(WorkerTaskExecution<?> workerTaskExecution) {
         this.jdbcRepository.delete(workerTaskExecution);
     }
 }

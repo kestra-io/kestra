@@ -27,7 +27,7 @@ public class Executor {
     private final List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
     private final List<ExecutionDelay> executionDelays = new ArrayList<>();
     private WorkerTaskResult joined;
-    private final List<WorkerTaskExecution> workerTaskExecutions = new ArrayList<>();
+    private final List<WorkerTaskExecution<?>> workerTaskExecutions = new ArrayList<>();
     private ExecutionsRunning executionsRunning;
     private ExecutionQueued executionQueued;
 

@@ -43,7 +43,7 @@ import java.util.*;
         )
     }
 )
-public class Flow extends Task implements ExecutableTask {
+public class Flow extends Task implements ExecutableTask<Flow.Output> {
     @NotNull
     @Schema(
         title = "The namespace of the subflow to be executed"
@@ -137,7 +137,8 @@ public class Flow extends Task implements ExecutableTask {
             this,
             currentTaskRun,
             inputs,
-            labels
+            labels,
+            null
         ));
     }
 

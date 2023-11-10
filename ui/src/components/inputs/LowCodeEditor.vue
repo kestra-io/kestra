@@ -7,7 +7,7 @@
     import TaskEdit from "../flows/TaskEdit.vue";
     import SearchField from "../layout/SearchField.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
-    import LogList from "../logs/LogList.vue";
+    import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Collapse from "../layout/Collapse.vue";
 
     // Topology
@@ -366,7 +366,7 @@
                         <log-level-selector :value="logLevel" @update:model-value="onLevelChange"/>
                     </el-form-item>
                 </collapse>
-                <log-list
+                <task-run-details
                     v-for="taskRun in selectedTask.taskRuns"
                     :key="taskRun.id"
                     :target-execution-id="selectedTask.execution?.id"

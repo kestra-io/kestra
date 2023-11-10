@@ -43,7 +43,7 @@ public final class ExecutableUtils {
             .build();
     }
 
-    public static <T extends Task & ExecutableTask> WorkerTaskExecution<?> workerTaskExecution(
+    public static <T extends Task & ExecutableTask<?>> WorkerTaskExecution<?> workerTaskExecution(
         RunContext runContext,
         FlowExecutorInterface flowExecutorInterface,
         Execution currentExecution,
@@ -51,7 +51,8 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        List<Label> labels
+        List<Label> labels,
+        Integer iteration
     ) throws IllegalVariableEvaluationException {
         String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
         String subflowId = runContext.render(currentTask.subflowId().flowId());
@@ -100,6 +101,7 @@ public final class ExecutableUtils {
             .task(currentTask)
             .taskRun(currentTaskRun)
             .execution(execution)
+            .iteration(iteration)
             .build();
     }
 
@@ -117,7 +119,7 @@ public final class ExecutableUtils {
 
                 int currentStateIteration = getIterationCounter(iterations, currentState, maxIterations) + 1;
                 iterations.put(currentState.toString(), currentStateIteration);
-                if(previousState.isPresent() && previousState.get() != currentState) {
+                if (previousState.isPresent() && previousState.get() != currentState) {
                     int previousStateIterations = getIterationCounter(iterations, previousState.get(), maxIterations) - 1;
                     iterations.put(previousState.get().toString(), previousStateIterations);
                 }

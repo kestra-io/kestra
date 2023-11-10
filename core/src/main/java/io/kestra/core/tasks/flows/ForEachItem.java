@@ -8,7 +8,6 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
@@ -70,7 +69,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
-public class ForEachItem extends Task implements ExecutableTask {
+public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Output> {
     @NotEmpty
     @PluginProperty(dynamic = true)
     @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI, e.g. output from a previous task in the format `{{ outputs.task_id.uri }}` or an input parameter of FILE type e.g. `{{ inputs.myfile }}`.")
@@ -171,6 +170,7 @@ public class ForEachItem extends Task implements ExecutableTask {
                         }
 
                         int iteration = currentIteration.getAndIncrement();
+                        var outputs = Output.builder().iterations(Map.of("max", splits.size())).build();
                         return ExecutableUtils.workerTaskExecution(
                             runContext,
                             flowExecutorInterface,
@@ -178,13 +178,11 @@ public class ForEachItem extends Task implements ExecutableTask {
                             currentFlow,
                             this,
                             currentTaskRun
-                                .withValue(String.valueOf(iteration))
-                                .withOutputs(Map.of(
-                                    "iterations", Map.of("max", splits.size())
-                                ))
+                                .withOutputs(outputs.toMap())
                                 .withItems(split.toString()),
                             inputs,
-                            labels
+                            labels,
+                            iteration
                         );
                     }
                 ))
@@ -230,5 +228,15 @@ public class ForEachItem extends Task implements ExecutableTask {
 
         @Builder.Default
         private String separator = "\n";
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(
+            title = "The iterations counter.",
+            description = "This output will be updated in real-time with the subflow executions.\n It will contains one counter by subflow execution state, plus a `max` counter that represent the maximum number of iterations (or the number of batches)."
+        )
+        private final Map<String, Integer> iterations;
     }
 }

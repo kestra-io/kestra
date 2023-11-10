@@ -5,133 +5,25 @@
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
             >
                 <el-card class="attempt-wrapper">
-                    <div class="attempt-header">
-                        <div class="task-icon d-none d-md-inline-block me-1">
-                            <task-icon
-                                :cls="taskIcon(currentTaskRun)"
-                                v-if="taskIcon(currentTaskRun)"
-                                only-icon
-                                :icons="icons"
-                            />
-                        </div>
-                        <div class="task-id flex-grow-1"
-                             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
-                        >
-                            <el-tooltip :persistent="false" transition="" :hide-after="0">
-                                <template #content>
-                                    {{ $t("from") }} :
-                                    {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}
-                                    <br>
-                                    {{ $t("to") }} :
-                                    {{ $filters.date(selectedAttempt(currentTaskRun).state.endDate) }}
-                                    <br>
-                                    <clock />
-                                    <strong>{{ $t("duration") }}:</strong>
-                                    {{ $filters.humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
-                                </template>
-                                <span>
-                                    <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
-                                    <small v-if="currentTaskRun.value">
-                                        {{ currentTaskRun.value }}
-                                    </small>
-                                </span>
-                            </el-tooltip>
-                        </div>
-
-                        <div class="task-duration d-none d-md-inline-block">
-                            <small class="me-1">
-                                <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
-                            </small>
-                        </div>
-
-                        <div class="task-status">
-                            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
-                        </div>
-
-                        <el-select
-                            class="d-none d-md-inline-block"
-                            v-model="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                            @change="swapDisplayedAttempt(currentTaskRun.id, $event)"
-                            :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
-                        >
-                            <el-option v-for="(_, index) in attempts(currentTaskRun)"
-                                       :key="`attempt-${index}-${currentTaskRun.id}`"
-                                       :value="index"
-                                       :label="`${$t('attempt')} ${index + 1}`"
-                            />
-                        </el-select>
-
-                        <el-dropdown trigger="click">
-                            <el-button type="default" class="more-dropdown-button">
-                                <DotsHorizontal title="" />
-                            </el-button>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <sub-flow-link
-                                        v-if="isSubflow(currentTaskRun)"
-                                        component="el-dropdown-item"
-                                        tab-execution="logs"
-                                        :execution-id="currentTaskRun.outputs.executionId"
-                                    />
-
-                                    <metrics :task-run="currentTaskRun" :execution="followedExecution" />
-
-                                    <outputs
-                                        :outputs="currentTaskRun.outputs"
-                                        :execution="followedExecution"
-                                    />
-
-                                    <restart
-                                        component="el-dropdown-item"
-                                        :key="`restart-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${selectedAttempt(currentTaskRun).state.startDate}`"
-                                        is-replay
-                                        tooltip-position="left"
-                                        :execution="followedExecution"
-                                        :task-run="currentTaskRun"
-                                        :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                                        @follow="forwardEvent('follow', $event)"
-                                    />
-
-                                    <change-status
-                                        component="el-dropdown-item"
-                                        :key="`change-status-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${selectedAttempt(currentTaskRun).state.startDate}`"
-                                        :execution="followedExecution"
-                                        :task-run="currentTaskRun"
-                                        :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                                        @follow="forwardEvent('follow', $event)"
-                                    />
-                                    <task-edit
-                                        :read-only="true"
-                                        component="el-dropdown-item"
-                                        :task-id="currentTaskRun.taskId"
-                                        :section="SECTIONS.TASKS"
-                                        :flow-id="followedExecution.flowId"
-                                        :namespace="followedExecution.namespace"
-                                        :revision="followedExecution.flowRevision"
-                                        :flow-source="flow?.source"
-                                    />
-                                    <el-dropdown-item
-                                        :icon="Download"
-                                        @click="downloadContent(currentTaskRun.id)"
-                                    >
-                                        {{ $t("download logs") }}
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown>
-
-                        <el-button v-if="!taskRunId" class="border-0 expand-collapse" type="default" text
-                                   @click.stop="() => toggleShowAttempt(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-                        >
-                            <ChevronDown
-                                v-if="!shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-                            />
-                            <ChevronUp v-else />
-                        </el-button>
-
-                    </div>
+                    <task-run-line
+                        :current-task-run="currentTaskRun"
+                        :followed-execution="followedExecution"
+                        :flow="flow"
+                        :forced-attempt-number="forcedAttemptNumber"
+                        :task-run-id="taskRunId"
+                        @toggle-show-attempt="toggleShowAttempt"
+                        @swap-displayed-attempt="swapDisplayedAttempt"
+                        :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
+                        :shown-attempts-uid="shownAttemptsUid"
+                        :logs="logs"
+                    />
+                    <for-each-status
+                        v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
+                        :task-run-id="currentTaskRun.id"
+                        :subflows-status="currentTaskRun.outputs.iterations"
+                    />
                     <DynamicScroller
-                        v-if="shouldDisplayLogs(currentTaskRun.id)"
+                        v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
                         :min-item-size="50"
                         key-field="index"
@@ -152,14 +44,15 @@
                                     :exclude-metas="excludeMetas"
                                     v-if="filter === '' || item.message.toLowerCase().includes(filter)"
                                 />
-                                <log-list v-if="!taskRunId && isSubflow(currentTaskRun) && currentTaskRun.outputs?.executionId"
-                                          ref="subflows-logs"
-                                          :level="level"
-                                          :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                                          :filter="filter"
-                                          :allow-auto-expand-subflows="false"
-                                          :target-execution-id="currentTaskRun.outputs.executionId"
-                                          :class="$el.classList.contains('even') ? '' : 'even'"
+                                <task-run-details
+                                    v-if="!taskRunId && isSubflow(currentTaskRun) && currentTaskRun.outputs?.executionId"
+                                    ref="subflows-logs"
+                                    :level="level"
+                                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                    :filter="filter"
+                                    :allow-auto-expand-subflows="false"
+                                    :target-execution-id="currentTaskRun.outputs.executionId"
+                                    :class="$el.classList.contains('even') ? '' : 'even'"
                                 />
                             </DynamicScrollerItem>
                         </template>
@@ -172,49 +65,27 @@
 
 <script>
     import LogLine from "./LogLine.vue";
-    import Restart from "../executions/Restart.vue";
-    import ChangeStatus from "../executions/ChangeStatus.vue";
-    import Metrics from "../executions/Metrics.vue";
-    import Outputs from "../executions/Outputs.vue";
-    import Clock from "vue-material-design-icons/Clock.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import State from "../../utils/state";
-    import Status from "../Status.vue";
-    import SubFlowLink from "../flows/SubFlowLink.vue"
-    import TaskEdit from "../flows/TaskEdit.vue";
-    import Duration from "../layout/Duration.vue";
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import _xor from "lodash/xor";
     import _groupBy from "lodash/groupBy";
-    import FlowUtils from "../../utils/flowUtils.js";
     import moment from "moment";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import {logDisplayTypes, SECTIONS} from "../../utils/constants";
+    import {logDisplayTypes} from "../../utils/constants";
     import Download from "vue-material-design-icons/Download.vue";
-    import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {mapState} from "vuex";
+    import ForEachStatus from "../executions/ForEachStatus.vue";
+    import TaskRunLine from "../executions/TaskRunLine.vue";
+    import FlowUtils from "../../utils/flowUtils";
 
     export default {
-        name: 'LogList',
+        name: "TaskRunDetails",
         components: {
+            TaskRunLine,
+            ForEachStatus,
             LogLine,
-            Restart,
-            ChangeStatus,
-            Clock,
-            Metrics,
-            Outputs,
-            ChevronDown,
-            ChevronUp,
-            Status,
-            SubFlowLink,
-            TaskEdit,
-            Duration,
-            TaskIcon,
             DynamicScroller,
             DynamicScrollerItem,
-            DotsHorizontal
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch"],
         props: {
@@ -254,6 +125,14 @@
                 default: undefined
             },
             allowAutoExpandSubflows: {
+                type: Boolean,
+                default: true
+            },
+            showProgressBar: {
+                type: Boolean,
+                default: true
+            },
+            showLogs: {
                 type: Boolean,
                 default: true
             }
@@ -361,9 +240,6 @@
         },
         computed: {
             ...mapState("plugin", ["icons"]),
-            SECTIONS() {
-                return SECTIONS
-            },
             Download() {
                 return Download
             },
@@ -411,11 +287,11 @@
                 this.shownAttemptsUid.length === 0 ? this.expandAll() : this.collapseAll();
             },
             autoExpandBasedOnSettings() {
-                if(this.autoExpandTaskrunStates.length === 0) {
+                if (this.autoExpandTaskrunStates.length === 0) {
                     return;
                 }
 
-                if(this.followedExecution === undefined) {
+                if (this.followedExecution === undefined) {
                     setTimeout(() => this.autoExpandBasedOnSettings(), 50);
                     return;
                 }
@@ -429,19 +305,15 @@
                     }
                 });
             },
-            shouldDisplayLogs(taskRunId) {
-                return this.taskRunId || (this.shownAttemptsUid.includes(this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])) &&
-                    this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])])
+            shouldDisplayProgressBar(taskRun) {
+                return this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem"
             },
-            followExecution(executionId) {
-                this.$store
-                    .dispatch("execution/followExecution", {id: executionId})
-                    .then(sse => {
-                        this.executionSSE = sse;
-                        this.executionSSE.onmessage = async (event) => {
-                            this.followedExecution = JSON.parse(event.data);
-                        }
-                    });
+            shouldDisplayLogs(taskRun) {
+                return (this.taskRunId ||
+                    (this.shownAttemptsUid.includes(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])) &&
+                    this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
+                    this.showLogs &&
+                    this.taskType(taskRun) !== "io.kestra.core.tasks.flows.ForEachItem"
             },
             followLogs(executionId) {
                 this.$store
@@ -471,20 +343,11 @@
                         }
                     })
             },
-            swapDisplayedAttempt(taskRunId, newDisplayedAttemptUid) {
-                this.shownAttemptsUid = this.shownAttemptsUid.map(attemptUid => attemptUid.startsWith(`${taskRunId}-`)
-                    ? this.attemptUid(taskRunId, newDisplayedAttemptUid)
-                    : attemptUid
-                );
-            },
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
             },
-            selectedAttempt(taskRun) {
-                return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0];
-            },
             expandAll() {
-                if(!this.followedExecution) {
+                if (!this.followedExecution) {
                     setTimeout(() => this.expandAll(), 50);
                     return;
                 }
@@ -498,9 +361,9 @@
                 this.expandSubflows();
             },
             expandSubflows() {
-                if(this.currentTaskRuns.some(taskRun => this.isSubflow(taskRun))){
+                if (this.currentTaskRuns.some(taskRun => this.isSubflow(taskRun))) {
                     const subflowLogsElements = this.$refs["subflows-logs"];
-                    if(!subflowLogsElements || subflowLogsElements.length === 0) {
+                    if (!subflowLogsElements || subflowLogsElements.length === 0) {
                         setTimeout(() => this.expandSubflows(), 50);
                     }
 
@@ -525,38 +388,16 @@
                     });
                 }
             },
-            downloadContent(currentTaskRunId) {
-                const params = this.params
-                this.$store.dispatch("execution/downloadLogs", {
-                    executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId}
-                }).then((response) => {
-                    const url = window.URL.createObjectURL(new Blob([response]));
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.setAttribute("download", this.downloadName(currentTaskRunId));
-                    document.body.appendChild(link);
-                    link.click();
-                });
-            },
             downloadName(currentTaskRunId) {
                 return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
-            },
-            forwardEvent(type, event) {
-                this.$emit(type, event);
             },
             uniqueTaskRunDisplayFilter(currentTaskRun) {
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);
             },
-            taskIcon(taskRun) {
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
-                const parentTaskRunId = taskRun.parentTaskRunId;
-                if(task === undefined && parentTaskRunId) {
-                    return this.taskIcon(this.taskRunById[parentTaskRunId])
-                }
-                return task ? task.type : undefined;
-            },
             loadLogs(executionId) {
+                if(!this.showLogs) {
+                    return;
+                }
                 this.$store.dispatch("execution/loadLogs", {
                     executionId,
                     params: {
@@ -576,6 +417,20 @@
             },
             toggleShowAttempt(attemptUid) {
                 this.shownAttemptsUid = _xor(this.shownAttemptsUid, [attemptUid])
+            },
+            swapDisplayedAttempt(taskRunId, newDisplayedAttemptUid) {
+                this.shownAttemptsUid = this.shownAttemptsUid.map(attemptUid => attemptUid.startsWith(`${taskRunId}-`)
+                    ? this.attemptUid(taskRunId, newDisplayedAttemptUid)
+                    : attemptUid
+                );
+            },
+            taskType(taskRun) {
+                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                const parentTaskRunId = taskRun.parentTaskRunId;
+                if (task === undefined && parentTaskRunId) {
+                    return this.taskType(this.taskRunById[parentTaskRunId])
+                }
+                return task ? task.type : undefined;
             }
         },
         beforeUnmount() {
@@ -607,80 +462,6 @@
 
         :deep(.line) {
             padding-left: 0;
-        }
-
-        .attempt-header {
-            display: flex;
-            gap: calc(var(--spacer) / 2);
-
-            > * {
-                display: flex;
-                align-items: center;
-            }
-
-            .el-select {
-                width: 8rem;
-            }
-
-            .attempt-number {
-                background: var(--bs-gray-400);
-                padding: .375rem .75rem;
-                white-space: nowrap;
-
-                html.dark & {
-                    color: var(--bs-gray-600);
-                }
-            }
-
-            .task-id, .task-duration {
-                padding: .375rem 0;
-            }
-
-            .task-id {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-
-                span span {
-                    color: var(--bs-tertiary-color);
-
-                    html:not(.dark) & {
-                        color: $black;
-                    }
-                }
-            }
-
-            .task-icon {
-                width: 36px;
-                padding: 6px;
-                border-radius: $border-radius-lg;
-            }
-
-            small {
-                color: var(--bs-gray-600);
-                font-family: var(--bs-font-monospace);
-                font-size: var(--font-size-xs)
-            }
-
-            .task-duration small {
-                white-space: nowrap;
-
-                color: var(--bs-gray-800);
-            }
-
-            .more-dropdown-button {
-                padding: .5rem;
-                border: 1px solid rgba($white, .05);
-
-                &:not(:hover) {
-                    background: rgba($white, .10);
-                }
-            }
-
-            .expand-collapse {
-                background-color: transparent !important;
-                padding-right: 0;
-            }
         }
 
         .attempt-wrapper {

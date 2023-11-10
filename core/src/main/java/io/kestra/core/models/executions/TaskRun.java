@@ -166,10 +166,9 @@ public class TaskRun implements TenantInterface {
     }
 
     public boolean isSame(TaskRun taskRun) {
-        return this.getId().equals(taskRun.getId()) && (
-            (this.getValue() == null && taskRun.getValue() == null) ||
-                (this.getValue() != null && this.getValue().equals(taskRun.getValue()))
-        );
+        return this.getId().equals(taskRun.getId()) &&
+            ((this.getValue() == null && taskRun.getValue() == null) || (this.getValue() != null && this.getValue().equals(taskRun.getValue()))) &&
+            ((this.getItems() == null && taskRun.getItems() == null) || (this.getItems() != null && this.getItems().equals(taskRun.getItems()))) ;
     }
 
     public String toString(boolean pretty) {

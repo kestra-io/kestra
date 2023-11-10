@@ -28,7 +28,7 @@ public abstract class AbstractWorkerTaskExecutionTest {
     @Test
     void suite() throws Exception {
 
-        WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
+        WorkerTaskExecution<?> workerTaskExecution = WorkerTaskExecution.builder()
             .execution(Execution.builder().id(IdUtils.create()).build())
             .task(Flow.builder().type(Flow.class.getName()).id(IdUtils.create()).build())
             .taskRun(TaskRun.builder().id(IdUtils.create()).build())
@@ -37,7 +37,7 @@ public abstract class AbstractWorkerTaskExecutionTest {
         workerTaskExecutionStorage.save(List.of(workerTaskExecution));
 
 
-        Optional<WorkerTaskExecution> find = workerTaskExecutionStorage.get(workerTaskExecution.getExecution().getId());
+        Optional<WorkerTaskExecution<?>> find = workerTaskExecutionStorage.get(workerTaskExecution.getExecution().getId());
         assertThat(find.isPresent(), is(true));
         assertThat(find.get().getExecution().getId(), is(workerTaskExecution.getExecution().getId()));
 

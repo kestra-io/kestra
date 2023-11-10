@@ -169,7 +169,8 @@ export default class State {
             return {
                 key: state.name,
                 icon: state.icon,
-                color: cssVariable("--bs-" + state.colorClass)
+                color: cssVariable("--bs-" + state.colorClass),
+                colorClass: state.colorClass
             }
         });
     }

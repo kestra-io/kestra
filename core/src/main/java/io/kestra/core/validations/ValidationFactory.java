@@ -217,7 +217,7 @@ public class ValidationFactory {
                 .stream()
                 .forEach(
                     task -> {
-                        if (task instanceof ExecutableTask executableTask
+                        if (task instanceof ExecutableTask<?> executableTask
                             && value.getId().equals(executableTask.subflowId().flowId())
                             && value.getNamespace().equals(executableTask.subflowId().namespace())) {
                             violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]");

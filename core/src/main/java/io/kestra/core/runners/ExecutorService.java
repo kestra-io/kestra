@@ -605,7 +605,7 @@ public class ExecutorService {
                     return false;
                 }
 
-                var executableTask = (Task & ExecutableTask) workerTask.getTask();
+                var executableTask = (Task & ExecutableTask<?>) workerTask.getTask();
                 try {
                     // mark taskrun as running to avoid multiple try for failed
                     TaskRun executableTaskRun = executor.getExecution()

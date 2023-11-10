@@ -34,7 +34,7 @@
             </el-form-item>
         </collapse>
 
-        <log-list
+        <task-run-details
             ref="logs"
             :level="level"
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
@@ -48,7 +48,7 @@
 </template>
 
 <script>
-    import LogList from "../logs/LogList.vue";
+    import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -59,7 +59,7 @@
 
     export default {
         components: {
-            LogList,
+            TaskRunDetails,
             LogLevelSelector,
             Kicon,
             Download,

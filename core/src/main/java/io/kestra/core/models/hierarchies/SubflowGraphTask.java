@@ -9,11 +9,11 @@ import java.util.List;
 
 @Getter
 public class SubflowGraphTask extends AbstractGraphTask {
-    public SubflowGraphTask(ExecutableTask task, TaskRun taskRun, List<String> values, RelationType relationType) {
+    public SubflowGraphTask(ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType) {
         super((Task) task, taskRun, values, relationType);
     }
 
-    public ExecutableTask getExecutableTask() {
-        return (ExecutableTask) super.getTask();
+    public ExecutableTask<?> getExecutableTask() {
+        return (ExecutableTask<?>) super.getTask();
     }
 }

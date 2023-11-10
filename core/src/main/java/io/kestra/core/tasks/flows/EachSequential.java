@@ -70,7 +70,6 @@ import java.util.Optional;
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
-    @NotBlank
     @PluginProperty(dynamic = true)
     @Schema(
         title = "The list of values for this task",

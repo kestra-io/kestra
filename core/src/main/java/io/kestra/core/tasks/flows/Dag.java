@@ -14,6 +14,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.DagTaskValidation;
+import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -79,7 +80,6 @@ import java.util.stream.Stream;
 )
 public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull
-    @NotBlank
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks",
@@ -88,6 +88,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @PluginProperty
     private final Integer concurrent = 0;
 
+    @Valid
     @NotEmpty
     private List<DagTask> tasks;
 
@@ -211,6 +212,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
+    @Introspected
     public static class DagTask {
         @NotNull
         @PluginProperty

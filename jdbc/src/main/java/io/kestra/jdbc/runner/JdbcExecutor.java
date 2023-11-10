@@ -389,12 +389,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         String log = "Create new execution for flow '" +
                             workerTaskExecution.getExecution()
                                 .getNamespace() + "'.'" + workerTaskExecution.getExecution().getFlowId() +
-                            "' with id '" + workerTaskExecution.getExecution()
-                            .getId() + "' from task '" + ((Task) workerTaskExecution.getTask()).getId() +
-                            "' and taskrun '" + workerTaskExecution.getTaskRun().getId() +
-                            (workerTaskExecution.getTaskRun()
-                                .getValue() != null ? " (" + workerTaskExecution.getTaskRun()
-                                .getValue() + ")" : "") + "'";
+                            "' with id '" + workerTaskExecution.getExecution() + "'";
 
                         JdbcExecutor.log.info(log);
 

@@ -20,6 +20,4 @@ public class WorkerTaskExecution<T extends Task & ExecutableTask<?>> {
 
     @NotNull
     private Execution execution;
-
-    private Integer iteration;
 }

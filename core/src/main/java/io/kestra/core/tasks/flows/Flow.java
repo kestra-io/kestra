@@ -136,8 +136,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
             this,
             currentTaskRun,
             inputs,
-            labels,
-            null
+            labels
         ));
     }
 

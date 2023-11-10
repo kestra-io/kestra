@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.services.StorageInterfaceService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.ImmutableFileAttributes;
 import io.kestra.core.storages.StorageInterface;
@@ -20,12 +21,15 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -36,6 +40,8 @@ public class NamespaceFileController {
     private StorageInterface storageInterface;
     @Inject
     private TenantService tenantService;
+    @Inject
+    StorageInterfaceService storageInterfaceService;
 
     private final List<StaticFile> staticFiles;
 
@@ -162,11 +168,7 @@ public class NamespaceFileController {
     @Get(uri = "files/distinct-namespaces", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Files"}, summary = "List existing namespace folders")
     public List<String> distinctNamespaces() throws IOException, URISyntaxException {
-        return storageInterface.list(tenantService.resolveTenant(), null)
-            .stream()
-            .distinct()
-            .filter(fileAttributes -> fileAttributes.getType().equals(FileAttributes.FileType.Directory))
-            .map(FileAttributes::getFileName).toList();
+        return storageInterfaceService.distinctNamespacesFolders(tenantService.resolveTenant());
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

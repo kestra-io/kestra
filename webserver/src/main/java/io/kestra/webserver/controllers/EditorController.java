@@ -1,5 +1,8 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.StorageInterfaceService;
+import io.kestra.core.tenant.TenantService;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -19,16 +22,20 @@ import java.util.stream.Stream;
 @Validated
 @Controller("/api/v1/editors")
 public class EditorController {
-    @Inject NamespaceFileController namespaceFileController;
-    @Inject FlowController flowController;
+    @Inject
+    StorageInterfaceService storageInterfaceService;
+    @Inject
+    FlowRepositoryInterface flowRepository;
+    @Inject
+    TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/distinct-namespaces", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Editor"}, summary = "Get namespaces that contains files or flows")
     public List<String> distinctNamespaces() throws IOException, URISyntaxException {
         return Stream.concat(
-            namespaceFileController.distinctNamespaces().stream(),
-            flowController.listDistinctNamespace().stream()
+            storageInterfaceService.distinctNamespacesFolders(tenantService.resolveTenant()).stream(),
+            flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream()
         ).distinct().toList();
     }
 }

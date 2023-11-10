@@ -23,6 +23,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -35,7 +36,6 @@ public class NamespaceFileController {
     private TenantService tenantService;
 
     private final List<StaticFile> staticFiles;
-
     {
         try {
             staticFiles = List.of(
@@ -49,6 +49,10 @@ public class NamespaceFileController {
         }
     }
 
+    private final List<Pattern> forbiddenPathPatterns = List.of(
+        Pattern.compile("/_flows.*")
+    );
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files", produces = MediaType.APPLICATION_OCTET_STREAM)
@@ -57,6 +61,8 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @QueryValue URI path
     ) throws IOException, URISyntaxException {
+        forbiddenPathsGuard(path);
+
         Optional<StaticFile> maybeStaticFile = staticFiles.stream().filter(staticFile -> path.getPath().equals(staticFile.getServedPath())).findFirst();
         InputStream fileHandler = maybeStaticFile
             .<InputStream>map(staticFile -> new ByteArrayInputStream(staticFile.getTemplatedContent(Map.of("namespace", namespace)).getBytes()))
@@ -72,6 +78,8 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue URI path
     ) throws IOException, URISyntaxException {
+        forbiddenPathsGuard(path);
+
         // if stats is performed upon namespace root and it doesn't exist yet, we create it
         if (path == null) {
             if(!storageInterface.exists(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null))) {
@@ -94,6 +102,8 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue URI path
     ) throws IOException, URISyntaxException {
+        forbiddenPathsGuard(path);
+
         if (path == null) {
             path = URI.create("/");
         }
@@ -113,6 +123,8 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue URI path
     ) throws IOException, URISyntaxException {
+        forbiddenPathsGuard(path);
+
         storageInterface.createDirectory(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
     }
 
@@ -155,11 +167,23 @@ public class NamespaceFileController {
         storageInterface.delete(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
     }
 
+    private void forbiddenPathsGuard(URI path) {
+        if (path == null) {
+            return;
+        }
+
+        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
+            throw new IllegalArgumentException("Forbidden path: " + path.getPath());
+        }
+    }
+
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
         return URI.create(storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
     }
 
     private void ensureWritableFile(URI path) {
+        forbiddenPathsGuard(path);
+
         Optional<StaticFile> maybeStaticFile = staticFiles.stream().filter(staticFile -> path.getPath().equals(staticFile.getServedPath())).findFirst();
         if(maybeStaticFile.isPresent()) {
             throw new IllegalArgumentException("'" + maybeStaticFile.get().getServedPath().replaceFirst("^/", "") + "' file is read-only");

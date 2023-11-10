@@ -70,9 +70,12 @@
             window.addEventListener("message", (event) => {
                 const message = event.data;
                 if (message.type === "kestra.tabFileChanged") {
-                    const path = `/${this.namespace}/_flows/`;
-                    if (message.filePath.path.startsWith(path)) {
-                        this.flow = message.filePath.path.split(path)[1].replace(".yml", "");
+                    const flowsFolderPath = `/${this.namespace}/_flows/`;
+                    const filePath = message.filePath.path;
+                    if (filePath.startsWith(flowsFolderPath)) {
+                        const fileName = filePath.split(flowsFolderPath)[1];
+                        // trim the eventual extension
+                        this.flow = fileName.split(".")[0];
                     } else {
                         this.flow = null;
                     }

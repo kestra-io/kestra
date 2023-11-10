@@ -9,7 +9,7 @@
         :allow-create="allowCreate"
     >
         <el-option
-            v-for="item in groupedNamespaces"
+            v-for="item in (groupedNamespaces)"
             :key="item.code"
             :class="'level-'+item.level"
             :label="item.label"
@@ -34,6 +34,10 @@
             allowCreate: {
                 type: Boolean,
                 default: false
+            },
+            isFilter: {
+                type: Boolean,
+                default: true
             }
         },
         emits: ["update:modelValue"],
@@ -78,7 +82,7 @@
                 });
 
                 // Remove duplicate namespaces ...
-                return _uniqBy(res,"code");
+                return _uniqBy(res,"code").filter(ns => namespaces.includes(ns.code) && !this.isFilter);
             },
         }
     };

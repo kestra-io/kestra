@@ -379,10 +379,10 @@ public class JdbcExecutor implements ExecutorInterface {
             if (!executor.getWorkerTaskExecutions().isEmpty()) {
                 workerTaskExecutionStorage.save(executor.getWorkerTaskExecutions());
 
-                List<WorkerTaskExecution> workerTasksExecutionDedup = executor
+                List<WorkerTaskExecution<?>> workerTasksExecutionDedup = executor
                     .getWorkerTaskExecutions()
                     .stream()
-                    .filter(workerTaskExecution -> this.deduplicateWorkerTaskExecution(execution, executorState, workerTaskExecution.getTaskRun()))
+                    .filter(workerTaskExecution -> this.deduplicateWorkerTaskExecution(execution, executorState, workerTaskExecution.getTaskRun(), workerTaskExecution.getIteration()))
                     .toList();
 
                 workerTasksExecutionDedup
@@ -405,7 +405,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         executionQueue.emit(workerTaskExecution.getExecution());
 
                         // send a running worker task result to track running vs created status
-                        if (((ExecutableTask) workerTaskExecution.getTask()).waitForExecution()) {
+                        if (workerTaskExecution.getTask().waitForExecution()) {
                             sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING));
                         }
                     });
@@ -425,7 +425,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 workerTaskExecutionStorage.get(execution.getId())
                     .ifPresent(workerTaskExecution -> {
                         // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                        if (((ExecutableTask) workerTaskExecution.getTask()).waitForExecution()) {
+                        if (workerTaskExecution.getTask().waitForExecution()) {
                             sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING).withState(execution.getState().getCurrent()));
                         }
 
@@ -456,7 +456,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private void sendWorkerTaskResultForWorkerTaskExecution(Execution execution, WorkerTaskExecution<?> workerTaskExecution, TaskRun taskRun) {
         Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-        ExecutableTask executableTask = workerTaskExecution.getTask();
+        ExecutableTask<?> executableTask = workerTaskExecution.getTask();
 
         RunContext runContext = runContextFactory.of(
             workerTaskFlow,
@@ -693,9 +693,9 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-    private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
-        // There can be multiple executions for the same task, so we need to deduplicated with the taskrun.value
-        String deduplicationKey = taskRun.getId() + "-" + taskRun.getValue();
+    private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun, Integer iteration) {
+        // There can be multiple executions for the same task, so we need to deduplicated with the worker task execution iteration
+        String deduplicationKey = taskRun.getId() + (iteration == null ? "" : "-" + iteration);
         State.Type current = executorState.getWorkerTaskExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {

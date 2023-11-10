@@ -271,7 +271,7 @@ public class GraphUtils {
                 // detect kids
                 if (currentTask instanceof FlowableTask<?> flowableTask) {
                     currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
-                } else if (currentTask instanceof ExecutableTask subflowTask) {
+                } else if (currentTask instanceof ExecutableTask<?> subflowTask) {
                     currentGraph = new SubflowGraphTask(subflowTask, currentTaskRun, parentValues, relationType);
                 } else {
                     currentGraph = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);

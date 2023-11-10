@@ -163,7 +163,7 @@ public class FlowTopologyService {
                 .allTasksWithChilds()
                 .stream()
                 .filter(t -> t instanceof ExecutableTask)
-                .map(t -> (ExecutableTask) t)
+                .map(t -> (ExecutableTask<?>) t)
                 .anyMatch(t ->
                     t.subflowId().namespace().equals(child.getNamespace()) && t.subflowId().flowId().equals(child.getId())
                 );

@@ -2,71 +2,72 @@
     <el-card shadow="never" v-if="execution">
         <table>
             <thead>
-            <tr>
-                <th>
-                    <duration :histories="execution.state.histories" />
-                </th>
-                <td v-for="(date, i) in dates" :key="i">
-                    {{ date }}
-                </td>
-            </tr>
+                <tr>
+                    <th>
+                        <duration :histories="execution.state.histories" />
+                    </th>
+                    <td v-for="(date, i) in dates" :key="i">
+                        {{ date }}
+                    </td>
+                </tr>
             </thead>
             <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
-            <tr>
-                <th>
-                    <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0">
-                        <template #content>
-                            <code>{{ currentTaskRun.name }}</code>
-                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</small>
-                        </template>
-                        <span>
-                            <code>{{ currentTaskRun.name }}</code>
-                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
-                        </span>
-                    </el-tooltip>
-                </th>
-                <td :colspan="dates.length">
-                    <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
-                        <template #content>
-                            <span style="white-space: pre-wrap;">
-                                {{ currentTaskRun.tooltip }}
+                <tr>
+                    <th>
+                        <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0">
+                            <template #content>
+                                <code>{{ currentTaskRun.name }}</code>
+                                <small v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</small>
+                            </template>
+                            <span>
+                                <code>{{ currentTaskRun.name }}</code>
+                                <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
                             </span>
-                        </template>
-                        <div
-                            :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
-                            class="task-progress"
-                            @click="onTaskSelect(currentTaskRun.task)"
-                        >
-                            <div class="progress">
-                                <div
-                                    class="progress-bar"
-                                    :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                    :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                    role="progressbar"
-                                />
+                        </el-tooltip>
+                    </th>
+                    <td :colspan="dates.length">
+                        <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
+                            <template #content>
+                                <span style="white-space: pre-wrap;">
+                                    {{ currentTaskRun.tooltip }}
+                                </span>
+                            </template>
+                            <div
+                                :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
+                                class="task-progress"
+                                @click="onTaskSelect(currentTaskRun.task)"
+                            >
+                                <div class="progress">
+                                    <div
+                                        class="progress-bar"
+                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
+                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
+                                        role="progressbar"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    </el-tooltip>
-                </td>
-            </tr>
-            <tr v-if="selectedTaskRun?.id === currentTaskRun.id">
-                <td :colspan="dates.length + 1" class="p-0 pb-2">
-                    <log-list
-                        :task-run-id="selectedTaskRun.id"
-                        :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                        level="TRACE"
-                        @follow="forwardEvent('follow', $event)"
-                        :target-execution="execution"
-                        :target-flow="flow"
-                    />
-                </td>
-            </tr>
+                        </el-tooltip>
+                    </td>
+                </tr>
+                <tr v-if="selectedTaskRun?.id === currentTaskRun.id">
+                    <td :colspan="dates.length + 1" class="p-0 pb-2">
+                        <task-run-details
+                            :task-run-id="selectedTaskRun.id"
+                            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                            level="TRACE"
+                            @follow="forwardEvent('follow', $event)"
+                            :target-execution="execution"
+                            :target-flow="flow"
+                            :show-logs="!currentTaskRun?.task?.outputs?.iterations"
+                        />
+                    </td>
+                </tr>
             </tbody>
         </table>
     </el-card>
 </template>
 <script>
-    import LogList from "../logs/LogList.vue";
+    import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {mapState} from "vuex";
     import State from "../../utils/state";
     import Duration from "../layout/Duration.vue";
@@ -75,7 +76,7 @@
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
     export default {
-        components: {LogList, Duration},
+        components: {TaskRunDetails, Duration},
         data() {
             return {
                 colors: State.colorClass(),

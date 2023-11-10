@@ -236,7 +236,7 @@ public class MemoryExecutor implements ExecutorInterface {
                         executionQueue.emit(workerTaskExecution.getExecution());
 
                         // send a running worker task result to track running vs created status
-                        if (((ExecutableTask) workerTaskExecution.getTask()).waitForExecution()) {
+                        if (workerTaskExecution.getTask().waitForExecution()) {
                             sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING));
                         }
                     });
@@ -271,7 +271,7 @@ public class MemoryExecutor implements ExecutorInterface {
         try {
             Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-            ExecutableTask executableTask = workerTaskExecution.getTask();
+            ExecutableTask<?> executableTask = workerTaskExecution.getTask();
 
             RunContext runContext = runContextFactory.of(
                 workerTaskFlow,

@@ -521,7 +521,8 @@
     "row count": "Row count",
     "encoding": "Encoding",
     "show": "Show",
-    "advanced configuration": "Advanced configuration"
+    "advanced configuration": "Advanced configuration",
+    "all executions": "All executions"
   },
   "fr": {
     "id": "Identifiant",
@@ -1035,7 +1036,8 @@
     "show": "Afficher",
     "advanced configuration": "Configuration avancée",
     "row count": "Nombre de lignes",
-    "encoding": "Encodage"
+    "encoding": "Encodage",
+    "all executions": "Toutes les exécutions"
   }
 }
 

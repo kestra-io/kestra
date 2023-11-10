@@ -414,7 +414,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 List<WorkerTaskExecution<?>> workerTasksExecutionDedup = executor
                     .getWorkerTaskExecutions()
                     .stream()
-                    .filter(workerTaskExecution -> this.deduplicateWorkerTaskExecution(execution, executorState, workerTaskExecution.getTaskRun(), workerTaskExecution.getIteration()))
+                    .filter(workerTaskExecution -> this.deduplicateWorkerTaskExecution(execution, executorState, workerTaskExecution.getTaskRun()))
                     .toList();
 
                 workerTasksExecutionDedup
@@ -774,9 +774,9 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-    private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun, Integer iteration) {
+    private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
         // There can be multiple executions for the same task, so we need to deduplicated with the worker task execution iteration
-        String deduplicationKey = taskRun.getId() + (iteration == null ? "" : "-" + iteration);
+        String deduplicationKey = taskRun.getId() + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
         State.Type current = executorState.getWorkerTaskExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {

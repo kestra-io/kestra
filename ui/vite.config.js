@@ -4,6 +4,7 @@ import vue from "@vitejs/plugin-vue";
 import pluginRewriteAll from 'vite-plugin-rewrite-all';
 import {visualizer} from "rollup-plugin-visualizer";
 import copy from 'rollup-plugin-copy'
+import unzip from './unzip-rollup-plugin'
 
 export default defineConfig({
     base: "",
@@ -26,6 +27,14 @@ export default defineConfig({
                 {
                     src: 'node_modules/vscode-web/*',
                     dest: 'public/vscode-web/'
+                }
+            ]
+        }),
+        unzip({
+            targets: [
+                {
+                    archive: 'public/vscode/extensions/ms-python.vscode-pylance-2023.11.12.vsix',
+                    outputDir: 'public/vscode/extensions/pylance'
                 }
             ]
         }),

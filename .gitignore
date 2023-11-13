@@ -37,6 +37,9 @@ yarn.lock
 ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
+ui/public/vscode/extensions/*
+!ui/public/vscode/extensions/*.vsix
+!ui/public/vscode/extensions/yaml
 
 ### Docker
 /.env

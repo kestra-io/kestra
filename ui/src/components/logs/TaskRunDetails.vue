@@ -21,6 +21,7 @@
                         v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
                         :execution-id="currentTaskRun.executionId"
                         :subflows-status="currentTaskRun?.outputs?.iterations"
+                        :max="currentTaskRun.outputs.numberOfBatches"
                     />
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"

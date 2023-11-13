@@ -10,12 +10,12 @@
                 :style="`width: ${getPercentage(state.key)}%`"
                 :aria-valuenow="getPercentage(state.key)"
                 aria-valuemin="0"
-                :aria-valuemax="localSubflowStatus.max"
+                :aria-valuemax="max"
             />
         </div>
         <div class="mt-2 d-flex">
             <router-link :to="goToExecutionsList(null)" class="el-button count-button">
-                {{ $t("all executions") }} <span class="counter">{{ localSubflowStatus.max }}</span>
+                {{ $t("all executions") }} <span class="counter">{{ max }}</span>
             </router-link>
             <div v-for="state in State.allStates()" :key="state.key">
                 <router-link :to="goToExecutionsList(state.key)" class="el-button count-button" v-if="localSubflowStatus[state.key] >= 0">
@@ -54,6 +54,10 @@
             executionId: {
                 type: String,
                 required: true
+            },
+            max: {
+                type: Number,
+                required:true
             }
         },
         watch: {
@@ -67,7 +71,7 @@
                 if (!this.localSubflowStatus[state]) {
                     return 0;
                 }
-                return Math.round((this.localSubflowStatus[state] / this.localSubflowStatus.max) * 100);
+                return Math.round((this.localSubflowStatus[state] / this.max) * 100);
             },
             capitalizeFirstLetter(str) {
                 return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();

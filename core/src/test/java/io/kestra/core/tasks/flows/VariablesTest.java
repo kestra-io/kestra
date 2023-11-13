@@ -20,11 +20,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 class VariablesTest extends AbstractMemoryRunnerTest {
-    static {
-        System.setProperty("KESTRA_TEST1", "true");
-        System.setProperty("KESTRA_TEST2", "Pass by env");
-    }
-
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;

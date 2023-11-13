@@ -19,7 +19,7 @@
                     />
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
-                        :task-run-id="currentTaskRun.id"
+                        :execution-id="currentTaskRun.executionId"
                         :subflows-status="currentTaskRun.outputs.iterations"
                     />
                     <DynamicScroller

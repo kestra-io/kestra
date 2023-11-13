@@ -113,7 +113,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -130,7 +130,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     endDate,
                     state,
                     labels,
-                    parentId
+                    triggerExecutionId
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -147,7 +147,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     ) {
         return Flowable.create(
             emitter -> this.jdbcRepository
@@ -165,7 +165,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         endDate,
                         state,
                         labels,
-                        parentId
+                        triggerExecutionId
                     );
 
                     select.fetch()
@@ -188,7 +188,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     ) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -198,7 +198,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
 
-        select = filteringQuery(select, namespace, flowId, null, query, labels, parentId);
+        select = filteringQuery(select, namespace, flowId, null, query, labels, triggerExecutionId);
 
         if (startDate != null) {
             select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -244,7 +244,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     ) {
         throw new UnsupportedOperationException();
     }
@@ -377,7 +377,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<FlowFilter> flows,
         @Nullable String query,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     ) {
         if (flowId != null && namespace != null) {
             select = select.and(field("namespace").eq(namespace));
@@ -390,8 +390,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             select = select.and(this.findCondition(query, labels));
         }
 
-        if (parentId != null) {
-            select = select.and(field("parent_id").eq(parentId));
+        if (triggerExecutionId != null) {
+            select = select.and(field("trigger_execution_id").eq(triggerExecutionId));
         }
 
         if (flows != null) {

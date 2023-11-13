@@ -14,15 +14,15 @@
             />
         </div>
         <div class="mt-2 d-flex">
-            <el-button @click="goToExecutionsList(null)" class="count-button">
+            <router-link :to="goToExecutionsList(null)" class="el-button count-button">
                 {{ $t("all executions") }} <span class="counter">{{ localSubflowStatus.max }}</span>
-            </el-button>
+            </router-link>
             <div v-for="state in State.allStates()" :key="state.key">
-                <el-button @click="goToExecutionsList(state.key)" class="count-button" v-if="localSubflowStatus[state.key] >= 0">
+                <router-link :to="goToExecutionsList(state.key)" class="el-button count-button" v-if="localSubflowStatus[state.key] >= 0">
                     <div class="dot rounded-5" :class="`bg-${state.colorClass}`"></div>
                     {{ capitalizeFirstLetter(state.key) }}
                     <span class="counter">{{ localSubflowStatus[state.key] }}</span>
-                </el-button>
+                </router-link>
             </div>
         </div>
     </div>
@@ -51,7 +51,7 @@
                 type: Object,
                 required: true
             },
-            taskRunId: {
+            executionId: {
                 type: String,
                 required: true
             }
@@ -73,13 +73,18 @@
                 return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
             },
             goToExecutionsList(state) {
-                this.$router.push({
+                const queries = {
+                    triggerExecutionId: this.executionId,
+                }
+
+                if (state) {
+                    queries.state = state;
+                }
+
+                return {
                     name: "executions/list",
-                    query: {
-                        parentId: this.taskRunId,
-                        state: state
-                    }
-                });
+                    query: queries
+                };
             },
             updateThrottled: throttle(function () {
                 this.localSubflowStatus = this.subflowsStatus

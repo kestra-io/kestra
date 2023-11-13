@@ -19,7 +19,7 @@ import static org.hamcrest.core.StringContains.containsString;
 
 class NamespaceFilesUpdateCommandTest {
     @Test
-    void run_ToSpecified() {
+    void runWithToSpecified() {
         URL directory = NamespaceFilesUpdateCommandTest.class.getClassLoader().getResource("namespacefiles/noignore");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));

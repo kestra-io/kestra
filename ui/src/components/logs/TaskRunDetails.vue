@@ -306,14 +306,14 @@
                 });
             },
             shouldDisplayProgressBar(taskRun) {
-                return this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem"
+                return this.showProgressBar &&
+                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem"
             },
             shouldDisplayLogs(taskRun) {
                 return (this.taskRunId ||
                     (this.shownAttemptsUid.includes(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])) &&
-                    this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
-                    this.showLogs &&
-                    this.taskType(taskRun) !== "io.kestra.core.tasks.flows.ForEachItem"
+                        this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
+                    this.showLogs
             },
             followLogs(executionId) {
                 this.$store

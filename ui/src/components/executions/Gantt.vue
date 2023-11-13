@@ -58,7 +58,7 @@
                             @follow="forwardEvent('follow', $event)"
                             :target-execution="execution"
                             :target-flow="flow"
-                            :show-logs="!currentTaskRun?.task?.outputs?.iterations"
+                            :show-logs="taskType(currentTaskRun) !== 'io.kestra.core.tasks.flows.ForEachItem'"
                         />
                     </td>
                 </tr>
@@ -72,6 +72,7 @@
     import State from "../../utils/state";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
+    import {YamlUtils} from "@kestra-io/ui-libs";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
@@ -276,6 +277,10 @@
             },
             stopRealTime() {
                 this.realTime = false
+            },
+            taskType(taskRun) {
+                const task = YamlUtils.parse(YamlUtils.extractTask(this.flow.source, taskRun.task.taskId));
+                return task.type;
             }
         },
         unmounted() {

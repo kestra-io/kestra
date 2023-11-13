@@ -330,47 +330,58 @@
                 optionalColumns: [
                     {
                         label: "start date",
-                        prop: "state.startDate"
+                        prop: "state.startDate",
+                        default: true
                     },
                     {
                         label: "end date",
-                        prop: "state.endDate"
+                        prop: "state.endDate",
+                        default: true
                     },
                     {
                         label: "duration",
-                        prop: "state.duration"
+                        prop: "state.duration",
+                        default: true
                     },
                     {
                         label: "state",
-                        prop: "state.current"
+                        prop: "state.current",
+                        default: true
                     },
                     {
                         label: "triggers",
-                        prop: "triggers"
+                        prop: "triggers",
+                        default: true
                     },
                     {
                         label: "labels",
-                        prop: "labels"
+                        prop: "labels",
+                        default: true
                     },
                     {
                         label: "inputs",
-                        prop: "inputs"
+                        prop: "inputs",
+                        default: false
                     },
                     {
                         label: "namespace",
-                        prop: "namespace"
+                        prop: "namespace",
+                        default: true
                     },
                     {
                         label: "flow",
-                        prop: "flowId"
+                        prop: "flowId",
+                        default: true
                     },
                     {
                         label: "revision",
-                        prop: "flowRevision"
+                        prop: "flowRevision",
+                        default: false
                     },
                     {
                         label: "task id",
-                        prop: "taskRunList.taskId"
+                        prop: "taskRunList.taskId",
+                        default: false
                     }
                 ],
                 displayColumns: [],
@@ -384,7 +395,7 @@
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
-                || this.optionalColumns.map(col => col.prop);
+                || this.optionalColumns.filter(col => col.default).map(col => col.prop);
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),

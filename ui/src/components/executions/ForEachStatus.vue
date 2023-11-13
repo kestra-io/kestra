@@ -6,7 +6,7 @@
                 :key="state.key"
                 class="progress-bar"
                 role="progressbar"
-                :class="`bg-${state.colorClass}`"
+                :class="`bg-${state.colorClass} ${localSubflowStatus[State.RUNNING] > 0 ? 'progress-bar-striped' : ''}`"
                 :style="`width: ${getPercentage(state.key)}%`"
                 :aria-valuenow="getPercentage(state.key)"
                 aria-valuemin="0"

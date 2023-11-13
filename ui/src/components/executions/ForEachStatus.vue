@@ -1,5 +1,5 @@
 <template>
-    <div class="m-3">
+    <div class="m-3" v-if="localSubflowStatus">
         <div class="progress">
             <div
                 v-for="state in State.allStates()"

@@ -20,7 +20,7 @@
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
                         :execution-id="currentTaskRun.executionId"
-                        :subflows-status="currentTaskRun.outputs.iterations"
+                        :subflows-status="currentTaskRun?.outputs?.iterations"
                     />
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"

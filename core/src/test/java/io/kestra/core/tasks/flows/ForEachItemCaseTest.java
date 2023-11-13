@@ -62,6 +62,8 @@ public class ForEachItemCaseTest {
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
         assertThat(outputs.get("iterations"), notNullValue());
@@ -96,6 +98,8 @@ public class ForEachItemCaseTest {
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
         assertThat(outputs.get("iterations"), notNullValue());
@@ -140,6 +144,8 @@ public class ForEachItemCaseTest {
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
         assertThat(outputs.get("iterations"), notNullValue());

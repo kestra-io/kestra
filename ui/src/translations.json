@@ -522,7 +522,8 @@
     "encoding": "Encoding",
     "show": "Show",
     "advanced configuration": "Advanced configuration",
-    "all executions": "All executions"
+    "all executions": "All executions",
+    "trigger execution id": "Parent Id"
   },
   "fr": {
     "id": "Identifiant",
@@ -1037,7 +1038,8 @@
     "advanced configuration": "Configuration avancée",
     "row count": "Nombre de lignes",
     "encoding": "Encodage",
-    "all executions": "Toutes les exécutions"
+    "all executions": "Toutes les exécutions",
+    "trigger execution id": "Id parent"
   }
 }
 

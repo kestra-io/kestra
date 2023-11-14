@@ -86,6 +86,6 @@ public class StorageInterfaceTest {
     void namespaceFilePrefix() {
         var prefix = storageInterface.namespaceFilePrefix("io.namespace");
         assertThat(prefix, notNullValue());
-        assertThat(prefix, is("/io/namespace/files"));
+        assertThat(prefix, is("/io/namespace/_files"));
     }
 }

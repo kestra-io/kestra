@@ -62,6 +62,14 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
+                    <el-input
+                        :placeholder="$t('trigger execution id')"
+                        clearable
+                        :model-value="$route.query.triggerExecutionId"
+                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <label-filter
                         :model-value="$route.query.labels"
                         @update:model-value="onDataTableValue('labels', $event)"

@@ -4,7 +4,7 @@ import vue from "@vitejs/plugin-vue";
 import pluginRewriteAll from 'vite-plugin-rewrite-all';
 import {visualizer} from "rollup-plugin-visualizer";
 import copy from 'rollup-plugin-copy'
-import unzip from './unzip-rollup-plugin'
+import downloadVsix from './download-vsix-rollup-plugin'
 
 export default defineConfig({
     base: "",
@@ -30,11 +30,15 @@ export default defineConfig({
                 }
             ]
         }),
-        unzip({
+        downloadVsix({
             targets: [
                 {
-                    archive: 'public/vscode/extensions/ms-python.vscode-pylance-2023.11.12.vsix',
+                    vsixUrl: 'https://github.com/kestra-io/vscode-kestra/releases/download/v0.1.7/ms-python.vscode-pylance-2023.11.12.vsix',
                     outputDir: 'public/vscode/extensions/pylance'
+                },
+                {
+                    vsixUrl: 'https://github.com/kestra-io/vscode-kestra/releases/download/v0.1.7/vscode-yaml-1.14.1.vsix',
+                    outputDir: 'public/vscode/extensions/yaml'
                 }
             ]
         }),

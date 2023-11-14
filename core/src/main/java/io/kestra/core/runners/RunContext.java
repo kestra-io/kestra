@@ -398,6 +398,16 @@ public class RunContext {
         clone.remove("task");
         clone.put("task", this.variables(workerTask.getTask()));
 
+        if (clone.containsKey("workerTaskrun") && ((Map<String, Object>) clone.get("workerTaskrun")).containsKey("value")) {
+            Map<String, Object> workerTaskrun = ((Map<String, Object>) clone.get("workerTaskrun"));
+            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) clone.get("taskrun"));
+
+            taskrun.put("value", workerTaskrun.get("value"));
+
+            clone.remove("taskrun");
+            clone.put("taskrun", taskrun);
+        }
+
         this.variables = ImmutableMap.copyOf(clone);
         this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(workerTask.getTaskRun()));
 
@@ -421,25 +431,6 @@ public class RunContext {
 
         this.variables = ImmutableMap.copyOf(clone);
 
-        return this;
-    }
-
-    public RunContext forWorkerHandleDirectoryTask(ApplicationContext applicationContext, WorkerTask workerTask) {
-        forWorker(applicationContext, workerTask);
-
-        Map<String, Object> clone = new HashMap<>(this.variables);
-
-        if (clone.containsKey("workerTaskrun") && ((Map<String, Object>) clone.get("workerTaskrun")).containsKey("value")) {
-            Map<String, Object> workerTaskrun = ((Map<String, Object>) clone.get("workerTaskrun"));
-            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) clone.get("taskrun"));
-
-            taskrun.put("value", workerTaskrun.get("value"));
-
-            clone.remove("taskrun");
-            clone.put("taskrun", taskrun);
-        }
-
-        this.variables = ImmutableMap.copyOf(clone);
         return this;
     }
 

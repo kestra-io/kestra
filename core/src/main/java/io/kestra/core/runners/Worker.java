@@ -454,7 +454,7 @@ public class Worker implements Runnable, AutoCloseable {
     private WorkerTask runAttempt(WorkerTask workerTask) {
         RunContext runContext = workerTask
             .getRunContext()
-            .forWorkerHandleDirectoryTask(this.applicationContext, workerTask);
+            .forWorker(this.applicationContext, workerTask);
 
         Logger logger = runContext.logger();
 

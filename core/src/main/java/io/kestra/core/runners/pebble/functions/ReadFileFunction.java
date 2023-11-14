@@ -79,7 +79,7 @@ public class ReadFileFunction implements Function {
             return false;
         }
 
-        String authorizedBasePath = KESTRA_SCHEME + Slugify.of(namespace) + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
+        String authorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
         return path.startsWith(authorizedBasePath);
     }
 }

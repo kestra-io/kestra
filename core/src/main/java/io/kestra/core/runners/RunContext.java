@@ -564,9 +564,10 @@ public class RunContext {
         try (InputStream fileInput = new FileInputStream(file)) {
             return this.putTempFile(fileInput, prefix, (name != null ? name : file.getName()));
         } finally {
-            boolean delete = file.delete();
-            if (!delete) {
-                runContextLogger.logger().warn("Failed to delete temporary file");
+            try {
+                Files.delete(file.toPath());
+            } catch (IOException e) {
+                runContextLogger.logger().warn("Failed to delete temporary file '{}'", file.toPath(), e);
             }
         }
     }

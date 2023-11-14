@@ -495,10 +495,10 @@
                                     .then(() => {
                                         this.lastExecutionByFlowReady = true
                                     })
-                                    .finally(callback);
                             }
                         }
                     })
+                    .finally(callback);
             },
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";

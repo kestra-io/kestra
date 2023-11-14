@@ -165,7 +165,7 @@ public interface StorageInterface {
     default String namespaceFilePrefix(String namespace) {
         return fromParts(
             namespace.replace(".", "/"),
-            "files"
+            "_files"
         );
     }
 

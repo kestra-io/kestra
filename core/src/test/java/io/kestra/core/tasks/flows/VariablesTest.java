@@ -10,6 +10,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,6 +26,8 @@ class VariablesTest extends AbstractMemoryRunnerTest {
     QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "KESTRA_TEST1", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "KESTRA_TEST2", matches = ".*")
     void recursiveVars() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables");
 

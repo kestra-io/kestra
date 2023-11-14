@@ -29,6 +29,7 @@ node_modules
 yarn-error.log
 yarn.lock
 ui/node_modules
+ui/public/vscode
 ui/public/vscode-web
 ui/.env.local
 ui/.env.*.local
@@ -37,9 +38,6 @@ yarn.lock
 ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
-ui/public/vscode/extensions/*
-!ui/public/vscode/extensions/*.vsix
-!ui/public/vscode/extensions/yaml
 
 ### Docker
 /.env

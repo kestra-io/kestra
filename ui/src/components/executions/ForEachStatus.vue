@@ -1,12 +1,12 @@
 <template>
-    <div class="m-3">
+    <div class="m-3" v-if="localSubflowStatus">
         <div class="progress">
             <div
                 v-for="state in State.allStates()"
                 :key="state.key"
                 class="progress-bar"
                 role="progressbar"
-                :class="`bg-${state.colorClass}`"
+                :class="`bg-${state.colorClass} ${localSubflowStatus[State.RUNNING] > 0 ? 'progress-bar-striped' : ''}`"
                 :style="`width: ${getPercentage(state.key)}%`"
                 :aria-valuenow="getPercentage(state.key)"
                 aria-valuemin="0"

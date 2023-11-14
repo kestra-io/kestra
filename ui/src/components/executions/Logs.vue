@@ -43,6 +43,7 @@
             @opened-taskruns-count="openedTaskrunsCount = $event"
             :target-execution="execution"
             :target-flow="flow"
+            :show-progress-bar="false"
         />
     </div>
 </template>

@@ -398,6 +398,16 @@ public class RunContext {
         clone.remove("task");
         clone.put("task", this.variables(workerTask.getTask()));
 
+        if (clone.containsKey("workerTaskrun") && ((Map<String, Object>) clone.get("workerTaskrun")).containsKey("value")) {
+            Map<String, Object> workerTaskrun = ((Map<String, Object>) clone.get("workerTaskrun"));
+            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) clone.get("taskrun"));
+
+            taskrun.put("value", workerTaskrun.get("value"));
+
+            clone.remove("taskrun");
+            clone.put("taskrun", taskrun);
+        }
+
         this.variables = ImmutableMap.copyOf(clone);
         this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(workerTask.getTaskRun()));
 
@@ -418,12 +428,6 @@ public class RunContext {
         Map<String, Object> clone = new HashMap<>(this.variables);
 
         clone.put("workerTaskrun", clone.get("taskrun"));
-        if (clone.containsKey("parents")) {
-            clone.put("parents", clone.get("parents"));
-        }
-        if (clone.containsKey("parent")) {
-            clone.put("parent", clone.get("parent"));
-        }
 
         this.variables = ImmutableMap.copyOf(clone);
 

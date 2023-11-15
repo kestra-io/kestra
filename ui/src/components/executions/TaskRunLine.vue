@@ -123,10 +123,10 @@
             text
             @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
         >
-            <ChevronDown
+            <ChevronUp
                 v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
             />
-            <ChevronUp v-else/>
+            <ChevronDown v-else/>
         </el-button>
     </div>
 </template>

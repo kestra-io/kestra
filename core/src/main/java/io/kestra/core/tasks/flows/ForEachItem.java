@@ -179,7 +179,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
         TaskRun currentTaskRun
     ) throws InternalException {
         var renderedUri = runContext.render(this.items);
-        if (! renderedUri.startsWith("kestra://")) {
+        if (!renderedUri.startsWith("kestra://")) {
             var errorMessage = "Unable to split the items from " + renderedUri + ", this is not an internal storage URI!";
             runContext.logger().error(errorMessage);
             throw new IllegalArgumentException(errorMessage);

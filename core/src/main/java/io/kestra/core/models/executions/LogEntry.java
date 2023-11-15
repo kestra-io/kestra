@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Builder(toBuilder = true)
 public class LogEntry implements DeletedInterface, TenantInterface {
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 
     @NotNull

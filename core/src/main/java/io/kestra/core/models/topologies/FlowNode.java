@@ -18,7 +18,7 @@ public class FlowNode implements TenantInterface {
     String uid;
 
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 
     String namespace;

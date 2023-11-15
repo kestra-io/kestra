@@ -14,6 +14,6 @@ import javax.validation.constraints.Pattern;
 @Introspected
 @WorkerGroupValidation
 public class WorkerGroup {
-    @Pattern(regexp="[a-zA-Z0-9_-]+")
+    @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
     private String key;
 }

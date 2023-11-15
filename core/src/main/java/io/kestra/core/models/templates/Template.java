@@ -45,16 +45,16 @@ public class Template implements DeletedInterface, TenantInterface {
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     private String tenantId;
 
     @NotNull
     @NotBlank
-    @Pattern(regexp = "[a-zA-Z0-9._-]+")
+    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
     private String id;
 
     @NotNull
-    @Pattern(regexp="[a-z0-9._-]+")
+    @Pattern(regexp="^[a-z0-9][a-z0-9._-]*")
     private String namespace;
 
     String description;

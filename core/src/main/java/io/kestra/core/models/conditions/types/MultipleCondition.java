@@ -74,7 +74,7 @@ import java.util.stream.Stream;
 public class MultipleCondition extends Condition {
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9_-]+")
+    @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
     @Schema(title = "A unique id for the whole flow")
     @PluginProperty
     protected String id;

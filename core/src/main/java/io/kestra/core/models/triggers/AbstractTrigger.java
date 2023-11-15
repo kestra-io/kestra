@@ -28,7 +28,7 @@ import javax.validation.constraints.Pattern;
 abstract public class AbstractTrigger {
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9_-]+")
+    @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
     @Schema(title = "A unique id for the whole flow")
     protected String id;
 

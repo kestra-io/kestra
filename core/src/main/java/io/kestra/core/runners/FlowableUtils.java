@@ -277,6 +277,9 @@ public class FlowableUtils {
                 if (obj instanceof String) {
                     values.add(runContext.render((String) obj));
                 }
+                else if (obj instanceof Integer) {
+                    values.add(runContext.render(obj.toString()));
+                }
                 else if(obj instanceof Map<?, ?>) {
                     //JSON or YAML map
                     values.add(runContext.render((Map) obj));

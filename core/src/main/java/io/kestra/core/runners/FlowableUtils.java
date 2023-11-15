@@ -276,7 +276,8 @@ public class FlowableUtils {
             for (Object obj : (List<Object>) value) {
                 if (obj instanceof String) {
                     values.add(runContext.render((String) obj));
-                }else if (obj instanceof Integer){
+                }
+                else if (obj instanceof Integer) {
                     values.add(runContext.render(obj.toString()));
                 }
                 else if(obj instanceof Map<?, ?>) {

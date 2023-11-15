@@ -43,9 +43,9 @@ public class RunContext {
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;
     private StorageInterface storageInterface;
-    private String envPrefix;
     private MetricRegistry meterRegistry;
     private Path tempBasedPath;
+    private RunContextCache runContextCache;
 
     private URI storageOutputPrefix;
     private URI storageExecutionPrefix;
@@ -120,8 +120,8 @@ public class RunContext {
         this.applicationContext = applicationContext;
         this.variableRenderer = applicationContext.findBean(VariableRenderer.class).orElseThrow();
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
-        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
+        this.runContextCache = applicationContext.findBean(RunContextCache.class).orElseThrow();
         this.tempBasedPath = Path.of(applicationContext
             .getProperty("kestra.tasks.tmp-dir.path", String.class)
             .orElse(System.getProperty("java.io.tmpdir"))
@@ -208,13 +208,8 @@ public class RunContext {
 
     protected Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun, AbstractTrigger trigger) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-            .put("envs", envVariables());
-
-        if (applicationContext.getProperty("kestra.variables.globals", Map.class).isPresent()) {
-            builder.put("globals", applicationContext.getProperty("kestra.variables.globals", Map.class).get());
-        } else {
-            builder.put("globals", Map.of());
-        }
+            .put("envs", runContextCache.getEnvVars())
+            .put("globals", runContextCache.getGlobalVars());
 
         if (flow != null) {
             if (flow.getVariables() != null) {
@@ -299,22 +294,6 @@ public class RunContext {
         return builder.build();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private Map<String, String> envVariables() {
-        Map<String, String> result = new HashMap<>(System.getenv());
-        result.putAll((Map) System.getProperties());
-
-        return result
-            .entrySet()
-            .stream()
-            .filter(e -> e.getKey().startsWith(this.envPrefix))
-            .map(e -> new AbstractMap.SimpleEntry<>(
-                e.getKey().substring(this.envPrefix.length()).toLowerCase(),
-                e.getValue()
-            ))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
     private Map<String, Object> variables(TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("id", taskRun.getId())
@@ -390,7 +369,6 @@ public class RunContext {
         runContext.storageInterface = this.storageInterface;
         runContext.storageOutputPrefix = this.storageOutputPrefix;
         runContext.storageExecutionPrefix = this.storageExecutionPrefix;
-        runContext.envPrefix = this.envPrefix;
         runContext.variables = variables;
         runContext.metrics = new ArrayList<>();
         runContext.meterRegistry = this.meterRegistry;
@@ -420,6 +398,16 @@ public class RunContext {
         clone.remove("task");
         clone.put("task", this.variables(workerTask.getTask()));
 
+        if (clone.containsKey("workerTaskrun") && ((Map<String, Object>) clone.get("workerTaskrun")).containsKey("value")) {
+            Map<String, Object> workerTaskrun = ((Map<String, Object>) clone.get("workerTaskrun"));
+            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) clone.get("taskrun"));
+
+            taskrun.put("value", workerTaskrun.get("value"));
+
+            clone.remove("taskrun");
+            clone.put("taskrun", taskrun);
+        }
+
         this.variables = ImmutableMap.copyOf(clone);
         this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(workerTask.getTaskRun()));
 
@@ -440,12 +428,6 @@ public class RunContext {
         Map<String, Object> clone = new HashMap<>(this.variables);
 
         clone.put("workerTaskrun", clone.get("taskrun"));
-        if (clone.containsKey("parents")) {
-            clone.put("parents", clone.get("parents"));
-        }
-        if (clone.containsKey("parent")) {
-            clone.put("parent", clone.get("parent"));
-        }
 
         this.variables = ImmutableMap.copyOf(clone);
 
@@ -586,9 +568,10 @@ public class RunContext {
         try (InputStream fileInput = new FileInputStream(file)) {
             return this.putTempFile(fileInput, prefix, (name != null ? name : file.getName()));
         } finally {
-            boolean delete = file.delete();
-            if (!delete) {
-                runContextLogger.logger().warn("Failed to delete temporary file");
+            try {
+                Files.delete(file.toPath());
+            } catch (IOException e) {
+                runContextLogger.logger().warn("Failed to delete temporary file '{}'", file.toPath(), e);
             }
         }
     }

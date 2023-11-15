@@ -1,0 +1,23 @@
+id: working-directory-taskrun-nested
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.core.tasks.flows.EachParallel
+    value: ["1"]
+    tasks:
+      - id: seq
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: workingDir
+            type: io.kestra.core.tasks.flows.WorkingDirectory
+            tasks:
+              - id: log-taskrun
+                type: io.kestra.core.tasks.debugs.Return
+                format: "{{ workerTaskrun }}"
+              - id: log-workerparents
+                type: io.kestra.core.tasks.debugs.Return
+                format:  "{{ parents }}"
+              - id: log-workerparent
+                type: io.kestra.core.tasks.debugs.Return
+                format:  "{{ parent }}"

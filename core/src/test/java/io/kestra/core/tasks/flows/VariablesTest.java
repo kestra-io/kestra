@@ -10,6 +10,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,16 +21,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 class VariablesTest extends AbstractMemoryRunnerTest {
-    static {
-        System.setProperty("KESTRA_TEST1", "true");
-        System.setProperty("KESTRA_TEST2", "Pass by env");
-    }
-
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "KESTRA_TEST1", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "KESTRA_TEST2", matches = ".*")
     void recursiveVars() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables");
 

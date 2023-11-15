@@ -38,7 +38,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     );
 
     Flowable<Execution> find(
@@ -50,7 +50,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     );
 
     ArrayListTotal<TaskRun> findTaskRun(
@@ -63,7 +63,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states,
         @Nullable Map<String, String> labels,
-        @Nullable String parentId
+        @Nullable String triggerExecutionId
     );
 
     Execution delete(Execution execution);

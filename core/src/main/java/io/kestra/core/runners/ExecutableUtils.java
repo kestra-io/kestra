@@ -135,8 +135,10 @@ public final class ExecutableUtils {
                     // the final state should be computed based on the iterations
                     return previousTaskRun.withOutputs(Map.of("iterations", iterations));
                 } else if (terminatedIterations == maxIterations && taskRun.getState().isTerminated()) {
+                    var state = transmitFailed ? findTerminalState(iterations) : State.Type.SUCCESS;
                     return previousTaskRun.withOutputs(Map.of("iterations", iterations))
-                        .withState(transmitFailed ? findTerminalState(iterations) : State.Type.SUCCESS);
+                        .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
+                        .withState(state);
                 }
                 return taskRun.withOutputs(Map.of("iterations", iterations));
             }

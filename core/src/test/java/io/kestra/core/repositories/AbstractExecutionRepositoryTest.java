@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
@@ -100,13 +101,21 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(null);
     }
 
-    protected void inject(String parentId) {
-        executionRepository.save(builder(State.Type.RUNNING, null).labels(List.of(new Label("key", "value"))).parentId(parentId).build());
+    protected void inject(String executionTriggerId) {
+        ExecutionTrigger executionTrigger = null;
+
+        if (executionTriggerId != null) {
+            executionTrigger = ExecutionTrigger.builder()
+                .variables(Map.of("executionId", executionTriggerId))
+                .build();
+        }
+
+        executionRepository.save(builder(State.Type.RUNNING, null).labels(List.of(new Label("key", "value"))).trigger(executionTrigger).build());
         for (int i = 1; i < 28; i++) {
             executionRepository.save(builder(
                 i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
                 i < 15 ? null : "second"
-            ).parentId(parentId).build());
+            ).trigger(executionTrigger).build());
         }
     }
 
@@ -126,16 +135,16 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    protected void findParentId() {
-        String parentId = IdUtils.create();
+    protected void findTriggerExecutionId() {
+        String executionTriggerId = IdUtils.create();
 
-        inject(parentId);
+        inject(executionTriggerId);
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, parentId);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, executionTriggerId);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
-        assertThat(executions.get(0).getParentId(), is(parentId));
+        assertThat(executions.get(0).getTrigger().getVariables().get("executionId"), is(executionTriggerId));
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(56L));

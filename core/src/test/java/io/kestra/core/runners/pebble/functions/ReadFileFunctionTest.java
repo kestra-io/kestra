@@ -47,10 +47,10 @@ class ReadFileFunctionTest {
     @Test
     void readInternalStorageFile() throws IOException, IllegalVariableEvaluationException {
         // task output URI format: 'kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
-        String namespace = "namespace";
+        String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
-        URI internalStorageURI = URI.create("/" + namespace + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
+        URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
         URI internalStorageFile = storageInterface.put(null, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
 
         // test for an authorized execution
@@ -83,10 +83,10 @@ class ReadFileFunctionTest {
 
     @Test
     void readUnauthorizedInternalStorageFile() throws IOException {
-        String namespace = "namespace";
+        String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
-        URI internalStorageURI = URI.create("/" + namespace + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
+        URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
         URI internalStorageFile = storageInterface.put(null, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
 
         // test for an un-authorized execution with no trigger

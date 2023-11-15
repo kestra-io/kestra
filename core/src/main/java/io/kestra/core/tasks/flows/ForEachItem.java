@@ -50,35 +50,68 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin(
     examples = {
         @Example(
-            title = "Execute a subflow for each batch of items",
-            code = {
+            title = """
+            Execute a subflow for each batch of items. The subflow `orders` is called from the parent flow `orders_parallel` using the `ForEachItem` task in order to start one subflow execution for each batch of items.
+            ```yaml
+            id: orders
+            namespace: prod
+
+            inputs:
+              - name: order
+                type: STRING
+
+            tasks:
+              - id: read_file
+                type: io.kestra.plugin.scripts.shell.Commands
+                runner: PROCESS
+                commands:
+                  - cat "{{ inputs.order }}"
+
+              - id: read_file_content
+                type: io.kestra.core.tasks.log.Log
+                message: "{{ read(inputs.order) }}"
+            ```
+            """,
+            full = true,
+            code =
                 """
-                    id: each
+                id: orders_parallel
+                namespace: prod
+
+                tasks:
+                  - id: extract
+                    type: io.kestra.plugin.jdbc.duckdb.Query
+                    sql: |
+                      INSTALL httpfs;
+                      LOAD httpfs;
+                      SELECT *
+                      FROM read_csv_auto('https://raw.githubusercontent.com/kestra-io/datasets/main/csv/orders.csv', header=True);
+                    store: true
+
+                  - id: each
                     type: io.kestra.core.tasks.flows.ForEachItem
-                    items: "{{ outputs.extract.uri }}" # works with API payloads too. Kestra can detect if this output is not a file,\s
-                    # and will make it to a file, split into (batches of) items
+                    items: "{{ outputs.extract.uri }}"
                     batch:
-                      rows: 10
-                    flowId: file
-                    namespace: dev
-                    inputs:
-                      file: "{{ taskrun.items }}" # special variable that contains the items of the batch
+                      rows: 1
+                    namespace: prod
+                    flowId: orders
                     wait: true # wait for the subflow execution
-                    transmitFailed: true # fail the task run if the subflow execution fails"""
-            }
+                    transmitFailed: true # fail the task run if the subflow execution fails
+                    inputs:
+                      order: "{{ taskrun.items }}" # special variable that contains the items of the batch"""
         )
     }
 )
 public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Output> {
     @NotEmpty
     @PluginProperty(dynamic = true)
-    @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI, e.g. output from a previous task in the format `{{ outputs.task_id.uri }}` or an input parameter of FILE type e.g. `{{ inputs.myfile }}`.")
+    @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI. This can be either the output from a previous task, formatted as `{{ outputs.task_id.uri }}`, or a FILE type input parameter, like `{{ inputs.myfile }}`. This task is optimized for files where each line represents a single item. Suitable file types include Amazon ION-type files (commonly produced by Query tasks), newline-separated JSON files, or CSV files formatted with one row per line and without a header. For files in other formats such as Excel, CSV, Avro, Parquet, XML, or JSON, it's recommended to first convert them to the ION format. This can be done using the conversion tasks available in the `io.kestra.plugin.serdes` module, which will transform files from their original format to ION.")
     private String items;
 
     @NotNull
     @PluginProperty
     @Builder.Default
-    @Schema(title = "The batch split size")
+    @Schema(title = "How to split the items into batches.")
     private ForEachItem.Batch batch = Batch.builder().build();
 
     @NotEmpty
@@ -123,7 +156,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
 
     @Builder.Default
     @Schema(
-        title = "Whether to fail the current execution if the subflow execution fails or is killed",
+        title = "Whether to fail the current execution if the subflow execution fails or is killed.",
         description = "Note that this option works only if `wait` is set to `true`."
     )
     @PluginProperty
@@ -234,8 +267,8 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The iterations counter.",
-            description = "This output will be updated in real-time with the subflow executions.\n It will contains one counter by subflow execution state, plus a `max` counter that represent the maximum number of iterations (or the number of batches)."
+            title = "The counter of iterations for each subflow execution state.",
+            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter per subflow execution state, as well as a `max` counter that represents the maximum number of iterations (i.e. the total number of batches)."
         )
         private final Map<String, Integer> iterations;
     }

@@ -52,6 +52,11 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void taskrunNested() throws TimeoutException, InternalException {
+        suite.taskRunNested(runnerUtils);
+    }
+
+    @Test
     void namespaceFiles() throws TimeoutException, InternalException, IOException {
         suite.namespaceFiles(runnerUtils);
     }
@@ -109,6 +114,14 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
         public void taskRun(RunnerUtils runnerUtils) throws TimeoutException, InternalException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun");
+
+            assertThat(execution.getTaskRunList(), hasSize(3));
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-taskrun", List.of("1")).getOutputs().get("value")), containsString("1"));
+        }
+
+        public void taskRunNested(RunnerUtils runnerUtils) throws TimeoutException, InternalException {
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-nested");
 
             assertThat(execution.getTaskRunList(), hasSize(6));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

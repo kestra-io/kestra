@@ -1,37 +1,20 @@
 package io.kestra.core.tasks.storages;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.PluginUtilsService;
-import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.kestra.core.utils.Rethrow.throwBiConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -151,60 +134,12 @@ public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFil
 
     @Override
     public LocalFilesOutput run(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger();
-
-        Map<String, String> inputFiles = this.inputs == null ? Map.of() : PluginUtilsService.transformInputFiles(runContext, this.inputs);
-
-        inputFiles
-            .forEach(throwBiConsumer((fileName, input) -> {
-                var file = new File(runContext.tempDir().toString(), fileName);
-                if (file.exists()) {
-                    throw new IllegalVariableEvaluationException("File '" + fileName + "' already exist!");
-                }
-
-                if (!file.getParentFile().exists()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    file.getParentFile().mkdirs();
-                }
-
-                var fileContent = runContext.render(input);
-                if (fileContent.startsWith("kestra://")) {
-                    try (var is = runContext.uriToInputStream(URI.create(fileContent));
-                         var out = new FileOutputStream(file)) {
-                        IOUtils.copyLarge(is, out);
-                    }
-                } else {
-                    Files.write(file.toPath(), fileContent.getBytes());
-                }
-            }));
-
-        var outputFiles = ListUtils.emptyOnNull(outputs)
-            .stream()
-            .flatMap(throwFunction(output -> this.outputMatcher(runContext, output)))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        logger.info("Provided {} input(s) and captured {} output(s).", inputFiles.size(), outputFiles.size());
+        FilesService.inputFiles(runContext, this.inputs);
+        Map<String, URI> outputFiles = FilesService.outputFiles(runContext, this.outputs);
 
         return LocalFilesOutput.builder()
             .uris(outputFiles)
             .build();
-    }
-
-    private Stream<AbstractMap.SimpleEntry<String, URI>> outputMatcher(RunContext runContext, String output) throws IllegalVariableEvaluationException, IOException {
-        var glob = runContext.render(output);
-        final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
-
-        try (Stream<Path> walk = Files.walk(runContext.tempDir())) {
-            return walk
-                .filter(Files::isRegularFile)
-                .filter(path -> pathMatcher.matches(runContext.tempDir().relativize(path)))
-                .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
-                    runContext.tempDir().relativize(path).toString(),
-                    runContext.putTempFile(path.toFile())
-                )))
-                .toList()
-                .stream();
-        }
     }
 
     @Builder

@@ -13,6 +13,22 @@ require.config({
     paths: window.webPackagePaths
 });
 
+// publisherId/extensionId format
+const versionByExtensionIdToFetch = {
+    // to handle dark theme
+    "PROxZIMA/sweetdracula": "1.0.9",
+    // to apply Kestra's flow validation schema
+    "kestra-io/kestra": "0.1.7",
+    // for Python autocompletion along with Pylance that is needed for it to work
+    "ms-python/python": "2023.20.0"
+};
+
+const extensionsToFetch = Object.entries(versionByExtensionIdToFetch).map(([extensionId, version]) => ({
+    scheme: "https",
+    authority: "openvsxorg.blob.core.windows.net",
+    path: `/resources/${extensionId}/${version}/extension`
+}));
+
 // used to configure VSCode startup
 window.product = {
     productConfiguration: {
@@ -40,31 +56,20 @@ window.product = {
     ],
     additionalBuiltinExtensions: [
         {
-            scheme: "https",
-            authority: "openvsxorg.blob.core.windows.net",
-            path: "/resources/PROxZIMA/sweetdracula/1.0.9/extension"
+            scheme: window.location.protocol.replace(":", ""),
+            authority: window.location.host,
+            path: KESTRA_UI_PATH + "vscode/extensions/yaml/extension"
         },
         {
             scheme: window.location.protocol.replace(":", ""),
             authority: window.location.host,
-            path: KESTRA_UI_PATH + "yamlExt"
+            path: KESTRA_UI_PATH + "vscode/extensions/pylance/extension"
         },
-        {
-            scheme: "https",
-            authority: "openvsxorg.blob.core.windows.net",
-            path: "/resources/kestra-io/kestra/0.1.7/extension"
-        }
+        ...extensionsToFetch
     ],
     "linkProtectionTrustedDomains": [
         "https://open-vsx.org",
         "https://openvsxorg.blob.core.windows.net"
-    ],
-    enabledExtensions: [
-        // to handle dark theme
-        "proxzima.sweetdracula",
-        // to apply Kestra's flow validation schema
-        "redhat.vscode-yaml",
-        "kestra-io.kestra"
     ],
     configurationDefaults: {
         "files.autoSave": "off",

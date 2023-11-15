@@ -15,7 +15,6 @@ import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.types.Webhook;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -147,7 +146,7 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
     ) {
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
@@ -159,7 +158,7 @@ public class ExecutionController {
             endDate,
             state,
             RequestUtils.toMap(labels),
-            parentId
+            triggerExecutionId
         ));
     }
 
@@ -308,7 +307,7 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
     ) {
         Integer count = executionRepository
             .find(
@@ -320,7 +319,7 @@ public class ExecutionController {
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
-                parentId
+                triggerExecutionId
             )
             .map(e -> {
                 executionRepository.delete(e);
@@ -695,7 +694,7 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
     ) {
         Integer count = executionRepository
             .find(
@@ -707,7 +706,7 @@ public class ExecutionController {
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
-                parentId
+                triggerExecutionId
             )
             .map(e -> {
                 Execution restart = executionService.restart(e, null);
@@ -918,7 +917,7 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The parent execution id") @Nullable @QueryValue String parentId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
     ) {
         var ids = executionRepository
             .find(
@@ -930,7 +929,7 @@ public class ExecutionController {
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
-                parentId
+                triggerExecutionId
             )
             .map(execution -> execution.getId())
             .toList()

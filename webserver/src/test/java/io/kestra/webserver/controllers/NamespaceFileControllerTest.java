@@ -90,7 +90,7 @@ class NamespaceFileControllerTest {
     @Test
     void namespaceRootStatsWithoutPreCreation() {
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/stats"), TestFileAttributes.class);
-        assertThat(res.getFileName(), is("files"));
+        assertThat(res.getFileName(), is("_files"));
         assertThat(res.getType(), is(FileAttributes.FileType.Directory));
     }
 

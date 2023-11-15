@@ -178,8 +178,15 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
         Execution currentExecution,
         TaskRun currentTaskRun
     ) throws InternalException {
+        var renderedUri = runContext.render(this.items);
+        if (!renderedUri.startsWith("kestra://")) {
+            var errorMessage = "Unable to split the items from " + renderedUri + ", this is not an internal storage URI!";
+            runContext.logger().error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
         try {
-            List<URI> splits = StorageService.split(runContext, this.batch, URI.create(runContext.render(this.items)));
+            List<URI> splits = StorageService.split(runContext, this.batch, URI.create(renderedUri));
 
             AtomicInteger currentIteration = new AtomicInteger(1);
 
@@ -221,6 +228,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
                 ))
                 .toList();
         } catch (IOException e) {
+            runContext.logger().error(e.getMessage(), e);
             throw new InternalException(e);
         }
     }

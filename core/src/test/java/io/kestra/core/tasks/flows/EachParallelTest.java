@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -27,5 +28,11 @@ public class EachParallelTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(11));
+    }
+
+    @Test
+    void parallelInteger() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-Integer");
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

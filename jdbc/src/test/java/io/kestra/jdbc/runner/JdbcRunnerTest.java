@@ -302,4 +302,9 @@ public abstract class JdbcRunnerTest {
     void concurrencyQueuePause() throws TimeoutException, InterruptedException  {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();
     }
+
+    @Test
+    void concurrencyCancelPause() throws TimeoutException, InterruptedException  {
+        flowConcurrencyCaseTest.flowConcurrencyCancelPause();
+    }
 }

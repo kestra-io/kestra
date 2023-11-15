@@ -20,7 +20,7 @@ import javax.validation.constraints.Pattern;
 @Introspected
 public class TriggerContext implements TenantInterface {
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]")
     private String tenantId;
 
     @NotNull

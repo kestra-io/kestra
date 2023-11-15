@@ -42,7 +42,7 @@ import javax.validation.constraints.Pattern;
 public class Execution implements DeletedInterface, TenantInterface {
     @With
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 
     @NotNull

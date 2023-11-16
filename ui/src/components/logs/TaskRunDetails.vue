@@ -53,6 +53,8 @@
                                     :allow-auto-expand-subflows="false"
                                     :target-execution-id="currentTaskRun.outputs.executionId"
                                     :class="$el.classList.contains('even') ? '' : 'even'"
+                                    :show-progress-bar="showProgressBar"
+                                    :show-logs="showLogs"
                                 />
                             </DynamicScrollerItem>
                         </template>
@@ -314,6 +316,16 @@
                     (this.shownAttemptsUid.includes(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])) &&
                         this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
                     this.showLogs
+            },
+            followExecution(executionId) {
+                this.$store
+                    .dispatch("execution/followExecution", {id: executionId})
+                    .then(sse => {
+                        this.executionSSE = sse;
+                        this.executionSSE.onmessage = async (event) => {
+                            this.followedExecution = JSON.parse(event.data);
+                        }
+                    });
             },
             followLogs(executionId) {
                 this.$store

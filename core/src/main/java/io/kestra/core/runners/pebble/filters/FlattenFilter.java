@@ -14,13 +14,11 @@ import java.util.stream.Stream;
 public class FlattenFilter implements Filter {
     private final List<String> argumentNames = new ArrayList<>();
 
-    public FlattenFilter() {
-    }
-
     @Override
     public List<String> getArgumentNames() {
         return this.argumentNames;
     }
+
 
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {

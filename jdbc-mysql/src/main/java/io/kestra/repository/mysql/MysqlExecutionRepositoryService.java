@@ -16,7 +16,13 @@ public abstract class MysqlExecutionRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "flow_id", "id"), query));
+            Condition namespaceCondition = DSL.field("namespace").like("%" + query + "%");
+            Condition idCondition = DSL.field("id").like("%" + query + "%");
+            Condition flowIdCondition = DSL.field("flow_id").like("%" + query + "%");
+
+            Condition combinedCondition = namespaceCondition.or(idCondition).or(flowIdCondition);
+
+            conditions.add(combinedCondition);
         }
 
         if (labels != null) {

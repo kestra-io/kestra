@@ -13,7 +13,10 @@ public abstract class MysqlFlowRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "id"), query));
+            Condition namespaceCondition = DSL.field("namespace").like("%" + query + "%");
+            Condition idCondition = DSL.field("id").like("%" + query + "%");
+
+            conditions.add(namespaceCondition.or(idCondition));
         }
 
         if (labels != null) {

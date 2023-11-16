@@ -16,7 +16,10 @@ public abstract class PostgresFlowRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+            Condition namespaceCondition = DSL.field("namespace").like("%" + query + "%");
+            Condition idCondition = DSL.field("id").like("%" + query + "%");
+
+            conditions.add(namespaceCondition.or(idCondition));
         }
 
         if (labels != null)  {

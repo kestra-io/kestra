@@ -57,16 +57,16 @@ public class Flow implements DeletedInterface, TenantInterface {
         });
 
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 
     @NotNull
     @NotBlank
-    @Pattern(regexp = "[a-zA-Z0-9._-]+")
+    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
     String id;
 
     @NotNull
-    @Pattern(regexp = "[a-z0-9._-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
     String namespace;
 
     @Min(value = 1)

@@ -7,6 +7,7 @@
                 :value="namespace"
                 @update:model-value="namespaceUpdate"
                 allow-create
+                :is-filter="false"
             />
             <trigger-flow
                 :disabled="!flow"
@@ -41,11 +42,13 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import {apiUrl} from "override/utils/route";
     import {mapState} from "vuex";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
         methods: {
             namespaceUpdate(namespace) {
+                localStorage.setItem(storageKeys.LATEST_NAMESPACE, namespace);
                 this.$router.push({
                     params: {
                         namespace
@@ -85,7 +88,7 @@
             });
 
             // Setup namespace
-            const namespace = localStorage.getItem("defaultNamespace");
+            const namespace = localStorage.getItem(storageKeys.LATEST_NAMESPACE) ? localStorage.getItem(storageKeys.LATEST_NAMESPACE) : localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             if (namespace) {
                 this.namespaceUpdate(namespace);
             } else if (this.namespaces?.length > 0) {

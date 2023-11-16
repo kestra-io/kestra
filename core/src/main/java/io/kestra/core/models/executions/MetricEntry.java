@@ -19,7 +19,7 @@ import javax.validation.constraints.Pattern;
 @Builder(toBuilder = true)
 public class MetricEntry implements DeletedInterface, TenantInterface {
     @Hidden
-    @Pattern(regexp = "[a-z0-9_-]+")
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 
     @NotNull

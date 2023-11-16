@@ -96,7 +96,8 @@ public class ExecutorService {
 
     public Executor process(Executor executor) {
         // previous failed (flow join can fail), just forward
-        if (!executor.canBeProcessed()) {
+        // or concurrency limit failed/cancelled the execution
+        if (!executor.canBeProcessed() || conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
             return executor;
         }
 

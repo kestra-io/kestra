@@ -40,10 +40,8 @@ public class FlowConcurrencyCaseTest {
         assertThat(execution2.getState().getCurrent(), is(State.Type.CANCELLED));
 
         var executionResult1  = new AtomicReference<Execution>();
-        var executionResult2  = new AtomicReference<Execution>();
 
         CountDownLatch latch1 = new CountDownLatch(1);
-        CountDownLatch latch2 = new CountDownLatch(1);
 
         executionQueue.receive(e -> {
             if (e.getLeft().getId().equals(execution1.getId())) {
@@ -53,19 +51,12 @@ public class FlowConcurrencyCaseTest {
                 }
             }
 
-            if (e.getLeft().getId().equals(execution2.getId())) {
-                executionResult2.set(e.getLeft());
-                if (e.getLeft().getState().getCurrent() == State.Type.CANCELLED) {
-                    latch2.countDown();
-                }
-            }
+            // FIXME we should fail if we receive the cancel execution again but on Kafka it happens
         });
 
         latch1.await(1, TimeUnit.MINUTES);
-        latch2.await(1, TimeUnit.MINUTES);
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.CANCELLED));
     }
 
     public void flowConcurrencyFail() throws TimeoutException, InterruptedException {
@@ -76,10 +67,8 @@ public class FlowConcurrencyCaseTest {
         assertThat(execution2.getState().getCurrent(), is(State.Type.FAILED));
 
         var executionResult1  = new AtomicReference<Execution>();
-        var executionResult2  = new AtomicReference<Execution>();
 
         CountDownLatch latch1 = new CountDownLatch(1);
-        CountDownLatch latch2 = new CountDownLatch(1);
 
         executionQueue.receive(e -> {
             if (e.getLeft().getId().equals(execution1.getId())) {
@@ -89,19 +78,12 @@ public class FlowConcurrencyCaseTest {
                 }
             }
 
-            if (e.getLeft().getId().equals(execution2.getId())) {
-                executionResult2.set(e.getLeft());
-                if (e.getLeft().getState().getCurrent() == State.Type.FAILED) {
-                    latch2.countDown();
-                }
-            }
+            // FIXME we should fail if we receive the cancel execution again but on Kafka it happens
         });
 
         latch1.await(1, TimeUnit.MINUTES);
-        latch2.await(1, TimeUnit.MINUTES);
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.FAILED));
     }
 
     public void flowConcurrencyQueue() throws TimeoutException, InterruptedException {
@@ -198,5 +180,47 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.get().getState().getHistories().get(0).getState(), is(State.Type.CREATED));
         assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.QUEUED));
         assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
+    }
+
+    public void flowConcurrencyCancelPause() throws TimeoutException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel-pause", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository
+            .findById(null, "io.kestra.tests", "flow-concurrency-cancel-pause", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = runnerUtils.newExecution(flow, null, null);
+        executionQueue.emit(execution2);
+
+        assertThat(execution1.getState().isRunning(), is(true));
+        assertThat(execution2.getState().getCurrent(), is(State.Type.CREATED));
+
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
+
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.CANCELLED) {
+                    latch2.countDown();
+                }
+            }
+        });
+
+        latch1.await(1, TimeUnit.MINUTES);
+        latch2.await(1, TimeUnit.MINUTES);
+
+        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.CANCELLED));
+        assertThat(executionResult2.get().getState().getHistories().get(0).getState(), is(State.Type.CREATED));
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.CANCELLED));
     }
 }

@@ -1,11 +1,12 @@
 package io.kestra.core.validations;
 
-import javax.validation.Constraint;
+import io.kestra.core.validations.validator.FlowValidator;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import javax.validation.Constraint;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = { })
+@Constraint(validatedBy = FlowValidator.class)
 public @interface FlowValidation {
     String message() default "invalid Flow";
 }

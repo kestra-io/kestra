@@ -55,6 +55,14 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(2));
     }
 
+    @Test
+    void flowableTask() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-flowable");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.getTaskRunList(), hasSize(3));
+    }
+
     private URI storageUpload(int count) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 

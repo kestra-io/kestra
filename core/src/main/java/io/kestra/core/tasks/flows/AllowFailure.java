@@ -64,7 +64,8 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
             resolvedTasks,
             resolvedErrors,
             parentTaskRun,
-            runContext
+            runContext,
+            this.isAllowFailure()
         );
 
         if (type.isEmpty()) {
@@ -75,7 +76,8 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
                 resolvedTasks,
                 null,
                 parentTaskRun,
-                runContext
+                runContext,
+                this.isAllowFailure()
             );
 
             if (normalState.isPresent() && normalState.get().isFailed()) {

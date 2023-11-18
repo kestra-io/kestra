@@ -64,7 +64,6 @@ import javax.validation.constraints.NotNull;
 )
 public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @NotNull
-    @NotBlank
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks",

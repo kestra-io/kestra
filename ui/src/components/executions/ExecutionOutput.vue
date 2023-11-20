@@ -20,6 +20,12 @@
                 </el-select>
             </el-form-item>
             <el-form-item>
+                <el-input v-model="filterByValue" placeholder="Filter by Value..."></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-input v-model="filterByName" placeholder="Filter by Name..."></el-input>
+            </el-form-item>
+            <el-form-item>
                 <el-tooltip :content="$t('eval.tooltip')" :persistent="false" transition="" :hide-after="0">
                     <el-button :disabled="!filter" @click="isModalOpen = !isModalOpen">
                         {{ $t("eval.title") }}
@@ -99,6 +105,7 @@
     import Pagination from "../layout/Pagination.vue";
     import {apiUrl} from "override/utils/route";
     import SubFlowLink from "../flows/SubFlowLink.vue";
+    import {random} from "lodash";
 
     export default {
         components: {
@@ -111,6 +118,8 @@
         data() {
             return {
                 filter: undefined,
+                filterByValue: undefined,
+                filterByName: undefined,
                 debugExpression: "",
                 isJson: false,
                 debugError: "",
@@ -198,6 +207,12 @@
                     const token = taskRun.id;
                     if (this.filter === undefined || token === this.filter) {
                         Utils.executionVars(taskRun.outputs).forEach(output => {
+                            if(this.filterByValue && !taskRun.value.includes(this.filterByValue)) {
+                                return;
+                            }
+                            if(this.filterByName && !output.key.includes(this.filterByName)) {
+                                return;
+                            }
                             const item = {
                                 key: output.key,
                                 output: output.value,

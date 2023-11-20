@@ -157,7 +157,7 @@ public class Worker implements Runnable, AutoCloseable {
                     workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
                 } catch (Exception e) {
                     runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                    workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.FAILED));
+                    workerTask = workerTask.fail();
                     this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
                     this.logTerminated(workerTask);
 
@@ -178,7 +178,7 @@ public class Worker implements Runnable, AutoCloseable {
                     // all tasks will be handled immediately by the worker
                     WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
 
-                    if (workerTaskResult.getTaskRun().getState().isFailed()) {
+                    if (workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
                         break;
                     }
 
@@ -350,8 +350,7 @@ public class Worker implements Runnable, AutoCloseable {
                     this.workerTaskResultQueue.emit(
                         new WorkerTaskResult(lastResult)
                     );
-                })/*,
-                Fallback.of(current::get)*/
+                })
             )
             .get(() -> this.runAttempt(current.get()));
 
@@ -382,21 +381,22 @@ public class Worker implements Runnable, AutoCloseable {
             state = State.Type.WARNING;
         }
 
+        if (workerTask.getTask().isAllowFailure() && state.isFailed()) {
+            state = State.Type.WARNING;
+        }
+
         // emit
         finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
 
         // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
-        // So we just tried to fail the status of the worker task, in this case, no log can't be happend, just
+        // So we just tried to fail the status of the worker task, in this case, no log can't be added, just
         // changing status must work in order to finish current task (except if we are near the upper bound size).
         try {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } catch (QueueException e) {
-            finalWorkerTask = workerTask
-                .withTaskRun(workerTask.getTaskRun()
-                    .withState(State.Type.FAILED)
-                );
+            finalWorkerTask = workerTask.fail();
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
             RunContext runContext = workerTask
                 .getRunContext()
@@ -460,7 +460,8 @@ public class Worker implements Runnable, AutoCloseable {
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
-            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
+            var state = workerTask.getTask().isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
+            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new State().withState(state)).build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
             logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
@@ -496,7 +497,7 @@ public class Worker implements Runnable, AutoCloseable {
             state = workerThread.getTaskState();
         } catch (InterruptedException e) {
             logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
-            state = State.Type.FAILED;
+            state  = workerTask.getTask().isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;;
         } finally {
             synchronized (this) {
                 workerThreadReferences.remove(workerThread);

@@ -107,7 +107,6 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
     @PluginProperty(dynamic = true)
     private Map<String, Object> outputs;
 
-    @SuppressWarnings("unchecked")
     @Override
     public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
                                                                    FlowExecutorInterface flowExecutorInterface,
@@ -149,7 +148,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
         io.kestra.core.models.flows.Flow flow,
         Execution execution
     ) {
-        // we only create a worker task result when the taskrun is terminated
+        // we only create a worker task result when the execution is terminated
         if (!taskRun.getState().isTerminated()) {
             return Optional.empty();
         }
@@ -162,9 +161,10 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
                 builder.outputs(runContext.render(this.getOutputs()));
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '" + e.getMessage() + "'", e);
+                var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
                 taskRun = taskRun
-                    .withState(State.Type.FAILED)
-                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()))
+                    .withState(state)
+                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                     .withOutputs(builder.build().toMap());
 
                 return Optional.of(WorkerTaskResult.builder()
@@ -175,7 +175,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
 
         taskRun = taskRun.withOutputs(builder.build().toMap());
 
-        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed, State.Type.SUCCESS));
+        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure()));
 
         return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
     }

@@ -25,13 +25,13 @@ public final class ExecutableUtils {
         // prevent initialization
     }
 
-    public static State.Type guessState(Execution execution, boolean transmitFailed, State.Type defaultState) {
+    public static State.Type guessState(Execution execution, boolean transmitFailed, boolean allowedFailure) {
         if (transmitFailed &&
             (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
-            return execution.getState().getCurrent();
+            return (allowedFailure && execution.getState().isFailed()) ? State.Type.WARNING : execution.getState().getCurrent();
         } else {
-            return defaultState;
+            return State.Type.SUCCESS;
         }
     }
 
@@ -105,7 +105,7 @@ public final class ExecutableUtils {
             .build();
     }
 
-    public static TaskRun manageIterations(TaskRun taskRun, Execution execution, boolean transmitFailed) throws InternalException {
+    public static TaskRun manageIterations(TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure) throws InternalException {
         if (taskRun.getOutputs() != null && taskRun.getOutputs().containsKey("iterations")) {
             Map<String, Integer> taskRunIteration = (Map<String, Integer>) taskRun.getOutputs().get("iterations");
             int maxIterations = taskRunIteration.get("max");
@@ -135,7 +135,7 @@ public final class ExecutableUtils {
                     // the final state should be computed based on the iterations
                     return previousTaskRun.withOutputs(Map.of("iterations", iterations));
                 } else if (terminatedIterations == maxIterations && taskRun.getState().isTerminated()) {
-                    var state = transmitFailed ? findTerminalState(iterations) : State.Type.SUCCESS;
+                    var state = transmitFailed ? findTerminalState(iterations, allowFailure) : State.Type.SUCCESS;
                     return previousTaskRun.withOutputs(Map.of("iterations", iterations))
                         .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                         .withState(state);
@@ -147,9 +147,9 @@ public final class ExecutableUtils {
         return taskRun;
     }
 
-    private static State.Type findTerminalState(Map<String, Integer> iterations) {
+    private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure) {
         if (iterations.getOrDefault(State.Type.FAILED.toString(), 0) > 0) {
-            return State.Type.FAILED;
+            return allowFailure ? State.Type.WARNING : State.Type.FAILED;
         }
         if (iterations.getOrDefault(State.Type.KILLED.toString(), 0) > 0) {
             return State.Type.KILLED;

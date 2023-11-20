@@ -26,7 +26,7 @@
             <component
                 :is="`task-${getType(schema)}`"
                 :model-value="getPropertiesValue(key)"
-                @update:model-value="onInput(key, $event)"
+                @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"
                 :schema="schema"
                 :required="isRequired(key)"
@@ -40,6 +40,7 @@
             :root="root"
             :schema="schema"
             :definitions="definitions"
+            @update:model-value="onInput"
         />
     </template>
 </template>
@@ -69,16 +70,11 @@
             properties() {
                 if (this.schema) {
                     const properties = this.schema.properties
-
                     return this.sortProperties(properties)
                 }
 
                 return undefined;
-            },
-            editorValue() {
-                const stringify = YamlUtils.stringify(toRaw(this.modelValue));
-                return stringify.trim() === "{}" ? "" : stringify;
-            },
+            }
         },
         methods: {
             getPropertiesValue(properties) {
@@ -125,7 +121,7 @@
                         return result
                     }, {});
             },
-            onInput(properties, value) {
+            onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[properties] = value;
                 this.$emit("update:modelValue", currentValue);

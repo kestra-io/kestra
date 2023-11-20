@@ -1,7 +1,12 @@
 package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
-import lombok.*;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
@@ -10,6 +15,7 @@ import java.util.stream.Collectors;
 @Getter
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public abstract class AbstractClassDocumentation<T> {
     protected Boolean deprecated;
     protected String cls;
@@ -42,7 +48,7 @@ public abstract class AbstractClassDocumentation<T> {
             .filter(entry -> !entry.getKey().equals("io.kestra.core.models.tasks.Task"))
             .map(entry -> {
                 Map<String, Object> value = (Map<String, Object>) entry.getValue();
-                value.put("properties", flatten(properties(value), required(value)));
+                value.put("properties", flatten(properties(value), required(value), isTypeToKeep(entry.getKey())));
 
                 return new AbstractMap.SimpleEntry<>(
                     entry.getKey(),
@@ -80,7 +86,14 @@ public abstract class AbstractClassDocumentation<T> {
 
     protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required) {
         map.remove("type");
-        return flatten(map, required, null);
+        return flatten(map, required, (String) null);
+    }
+
+    protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required, Boolean keepType) {
+        if (!keepType) {
+            map.remove("type");
+        }
+        return flatten(map, required, (String) null);
     }
 
     @SuppressWarnings("unchecked")
@@ -112,6 +125,19 @@ public abstract class AbstractClassDocumentation<T> {
         }
 
         return result;
+    }
+
+    // Some task can have the `type` property but not to represent the task
+    // so we cant to keep it in the doc
+    private Boolean isTypeToKeep(String key){
+        try {
+            if (AbstractRetry.class.isAssignableFrom(Class.forName(key))) {
+                return true;
+            }
+        } catch (ClassNotFoundException ignored) {
+            log.debug(ignored.getMessage(), ignored);
+        }
+        return false;
     }
 
     protected static String flattenKey(String current, String parent) {

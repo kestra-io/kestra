@@ -238,20 +238,28 @@ public class JdbcExecutor implements ExecutorInterface {
             workerJobRunningRepository.getWorkerJobWithWorkerDead(context, workersToDeleteUuids)
                 .forEach(workerJobRunning -> {
                     if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-                        workerTaskQueue.emit(WorkerTask.builder()
-                            .taskRun(workerTaskRunning.getTaskRun())
-                            .task(workerTaskRunning.getTask())
-                            .runContext(workerTaskRunning.getRunContext())
-                            .build()
-                        );
+                        if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun().getExecutionId())) {
+                            // if the execution is skipped, we remove the workerTaskRunning and skip its resubmission
+                            log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getId());
+                            workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
+                        }
+                        else {
+                            workerTaskQueue.emit(WorkerTask.builder()
+                                .taskRun(workerTaskRunning.getTaskRun())
+                                .task(workerTaskRunning.getTask())
+                                .runContext(workerTaskRunning.getRunContext())
+                                .build()
+                            );
 
-                        log.warn(
-                            "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
-                            workerTaskRunning.getTaskRun().getNamespace(),
-                            workerTaskRunning.getTaskRun().getFlowId(),
-                            workerTaskRunning.getTaskRun().getExecutionId(),
-                            workerTaskRunning.getTaskRun().getId()
-                        );
+                            log.warn(
+                                "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
+                                workerTaskRunning.getTaskRun().getNamespace(),
+                                workerTaskRunning.getTaskRun().getFlowId(),
+                                workerTaskRunning.getTaskRun().getExecutionId(),
+                                workerTaskRunning.getTaskRun().getId()
+                            );
+                        }
+
                     } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
                         workerTaskQueue.emit(WorkerTrigger.builder()
                             .trigger(workerTriggerRunning.getTrigger())

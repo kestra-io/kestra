@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -55,7 +56,9 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item", null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
 
         // we should have triggered 3 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
@@ -94,7 +97,9 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-no-wait", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-no-wait", null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(1));
@@ -137,7 +142,9 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-failed", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-failed", null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
 
         // we should have triggered 3 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));

@@ -30,6 +30,31 @@ const extensionsToFetch = Object.entries(versionByExtensionIdToFetch).map(([exte
 }));
 
 // used to configure VSCode startup
+const sidebarTabs = [
+    {"id": "workbench.view.explorer", "pinned": true, "visible": true, "order": 0},
+    {"id": "workbench.view.search", "pinned": true, "visible": true, "order": 1},
+    {"id": "workbench.view.scm", "pinned": false, "visible": false, "order": 2},
+    {"id": "workbench.view.debug", "pinned": false,"visible": false,"order": 3},
+    {"id": "workbench.view.extensions", "pinned": true,"visible": true,"order": 4},
+    {"id": "workbench.view.remote", "pinned": false,"visible": false,"order": 4},
+    {"id": "workbench.view.extension.test", "pinned": false,"visible": false,"order": 6},
+    {"id": "workbench.view.extension.references-view", "pinned": false,"visible": false,"order": 7},
+    {"id": "workbench.panel.chatSidebar", "pinned": false,"visible": false,"order": 100},
+    {"id": "userDataProfiles", "pinned": false, "visible": false},
+    {"id": "workbench.view.sync", "pinned": false,"visible": false},
+    {"id": "workbench.view.editSessions", "pinned": false, "visible": false}
+];
+
+const bottomBarTabs = [
+    {"id":"workbench.panel.markers", "pinned": false,"visible": false,"order": 0},
+    {"id":"workbench.panel.output", "pinned": false,"visible": false,"order": 1},
+    {"id":"workbench.panel.repl", "pinned": false,"visible": false,"order": 2},
+    {"id":"terminal", "pinned": false,"visible": false,"order": 3},
+    {"id":"workbench.panel.testResults", "pinned": false,"visible": false,"order": 3},
+    {"id":"~remote.forwardedPortsContainer", "pinned": false,"visible": false,"order": 5},
+    {"id":"refactorPreview", "pinned": false,"visible": false}
+];
+
 window.product = {
     productConfiguration: {
         nameShort: "Kestra VSCode",
@@ -77,5 +102,17 @@ window.product = {
         "workbench.colorTheme": THEME === "dark" ? "Sweet Dracula" : "Default Light Modern",
         // provide the Kestra root URL to extension
         "kestra.api.url": KESTRA_API_URL
+    },
+    profile: {
+        name: "Kestra VSCode",
+        contents: JSON.stringify({
+            globalState: JSON.stringify({
+                "storage": {
+                    "workbench.activity.pinnedViewlets2": sidebarTabs,
+                    "workbench.activity.showAccounts": "false",
+                    "workbench.panel.pinnedPanels": bottomBarTabs
+                }
+            })
+        })
     }
 };

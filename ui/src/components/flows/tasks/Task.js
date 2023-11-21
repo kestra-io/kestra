@@ -58,6 +58,10 @@ export default {
                 return "number";
             }
 
+            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+                return "anyOf";
+            }
+
             return property.type || "dynamic";
         },
         // eslint-disable-next-line no-unused-vars

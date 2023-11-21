@@ -16,6 +16,7 @@ import io.kestra.core.runners.RunContext;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
@@ -128,7 +129,9 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
 
             finalFiles.forEach(throwConsumer(s -> {
                 URI from = new URI(runContext.render(s));
-                IOUtils.copyLarge(runContext.uriToInputStream(from), fileOutputStream);
+                try (InputStream inputStream = runContext.uriToInputStream(from)) {
+                    IOUtils.copyLarge(inputStream, fileOutputStream);
+                }
 
                 if (separator != null) {
                     IOUtils.copy(new ByteArrayInputStream(this.separator.getBytes()), fileOutputStream);

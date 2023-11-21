@@ -19,12 +19,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Context used for storing and retrieving data from Kestra's storage.
+ * Context used for storing and retrieving data from Kestra's internal storage.
  */
 @Getter
 public class StorageContext {
 
     public static final String KESTRA_SCHEME = "kestra";
+    public static final String KESTRA_PROTOCOL = KESTRA_SCHEME + "://";
+    public static final String PREFIX_MESSAGES = "/_messages";
 
     // /{namespace}/_files
     static final String PREFIX_FORMAT_NAMESPACE_FILE = "/%s/_files";

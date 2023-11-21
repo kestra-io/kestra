@@ -107,7 +107,6 @@ public class NamespaceFilesService {
     private void copy(String tenantId, String namespace, Path basePath, List<URI> files) throws IOException {
         files
             .forEach(throwConsumer(f -> {
-                InputStream inputStream = storageInterface.get(tenantId, uri(namespace, f));
                 Path destination = Paths.get(basePath.toString(), f.getPath());
 
                 if (!destination.getParent().toFile().exists()) {
@@ -115,7 +114,9 @@ public class NamespaceFilesService {
                     destination.getParent().toFile().mkdirs();
                 }
 
-                Files.copy(inputStream, destination);
+                try (InputStream inputStream = storageInterface.get(tenantId, uri(namespace, f))) {
+                    Files.copy(inputStream, destination);
+                }
             }));
     }
 }

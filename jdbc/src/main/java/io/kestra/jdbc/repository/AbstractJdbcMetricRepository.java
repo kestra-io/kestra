@@ -33,12 +33,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
-        return this.query(
-            tenantId,
-            field("execution_id").eq(executionId)
-            , pageable
-        );
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId,String name, Pageable pageable) {
+        Condition condition = field("execution_id").eq(executionId);
+        if (name != null && !name.isEmpty()) {
+            condition = condition.and(field("metric_name").likeIgnoreCase(name + "%"));
+        }
+        return this.query(tenantId, condition, pageable);
     }
 
     @Override
@@ -52,13 +52,15 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
-        return this.query(
-            tenantId,
-            field("execution_id").eq(executionId)
-                .and(field("taskrun_id").eq(taskRunId)),
-            pageable
-        );
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId,String name, Pageable pageable) {
+        Condition condition = field("execution_id").eq(executionId)
+            .and(field("taskrun_id").eq(taskRunId));
+
+        if (name != null && !name.isEmpty()) {
+            condition = condition.and(field("metric_name").likeIgnoreCase(name + "%"));
+        }
+
+        return this.query(tenantId, condition, pageable);
     }
 
     @Override

@@ -33,13 +33,13 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(counter);
         metricRepository.save(timer);
 
-        List<MetricEntry> results = metricRepository.findByExecutionId(null, executionId, Pageable.from(1, 10));
+        List<MetricEntry> results = metricRepository.findByExecutionId(null, executionId,"res", Pageable.from(1, 10));
         assertThat(results.size(), is(2));
 
         results = metricRepository.findByExecutionIdAndTaskId(null, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
         assertThat(results.size(), is(2));
 
-        results = metricRepository.findByExecutionIdAndTaskRunId(null, executionId, taskRun1.getId(), Pageable.from(1, 10));
+        results = metricRepository.findByExecutionIdAndTaskRunId(null, executionId, taskRun1.getId(),null, Pageable.from(1, 10));
         assertThat(results.size(), is(1));
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(

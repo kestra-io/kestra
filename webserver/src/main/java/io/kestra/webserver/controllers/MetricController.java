@@ -50,15 +50,16 @@ public class MetricController {
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
-        @Parameter(description = "The task id") @Nullable @QueryValue String taskId
+        @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
+        @Parameter(description = "name") @Nullable @QueryValue String name
     ) {
         var pageable = PageableUtils.from(page, size, sort, metricsRepository.sortMapping());
         if (taskId != null) {
             return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, pageable));
         } else if (taskRunId != null) {
-            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, pageable));
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId,name, pageable));
         } else {
-            return PagedResults.of(metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, pageable));
+            return PagedResults.of(metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, name,pageable));
         }
     }
 

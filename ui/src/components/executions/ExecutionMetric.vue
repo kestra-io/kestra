@@ -5,7 +5,6 @@
         :show-task="true"
         :execution="execution"
         :filter-by-name="filterByName"
-        :filter-by-tags="filterByTags"
     >
         <template #navbar>
             <el-form-item>
@@ -33,12 +32,6 @@
                     placeholder="Filter by Name..."
                 ></el-input>
             </el-form-item>
-            <el-form-item>
-                <el-input
-                    v-model="filterByTags"
-                    placeholder="Filter by Tags..."
-                ></el-input>
-            </el-form-item>
         </template>
     </metrics-table>
 </template>
@@ -61,7 +54,6 @@ export default {
             isModalOpen: false,
             taskRunId: undefined,
             filterByName: undefined,
-            filterByTags: undefined,
         };
     },
     methods: {

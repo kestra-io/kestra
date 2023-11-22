@@ -20,10 +20,11 @@ public class MemoryMetricRepository implements MetricRepositoryInterface {
     private final List<MetricEntry> metrics = new ArrayList<>();
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id,String name, Pageable pageable) {
         var results = metrics.stream()
             .filter(metric -> metric.getExecutionId().equals(id))
             .filter(metric -> (tenantId == null && metric.getTenantId() == null) || (tenantId != null && tenantId.equals(metric.getTenantId())))
+            .filter(metric -> (name == null || name.equals(metric.getName())))
             .collect(Collectors.toList());
         return new ArrayListTotal<>(results, results.size());
     }
@@ -34,7 +35,7 @@ public class MemoryMetricRepository implements MetricRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId,String name, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 

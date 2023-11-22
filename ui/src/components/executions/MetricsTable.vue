@@ -118,10 +118,6 @@ export default {
             type: String,
             default: undefined,
         },
-        filterByTags: {
-            type: String,
-            default: undefined,
-        },
     },
     watch: {
         taskRunId() {
@@ -155,6 +151,11 @@ export default {
             } else {
                 params.sort = "name:asc";
             }
+
+            if (this.filterByName) {
+                params.name = this.filterByName;
+            }
+
             this.$store
                 .dispatch("execution/loadMetrics", {
                     executionId: this.execution.id,
@@ -163,18 +164,6 @@ export default {
                 })
                 .then((metrics) => {
                     this.metrics = metrics.results;
-                    if (this.filterByName) {
-                        this.metrics = this.metrics.filter((item) =>
-                            item.name.includes(this.filterByName),
-                        );
-                    }
-                    if (this.filterByTags) {
-                        this.metrics = this.metrics.filter((item) =>
-                            Object.values(item.tags).some((value) =>
-                                value.includes(this.filterByTags),
-                            ),
-                        );
-                    }
                     this.metricsTotal = metrics.total;
                     callback();
                 });

@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface MetricRepositoryInterface extends SaveRepositoryInterface<MetricEntry> {
-    ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable);
+    ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id,String name, Pageable pageable);
 
     ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable);
 
-    ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable);
+    ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId,String name, Pageable pageable);
 
     List<String> flowMetrics(String tenantId, String namespace, String flowId);
 

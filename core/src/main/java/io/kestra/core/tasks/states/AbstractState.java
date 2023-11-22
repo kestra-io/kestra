@@ -54,9 +54,9 @@ public abstract class AbstractState extends Task {
 
 
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue);
-
-        return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
+        try (InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue)) {
+            return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
+        }
     }
 
     protected Pair<URI, Map<String, Object>> merge(RunContext runContext, Map<String, Object> map) throws IllegalVariableEvaluationException, IOException {

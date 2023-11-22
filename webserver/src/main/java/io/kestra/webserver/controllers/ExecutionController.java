@@ -1014,7 +1014,6 @@ public class ExecutionController {
         this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
-        InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path);
         Optional<Charset> charset;
 
         try {
@@ -1023,13 +1022,15 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        FileRender fileRender = FileRenderBuilder.of(
-            extension,
-            fileStream,
-            charset,
-            maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
-        );
+        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)){
+            FileRender fileRender = FileRenderBuilder.of(
+                extension,
+                fileStream,
+                charset,
+                maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
+            );
 
-        return HttpResponse.ok(fileRender);
+            return HttpResponse.ok(fileRender);
+        }
     }
 }

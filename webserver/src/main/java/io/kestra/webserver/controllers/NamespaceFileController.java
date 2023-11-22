@@ -138,7 +138,9 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         ensureWritableFile(path);
 
-        storageInterface.put(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path), new BufferedInputStream(fileContent.getInputStream()));
+        try(BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream())) {
+            storageInterface.put(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path), inputStream);
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

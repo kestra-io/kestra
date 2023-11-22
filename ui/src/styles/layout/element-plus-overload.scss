@@ -413,11 +413,6 @@ form.ks-horizontal {
 
     &.is-dark {
         color: var(--bs-gray-100);
-        html:not(.dark) & {
-            * {
-                color: var(--bs-gray-100);
-            }
-        }
 
         background: var(--bs-gray-900);
         border: 1px solid var(--bs-border-color);

@@ -95,49 +95,49 @@ import javax.validation.constraints.NotNull;
                 namespace: dev
 
                 tasks:
-                - id: wdir
+                  - id: wdir
                     type: io.kestra.core.tasks.flows.WorkingDirectory
                     tasks:
-                    - id: demoSQL
+                      - id: demoSQL
                         type: io.kestra.core.tasks.storages.LocalFiles
                         inputs:
                         query.sql: |
-                            SELECT sum(total) as total, avg(quantity) as avg_quantity
-                            FROM sales;
+                          SELECT sum(total) as total, avg(quantity) as avg_quantity
+                          FROM sales;
 
-                    - id: inlineScript
+                      - id: inlineScript
                         type: io.kestra.plugin.scripts.python.Script
                         runner: DOCKER
                         docker:
-                        image: python:3.11-slim
+                          image: python:3.11-slim
                         beforeCommands:
-                        - pip install requests kestra > /dev/null
+                          - pip install requests kestra > /dev/null
                         warningOnStdErr: false
                         script: |
-                        import requests
-                        import json
-                        from kestra import Kestra
+                            import requests
+                            import json
+                            from kestra import Kestra
 
-                        with open('query.sql', 'r') as input_file:
-                            sql = input_file.read()
+                            with open('query.sql', 'r') as input_file:
+                                sql = input_file.read()
 
-                        response = requests.get('https://api.github.com')
-                        data = response.json()
+                            response = requests.get('https://api.github.com')
+                            data = response.json()
 
-                        with open('output.json', 'w') as output_file:
-                            json.dump(data, output_file)
+                            with open('output.json', 'w') as output_file:
+                                json.dump(data, output_file)
 
-                        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
+                            Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-                    - id: jsonFiles
+                      - id: jsonFiles
                         type: io.kestra.core.tasks.storages.LocalFiles
                         outputs:
-                        - output.json
+                          - output.json
 
-                - id: loadToMongoDB
+                  - id: loadToMongoDB
                     type: io.kestra.plugin.mongodb.Load
                     connection:
-                    uri: mongodb://host.docker.internal:27017/
+                      uri: mongodb://host.docker.internal:27017/
                     database: local
                     collection: github
                     from: "{{outputs.jsonFiles.uris['output.json']}}"
@@ -180,6 +180,7 @@ import javax.validation.constraints.NotNull;
                     tasks:
                     - id: script
                       type: io.kestra.plugin.scripts.node.Script
+                      runner: PROCESS
                       beforeCommands:
                         - npm install colors
                       script: |
@@ -194,8 +195,11 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @Schema(
         title = "Cache configuration",
         description = """
-            When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the execution of the task and saved in Kestra's internal storage.
-            Then at the beginning of the next execution of the task, the archive of the files is retrieved and the working directory initialized with it.
+            When you configure the `cache` property, an archive of cached files (incl. files such as package dependencies) is created at the end of the task run. That archive is saved in Kestra's internal storage.
+
+            The next task run retrieves those files and initializes the working directory with those files.
+
+            Note that the `cache` property works only with the `PROCESS` runner due to Docker permissions issues. Therefore, make sure to set the `runner` property to `PROCESS` in your script tasks when using the `cache` property on the `WorkingDirectory` task.
             """
     )
     @PluginProperty

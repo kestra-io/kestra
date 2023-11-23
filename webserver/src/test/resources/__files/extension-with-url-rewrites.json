@@ -1,0 +1,4 @@
+[
+    "http://localhost:{port}/api/v1/editor/marketplace/resource/my-publisher/my-extension/1.0.0/extension/package.json",
+    "http://localhost:{port}/api/v1/editor/marketplace/resource/my-publisher/my-extension/1.0.0/extension/package.nls.json"
+]

@@ -93,6 +93,10 @@ public class VariableRenderer {
     }
 
     public String recursiveRender(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return recursiveRender(inline, variables, true);
+    }
+
+    public String recursiveRender(String inline, Map<String, Object> variables, Boolean renderVariables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -111,8 +115,14 @@ public class VariableRenderer {
             return uuid;
         });
 
+        // pre-process variables
+        if (renderVariables) {
+            variables = this.renderVariables(variables);
+        }
+
         boolean isSame = false;
         String current = "";
+        List<String> previousCurrents = new ArrayList<>();
         PebbleTemplate compiledTemplate;
         while (!isSame) {
             try {
@@ -131,26 +141,47 @@ public class VariableRenderer {
                 }
 
                 try {
-                    Template  template = handlebars.compileInline(currentTemplate);
+                    Template template = handlebars.compileInline(currentTemplate);
                     current = template.apply(variables);
                 } catch (HandlebarsException | IOException hbE) {
                     throw new IllegalVariableEvaluationException(
-                        "Pebble evaluation failed with '" + e.getMessage() +  "' " +
-                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'" ,
+                        "Pebble evaluation failed with '" + e.getMessage() + "' " +
+                            "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'",
                         e
                     );
                 }
             }
 
-            isSame = currentTemplate.equals(current);
+            // Avoid infinite loop
+            if (previousCurrents.contains(current)) {
+                break;
+            } else {
+                previousCurrents.add(current);
+            }
+            previousCurrents.add(current);
+            isSame = previousCurrents.contains(current);
             currentTemplate = current;
         }
 
         // post-process raw tags
-        for(var entry: replacers.entrySet()) {
+        for (var entry : replacers.entrySet()) {
             current = current.replace(entry.getKey(), entry.getValue());
         }
         return current;
+    }
+
+    public Map<String, Object> renderVariables(Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        Map<String, Object> currentVariables = variables;
+        Map<String, Object> previousVariables;
+        boolean isSame = false;
+
+        while (!isSame) {
+            previousVariables = currentVariables;
+            currentVariables = this.render(currentVariables, variables, false);
+            isSame = previousVariables.equals(currentVariables);
+        }
+
+        return currentVariables;
     }
 
     public IllegalVariableEvaluationException properPebbleException(PebbleException e) {
@@ -166,17 +197,27 @@ public class VariableRenderer {
         return new IllegalVariableEvaluationException(e);
     }
 
+    // By default, render() will render variables
+    // so we keep the previous behavior
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.recursiveRender(inline, variables);
+        return this.recursiveRender(inline, variables, true);
     }
 
+    public String render(String inline, Map<String, Object> variables, boolean renderVariables) throws IllegalVariableEvaluationException {
+        return this.recursiveRender(inline, variables, renderVariables);
+    }
 
+    // Default behavior
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return render(in, variables, true);
+    }
+
+    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean renderVariables) throws IllegalVariableEvaluationException {
         Map<String, Object> map = new HashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
-            String key = this.render(r.getKey(), variables);
-            Object value = renderObject(r.getValue(), variables).orElse(r.getValue());
+            String key = this.render(r.getKey(), variables, renderVariables);
+            Object value = renderObject(r.getValue(), variables, renderVariables).orElse(r.getValue());
 
             map.putIfAbsent(
                 key,
@@ -188,23 +229,23 @@ public class VariableRenderer {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    private Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean renderVariables) throws IllegalVariableEvaluationException {
         if (object instanceof Map) {
-            return Optional.of(this.render((Map) object, variables));
+            return Optional.of(this.render((Map) object, variables, renderVariables));
         } else if (object instanceof Collection) {
-            return Optional.of(this.renderList((List) object, variables));
+            return Optional.of(this.renderList((List) object, variables, renderVariables));
         } else if (object instanceof String) {
-            return Optional.of(this.render((String) object, variables));
+            return Optional.of(this.render((String) object, variables, renderVariables));
         }
 
         return Optional.empty();
     }
 
-    public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    private List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean renderVariables) throws IllegalVariableEvaluationException {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            this.renderObject(inline, variables)
+            this.renderObject(inline, variables, renderVariables)
                 .ifPresent(result::add);
         }
 

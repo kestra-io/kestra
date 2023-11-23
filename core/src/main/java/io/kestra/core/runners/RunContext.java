@@ -434,12 +434,22 @@ public class RunContext {
         return this;
     }
 
+    // Default behavior
     public String render(String inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables);
+        return variableRenderer.render(inline, this.variables, true);
     }
 
+    public String render(String inline, boolean renderVariables) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, this.variables, renderVariables);
+    }
+
+    // Default behavior
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeVariables(variables), true);
+    }
+
+    public String render(String inline, Map<String, Object> variables, boolean renderVariables) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, mergeVariables(variables), renderVariables);
     }
 
     public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
@@ -459,20 +469,20 @@ public class RunContext {
     }
 
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables);
+        return variableRenderer.render(inline, this.variables, true);
     }
 
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeVariables(variables), true);
     }
 
-    public Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException {
+    public Map<String, String> renderMap(Map<String, String> inline, boolean renderVariables) throws IllegalVariableEvaluationException {
         return inline
             .entrySet()
             .stream()
             .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), mergeVariables(variables)),
-                this.render(entry.getValue(), mergeVariables(variables))
+                this.render(entry.getKey(), mergeVariables(variables), renderVariables),
+                this.render(entry.getValue(), mergeVariables(variables), renderVariables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

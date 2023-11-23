@@ -121,7 +121,6 @@ public class VariableRenderer {
 
         boolean isSame = false;
         String current = "";
-        List<String> previousCurrents = new ArrayList<>();
         PebbleTemplate compiledTemplate;
         while (!isSame) {
             try {
@@ -151,14 +150,8 @@ public class VariableRenderer {
                 }
             }
 
-            // Avoid infinite loop
-            if (previousCurrents.contains(current)) {
-                break;
-            } else {
-                previousCurrents.add(current);
-            }
-            previousCurrents.add(current);
-            isSame = previousCurrents.contains(current);
+
+            isSame = currentTemplate.equals(current);
             currentTemplate = current;
         }
 

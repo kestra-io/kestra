@@ -108,11 +108,11 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
     private Map<String, Object> outputs;
 
     @Override
-    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
-                                                                   FlowExecutorInterface flowExecutorInterface,
-                                                                   io.kestra.core.models.flows.Flow currentFlow,
-                                                                   Execution currentExecution,
-                                                                   TaskRun currentTaskRun) throws InternalException {
+    public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
+                                                             FlowExecutorInterface flowExecutorInterface,
+                                                             io.kestra.core.models.flows.Flow currentFlow,
+                                                             Execution currentExecution,
+                                                             TaskRun currentTaskRun) throws InternalException {
         Map<String, Object> inputs = new HashMap<>();
         if (this.inputs != null) {
             inputs.putAll(runContext.render(this.inputs));
@@ -128,7 +128,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
             }
         }
 
-        return List.of(ExecutableUtils.workerTaskExecution(
+        return List.of(ExecutableUtils.subflowExecution(
             runContext,
             flowExecutorInterface,
             currentExecution,
@@ -141,7 +141,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
     }
 
     @Override
-    public Optional<WorkerTaskResult> createWorkerTaskResult(
+    public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
         io.kestra.core.models.flows.Flow flow,
@@ -166,8 +166,10 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
                     .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                     .withOutputs(builder.build().toMap());
 
-                return Optional.of(WorkerTaskResult.builder()
-                    .taskRun(taskRun)
+                return Optional.of(SubflowExecutionResult.builder()
+                    .executionId(execution.getId())
+                    .state(State.Type.FAILED)
+                    .parentTaskRun(taskRun)
                     .build());
             }
         }
@@ -176,7 +178,7 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
 
         taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure()));
 
-        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
+        return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
     }
 
     @Override

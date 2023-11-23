@@ -69,9 +69,9 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("numberOfBatches"), is(3));
         assertThat(outputs.get("iterations"), notNullValue());
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("max"), is(3));
         assertThat(iterations.get("CREATED"), is(0));
         assertThat(iterations.get("RUNNING"), is(0));
         assertThat(iterations.get("SUCCESS"), is(3));
@@ -107,9 +107,9 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("numberOfBatches"), is(3));
         assertThat(outputs.get("iterations"), notNullValue());
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("max"), is(3));
         assertThat(iterations.get("CREATED"), is(0));
         assertThat(iterations.get("RUNNING"), nullValue()); // if we didn't wait we will only observe CREATED and SUCCESS
         assertThat(iterations.get("SUCCESS"), is(3));
@@ -155,9 +155,9 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("numberOfBatches"), is(3));
         assertThat(outputs.get("iterations"), notNullValue());
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("max"), is(3));
         assertThat(iterations.get("CREATED"), is(0));
         assertThat(iterations.get("RUNNING"), is(0));
         assertThat(iterations.get("FAILED"), is(3));

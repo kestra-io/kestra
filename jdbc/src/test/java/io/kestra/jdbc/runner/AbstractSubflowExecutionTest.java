@@ -3,7 +3,7 @@ package io.kestra.jdbc.runner;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.tasks.flows.Flow;
-import io.kestra.core.runners.WorkerTaskExecution;
+import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -18,33 +18,33 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest(transactional = false)
-public abstract class AbstractWorkerTaskExecutionTest {
+public abstract class AbstractSubflowExecutionTest {
     @Inject
-    AbstractJdbcWorkerTaskExecutionStorage workerTaskExecutionStorage;
+    AbstractJdbcSubflowExecutionStorage subflowExecutionStorage;
 
     @Inject
     JdbcTestUtils jdbcTestUtils;
 
     @Test
-    void suite() throws Exception {
+    void suite() {
 
-        WorkerTaskExecution<?> workerTaskExecution = WorkerTaskExecution.builder()
+        SubflowExecution<?> subflowExecution = SubflowExecution.builder()
             .execution(Execution.builder().id(IdUtils.create()).build())
-            .task(Flow.builder().type(Flow.class.getName()).id(IdUtils.create()).build())
-            .taskRun(TaskRun.builder().id(IdUtils.create()).build())
+            .parentTask(Flow.builder().type(Flow.class.getName()).id(IdUtils.create()).build())
+            .parentTaskRun(TaskRun.builder().id(IdUtils.create()).build())
             .build();
 
-        workerTaskExecutionStorage.save(List.of(workerTaskExecution));
+        subflowExecutionStorage.save(List.of(subflowExecution));
 
 
-        Optional<WorkerTaskExecution<?>> find = workerTaskExecutionStorage.get(workerTaskExecution.getExecution().getId());
+        Optional<SubflowExecution<?>> find = subflowExecutionStorage.get(subflowExecution.getExecution().getId());
         assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getExecution().getId(), is(workerTaskExecution.getExecution().getId()));
+        assertThat(find.get().getExecution().getId(), is(subflowExecution.getExecution().getId()));
 
 
-        workerTaskExecutionStorage.delete(workerTaskExecution);
+        subflowExecutionStorage.delete(subflowExecution);
 
-        find = workerTaskExecutionStorage.get(workerTaskExecution.getExecution().getId());
+        find = subflowExecutionStorage.get(subflowExecution.getExecution().getId());
         assertThat(find.isPresent(), is(false));
     }
 

@@ -434,22 +434,12 @@ public class RunContext {
         return this;
     }
 
-    // Default behavior
     public String render(String inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables, true);
+        return variableRenderer.render(inline, this.variables);
     }
 
-    public String render(String inline, boolean renderVariables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables, renderVariables);
-    }
-
-    // Default behavior
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables), true);
-    }
-
-    public String render(String inline, Map<String, Object> variables, boolean renderVariables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables), renderVariables);
+        return variableRenderer.render(inline, mergeVariables(variables));
     }
 
     public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
@@ -469,20 +459,20 @@ public class RunContext {
     }
 
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables, true);
+        return variableRenderer.render(inline, this.variables);
     }
 
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables), true);
+        return variableRenderer.render(inline, mergeVariables(variables));
     }
 
-    public Map<String, String> renderMap(Map<String, String> inline, boolean renderVariables) throws IllegalVariableEvaluationException {
+    public Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException {
         return inline
             .entrySet()
             .stream()
             .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), mergeVariables(variables), renderVariables),
-                this.render(entry.getValue(), mergeVariables(variables), renderVariables)
+                this.render(entry.getKey(), mergeVariables(variables)),
+                this.render(entry.getValue(), mergeVariables(variables))
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -608,7 +598,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-       return this.storageInterface.get(getTenantId(), resolve);
+        return this.storageInterface.get(getTenantId(), resolve);
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {

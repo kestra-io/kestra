@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
@@ -39,17 +38,13 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import java.io.File;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Inject
@@ -58,10 +53,6 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
@@ -669,52 +660,5 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(executions.getTotal(), is(0L));
 
-    }
-
-    @Test
-    void kill() throws TimeoutException, InterruptedException {
-        // Run execution until it is paused
-        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
-        assertThat(runningExecution.getState().isRunning(), is(true));
-
-        // listen to the execution queue
-        CountDownLatch killingLatch = new CountDownLatch(1);
-        CountDownLatch killedLatch = new CountDownLatch(1);
-        executionQueue.receive(e -> {
-            if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLING) {
-                killingLatch.countDown();
-            }
-            if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLED) {
-                killedLatch.countDown();
-            }
-        });
-
-        // listen to the executionkilled queue
-        CountDownLatch executionKilledLatch = new CountDownLatch(1);
-        killQueue.receive(e -> {
-            if (e.getLeft().getExecutionId().equals(runningExecution.getId())) {
-                executionKilledLatch.countDown();
-            }
-        });
-
-        // kill the execution
-        HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/executions/" + runningExecution.getId() + "/kill"));
-        assertThat(killResponse.getStatus(), is(HttpStatus.NO_CONTENT));
-
-        // check that the execution has been set to killing then killed
-        assertTrue(killingLatch.await(10, TimeUnit.SECONDS));
-        assertTrue(killedLatch.await(10, TimeUnit.SECONDS));
-        //check that an executionkilled message has been sent
-        assertTrue(executionKilledLatch.await(10, TimeUnit.SECONDS));
-
-        // retrieve the execution from the API and check that the task has been set to killed
-        Thread.sleep(250);
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + runningExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().getCurrent(), is(State.Type.KILLED));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
     }
 }

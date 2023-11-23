@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -15,14 +14,11 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -51,10 +47,6 @@ public class ExecutorService {
 
     @Inject
     protected ConditionService conditionService;
-
-    @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
 
     protected FlowExecutorInterface flowExecutorInterface;
 
@@ -471,7 +463,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    private Executor handleCreatedKilling(Executor executor) {
+    private Executor handleCreatedKilling(Executor executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
         }
@@ -481,6 +473,8 @@ public class ExecutorService {
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(t -> {
+                Task task = executor.getFlow().findTaskByTaskId(t.getTaskId());
+
                 return childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
                     t
@@ -565,12 +559,7 @@ public class ExecutorService {
         );
 
         if (executor.getExecution().hasRunning(currentTasks) || executor.getExecution().hasCreated()) {
-            // if some tasks are not killed, send a killing event to the worker
-            killQueue.emit(ExecutionKilled
-                .builder()
-                .executionId(executor.getExecution().getId())
-                .build()
-            );
+            return executor;
         }
 
         Execution newExecution = executor.getExecution().withState(State.Type.KILLED);

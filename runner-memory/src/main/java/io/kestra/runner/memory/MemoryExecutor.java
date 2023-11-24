@@ -469,7 +469,7 @@ public class MemoryExecutor implements ExecutorInterface {
             Task task = flow.findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
             TaskRun taskRun;
             if (task instanceof ForEachItem forEachItem) {
-                taskRun = ExecutableUtils.manageIterations(workerTaskResult.getTaskRun(), this.execution, forEachItem.getTransmitFailed());
+                taskRun = ExecutableUtils.manageIterations(workerTaskResult.getTaskRun(), this.execution, forEachItem.getTransmitFailed(), forEachItem.isAllowFailure());
             } else {
                 taskRun = workerTaskResult.getTaskRun();
             }

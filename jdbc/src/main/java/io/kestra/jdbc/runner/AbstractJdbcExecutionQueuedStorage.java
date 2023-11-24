@@ -6,6 +6,7 @@ import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -45,4 +46,19 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
             });
     }
 
+    /**
+     * This method should only be used for administration purpose via a command
+     */
+    public List<ExecutionQueued> getAllForAllTenants() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(AbstractJdbcRepository.field("value"))
+                    .from(this.jdbcRepository.getTable());
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
 }

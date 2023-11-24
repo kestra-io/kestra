@@ -13,7 +13,8 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         ReindexCommand.class,
-        DatabaseCommand.class
+        DatabaseCommand.class,
+        SubmitQueuedCommand.class
     }
 )
 @Slf4j

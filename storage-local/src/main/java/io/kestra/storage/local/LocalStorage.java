@@ -2,6 +2,7 @@ package io.kestra.storage.local;
 
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tenant.TenantService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.io.FileUtils;
@@ -20,21 +21,43 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @LocalStorageEnabled
 public class LocalStorage implements StorageInterface {
-    LocalConfig config;
+    private final LocalConfig config;
+    private final TenantService tenantService;
 
     @Inject
-    public LocalStorage(LocalConfig config) throws IOException {
+    public LocalStorage(LocalConfig config, TenantService tenantService) throws IOException {
         this.config = config;
+        this.tenantService = tenantService;
 
         if (!Files.exists(config.getBasePath())) {
             Files.createDirectories(config.getBasePath());
         }
     }
 
-    private Path getPath(String tenantId, URI uri) {
-        Path basePath = tenantId == null ? config.getBasePath().toAbsolutePath()
-            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId);
-        if(uri == null) {
+    private Path getBasePath(String tenantId) throws IOException {
+        if (tenantId == null) {
+            return config.getBasePath().toAbsolutePath();
+        }
+
+        Path basePath = tenantService.storageConfiguration(tenantId)
+            .filter(storageConfiguration -> storageConfiguration.getConfiguration() != null)
+            .map(throwFunction(storageConfiguration -> {
+                if (storageConfiguration.getConfiguration().containsKey("basePath")) {
+                    Path tenantPath = Path.of((String) storageConfiguration.getConfiguration().get("basePath"));
+                    if (!Files.exists(tenantPath)) {
+                        Files.createDirectories(tenantPath);
+                    }
+                    return tenantPath;
+                }
+                return null;
+            }))
+            .orElse(config.getBasePath());
+        return Paths.get(basePath.toString(), tenantId);
+    }
+
+    private Path getPath(String tenantId, URI uri) throws IOException {
+        Path basePath = getBasePath(tenantId);
+        if (uri == null) {
             return basePath;
         }
 
@@ -51,7 +74,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public boolean exists(String tenantId, URI uri) {
+    public boolean exists(String tenantId, URI uri) throws IOException {
         return Files.exists(getPath(tenantId, uri));
     }
 
@@ -127,7 +150,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public URI createDirectory(String tenantId, URI uri) {
+    public URI createDirectory(String tenantId, URI uri) throws IOException {
         if (uri == null || uri.getPath().isEmpty()) {
             throw new IllegalArgumentException("Unable to create a directory with empty url.");
         }
@@ -177,15 +200,13 @@ public class LocalStorage implements StorageInterface {
             return walk.sorted(Comparator.reverseOrder())
                 .map(Path::toFile)
                 .peek(File::delete)
-                .map(r -> getKestraUri(tenantId, r.toPath()))
+                .map(throwFunction(r -> getKestraUri(tenantId, r.toPath())))
                 .toList();
         }
     }
 
-    private URI getKestraUri(String tenantId, Path path) {
-        Path prefix = (tenantId == null) ?
-            config.getBasePath().toAbsolutePath() :
-            Path.of(config.getBasePath().toAbsolutePath().toString(), tenantId);
+    private URI getKestraUri(String tenantId, Path path) throws IOException {
+        Path prefix = getBasePath(tenantId);
         return URI.create("kestra:///" + prefix.relativize(path));
     }
 

@@ -140,7 +140,7 @@ class NamespaceFileControllerTest {
     }
 
     @Test
-    void modifyGettingStarted_ShouldNotWork() {
+    void modifyGettingStarted_ShouldNotWork() throws IOException {
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "test.txt", "Hello".getBytes())
             .build();
@@ -168,7 +168,7 @@ class NamespaceFileControllerTest {
     }
 
     @Test
-    void moveGettingStarted_ShouldNotWork() {
+    void moveGettingStarted_ShouldNotWork() throws IOException {
         HttpClientResponseException exception = Assertions.assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/files?from=/getting-started.md&to=/my-getting-started.md", null))
         );

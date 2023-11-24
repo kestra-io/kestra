@@ -60,4 +60,6 @@ public class Usage {
 
     @Valid
     private final ExecutionUsage executions;
+
+    private int numberOfTenants;
 }

@@ -67,7 +67,6 @@
     </data-table>
 </template>
 
-
 <script>
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";
@@ -87,29 +86,29 @@
             return {
                 loadInit: false,
                 metrics: undefined,
-                metricsTotal: undefined,
+                metricsTotal: undefined
             };
         },
         props: {
             embed: {
                 type: Boolean,
-                default: true,
+                default: true
             },
             taskRunId: {
                 type: String,
-                default: undefined,
+                default: undefined
             },
             showTask: {
                 type: Boolean,
-                default: false,
+                default: false
             },
             execution: {
                 type: Object,
-                required: true,
+                required: true
             },
             filterByName: {
                 type: String,
-                default: undefined,
+                default: undefined
             },
         },
         watch: {
@@ -146,8 +145,7 @@
                     params.name = this.filterByName;
                 }
 
-                this.$store
-                    .dispatch("execution/loadMetrics", {
+                this.$store.dispatch("execution/loadMetrics", {
                         executionId: this.execution.id,
                         params: params,
                         store: false,

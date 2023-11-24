@@ -168,7 +168,7 @@
                     return false;
                 }
 
-                if (this.taskRun.state.current === "PAUSED") {
+                if (this.taskRun.state.current === "PAUSED" || this.taskRun.state.current === "CREATED") {
                     return true;
                 }
 

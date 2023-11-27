@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.annotation.Nullable;
@@ -32,8 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 
 @MicronautTest
@@ -60,6 +60,28 @@ class NamespaceFileControllerTest {
     @BeforeEach
     public void init() throws IOException {
         storageInterface.delete(null, toNamespacedStorageUri(NAMESPACE, null));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void search() throws IOException {
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/file.txt")), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/another_file.json")), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt")), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/some.yaml")), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/sub/script.py")), new ByteArrayInputStream(new byte[0]));
+
+        String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=file"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/file.txt", "/another_file.json", "/folder/file.txt"));
+
+        res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=file.txt"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/file.txt", "/folder/file.txt"));
+
+        res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=folder"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/folder/file.txt", "/folder/some.yaml", "/folder/sub/script.py"));
+
+        res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=.py"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/folder/sub/script.py"));
     }
 
     @Test

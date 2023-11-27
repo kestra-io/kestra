@@ -30,6 +30,13 @@ public interface StorageInterface {
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(String tenantId, URI uri) throws IOException;
 
+    /**
+     * Returns all existing file paths' that start with the given prefix.
+     * @return relative paths starting from prefix
+     */
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    List<String> filePathsByPrefix(String tenantId, URI prefix) throws IOException;
+
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     List<FileAttributes> list(String tenantId, URI uri) throws IOException;
 

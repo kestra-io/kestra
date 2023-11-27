@@ -55,6 +55,19 @@ public class NamespaceFileController {
 
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "{namespace}/files/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Files"}, summary = "Find files which path contain the given string in their URI")
+    public List<String> search(
+        @Parameter(description = "The namespace id") @PathVariable String namespace,
+        @Parameter(description = "The string the file path should contain") @QueryValue String q
+    ) throws IOException, URISyntaxException {
+        return Stream.concat(
+            storageInterface.filePathsByPrefix(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null)).stream(),
+            staticFiles.stream().map(StaticFile::getServedPath)
+        ).filter(path -> path.contains(q)).toList();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = {"Files"}, summary = "Get namespace file content")
     public StreamedFile file(

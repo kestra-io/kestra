@@ -89,6 +89,9 @@ window.product = {
                 "saveEditor",
                 "terminalDataWriteEvent",
                 "terminalExecuteCommandEvent"
+            ],
+            "kestra-io.kestra": [
+                "fileSearchProvider"
             ]
         }
     },

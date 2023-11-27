@@ -112,6 +112,28 @@ public abstract class StorageTestSuite {
     }
     //endregion
 
+    @Test
+    void search() throws IOException {
+        storageInterface.put(null, URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put("tenant", URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, URI.create("/namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, URI.create("/namespace/folder/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, URI.create("/namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(null, URI.create("/namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
+
+        List<String> res = storageInterface.filePathsByPrefix(null, URI.create("/namespace"));
+        assertThat(res, containsInAnyOrder("/file.txt", "/another_file.json", "/folder/file.txt", "/folder/some.yaml", "/folder/sub/script.py"));
+
+        res = storageInterface.filePathsByPrefix("tenant", URI.create("/namespace"));
+        assertThat(res, containsInAnyOrder("/file.txt"));
+
+        res = storageInterface.filePathsByPrefix(null, URI.create("/namespace/folder"));
+        assertThat(res, containsInAnyOrder("/file.txt", "/some.yaml", "/sub/script.py"));
+
+        res = storageInterface.filePathsByPrefix(null, URI.create("/namespace/folder/sub"));
+        assertThat(res, containsInAnyOrder("/script.py"));
+    }
+
     //region test LIST
     @Test
     void list() throws Exception {

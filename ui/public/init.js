@@ -14,19 +14,27 @@ require.config({
 });
 
 // publisherId/extensionId format
-const versionByExtensionIdToFetch = {
+const extensionsToFetch = {
     // to handle dark theme
     "PROxZIMA/sweetdracula": "1.0.9",
     // to apply Kestra's flow validation schema
     "kestra-io/kestra": "0.1.7",
-    // for Python autocompletion along with Pylance that is needed for it to work
-    // "ms-python/python": "2023.20.0"
 };
 
-const extensionsToFetch = Object.entries(versionByExtensionIdToFetch).map(([extensionId, version]) => ({
-    scheme: "https",
-    authority: "openvsxorg.blob.core.windows.net",
-    path: `/resources/${extensionId}/${version}/extension`
+let url;
+try {
+    url = new URL(KESTRA_API_URL);
+} catch (e) {
+    // KESTRA_API_URL is a relative path
+    url = {
+        ...window.location,
+        pathname: KESTRA_API_URL
+    };
+}
+const extensionUrls = Object.entries(extensionsToFetch).map(([extensionId, version]) => ({
+    scheme: url.protocol.replace(":", ""),
+    authority: url.host,
+    path: `${url.pathname}/editor/marketplace/resource/${extensionId}/${version}/extension`
 }));
 
 // used to configure VSCode startup
@@ -55,16 +63,34 @@ const bottomBarTabs = [
     {"id":"refactorPreview", "pinned": false,"visible": false}
 ];
 
+const apiUrl = url.origin + url.pathname;
 window.product = {
     productConfiguration: {
         nameShort: "Kestra VSCode",
         nameLong: "Kestra VSCode",
-        // configure the open sx marketplace
-        "extensionsGallery": {
-            "serviceUrl": "https://open-vsx.org/vscode/gallery",
-            "itemUrl": "https://open-vsx.org/vscode/item",
-            "resourceUrlTemplate": "https://openvsxorg.blob.core.windows.net/resources/{publisher}/{name}/{version}/{path}"
+        // configure VSCode Marketplace
+        extensionsGallery: {
+            nlsBaseUrl: `${apiUrl}/editor/marketplace/nls`,
+            serviceUrl: `${apiUrl}/editor/marketplace/service`,
+            searchUrl: `${apiUrl}/editor/marketplace/search`,
+            servicePPEUrl: `${apiUrl}/editor/marketplace/serviceppe`,
+            cacheUrl: `${apiUrl}/editor/marketplace/cache`,
+            itemUrl: `${apiUrl}/editor/marketplace/item`,
+            publisherUrl: `${apiUrl}/editor/marketplace/publisher`,
+            resourceUrlTemplate: `${apiUrl}/editor/marketplace/resource/{publisher}/{name}/{version}/{path}`,
+            controlUrl: `${apiUrl}/editor/marketplace/control`
         },
+        extensionEnabledApiProposals: {
+            "ms-python.python": [
+                "contribEditorContentMenu",
+                "quickPickSortByLabel",
+                "testObserver",
+                "quickPickItemTooltip",
+                "saveEditor",
+                "terminalDataWriteEvent",
+                "terminalExecuteCommandEvent"
+            ]
+        }
     },
     // scope the VSCode instance to Kestra File System Provider (defined in Kestra VSCode extension)
     folderUri: {
@@ -85,16 +111,7 @@ window.product = {
             authority: window.location.host,
             path: KESTRA_UI_PATH + "vscode/extensions/yaml/extension"
         },
-        // {
-        //     scheme: window.location.protocol.replace(":", ""),
-        //     authority: window.location.host,
-        //     path: KESTRA_UI_PATH + "vscode/extensions/pylance/extension"
-        // },
-        ...extensionsToFetch
-    ],
-    "linkProtectionTrustedDomains": [
-        "https://open-vsx.org",
-        "https://openvsxorg.blob.core.windows.net"
+        ...extensionUrls
     ],
     configurationDefaults: {
         "files.autoSave": "off",

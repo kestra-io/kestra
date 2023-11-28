@@ -228,9 +228,11 @@ public class VariableRenderer {
             return Optional.of(this.renderList((List) object, variables, preprocessVariables));
         } else if (object instanceof String) {
             return Optional.of(this.render((String) object, variables, preprocessVariables));
+        } else if (object == null) {
+            return Optional.empty();
         }
 
-        return Optional.empty();
+        return Optional.of(object);
     }
 
     private List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean preprocessVariables) throws IllegalVariableEvaluationException {

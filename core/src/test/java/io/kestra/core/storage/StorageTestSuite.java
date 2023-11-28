@@ -664,6 +664,8 @@ public abstract class StorageTestSuite {
             "/" + prefix + "/storage/root.yml",
             "/" + prefix + "/storage/level1/1.yml",
             "/" + prefix + "/storage/level12.yml",
+            "/" + prefix + "/storage/file",
+            "/" + prefix + "/storage/file.txt",
             "/" + prefix + "/storage/level1/level2/1.yml",
             "/" + prefix + "/storage/another/1.yml"
         );
@@ -677,9 +679,15 @@ public abstract class StorageTestSuite {
         assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/level12.yml")), is(true));
         assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/level1/1.yml")), is(false));
         assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/level1/level2/1.yml")), is(false));
+
         deleted = storageInterface.delete(tenantId, new URI("/" + prefix + "/storage/root.yml"));
         assertThat(deleted, is(true));
         assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/root.yml")), is(false));
+
+        deleted = storageInterface.delete(tenantId, new URI("/" + prefix + "/storage/file"));
+        assertThat(deleted, is(true));
+        assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/file")), is(false));
+        assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/file.txt")), is(true));
     }
 
     @Test

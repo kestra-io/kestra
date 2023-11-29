@@ -231,7 +231,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         boolean isReady = next.compareTo(previousDate) == 0;
 
         // in case on cron expression changed, the next date will never match, so we allow past operation to start
-        boolean isLate = next.compareTo(ZonedDateTime.now().minus(Duration.ofMinutes(1))) < 0;
+        boolean isLate = next.compareTo(ZonedDateTime.now()) < 0;
 
         if (!isReady && !isLate) {
             return Optional.empty();

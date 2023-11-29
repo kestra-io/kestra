@@ -541,7 +541,10 @@ public abstract class AbstractScheduler implements Scheduler {
 
             return evaluate.map(execution -> new SchedulerExecutionWithTrigger(
                 execution,
-                flowWithTrigger.getTriggerContext()
+                // ensure that we skip any in-between date if we were late
+                flowWithTrigger.getTriggerContext().toBuilder()
+                    .date(ZonedDateTime.parse(execution.getTrigger().getVariables().get("date").toString()))
+                    .build()
             )).orElse(null);
         } catch (Exception e) {
             logError(flowWithTrigger, e);

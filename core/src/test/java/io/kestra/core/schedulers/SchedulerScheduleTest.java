@@ -3,15 +3,14 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
 import org.junitpioneer.jupiter.RetryingTest;
-import org.junitpioneer.jupiter.RetryingTest;
-
-import java.lang.reflect.Executable;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -37,8 +36,10 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .inputs(Map.of(
                 "testInputs", "test-inputs"
             ))
+            // this will create a shift between trigger context date and trigger state date if they are not synced
+            .lateMaximumDelay(Duration.ofHours(5))
             .backfill(Schedule.ScheduleBackfill.builder()
-                .start(date(5))
+                .start(date(6))
                 .build()
             )
             .build();
@@ -60,6 +61,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         );
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @RetryingTest(5)
     void schedule() throws Exception {
         // mock flow listeners
@@ -85,6 +87,15 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
                 date.add((String) execution.getTrigger().getVariables().get("date"));
                 executionId.add(execution.getId());
+
+                // ensure synchronization between the last execution trigger context date and what's in the trigger state
+                ZonedDateTime triggerDate = triggerState.findLast(TriggerContext.builder()
+                    .namespace(flow.getNamespace())
+                    .flowId(flow.getId())
+                    .triggerId(execution.getTrigger().getId())
+                    .build()
+                ).get().getDate();
+                assertThat(triggerDate.getHour(), is(ZonedDateTime.parse(execution.getTrigger().getVariables().get("date").toString()).getHour()));
 
                 queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {

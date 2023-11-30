@@ -400,7 +400,6 @@
             // allow to have different storage key for flow executions list
             if (this.$route.name === "flows/update") {
                 this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
-                console.log("changed key")
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")

@@ -208,19 +208,14 @@
             this.expandParentIfNeeded();
         },
         watch: {
-            menu: {
-                handler(newVal, oldVal) {
-                    // Only update if the menu has really changed and just not the computed being re-rendered
-                    if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
-                        this.localMenu = newVal;
-                        this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                            //empty icon name on mouseover
-                            e.setAttribute("title", "")
-                        });
-                    }
-                },
-                flush: 'post',
-                deep: true
+            $route (to, from){
+                if (to.name !== from.name) {
+                    this.localMenu = this.menu;
+                    this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                        //empty icon name on mouseover
+                        e.setAttribute("title", "")
+                    });
+                }
             }
         },
         data() {

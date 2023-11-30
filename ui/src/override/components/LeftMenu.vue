@@ -55,6 +55,16 @@
         },
         emits: ["menu-collapse"],
         methods: {
+            flattenMenu(menu) {
+                return menu.reduce((acc, item) => {
+                    if (item.child) {
+                        acc.push(...this.flattenMenu(item.child));
+                    }
+
+                    acc.push(item);
+                    return acc;
+                }, []);
+            },
             onToggleCollapse(folded) {
                 this.collapsed = folded;
                 localStorage.setItem("menuCollapsed", folded ? "true" : "false");
@@ -208,15 +218,21 @@
             this.expandParentIfNeeded();
         },
         watch: {
-            $route (to, from){
-                if (to.name !== from.name) {
-                    this.localMenu = this.menu;
-                    this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                        //empty icon name on mouseover
-                        e.setAttribute("title", "")
-                    });
-                }
-            }
+            menu: {
+                handler(newVal, oldVal) {
+                    // Check if the active menu item has changed, if yes then update the menu
+                    if (JSON.stringify(this.flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
+                        JSON.stringify(this.flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
+                        this.localMenu = newVal;
+                        this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                            //empty icon name on mouseover
+                            e.setAttribute("title", "")
+                        });
+                    }
+                },
+                flush: "post",
+                deep: true
+            },
         },
         data() {
             return {
@@ -225,7 +241,8 @@
             };
         },
         computed: {
-            ...mapState("misc", ["configs"]),
+            ...
+                mapState("misc", ["configs"]),
             menu() {
                 return this.disabledCurrentRoute(this.generateMenu());
             }

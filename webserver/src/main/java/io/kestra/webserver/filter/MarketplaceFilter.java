@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
-@Filter("/api/v1/editor/marketplace/**")
+@Filter("/api/v1/**/editor/marketplace/**")
 public class MarketplaceFilter implements HttpServerFilter {
     @Inject
     @Client("proxy")

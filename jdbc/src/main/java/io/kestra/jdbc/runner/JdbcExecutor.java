@@ -414,7 +414,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
                         // send a running worker task result to track running vs created status
                         if (workerTaskExecution.getTask().waitForExecution()) {
-                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING));
+                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun());
                         }
                     });
             }
@@ -434,7 +434,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     .ifPresent(workerTaskExecution -> {
                         // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
                         if (workerTaskExecution.getTask().waitForExecution()) {
-                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(State.Type.RUNNING).withState(execution.getState().getCurrent()));
+                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(execution.getState().getCurrent()));
                         }
 
                         workerTaskExecutionStorage.delete(workerTaskExecution);

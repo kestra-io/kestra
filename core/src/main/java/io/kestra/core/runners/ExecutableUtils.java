@@ -99,7 +99,7 @@ public final class ExecutableUtils {
 
         return WorkerTaskExecution.builder()
             .task(currentTask)
-            .taskRun(currentTaskRun)
+            .taskRun(currentTaskRun.withState(State.Type.RUNNING))
             .execution(execution)
             .iteration(iteration)
             .build();
@@ -117,11 +117,11 @@ public final class ExecutableUtils {
                 State.Type currentState = taskRun.getState().getCurrent();
                 Optional<State.Type> previousState = taskRun.getState().getHistories().size() > 1 ? Optional.of(taskRun.getState().getHistories().get(taskRun.getState().getHistories().size() - 2).getState()) : Optional.empty();
 
-                int currentStateIteration = getIterationCounter(iterations, currentState, maxIterations) + 1;
-                iterations.put(currentState.toString(), currentStateIteration);
+                int currentStateIteration = iterations.getOrDefault(currentState.toString(),  0);
+                iterations.put(currentState.toString(), currentStateIteration + 1);
                 if (previousState.isPresent() && previousState.get() != currentState) {
-                    int previousStateIterations = getIterationCounter(iterations, previousState.get(), maxIterations) - 1;
-                    iterations.put(previousState.get().toString(), previousStateIterations);
+                    int previousStateIterations = iterations.getOrDefault(previousState.get() .toString(),  maxIterations);
+                    iterations.put(previousState.get().toString(), previousStateIterations - 1);
                 }
 
                 // update the state to success if current == max

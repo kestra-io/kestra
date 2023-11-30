@@ -175,7 +175,10 @@ public class Flow extends Task implements ExecutableTask<Flow.Output> {
 
         taskRun = taskRun.withOutputs(builder.build().toMap());
 
-        taskRun = taskRun.withState(ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure()));
+        State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure());
+        if (taskRun.getState().getCurrent() != finalState) {
+            taskRun = taskRun.withState(finalState);
+        }
 
         return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
     }

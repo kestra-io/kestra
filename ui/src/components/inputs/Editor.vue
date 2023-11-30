@@ -456,15 +456,15 @@
             }
 
             .bottom-right {
-                bottom: var(--spacer);
-                right: var(--spacer);
+                bottom: 0px;
+                right: 0px;
 
                 ul {
                     display: flex;
                     list-style: none;
                     padding: 0;
                     margin: 0;
-                    gap: calc(var(--spacer) / 2);
+                    //gap: calc(var(--spacer) / 2);
                 }
             }
         }

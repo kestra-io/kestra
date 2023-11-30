@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
 import lombok.Builder;
 import lombok.Data;
@@ -45,5 +46,15 @@ public class WorkerTask extends WorkerJob {
     @Override
     public String taskRunId() {
         return this.taskRun.getId();
+    }
+
+    /**
+     * This method will fail the tasks with a FAILED or WARNING state depending on the allowFailure attribute of the task.
+     *
+     * @return this worker task, updated
+     */
+    public WorkerTask fail() {
+        var state = this.task.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
+        return this.withTaskRun(this.getTaskRun().withState(state));
     }
 }

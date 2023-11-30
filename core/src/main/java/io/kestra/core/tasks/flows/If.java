@@ -159,7 +159,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
         List<ResolvedTask> childTask = this.childTasks(runContext, parentTaskRun);
         if (childTask == null) {
             // no next task to run, we guess the state from the parent task
-            return Optional.of(execution.guessFinalState(null, parentTaskRun));
+            return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure()));
         }
 
         return FlowableUtils.resolveState(
@@ -167,7 +167,8 @@ public class If extends Task implements FlowableTask<VoidOutput> {
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
-            runContext
+            runContext,
+            this.isAllowFailure()
         );
     }
 }

@@ -9,6 +9,13 @@ micronaut:
     services:
       api:
         url: http://localhost:8081
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          allowedOrigins:
+            - http://bad-origin
 jackson:
   serialization:
     writeDatesAsTimestamps: false

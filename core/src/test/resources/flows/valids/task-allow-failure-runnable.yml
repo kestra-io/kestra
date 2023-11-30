@@ -1,0 +1,14 @@
+id: task-allow-failure-runnable
+namespace: io.kestra.tests
+
+tasks:
+  - id: fail
+    type: io.kestra.core.tasks.executions.Fail
+    allowFailure: true
+    retry:
+      type: constant
+      interval: PT0.100S
+      maxAttempt: 3
+  - id: log
+    type: io.kestra.core.tasks.log.Log
+    message: I'm allowed

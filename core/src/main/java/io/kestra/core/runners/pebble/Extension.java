@@ -69,7 +69,7 @@ public class Extension extends AbstractExtension {
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
-
+        filters.put("flatten",new FlattenFilter());
         return filters;
     }
 

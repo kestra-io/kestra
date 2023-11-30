@@ -71,7 +71,7 @@
                             r.class = "vsm--link_active";
                         }
 
-                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href))) {
+                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href) || c.routes?.includes(this.$route.name))) {
                             r.class = "vsm--link_active";
                             r.child = this.disabledCurrentRoute(r.child);
                         }

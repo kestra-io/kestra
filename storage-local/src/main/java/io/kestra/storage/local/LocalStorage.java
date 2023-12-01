@@ -51,12 +51,15 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public List<String> filePathsByPrefix(String tenantId, URI prefix) throws IOException {
-        Path prefixPath = getPath(tenantId, prefix);
-        try (Stream<Path> walk = Files.walk(prefixPath).filter(Files::isRegularFile)) {
+    public List<URI> filesByPrefix(String tenantId, URI prefix) throws IOException {
+        Path fsPath = getPath(tenantId, prefix);
+        try (Stream<Path> walk = Files.walk(fsPath).filter(Files::isRegularFile)) {
             return walk.sorted(Comparator.reverseOrder())
-                .map(prefixPath::relativize)
-                .map(path -> "/" + path)
+                .map(fsPath::relativize)
+                .map(path -> {
+                    String prefixPath = prefix.getPath();
+                    return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
+                })
                 .toList();
         }
     }

@@ -61,8 +61,10 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The string the file path should contain") @QueryValue String q
     ) throws IOException, URISyntaxException {
+        URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
         return Stream.concat(
-            storageInterface.filePathsByPrefix(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null)).stream(),
+            storageInterface.filesByPrefix(tenantService.resolveTenant(), baseNamespaceFilesUri).stream()
+                .map(storageUri -> "/" + baseNamespaceFilesUri.relativize(storageUri).getPath()),
             staticFiles.stream().map(StaticFile::getServedPath)
         ).filter(path -> path.contains(q)).toList();
     }
@@ -193,7 +195,7 @@ public class NamespaceFileController {
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
-        return URI.create(storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
+        return URI.create("kestra://" + storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
     }
 
     private void ensureWritableFile(URI path) {

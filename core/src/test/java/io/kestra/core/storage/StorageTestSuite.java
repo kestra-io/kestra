@@ -121,17 +121,27 @@ public abstract class StorageTestSuite {
         storageInterface.put(null, URI.create("/namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put(null, URI.create("/namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
 
-        List<String> res = storageInterface.filePathsByPrefix(null, URI.create("/namespace"));
-        assertThat(res, containsInAnyOrder("/file.txt", "/another_file.json", "/folder/file.txt", "/folder/some.yaml", "/folder/sub/script.py"));
+        List<URI> res = storageInterface.filesByPrefix(null, URI.create("kestra:///namespace/"));
+        assertThat(res, containsInAnyOrder(
+            URI.create("kestra:///namespace/file.txt"),
+            URI.create("kestra:///namespace/another_file.json"),
+            URI.create("kestra:///namespace/folder/file.txt"),
+            URI.create("kestra:///namespace/folder/some.yaml"),
+            URI.create("kestra:///namespace/folder/sub/script.py")
+        ));
 
-        res = storageInterface.filePathsByPrefix("tenant", URI.create("/namespace"));
-        assertThat(res, containsInAnyOrder("/file.txt"));
+        res = storageInterface.filesByPrefix("tenant", URI.create("/namespace"));
+        assertThat(res, containsInAnyOrder(URI.create("kestra:///namespace/file.txt")));
 
-        res = storageInterface.filePathsByPrefix(null, URI.create("/namespace/folder"));
-        assertThat(res, containsInAnyOrder("/file.txt", "/some.yaml", "/sub/script.py"));
+        res = storageInterface.filesByPrefix(null, URI.create("/namespace/folder"));
+        assertThat(res, containsInAnyOrder(
+            URI.create("kestra:///namespace/folder/file.txt"),
+            URI.create("kestra:///namespace/folder/some.yaml"),
+            URI.create("kestra:///namespace/folder/sub/script.py")
+        ));
 
-        res = storageInterface.filePathsByPrefix(null, URI.create("/namespace/folder/sub"));
-        assertThat(res, containsInAnyOrder("/script.py"));
+        res = storageInterface.filesByPrefix(null, URI.create("/namespace/folder/sub"));
+        assertThat(res, containsInAnyOrder(URI.create("kestra:///namespace/folder/sub/script.py")));
     }
 
     //region test LIST

@@ -193,12 +193,6 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
-            throw new IllegalStateException("Execution must be terminated to be restarted, " +
-                "current state is '" + execution.getState().getCurrent() + "' !"
-            );
-        }
-
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
         Set<String> taskRunToRestart = this.taskRunToRestart(

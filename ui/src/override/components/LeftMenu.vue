@@ -1,7 +1,7 @@
 <template>
     <sidebar-menu
         id="side-menu"
-        :menu="menu"
+        :menu="localMenu"
         @update:collapsed="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
@@ -44,6 +44,7 @@
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
     import AccountHardHatOutline from "vue-material-design-icons/AccountHardHatOutline.vue";
+    import {shallowRef} from "vue";
 
     export default {
         components: {
@@ -54,6 +55,16 @@
         },
         emits: ["menu-collapse"],
         methods: {
+            flattenMenu(menu) {
+                return menu.reduce((acc, item) => {
+                    if (item.child) {
+                        acc.push(...this.flattenMenu(item.child));
+                    }
+
+                    acc.push(item);
+                    return acc;
+                }, []);
+            },
             onToggleCollapse(folded) {
                 this.collapsed = folded;
                 localStorage.setItem("menuCollapsed", folded ? "true" : "false");
@@ -71,7 +82,7 @@
                             r.class = "vsm--link_active";
                         }
 
-                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href))) {
+                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href) || c.routes?.includes(this.$route.name))) {
                             r.class = "vsm--link_active";
                             r.child = this.disabledCurrentRoute(r.child);
                         }
@@ -88,7 +99,7 @@
                         href: {name: "home"},
                         title: this.$t("homeDashboard.title"),
                         icon: {
-                            element: ViewDashboardVariantOutline,
+                            element: shallowRef(ViewDashboardVariantOutline),
                             class: "menu-icon",
                         },
                     },
@@ -96,7 +107,7 @@
                         href: {name: "editor"},
                         title: this.$t("editor"),
                         icon: {
-                            element: FolderEditOutline,
+                            element: shallowRef(FolderEditOutline),
                             class: "menu-icon",
                         },
                     },
@@ -105,7 +116,7 @@
                         routes: this.routeStartWith("flows"),
                         title: this.$t("flows"),
                         icon: {
-                            element: FileTreeOutline,
+                            element: shallowRef(FileTreeOutline),
                             class: "menu-icon",
                         },
                         exact: false,
@@ -115,7 +126,7 @@
                         routes: this.routeStartWith("templates"),
                         title: this.$t("templates"),
                         icon: {
-                            element: ContentCopy,
+                            element: shallowRef(ContentCopy),
                             class: "menu-icon",
                         },
                         hidden: !this.configs.isTemplateEnabled
@@ -125,7 +136,7 @@
                         routes: this.routeStartWith("executions"),
                         title: this.$t("executions"),
                         icon: {
-                            element: TimelineClockOutline,
+                            element: shallowRef(TimelineClockOutline),
                             class: "menu-icon"
                         },
                     },
@@ -134,7 +145,7 @@
                         routes: this.routeStartWith("taskruns"),
                         title: this.$t("taskruns"),
                         icon: {
-                            element: TimelineTextOutline,
+                            element: shallowRef(TimelineTextOutline),
                             class: "menu-icon"
                         },
                         hidden: !this.configs.isTaskRunEnabled
@@ -144,7 +155,7 @@
                         routes: this.routeStartWith("logs"),
                         title: this.$t("logs"),
                         icon: {
-                            element: NotebookOutline,
+                            element: shallowRef(NotebookOutline),
                             class: "menu-icon"
                         },
                     },
@@ -153,7 +164,7 @@
                         routes: this.routeStartWith("blueprints"),
                         title: this.$t("blueprints.title"),
                         icon: {
-                            element: Ballot,
+                            element: shallowRef(Ballot),
                             class: "menu-icon"
                         },
                     },
@@ -161,7 +172,7 @@
                         title: this.$t("administration"),
                         routes: this.routeStartWith("admin"),
                         icon: {
-                            element: AccountSupervisorOutline,
+                            element: shallowRef(AccountSupervisorOutline),
                             class: "menu-icon"
                         },
                         child: [
@@ -170,7 +181,7 @@
                                 routes: this.routeStartWith("admin/triggers"),
                                 title: this.$t("triggers"),
                                 icon: {
-                                    element: TimerCogOutline,
+                                    element: shallowRef(TimerCogOutline),
                                     class: "menu-icon"
                                 }
                             },
@@ -179,7 +190,7 @@
                                 routes: this.routeStartWith("admin/workers"),
                                 title: this.$t("workers"),
                                 icon: {
-                                    element: AccountHardHatOutline,
+                                    element: shallowRef(AccountHardHatOutline),
                                     class: "menu-icon"
                                 },
                             }
@@ -190,41 +201,54 @@
                         routes: this.routeStartWith("admin/settings"),
                         title: this.$t("settings"),
                         icon: {
-                            element: CogOutline,
+                            element: shallowRef(CogOutline),
                             class: "menu-icon"
                         }
                     }
                 ];
             },
             expandParentIfNeeded() {
-                document.querySelectorAll(".vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => e.click());
+                document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
+                    e.click()
+                });
             }
+        },
+        updated() {
+            // Required here because in mounted() the menu is not yet rendered
+            this.expandParentIfNeeded();
         },
         watch: {
             menu: {
-                handler() {
-                    this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                        //empty icon name on mouseover
-                        e.setAttribute("title", "")
-                    });
-                    this.expandParentIfNeeded();
+                handler(newVal, oldVal) {
+                    // Check if the active menu item has changed, if yes then update the menu
+                    if (JSON.stringify(this.flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
+                        JSON.stringify(this.flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
+                        this.localMenu = newVal;
+                        this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                            //empty icon name on mouseover
+                            e.setAttribute("title", "")
+                        });
+                    }
                 },
-                flush: 'post'
-            }
+                flush: "post",
+                deep: true
+            },
         },
         data() {
             return {
                 collapsed: localStorage.getItem("menuCollapsed") === "true",
+                localMenu: []
             };
         },
         computed: {
-            ...mapState("misc", ["configs"]),
+            ...
+                mapState("misc", ["configs"]),
             menu() {
                 return this.disabledCurrentRoute(this.generateMenu());
             }
         },
         mounted() {
-            this.expandParentIfNeeded();
+            this.localMenu = this.menu;
         }
     };
 </script>

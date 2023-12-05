@@ -701,7 +701,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @return List of parent {@link TaskRun}
      */
     public List<TaskRun> findChilds(TaskRun taskRun) {
-        if (taskRun.getParentTaskRunId() == null) {
+        if (taskRun.getParentTaskRunId() == null || this.taskRunList == null) {
             return new ArrayList<>();
         }
 

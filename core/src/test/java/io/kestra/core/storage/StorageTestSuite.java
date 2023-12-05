@@ -115,7 +115,7 @@ public abstract class StorageTestSuite {
     @Test
     void search() throws IOException {
         storageInterface.put(null, URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put("tenant", URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put("tenant", URI.create("/namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put(null, URI.create("/namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put(null, URI.create("/namespace/folder/file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put(null, URI.create("/namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
@@ -131,7 +131,7 @@ public abstract class StorageTestSuite {
         ));
 
         res = storageInterface.filesByPrefix("tenant", URI.create("/namespace"));
-        assertThat(res, containsInAnyOrder(URI.create("kestra:///namespace/file.txt")));
+        assertThat(res, containsInAnyOrder(URI.create("kestra:///namespace/tenant_file.txt")));
 
         res = storageInterface.filesByPrefix(null, URI.create("/namespace/folder"));
         assertThat(res, containsInAnyOrder(
@@ -142,6 +142,9 @@ public abstract class StorageTestSuite {
 
         res = storageInterface.filesByPrefix(null, URI.create("/namespace/folder/sub"));
         assertThat(res, containsInAnyOrder(URI.create("kestra:///namespace/folder/sub/script.py")));
+
+        res = storageInterface.filesByPrefix(null, URI.create("/namespace/non-existing"));
+        assertThat(res, empty());
     }
 
     //region test LIST

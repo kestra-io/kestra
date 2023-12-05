@@ -11,6 +11,7 @@ import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -61,6 +62,8 @@ public class LocalStorage implements StorageInterface {
                     return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
                 })
                 .toList();
+        } catch (NoSuchFileException e) {
+            return Collections.emptyList();
         }
     }
 

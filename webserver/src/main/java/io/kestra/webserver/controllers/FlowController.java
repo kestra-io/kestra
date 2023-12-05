@@ -713,8 +713,7 @@ public class FlowController {
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                Flow parsed = yamlFlowParser.parse(source, Flow.class);
-                importFlow(source, parsed);
+                flowService.importFlow(source);
             }
         } else if (fileName.endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
@@ -725,8 +724,7 @@ public class FlowController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    Flow parsed = yamlFlowParser.parse(source, Flow.class);
-                    importFlow(source, parsed);
+                    flowService.importFlow(source);
                 }
             }
         } else {
@@ -734,15 +732,6 @@ public class FlowController {
         }
 
         return HttpResponse.status(HttpStatus.NO_CONTENT);
-    }
-
-    protected void importFlow(String source, Flow parsed) {
-        flowRepository
-            .findById(tenantService.resolveTenant(), parsed.getNamespace(), parsed.getId())
-            .ifPresentOrElse(
-                previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
-                () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
-            );
     }
 
     protected List<FlowWithSource> setFlowsDisableByIds(List<IdWithNamespace> ids, boolean disable) {

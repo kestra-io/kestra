@@ -220,6 +220,28 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @Override
+    public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record2<String, String>> select = DSL
+                    .using(configuration)
+                    .select(
+                        field("source_code", String.class),
+                        field("value", String.class)
+                    )
+                    .from(fromLastRevision(true))
+                    .where(field("namespace").eq(namespace))
+                    .and(this.defaultFilter(tenantId));
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    jdbcRepository.map(record),
+                    record.get("source_code", String.class)
+                ));
+            });
+    }
+
     @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field) {
         ArrayList<Field<Object>> fields = new ArrayList<>(Collections.singletonList(field("value")));

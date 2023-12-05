@@ -13,9 +13,9 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Template;
@@ -25,7 +25,6 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -237,6 +236,20 @@ public abstract class AbstractFlowRepositoryTest {
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests.minimal.bis");
         assertThat((long) save.size(), is(1L));
+    }
+
+    @Test
+    void findByNamespaceWithSource() {
+        Flow flow = builder()
+            .revision(3)
+            .build();
+        String flowSource = "# comment\n" + flow.generateSource();
+        flowRepository.create(flow, flowSource, taskDefaultService.injectDefaults(flow));
+
+        List<FlowWithSource> save = flowRepository.findByNamespaceWithSource(null, flow.getNamespace());
+        assertThat((long) save.size(), is(1L));
+
+        assertThat(save.get(0).getSource(), is(FlowService.cleanupSource(flowSource)));
     }
 
     @Test

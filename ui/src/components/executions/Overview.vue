@@ -133,7 +133,8 @@
                     {key: this.$t("created date"), value: this.execution.state.histories[0].date, date: true},
                     {key: this.$t("updated date"), value: this.stop(), date: true},
                     {key: this.$t("duration"), value: this.execution.state.histories, duration: true},
-                    {key: this.$t("steps"), value: stepCount}
+                    {key: this.$t("steps"), value: stepCount},
+                    {key: this.$t("exception message"), value: this.execution.exceptionMessage},
                 ];
 
                 if (this.execution.parentId) {

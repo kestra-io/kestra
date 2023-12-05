@@ -65,6 +65,7 @@ public class FlowConcurrencyCaseTest {
 
         assertThat(execution1.getState().isRunning(), is(true));
         assertThat(execution2.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution2.getExceptionMessage(), is("Flow is FAILED due to concurrency limit exceeded"));
 
         var executionResult1  = new AtomicReference<Execution>();
 

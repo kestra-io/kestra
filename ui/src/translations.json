@@ -523,7 +523,8 @@
     "show": "Show",
     "advanced configuration": "Advanced configuration",
     "all executions": "All executions",
-    "trigger execution id": "Parent Id"
+    "trigger execution id": "Parent Id",
+    "exception message": "Exception message"
   },
   "fr": {
     "id": "Identifiant",
@@ -1039,7 +1040,8 @@
     "row count": "Nombre de lignes",
     "encoding": "Encodage",
     "all executions": "Toutes les exécutions",
-    "trigger execution id": "Id parent"
+    "trigger execution id": "Id parent",
+    "exception message": "Message d'exception"
   }
 }
 

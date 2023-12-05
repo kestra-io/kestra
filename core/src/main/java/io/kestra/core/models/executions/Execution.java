@@ -87,6 +87,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @With
+    String exceptionMessage;
+
+
     public static class ExecutionBuilder {
         void prebuild() {
             this.originalId = this.id;
@@ -120,7 +124,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.parentId,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.exceptionMessage
         );
     }
 
@@ -151,7 +156,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.parentId,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.exceptionMessage
         );
     }
 
@@ -170,7 +176,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             childExecutionId != null ? this.getId() : null,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.exceptionMessage
         );
     }
 
@@ -488,14 +495,14 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     /**
-     * Convert an exception on Executor and add log to the current
-     * {@code RUNNING} taskRun, on the lastAttempts.
-     * If no Attempt is found, we create one (must be nominal case).
-     * The executor will catch the {@code FAILED} taskRun emitted and will failed the execution.
+     * Convert an exception on the Executor and add logs to the current
+     * {@code RUNNING} taskRun, on the last attempt.
+     * If no attempt is found, we create one (must be the nominal case).
+     * The executor will catch the {@code FAILED} taskRun emitted and will fail the execution.
      * In the worst case, we FAILED the execution (only from {@link io.kestra.core.models.triggers.types.Flow}).
      *
      * @param e the exception throw from Executor
-     * @return a new execution with taskrun failed if possible or execution failed is other case
+     * @return a new execution with taskrun failed if possible or execution failed in other cases
      */
     public FailedExecutionWithLog failedExecutionFromExecutor(Exception e) {
         if (log.isWarnEnabled()) {
@@ -523,19 +530,18 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()),
+                        this.withTaskRun(t.getTaskRun()).withExceptionMessage(e.getMessage()),
                         t.getLogs()
                     );
                 } catch (InternalException ex) {
                     return null;
                 }
             })
-            .filter(Objects::nonNull)
             .orElseGet(() -> new FailedExecutionWithLog(
-                this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
+                this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED).withExceptionMessage(e.getMessage()) : this.withExceptionMessage(e.getMessage()),
                 RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
-            )
-        );
+                )
+            );
     }
 
     /**

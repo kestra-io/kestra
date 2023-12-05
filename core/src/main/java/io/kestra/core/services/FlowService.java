@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -39,7 +43,34 @@ public class FlowService {
     ConditionService conditionService;
 
     @Inject
+    FlowRepositoryInterface flowRepository;
+
+    @Inject
+    TenantService tenantService;
+
+    @Inject
+    TaskDefaultService taskDefaultService;
+
+    @Inject
+    YamlFlowParser yamlFlowParser;
+
+    @Inject
     ApplicationContext applicationContext;
+
+
+    public void importFlow(String source) {
+        Flow parsed = yamlFlowParser.parse(source, Flow.class);
+        flowRepository
+            .findById(tenantService.resolveTenant(), parsed.getNamespace(), parsed.getId())
+            .ifPresentOrElse(
+                previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
+                () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
+            );
+    }
+
+    public List<FlowWithSource> findByNamespaceWithSource(String namespace) {
+        return flowRepository.findByNamespaceWithSource(tenantService.resolveTenant(), namespace);
+    }
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return keepLastVersionCollector(stream);

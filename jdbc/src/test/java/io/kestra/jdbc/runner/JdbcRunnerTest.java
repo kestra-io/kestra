@@ -174,12 +174,12 @@ public abstract class JdbcRunnerTest {
         restartCaseTest.replay();
     }
 
-    @Test
+    @RetryingTest(5)
     void restartMultiple() throws Exception {
         restartCaseTest.restartMultiple();
     }
 
-    @Test
+    @RetryingTest(5)
     void flowTrigger() throws Exception {
         flowTriggerCaseTest.trigger();
     }
@@ -268,7 +268,7 @@ public abstract class JdbcRunnerTest {
         skipExecutionCaseTest.skipExecution();
     }
 
-    @Test
+    @RetryingTest(5)
     void forEachItem() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItem();
     }

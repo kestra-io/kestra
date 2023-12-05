@@ -41,7 +41,7 @@ public interface StorageInterface {
      * @param tenantId the tenant identifier.
      * @return true if the uri points to a file/object that exist in the internal storage.
      */
-    default boolean exists(String tenantId, URI uri) {
+    default boolean exists(String tenantId, URI uri) throws IOException {
         try (InputStream ignored = get(tenantId, uri)){
             return true;
         } catch (IOException ieo) {

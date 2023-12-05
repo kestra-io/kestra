@@ -23,7 +23,7 @@ public class NamespaceCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "namespaces", "--help");
+        PicocliRunner.call(App.class, "namespace", "--help");
 
         return 0;
     }

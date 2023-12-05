@@ -523,7 +523,16 @@
     "show": "Show",
     "advanced configuration": "Advanced configuration",
     "all executions": "All executions",
-    "trigger execution id": "Parent Id"
+    "trigger execution id": "Parent Id",
+    "namespace files": {
+      "import": {
+        "file": "Import from ZIP or add file(s)",
+        "folder": "Import from folder",
+        "success": "File(s) successfully imported",
+        "error": "Error(s) occurred while importing file(s)"
+      },
+      "export": "Export as ZIP file"
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -1039,7 +1048,16 @@
     "row count": "Nombre de lignes",
     "encoding": "Encodage",
     "all executions": "Toutes les exécutions",
-    "trigger execution id": "Id parent"
+    "trigger execution id": "Id parent",
+    "namespace files": {
+      "import": {
+        "file": "Importer depuis un ZIP ou ajouter des fichiers",
+        "folder": "Importer depuis un dossier",
+        "success": "Fichier(s) importé(s) avec succès",
+        "error": "Une erreur est survenue lors de l'importation"
+      },
+      "export": "Export as ZIP file"
+    }
   }
 }
 

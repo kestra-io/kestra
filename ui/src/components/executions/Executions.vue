@@ -447,7 +447,7 @@
         },
         methods: {
             onDisplayColumnsChange(event) {
-                localStorage.setItem("displayExecutionsColumns", event);
+                localStorage.setItem(this.storageKey, event);
                 this.displayColumns = event;
             },
             displayColumn(column) {

@@ -186,6 +186,7 @@ jobs:
               io.kestra.plugin:plugin-hightouch:LATEST
               io.kestra.plugin:plugin-jdbc-clickhouse:LATEST
               io.kestra.plugin:plugin-jdbc-duckdb:LATEST
+              io.kestra.plugin:plugin-jdbc-druid:LATEST
               io.kestra.plugin:plugin-jdbc-mysql:LATEST
               io.kestra.plugin:plugin-jdbc-oracle:LATEST
               io.kestra.plugin:plugin-jdbc-pinot:LATEST

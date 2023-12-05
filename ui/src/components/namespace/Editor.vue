@@ -9,6 +9,31 @@
                 allow-create
                 :is-filter="false"
             />
+
+            <el-dropdown>
+                <el-button :icon="Plus" class="p-2 m-0" />
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item :icon="FilePlus" @click="pickFile">
+                            <input ref="filePicker" type="file"
+                                   multiple
+                                   style="display: none"
+                                   @change="importNsFiles" />
+                            {{ $t("namespace files.import.file") }}
+                        </el-dropdown-item>
+                        <el-dropdown-item :icon="FolderPlus" @click="pickFolder">
+                            <input ref="folderPicker" type="file"
+                                   webkitdirectory mozdirectory msdirectory odirectory directory
+                                   style="display: none"
+                                   @change="importNsFiles" />
+                            {{ $t("namespace files.import.folder") }}
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+            <el-tooltip hide-after="50" :content="$t('namespace files.export')">
+                <el-button :icon="FolderZip" class="p-2 m-0" @click="exportNsFiles" />
+            </el-tooltip>
             <trigger-flow
                 :disabled="!flow"
                 :flow-id="flow"
@@ -35,6 +60,10 @@
     import NamespaceSelect from "./NamespaceSelect.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
+    import FilePlus from "vue-material-design-icons/FilePlus.vue";
+    import FolderZip from "vue-material-design-icons/FolderZip.vue";
 </script>
 
 <script>
@@ -47,6 +76,40 @@
     export default {
         mixins: [RouteContext, RestoreUrl],
         methods: {
+            importNsFiles(event) {
+                const files = [...event.target.files];
+                Promise.all(files.map(file => {
+                    return this.$store
+                        .dispatch("namespace/importFile", {
+                            namespace: this.namespace,
+                            file: file
+                        })
+                })).then(() => {
+                    this.$message({
+                        message: this.$t("namespace files.import.success"),
+                        type: "success"
+                    });
+                }).catch(() => {
+                    this.$message({
+                        message: this.$t("namespace files.import.error"),
+                        type: "error"
+                    });
+                }).finally(() => {
+                    this.$refs.vscodeIde.contentDocument.location.reload(true);
+                    event.target.value = "";
+                });
+            },
+            exportNsFiles() {
+                this.$store.dispatch("namespace/exportFiles", {
+                    namespace: this.namespace
+                });
+            },
+            pickFile() {
+                this.$refs.filePicker.click();
+            },
+            pickFolder() {
+                this.$refs.folderPicker.click();
+            },
             namespaceUpdate(namespace) {
                 localStorage.setItem(storageKeys.LATEST_NAMESPACE, namespace);
                 this.$router.push({
@@ -66,7 +129,8 @@
         data() {
             return {
                 flow: null,
-                tabsNotSaved: []
+                tabsNotSaved: [],
+                uploadFileName: undefined
             }
         },
         mounted() {

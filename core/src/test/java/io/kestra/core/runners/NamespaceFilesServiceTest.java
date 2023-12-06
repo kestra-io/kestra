@@ -6,6 +6,7 @@ import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -39,10 +40,12 @@ class NamespaceFilesServiceTest {
 
         put(null, namespace, "/a/b/c/1.sql", "1");
         put(null, namespace, "/a/1.sql", "2");
-        put(null, namespace, "/b/c/d/1.sql", "3");
+        String expectedFileContent = "3";
+        put(null, namespace, "/b/c/d/1.sql", expectedFileContent);
 
+        RunContext runContext = runContextFactory.of();
         List<URI> injected = namespaceFilesService.inject(
-            runContextFactory.of(),
+            runContext,
             null,
             namespace,
             basePath,
@@ -53,9 +56,36 @@ class NamespaceFilesServiceTest {
         );
 
         assertThat(injected.size(), is(3));
-
         List<Path> tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
         assertThat(tempDir.size(), is(3));
+        String fileContent = FileUtils.readFileToString(
+            tempDir.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
+            "UTF-8"
+        );
+        assertThat(fileContent, is(expectedFileContent));
+
+        // injecting a namespace file that collapse with an existing file will override its content
+        expectedFileContent = "4";
+        put(null, namespace, "/b/c/d/1.sql", expectedFileContent);
+        injected = namespaceFilesService.inject(
+            runContext,
+            null,
+            namespace,
+            basePath,
+            NamespaceFiles
+                .builder()
+                .enabled(true)
+                .build()
+        );
+
+        assertThat(injected.size(), is(3));
+        tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
+        assertThat(tempDir.size(), is(3));
+        fileContent = FileUtils.readFileToString(
+            tempDir.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
+            "UTF-8"
+        );
+        assertThat(fileContent, is(expectedFileContent));
     }
 
     @Test

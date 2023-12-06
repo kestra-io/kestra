@@ -35,9 +35,6 @@ public abstract class FilesService {
          inputFiles
              .forEach(throwBiConsumer((fileName, input) -> {
                  var file = new File(runContext.tempDir().toString(), fileName);
-                 if (file.exists()) {
-                     throw new IllegalVariableEvaluationException("File '" + fileName + "' already exist!");
-                 }
 
                  if (!file.getParentFile().exists()) {
                      //noinspection ResultOfMethodCallIgnored

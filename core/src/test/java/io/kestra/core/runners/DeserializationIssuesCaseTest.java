@@ -14,12 +14,10 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 @Singleton
 public class DeserializationIssuesCaseTest {
@@ -181,10 +179,11 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(2));
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().get(0).getState(), is(State.Type.CREATED));
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(State.Type.FAILED));
     }
 
-    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws InterruptedException {
+    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>();
         workerTriggerResultQueue.receive(either -> {
             if (either != null) {
@@ -194,9 +193,12 @@ public class DeserializationIssuesCaseTest {
 
         sendToQueue.accept(new QueueMessage(WorkerJob.class, INVALID_WORKER_TRIGGER_KEY, INVALID_WORKER_TRIGGER_VALUE));
 
-        // Invalid worker trigger will be ignored, so we just check that no messages are received
-        Thread.sleep(500);
-        assertThat(workerTriggerResult.get(), nullValue());
+        Await.until(
+            () -> workerTriggerResult.get() != null,
+            Duration.ofMillis(100),
+            Duration.ofMinutes(1)
+        );
+        assertThat(workerTriggerResult.get().getSuccess(), is(Boolean.FALSE));
     }
 
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {

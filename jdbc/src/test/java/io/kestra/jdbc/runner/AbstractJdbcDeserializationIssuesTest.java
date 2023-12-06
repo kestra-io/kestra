@@ -1,7 +1,6 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.runners.DeserializationIssuesCaseTest;
-import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcConfiguration;

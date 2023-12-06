@@ -19,6 +19,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -156,8 +157,12 @@ public class Worker implements Runnable, AutoCloseable {
                     // try to deserialize the taskRun to fail it
                     var taskRun = MAPPER.treeToValue(json.get("taskRun"), TaskRun.class);
                     this.workerTaskResultQueue.emit(new WorkerTaskResult(taskRun.fail()));
+                } else if ("trigger".equals(type)) {
+                    // try to deserialize the triggerContext to fail it
+                    var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
+                    var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).success(false).execution(Optional.empty()).build();
+                    this.workerTriggerResultQueue.emit(workerTriggerResult);
                 }
-                // TODO for now we cannot handle deserialization error for a WorkerTrigger as we cannot create a valid WorkerTriggerResult as it contains the trigger itself
             }
             catch (IOException e) {
                 // ignore the message if we cannot do anything about it

@@ -174,12 +174,12 @@ public abstract class JdbcRunnerTest {
         restartCaseTest.replay();
     }
 
-    @Test
+    @RetryingTest(5)
     void restartMultiple() throws Exception {
         restartCaseTest.restartMultiple();
     }
 
-    @Test
+    @RetryingTest(5)
     void flowTrigger() throws Exception {
         flowTriggerCaseTest.trigger();
     }

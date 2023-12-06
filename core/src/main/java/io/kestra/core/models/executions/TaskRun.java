@@ -86,6 +86,27 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    public TaskRun fail() {
+        var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
+        List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : this.attempts;
+        newAttempts.add(attempt);
+
+        return new TaskRun(
+            this.tenantId,
+            this.id,
+            this.executionId,
+            this.namespace,
+            this.flowId,
+            this.taskId,
+            this.parentTaskRunId,
+            this.value,
+            newAttempts,
+            this.outputs,
+            this.state.withState(State.Type.FAILED),
+            this.items
+        );
+    }
+
     public TaskRun forChildExecution(Map<String, String> remapTaskRunId, String executionId, State state) {
         return TaskRun.builder()
             .tenantId(this.getTenantId())

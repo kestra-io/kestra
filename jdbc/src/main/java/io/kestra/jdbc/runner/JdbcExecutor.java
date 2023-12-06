@@ -6,6 +6,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
@@ -44,6 +45,7 @@ import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -478,8 +480,15 @@ public class JdbcExecutor implements ExecutorInterface {
 
             maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
         } catch (Exception e) {
-            // TODO maybe create a FAILED Worker Task Result instead
             log.error("Unable to create the Worker Task Result", e);
+            // we send a fail worker task result to end the flow
+            this.workerTaskResultQueue.emit(
+                WorkerTaskResult.builder()
+                    .taskRun(taskRun.withState(State.Type.FAILED).withAttempts(
+                        Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build())
+                    ))
+                    .build()
+            );
         }
     }
 

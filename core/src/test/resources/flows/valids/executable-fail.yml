@@ -1,0 +1,9 @@
+id: executable-fail
+namespace: io.kestra.tests
+
+tasks:
+  - id: launch
+    type: io.kestra.core.tasks.test.BadExecutable
+    namespace: io.kestra.tests
+    flowId: logs
+    wait: true

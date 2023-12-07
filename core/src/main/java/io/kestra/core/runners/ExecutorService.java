@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -106,7 +107,7 @@ public class ExecutorService {
             executor = this.handleEnd(executor);
             // if killing: move created tasks to killed as they are not already started
             executor = this.handleCreatedKilling(executor);
-            // if all tasks are  killed or terminated, set the execution to killed
+            //then set the execution to killed
             executor = this.handleKilling(executor);
 
             // process next task if not killing or killed
@@ -463,7 +464,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    private Executor handleCreatedKilling(Executor executor) throws InternalException {
+    private Executor handleCreatedKilling(Executor executor) {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
         }
@@ -473,8 +474,6 @@ public class ExecutorService {
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(t -> {
-                Task task = executor.getFlow().findTaskByTaskId(t.getTaskId());
-
                 return childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
                     t
@@ -550,15 +549,6 @@ public class ExecutorService {
 
     private Executor handleKilling(Executor executor) {
         if (executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
-            return executor;
-        }
-
-        List<ResolvedTask> currentTasks = executor.getExecution().findTaskDependingFlowState(
-            ResolvedTask.of(executor.getFlow().getTasks()),
-            ResolvedTask.of(executor.getFlow().getErrors())
-        );
-
-        if (executor.getExecution().hasRunning(currentTasks) || executor.getExecution().hasCreated()) {
             return executor;
         }
 
@@ -765,6 +755,16 @@ public class ExecutorService {
             value.getOffset(),
             value.getExecution().toCrc32State(),
             value.getExecution().toStringState()
+        );
+    }
+
+    public void log(Logger log, Boolean in, ExecutionKilled value) {
+        log.debug(
+            "{} {} [key='{}']\n{}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.getExecutionId(),
+            value
         );
     }
 }

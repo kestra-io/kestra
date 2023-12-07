@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -34,6 +35,7 @@ import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -156,6 +158,10 @@ public class JdbcExecutor implements ExecutorInterface {
     @Value("${kestra.heartbeat.frequency}")
     private Duration frequency;
 
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
+
     @SneakyThrows
     @Override
     public void run() {
@@ -168,6 +174,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
         this.executionQueue.receive(Executor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(Executor.class, this::workerTaskResultQueue);
+        this.killQueue.receive(Executor.class, this::killQueue);
 
         ScheduledFuture<?> handle = schedulerDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -559,6 +566,13 @@ public class JdbcExecutor implements ExecutorInterface {
                     }
 
                     newExecution = current.getExecution().withTaskRun(taskRun);
+
+                    // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
+                    // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
+                    if (taskRun.getState().getCurrent() == State.Type.KILLED && taskRun.getParentTaskRunId() != null) {
+                        newExecution = executionService.killParentTaskruns(taskRun, newExecution);
+                    }
+
                     current = current.withExecution(newExecution, "joinWorkerResult");
 
                     // send metrics on terminated
@@ -589,6 +603,41 @@ public class JdbcExecutor implements ExecutorInterface {
             }
 
             return null;
+        });
+
+        if (executor != null) {
+            this.toExecution(executor);
+        }
+    }
+
+    private void killQueue(Either<ExecutionKilled, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a killed execution: {}", either.getRight().getMessage());
+            return;
+        }
+
+        ExecutionKilled message = either.getLeft();
+        if (skipExecutionService.skipExecution(message.getExecutionId())) {
+            log.warn("Skipping execution {}", message.getExecutionId());
+            return;
+        }
+
+        if (log.isDebugEnabled()) {
+            executorService.log(log, true, message);
+        }
+
+        Executor executor = executionRepository.lock(message.getExecutionId(), pair -> {
+            Execution execution = pair.getLeft();
+            Executor current = new Executor(execution, null);
+
+            if (execution == null) {
+                throw new IllegalStateException("Execution state don't exist for " + message.getExecutionId() + ", receive " + message);
+            }
+
+            return Pair.of(
+                current.withExecution(executionService.kill(execution), "joinKillingExecution"),
+                pair.getRight()
+            );
         });
 
         if (executor != null) {

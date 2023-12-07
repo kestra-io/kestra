@@ -17,9 +17,7 @@ import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
@@ -31,6 +29,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,7 +54,7 @@ public class PluginDownloader {
         this.repositoryConfigs.add(repositoryConfig);
     }
 
-    public List<URL> resolve(List<String> dependencies) throws MalformedURLException, ArtifactResolutionException {
+    public List<URL> resolve(List<String> dependencies) throws MalformedURLException, ArtifactResolutionException, VersionRangeResolutionException {
         List<RemoteRepository> repositories = remoteRepositories();
 
         List<ArtifactResult> artifactResults = resolveArtifacts(repositories, dependencies);
@@ -126,21 +125,20 @@ public class PluginDownloader {
         return session;
     }
 
-    private List<ArtifactResult> resolveArtifacts(List<RemoteRepository> repositories, List<String> dependencies) throws ArtifactResolutionException {
-        List<ArtifactRequest> requests = dependencies
-            .stream()
-            .map(s -> {
-                Artifact artifact = new DefaultArtifact(s);
-
-                return new ArtifactRequest(
-                    artifact,
-                    repositories,
-                    null
-                );
-            })
-            .collect(Collectors.toList());
-
-        return system.resolveArtifacts(session, requests);
+    private List<ArtifactResult> resolveArtifacts(List<RemoteRepository> repositories, List<String> dependencies) throws ArtifactResolutionException, VersionRangeResolutionException {
+        List<ArtifactResult> results = new ArrayList<>(dependencies.size());
+        for (String dependency: dependencies) {
+            var artifact = new DefaultArtifact(dependency);
+            var version = system.resolveVersionRange(session, new VersionRangeRequest(artifact, repositories, null));
+            var artifactRequest = new ArtifactRequest(
+                new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "jar", version.getHighestVersion().toString()),
+                repositories,
+                null
+            );
+            var artifactResult = system.resolveArtifact(session, artifactRequest);
+            results.add(artifactResult);
+        }
+        return results;
     }
 
     private List<URL> resolveUrls(List<ArtifactResult> artifactResults) throws MalformedURLException {

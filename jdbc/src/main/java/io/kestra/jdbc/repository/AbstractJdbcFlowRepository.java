@@ -61,14 +61,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             } catch (DeserializationException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
-                    return FlowWithException.builder()
-                        .id(jsonNode.get("id").asText())
-                        .tenantId(jsonNode.get("tenant_id") != null ? jsonNode.get("tenant_id").asText() : null)
-                        .namespace(jsonNode.get("namespace").asText())
-                        .revision(jsonNode.get("revision").asInt())
-                        .exception(e.getMessage())
-                        .tasks(List.of())
-                        .build();
+                    return FlowWithException.from(jsonNode, e).orElseThrow(() -> e);
                 } catch (JsonProcessingException ex) {
                     throw new DeserializationException(ex, source);
                 }

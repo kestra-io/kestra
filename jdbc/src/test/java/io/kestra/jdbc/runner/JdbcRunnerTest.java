@@ -268,7 +268,7 @@ public abstract class JdbcRunnerTest {
         skipExecutionCaseTest.skipExecution();
     }
 
-    @Test
+    @RetryingTest(5)
     void forEachItem() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItem();
     }

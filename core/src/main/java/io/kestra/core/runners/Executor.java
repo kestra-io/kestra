@@ -41,7 +41,7 @@ public class Executor {
     }
 
     public Boolean canBeProcessed() {
-        return !(this.getException() != null || this.getFlow() == null || this.getFlow() instanceof FlowWithException || this.getExecution().isDeleted());
+        return !(this.getException() != null || this.getFlow() == null || this.getFlow() instanceof FlowWithException || this.getFlow().getTasks() == null || this.getExecution().isDeleted());
     }
 
     public Executor withFlow(Flow flow) {

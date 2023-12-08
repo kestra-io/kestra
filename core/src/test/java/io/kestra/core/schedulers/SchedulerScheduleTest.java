@@ -85,12 +85,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .when(flowListenersServiceSpy)
             .flows();
 
-        logQueue.receive(e -> {
-            if (e.getLeft().getMessage().contains("Unknown time-zone ID: Asia/Delhi")) {
-                invalidLogCount.countDown();
-            }
-        });
-
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
              Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
@@ -110,12 +104,19 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
+            Runnable logStop = logQueue.receive(e -> {
+                if (e.getLeft().getMessage().contains("Unknown time-zone ID: Asia/Delhi")) {
+                    invalidLogCount.countDown();
+                }
+            });
+
             worker.run();
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
             invalidLogCount.await(1, TimeUnit.MINUTES);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             assertionStop.run();
+            logStop.run();
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(date.size(), is(3));

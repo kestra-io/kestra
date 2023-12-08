@@ -118,7 +118,7 @@ public class CollectorService {
         } catch (HttpClientResponseException t) {
             log.debug("Unable to report anonymous usage with body '{}'", t.getResponse().getBody(String.class), t);
         } catch (Exception t) {
-            log.error("Unable to handle anonymous usage", t);
+            log.debug("Unable to handle anonymous usage", t);
         }
     }
 

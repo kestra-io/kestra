@@ -1,5 +1,6 @@
 package io.kestra.core.serializers;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -24,6 +25,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -217,6 +219,20 @@ class YamlFlowParserTest {
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString(), is("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.core.tasks.debugs.Return[\"invalid\"]"));
     }
 
+    @Test
+    void invalidPropertyOk() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/invalids/invalid-property.yaml");
+        assert resource != null;
+
+        File file = new File(resource.getFile());
+        String flowSource = Files.readString(file.toPath(), Charset.defaultCharset());
+        TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
+        Map<String, Object> flow = JacksonMapper.ofYaml().readValue(flowSource, TYPE_REFERENCE);
+
+        Flow parse = yamlFlowParser.parse(flow, Flow.class, false);
+
+        assertThat(parse.getId(), is("duplicate"));
+    }
 
     @Test
     void includeFailed() {

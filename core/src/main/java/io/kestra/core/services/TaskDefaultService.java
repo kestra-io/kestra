@@ -108,11 +108,11 @@ public class TaskDefaultService {
         }
 
         // we apply default and overwrite with forced
-        if (defaults.size() > 0) {
+        if (!defaults.isEmpty()) {
             flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults);
         }
 
-        if (forced.size() > 0) {
+        if (!forced.isEmpty()) {
             flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, forced);
         }
 
@@ -120,12 +120,11 @@ public class TaskDefaultService {
             flowAsMap.put("taskDefaults", taskDefaults);
         }
 
-        return yamlFlowParser.parse(flowAsMap, Flow.class);
+        return yamlFlowParser.parse(flowAsMap, Flow.class, false);
     }
 
     private static Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {
-        if (object instanceof Map) {
-            Map<?, ?> value = (Map<?, ?>) object;
+        if (object instanceof Map<?, ?> value) {
             if (value.containsKey("type")) {
                 value = defaults(value, defaults);
             }
@@ -138,8 +137,7 @@ public class TaskDefaultService {
                     recursiveDefaults(e.getValue(), defaults)
                 ))
                 .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
-        } else if (object instanceof Collection) {
-            Collection<?> value = (Collection<?>) object;
+        } else if (object instanceof Collection<?> value) {
             return value
                 .stream()
                 .map(r -> recursiveDefaults(r, defaults))
@@ -152,19 +150,23 @@ public class TaskDefaultService {
     @SuppressWarnings("unchecked")
     protected static Map<?, ?> defaults(Map<?, ?> task, Map<String, List<TaskDefault>> defaults) {
         Object type = task.get("type");
-        if (!(type instanceof String)) {
+        if (!(type instanceof String taskType)) {
             return task;
         }
 
-        String taskType = (String) type;
+        List<TaskDefault> matching = defaults.entrySet()
+            .stream()
+            .filter(e -> e.getKey().equals(taskType) || taskType.startsWith(e.getKey()))
+            .flatMap(e -> e.getValue().stream())
+            .toList();
 
-        if (!defaults.containsKey(taskType)) {
+        if (matching.isEmpty()) {
             return task;
         }
 
         Map<String, Object> result = (Map<String, Object>) task;
 
-        for (TaskDefault taskDefault : defaults.get(taskType)) {
+        for (TaskDefault taskDefault : matching) {
             if (taskDefault.isForced()) {
                 result = MapUtils.merge(result, taskDefault.getValues());
             } else {

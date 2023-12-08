@@ -154,12 +154,6 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
-        taskDefaultsCaseTest.invalidTaskDefaults();
-    }
-
-    @Test
     void metricsIncrement() {
         RunContext runContext = runContextFactory.of();
 

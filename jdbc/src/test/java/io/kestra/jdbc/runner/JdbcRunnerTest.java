@@ -201,12 +201,6 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
-        taskDefaultsCaseTest.invalidTaskDefaults();
-    }
-
-    @Test
     void flowWaitSuccess() throws Exception {
         flowCaseTest.waitSuccess();
     }

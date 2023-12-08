@@ -42,9 +42,17 @@ public class YamlFlowParser {
         return readFlow(mapper, input, cls, type(cls));
     }
 
-    public <T> T parse(Map<String, Object> input, Class<T> cls) {
+
+    public <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
+        ObjectMapper currentMapper = mapper;
+
+        if (!strict) {
+            currentMapper = mapper.copy()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        }
+
         try {
-            return mapper.convertValue(input, cls);
+            return currentMapper.convertValue(input, cls);
         } catch (IllegalArgumentException e) {
             if(e.getCause() instanceof JsonProcessingException jsonProcessingException) {
                 jsonProcessingExceptionHandler(input, type(cls), jsonProcessingException);

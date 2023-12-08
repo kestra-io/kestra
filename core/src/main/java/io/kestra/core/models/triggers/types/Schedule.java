@@ -174,7 +174,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private transient ExecutionTime executionTime;
 
     @Override
-    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
         ExecutionTime executionTime = this.executionTime();
 
         if (last.isPresent()) {

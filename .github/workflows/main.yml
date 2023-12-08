@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: "false"
+      plugin-version:
+        description: 'Plugin version'
+        required: false
+        type: string
+        default: "LATEST"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -169,6 +174,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
+    env:
+      PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || '[0.15,0.16.0-SNAPSHOT)' }}
     strategy:
       matrix:
         image:
@@ -178,85 +185,85 @@ jobs:
             python-libs: ""
           - name: "-full"
             plugins: >-
-              io.kestra.plugin:plugin-airbyte:LATEST
-              io.kestra.plugin:plugin-amqp:LATEST
-              io.kestra.plugin:plugin-ansible:LATEST
-              io.kestra.plugin:plugin-aws:LATEST
-              io.kestra.plugin:plugin-azure:LATEST
-              io.kestra.plugin:plugin-cassandra:LATEST
-              io.kestra.plugin:plugin-cloudquery:LATEST
-              io.kestra.plugin:plugin-compress:LATEST
-              io.kestra.plugin:plugin-couchbase:LATEST
-              io.kestra.plugin:plugin-crypto:LATEST
-              io.kestra.plugin:plugin-databricks:LATEST
-              io.kestra.plugin:plugin-dataform:LATEST
-              io.kestra.plugin:plugin-dbt:LATEST
-              io.kestra.plugin:plugin-debezium-mysql:LATEST
-              io.kestra.plugin:plugin-debezium-postgres:LATEST
-              io.kestra.plugin:plugin-debezium-sqlserver:LATEST
-              io.kestra.plugin:plugin-docker:LATEST
-              io.kestra.plugin:plugin-elasticsearch:LATEST
-              io.kestra.plugin:plugin-fivetran:LATEST
-              io.kestra.plugin:plugin-fs:LATEST
-              io.kestra.plugin:plugin-gcp:LATEST
-              io.kestra.plugin:plugin-git:LATEST
-              io.kestra.plugin:plugin-googleworkspace:LATEST
-              io.kestra.plugin:plugin-hightouch:LATEST
-              io.kestra.plugin:plugin-jdbc-clickhouse:LATEST
-              io.kestra.plugin:plugin-jdbc-duckdb:LATEST
-              io.kestra.plugin:plugin-jdbc-druid:LATEST
-              io.kestra.plugin:plugin-jdbc-mysql:LATEST
-              io.kestra.plugin:plugin-jdbc-oracle:LATEST
-              io.kestra.plugin:plugin-jdbc-pinot:LATEST
-              io.kestra.plugin:plugin-jdbc-postgres:LATEST
-              io.kestra.plugin:plugin-jdbc-redshift:LATEST
-              io.kestra.plugin:plugin-jdbc-rockset:LATEST
-              io.kestra.plugin:plugin-jdbc-snowflake:LATEST
-              io.kestra.plugin:plugin-jdbc-sqlserver:LATEST
-              io.kestra.plugin:plugin-jdbc-trino:LATEST
-              io.kestra.plugin:plugin-jdbc-vectorwise:LATEST
-              io.kestra.plugin:plugin-jdbc-vertica:LATEST
-              io.kestra.plugin:plugin-jdbc-dremio:LATEST
-              io.kestra.plugin:plugin-jdbc-arrow-flight:LATEST
-              io.kestra.plugin:plugin-jdbc-sqlite:LATEST
-              io.kestra.plugin:plugin-kafka:LATEST
-              io.kestra.plugin:plugin-kubernetes:LATEST
-              io.kestra.plugin:plugin-malloy:LATEST
-              io.kestra.plugin:plugin-modal:LATEST
-              io.kestra.plugin:plugin-mongodb:LATEST
-              io.kestra.plugin:plugin-mqtt:LATEST
-              io.kestra.plugin:plugin-nats:LATEST
-              io.kestra.plugin:plugin-neo4j:LATEST
-              io.kestra.plugin:plugin-notifications:LATEST
-              io.kestra.plugin:plugin-openai:LATEST
-              io.kestra.plugin:plugin-powerbi:LATEST
-              io.kestra.plugin:plugin-pulsar:LATEST
-              io.kestra.plugin:plugin-redis:LATEST
-              io.kestra.plugin:plugin-script-groovy:LATEST
-              io.kestra.plugin:plugin-script-julia:LATEST
-              io.kestra.plugin:plugin-script-jython:LATEST
-              io.kestra.plugin:plugin-script-nashorn:LATEST
-              io.kestra.plugin:plugin-script-node:LATEST
-              io.kestra.plugin:plugin-script-powershell:LATEST
-              io.kestra.plugin:plugin-script-python:LATEST
-              io.kestra.plugin:plugin-script-r:LATEST
-              io.kestra.plugin:plugin-script-ruby:LATEST
-              io.kestra.plugin:plugin-script-shell:LATEST
-              io.kestra.plugin:plugin-serdes:LATEST
-              io.kestra.plugin:plugin-servicenow:LATEST
-              io.kestra.plugin:plugin-singer:LATEST
-              io.kestra.plugin:plugin-soda:LATEST
-              io.kestra.plugin:plugin-solace:LATEST
-              io.kestra.plugin:plugin-spark:LATEST
-              io.kestra.plugin:plugin-sqlmesh:LATEST
-              io.kestra.plugin:plugin-surrealdb:LATEST
-              io.kestra.plugin:plugin-terraform:LATEST
-              io.kestra.plugin:plugin-tika:LATEST
-              io.kestra.plugin:plugin-weaviate:LATEST
-              io.kestra.storage:storage-azure:LATEST
-              io.kestra.storage:storage-gcs:LATEST
-              io.kestra.storage:storage-minio:LATEST
-              io.kestra.storage:storage-s3:LATEST
+              io.kestra.plugin:plugin-airbyte:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-amqp:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-ansible:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-aws:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-azure:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-cassandra:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-cloudquery:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-compress:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-couchbase:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-crypto:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-databricks:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-dataform:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-dbt:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-debezium-mysql:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-debezium-postgres:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-debezium-sqlserver:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-docker:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-elasticsearch:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-fivetran:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-fs:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-gcp:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-git:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-googleworkspace:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-hightouch:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-clickhouse:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-duckdb:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-druid:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-mysql:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-oracle:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-pinot:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-postgres:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-redshift:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-rockset:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-snowflake:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-sqlserver:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-trino:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-vectorwise:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-vertica:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-dremio:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-arrow-flight:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-sqlite:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-kafka:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-kubernetes:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-malloy:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-modal:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-mongodb:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-mqtt:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-nats:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-neo4j:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-notifications:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-openai:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-powerbi:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-pulsar:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-redis:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-groovy:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-julia:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-jython:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-nashorn:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-node:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-powershell:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-python:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-r:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-ruby:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-script-shell:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-serdes:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-servicenow:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-singer:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-soda:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-solace:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-spark:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-sqlmesh:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-surrealdb:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-terraform:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-tika:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-weaviate:$PLUGIN_VERSION
+              io.kestra.storage:storage-azure:$PLUGIN_VERSION
+              io.kestra.storage:storage-gcs:$PLUGIN_VERSION
+              io.kestra.storage:storage-minio:$PLUGIN_VERSION
+              io.kestra.storage:storage-s3:$PLUGIN_VERSION
             packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
             python-libs: kestra
     steps:

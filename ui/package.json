@@ -59,7 +59,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.5.1",
-    "@vitejs/plugin-vue": "^4.4.0",
+    "@vitejs/plugin-vue": "^4.5.2",
     "@vue/eslint-config-prettier": "^8.0.0",
     "@vue/test-utils": "^2.4.1",
     "decompress": "^4.2.1",

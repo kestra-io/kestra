@@ -6,25 +6,28 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      # Check for updates to GitHub Actions every weekday
-      interval: "daily"
+      # Check for updates to GitHub Actions every week
+      interval: "weekly"
     labels:
       - "dependency-upgrade"
+    open-pull-requests-limit: 50
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      # Check for updates to Go modules every weekday
-      interval: "daily"
+      # Check for updates to Gradle modules every week
+      interval: "weekly"
     labels:
       - "dependency-upgrade"
+    open-pull-requests-limit: 50
 
   # Maintain dependencies for Npm modules
   - package-ecosystem: "npm"
     directory: "/ui"
     schedule:
-      # Check for updates to Go modules every weekday
-      interval: "daily"
+      # Check for updates to Npm modules every week
+      interval: "weekly"
     labels:
       - "dependency-upgrade"
+    open-pull-requests-limit: 50

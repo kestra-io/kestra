@@ -20,7 +20,7 @@
     "axios": "^1.5.1",
     "bootstrap": "^5.3.2",
     "buffer": "^6.0.3",
-    "chart.js": "^4.4.0",
+    "chart.js": "^4.4.1",
     "chartjs-chart-matrix": "^2.0.1",
     "chartjs-chart-treemap": "^2.3.0",
     "core-js": "^3.33.0",

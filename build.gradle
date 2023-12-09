@@ -75,8 +75,8 @@ allprojects {
             force("org.slf4j:slf4j-api:1.7.36")
 
             // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.23.3")
-            force("com.google.protobuf:protobuf-java-util:3.23.3")
+            force("com.google.protobuf:protobuf-java:3.25.1")
+            force("com.google.protobuf:protobuf-java-util:3.25.1")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.13")

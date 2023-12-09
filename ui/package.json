@@ -64,7 +64,7 @@
     "@vue/test-utils": "^2.4.1",
     "decompress": "^4.2.1",
     "eslint": "^8.51.0",
-    "eslint-plugin-vue": "^9.17.0",
+    "eslint-plugin-vue": "^9.19.2",
     "jsdom": "^22.1.0",
     "monaco-editor": "0.39.0",
     "monaco-yaml": "4.0.0-alpha.0",

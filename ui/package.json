@@ -61,7 +61,7 @@
     "@rushstack/eslint-patch": "^1.5.1",
     "@vitejs/plugin-vue": "^4.4.0",
     "@vue/eslint-config-prettier": "^8.0.0",
-    "@vue/test-utils": "^2.4.1",
+    "@vue/test-utils": "^2.4.3",
     "decompress": "^4.2.1",
     "eslint": "^8.51.0",
     "eslint-plugin-vue": "^9.17.0",

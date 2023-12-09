@@ -26,7 +26,7 @@
     "core-js": "^3.33.0",
     "dagre": "^0.8.5",
     "element-plus": "^2.3.14",
-    "humanize-duration": "^3.30.0",
+    "humanize-duration": "^3.31.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "markdown-it": "^13.0.2",

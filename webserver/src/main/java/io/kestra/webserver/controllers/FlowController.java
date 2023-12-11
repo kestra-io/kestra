@@ -710,10 +710,11 @@ public class FlowController {
         @Part CompletedFileUpload fileUpload
     ) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
+        String tenantId = tenantService.resolveTenant();
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                flowService.importFlow(source);
+                this.importFlow(tenantId, source);
             }
         } else if (fileName.endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
@@ -724,7 +725,7 @@ public class FlowController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    flowService.importFlow(source);
+                    this.importFlow(tenantId, source);
                 }
             }
         } else {
@@ -732,6 +733,10 @@ public class FlowController {
         }
 
         return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    protected void importFlow(String tenantId, String source) {
+        flowService.importFlow(tenantId, source);
     }
 
     protected List<FlowWithSource> setFlowsDisableByIds(List<IdWithNamespace> ids, boolean disable) {

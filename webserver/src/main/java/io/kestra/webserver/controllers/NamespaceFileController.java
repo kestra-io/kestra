@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.ImmutableFileAttributes;
@@ -42,6 +44,8 @@ public class NamespaceFileController {
     private TenantService tenantService;
     @Inject
     private FlowService flowService;
+    @Inject
+    private YamlFlowParser yamlFlowParser;
 
     private final List<StaticFile> staticFiles;
     {
@@ -161,6 +165,7 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         ensureNonReadOnly(path);
 
+        String tenantId = tenantService.resolveTenant();
         if(fileContent.getFilename().toLowerCase().endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
                 ZipEntry entry;
@@ -169,17 +174,17 @@ public class NamespaceFileController {
                         continue;
                     }
 
-                    putNamespaceFile(namespace, URI.create("/" + entry.getName()), new BufferedInputStream(new ByteArrayInputStream(archive.readAllBytes())));
+                    putNamespaceFile(tenantId, namespace, URI.create("/" + entry.getName()), new BufferedInputStream(new ByteArrayInputStream(archive.readAllBytes())));
                 }
             }
         } else {
             try(BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream())) {
-                putNamespaceFile(namespace, path, inputStream);
+                putNamespaceFile(tenantId, namespace, path, inputStream);
             }
         }
     }
 
-    private void putNamespaceFile(String namespace, URI path, BufferedInputStream inputStream) throws IOException {
+    private void putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws IOException {
         String filePath = path.getPath();
         if(filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
             if(filePath.split("/").length != 3) {
@@ -188,11 +193,15 @@ public class NamespaceFileController {
 
             String flowSource = new String(inputStream.readAllBytes());
             flowSource = flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + namespace);
-            flowService.importFlow(flowSource);
+            this.importFlow(tenantId, flowSource);
             return;
         }
 
-        storageInterface.put(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path), inputStream);
+        storageInterface.put(tenantId, toNamespacedStorageUri(namespace, path), inputStream);
+    }
+
+    protected void importFlow(String tenantId, String source) {
+        flowService.importFlow(tenantId, source);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -205,15 +214,16 @@ public class NamespaceFileController {
              ZipOutputStream archive = new ZipOutputStream(bos)) {
 
             URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
-            storageInterface.filesByPrefix(tenantService.resolveTenant(), baseNamespaceFilesUri).forEach(Rethrow.throwConsumer(uri -> {
-                try (InputStream inputStream = storageInterface.get(tenantService.resolveTenant(), uri)) {
+            String tenantId = tenantService.resolveTenant();
+            storageInterface.filesByPrefix(tenantId, baseNamespaceFilesUri).forEach(Rethrow.throwConsumer(uri -> {
+                try (InputStream inputStream = storageInterface.get(tenantId, uri)) {
                     archive.putNextEntry(new ZipEntry(baseNamespaceFilesUri.relativize(uri).getPath()));
                     archive.write(inputStream.readAllBytes());
                     archive.closeEntry();
                 }
             }));
 
-            flowService.findByNamespaceWithSource(namespace).forEach(Rethrow.throwConsumer(flowWithSource -> {
+            flowService.findByNamespaceWithSource(tenantId, namespace).forEach(Rethrow.throwConsumer(flowWithSource -> {
                 try {
                     archive.putNextEntry(new ZipEntry(FLOWS_FOLDER + "/" + flowWithSource.getId() + ".yml"));
                     archive.write(flowWithSource.getSource().getBytes());

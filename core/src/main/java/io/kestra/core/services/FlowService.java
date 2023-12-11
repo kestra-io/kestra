@@ -10,7 +10,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -46,30 +45,27 @@ public class FlowService {
     FlowRepositoryInterface flowRepository;
 
     @Inject
-    TenantService tenantService;
+    YamlFlowParser yamlFlowParser;
 
     @Inject
     TaskDefaultService taskDefaultService;
 
     @Inject
-    YamlFlowParser yamlFlowParser;
-
-    @Inject
     ApplicationContext applicationContext;
 
+    public FlowWithSource importFlow(String tenantId, String source) {
+        Flow withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
+            .tenantId(tenantId)
+            .build();
 
-    public void importFlow(String source) {
-        Flow parsed = yamlFlowParser.parse(source, Flow.class);
-        flowRepository
-            .findById(tenantService.resolveTenant(), parsed.getNamespace(), parsed.getId())
-            .ifPresentOrElse(
-                previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
-                () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
-            );
+        return flowRepository
+            .findById(withTenant.getTenantId(), withTenant.getNamespace(), withTenant.getId())
+            .map(previous -> flowRepository.update(withTenant, previous, source, taskDefaultService.injectDefaults(withTenant)))
+            .orElseGet(() -> flowRepository.create(withTenant, source, taskDefaultService.injectDefaults(withTenant)));
     }
 
-    public List<FlowWithSource> findByNamespaceWithSource(String namespace) {
-        return flowRepository.findByNamespaceWithSource(tenantService.resolveTenant(), namespace);
+    public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {
+        return flowRepository.findByNamespaceWithSource(tenantId, namespace);
     }
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {

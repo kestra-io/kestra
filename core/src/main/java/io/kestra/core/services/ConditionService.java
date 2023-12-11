@@ -5,7 +5,9 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
@@ -119,6 +121,10 @@ public class ConditionService {
 
     public boolean isTerminatedWithListeners(Flow flow, Execution execution) {
         if (!execution.getState().isTerminated()) {
+            return false;
+        }
+
+        if (!execution.getTaskRunList().stream().map(TaskRun::getState).allMatch(State::isTerminated)) {
             return false;
         }
 

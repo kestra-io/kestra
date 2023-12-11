@@ -771,6 +771,30 @@ public class RunContext {
     }
 
     /**
+     * Resolve a path inside the working directory (a.k.a. the tempDir).
+     * If the resolved path escapes the working directory, an IllegalArgumentException will be thrown to protect against path traversal security issue.
+     * This method is null-friendly: it will return the working directory (a.k.a. the tempDir) if called with a null path.
+     */
+    public Path resolve(Path path) {
+        if (path == null) {
+            return tempDir();
+        }
+
+        if (path.toString().contains(".." + File.separator)) {
+            throw new IllegalArgumentException("The path to resolve must be a relative path inside the current working directory");
+        }
+
+        Path baseDir = tempDir();
+        Path resolved = baseDir.resolve(path).toAbsolutePath();
+
+        if (!resolved.startsWith(baseDir)) {
+            throw new IllegalArgumentException("The path to resolve must be a relative path inside the current working directory");
+        }
+
+        return resolved;
+    }
+
+    /**
      * @deprecated use {@link #tempFile(String)} instead
      */
     @Deprecated

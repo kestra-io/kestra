@@ -124,7 +124,6 @@ class ScheduleTest {
 
         var inputs = evaluate.get().getInputs();
 
-        System.out.println(inputs);
         assertThat(inputs.size(), is(2));
         assertThat(inputs.get("input1"), is("input1"));
         assertThat(inputs.get("input2"), is("default"));

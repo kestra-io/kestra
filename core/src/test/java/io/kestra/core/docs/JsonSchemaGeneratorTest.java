@@ -184,7 +184,6 @@ class JsonSchemaGeneratorTest {
     @Test
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
-        System.out.println(generate);
         assertThat(generate, is(not(nullValue())));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(4));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));

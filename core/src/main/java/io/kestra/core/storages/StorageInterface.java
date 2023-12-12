@@ -31,11 +31,12 @@ public interface StorageInterface {
     InputStream get(String tenantId, URI uri) throws IOException;
 
     /**
-     * Returns all files that start with the given prefix.
-     * @return Kestra's internal storage uris of the found files
+     * Returns all objects that start with the given prefix
+     * @param includeDirectories whether to include directories in the given results or not. If true, directories' uri will have a trailing '/'
+     * @return Kestra's internal storage uris of the found objects
      */
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    List<URI> filesByPrefix(String tenantId, URI prefix) throws IOException;
+    List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     List<FileAttributes> list(String tenantId, URI uri) throws IOException;

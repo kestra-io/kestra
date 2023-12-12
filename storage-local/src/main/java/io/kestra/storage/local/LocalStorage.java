@@ -14,6 +14,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -52,11 +53,16 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public List<URI> filesByPrefix(String tenantId, URI prefix) throws IOException {
+    public List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getPath(tenantId, prefix);
-        try (Stream<Path> walk = Files.walk(fsPath).filter(Files::isRegularFile)) {
+        try (Stream<Path> walk = Files.walk(fsPath)) {
             return walk.sorted(Comparator.reverseOrder())
-                .map(fsPath::relativize)
+                .filter(path -> includeDirectories || !Files.isDirectory(path))
+                .map(path -> {
+                    Path relativePath = fsPath.relativize(path);
+                    return relativePath + (Files.isDirectory(path) && !relativePath.toString().isEmpty() ? "/" : "");
+                })
+                .filter(Predicate.not(String::isEmpty))
                 .map(path -> {
                     String prefixPath = prefix.getPath();
                     return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);

@@ -9,7 +9,7 @@ tasks:
       - value-2
     tasks:
       - id: subflow-not-exist
-        type: io.kestra.core.tasks.flows.Flow
+        type: io.kestra.core.tasks.flows.Subflow
         flowId: "{{ taskrun.value }}"
         namespace: dev
         wait: true

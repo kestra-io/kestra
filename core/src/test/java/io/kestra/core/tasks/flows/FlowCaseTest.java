@@ -83,7 +83,7 @@ public class FlowCaseTest {
             assertThat(execution.getTaskRunList().get(0).getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
         }
 
-        assertThat(triggered.get().getTrigger().getType(), is(Flow.class.getName()));
+        assertThat(triggered.get().getTrigger().getType(), is(Subflow.class.getName()));
         assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
         assertThat(triggered.get().getTrigger().getVariables().get("flowId"), is(execution.getFlowId()));
         assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));

@@ -10,6 +10,7 @@ import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Parallel;
+import io.kestra.core.tasks.flows.Subflow;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -43,9 +44,9 @@ class FlowTopologyServiceTest {
                 Parallel.builder()
                     .id("para")
                     .type(Parallel.class.getName())
-                    .tasks(List.of(io.kestra.core.tasks.flows.Flow.builder()
+                    .tasks(List.of(Subflow.builder()
                         .id("launch")
-                        .type(io.kestra.core.tasks.flows.Flow.class.getName())
+                        .type(Subflow.class.getName())
                         .namespace("io.kestra.ee")
                         .flowId("child")
                         .build()

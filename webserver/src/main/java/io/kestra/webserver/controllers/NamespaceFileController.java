@@ -75,7 +75,7 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
         return Stream.concat(
-            storageInterface.filesByPrefix(tenantService.resolveTenant(), baseNamespaceFilesUri).stream()
+            storageInterface.allByPrefix(tenantService.resolveTenant(), baseNamespaceFilesUri, false).stream()
                 .map(storageUri -> "/" + baseNamespaceFilesUri.relativize(storageUri).getPath()),
             staticFiles.stream().map(StaticFile::getServedPath)
         ).filter(path -> path.contains(q)).toList();
@@ -215,7 +215,7 @@ public class NamespaceFileController {
 
             URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
             String tenantId = tenantService.resolveTenant();
-            storageInterface.filesByPrefix(tenantId, baseNamespaceFilesUri).forEach(Rethrow.throwConsumer(uri -> {
+            storageInterface.allByPrefix(tenantId, baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
                 try (InputStream inputStream = storageInterface.get(tenantId, uri)) {
                     archive.putNextEntry(new ZipEntry(baseNamespaceFilesUri.relativize(uri).getPath()));
                     archive.write(inputStream.readAllBytes());

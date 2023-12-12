@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path ../.gitignore"
   },
   "dependencies": {
-    "@kestra-io/ui-libs": "^0.0.30",
+    "@kestra-io/ui-libs": "^0.0.31",
     "@popperjs/core": "npm:@sxzz/popperjs-es@2.11.7",
     "@vue-flow/background": "^1.2.0",
     "@vue-flow/controls": "1.0.6",

@@ -229,7 +229,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
 
         Flow retrievedFlow = flowRepository.findById(null, NAMESPACE, "task-flow").get();
         assertThat(retrievedFlow.getNamespace(), is(NAMESPACE));
-        assertThat(((io.kestra.core.tasks.flows.Flow) retrievedFlow.getTasks().get(0)).getNamespace(), is(namespaceToExport));
+        assertThat(((io.kestra.core.tasks.flows.Subflow) retrievedFlow.getTasks().get(0)).getNamespace(), is(namespaceToExport));
     }
 
     private void assertNamespaceFileContent(URI fileUri, String expectedContent) throws IOException {

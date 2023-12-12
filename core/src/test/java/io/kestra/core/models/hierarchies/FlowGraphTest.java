@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.GraphService;
+import io.kestra.core.tasks.flows.Subflow;
 import io.kestra.core.tasks.flows.Switch;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -238,7 +239,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
 
         assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).getExecutableTask().subflowId().flowId(), is("switch"));
         SubflowGraphTask subflowGraphTask = (SubflowGraphTask) nodeByUid(flowGraph, "root.launch");
-        assertThat(subflowGraphTask.getTask(), instanceOf(io.kestra.core.tasks.flows.Flow.class));
+        assertThat(subflowGraphTask.getTask(), instanceOf(Subflow.class));
         assertThat(subflowGraphTask.getRelationType(), is(RelationType.SEQUENTIAL));
 
         GraphTask switchNode = (GraphTask) nodeByUid(flowGraph, "root.launch.parent-seq");

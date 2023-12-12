@@ -2,7 +2,7 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.tasks.flows.Flow;
+import io.kestra.core.tasks.flows.Subflow;
 import io.kestra.core.runners.WorkerTaskExecution;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -30,7 +30,7 @@ public abstract class AbstractWorkerTaskExecutionTest {
 
         WorkerTaskExecution<?> workerTaskExecution = WorkerTaskExecution.builder()
             .execution(Execution.builder().id(IdUtils.create()).build())
-            .task(Flow.builder().type(Flow.class.getName()).id(IdUtils.create()).build())
+            .task(Subflow.builder().type(Subflow.class.getName()).id(IdUtils.create()).build())
             .taskRun(TaskRun.builder().id(IdUtils.create()).build())
             .build();
 

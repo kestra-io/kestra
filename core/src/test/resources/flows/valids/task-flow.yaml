@@ -10,7 +10,7 @@ labels:
 
 tasks:
   - id: launch
-    type: io.kestra.core.tasks.flows.Flow
+    type: io.kestra.core.tasks.flows.Subflow
     namespace: io.kestra.tests
     flowId: switch
     inputs:

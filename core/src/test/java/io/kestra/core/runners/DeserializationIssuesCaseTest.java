@@ -1,14 +1,17 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -131,6 +134,23 @@ public class DeserializationIssuesCaseTest {
         }
         """;
 
+    private static final String INVALID_FLOW_KEY = "company.team_hello-world_2";
+    private static final String INVALID_FLOW_VALUE = """
+        {
+          "id": "hello-world",
+          "tasks": [
+            {
+              "id": "invalid",
+              "type": "io.kestra.notfound.Invalid"
+            }
+          ],
+          "deleted": false,
+          "disabled": false,
+          "revision": 2,
+          "namespace": "company.team"
+        }
+        """;
+
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
@@ -139,12 +159,19 @@ public class DeserializationIssuesCaseTest {
     @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
     protected QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
+    @Inject
+    private FlowListenersInterface flowListeners;
+
     public record QueueMessage(Class<?> type, String key, String value) {}
 
 
     public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
-        AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
+        AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
+        workerTaskResultQueue.receive(either -> {
+            if (either != null) {
+                workerTaskResult.set(either.getLeft());
+            }
+        });
 
         sendToQueue.accept(new QueueMessage(WorkerJob.class, INVALID_WORKER_TASK_KEY, INVALID_WORKER_TASK_VALUE));
 
@@ -158,8 +185,12 @@ public class DeserializationIssuesCaseTest {
     }
 
     public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws InterruptedException {
-        AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>(null);
-        workerTriggerResultQueue.receive(either -> workerTriggerResult.set(either.getLeft()));
+        AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>();
+        workerTriggerResultQueue.receive(either -> {
+            if (either != null) {
+                workerTriggerResult.set(either.getLeft());
+            }
+        });
 
         sendToQueue.accept(new QueueMessage(WorkerJob.class, INVALID_WORKER_TRIGGER_KEY, INVALID_WORKER_TRIGGER_VALUE));
 
@@ -168,4 +199,16 @@ public class DeserializationIssuesCaseTest {
         assertThat(workerTriggerResult.get(), nullValue());
     }
 
+    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
+        AtomicReference<List<Flow>> flows = new AtomicReference<>();
+        flowListeners.listen(newFlows -> flows.set(newFlows));
+
+        sendToQueue.accept(new QueueMessage(Flow.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
+
+        Await.until(
+            () -> flows.get() != null && flows.get().stream().anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2") && (newFlow.getTasks() == null || newFlow.getTasks().isEmpty())),
+            Duration.ofMillis(100),
+            Duration.ofMinutes(1)
+        );
+    }
 }

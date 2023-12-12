@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.runners.DeserializationIssuesCaseTest;
+import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcConfiguration;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
@@ -54,6 +56,11 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     @Test
     void workerTriggerDeserializationIssue() throws Exception {
         deserializationIssuesCaseTest.workerTriggerDeserializationIssue(queueMessage -> sendToQueue(queueMessage));
+    }
+
+    @Test
+    void flowDeserializationIssue() throws TimeoutException {
+        deserializationIssuesCaseTest.flowDeserializationIssue(queueMessage -> sendToQueue(queueMessage));
     }
 
     private void sendToQueue(DeserializationIssuesCaseTest.QueueMessage queueMessage) {

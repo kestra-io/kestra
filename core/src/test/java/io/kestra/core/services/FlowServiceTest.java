@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.Flow;
@@ -17,12 +18,19 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest
 class FlowServiceTest {
     @Inject
+    private FlowRepositoryInterface flowRepository;
+    @Inject
     private FlowService flowService;
 
     private static Flow create(String flowId, String taskId, Integer revision) {
+        return create(null, flowId, taskId, revision);
+    }
+
+    private static Flow create(String tenantId, String flowId, String taskId, Integer revision) {
         return Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
+            .tenantId(tenantId)
             .revision(revision)
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
@@ -99,5 +107,13 @@ class FlowServiceTest {
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision(), is(2));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test2")).findFirst().orElseThrow().getRevision(), is(3));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test3")).findFirst().orElseThrow().getRevision(), is(3));
+    }
+
+    @Test
+    public void findById() {
+        Flow flow = create("my-tenant", "test", "test", 1);
+        flowRepository.create(flow, flow.generateSource(), flow);
+        assertThat(flowService.findById("my-tenant", "io.kestra.unittest", "test").isPresent(), is(true));
+        assertThat(flowService.findById(null, "io.kestra.unittest", "test").isPresent(), is(false));
     }
 }

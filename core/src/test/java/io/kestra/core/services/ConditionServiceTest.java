@@ -84,7 +84,7 @@ class ConditionServiceTest {
 
         conditionService.valid(flow, conditions, conditionContext);
 
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.ConditionServiceTest") && logEntry.getFlowId().equals("exception"));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.conditionservicetest") && logEntry.getFlowId().equals("exception"));
         assertThat(matchingLog, notNullValue());
     }
 }

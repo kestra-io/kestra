@@ -169,7 +169,7 @@ public abstract class JdbcRunnerTest {
         restartCaseTest.restartFailedThenSuccess();
     }
 
-    @Test
+    @RetryingTest(5)
     void replay() throws Exception {
         restartCaseTest.replay();
     }

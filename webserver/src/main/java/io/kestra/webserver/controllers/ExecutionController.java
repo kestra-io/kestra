@@ -463,7 +463,7 @@ public class ExecutionController {
     public Execution trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs") @Nullable @Body Map<String, Object> inputs,
+        @Parameter(description = "The inputs") HttpRequest<?> inputs, // FIXME we had to inject the HttpRequest here due to https://github.com/micronaut-projects/micronaut-core/issues/9694
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
@@ -483,9 +483,10 @@ public class ExecutionController {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
+        Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
         Execution current = runnerUtils.newExecution(
             found,
-            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files),
+            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputMap, files),
             parseLabels(labels)
         );
 

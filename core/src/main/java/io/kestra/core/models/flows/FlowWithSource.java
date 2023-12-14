@@ -32,6 +32,7 @@ public class FlowWithSource extends Flow {
             .taskDefaults(this.taskDefaults)
             .disabled(this.disabled)
             .deleted(this.deleted)
+            .concurrency(this.concurrency)
             .build();
     }
 
@@ -73,6 +74,7 @@ public class FlowWithSource extends Flow {
             .disabled(flow.disabled)
             .deleted(flow.deleted)
             .source(source)
+            .concurrency(flow.concurrency)
             .build();
     }
 }

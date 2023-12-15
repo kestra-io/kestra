@@ -18,7 +18,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, AutoCloseable {
-    @Setter private java.util.concurrent.ExecutorService poolExecutor;
+    private java.util.concurrent.ExecutorService poolExecutor;
     @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
     @Setter protected boolean schedulerEnabled = true;
     @Setter protected boolean workerEnabled = true;

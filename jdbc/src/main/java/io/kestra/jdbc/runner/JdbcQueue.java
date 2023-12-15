@@ -44,7 +44,7 @@ import java.util.function.Supplier;
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
-    private static ExecutorService poolExecutor;
+    private final ExecutorService poolExecutor;
 
     protected final QueueService queueService;
 
@@ -63,10 +63,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected Boolean isShutdown = false;
 
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
-        if (poolExecutor == null) {
-            ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
-            poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue");
-        }
+        ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+        this.poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue-" + cls.getSimpleName());
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;

@@ -72,6 +72,10 @@ public class FlowService {
         return flowRepository.findById(tenantId, namespace, id);
     }
 
+    public List<Flow> findByNamespace(String tenantId, String namespace) {
+        return flowRepository.findByNamespace(tenantId, namespace);
+    }
+
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return keepLastVersionCollector(stream);
     }

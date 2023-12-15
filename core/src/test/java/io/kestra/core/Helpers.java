@@ -1,9 +1,9 @@
 package io.kestra.core;
 
 import io.micronaut.context.ApplicationContext;
+import io.kestra.core.contexts.KestraApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.kestra.core.contexts.KestraApplicationContextBuilder;
 import io.kestra.core.contexts.KestraClassLoader;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginScanner;
@@ -68,19 +68,20 @@ public class Helpers {
         if (!KestraClassLoader.isInit()) {
             KestraClassLoader.create(Thread.currentThread().getContextClassLoader());
         }
+        Thread.currentThread().setContextClassLoader(KestraClassLoader.instance());
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         List<RegisteredPlugin> scan = pluginScanner.scan(pluginsPath);
         PluginRegistry pluginRegistry = new PluginRegistry(scan);
         KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
 
-        return new KestraApplicationContextBuilder()
+        KestraApplicationContextBuilder builder = (KestraApplicationContextBuilder) new KestraApplicationContextBuilder()
             .mainClass(Helpers.class)
             .environments(envs)
-            .properties(properties)
-            .classLoader(KestraClassLoader.instance())
-            .pluginRegistry(pluginRegistry)
-            .build();
+            .properties(properties);
+
+        builder.pluginRegistry(pluginRegistry);
+        return builder.build();
     }
 
     public static void runApplicationContext(Consumer<ApplicationContext> consumer) throws URISyntaxException {

@@ -7,11 +7,11 @@ import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.commands.templates.TemplateCommand;
-import io.kestra.core.contexts.KestraApplicationContextBuilder;
 import io.kestra.core.contexts.KestraClassLoader;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
+import io.kestra.core.contexts.KestraApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Introspected;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -84,10 +84,9 @@ public class App implements Callable<Integer> {
      * @return the application context created
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass, String[] args) {
-        KestraApplicationContextBuilder builder = new KestraApplicationContextBuilder()
+        KestraApplicationContextBuilder builder = (KestraApplicationContextBuilder) new KestraApplicationContextBuilder()
             .mainClass(mainClass)
-            .environments(Environment.CLI)
-            .classLoader(KestraClassLoader.instance());
+            .environments(Environment.CLI);
 
         CommandLine cmd = new CommandLine(mainClass, CommandLine.defaultFactory());
 

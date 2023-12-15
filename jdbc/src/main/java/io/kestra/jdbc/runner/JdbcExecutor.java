@@ -210,8 +210,12 @@ public class JdbcExecutor implements ExecutorInterface {
                     if (e.getCause().getClass() != CannotCreateTransactionException.class) {
                         log.error("Executor fatal exception", e);
 
-                        applicationContext.close();
-                        Runtime.getRuntime().exit(1);
+                        try {
+                            close();
+                        }
+                        catch (IOException ioe) {
+                            log.error("Unable to property close the executor", ioe);
+                        }
                     }
                 }
             },

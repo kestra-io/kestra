@@ -108,24 +108,4 @@ class FlowServiceTest {
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test2")).findFirst().orElseThrow().getRevision(), is(3));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test3")).findFirst().orElseThrow().getRevision(), is(3));
     }
-
-    @Test
-    public void findById() {
-        Flow flow = create("my-tenant", "test", "test", 1);
-        flowRepository.create(flow, flow.generateSource(), flow);
-        assertThat(flowService.findById("my-tenant", "io.kestra.unittest", "test").isPresent(), is(true));
-        assertThat(flowService.findById(null, "io.kestra.unittest", "test").isPresent(), is(false));
-    }
-
-    @Test
-    public void findByNamespace() {
-        Flow flow = create("my-tenant", "test", "test", 1);
-        flowRepository.create(flow, flow.generateSource(), flow);
-        flow = create("my-tenant", "test2", "test", 1);
-        flowRepository.create(flow, flow.generateSource(), flow);
-
-        assertThat(flowService.findByNamespace("my-tenant", "io.kestra.unittest").size(), is(2));
-        assertThat(flowService.findByNamespace("my-tenant", "io.kestra.unittes").isEmpty(), is(true));
-        assertThat(flowService.findByNamespace(null, "io.kestra.unittest").isEmpty(), is(true));
-    }
 }

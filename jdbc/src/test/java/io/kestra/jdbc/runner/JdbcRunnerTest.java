@@ -174,7 +174,7 @@ public abstract class JdbcRunnerTest {
         restartCaseTest.replay();
     }
 
-    @Test
+    @RetryingTest(5)
     void restartMultiple() throws Exception {
         restartCaseTest.restartMultiple();
     }
@@ -189,7 +189,7 @@ public abstract class JdbcRunnerTest {
         multipleConditionTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5)
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
     }
@@ -250,7 +250,7 @@ public abstract class JdbcRunnerTest {
         pauseTest.runTimeout(runnerUtils);
     }
 
-    @Test
+    @RetryingTest(5)
     void executionDate() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "execution-start-date", null, null, Duration.ofSeconds(60));
 

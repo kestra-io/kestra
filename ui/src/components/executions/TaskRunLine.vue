@@ -46,7 +46,7 @@
         <el-select
             class="d-none d-md-inline-block"
             :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-            @change="forwardEvent('swapDisplayedAttempt',(currentTaskRun.id, $event))"
+            @change="forwardEvent('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
             <el-option

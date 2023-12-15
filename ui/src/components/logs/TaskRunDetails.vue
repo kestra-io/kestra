@@ -430,11 +430,14 @@
             toggleShowAttempt(attemptUid) {
                 this.shownAttemptsUid = _xor(this.shownAttemptsUid, [attemptUid])
             },
-            swapDisplayedAttempt(taskRunId, newDisplayedAttemptUid) {
+            swapDisplayedAttempt(event) {
+                const {taskRunId, attemptNumber: newDisplayedAttemptNumber} = event;
                 this.shownAttemptsUid = this.shownAttemptsUid.map(attemptUid => attemptUid.startsWith(`${taskRunId}-`)
-                    ? this.attemptUid(taskRunId, newDisplayedAttemptUid)
+                    ? this.attemptUid(taskRunId, newDisplayedAttemptNumber)
                     : attemptUid
                 );
+
+                this.selectedAttemptNumberByTaskRunId[taskRunId] = newDisplayedAttemptNumber;
             },
             taskType(taskRun) {
                 const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);

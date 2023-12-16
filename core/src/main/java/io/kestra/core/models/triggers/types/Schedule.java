@@ -21,7 +21,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.validations.CronExpression;
-import io.swagger.v3.oas.annotations.Hidden;
+import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -129,6 +129,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @PluginProperty
     private String cron;
 
+    @TimezoneId
     @Schema(
         title = "The time zone id to use for evaluating the cron expression. Default value is the server default zone id."
     )

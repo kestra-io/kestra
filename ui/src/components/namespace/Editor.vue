@@ -35,6 +35,7 @@
                 <el-button :icon="FolderZip" class="p-2 m-0" @click="exportNsFiles" />
             </el-tooltip>
             <trigger-flow
+                ref="triggerFlow"
                 :disabled="!flow"
                 :flow-id="flow"
                 :namespace="namespace"
@@ -144,10 +145,12 @@
                         // trim the eventual extension
                         this.flow = fileName.split(".")[0];
                     } else {
-                        this.flow = null;
+                        this.flow = undefined;
                     }
                 } else if (message.type === "kestra.tabsChanged") {
                     this.handleTabsDirty(message.tabs);
+                } else if (message.type === "kestra.flowSaved") {
+                    this.$refs.triggerFlow.loadDefinition();
                 }
             });
 

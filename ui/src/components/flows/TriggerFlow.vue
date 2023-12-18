@@ -47,16 +47,6 @@
                 }
             };
         },
-        mounted() {
-            if (!this.flow && this.flowId && this.namespace) {
-                this.$store
-                    .dispatch("flow/loadFlow", {
-                        id: this.flowId,
-                        namespace: this.namespace,
-                        allowDeleted: true
-                    });
-            }
-        },
         methods: {
             onClick() {
                 if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow) {
@@ -78,6 +68,13 @@
             },
             isDisabled() {
                 return this.disabled || this.flow?.deleted;
+            },
+            loadDefinition() {
+                this.$store.dispatch("flow/loadFlow", {
+                    id: this.flowId,
+                    namespace: this.namespace,
+                    allowDeleted: true
+                });
             }
         },
         computed: {
@@ -103,15 +100,13 @@
             },
             flowId: {
                 handler() {
-                    if ((!this.flow || this.flow.id !== this.flowId) && this.flowId && this.namespace) {
-                        this.$store
-                            .dispatch("flow/loadFlow", {
-                                id: this.flowId,
-                                namespace: this.namespace,
-                                allowDeleted: true
-                            });
+                    if (!this.flowId) {
+                        return;
                     }
-                }
+
+                    this.loadDefinition();
+                },
+                immediate: true
             }
         }
     };

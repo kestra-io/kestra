@@ -85,6 +85,8 @@ class TaskDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
+        assertThat(((DefaultTriggerTester) injected.getTriggers().get(0)).getSet(), is(123));
+        assertThat(((VariableCondition) injected.getTriggers().get(0).getConditions().get(0)).getExpression(), is("{{ test }}"));
     }
 
     @Test

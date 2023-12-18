@@ -72,7 +72,7 @@
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.11.0",
     "sass": "^1.69.5",
-    "vite": "^5.0.7",
+    "vite": "^5.0.10",
     "vite-plugin-rewrite-all": "1.0.1",
     "vitest": "^1.0.4",
     "vscode-web": "^1.82.0"

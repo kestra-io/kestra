@@ -9,6 +9,7 @@ import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.util.stream.IntStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@Slf4j
 @Singleton
 public class ForEachItemCaseTest {
     @Inject
@@ -89,9 +91,12 @@ public class ForEachItemCaseTest {
 
         executionQueue.receive(either -> {
             Execution execution = either.getLeft();
-            if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
-                triggered.set(execution);
+            if (execution.getFlowId().equals("for-each-item-subflow")) {
+                log.info("Received sub-execution " + execution.getId() + " with status " + execution.getState().getCurrent());
+                if (execution.getState().getCurrent().isTerminated()) {
+                    countDownLatch.countDown();
+                    triggered.set(execution);
+                }
             }
         });
 
@@ -119,7 +124,7 @@ public class ForEachItemCaseTest {
         assertThat(countDownLatch.getCount(), greaterThan(0L));
 
         // wait for the 3 flows to ends
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+        assertThat("Remaining count was " + countDownLatch.getCount(), countDownLatch.await(1, TimeUnit.MINUTES), is(true));
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));

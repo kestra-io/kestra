@@ -58,7 +58,7 @@
     "yaml": "^2.3.4"
   },
   "devDependencies": {
-    "@rushstack/eslint-patch": "^1.6.0",
+    "@rushstack/eslint-patch": "^1.6.1",
     "@vitejs/plugin-vue": "^4.5.2",
     "@vue/eslint-config-prettier": "^8.0.0",
     "@vue/test-utils": "^2.4.3",

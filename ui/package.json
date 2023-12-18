@@ -63,7 +63,7 @@
     "@vue/eslint-config-prettier": "^8.0.0",
     "@vue/test-utils": "^2.4.3",
     "decompress": "^4.2.1",
-    "eslint": "^8.55.0",
+    "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.19.2",
     "jsdom": "^23.0.1",
     "monaco-editor": "0.39.0",

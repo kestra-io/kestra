@@ -17,7 +17,7 @@ require.config({
 const extensionsToFetch = {
     // to handle dark theme
     "PROxZIMA/sweetdracula": "1.0.9",
-    // to apply Kestra's flow validation schema
+    // to apply Kestra's flow validation schema, comment for local extension testing
     "kestra-io/kestra": "0.1.8",
 };
 
@@ -114,6 +114,12 @@ window.product = {
             authority: window.location.host,
             path: KESTRA_UI_PATH + "vscode/extensions/yaml/extension"
         },
+        // uncomment for local extension testing
+        /*{
+            scheme: window.location.protocol.replace(":", ""),
+            authority: window.location.host,
+            path: KESTRA_UI_PATH + "vscode/extensions/kestra/extension"
+        },*/
         ...extensionUrls
     ],
     configurationDefaults: {

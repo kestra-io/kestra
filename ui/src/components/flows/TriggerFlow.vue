@@ -24,8 +24,7 @@
         },
         props: {
             flowId: {
-                type: String,
-                required: true
+                type: String
             },
             namespace: {
                 type: String,

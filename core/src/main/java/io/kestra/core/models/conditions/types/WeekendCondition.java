@@ -39,11 +39,11 @@ public class WeekendCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use `{{ now(format=\"iso_local_date\") }}`"
+        description = "Can be any variable or any valid ISO 8601 datetime, default will use the trigger date"
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now(format='iso_local_date') }}";
+    private final String date = "{{ trigger.date }}";
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

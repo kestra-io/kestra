@@ -40,11 +40,11 @@ public class TimeBetweenCondition extends Condition implements ScheduleCondition
     @NotNull
     @Schema(
         title = "The time to test",
-        description = "Can be any variable or any valid ISO 8601 time, default will use `{{ now(format='iso_offset_time') }}`"
+        description = "Can be any variable or any valid ISO 8601 time, default will use the trigger date"
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now(format='iso_offset_time') }}";
+    private final String date = "{{ trigger.date }}";
 
     @Schema(
         title = "The time to test must be after this one",

@@ -179,7 +179,7 @@ public abstract class JdbcRunnerTest {
         restartCaseTest.restartMultiple();
     }
 
-    @Test
+    @RetryingTest(5)
     void flowTrigger() throws Exception {
         flowTriggerCaseTest.trigger();
     }

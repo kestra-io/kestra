@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -23,6 +24,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.runners.*;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.ForEachItem;
 import io.kestra.core.tasks.flows.Template;
@@ -58,6 +60,8 @@ import java.util.stream.Stream;
 @JdbcRunnerEnabled
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 
     private final ScheduledExecutorService schedulerHeartbeat = Executors.newSingleThreadScheduledExecutor();
@@ -214,11 +218,22 @@ public class JdbcExecutor implements ExecutorInterface {
         flowQueue.receive(
             FlowTopology.class,
             either -> {
-                if (either == null || either.isRight() || either.getLeft() == null || either.getLeft() instanceof FlowWithException) {
-                    return;
+                Flow flow;
+                if (either.isRight()) {
+                    log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
+                    try {
+                        var jsonNode = MAPPER.readTree(either.getRight().getRecord());
+                        flow = FlowWithException.from(jsonNode, either.getRight()).orElseThrow(IOException::new);
+                    } catch (IOException e) {
+                        // if we cannot create a FlowWithException, ignore the message
+                        log.error("Unexpected exception when trying to handle a deserialization error", e);
+                        return;
+                    }
+                }
+                else {
+                    flow = either.getLeft();
                 }
 
-                Flow flow = either.getLeft();
                 flowTopologyRepository.save(
                     flow,
                     (flow.isDeleted() ?

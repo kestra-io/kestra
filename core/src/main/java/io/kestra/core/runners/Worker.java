@@ -8,6 +8,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
@@ -18,6 +19,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -130,6 +132,7 @@ public class Worker implements Runnable, AutoCloseable {
                 executors.execute(() -> {
                     if (either.isRight()) {
                         log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
+                        handleDeserializationError(either.getRight());
                         return;
                     }
 
@@ -143,6 +146,29 @@ public class Worker implements Runnable, AutoCloseable {
                 });
             }
         );
+    }
+
+    private void handleDeserializationError(DeserializationException deserializationException) {
+        if (deserializationException.getRecord() != null) {
+            try {
+                var json = MAPPER.readTree(deserializationException.getRecord());
+                var type = json.get("type") != null ? json.get("type").asText() : null;
+                if ("task".equals(type)) {
+                    // try to deserialize the taskRun to fail it
+                    var taskRun = MAPPER.treeToValue(json.get("taskRun"), TaskRun.class);
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(taskRun.fail()));
+                } else if ("trigger".equals(type)) {
+                    // try to deserialize the triggerContext to fail it
+                    var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
+                    var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).success(false).execution(Optional.empty()).build();
+                    this.workerTriggerResultQueue.emit(workerTriggerResult);
+                }
+            }
+            catch (IOException e) {
+                // ignore the message if we cannot do anything about it
+                log.error("Unexpected exception when trying to handle a deserialization error", e);
+            }
+        }
     }
 
     private void handleTask(WorkerTask workerTask) {

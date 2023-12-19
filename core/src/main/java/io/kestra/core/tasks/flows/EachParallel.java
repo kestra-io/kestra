@@ -103,7 +103,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @PluginProperty(dynamic = true)
     @Schema(
         title = "The list of values for this task",
-        description = "The value car be passed as a String, a list of String, or a list of objects",
+        description = "The value can be passed as a String, a list of String, or a list of objects",
         anyOf = {String.class, Object[].class}
     )
     private Object value;

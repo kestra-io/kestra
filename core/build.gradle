@@ -23,6 +23,8 @@ dependencies {
     implementation 'com.github.oshi:oshi-core:6.4.6'
     implementation 'io.pebbletemplates:pebble:3.2.1'
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.5.0'
+    implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.22.0'
+    implementation group: 'de.focus-shift', name: 'jollyday-jaxb', version: '0.22.0'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'

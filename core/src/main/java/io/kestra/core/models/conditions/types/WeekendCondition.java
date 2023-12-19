@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for allows events on weekend"
+    title = "Condition to allow events on weekend"
 )
 @Plugin(
     examples = {
@@ -43,7 +43,7 @@ public class WeekendCondition extends Condition implements ScheduleCondition {
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now(format(\"iso_local_date\") }}";
+    private final String date = "{{ now(format='iso_local_date') }}";
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

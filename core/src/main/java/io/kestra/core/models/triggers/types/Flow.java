@@ -82,6 +82,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
 
         Execution.ExecutionBuilder builder = Execution.builder()
             .id(IdUtils.create())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())

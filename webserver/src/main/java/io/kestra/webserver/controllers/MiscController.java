@@ -67,7 +67,7 @@ public class MiscController {
         return HttpResponse.ok("pong");
     }
 
-    @Get("/api/v1/configs")
+    @Get("/api/v1{/tenant}/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get current configurations")
     public Configuration configuration() throws JsonProcessingException {

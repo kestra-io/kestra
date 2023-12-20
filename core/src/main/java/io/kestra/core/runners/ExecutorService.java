@@ -10,11 +10,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.ExecutableTask;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
@@ -62,7 +58,7 @@ public class ExecutorService {
 
     public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
         if (count >= flow.getConcurrency().getLimit()) {
-            return switch(flow.getConcurrency().getBehavior()) {
+            return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
                     var newExecution = execution.withState(State.Type.QUEUED);
 
@@ -124,6 +120,9 @@ public class ExecutorService {
 
             // search for worker task result
             executor = this.handleChildWorkerTaskResult(executor);
+
+            // search for execution updating tasks
+            executor = this.handleExecutionUpdatingTask(executor);
 
             // search for flow task
             executor = this.handleExecutableTask(executor);
@@ -192,8 +191,7 @@ public class ExecutorService {
             Optional<State.Type> state;
             try {
                 state = flowableParent.resolveState(runContext, execution, parentTaskRun);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // This will lead to the next task being still executed but at least Kestra will not crash.
                 // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.
                 runContext.logger().error("Unable to resolve state from the Flowable task: " + e.getMessage(), e);
@@ -455,7 +453,7 @@ public class ExecutorService {
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
-        if(executor.getExecution().getState().getCurrent() != State.Type.PAUSED) {
+        if (executor.getExecution().getState().getCurrent() != State.Type.PAUSED) {
             return executor
                 .withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePausedDelay")
                 .withWorkerTaskDelays(list, "handlePausedDelay");
@@ -623,8 +621,7 @@ public class ExecutorService {
                                 .withTaskRun(executableTaskRun.withState(State.Type.SUCCESS)),
                             "handleExecutableTaskRunning.noExecution"
                         );
-                    }
-                    else {
+                    } else {
                         executions.addAll(workerTaskExecutions);
                         if (!executableTask.waitForExecution()) {
                             // send immediately all workerTaskResult to ends the executable task
@@ -639,8 +636,7 @@ public class ExecutorService {
                             }
                         }
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     workerTaskResults.add(WorkerTaskResult.builder()
                         .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
                             .withAttempts(Collections.singletonList(
@@ -665,6 +661,47 @@ public class ExecutorService {
         }
 
         return resultExecutor;
+    }
+
+    private Executor handleExecutionUpdatingTask(final Executor executor) {
+        List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+
+        executor.getWorkerTasks()
+            .removeIf(workerTask -> {
+                if (!(workerTask.getTask() instanceof ExecutionUpdatableTask)) {
+                    return false;
+                }
+
+                var executionUpdatingTask = (ExecutionUpdatableTask) workerTask.getTask();
+
+                try {
+                    executor.withExecution(
+                        executionUpdatingTask.update(executor.getExecution(), workerTask.getRunContext())
+                            .withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING)),
+                        "handleExecutionUpdatingTask.updateExecution"
+                    );
+
+                    workerTaskResults.add(
+                        ExecutableUtils.workerTaskResult(workerTask.getTaskRun().withState(State.Type.SUCCESS))
+                    );
+                } catch (Exception e) {
+                    workerTaskResults.add(WorkerTaskResult.builder()
+                        .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
+                            .withAttempts(Collections.singletonList(
+                                TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()
+                            ))
+                        )
+                        .build());
+                    executor.withException(e, "handleExecutionUpdatingTask");
+                }
+                return true;
+            });
+
+        if (!workerTaskResults.isEmpty()) {
+            return executor.withWorkerTaskResults(workerTaskResults, "handleExecutionUpdatingTask.workerTaskResults");
+        }
+
+        return executor;
     }
 
     public Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {

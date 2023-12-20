@@ -37,12 +37,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
@@ -52,6 +53,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionControllerTest extends JdbcH2ControllerTest {
+    public static final String URL_LABEL_VALUE = "https://some-url.com";
+    public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
     @Inject
     EmbeddedServer embeddedServer;
 
@@ -97,7 +100,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2" + (wait ? "&wait=true" : ""), requestBody)
+                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2,url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -139,11 +142,12 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().containsKey("bool"), is(true));
         assertThat(result.getInputs().get("bool"), nullValue());
-        assertThat(result.getLabels().size(), is(4));
+        assertThat(result.getLabels().size(), is(5));
         assertThat(result.getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
         assertThat(result.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
         assertThat(result.getLabels().get(2), is(new Label("a", "label-1")));
         assertThat(result.getLabels().get(3), is(new Label("b", "label-2")));
+        assertThat(result.getLabels().get(4), is(new Label("url", URL_LABEL_VALUE)));
     }
 
     @Test
@@ -669,6 +673,14 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(executions.getTotal(), is(0L));
 
+        triggerInputsFlowExecution(false);
+
+        // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
+        executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search?page=1&size=25labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(1L));
     }
 
     @Test

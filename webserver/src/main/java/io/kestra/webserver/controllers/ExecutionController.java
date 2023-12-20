@@ -526,14 +526,8 @@ public class ExecutionController {
     }
 
     private List<Label> parseLabels(List<String> labels) {
-        return labels == null ? null : labels.stream()
-            .map(label ->  {
-                String[] split = label.split(":");
-                if (split.length != 2) {
-                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid labels parameter");
-                }
-                return new Label(split[0], split[1]);
-            })
+        return labels == null ? null : RequestUtils.toMap(labels).entrySet().stream()
+            .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
     }
 

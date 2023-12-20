@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
+class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
     @Test
     void update() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
@@ -52,7 +52,7 @@ public class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
 
 
     @Test
-    void npeOnExecutionLabels() throws TimeoutException {
+    void noNpeOnNullPreviousExecutionLabels() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",

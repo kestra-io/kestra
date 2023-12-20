@@ -6,6 +6,6 @@ import io.kestra.core.runners.RunContext;
 /**
  * Interface for tasks that modify the execution at runtime.
  */
-public interface ExecutionUpdatingTask {
+public interface ExecutionUpdatableTask {
     Execution update(Execution execution, RunContext runContext) throws Exception;
 }

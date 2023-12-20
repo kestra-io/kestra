@@ -7,7 +7,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.tasks.ExecutionUpdatingTask;
+import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -35,8 +35,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to add labels to current execution at runtime.",
-    description = "Can be used to ease filtering executions by some runtime-fetched data."
+    title = "Allow to add or overwrite labels for the current execution at runtime."
 )
 @Plugin(
     examples = {
@@ -69,17 +68,17 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
-public class Labels extends Task implements ExecutionUpdatingTask {
+public class Labels extends Task implements ExecutionUpdatableTask {
     @Schema(
-        title = "Labels to add to current execution.",
+        title = "Labels to add to the current execution.",
         description = "The value should result in a list of labels or a labelKey:labelValue map",
         anyOf = {
             String.class,
-            List.class,
+            Label[].class,
             Map.class
         }
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, additionalProperties = String.class)
     @NotNull
     private Object labels;
 
@@ -96,10 +95,10 @@ public class Labels extends Task implements ExecutionUpdatingTask {
             }
         }
 
-        if (labelsObject instanceof List labelsList) {
-            labelsObject = ((List<?>) labelsList).stream()
+        if (labelsObject instanceof List<?> labelsList) {
+            labelsObject = labelsList.stream()
                 .map(throwFunction(label -> {
-                        if (label instanceof Map labelMap) {
+                        if (label instanceof Map<?, ?> labelMap) {
                             return Map.entry(
                                 (String) labelMap.get("key"),
                                 (String) labelMap.get("value")
@@ -114,16 +113,16 @@ public class Labels extends Task implements ExecutionUpdatingTask {
                 ));
         }
 
-        if (labelsObject instanceof Map labelsMap) {
+        if (labelsObject instanceof Map<?, ?> labelsMap) {
             Map<String, String> newLabels = Optional.ofNullable(execution.getLabels()).orElse(Collections.emptyList()).stream()
                 .collect(Collectors.toMap(
                     Label::key,
                     Label::value,
                     (labelValue1, labelValue2) -> labelValue2
                 ));
-            ((Map<String, String>) labelsMap).forEach(throwBiConsumer((key, value) -> {
-                String renderedKey = runContext.render(key);
-                String renderedValue = runContext.render(value);
+            labelsMap.forEach(throwBiConsumer((key, value) -> {
+                String renderedKey = runContext.render((String) key);
+                String renderedValue = runContext.render((String) value);
                 logger.info("Adding label {} with value {}", renderedKey, renderedValue);
                 newLabels.put(
                     renderedKey,

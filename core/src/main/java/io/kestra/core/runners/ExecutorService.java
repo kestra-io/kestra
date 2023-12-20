@@ -668,11 +668,11 @@ public class ExecutorService {
 
         executor.getWorkerTasks()
             .removeIf(workerTask -> {
-                if (!(workerTask.getTask() instanceof ExecutionUpdatingTask)) {
+                if (!(workerTask.getTask() instanceof ExecutionUpdatableTask)) {
                     return false;
                 }
 
-                var executionUpdatingTask = (ExecutionUpdatingTask) workerTask.getTask();
+                var executionUpdatingTask = (ExecutionUpdatableTask) workerTask.getTask();
 
                 try {
                     executor.withExecution(

@@ -37,7 +37,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
     @Test
     protected void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null, null, null);
+        List<Flow> save = flowRepository.find(Pageable.unpaged(), null, null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
         save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null, null, null);

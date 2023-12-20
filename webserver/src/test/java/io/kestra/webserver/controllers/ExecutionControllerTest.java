@@ -677,7 +677,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
         executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search?page=1&size=25labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
+            HttpRequest.GET("/api/v1/executions/search?page=1&size=25&labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));

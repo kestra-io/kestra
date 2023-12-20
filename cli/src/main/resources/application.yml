@@ -28,6 +28,13 @@ micronaut:
           cache-control:
             public: true
 
+      # Access log configuration, see https://docs.micronaut.io/latest/guide/index.html#accessLogger
+      access-logger:
+        enabled: true
+        logger-name: io.kestra.webserver.access
+        log-format: "[Date: %{yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'}t] [Duration: %D ms] [Method: %m] [Url: %x] [Status: %s] [Length: %b] [Ip: %a] [Port: %p]"
+        exclusions:
+          - /ui/.+
   caches:
     default:
       maximum-weight: 10485760
@@ -180,12 +187,6 @@ kestra:
     prefix: kestra
 
   server:
-    access-log:
-      enabled: true
-      name: io.kestra.webserver.access
-      format: "[Date: {}] [Duration: {} ms] [Method: {}] [Url: {}] [Status: {}] [Length: {}] [Ip: {}] [Port: {}]"
-      filters:
-        - ".*\\[Url: /api/.*"
     basic-auth:
       enabled: false
       # These URLs will not be authenticated, by default we open some of the Micronaut default endpoints but not all for security reasons

@@ -508,7 +508,7 @@ export default class YamlUtils {
     static cleanMetadata(source) {
         // Reorder and remove empty metadata
         const yamlDoc = yaml.parseDocument(source);
-        const order = ["id", "namespace", "description", "labels", "inputs", "variables", "tasks", "triggers", "errors", "taskDefaults"];
+        const order = ["id", "namespace", "description", "labels", "inputs", "variables", "tasks", "triggers", "errors", "taskDefaults", "concurrency"];
         const updatedItems = [];
         for (const prop of order) {
             const item = yamlDoc.contents.items.find(e => e.key.value === prop);

@@ -66,6 +66,11 @@ export default {
 
                 return response.data;
             })
+        },
+        loadSchemaType(_, options) {
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
+                return response.data;
+            })
         }
 
     },

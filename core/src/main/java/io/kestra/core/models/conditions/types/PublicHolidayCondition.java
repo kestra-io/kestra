@@ -24,13 +24,13 @@ import java.util.Locale;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on public holidays"
+    title = "Condition to allow events on public holidays."
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
-            title = "Condition to allow events on public holidays",
+            title = "Condition to allow events on public holidays.",
             code = {
                 """
                 - conditions:
@@ -41,7 +41,7 @@ import java.util.Locale;
         ),
         @Example(
             full = true,
-            title = "Conditions to allow events on work days",
+            title = "Conditions to allow events on work days.",
             code = {
                 """
                 - conditions:
@@ -58,23 +58,23 @@ import java.util.Locale;
 public class PublicHolidayCondition extends Condition implements ScheduleCondition {
     @NotEmpty
     @Schema(
-        title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use the trigger date"
+        title = "The date to test.",
+        description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
     private String date = "{{ trigger.date }}";
 
     @Schema(
-        title = "[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. If not set it uses the country code from the default locale.",
-        description = "It uses the [Jollyday](https://github.com/focus-shift/jollyday) library for public holiday calendar that support more than 70 countries."
+        title = "[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. If not set, it uses the country code from the default locale.",
+        description = "It uses the [Jollyday](https://github.com/focus-shift/jollyday) library for public holiday calendar that supports more than 70 countries."
     )
     @PluginProperty(dynamic = true)
     private String country;
 
     @Schema(
         title = "[ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) country subdivision (e.g., provinces and states) code.",
-        description = "It uses the [Jollyday](https://github.com/focus-shift/jollyday) library for public holiday calendar that support more than 70 countries."
+        description = "It uses the [Jollyday](https://github.com/focus-shift/jollyday) library for public holiday calendar that supports more than 70 countries."
     )
     @PluginProperty(dynamic = true)
     private String subDivision;

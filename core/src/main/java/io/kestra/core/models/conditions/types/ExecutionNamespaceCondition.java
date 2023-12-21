@@ -20,7 +20,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for an execution namespace"
+    title = "Condition for an execution namespace."
 )
 @Plugin(
     examples = {
@@ -39,14 +39,14 @@ import javax.validation.constraints.NotNull;
 public class ExecutionNamespaceCondition extends Condition {
     @NotNull
     @Schema(
-        description = "The namespace of the flow or the prefix if `prefix` is true"
+        description = "The namespace of the flow or the prefix if `prefix` is true."
     )
     @PluginProperty
     private String namespace;
 
     @Builder.Default
     @Schema(
-        description = "If we must look at the flow namespace by prefix (simple startWith case sensitive)"
+        description = "If we must look at the flow namespace by prefix (checked using startWith). The prefix is case sensitive."
     )
     @PluginProperty
     private final Boolean prefix = false;
@@ -54,7 +54,7 @@ public class ExecutionNamespaceCondition extends Condition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         if (conditionContext.getExecution() == null) {
-            throw new IllegalConditionEvaluation("Invalid condition with execution null");
+            throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
         if (!prefix && conditionContext.getExecution().getNamespace().equals(this.namespace)) {

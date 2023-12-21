@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a specific flow of an execution"
+    title = "Condition for a specific flow of an execution."
 )
 @Plugin(
     examples = {
@@ -39,19 +39,19 @@ import javax.validation.constraints.NotNull;
 )
 public class ExecutionFlowCondition extends Condition {
     @NotNull
-    @Schema(title = "The namespace of the flow")
+    @Schema(title = "The namespace of the flow.")
     @PluginProperty
     private String namespace;
 
     @NotNull
-    @Schema(title = "The flow id")
+    @Schema(title = "The flow id.")
     @PluginProperty
     private String flowId;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         if (conditionContext.getExecution() == null) {
-            throw new IllegalConditionEvaluation("Invalid condition with execution null");
+            throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
         return conditionContext.getExecution().getNamespace().equals(this.namespace) && conditionContext.getExecution().getFlowId().equals(this.flowId);

@@ -164,7 +164,8 @@
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.$route.params.namespace,
                     id: this.$route.params.flowId,
-                    tab: "editor"
+                    tab: "editor",
+                    tenant: this.$route.params.tenant
                 }})
             },
             deleteExecution() {
@@ -182,7 +183,8 @@
                                 .dispatch("execution/deleteExecution", item)
                                 .then(() => {
                                     return this.$router.push({
-                                        name: "executions/list"
+                                        name: "executions/list",
+                                        tenant: this.$route.params.tenant
                                     });
                                 })
                                 .then(() => {

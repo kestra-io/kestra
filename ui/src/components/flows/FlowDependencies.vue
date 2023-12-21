@@ -148,7 +148,12 @@
     const openFlow = (data) => {
         router.push({
             name: "flows/update",
-            params: {"namespace": data.namespace, "id": data.flowId, tab: "dependencies"},
+            params: {
+                "namespace": data.namespace,
+                "id": data.flowId,
+                tab: "dependencies",
+                tenant: route.params.tenant
+            },
         });
     }
 </script>

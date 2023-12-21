@@ -143,7 +143,12 @@
             async blueprintToEditor(blueprintId) {
                 localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
                 localStorage.setItem("autoRestore-creation_draft", (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data);
-                this.$router.push({name: "flows/create"});
+                this.$router.push({
+                    name: "flows/create",
+                    params: {
+                        tenant: this.$route.params.tenant
+                    }
+                });
             },
             tagsToString(blueprintTags) {
                 return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")

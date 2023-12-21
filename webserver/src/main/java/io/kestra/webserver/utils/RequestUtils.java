@@ -21,7 +21,7 @@ public class RequestUtils {
 
                 return new AbstractMap.SimpleEntry<>(
                     split[0],
-                    s.substring(s.indexOf(":") + 1)
+                    s.substring(s.indexOf(":") + 1).trim()
                 );
             })
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

@@ -11,20 +11,16 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class H2Functions {
-    private static final Scope rootScope;
-    private static final Scope scope;
+    private static final Scope scope = Scope.newEmptyScope();
 
     static {
-        rootScope = Scope.newEmptyScope();
-        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
-        scope = Scope.newEmptyScope();
+        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
     }
 
     public static Boolean jqBoolean(String value, String expression) {

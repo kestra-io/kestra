@@ -110,7 +110,14 @@ public abstract class AbstractExecutionRepositoryTest {
                 .build();
         }
 
-        executionRepository.save(builder(State.Type.RUNNING, null).labels(List.of(new Label("key", "value"))).trigger(executionTrigger).build());
+        executionRepository.save(builder(State.Type.RUNNING, null)
+            .labels(List.of(
+                new Label("key", "value"),
+                new Label("key2", "value2")
+            ))
+            .trigger(executionTrigger)
+            .build()
+        );
         for (int i = 1; i < 28; i++) {
             executionRepository.save(builder(
                 i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
@@ -132,6 +139,9 @@ public abstract class AbstractExecutionRepositoryTest {
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value"), null);
         assertThat(executions.getTotal(), is(1L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value2"), null);
+        assertThat(executions.getTotal(), is(0L));
     }
 
     @Test

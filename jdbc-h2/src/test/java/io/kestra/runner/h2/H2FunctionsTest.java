@@ -18,6 +18,10 @@ class H2FunctionsTest {
     public void jqString() {
         String jqString = H2Functions.jqString("{\"a\": \"b\"}", ".a");
         assertThat(jqString, is("b"));
+
+        // on arrays, it will use the first element
+        jqString = H2Functions.jqString("{\"labels\":[{\"key\":\"a\",\"value\":\"aValue\"},{\"key\":\"b\",\"value\":\"bValue\"}]}", ".labels[].value");
+        assertThat(jqString, is("aValue"));
     }
 
     @Test

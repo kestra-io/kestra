@@ -23,4 +23,9 @@ public class FlowTest extends AbstractMemoryRunnerTest {
     public void invalidOutputs() throws Exception {
         flowCaseTest.invalidOutputs();
     }
+
+    @Test
+    public void noLabels() throws Exception {
+        flowCaseTest.noLabels();
+    }
 }

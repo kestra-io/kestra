@@ -200,9 +200,10 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
                         }
 
                         List<Label> labels = new ArrayList<>();
-                        if (this.inheritLabels) {
+                        if (this.inheritLabels && currentExecution.getLabels() != null && !currentExecution.getLabels().isEmpty()) {
                             labels.addAll(currentExecution.getLabels());
                         }
+
                         if (this.labels != null) {
                             for (Map.Entry<String, String> entry: this.labels.entrySet()) {
                                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));

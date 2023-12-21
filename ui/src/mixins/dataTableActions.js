@@ -63,7 +63,10 @@ export default {
         onRowDoubleClick(item) {
             this.$router.push({
                 name: this.dblClickRouteName || this.$route.name.replace("/list", "/update"),
-                params: item
+                params: {
+                    ...item,
+                    tenant: this.$route.params.tenant
+                }
             });
         },
         onDataTableValue(keyOrObject, value) {

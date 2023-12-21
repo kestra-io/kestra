@@ -109,6 +109,7 @@ export function chartClick(moment, router, route, event) {
                 namespace: event.namespace,
                 id: event.flowId,
                 tab: "executions",
+                tenant: route.params.tenant
             },
             query: query
         });
@@ -120,7 +121,10 @@ export function chartClick(moment, router, route, event) {
 
     router.push({
         name: "executions/list",
-        params: {tab: "executions"},
+        params: {
+            tab: "executions",
+            tenant: route.params.tenant
+        },
         query: query
     });
 }

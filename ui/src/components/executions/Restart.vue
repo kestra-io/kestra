@@ -153,7 +153,15 @@
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
-                            this.$router.push({name: "executions/update", params: {...{namespace: execution.namespace, flowId: execution.flowId, id: execution.id}, ...{tab: "gantt"}}});
+                            this.$router.push({
+                                name: "executions/update",
+                                params: {
+                                    namespace: execution.namespace,
+                                    flowId: execution.flowId,
+                                    id: execution.id,
+                                    tab: "gantt",
+                                    tenant: this.$route.params.tenant
+                                }});
                         }
 
                         this.$toast().success(this.$t(this.replayOrRestart + "ed"));

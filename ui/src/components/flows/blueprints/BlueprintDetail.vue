@@ -127,7 +127,12 @@
                 if (this.embed) {
                     this.$emit("back");
                 } else {
-                    this.$router.push({name: "blueprints"})
+                    this.$router.push({
+                        name: "blueprints",
+                        params: {
+                            tenant: this.$route.params.tenant
+                        }
+                    })
                 }
             },
             asAutoRestoreDraft() {

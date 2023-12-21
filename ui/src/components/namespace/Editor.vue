@@ -161,7 +161,12 @@
             } else if (this.namespaces?.length > 0) {
                 this.namespaceUpdate(this.namespaces[0]);
             } else if (localStorage.getItem("tourDoneOrSkip") !== "true") {
-                this.$router.push({name: "flows/create"});
+                this.$router.push({
+                    name: "flows/create",
+                    params: {
+                        tenant: this.$route.params.tenant
+                    }
+                });
             }
         },
         computed: {

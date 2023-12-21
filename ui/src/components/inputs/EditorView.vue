@@ -522,7 +522,12 @@
                         store.dispatch("core/isUnsaved", false);
                         router.push({
                             name: "flows/update",
-                            params: {id: flowParsed.id, namespace: flowParsed.namespace, tab: "editor"}
+                            params: {
+                                id: flowParsed.id,
+                                namespace: flowParsed.namespace,
+                                tab: "editor",
+                                tenant: routeParams.tenant
+                            }
                         });
                     })
             } else {
@@ -594,7 +599,10 @@
                             .dispatch("flow/deleteFlow", metadata)
                             .then(() => {
                                 return router.push({
-                                    name: "flows/list"
+                                    name: "flows/list",
+                                    params: {
+                                        tenant: routeParams.tenant
+                                    }
                                 });
                             })
                             .then(() => {
@@ -687,7 +695,7 @@
                     :flow-error="flowError"
                     @delete-flow="deleteFlow"
                     @save="save"
-                    @copy="() => router.push({name: 'flows/create', query: {copy: true}})"
+                    @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
                     @open-new-error="isNewErrorOpen = true;"
                     @open-new-trigger="isNewTriggerOpen = true;"
                     @open-edit-metadata="isEditMetadataOpen = true;"
@@ -818,7 +826,7 @@
             :flow-error="flowError"
             @delete-flow="deleteFlow"
             @save="save"
-            @copy="() => router.push({name: 'flows/create', query: {copy: true}})"
+            @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
             @open-new-error="isNewErrorOpen = true;"
             @open-new-trigger="isNewTriggerOpen = true;"
             @open-edit-metadata="isEditMetadataOpen = true;"

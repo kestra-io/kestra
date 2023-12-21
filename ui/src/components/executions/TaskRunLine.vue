@@ -167,11 +167,6 @@
             Restart,
             Duration
         },
-        mounted() {
-            if (this.targetExecutionId) {
-                this.followExecution(this.targetExecutionId);
-            }
-        },
         props: {
             currentTaskRun: {
                 type: Object,

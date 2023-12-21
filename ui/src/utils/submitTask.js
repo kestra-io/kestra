@@ -39,10 +39,28 @@ export const executeTask = (submitor, flow, values, options) => {
             submitor.$store.commit("execution/setExecution", response.data)
             if (options.redirect) {
                 if (options.newTab) {
-                    const resolved = submitor.$router.resolve({name: "executions/update", params: {...{namespace: response.data.namespace, flowId: response.data.flowId, id: response.data.id}, ...{tab: "gantt"}}})
+                    const resolved = submitor.$router.resolve({
+                        name: "executions/update",
+                        params: {
+                            namespace: response.data.namespace,
+                            flowId: response.data.flowId,
+                            id: response.data.id,
+                            tab: "gantt",
+                            tenant: submitor.$route.params.tenant
+                        }
+                    })
                     window.open(resolved.href, "_blank")
                 } else {
-                    submitor.$router.push({name: "executions/update", params: {...{namespace: response.data.namespace, flowId: response.data.flowId, id: response.data.id}, ...{tab: "gantt"}}})
+                    submitor.$router.push({
+                        name: "executions/update",
+                        params: {
+                            namespace: response.data.namespace,
+                            flowId: response.data.flowId,
+                            id: response.data.id,
+                            tab: "gantt",
+                            tenant: submitor.$route.params.tenant
+                        }
+                    })
                 }
             }
             return response.data;

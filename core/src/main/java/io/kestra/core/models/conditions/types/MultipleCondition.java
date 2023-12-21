@@ -37,14 +37,14 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of flow",
-    description = "Trigger the first time all the flow are successfully executed during the `window` duration "
+    title = "Condition for a list of flows.",
+    description = "Trigger when all the flows are successfully executed for the first time during the `window` duration."
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
-            title = "A flow that is waiting for 2 flows that is successful in 1 days",
+            title = "A flow that is waiting for 2 flows to run successfully in a day",
             code = {
                 "triggers:",
                 "  - id: multiple-listen-flow",

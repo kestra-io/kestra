@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on weekend"
+    title = "Condition to allow events on weekend."
 )
 @Plugin(
     examples = {
@@ -38,8 +38,8 @@ import javax.validation.constraints.NotNull;
 public class WeekendCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
-        title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use the trigger date"
+        title = "The date to test.",
+        description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
     @PluginProperty(dynamic = true)

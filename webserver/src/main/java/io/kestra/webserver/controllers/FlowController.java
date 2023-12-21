@@ -137,7 +137,8 @@ public class FlowController {
     @Schema(
         anyOf = {FlowWithSource.class, Flow.class}
     )
-    public Flow index(
+    //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
+    public Object index(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "Include the source code") @QueryValue(defaultValue = "false") boolean source,
@@ -166,7 +167,9 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/tasks/{taskId}")
     @Operation(tags = {"Flows"}, summary = "Get a flow task")
-    public Task flowTask(
+    //FIXME we return Object instead of Task as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
+    @Schema(implementation = Task.class)
+    public Object flowTask(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The task id") @PathVariable String taskId,

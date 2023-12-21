@@ -41,4 +41,16 @@ class UriProviderTest {
         assertThat(uriProvider.executionUrl(execution).toString(), containsString("mysuperhost.com/subpath/ui"));
         assertThat(uriProvider.executionUrl(execution).toString(), containsString(flow.getNamespace() + "/" + flow.getId() + "/" + execution.getId()));
     }
+
+    @Test
+    void tenant() {
+        Flow flow = TestsUtils.mockFlow()
+            .toBuilder()
+            .tenantId("my-tenant")
+            .build();
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
+        assertThat(uriProvider.executionUrl(execution).toString(), containsString("mysuperhost.com/subpath/ui/my-tenant"));
+        assertThat(uriProvider.flowUrl(flow).toString(), containsString("mysuperhost.com/subpath/ui/my-tenant"));
+    }
 }

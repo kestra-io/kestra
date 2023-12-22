@@ -10,8 +10,8 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
-import io.micronaut.http.server.netty.types.files.NettyStreamedFileCustomizableResponseType;
-import io.micronaut.http.server.netty.types.files.NettySystemFileCustomizableResponseType;
+import io.micronaut.http.server.types.files.StreamedFile;
+import io.micronaut.http.server.types.files.SystemFile;
 import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 
@@ -48,11 +48,11 @@ public class StaticFilter implements HttpServerFilter {
                     Optional<? extends MutableHttpResponse<?>> alteredResponse = Stream
                         .of(
                             // jar mode
-                            response.getBody(NettyStreamedFileCustomizableResponseType.class)
+                            response.getBody(StreamedFile.class)
                                 .filter(n -> n.getMediaType().getName().equals(MediaType.TEXT_HTML))
                                 .map(throwFunction(n -> IOUtils.toString(n.getInputStream(), StandardCharsets.UTF_8))),
                             // debug mode
-                            response.getBody(NettySystemFileCustomizableResponseType.class)
+                            response.getBody(SystemFile.class)
                                 .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
                                 .map(throwFunction(n -> IOUtils.toString(
                                     Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),

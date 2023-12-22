@@ -8,6 +8,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.retry.RetryState;
 import io.micronaut.retry.annotation.DefaultRetryPredicate;
@@ -61,7 +62,7 @@ public class OverrideRetryInterceptor implements MethodInterceptor<Object, Objec
         MutableConvertibleValues<Object> attrs = context.getAttributes();
         attrs.put(RetryState.class.getName(), retry);
 
-        InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
+        InterceptedMethod interceptedMethod = InterceptedMethod.of(context, ConversionService.SHARED);
         try {
             retryState.open();
 

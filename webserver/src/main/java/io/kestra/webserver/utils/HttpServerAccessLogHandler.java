@@ -114,11 +114,14 @@ public class HttpServerAccessLogHandler extends ChannelDuplexHandler {
     }
 
     private void logAtLast(ChannelHandlerContext ctx, Object msg, ChannelPromise promise, AccessLog accessLog) {
-        ctx.write(msg, promise).addListener(future -> {
-            if (future.isSuccess()) {
-                accessLog.logAccess(accessLogger, filters);
-            }
-        });
+        //FIXME cannot attach a listener to a void future
+//        ctx.write(msg, promise).addListener(future -> {
+//            if (future.isSuccess()) {
+//                accessLog.logAccess(accessLogger, filters);
+//            }
+//        });
+
+        ctx.write(msg, promise);
     }
 
     private void processWriteEvent(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {

@@ -8,6 +8,7 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertySource;
 import io.micronaut.context.env.SystemPropertiesPropertySource;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.MutableConversionService;
 import io.micronaut.core.io.scan.ClassPathResourceLoader;
 import io.micronaut.core.util.StringUtils;
 import io.kestra.core.plugins.PluginRegistry;
@@ -126,10 +127,9 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         return null;
     }
 
-    @NonNull
     @Override
-    public ConversionService<?> getConversionService() {
-        return ConversionService.SHARED;
+    public Optional<MutableConversionService> getConversionService() {
+        return Optional.of((MutableConversionService) ConversionService.SHARED);
     }
 
     @NonNull

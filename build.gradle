@@ -71,8 +71,7 @@ allprojects {
     //
     configurations.all {
         resolutionStrategy {
-            force("org.jooq:jooq:3.17.14")
-            force("org.slf4j:slf4j-api:1.7.36")
+            force("org.slf4j:slf4j-api:2.0.9")
 
             // ugly bug on google cloud plugins
             force("com.google.protobuf:protobuf-java:3.23.3")
@@ -106,34 +105,37 @@ allprojects {
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
 
         // micronaut
-        annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        annotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         annotationProcessor "io.micronaut:micronaut-inject-java"
-        annotationProcessor "io.micronaut:micronaut-validation"
-        implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        annotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+
+        implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         implementation "io.micronaut:micronaut-inject"
-        implementation "io.micronaut:micronaut-validation"
+        implementation "io.micronaut.validation:micronaut-validation"
         implementation "io.micronaut:micronaut-runtime"
-        implementation "javax.annotation:javax.annotation-api"
+        implementation "io.micronaut:micronaut-retry"
+        implementation "io.micronaut:micronaut-jackson-databind"
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
         implementation "io.micrometer:micrometer-core"
         implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
-        api "io.micronaut:micronaut-http-client"
-        api "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
+        implementation "io.micronaut:micronaut-http-client"
+        implementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
 
         // logs
         implementation "org.slf4j:slf4j-api"
         implementation "ch.qos.logback:logback-classic"
-        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.19.0'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
-        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
+        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.22.0'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '2.0.9'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.9'
+        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.0'
 
         // jackson
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: jacksonVersion
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
@@ -141,7 +143,7 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
+        api group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.15.1'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"
@@ -163,9 +165,9 @@ subprojects {
         testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
 
         // micronaut
-        testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-        testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testAnnotationProcessor "io.micronaut.validation:micronaut-validation-processor"
 
         testImplementation "org.junit.jupiter:junit-jupiter-api"
         testImplementation "io.micronaut.test:micronaut-test-junit5"

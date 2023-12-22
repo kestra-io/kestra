@@ -59,6 +59,7 @@ public class FlowWithSource extends Flow {
 
     public static FlowWithSource of(Flow flow, String source) {
         return FlowWithSource.builder()
+            .tenantId(flow.tenantId)
             .id(flow.id)
             .namespace(flow.namespace)
             .revision(flow.revision)

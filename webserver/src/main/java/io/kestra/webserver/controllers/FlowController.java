@@ -368,7 +368,7 @@ public class FlowController {
                 if (existingFlow.isPresent()) {
                     return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 } else {
-                    return create(flow, flowWithSource.getSource());
+                    return this.create(flow, flowWithSource.getSource());
                 }
             })
             .toList();

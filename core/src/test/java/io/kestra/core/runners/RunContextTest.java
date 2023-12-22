@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.*;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
@@ -113,7 +112,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void variables() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "return");
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getTaskRunList(), hasSize(3));
 
         assertThat(
             ZonedDateTime.from(ZonedDateTime.parse((String) execution.getTaskRunList().get(0).getOutputs().get("value"))),
@@ -121,7 +120,6 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         );
         assertThat(execution.getTaskRunList().get(1).getOutputs().get("value"), is("task-id"));
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("return"));
-        assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value"), containsString("toto"));
     }
 
     @Test

@@ -598,7 +598,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.get(getTenantId(), resolve);
+       return this.storageInterface.get(getTenantId(), resolve);
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {

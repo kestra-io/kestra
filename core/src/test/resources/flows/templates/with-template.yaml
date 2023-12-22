@@ -10,7 +10,7 @@ inputs:
 
 variables:
   var-1: var-1
-  var-2: "{{ 'var-1' }}"
+  var-2: '{{ var-1 }}'
 
 taskDefaults:
   - type: io.kestra.core.tasks.log.Log

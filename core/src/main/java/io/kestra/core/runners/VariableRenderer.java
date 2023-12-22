@@ -5,6 +5,11 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.error.AttributeNotFoundException;
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.AbstractExtension;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.handlebars.VariableRendererPlugins;
 import io.kestra.core.runners.handlebars.helpers.*;
@@ -13,15 +18,6 @@ import io.kestra.core.runners.pebble.JsonWriter;
 import io.kestra.core.runners.pebble.PebbleLruCache;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.core.annotation.Nullable;
-import io.pebbletemplates.pebble.PebbleEngine;
-import io.pebbletemplates.pebble.error.AttributeNotFoundException;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.AbstractExtension;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.Getter;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -29,6 +25,11 @@ import java.io.Writer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
@@ -92,10 +93,6 @@ public class VariableRenderer {
     }
 
     public String recursiveRender(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return recursiveRender(inline, variables, true);
-    }
-
-    public String recursiveRender(String inline, Map<String, Object> variables, Boolean preprocessVariables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -113,11 +110,6 @@ public class VariableRenderer {
             replacers.put(uuid, result.group(1));
             return uuid;
         });
-
-        // pre-process variables
-        if (preprocessVariables) {
-            variables = this.preprocessVariables(variables);
-        }
 
         boolean isSame = false;
         String current = "";
@@ -139,41 +131,26 @@ public class VariableRenderer {
                 }
 
                 try {
-                    Template template = handlebars.compileInline(currentTemplate);
+                    Template  template = handlebars.compileInline(currentTemplate);
                     current = template.apply(variables);
                 } catch (HandlebarsException | IOException hbE) {
                     throw new IllegalVariableEvaluationException(
-                        "Pebble evaluation failed with '" + e.getMessage() + "' " +
-                            "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'",
+                        "Pebble evaluation failed with '" + e.getMessage() +  "' " +
+                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'" ,
                         e
                     );
                 }
             }
-
 
             isSame = currentTemplate.equals(current);
             currentTemplate = current;
         }
 
         // post-process raw tags
-        for (var entry : replacers.entrySet()) {
+        for(var entry: replacers.entrySet()) {
             current = current.replace(entry.getKey(), entry.getValue());
         }
         return current;
-    }
-
-    public Map<String, Object> preprocessVariables(Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        Map<String, Object> currentVariables = variables;
-        Map<String, Object> previousVariables;
-        boolean isSame = false;
-
-        while (!isSame) {
-            previousVariables = currentVariables;
-            currentVariables = this.render(currentVariables, variables, false);
-            isSame = previousVariables.equals(currentVariables);
-        }
-
-        return currentVariables;
     }
 
     public IllegalVariableEvaluationException properPebbleException(PebbleException e) {
@@ -189,27 +166,17 @@ public class VariableRenderer {
         return new IllegalVariableEvaluationException(e);
     }
 
-    // By default, render() will render variables
-    // so we keep the previous behavior
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.recursiveRender(inline, variables, true);
+        return this.recursiveRender(inline, variables);
     }
 
-    public String render(String inline, Map<String, Object> variables, boolean preprocessVariables) throws IllegalVariableEvaluationException {
-        return this.recursiveRender(inline, variables, preprocessVariables);
-    }
 
-    // Default behavior
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return render(in, variables, true);
-    }
-
-    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean preprocessVariables) throws IllegalVariableEvaluationException {
         Map<String, Object> map = new HashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
-            String key = this.render(r.getKey(), variables, preprocessVariables);
-            Object value = renderObject(r.getValue(), variables, preprocessVariables).orElse(r.getValue());
+            String key = this.render(r.getKey(), variables);
+            Object value = renderObject(r.getValue(), variables).orElse(r.getValue());
 
             map.putIfAbsent(
                 key,
@@ -221,25 +188,23 @@ public class VariableRenderer {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean preprocessVariables) throws IllegalVariableEvaluationException {
+    private Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (object instanceof Map) {
-            return Optional.of(this.render((Map) object, variables, preprocessVariables));
+            return Optional.of(this.render((Map) object, variables));
         } else if (object instanceof Collection) {
-            return Optional.of(this.renderList((List) object, variables, preprocessVariables));
+            return Optional.of(this.renderList((List) object, variables));
         } else if (object instanceof String) {
-            return Optional.of(this.render((String) object, variables, preprocessVariables));
-        } else if (object == null) {
-            return Optional.empty();
+            return Optional.of(this.render((String) object, variables));
         }
 
-        return Optional.of(object);
+        return Optional.empty();
     }
 
-    private List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean preprocessVariables) throws IllegalVariableEvaluationException {
+    public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            this.renderObject(inline, variables, preprocessVariables)
+            this.renderObject(inline, variables)
                 .ifPresent(result::add);
         }
 

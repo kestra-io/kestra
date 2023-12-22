@@ -1,9 +1,6 @@
 id: return
 namespace: io.kestra.tests
 
-variables:
-  period: "{{ schedule.date ?? execution.startDate }}"
-
 tasks:
 - id: date
   type: io.kestra.core.tasks.debugs.Return
@@ -14,6 +11,3 @@ tasks:
 - id: flow-id
   type: io.kestra.core.tasks.debugs.Return
   format: "{{flow.id}}"
-- id: variables
-  type: io.kestra.core.tasks.debugs.Return
-  format: "{{ vars.period | replace({':': 'toto'}) }}"

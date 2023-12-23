@@ -52,7 +52,6 @@
                 required: false,
                 default: undefined
             },
-
         },
         setup(props) {
             const moment = getCurrentInstance().appContext.config.globalProperties.$moment;

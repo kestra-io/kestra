@@ -113,20 +113,20 @@ export function chartClick(moment, router, route, event) {
             },
             query: query
         });
-    }
+    } else {
+        if (event.namespace) {
+            query.namespace = event.namespace;
+        }
 
-    if (event.namespace) {
-        query.namespace = event.namespace;
-    }
-
-    router.push({
-        name: "executions/list",
-        params: {
+        router.push({
+            name: "executions/list",
+            params: {
             tab: "executions",
             tenant: route.params.tenant
         },
-        query: query
-    });
+            query: query
+        });
+    }
 }
 
 export function backgroundFromState(state, alpha = 1) {

@@ -28,7 +28,7 @@
                     <namespace-select
                         data-type="flow"
                         v-if="$route.name !== 'flows/update'"
-                        :value="$route.query.namespace"
+                        :value="namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />
                 </el-form-item>
@@ -88,6 +88,8 @@
                     :data="daily"
                     :start-date="startDate"
                     :end-date="endDate"
+                    :namespace="namespace"
+                    :flow-id="flowId"
                 />
             </template>
 
@@ -330,7 +332,17 @@
             filter: {
                 type: Boolean,
                 default: false
-            }
+            },
+            namespace: {
+                type: String,
+                required: false,
+                default: undefined
+            },
+            flowId: {
+                type: String,
+                required: false,
+                default: undefined
+            },
         },
         data() {
             return {
@@ -437,10 +449,10 @@
                 return this.canDelete || this.canUpdate;
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.$route.query.namespace);
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.$route.query.namespace);
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
@@ -483,9 +495,12 @@
                     delete queryFilter["endDate"];
                 }
 
-                if (this.$route.name === "flows/update") {
-                    queryFilter["namespace"] = this.$route.params.namespace;
-                    queryFilter["flowId"] = this.$route.params.id;
+                if (this.namespace) {
+                    queryFilter["namespace"] = this.namespace;
+                }
+
+                if (this.flowId) {
+                    queryFilter["flowId"] = this.flowId;
                 }
 
                 return _merge(base, queryFilter)

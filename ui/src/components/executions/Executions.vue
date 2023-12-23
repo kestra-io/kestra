@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="routeInfo.title">
+    <top-nav-bar v-if="topbar" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'flows/update'">
@@ -18,7 +18,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div :class="{'mt-3': !embed}" v-if="ready">
+    <div :class="{'mt-3': topbar}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
@@ -322,6 +322,10 @@
             embed: {
                 type: Boolean,
                 default: false
+            },
+            topbar: {
+                type: Boolean,
+                default: true
             },
             filter: {
                 type: Boolean,

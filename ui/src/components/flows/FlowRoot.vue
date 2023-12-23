@@ -141,10 +141,6 @@
                         name: "executions",
                         component: FlowExecutions,
                         title: this.$t("executions"),
-                        props: {
-                            expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted
-                        },
                     });
                 }
 

@@ -33,7 +33,7 @@ import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
-    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
+    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%-*\\s*raw\\s*(\\d*)\\s*-*%}\\s*([\\s\\S]*?)\\s*\\{%-*\\s*endraw\\s*-*%}");
 
     private Handlebars handlebars;
     private final PebbleEngine pebbleEngine;
@@ -92,35 +92,55 @@ public class VariableRenderer {
         pebbleEngine = pebbleBuilder.build();
     }
 
-    public String recursiveRender(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (inline == null) {
+    public String recursiveRender(String initialTemplateToRender, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (initialTemplateToRender == null) {
             return null;
         }
 
-        if (inline.indexOf('{') == -1) {
+        if (initialTemplateToRender.indexOf('{') == -1) {
             // it's not a Pebble template so we short-circuit rendering
-            return inline;
+            return initialTemplateToRender;
         }
 
-        // pre-process raw tags
-        Matcher rawMatcher = RAW_PATTERN.matcher(inline);
-        Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
-        String currentTemplate = rawMatcher.replaceAll(result -> {
-            var uuid = UUID.randomUUID().toString();
-            replacers.put(uuid, result.group(1));
-            return uuid;
-        });
-
+        Map<String, String> replacers = null;
         boolean isSame = false;
-        String current = "";
+        boolean remainingRawTags = true;
+        String rendered = initialTemplateToRender;
         PebbleTemplate compiledTemplate;
         while (!isSame) {
+            String beforeRender = rendered;
+
+            // pre-process raw tags
+            if (remainingRawTags) {
+                Matcher rawMatcher = RAW_PATTERN.matcher(beforeRender);
+                if (rawMatcher.find()) {
+                    if(replacers == null) {
+                        replacers = new HashMap<>((int) Math.ceil(rawMatcher.results().count() / 0.75));
+                    }
+
+                    Map<String, String> finalReplacers = replacers;
+                    beforeRender = rawMatcher.replaceAll(result -> {
+                        String remainingRendering = result.group(1);
+                        int remainingRenderingCount = remainingRendering.isEmpty() ? 0 : Integer.parseInt(remainingRendering);
+                        if (remainingRenderingCount == 0) {
+                            String replacerKey = UUID.randomUUID().toString();
+                            finalReplacers.put(replacerKey, result.group(2));
+                            return replacerKey;
+                        }
+
+                        return "{% raw " + (remainingRenderingCount - 1) + " %}" + result.group(2) + "{% endraw %}";
+                    });
+                } else {
+                    remainingRawTags = false;
+                }
+            }
+
             try {
-                compiledTemplate = pebbleEngine.getLiteralTemplate(currentTemplate);
+                compiledTemplate = pebbleEngine.getLiteralTemplate(beforeRender);
 
                 Writer writer = new JsonWriter(new StringWriter());
                 compiledTemplate.evaluate(writer, variables);
-                current = writer.toString();
+                rendered = writer.toString();
             } catch (IOException | PebbleException e) {
                 if (this.variableConfiguration.disableHandlebars) {
                     if (e instanceof PebbleException) {
@@ -131,8 +151,8 @@ public class VariableRenderer {
                 }
 
                 try {
-                    Template  template = handlebars.compileInline(currentTemplate);
-                    current = template.apply(variables);
+                    Template  template = handlebars.compileInline(beforeRender);
+                    rendered = template.apply(variables);
                 } catch (HandlebarsException | IOException hbE) {
                     throw new IllegalVariableEvaluationException(
                         "Pebble evaluation failed with '" + e.getMessage() +  "' " +
@@ -142,15 +162,16 @@ public class VariableRenderer {
                 }
             }
 
-            isSame = currentTemplate.equals(current);
-            currentTemplate = current;
+            isSame = beforeRender.equals(rendered);
         }
 
-        // post-process raw tags
-        for(var entry: replacers.entrySet()) {
-            current = current.replace(entry.getKey(), entry.getValue());
+        if (replacers != null) {
+            // post-process raw tags
+            for (var entry : replacers.entrySet()) {
+                rendered = rendered.replace(entry.getKey(), entry.getValue());
+            }
         }
-        return current;
+        return rendered;
     }
 
     public IllegalVariableEvaluationException properPebbleException(PebbleException e) {

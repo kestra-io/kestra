@@ -166,7 +166,9 @@ class PebbleVariableRendererTest {
     @Test
     void raw() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
-            "var", "1"
+            "var", "1",
+            "recursive_var", "{{ var }}",
+            "recursive_recursive_var", "{{ recursive_var }}"
         );
 
         String render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %}", vars);
@@ -180,6 +182,19 @@ class PebbleVariableRendererTest {
 
         render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %} and some other code {% raw %}{{ var2 }}{% endraw %}", vars);
         assertThat(render, is("See some code {{ var }} and some other code {{ var2 }}"));
+
+        render = variableRenderer.render("""
+            Fully rendered: {{ recursive_recursive_var }};
+            Rendered twice: {% raw 2 %}
+            {{ recursive_recursive_var }}
+            {% endraw %};
+            Rendered once: {% raw 1 %}{{ recursive_recursive_var }}{% endraw %};
+            Not rendered: {% raw %}{{ recursive_recursive_var }}{% endraw %}""", vars);
+        assertThat(render, is("""
+            Fully rendered: 1;
+            Rendered twice: {{ var }};
+            Rendered once: {{ recursive_var }};
+            Not rendered: {{ recursive_recursive_var }}"""));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble;
 
 import io.kestra.core.runners.pebble.filters.ReplaceFilter;
+import io.kestra.core.runners.pebble.tags.RawTokenParser;
 import io.pebbletemplates.pebble.attributes.AttributeResolver;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.extension.Extension;
@@ -58,6 +59,8 @@ public class ExtensionCustomizer extends io.pebbletemplates.pebble.extension.Ext
             .map(ArrayList::new)
             .orElseGet(ArrayList::new);
 
+        list.add(new RawTokenParser());
+
         list.removeIf(x -> x instanceof AutoEscapeTokenParser);
         list.removeIf(x -> x instanceof ExtendsTokenParser);
         list.removeIf(x -> x instanceof EmbedTokenParser);
@@ -67,11 +70,6 @@ public class ExtensionCustomizer extends io.pebbletemplates.pebble.extension.Ext
         list.removeIf(x -> x instanceof ParallelTokenParser);
         list.removeIf(x -> x instanceof CacheTokenParser);
         list.removeIf(x -> x instanceof FromTokenParser);
-        list.removeIf(x -> x instanceof AutoEscapeTokenParser);
-        list.removeIf(x -> x instanceof AutoEscapeTokenParser);
-        list.removeIf(x -> x instanceof AutoEscapeTokenParser);
-        list.removeIf(x -> x instanceof AutoEscapeTokenParser);
-        list.removeIf(x -> x instanceof AutoEscapeTokenParser);
 
         return list;
     }

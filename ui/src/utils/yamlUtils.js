@@ -533,7 +533,7 @@ export default class YamlUtils {
 
     static flowHaveTasks(source) {
         const tasks = yaml.parseDocument(source).contents.items.find(item => item.key.value === "tasks");
-        return tasks && tasks.value.items && tasks.value.items.length >= 1;
+        return tasks?.value?.items?.length >= 1;
     }
 
     static deleteMetadata(source, metadata) {

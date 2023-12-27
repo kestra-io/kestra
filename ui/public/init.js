@@ -18,7 +18,7 @@ const extensionsToFetch = {
     // to handle dark theme
     "PROxZIMA/sweetdracula": "1.0.9",
     // to apply Kestra's flow validation schema, comment for local extension testing
-    "kestra-io/kestra": "0.1.10",
+    "kestra-io/kestra": "0.1.11",
 };
 
 let url;

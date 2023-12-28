@@ -8,10 +8,6 @@ on:
       - develop
     tags:
       - v*
-      
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
   
   pull_request:
     branches:
@@ -28,6 +24,10 @@ concurrency:
         type: string
         default: "false"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   check:
     env:

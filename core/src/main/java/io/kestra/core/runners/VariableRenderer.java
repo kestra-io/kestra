@@ -33,7 +33,7 @@ import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
-    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%-*\\s*raw\\s*(\\d*)\\s*-*%}\\s*([\\s\\S]*?)\\s*\\{%-*\\s*endraw\\s*-*%}");
+    private static final Pattern RAW_OR_MAX_RENDER_PATTERN = Pattern.compile("\\{%-*\\s*(raw|maxRender)\\s*\\d*\\s*-*%}\\s*([\\s\\S]*?)\\s*\\{%-*\\s*end(?:raw|maxRender)\\s*-*%}");
 
     private Handlebars handlebars;
     private final PebbleEngine pebbleEngine;
@@ -104,34 +104,33 @@ public class VariableRenderer {
 
         Map<String, String> replacers = null;
         boolean isSame = false;
-        boolean remainingRawTags = true;
+        boolean remainingTagsToPreprocess = true;
         String rendered = initialTemplateToRender;
         PebbleTemplate compiledTemplate;
         while (!isSame) {
             String beforeRender = rendered;
 
             // pre-process raw tags
-            if (remainingRawTags) {
-                Matcher rawMatcher = RAW_PATTERN.matcher(beforeRender);
-                if (rawMatcher.find()) {
+            if (remainingTagsToPreprocess) {
+                Matcher preprocessTagMatcher = RAW_OR_MAX_RENDER_PATTERN.matcher(beforeRender);
+                if (preprocessTagMatcher.find()) {
                     if(replacers == null) {
-                        replacers = new HashMap<>((int) Math.ceil(rawMatcher.results().count() / 0.75));
+                        replacers = new HashMap<>((int) Math.ceil(preprocessTagMatcher.results().count() / 0.75));
                     }
 
                     Map<String, String> finalReplacers = replacers;
-                    beforeRender = rawMatcher.replaceAll(result -> {
-                        String remainingRendering = result.group(1);
-                        int remainingRenderingCount = remainingRendering.isEmpty() ? 0 : Integer.parseInt(remainingRendering);
-                        if (remainingRenderingCount == 0) {
+                    beforeRender = preprocessTagMatcher.replaceAll(result -> {
+                        if (result.group(1).equals("raw")) {
                             String replacerKey = UUID.randomUUID().toString();
                             finalReplacers.put(replacerKey, result.group(2));
                             return replacerKey;
                         }
 
-                        return "{% raw " + (remainingRenderingCount - 1) + " %}" + result.group(2) + "{% endraw %}";
+                        // don't replace maxRender tags
+                        return result.group(0);
                     });
                 } else {
-                    remainingRawTags = false;
+                    remainingTagsToPreprocess = false;
                 }
             }
 

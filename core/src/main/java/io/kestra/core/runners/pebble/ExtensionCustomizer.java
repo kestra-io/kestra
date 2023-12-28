@@ -1,7 +1,7 @@
 package io.kestra.core.runners.pebble;
 
 import io.kestra.core.runners.pebble.filters.ReplaceFilter;
-import io.kestra.core.runners.pebble.tags.RawTokenParser;
+import io.kestra.core.runners.pebble.tags.MaxRenderTokenParser;
 import io.pebbletemplates.pebble.attributes.AttributeResolver;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.extension.Extension;
@@ -59,7 +59,7 @@ public class ExtensionCustomizer extends io.pebbletemplates.pebble.extension.Ext
             .map(ArrayList::new)
             .orElseGet(ArrayList::new);
 
-        list.add(new RawTokenParser());
+        list.add(new MaxRenderTokenParser());
 
         list.removeIf(x -> x instanceof AutoEscapeTokenParser);
         list.removeIf(x -> x instanceof ExtendsTokenParser);

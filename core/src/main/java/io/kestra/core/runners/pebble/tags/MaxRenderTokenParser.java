@@ -7,11 +7,10 @@ import io.pebbletemplates.pebble.node.expression.Expression;
 import io.pebbletemplates.pebble.parser.Parser;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
 
-// This parser is mandatory to handle raw tags as we need to not crash the pebble renderer so it needs to understand the raw tag
-public class RawTokenParser implements TokenParser {
+public class MaxRenderTokenParser implements TokenParser {
 
 	public String getTag(){
-		return "raw";
+		return "maxRender";
 	}
 
 	@Override
@@ -29,7 +28,7 @@ public class RawTokenParser implements TokenParser {
         stream.expect(Token.Type.EXECUTE_END);
 
         BodyNode parsedBody = parser.subparse(node ->
-            node.test(Token.Type.NAME, "endraw")
+            node.test(Token.Type.NAME, "endmaxRender")
         );
 
         // skip endraw tag
@@ -38,7 +37,7 @@ public class RawTokenParser implements TokenParser {
         stream.expect(Token.Type.EXECUTE_END);
 
         // RawNode is composed of a remaining and a value
-		return new RawNode(lineNumber, renderingCountLeft, parsedBody);
+		return new MaxRenderNode(lineNumber, renderingCountLeft, parsedBody);
 	}
 
 

@@ -4,6 +4,7 @@ import io.kestra.core.docs.DocumentationWithSchema;
 import io.kestra.core.docs.InputType;
 import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
+import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.tasks.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -45,6 +46,17 @@ class PluginControllerTest {
 
             assertThat(template.getGuides().size(), is(2));
             assertThat(template.getGuides().get(0), is("authentication"));
+
+            Plugin core = list.stream()
+                .filter(plugin -> plugin.getTitle().equals("core"))
+                .findFirst()
+                .orElseThrow();
+
+            assertThat(core.getCategories(), containsInAnyOrder(
+                PluginSubGroup.PluginCategory.FLOW,
+                PluginSubGroup.PluginCategory.STORAGE,
+                PluginSubGroup.PluginCategory.MISC
+            ));
 
             // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
             list = client.toBlocking().retrieve(

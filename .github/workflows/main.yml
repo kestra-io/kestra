@@ -8,7 +8,7 @@ on:
       - develop
     tags:
       - v*
-  
+
   pull_request:
     branches:
       - master
@@ -27,7 +27,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+
 jobs:
   check:
     env:
@@ -108,6 +108,13 @@ jobs:
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check jacoco javadoc --no-daemon --priority=normal
+
+      # report test
+      - name: Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure()
+        with:
+          report_paths: '**/build/test-results/**/TEST-*.xml'
 
       - name: Analyze with Sonar
         if: ${{ env.SONAR_TOKEN != 0 }}

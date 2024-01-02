@@ -4,16 +4,17 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 @MemoryQueueEnabled
@@ -27,6 +28,19 @@ public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterfa
     @Override
     public Optional<Trigger> findLast(TriggerContext context) {
         return Optional.ofNullable(triggers.get(context.uid()));
+    }
+
+    @Override
+    public List<Trigger> findAllForAllTenants() {
+        return new ArrayList<>(triggers.values());
+    }
+
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
+        triggers.put(trigger.uid(), trigger);
+        triggerQueue.emit(trigger);
+
+        return trigger;
     }
 
     @Override

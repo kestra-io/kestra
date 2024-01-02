@@ -5,11 +5,14 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-
-import java.util.*;
-
+import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -30,6 +33,18 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     @Override
     public List<Trigger> findAllForAllTenants() {
         return this.triggers;
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
+        return this.triggers.stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
+    }
+
+
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
+        return save(trigger);
+
     }
 
     @Override

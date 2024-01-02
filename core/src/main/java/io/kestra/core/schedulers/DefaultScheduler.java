@@ -10,13 +10,16 @@ import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import java.util.function.BiConsumer;
 
 @Slf4j
 @Singleton
@@ -62,7 +65,7 @@ public class DefaultScheduler extends AbstractScheduler {
                     triggerState.save(trigger.resetExecution());
                     watchingTrigger.remove(execution.getId());
                 } else {
-                    triggerState.save(Trigger.of(execution, trigger.getDate()));
+                    triggerState.save(Trigger.of(execution, trigger));
                 }
             }
         });
@@ -80,5 +83,12 @@ public class DefaultScheduler extends AbstractScheduler {
         });
 
         super.run();
+    }
+
+    @Override
+    public void handleNext(ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
+        List<Trigger> triggers =  triggerState.findAllForAllTenants().stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
+        DefaultScheduleContext schedulerContext = new DefaultScheduleContext();
+        consumer.accept(triggers, schedulerContext);
     }
 }

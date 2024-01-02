@@ -5,12 +5,15 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.kestra.jdbc.runner.JdbcSchedulerContext;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,6 +74,34 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
+    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
+        JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
+
+        return jdbcSchedulerContext.getContext()
+            .select(field("value"))
+            .from(this.jdbcRepository.getTable())
+            .where(
+                field("next_execution_date").lessThan(now.toOffsetDateTime())
+                    .or(field("next_execution_date").isNull())
+            )
+            .forUpdate()
+            .fetch()
+            .map(r -> this.jdbcRepository.deserialize(r.get("value").toString()));
+
+
+    }
+
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
+        JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
+
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
+        this.jdbcRepository.persist(trigger, jdbcSchedulerContext.getContext(), fields);
+
+        return trigger;
+    }
+
+    @Override
     public Trigger save(Trigger trigger) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
         this.jdbcRepository.persist(trigger, fields);
@@ -120,7 +151,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     protected Condition defaultFilter(String tenantId) {
-        return buildTenantCondition(tenantId) ;
+        return buildTenantCondition(tenantId);
     }
 
     @Override

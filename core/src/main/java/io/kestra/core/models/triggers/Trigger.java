@@ -1,11 +1,15 @@
 package io.kestra.core.models.triggers;
 
-import io.kestra.core.models.flows.State;
-import io.kestra.core.utils.IdUtils;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.utils.IdUtils;
+import io.micronaut.core.annotation.Nullable;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -19,7 +23,7 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 public class Trigger extends TriggerContext {
-    @NotNull
+    @Nullable
     private String executionId;
 
     @Nullable
@@ -90,6 +94,22 @@ public class Trigger extends TriggerContext {
     }
 
     /**
+     * Create a new Trigger from polling trigger with no execution information and no evaluation lock.
+     */
+    public static Trigger of(TriggerContext triggerContext, ZonedDateTime nextExecutionDate) {
+        return Trigger.builder()
+            .tenantId(triggerContext.getTenantId())
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .triggerId(triggerContext.getTriggerId())
+            .date(triggerContext.getDate())
+            .nextExecutionDate(nextExecutionDate)
+            .build();
+    }
+
+
+    /**
      * Create a new Trigger with execution information.
      *
      * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
@@ -104,6 +124,27 @@ public class Trigger extends TriggerContext {
             .date(triggerContext.getDate())
             .executionId(execution.getId())
             .updatedDate(Instant.now())
+            .nextExecutionDate(triggerContext.getNextExecutionDate())
+            .build();
+    }
+
+    /**
+     * Create a new Trigger with execution information and specific nextExecutionDate.
+     * This one is use when starting a schedule execution as the nextExecutionDate come from the execution variables
+     *
+     * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
+     */
+    public static Trigger of(TriggerContext triggerContext, Execution execution, ZonedDateTime nextExecutionDate) {
+        return Trigger.builder()
+            .tenantId(triggerContext.getTenantId())
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .triggerId(triggerContext.getTriggerId())
+            .date(triggerContext.getDate())
+            .executionId(execution.getId())
+            .updatedDate(Instant.now())
+            .nextExecutionDate(nextExecutionDate)
             .build();
     }
 
@@ -112,14 +153,15 @@ public class Trigger extends TriggerContext {
      *
      * This is used to update the trigger with the execution information, it will also erase the trigger date.
      */
-    public static Trigger of(Execution execution, ZonedDateTime date) {
+    public static Trigger of(Execution execution, Trigger trigger) {
         return Trigger.builder()
             .tenantId(execution.getTenantId())
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .flowRevision(execution.getFlowRevision())
             .triggerId(execution.getTrigger().getId())
-            .date(date)
+            .date(trigger.getDate())
+            .nextExecutionDate(trigger.getNextExecutionDate())
             .executionId(execution.getId())
             .executionCurrentState(execution.getState().getCurrent())
             .updatedDate(Instant.now())
@@ -131,14 +173,15 @@ public class Trigger extends TriggerContext {
      *
      * This is used to lock the trigger evaluation.
      */
-    public static Trigger of(TriggerContext triggerContext, ZonedDateTime evaluateRunningDate) {
+    public static Trigger of(Trigger trigger, ZonedDateTime evaluateRunningDate) {
         return Trigger.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(triggerContext.getFlowRevision())
-            .triggerId(triggerContext.getTriggerId())
-            .date(triggerContext.getDate())
+            .tenantId(trigger.getTenantId())
+            .namespace(trigger.getNamespace())
+            .flowId(trigger.getFlowId())
+            .flowRevision(trigger.getFlowRevision())
+            .triggerId(trigger.getTriggerId())
+            .date(trigger.getDate())
+            .nextExecutionDate(trigger.getNextExecutionDate())
             .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
             .build();
@@ -152,6 +195,7 @@ public class Trigger extends TriggerContext {
             .flowRevision(this.getFlowRevision())
             .triggerId(this.getTriggerId())
             .date(this.getDate())
+            .nextExecutionDate(this.getNextExecutionDate())
             .build();
     }
 }

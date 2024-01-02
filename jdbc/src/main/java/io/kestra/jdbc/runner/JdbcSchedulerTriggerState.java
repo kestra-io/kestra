@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -33,6 +34,18 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     @Override
     public Optional<Trigger> findLast(TriggerContext context) {
         return this.triggerRepository.findLast(context);
+    }
+
+    @Override
+    public List<Trigger> findAllForAllTenants() {
+        return this.triggerRepository.findAllForAllTenants();
+    }
+
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
+        triggerRepository.save(trigger, scheduleContextInterface);
+
+        return trigger;
     }
 
     @Override

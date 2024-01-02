@@ -10,7 +10,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
-import org.junitpioneer.jupiter.RetryingTest;
+import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
@@ -52,7 +53,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         return createFlow(Collections.singletonList(schedule));
     }
 
-    @RetryingTest(10)
+    @Test
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

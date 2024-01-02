@@ -89,6 +89,11 @@
                                 {{ scope.row.updatedDate ? $filters.date(scope.row.updatedDate, "iso") : "" }}
                             </template>
                         </el-table-column>
+                        <el-table-column :label="$t('next execution date')">
+                            <template #default="scope">
+                                {{ scope.row.nextExecutionDate ? $filters.date(scope.row.nextExecutionDate, "iso") : "" }}
+                            </template>
+                        </el-table-column>
                         <el-table-column :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 {{ scope.row.evaluateRunningDate ? $filters.date(scope.row.evaluateRunningDate, "iso") : "" }}

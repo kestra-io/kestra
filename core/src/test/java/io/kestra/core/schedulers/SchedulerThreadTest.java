@@ -10,8 +10,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junitpioneer.jupiter.RetryingTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +21,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
@@ -50,7 +50,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
         ));
     }
 
-    @RetryingTest(5)
+    @Test
     void thread() throws Exception {
         Flow flow = createThreadFlow();
         CountDownLatch queueCount = new CountDownLatch(2);

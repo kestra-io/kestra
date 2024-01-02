@@ -97,7 +97,7 @@ public class NamespaceFilesService {
             .stream()
             .anyMatch(s -> FileSystems
                 .getDefault()
-                .getPathMatcher("glob:" + s)
+                .getPathMatcher("glob:" + (s.matches("\\w+[\\s\\S]*") ? "**/" + s : s))
                 .matches(Paths.get(file))
             );
     }

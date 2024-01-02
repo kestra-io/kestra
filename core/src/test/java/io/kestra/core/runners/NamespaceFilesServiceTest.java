@@ -19,8 +19,7 @@ import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class NamespaceFilesServiceTest {
@@ -94,8 +93,10 @@ class NamespaceFilesServiceTest {
         String namespace = "io.kestra." + IdUtils.create();
 
         put(null, namespace, "/a/b/c/1.sql", "1");
-        put(null, namespace, "/a/3.sql", "2");
-        put(null, namespace, "/b/c/d/1.sql", "3");
+        put(null, namespace, "/a/2.sql", "2");
+        put(null, namespace, "/b/c/d/3.sql", "3");
+        put(null, namespace, "/b/d/4.sql", "4");
+        put(null, namespace, "/c/5.sql", "5");
 
         List<URI> injected = namespaceFilesService.inject(
             runContextFactory.of(),
@@ -103,16 +104,27 @@ class NamespaceFilesServiceTest {
             namespace,
             basePath,
             NamespaceFiles.builder()
-                .include(List.of("/a/**"))
-                .exclude(List.of("**/3.sql"))
+                .include(List.of(
+                    "/a/**",
+                    "c/**"
+                ))
+                .exclude(List.of("**/2.sql"))
                 .build()
         );
 
-        assertThat(injected.size(), is(1));
-        assertThat(injected.get(0).getPath(), containsString("c/1.sql"));
-        List<Path> tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
-        assertThat(tempDir.size(), is(1));
-        assertThat(tempDir.get(0).toString(), is(Paths.get(basePath.toString(), "/a/b/c/1.sql").toString()));
+        assertThat(injected, containsInAnyOrder(
+            hasProperty("path", endsWith("1.sql")),
+            hasProperty("path", endsWith("3.sql")),
+            hasProperty("path", endsWith("5.sql"))
+        ));
+        List<String> tempDirEntries = Files.walk(basePath).filter(path -> path.toFile().isFile())
+            .map(Path::toString)
+            .toList();
+        assertThat(tempDirEntries, containsInAnyOrder(
+            is(Paths.get(basePath.toString(), "/a/b/c/1.sql").toString()),
+            is(Paths.get(basePath.toString(), "/b/c/d/3.sql").toString()),
+            is(Paths.get(basePath.toString(), "/c/5.sql").toString())
+        ));
     }
 
     @Test

@@ -184,9 +184,9 @@ public abstract class JdbcHeartbeatTest {
         Worker newWorker = new Worker(applicationContext, 8, null);
         applicationContext.registerSingleton(newWorker);
         newWorker.run();
-        countDownLatch.await(12, TimeUnit.SECONDS);
+        boolean lastAwait = countDownLatch.await(12, TimeUnit.SECONDS);
 
-        assertThat(workerTriggerResult.get().getSuccess(), is(true));
+        assertThat("Last await result was " + lastAwait, workerTriggerResult.get().getSuccess(), is(true));
     }
 
     private WorkerTask workerTask(long sleepDuration) {

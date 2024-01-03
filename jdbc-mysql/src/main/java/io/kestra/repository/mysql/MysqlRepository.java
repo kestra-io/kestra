@@ -8,6 +8,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,5 +47,13 @@ public class MysqlRepository<T>  extends AbstractJdbcRepository<T> {
             map,
             DSL.using(configuration).fetchOne("SELECT FOUND_ROWS()").into(Integer.class)
         ));
+    }
+
+    public Field<Integer> weekFromTimestamp(Field<Timestamp> timestampField) {
+        // DAYOFWEEK > 5 means you have less than 3 days in the first week of the year so we choose mode 2 (see https://www.w3resource.com/mysql/date-and-time-functions/mysql-week-function.php)
+        return DSL.when(
+            DSL.field("DAYOFWEEK(CONCAT(YEAR({0}), '-01-01')) > 5", Boolean.class, timestampField),
+            DSL.field("WEEK({0}, 2)", Integer.class, timestampField)
+        ).otherwise(DSL.field("WEEK({0}, 3)", Integer.class, timestampField));
     }
 }

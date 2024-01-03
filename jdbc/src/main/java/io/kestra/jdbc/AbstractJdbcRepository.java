@@ -19,6 +19,7 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -245,5 +246,9 @@ public abstract class AbstractJdbcRepository<T> {
         select = this.sort(select, pageable);
 
         return this.limit(select, pageable);
+    }
+
+    public Field<Integer> weekFromTimestamp(Field<Timestamp> timestampField) {
+        return DSL.week(timestampField);
     }
 }

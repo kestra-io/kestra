@@ -28,3 +28,8 @@ tasks:
   message: fourth {{task.id}}
   level: TRACE
   logLevel: INFO
+- id: t5
+  type: io.kestra.core.tasks.log.Log
+  message:
+  - five first
+  - five second

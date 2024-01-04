@@ -128,7 +128,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Test
     void replayFromBeginning() throws Exception {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         Execution restart = executionService.replay(execution, null, null);
@@ -148,7 +148,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Test
     void replaySimple() throws Exception {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         Execution restart = executionService.replay(execution, execution.getTaskRunList().get(1).getId(), null);

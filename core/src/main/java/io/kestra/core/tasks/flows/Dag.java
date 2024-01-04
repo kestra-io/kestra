@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
@@ -44,36 +46,41 @@ import java.util.stream.Stream;
         @Example(
             title = "Run a series of tasks for which the execution order is defined by their upstream dependencies.",
             code = """
+                  id: dag-flow
+                  namespace: io.kestra.tests
                   tasks:
-                    - task:
-                        id: task1
-                        type: io.kestra.core.tasks.log.Log
-                        message: task 1
-                    - task:
-                        id: task2
-                        type: io.kestra.core.tasks.log.Log
-                        message: task 2
-                      dependsOn:
-                        - task1
-                    - task:
-                        id: task3
-                        type: io.kestra.core.tasks.log.Log
-                        message: task 3
-                      dependsOn:
-                        - task1
-                    - task:
-                        id: task4
-                        type: io.kestra.core.tasks.log.Log
-                        message: task 4
-                      dependsOn:
-                        - task2
-                    - task:
-                        id: task5
-                        type: io.kestra.core.tasks.log.Log
-                        message: task 5
-                      dependsOn:
-                        - task4
-                        - task3
+                    - id: dag
+                      type: io.kestra.core.tasks.flows.Dag
+                      tasks:
+                        - task:
+                            id: task1
+                            type: io.kestra.core.tasks.log.Log
+                            message: task 1
+                        - task:
+                            id: task2
+                            type: io.kestra.core.tasks.log.Log
+                            message: task 2
+                          dependsOn:
+                            - task1
+                        - task:
+                            id: task3
+                            type: io.kestra.core.tasks.log.Log
+                            message: task 3
+                          dependsOn:
+                            - task1
+                        - task:
+                            id: task4
+                            type: io.kestra.core.tasks.log.Log
+                            message: task 4
+                          dependsOn:
+                            - task2
+                        - task:
+                            id: task5
+                            type: io.kestra.core.tasks.log.Log
+                            message: task 5
+                          dependsOn:
+                            - task4
+                            - task3
                   """
         )
     }
@@ -82,8 +89,8 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parallel tasks",
-        description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time"
+        title = "Number of concurrent parallel tasks that can be running at any point in time.",
+        description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time."
     )
     @PluginProperty
     private final Integer concurrent = 0;
@@ -215,10 +222,16 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @Introspected
     public static class DagTask {
         @NotNull
+        @Schema(
+            title = "The task within the DAG."
+        )
         @PluginProperty
         private Task task;
 
         @PluginProperty
+        @Schema(
+            title = "The list of task IDs that should have been successfully executed before starting this task."
+        )
         private List<String> dependsOn;
     }
 }

@@ -15,6 +15,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.tasks.test.SleepTrigger;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +38,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.google.common.base.CharMatcher.isNot;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -118,6 +119,7 @@ public abstract class JdbcHeartbeatTest {
         newWorker.run();
         resubmitLatch.await(15, TimeUnit.SECONDS);
 
+        newWorker.shutdown();
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
     }
 
@@ -135,7 +137,7 @@ public abstract class JdbcHeartbeatTest {
         skipExecutionService.setSkipExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(either -> {
+        Runnable assertionStop = workerTaskResultQueue.receive(either -> {
             workerTaskResult.set(either.getLeft());
 
             if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {
@@ -158,6 +160,8 @@ public abstract class JdbcHeartbeatTest {
 
         // wait a little to be sure there is no resubmit
         Thread.sleep(500);
+        assertionStop.run();
+        newWorker.shutdown();
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), not(Type.SUCCESS));
     }
 
@@ -175,10 +179,16 @@ public abstract class JdbcHeartbeatTest {
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>(null);
         workerTriggerResultQueue.receive(either -> {
             workerTriggerResult.set(either.getLeft());
+            countDownLatch.countDown();
         });
 
-        workerJobQueue.emit(workerTrigger(7000));
-        countDownLatch.await(2, TimeUnit.SECONDS);
+        WorkerTrigger workerTrigger = workerTrigger(7000);
+        workerJobQueue.emit(workerTrigger);
+        Await.until(() -> worker.getEvaluateTriggerRunningCount()
+                .get("io.kestra.jdbc.runner.jdbcheartbeattest_workertrigger_unit-test") != null,
+            Duration.ofMillis(100),
+            Duration.ofSeconds(5)
+        );
         worker.shutdown();
 
         Worker newWorker = new Worker(applicationContext, 8, null);
@@ -186,6 +196,7 @@ public abstract class JdbcHeartbeatTest {
         newWorker.run();
         boolean lastAwait = countDownLatch.await(12, TimeUnit.SECONDS);
 
+        newWorker.shutdown();
         assertThat("Last await result was " + lastAwait, workerTriggerResult.get().getSuccess(), is(true));
     }
 

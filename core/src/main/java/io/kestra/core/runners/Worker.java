@@ -74,6 +74,8 @@ public class Worker implements Runnable, AutoCloseable {
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
 
+    @VisibleForTesting
+    @Getter
     private final Map<String, AtomicInteger> evaluateTriggerRunningCount = new ConcurrentHashMap<>();
 
     private final List<WorkerThread> workerThreadReferences = new ArrayList<>();

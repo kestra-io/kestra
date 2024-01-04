@@ -16,12 +16,12 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Schema(
     title = "Create a subflow execution. Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language.",
-    description = "This task is deprecated, please use the io.kestra.core.tasks.flows.Subflow task instead."
+    description = "This task is deprecated, please use the `io.kestra.core.tasks.flows.Subflow` task instead."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Run a subflow with custom inputs",
+            title = "Run a subflow with custom inputs.",
             code = {
                 "namespace: dev",
                 "flowId: subflow",

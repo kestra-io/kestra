@@ -17,7 +17,7 @@ dependencies {
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
-    implementation 'com.github.oshi:oshi-core:6.4.8'
+    implementation 'com.github.oshi:oshi-core:6.4.10'
     implementation 'io.pebbletemplates:pebble:3.2.2'
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.5.0'
     implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.23.2'
@@ -28,17 +28,16 @@ dependencies {
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.33.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation', version: '4.33.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.33.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.33.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.33.1'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation', version: '4.33.1'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.33.1'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.33.1'
 
     // test
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.4.0'
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"

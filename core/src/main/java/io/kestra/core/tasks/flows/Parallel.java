@@ -34,7 +34,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks in parallel",
+    title = "Run tasks in parallel.",
     description = "This task runs all child tasks in parallel."
 )
 @Plugin(
@@ -44,20 +44,20 @@ import javax.validation.constraints.NotNull;
             code = {
                 "id: parallel",
                 "namespace: io.kestra.tests\n" +
-                    "",
+                "",
                 "tasks:\n" +
-                    "  - id: parallel\n" +
-                    "    type: io.kestra.core.tasks.flows.Parallel\n" +
-                    "    tasks:\n" +
-                    "      - id: 1st\n" +
-                    "        type: io.kestra.core.tasks.debugs.Return\n" +
-                    "        format: \"{{task.id}} > {{taskrun.startDate}}\"\n" +
-                    "      - id: 2nd\n" +
-                    "        type: io.kestra.core.tasks.debugs.Return\n" +
-                    "        format: \"{{task.id}} > {{taskrun.id}}\"\n" +
-                    "  - id: last\n" +
-                    "    type: io.kestra.core.tasks.debugs.Return\n" +
-                    "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+                "  - id: parallel\n" +
+                "    type: io.kestra.core.tasks.flows.Parallel\n" +
+                "    tasks:\n" +
+                "      - id: 1st\n" +
+                "        type: io.kestra.core.tasks.debugs.Return\n" +
+                "        format: \"{{ task.id }} > {{ taskrun.startDate }}\"\n" +
+                "      - id: 2nd\n" +
+                "        type: io.kestra.core.tasks.debugs.Return\n" +
+                "        format: \"{{ task.id }} > {{ taskrun.id }}\"\n" +
+                "  - id: last\n" +
+                "    type: io.kestra.core.tasks.debugs.Return\n" +
+                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
     }
@@ -66,8 +66,8 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parallel tasks",
-        description = "If the value is `0`, no limit exist and all tasks will start at the same time"
+        title = "Number of concurrent parallel tasks that can be running at any point in time.",
+        description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
     @PluginProperty
     private final Integer concurrent = 0;

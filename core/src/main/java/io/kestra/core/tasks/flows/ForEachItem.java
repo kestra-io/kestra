@@ -44,8 +44,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a subflow for each batch of items",
-    description = "Execute a subflow for each batch of items. The `items` value must be internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type."
+    title = "Execute a subflow for each batch of items.",
+    description = "The `items` value must be Kestra's internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type."
 )
 @Plugin(
     examples = {

@@ -48,43 +48,61 @@ import java.util.Optional;
     examples = {
         @Example(
             code = {
-                "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "id: each-parallel",
+                "namespace: io.kestra.tests",
+                "",
                 "tasks:",
-                "  - id: each-value",
-                "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "  - id: each-parallel",
+                "    type: io.kestra.core.tasks.flows.EachParallel",
+                "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "    tasks:",
+                "      - id: each-value",
+                "        type: io.kestra.core.tasks.debugs.Return",
+                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),
         @Example(
             code = {
-                "value: ",
-                "- value 1",
-                "- value 2",
-                "- value 3",
+                "id: each-parallel",
+                "namespace: io.kestra.tests",
+                "",
                 "tasks:",
-                "  - id: each-value",
-                "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "  - id: each-parallel",
+                "    type: io.kestra.core.tasks.flows.EachParallel",
+                "    value: ",
+                "      - value 1",
+                "      - value 2",
+                "      - value 3",
+                "    tasks:",
+                "      - id: each-value",
+                "        type: io.kestra.core.tasks.debugs.Return",
+                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),
         @Example(
             title = "Handling each value in parallel but only 1 child task for each value at the same time.",
             code = {
-                "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "id: each-parallel",
+                "namespace: io.kestra.tests",
+                "",
                 "tasks:",
-                "  - id: seq",
-                "    type: io.kestra.core.tasks.flows.Sequential",
+                "  - id: each-parallel",
+                "    type: io.kestra.core.tasks.flows.EachParallel",
+                "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
                 "    tasks:",
-                "    - id: t1",
-                "      type: io.kestra.plugin.scripts.shell.Commands",
-                "      commands:",
-                "        - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
-                "        - 'sleep 1'",
-                "    - id: t2",
-                "      type: io.kestra.plugin.scripts.shell.Commands",
-                "      commands:",
-                "        - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
-                "        - 'sleep 1'"
+                "      - id: seq",
+                "        type: io.kestra.core.tasks.flows.Sequential",
+                "        tasks:",
+                "        - id: t1",
+                "          type: io.kestra.plugin.scripts.shell.Commands",
+                "          commands:",
+                "            - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
+                "            - 'sleep 1'",
+                "        - id: t2",
+                "          type: io.kestra.plugin.scripts.shell.Commands",
+                "          commands:",
+                "            - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
+                "            - 'sleep 1'"
             }
         )
     }
@@ -93,8 +111,8 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parallel tasks",
-        description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
+        title = "Number of concurrent parallel tasks that can be running at any point in time.",
+        description = "If the value is `0`, no limit exist and all the tasks will start at the same time."
     )
     @PluginProperty
     private final Integer concurrent = 0;
@@ -102,8 +120,8 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The list of values for this task",
-        description = "The value can be passed as a String, a list of String, or a list of objects",
+        title = "The list of values for this task.",
+        description = "The value can be passed as a string, a list of strings, or a list of objects.",
         anyOf = {String.class, Object[].class}
     )
     private Object value;

@@ -48,7 +48,7 @@ import java.util.Optional;
                 "        - 'exit 1'",
                 "  - id: last",
                 "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
     }

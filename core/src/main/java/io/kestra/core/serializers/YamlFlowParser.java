@@ -27,11 +27,17 @@ import java.util.Set;
 public class YamlFlowParser {
     public static final String CONTEXT_FLOW_DIRECTORY = "flowDirectory";
 
-    private static final ObjectMapper mapper = JacksonMapper.ofYaml()
+    private static final ObjectMapper DEFAULT_MAPPER_OPTIONS = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
+        .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+    private static final ObjectMapper FLOW_FROM_FILE_MAPPER = DEFAULT_MAPPER_OPTIONS.copy()
         .registerModule(new SimpleModule("HandleBarDeserializer")
-            .addDeserializer(String.class, new HandleBarDeserializer())
+            .addDeserializer(String.class, new HandleBarDeserializer(true))
+        );
+
+    private static final ObjectMapper FLOW_FROM_STRING_MAPPER = DEFAULT_MAPPER_OPTIONS.copy()
+        .registerModule(new SimpleModule("HandleBarDeserializer")
+            .addDeserializer(String.class, new HandleBarDeserializer(false))
         );
 
     public static boolean isValidExtension(Path path) {
@@ -39,15 +45,15 @@ public class YamlFlowParser {
     }
 
     public <T> T parse(String input, Class<T> cls) {
-        return readFlow(mapper, input, cls, type(cls));
+        return readFlow(FLOW_FROM_STRING_MAPPER, input, cls, type(cls));
     }
 
 
     public <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
-        ObjectMapper currentMapper = mapper;
+        ObjectMapper currentMapper = FLOW_FROM_STRING_MAPPER;
 
         if (!strict) {
-            currentMapper = mapper.copy()
+            currentMapper = FLOW_FROM_STRING_MAPPER.copy()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         }
 
@@ -70,7 +76,7 @@ public class YamlFlowParser {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
             return readFlow(
-                mapper.copy()
+                FLOW_FROM_FILE_MAPPER.copy()
                     .setInjectableValues(new InjectableValues.Std()
                         .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
                     ),

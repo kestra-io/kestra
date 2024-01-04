@@ -182,6 +182,14 @@ class YamlFlowParserTest {
         assertThat(((Return) flow.getTasks().get(0)).getFormat(), containsString("\n"));
         assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("Lorem Ipsum"));
         assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("\n"));
+
+        // This ensures Handlebars TemplateFileLoader is reset between usages.
+        // Moreover, it also asserts that in case of loading a flow from a string (and not a file) leads to non-existent directory location to load files from
+        ConstraintViolationException constraintViolationException = assertThrows(
+            ConstraintViolationException.class,
+            () -> parseString("flows/helpers/include.yaml")
+        );
+        assertThat(constraintViolationException.getMessage(), endsWith("The partial '/lorem.txt.hbs' at '/lorem.txt.hbs' could not be found"));
     }
 
     @Test

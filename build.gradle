@@ -71,11 +71,11 @@ allprojects {
     //
     configurations.all {
         resolutionStrategy {
-            force("org.slf4j:slf4j-api:2.0.9")
+            force("org.slf4j:slf4j-api:$slf4jVersion")
 
             // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.23.3")
-            force("com.google.protobuf:protobuf-java-util:3.23.3")
+            force("com.google.protobuf:protobuf-java:3.25.1")
+            force("com.google.protobuf:protobuf-java-util:3.25.1")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.14")
@@ -125,10 +125,10 @@ allprojects {
         // logs
         implementation "org.slf4j:slf4j-api"
         implementation "ch.qos.logback:logback-classic"
-        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.22.0'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '2.0.9'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.9'
-        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.0'
+        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.22.1'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
+        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
@@ -143,7 +143,7 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
+        api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.15.1'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"
@@ -169,11 +169,13 @@ subprojects {
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"
         testAnnotationProcessor "io.micronaut.validation:micronaut-validation-processor"
 
-        testImplementation "org.junit.jupiter:junit-jupiter-api"
+        testImplementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         testImplementation "io.micronaut.test:micronaut-test-junit5"
+
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
         testImplementation "org.junit.jupiter:junit-jupiter-params"
         testImplementation "org.junit-pioneer:junit-pioneer:2.2.0"
+        testImplementation 'org.mockito:mockito-junit-jupiter'
 
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'

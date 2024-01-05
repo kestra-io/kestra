@@ -50,7 +50,7 @@ public class LogController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
+    @Get(uri = "logs/search")
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
@@ -69,7 +69,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
+    @Get(uri = "logs/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
     public List<LogEntry> findByExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,

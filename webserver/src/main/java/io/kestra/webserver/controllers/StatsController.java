@@ -31,7 +31,7 @@ public class StatsController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
+    @Post(uri = "executions/daily")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
     public List<DailyExecutionStatistics> dailyStatistics(
         @Parameter(description = "A string filter") @Nullable String q,
@@ -54,7 +54,7 @@ public class StatsController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
+    @Post(uri = "taskruns/daily")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for taskRuns")
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
         @Parameter(description = "A string filter") @Nullable String q,
@@ -76,7 +76,7 @@ public class StatsController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
+    @Post(uri = "executions/daily/group-by-flow")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions group by namespaces and flows")
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Parameter(description = "A string filter") @Nullable String q,
@@ -100,7 +100,7 @@ public class StatsController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/latest/group-by-flow", produces = MediaType.TEXT_JSON)
+    @Post(uri = "executions/latest/group-by-flow")
     @Operation(tags = {"Stats"}, summary = "Get latest execution by flows")
     public List<Execution> lastExecutions(
         @Parameter(description = "A list of flows filter") @Nullable List<ExecutionRepositoryInterface.FlowFilter> flows

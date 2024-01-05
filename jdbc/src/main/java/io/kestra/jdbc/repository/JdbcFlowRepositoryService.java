@@ -16,7 +16,7 @@ public abstract class JdbcFlowRepositoryService {
     public static Table<Record> lastRevision(AbstractJdbcRepository<Flow> jdbcRepository, boolean asterisk) {
         List<SelectFieldOrAsterisk> fields = new ArrayList<>();
         if (asterisk) {
-            fields.add(DSL.asterisk());
+            fields.add(DSL.asterisk()); //FIXME it didn't work on mySQL
         } else {
             fields.add(field("key", String.class));
             fields.add(field("revision", Integer.class));

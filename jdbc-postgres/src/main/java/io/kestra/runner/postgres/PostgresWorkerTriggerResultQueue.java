@@ -8,13 +8,15 @@ import io.kestra.jdbc.JdbcWorkerTriggerResultQueueService;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
 @Slf4j
-public class PostgresWorkerTriggerResultQueue implements WorkerTriggerResultQueueInterface {
+public class PostgresWorkerTriggerResultQueue extends PostgresQueue<WorkerTriggerResult> implements WorkerTriggerResultQueueInterface {
     private final JdbcWorkerTriggerResultQueueService jdbcWorkerTriggerResultQueueService;
 
     public PostgresWorkerTriggerResultQueue(ApplicationContext applicationContext) {
+        super(WorkerTriggerResult.class, applicationContext);
         this.jdbcWorkerTriggerResultQueueService = applicationContext.getBean(JdbcWorkerTriggerResultQueueService.class);
     }
 
@@ -34,7 +36,8 @@ public class PostgresWorkerTriggerResultQueue implements WorkerTriggerResultQueu
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
+        super.close();
         jdbcWorkerTriggerResultQueueService.close();
     }
 }

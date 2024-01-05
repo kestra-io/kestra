@@ -616,7 +616,6 @@ public class Worker implements Runnable, AutoCloseable {
     @VisibleForTesting
     public void closeWorker(Duration awaitDuration) throws Exception {
         workerJobQueue.pause();
-        executionKilledQueue.pause();
         new Thread(
             () -> {
                 try {
@@ -660,11 +659,6 @@ public class Worker implements Runnable, AutoCloseable {
         if (cleanShutdown.get()) {
             workerJobQueue.cleanup();
         }
-
-        workerJobQueue.close();
-        executionKilledQueue.close();
-        workerTaskResultQueue.close();
-        metricEntryQueue.close();
     }
 
     @VisibleForTesting
@@ -687,7 +681,7 @@ public class Worker implements Runnable, AutoCloseable {
 
         Output taskOutput;
         io.kestra.core.models.flows.State.Type taskState;
-        boolean killed = false;
+        volatile boolean killed = false;
 
         public WorkerThread(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry, String workerGroup) {
             super("WorkerThread");

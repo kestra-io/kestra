@@ -1,13 +1,9 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,18 +21,6 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
     @Inject
     private ExecutorsUtils executorsUtils;
-
-    @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    protected QueueInterface<WorkerJob> workerTaskQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -81,8 +65,5 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
     public void close() throws Exception {
         this.servers.forEach(throwConsumer(AutoCloseable::close));
         this.poolExecutor.shutdown();
-        this.executionQueue.close();
-        this.workerTaskQueue.close();
-        this.workerTaskResultQueue.close();
     }
 }

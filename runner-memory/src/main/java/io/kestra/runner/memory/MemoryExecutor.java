@@ -631,9 +631,6 @@ public class MemoryExecutor implements ExecutorInterface {
 
     @Override
     public void close() throws IOException {
-        executionQueue.close();
-        workerTaskQueue.close();
-        workerTaskResultQueue.close();
-        logQueue.close();
+        schedulerDelay.shutdown();
     }
 }

@@ -460,6 +460,8 @@ subprojects {
     }
 
     signing {
+        // only sign JARs that we publish to Sonatype
+        required { gradle.taskGraph.hasTask("publishSonatypePublicationPublicationToSonatypeRepository") }
         sign publishing.publications.sonatypePublication
     }
 }

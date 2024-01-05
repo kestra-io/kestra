@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import jakarta.inject.Singleton;
 
+// log user/identify + filter pour UI
 /**
  * @author croudet
  */

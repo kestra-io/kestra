@@ -60,7 +60,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
 
-    protected Boolean isShutdown = false;
+    protected volatile boolean isShutdown = false;
 
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);

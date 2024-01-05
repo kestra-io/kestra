@@ -113,9 +113,9 @@ public abstract class AbstractScheduler implements Scheduler {
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
-                    log.error("Executor fatal exception", e);
+                    log.error("Scheduler fatal exception", e);
+                    close();
                     applicationContext.close();
-                    Runtime.getRuntime().exit(1);
                 }
             },
             "scheduler-listener"

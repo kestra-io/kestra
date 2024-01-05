@@ -6,6 +6,7 @@ import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
+import jakarta.annotation.PreDestroy;
 import org.apache.commons.lang3.NotImplementedException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -20,6 +21,10 @@ import io.kestra.core.runners.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
+import java.io.IOException;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Factory
 @MemoryQueueEnabled
@@ -135,5 +140,10 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
     public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
         return new MemoryQueue<>(SubflowExecutionResult.class, applicationContext);
+    }
+
+    @PreDestroy
+    void closeAllQueue() throws IOException {
+        this.applicationContext.getBeansOfType(MemoryQueue.class).forEach(throwConsumer(queue -> queue.close()));
     }
 }

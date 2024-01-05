@@ -61,11 +61,11 @@ import java.util.stream.Stream;
 public class JdbcExecutor implements ExecutorInterface {
     private static final ObjectMapper MAPPER = JdbcMapper.of();;
 
-    private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
 
-    private final ScheduledExecutorService schedulerHeartbeat = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduledHeartbeat = Executors.newSingleThreadScheduledExecutor();
 
-    private Boolean isShutdown = false;
+    private volatile boolean isShutdown = false;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -185,44 +185,69 @@ public class JdbcExecutor implements ExecutorInterface {
         this.killQueue.receive(Executor.class, this::killQueue);
         this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue);
 
-        ScheduledFuture<?> handle = schedulerDelay.scheduleAtFixedRate(
+        ScheduledFuture<?> scheduledDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
             0,
             1,
             TimeUnit.SECONDS
         );
 
-        schedulerHeartbeat.scheduleAtFixedRate(
+        ScheduledFuture<?> scheduledHeartbeatFuture = scheduledHeartbeat.scheduleAtFixedRate(
             this::workersUpdate,
             frequency.toSeconds(),
             frequency.toSeconds(),
             TimeUnit.SECONDS
         );
 
-        // look at exception on the main thread
-        Thread schedulerDelayThread = new Thread(
+        // look at exceptions on the scheduledDelay thread
+        Thread scheduledDelayExceptionThread = new Thread(
             () -> {
-                Await.until(handle::isDone);
+                Await.until(scheduledDelayFuture::isDone);
 
                 try {
-                    handle.get();
+                    scheduledDelayFuture.get();
                 } catch (ExecutionException | InterruptedException e) {
                     if (e.getCause().getClass() != CannotCreateTransactionException.class) {
-                        log.error("Executor fatal exception", e);
+                        log.error("Executor fatal exception in the scheduledDelay thread", e);
 
                         try {
                             close();
+                            applicationContext.stop();
                         }
                         catch (IOException ioe) {
-                            log.error("Unable to property close the executor", ioe);
+                            log.error("Unable to properly close the executor", ioe);
                         }
                     }
                 }
             },
-            "jdbc-delay"
+            "jdbc-delay-exception-watcher"
         );
+        scheduledDelayExceptionThread.start();
 
-        schedulerDelayThread.start();
+        // look at exceptions on the scheduledHeartbeat thread
+        Thread scheduledHeartbeatExceptionThread = new Thread(
+            () -> {
+                Await.until(scheduledHeartbeatFuture::isDone);
+
+                try {
+                    scheduledHeartbeatFuture.get();
+                } catch (ExecutionException | InterruptedException e) {
+                    if (e.getCause().getClass() != CannotCreateTransactionException.class) {
+                        log.error("Executor fatal exception in the scheduledHeartbeat thread", e);
+
+                        try {
+                            close();
+                            applicationContext.stop();
+                        }
+                        catch (IOException ioe) {
+                            log.error("Unable to properly close the executor", ioe);
+                        }
+                    }
+                }
+            },
+            "jdbc-heartbeat-exception-watcher"
+        );
+        scheduledHeartbeatExceptionThread.start();
 
         flowQueue.receive(
             FlowTopology.class,
@@ -885,11 +910,7 @@ public class JdbcExecutor implements ExecutorInterface {
     @Override
     public void close() throws IOException {
         isShutdown = true;
-        schedulerDelay.shutdown();
-        schedulerHeartbeat.shutdown();
-        executionQueue.close();
-        workerTaskQueue.close();
-        workerTaskResultQueue.close();
-        logQueue.close();
+        scheduledDelay.shutdown();
+        scheduledHeartbeat.shutdown();
     }
 }

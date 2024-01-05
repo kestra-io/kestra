@@ -33,7 +33,7 @@ public class TriggerController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/search", produces = MediaType.TEXT_JSON)
+    @Get(uri = "/search")
     @Operation(tags = {"Triggers"}, summary = "Search for triggers")
     public PagedResults<Trigger> search(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,

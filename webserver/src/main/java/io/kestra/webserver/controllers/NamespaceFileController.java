@@ -67,7 +67,7 @@ public class NamespaceFileController {
 
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/files/search", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/files/search")
     @Operation(tags = {"Files"}, summary = "Find files which path contain the given string in their URI")
     public List<String> search(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -99,7 +99,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/files/stats", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/files/stats")
     @Operation(tags = {"Files"}, summary = "Get namespace file stats such as size, creation & modification dates and type")
     public FileAttributes stats(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -123,7 +123,7 @@ public class NamespaceFileController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/files/directory", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/files/directory")
     @Operation(tags = {"Files"}, summary = "List directory content")
     public List<FileAttributes> list(
         @Parameter(description = "The namespace id") @PathVariable String namespace,

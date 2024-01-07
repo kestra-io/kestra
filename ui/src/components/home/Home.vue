@@ -152,9 +152,10 @@
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import DateRange from "../layout/DateRange.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import HomeStartup from "override/utils/mixins/homeStartup"
 
     export default {
-        mixins: [RouteContext, RestoreUrl],
+        mixins: [RouteContext, RestoreUrl, HomeStartup],
         components: {
             DateRange,
             OnboardingBottom,
@@ -182,10 +183,6 @@
                 type: String,
                 default: undefined
             }
-        },
-        created() {
-            this.loadStats();
-            this.haveExecutions();
         },
         watch: {
             $route(newValue, oldValue) {

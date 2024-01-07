@@ -41,6 +41,8 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +60,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
     @Inject
     EmbeddedServer embeddedServer;
+    @Inject
+    ExecutionController executionController;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -687,6 +691,14 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(executions.getTotal(), is(1L));
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&startDateRange=PT12H"))
+        );
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
     }
 
     @Test
@@ -734,5 +746,16 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.KILLED));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
+    }
+
+    @Test
+    void resolveAbsoluteDateTime() {
+        final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());
+        final Duration offset = Duration.ofSeconds(5L);
+        final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6,10, 0, ZoneId.systemDefault());
+
+        assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null), is(absoluteTimestamp));
+        assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp), is(baseTimestamp.minus(offset)));
+        assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
     }
 }

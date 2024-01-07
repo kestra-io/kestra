@@ -1,6 +1,6 @@
 <template>
     <el-button-group>
-        <el-button :active="autoRefresh" @click="toggleAutoRefresh">
+        <el-button :disabled="!canAutoRefresh" :active="autoRefresh" @click="toggleAutoRefresh">
             <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
                 <component :is="autoRefresh ? 'auto-renew' : 'auto-renew-off'" class="auto-refresh-icon" />
             </kicon>
@@ -20,6 +20,12 @@
     export default {
         components: {Refresh, AutoRenew, AutoRenewOff, Kicon},
         emits: ["refresh"],
+        props: {
+            canAutoRefresh: {
+                type: Boolean,
+                default: true
+            }
+        },
         data() {
             return {
                 autoRefresh: false,
@@ -48,6 +54,12 @@
             this.stopRefresh();
         },
         watch: {
+            canAutoRefresh(newValue) {
+                if (!newValue && this.autoRefresh) {
+                    this.toggleAutoRefresh();
+                    this.stopRefresh();
+                }
+            },
             autoRefresh(newValue) {
                 if (newValue) {
                     this.refreshHandler = setInterval(this.triggerRefresh, 10000);

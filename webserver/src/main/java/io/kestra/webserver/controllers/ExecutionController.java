@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -66,6 +67,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
@@ -163,24 +165,46 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A start time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration startDateRange,
+        @Parameter(description = "An end time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter up to 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter up to 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration endDateRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) {
+        final ZonedDateTime now = ZonedDateTime.now();
+
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,
             tenantService.resolveTenant(),
             namespace,
             flowId,
-            startDate,
-            endDate,
+            resolveAbsoluteDateTime(startDate, startDateRange, now),
+            resolveAbsoluteDateTime(endDate, endDateRange, now),
             state,
             RequestUtils.toMap(labels),
             triggerExecutionId,
             childFilter
         ));
+    }
+
+    @VisibleForTesting
+    ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
+        if (timeRange != null) {
+            if (absoluteDateTime != null) {
+                throw new IllegalArgumentException("Parameters 'Date' and 'DateRange' are mutually exclusive");
+            }
+            return now.minus(timeRange.abs());
+        }
+
+        return absoluteDateTime;
     }
 
     @ExecuteOn(TaskExecutors.IO)

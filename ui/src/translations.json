@@ -69,6 +69,7 @@
     "date": "Date",
     "datepicker": {
       "last5minutes": "Last 5 minutes",
+      "last15minutes": "Last 15 minutes",
       "last1hour": "Last 1 hour",
       "last12hours": "Last 12 hours",
       "last24hours": "Last 24 hours",
@@ -570,7 +571,12 @@
         "error": "Error(s) occurred while importing the file(s)"
       },
       "export": "Export as a ZIP file"
-    }
+    },
+    "relative": "Relative",
+    "relative start date": "Relative start date",
+    "relative end date": "Relative end date",
+    "now": "Now",
+    "absolute": "Absolute"
   },
   "fr": {
     "id": "Identifiant",

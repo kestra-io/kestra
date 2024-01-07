@@ -43,10 +43,9 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <date-range
-                        :start-date="startDate"
-                        :end-date="endDate"
-                        @update:model-value="onDataTableValue($event)"
+                    <date-filter
+                        @update:is-relative="onDateFilterTypeChange($event)"
+                        @update:filter-value="onDataTableValue($event)"
                     />
                 </el-form-item>
                 <el-form-item>
@@ -95,7 +94,25 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <refresh-button class="float-right" @refresh="refresh" />
+                    <el-input
+                        :placeholder="$t('trigger execution id')"
+                        clearable
+                        :model-value="$route.query.triggerExecutionId"
+                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <label-filter
+                        :model-value="$route.query.labels"
+                        @update:model-value="onDataTableValue('labels', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <refresh-button
+                        :can-auto-refresh="canAutoRefresh"
+                        class="float-right"
+                        @refresh="refresh"
+                    />
                 </el-form-item>
             </template>
 
@@ -329,7 +346,7 @@
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
-    import DateRange from "../layout/DateRange.vue";
+    import DateFilter from "./date-select/DateFilter.vue";
     import RefreshButton from "../layout/RefreshButton.vue"
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
@@ -355,7 +372,7 @@
             SearchField,
             NamespaceSelect,
             LabelFilter,
-            DateRange,
+            DateFilter,
             RefreshButton,
             StatusFilterButtons,
             StateGlobalChart,
@@ -469,6 +486,7 @@
                 ],
                 displayColumns: [],
                 childFilter: "ALL",
+                canAutoRefresh: false,
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS
             };
         },
@@ -480,6 +498,7 @@
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
+
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
@@ -492,15 +511,22 @@
                 };
             },
             endDate() {
-                // used to be able to force refresh the base interval when auto-reloading
-                this.recomputeInterval;
-                return this.$route.query.endDate ? this.$route.query.endDate : undefined;
+                if (this.$route.query.endDate) {
+                    return this.$route.query.endDate;
+                }
+                if (this.$route.query.endDateRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.endDateRange).as("milliseconds")).toISOString(true);
+                }
+                return undefined;
             },
             startDate() {
-                // used to be able to force refresh the base interval when auto-reloading
-                this.recomputeInterval;
-                return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
-                    .add(-30, "days").toISOString(true);
+                if (this.$route.query.startDate) {
+                    return this.$route.query.startDate;
+                }
+                if (this.$route.query.startDateRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.startDateRange).as("milliseconds")).toISOString(true);
+                }
+                return undefined;
             },
             displayButtons() {
                 return (this.$route.name === "flows/update");
@@ -545,12 +571,9 @@
             loadQuery(base, stats) {
                 let queryFilter = this.queryWithFilter();
 
-                if ((!queryFilter["startDate"] || !queryFilter["endDate"]) && !stats) {
-                    queryFilter["startDate"] = this.startDate;
-                    queryFilter["endDate"] = this.endDate;
-                }
-
                 if (stats) {
+                    delete queryFilter["startDateRange"];
+                    delete queryFilter["endDateRange"];
                     delete queryFilter["startDate"];
                     delete queryFilter["endDate"];
                 }
@@ -585,6 +608,9 @@
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
+            },
+            onDateFilterTypeChange(event) {
+                this.canAutoRefresh = event;
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000

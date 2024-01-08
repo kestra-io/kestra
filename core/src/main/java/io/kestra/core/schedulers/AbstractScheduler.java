@@ -61,7 +61,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
 
     // The triggerStateSavedLock must be used when accessing triggerStateSaved
-    private final Object triggerStateSavedLock = new Object();
+    protected final Object triggerStateSavedLock = new Object();
     private final Map<String, Trigger> triggerStateSaved = new ConcurrentHashMap<>();
     protected SchedulerTriggerStateInterface triggerState;
 

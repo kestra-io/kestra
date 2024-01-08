@@ -27,16 +27,16 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Kestra is able to trigger flow after another one. This allows chaining flow without need to update the base flows.\n" +
-        "With that, you can break responsibility between different flow to different teams.",
+    title = "Kestra is able to trigger flow after another one. This allows chaining flows without need to update the base flows.\n" +
+        "With that, you can break the responsibility between different flows, and thus to different teams.",
     description = "::alert{type=\"warning\"}\n" +
         "If you don't provide any conditions, the flow will be triggered for **EVERY execution** of **EVERY flow** on your instance.\n" +
         "::"
 )
 @Plugin(
     examples = @Example(
-        title = "This flow will be triggered after each successfully execution of flow `io.kestra.tests.trigger-flow` " +
-            "and forward the `uri` of `my-task` taskId outputs.",
+        title = "This flow will be triggered after each successful execution of flow `io.kestra.tests.trigger-flow` " +
+            "and forward the `uri` of `myTask` taskId outputs.",
         full = true,
         code = "id: trigger-flow-listener\n" +
             "namespace: io.kestra.tests\n" +
@@ -48,7 +48,7 @@ import javax.validation.constraints.NotNull;
             "tasks:\n" +
             "  - id: only-no-input\n" +
             "    type: io.kestra.core.tasks.debugs.Return\n" +
-            "    format: \"v1: {{trigger.executionId}}\"\n" +
+            "    format: \"v1: {{ trigger.executionId }}\"\n" +
             "\n" +
             "triggers:\n" +
             "  - id: listen-flow\n" +
@@ -68,10 +68,10 @@ import javax.validation.constraints.NotNull;
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
     @Nullable
     @Schema(
-        title = "Fill input of this flow based on output of current flow, allowing to pass data or file on the triggered flow",
+        title = "Fill input of this flow based on output of current flow, allowing to pass data or file to the triggered flow.",
         description = "::alert{type=\"warning\"}\n" +
-            "If you provide invalid input, the flow will not be created! Since there is no task started, you can't log any reason visible on the execution ui.\n" +
-            "So you will need to go to Logs tabs on the ui to understand the error\n" +
+            "If you provide invalid input, the flow will not be created! Since there is no task started, you can't log any reason that's visible on the Execution UI.\n" +
+            "So you will need to go to the Logs tabs on the UI to understand the error.\n" +
             "::"
     )
     @PluginProperty
@@ -122,23 +122,23 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The execution id that trigger the current flow")
+        @Schema(title = "The execution ID that triggered the current flow.")
         @NotNull
         private String executionId;
 
-        @Schema(title = "The execution state")
+        @Schema(title = "The execution state.")
         @NotNull
         private State.Type state;
 
-        @Schema(title = "The namespace of the flow that trigger the current flow")
+        @Schema(title = "The namespace of the flow that triggered the current flow.")
         @NotNull
         private String namespace;
 
-        @Schema(title = "The execution id that trigger the current flow")
+        @Schema(title = "The flow ID whose execution triggered the current flow.")
         @NotNull
         private String flowId;
 
-        @Schema(title = "The flow revision that trigger the current flow")
+        @Schema(title = "The flow revision that triggered the current flow.")
         @NotNull
         private Integer flowRevision;
     }

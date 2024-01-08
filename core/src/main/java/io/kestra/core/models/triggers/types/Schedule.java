@@ -45,19 +45,19 @@ import javax.validation.constraints.Null;
 @NoArgsConstructor
 @io.kestra.core.validations.Schedule
 @Schema(
-    title = "Schedule a flow based on a cron expression",
+    title = "Schedule a flow based on a cron expression.",
     description = "Kestra is able to trigger a flow based on a schedule. If you need to wait for another system " +
-        "to be ready and can't use any event mechanism, you can add one or more schedule to a flow.\n" +
+        "to be ready and can't use any event mechanism, you can add one or more schedule(s) to a flow.\n" +
         "\n" +
         "The scheduler will keep the last execution date for this schedule. This allow you to change the " +
-        "cron expression without restarting all past executions (if backfill exists)\n" +
-        "If you changed the current id, the scheduler will think it's a new schedule and will start with a fresh date and " +
+        "cron expression without restarting all past executions (if backfill exists).\n" +
+        "If you changed the current ID, the scheduler will think it's a new schedule and will start with a fresh date and " +
         "replay all backfill dates (if backfill exists)."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "A schedule with a backfill",
+            title = "A schedule with a backfill.",
             code = {
                 "triggers:",
                 "  - id: schedule",
@@ -69,7 +69,7 @@ import javax.validation.constraints.Null;
             full = true
         ),
         @Example(
-            title = "A schedule with a nickname",
+            title = "A schedule with a nickname.",
             code = {
                 "triggers:",
                 "  - id: schedule",
@@ -79,7 +79,7 @@ import javax.validation.constraints.Null;
             full = true
         ),
         @Example(
-            title = "A schedule that run only the first monday on every month at 11 AM",
+            title = "A schedule that runs only on the first Monday on every month at 11 AM.",
             code = {
                 "triggers:",
                 "  - id: schedule",
@@ -115,7 +115,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @NotNull
     @CronExpression
     @Schema(
-        title = "The cron expression",
+        title = "The cron expression.",
         description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) without second.\n" +
             "Can also be a cron extension / nickname:\n" +
             "* `@yearly`\n" +
@@ -131,17 +131,17 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @TimezoneId
     @Schema(
-        title = "The time zone id to use for evaluating the cron expression. Default value is the server default zone id."
+        title = "The time zone ID to use for evaluating the cron expression. Default value is the server default zone ID."
     )
     @PluginProperty
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
     @Schema(
-        title = "Backfill option in order to fill missing previous past dates",
+        title = "Backfill option in order to fill missing past dates.",
         description = "Kestra could optionally handle a backfill. The concept of a backfill is to replay missing schedules when a flow is created but we need to schedule it before its creation date.\n" +
             "\n" +
-            "A backfill will do all schedules between a define date and the current date, then the normal schedule will be done."
+            "A backfill will execute all schedules between a defined date and the current date, then the normal schedule will be executed."
     )
     @PluginProperty
     private ScheduleBackfill backfill;
@@ -153,20 +153,20 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @Valid
     @Schema(
-        title = "List of schedule Conditions in order to limit schedule date."
+        title = "List of schedule conditions in order to limit schedule date."
     )
     @PluginProperty
     private List<ScheduleCondition> scheduleConditions;
 
     @Schema(
-        title = "The input to pass to the triggered flow"
+        title = "The input to pass to the triggered flow."
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The maximum late delay accepted",
-        description = "If the schedule didn't start after this delay, the execution will be skip."
+        title = "The maximum late delay accepted.",
+        description = "If the schedule didn't start after this delay, the execution will be skipped."
     )
     @PluginProperty
     private Duration lateMaximumDelay;
@@ -446,15 +446,15 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Getter
     @NoArgsConstructor
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The date of current schedule ")
+        @Schema(title = "The date of the current schedule.")
         @NotNull
         private ZonedDateTime date;
 
-        @Schema(title = "The date of next schedule ")
+        @Schema(title = "The date of the next schedule.")
         @NotNull
         private ZonedDateTime next;
 
-        @Schema(title = "The date of previous schedule ")
+        @Schema(title = "The date of the previous schedule.")
         @NotNull
         private ZonedDateTime previous;
     }
@@ -463,7 +463,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Builder
     public static class ScheduleBackfill {
         @Schema(
-            title = "The first start date"
+            title = "The first start date."
         )
         ZonedDateTime start;
     }

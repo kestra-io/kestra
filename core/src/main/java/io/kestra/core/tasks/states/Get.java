@@ -23,7 +23,7 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
-            title = "Get the default state for the current flow",
+            title = "Get the default state file for the current flow.",
             code = {
                 "id: getState",
                 "type: io.kestra.core.tasks.states.Get",
@@ -31,7 +31,7 @@ import java.util.Map;
             full = true
         ),
         @Example(
-            title = "Get the `myState` state for the current flow",
+            title = "Get the `myState` state for the current flow.",
             code = {
                 "id: getState",
                 "type: io.kestra.core.tasks.states.Get",
@@ -43,7 +43,7 @@ import java.util.Map;
 )
 public class Get extends AbstractState implements RunnableTask<Get.Output> {
     @Schema(
-        title = "raise an error if the state is not found"
+        title = "Raise an error if the state file is not found."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
@@ -73,12 +73,12 @@ public class Get extends AbstractState implements RunnableTask<Get.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of properties found in the state"
+            title = "The count of properties found in the state."
         )
         private final int count;
 
         @Schema(
-            title = "The data extracted from state"
+            title = "The data extracted from the state."
         )
         private final Map<String, Object> data;
     }

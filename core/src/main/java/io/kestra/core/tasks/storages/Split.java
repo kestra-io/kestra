@@ -32,7 +32,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Split a file from the internal storage onto multiple files."
+    title = "Split a file from the Kestra's internal storage into multiple files."
 )
 @Plugin(
     examples = {
@@ -88,7 +88,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The splitted file uris "
+            title = "The URIs of split files in the Kestra's internal storage."
         )
         private final List<URI> uris;
     }

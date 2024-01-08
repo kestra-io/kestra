@@ -51,7 +51,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Slf4j
 @Schema(
-    title = "Include a reusable template inside a flow"
+    title = "Include a reusable template inside a flow."
 )
 @Plugin(
     examples = {
@@ -68,7 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "tasks:",
                 "  - id: 1-return",
                 "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
                 "  - id: 2-template",
                 "    type: io.kestra.core.tasks.flows.Template",
                 "    namespace: io.kestra.tests",
@@ -77,7 +77,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "      my-forward: \"{{ inputs.with-string }}\"",
                 "  - id: 3-end",
                 "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{task.id}} > {{taskrun.startDate}}\"\n"
+                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\"\n"
             }
         )
     }
@@ -90,14 +90,14 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
     @NotNull
     @Schema(
-        title = "The namespace of the template"
+        title = "The namespace of the template."
     )
     @PluginProperty
     private String namespace;
 
     @NotNull
     @Schema(
-        title = "The id of the template"
+        title = "The ID of the template."
     )
     @PluginProperty
     private String templateId;
@@ -107,10 +107,10 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     private String tenantId;
 
     @Schema(
-        title = "The args to pass to the template",
+        title = "The arguments to pass to the template.",
         description = "You can provide a list of named arguments (like function argument on dev) allowing to rename " +
             "outputs of current flow for this template.\n" +
-            "for example, if you declare this use of template like this: \n" +
+            "For example, if you declare this use of template like this: \n" +
             "```yaml\n" +
             "  - id: 2-template\n" +
             "    type: io.kestra.core.tasks.flows.Template\n" +
@@ -119,7 +119,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
             "    args:\n" +
             "      forward: \"{{ output.task-id.uri }}\"\n" +
             "```\n" +
-            "You will be able to get this output on the template with `{{ parent.outputs.args.forward }}`"
+            "You will be able to get this output on the template with `{{ parent.outputs.args.forward }}`."
     )
     @PluginProperty(dynamic = true, additionalProperties = String.class)
     private Map<String, String> args;
@@ -308,7 +308,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The args passed to the template"
+            title = "The arguments passed to the template."
         )
         private final Map<String, Object> args;
     }

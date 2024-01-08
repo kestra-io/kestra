@@ -28,7 +28,7 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
-            title = "Purge all flow execution data for flows ended more than one month ago.",
+            title = "Purge all flow execution data for flows that ended more than one month ago.",
             code = {
                 "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
                 "states: ",
@@ -42,21 +42,21 @@ import java.util.Map;
 )
 public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Schema(
-        title = "Namespace to purge or namespace for a flow",
+        title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged.",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
     @Schema(
-        title = "The flow id to purge",
+        title = "The flow ID to be purged.",
         description = "You need to provide the `namespace` properties if you want to purge a flow."
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
-        title = "The max date to purge",
+        title = "The maximum date to be purged.",
         description = "All data of flows executed before this date will be purged."
     )
     @PluginProperty(dynamic = true)
@@ -69,28 +69,28 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     private List<State.Type> states;
 
     @Schema(
-        title = "Purge executions from the repository."
+        title = "Whether to purge executions from the repository."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeExecution = true;
 
     @Schema(
-        title = "Purge logs from the repository."
+        title = "Whether to purge logs from the repository."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeLog = true;
 
     @Schema(
-        title = "Purge metrics from the repository."
+        title = "Whether to purge metrics from the repository."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeMetric = true;
 
     @Schema(
-        title = "Purge files from the internal storage."
+        title = "Whether to purge files from the Kestra's internal storage."
     )
     @PluginProperty
     @Builder.Default
@@ -126,17 +126,17 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of executions deleted"
+            title = "The count of executions deleted."
         )
         private int executionsCount;
 
         @Schema(
-            title = "The count of logs deleted"
+            title = "The count of logs deleted."
         )
         private int logsCount;
 
         @Schema(
-            title = "The count of storage deleted"
+            title = "The count of storage deleted."
         )
         private int storagesCount;
     }

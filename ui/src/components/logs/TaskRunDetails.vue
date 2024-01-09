@@ -42,7 +42,7 @@
                                     :level="level"
                                     :log="item"
                                     :exclude-metas="excludeMetas"
-                                    v-if="filter === '' || item.message.toLowerCase().includes(filter)"
+                                    v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <task-run-details
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && currentTaskRun.outputs?.executionId"
@@ -266,7 +266,7 @@
             },
             logsWithIndexByAttemptUid() {
                 const indexedLogs = this.logs
-                    .filter(logLine => this.filter === "" || logLine.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
+                    .filter(logLine => this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));

@@ -128,4 +128,11 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
         return new PostgresWorkerTriggerResultQueue(applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
+    public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
+        return new PostgresQueue<>(SubflowExecutionResult.class, applicationContext);
+    }
 }

@@ -23,6 +23,7 @@ public interface QueueFactoryInterface {
     String WORKERINSTANCE_NAMED = "workerInstanceQueue";
     String WORKERJOBRUNNING_NAMED = "workerJobRunningQueue";
     String TRIGGER_NAMED = "triggerQueue";
+    String SUBFLOWEXECUTIONRESULT_NAMED = "subflowExecutionResultQueue";
 
     QueueInterface<Execution> execution();
 
@@ -54,4 +55,5 @@ public interface QueueFactoryInterface {
 
     WorkerTriggerResultQueueInterface workerTriggerResultQueue();
 
+    QueueInterface<SubflowExecutionResult> subflowExecutionResult();
 }

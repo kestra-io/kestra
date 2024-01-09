@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
@@ -161,6 +162,22 @@ public class MetricRegistry {
             TAG_STATE, workerTaskResult.getTaskRun().getState().getCurrent().name()
         );
         return workerTaskResult.getTaskRun().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTaskResult.getTaskRun().getTenantId());
+    }
+
+    /**
+     * Return tags for current {@link WorkerTaskResult}
+     *
+     * @param subflowExecutionResult the current WorkerTaskResult
+     * @return tags to applied to metrics
+     */
+    public String[] tags(SubflowExecutionResult subflowExecutionResult, String... tags) {
+        var baseTags = ArrayUtils.addAll(
+            tags,
+            TAG_NAMESPACE_ID, subflowExecutionResult.getParentTaskRun().getNamespace(),
+            TAG_FLOW_ID, subflowExecutionResult.getParentTaskRun().getFlowId(),
+            TAG_STATE, subflowExecutionResult.getParentTaskRun().getState().getCurrent().name()
+        );
+        return subflowExecutionResult.getParentTaskRun().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, subflowExecutionResult.getParentTaskRun().getTenantId());
     }
 
     /**

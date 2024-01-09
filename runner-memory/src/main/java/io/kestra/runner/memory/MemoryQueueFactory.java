@@ -129,4 +129,11 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
         return new MemoryWorkerTriggerResultQueue(applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
+    public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
+        return new MemoryQueue<>(SubflowExecutionResult.class, applicationContext);
+    }
 }

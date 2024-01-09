@@ -6,8 +6,8 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerTaskExecution;
-import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.runners.SubflowExecutionResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,21 +17,21 @@ import java.util.Optional;
  */
 public interface ExecutableTask<T extends Output>{
     /**
-     * Creates a list of WorkerTaskExecution for this task definition.
-     * Each WorkerTaskExecution will generate a subflow execution.
+     * Creates a list of SubflowExecution for this task definition.
+     * Each SubflowExecution will generate a subflow execution.
      */
-    List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
-                                     FlowExecutorInterface flowExecutorInterface,
-                                     Flow currentFlow, Execution currentExecution,
-                                     TaskRun currentTaskRun) throws InternalException;
+    List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
+                                                      FlowExecutorInterface flowExecutorInterface,
+                                                      Flow currentFlow, Execution currentExecution,
+                                                      TaskRun currentTaskRun) throws InternalException;
 
     /**
-     * Creates a WorkerTaskResult for a given WorkerTaskExecution
+     * Creates a SubflowExecutionResult for a given SubflowExecution
      */
-    Optional<WorkerTaskResult> createWorkerTaskResult(RunContext runContext,
-                                                      TaskRun taskRun,
-                                                      Flow flow,
-                                                      Execution execution);
+    Optional<SubflowExecutionResult> createSubflowExecutionResult(RunContext runContext,
+                                                                         TaskRun taskRun,
+                                                                         Flow flow,
+                                                                         Execution execution);
 
     /**
      * Whether to wait for the execution(s) of the subflow before terminating this tasks

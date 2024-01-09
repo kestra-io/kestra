@@ -128,4 +128,11 @@ public class H2QueueFactory implements QueueFactoryInterface {
     public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
         return new H2WorkerTriggerResultQueue(applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
+    public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
+        return new H2Queue<>(SubflowExecutionResult.class, applicationContext);
+    }
 }

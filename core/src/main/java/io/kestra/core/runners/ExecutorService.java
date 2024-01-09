@@ -272,7 +272,7 @@ public class ExecutorService {
                     parentTaskRun
                 );
 
-                if (nexts.size() > 0) {
+                if (!nexts.isEmpty()) {
                     return this.saveFlowableOutput(
                         nexts,
                         executor,
@@ -387,7 +387,7 @@ public class ExecutorService {
             result.addAll(this.childNextsTaskRun(executor, taskRun));
         }
 
-        if (result.size() == 0) {
+        if (result.isEmpty()) {
             return executor;
         }
 
@@ -413,7 +413,7 @@ public class ExecutorService {
             }
         }
 
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             return executor;
         }
 
@@ -435,9 +435,7 @@ public class ExecutorService {
             .map(throwFunction(workerTaskResult -> {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
-                if (task instanceof Pause) {
-                    Pause pauseTask = (Pause) task;
-
+                if (task instanceof Pause pauseTask) {
                     if (pauseTask.getDelay() != null || pauseTask.getTimeout() != null) {
                         return ExecutionDelay.builder()
                             .taskRunId(workerTaskResult.getTaskRun().getId())
@@ -473,8 +471,8 @@ public class ExecutorService {
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(t -> childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
-                    t)
-            )
+                    t
+            ))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());
@@ -499,7 +497,7 @@ public class ExecutorService {
             null
         );
 
-        if (nexts.size() == 0) {
+        if (nexts.isEmpty()) {
             return executor;
         }
 
@@ -583,8 +581,8 @@ public class ExecutorService {
     }
 
     private Executor handleExecutableTask(final Executor executor) {
-        List<WorkerTaskExecution<?>> executions = new ArrayList<>();
-        List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+        List<SubflowExecution<?>> executions = new ArrayList<>();
+        List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>();
 
         boolean haveFlows = executor.getWorkerTasks()
             .removeIf(workerTask -> {
@@ -610,8 +608,8 @@ public class ExecutorService {
                         executor.getExecution(),
                         executableTaskRun
                     );
-                    List<WorkerTaskExecution<?>> workerTaskExecutions = executableTask.createWorkerTaskExecutions(runContext, flowExecutorInterface(), executor.getFlow(), executor.getExecution(), executableTaskRun);
-                    if (workerTaskExecutions.isEmpty()) {
+                    List<SubflowExecution<?>> subflowExecutions = executableTask.createSubflowExecutions(runContext, flowExecutorInterface(), executor.getFlow(), executor.getExecution(), executableTaskRun);
+                    if (subflowExecutions.isEmpty()) {
                         // if no executions we move the task to SUCCESS immediately
                         executor.withExecution(
                             executor
@@ -619,31 +617,34 @@ public class ExecutorService {
                                 .withTaskRun(executableTaskRun.withState(State.Type.SUCCESS)),
                             "handleExecutableTaskRunning.noExecution"
                         );
-                    } else {
-                        executions.addAll(workerTaskExecutions);
+                    }
+                    else {
+                        executions.addAll(subflowExecutions);
                         if (!executableTask.waitForExecution()) {
                             // send immediately all workerTaskResult to ends the executable task
-                            for (WorkerTaskExecution<?> workerTaskExecution : workerTaskExecutions) {
-                                Optional<WorkerTaskResult> workerTaskResult = executableTask.createWorkerTaskResult(
+                            for (SubflowExecution<?> subflowExecution : subflowExecutions) {
+                                Optional<SubflowExecutionResult> subflowExecutionResult = executableTask.createSubflowExecutionResult(
                                     runContext,
-                                    workerTaskExecution.getTaskRun().withState(State.Type.SUCCESS),
+                                    subflowExecution.getParentTaskRun().withState(State.Type.SUCCESS),
                                     executor.getFlow(),
-                                    workerTaskExecution.getExecution()
+                                    subflowExecution.getExecution()
                                 );
-                                workerTaskResult.ifPresent(result -> workerTaskResults.add(result));
+                                subflowExecutionResult.ifPresent(result -> subflowExecutionResults.add(result));
                             }
                         }
                     }
-                } catch (Exception e) {
-                    workerTaskResults.add(WorkerTaskResult.builder()
+                }
+                catch (Exception e) {
+                    WorkerTaskResult failed = WorkerTaskResult.builder()
                         .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
                             .withAttempts(Collections.singletonList(
                                 TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()
                             ))
                         )
-                        .build()
-                    );
-                    executor.withException(e, "handleExecutableTask");
+                        .build();
+                    executor
+                        .withWorkerTaskResults(List.of(failed), "handleExecutableTask")
+                        .withException(e, "handleExecutableTask");
                 }
                 return true;
             });
@@ -652,10 +653,10 @@ public class ExecutorService {
             return executor;
         }
 
-        Executor resultExecutor = executor.withWorkerTaskExecutions(executions, "handleExecutableTask");
+        Executor resultExecutor = executor.withSubflowExecutions(executions, "handleExecutableTask");
 
-        if (!workerTaskResults.isEmpty()) {
-            resultExecutor = executor.withWorkerTaskResults(workerTaskResults, "handleExecutableTaskWorkerTaskResults");
+        if (!subflowExecutionResults.isEmpty()) {
+            resultExecutor = executor.withSubflowExecutionResults(subflowExecutionResults, "handleExecutableTaskWorkerTaskResults");
         }
 
         return resultExecutor;
@@ -680,7 +681,13 @@ public class ExecutorService {
                     );
 
                     workerTaskResults.add(
-                        ExecutableUtils.workerTaskResult(workerTask.getTaskRun().withState(State.Type.SUCCESS))
+                        WorkerTaskResult.builder()
+                            .taskRun(workerTask.getTaskRun().withAttempts(
+                                Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build())
+                            )
+                                .withState(State.Type.SUCCESS)
+                            )
+                            .build()
                     );
                 } catch (Exception e) {
                     workerTaskResults.add(WorkerTaskResult.builder()
@@ -767,6 +774,15 @@ public class ExecutorService {
             in ? "<< IN " : ">> OUT",
             value.getClass().getSimpleName(),
             value.getTaskRun().toStringState()
+        );
+    }
+
+    public void log(Logger log, Boolean in, SubflowExecutionResult value) {
+        log.debug(
+            "{} {} : {}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.getParentTaskRun().toStringState()
         );
     }
 

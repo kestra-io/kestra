@@ -77,9 +77,9 @@ kestra:
       multipleconditions:
         table: "multipleconditions"
         cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
-      workertaskexecutions:
-        table: "workertaskexecutions"
-        cls: io.kestra.core.runners.WorkerTaskExecution
+      subflow_executions:
+        table: "subflow_executions"
+        cls: io.kestra.core.runners.SubflowExecution
       executorstate:
         table: "executorstate"
         cls: io.kestra.core.runners.ExecutorState

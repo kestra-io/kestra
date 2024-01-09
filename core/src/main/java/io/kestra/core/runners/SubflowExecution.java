@@ -11,12 +11,12 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
-public class WorkerTaskExecution<T extends Task & ExecutableTask<?>> {
+public class SubflowExecution<T extends Task & ExecutableTask<?>> {
     @NotNull
-    private TaskRun taskRun;
+    private TaskRun parentTaskRun;
 
     @NotNull
-    private T task;
+    private T parentTask;
 
     @NotNull
     private Execution execution;

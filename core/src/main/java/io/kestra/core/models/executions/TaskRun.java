@@ -102,7 +102,7 @@ public class TaskRun implements TenantInterface {
             newAttempts,
             this.outputs,
             this.state.withState(State.Type.FAILED),
-            this.items
+            this.iteration
         );
     }
 

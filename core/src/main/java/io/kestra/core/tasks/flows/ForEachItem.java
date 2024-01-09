@@ -14,8 +14,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerTaskExecution;
-import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -47,7 +47,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Schema(
     title = "Execute a subflow for each batch of items",
     description = """
-        Execute a subflow for each batch of items. The `items` value must be an internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type.
+        The `items` value must be Kestra's internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type.
         Two special variables are available to pass as inputs to the subflow:
         - `taskrun.items` which is the URI of internal storage file containing the batch of items to process
         - `taskrun.iteration` which is the iteration or batch number"""
@@ -176,7 +176,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     private final Boolean inheritLabels = false;
 
     @Override
-    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(
+    public List<SubflowExecution<?>> createSubflowExecutions(
         RunContext runContext,
         FlowExecutorInterface flowExecutorInterface,
         Flow currentFlow,
@@ -196,7 +196,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
             AtomicInteger currentIteration = new AtomicInteger(1);
 
             return splits.stream()
-                .<WorkerTaskExecution<?>>map(throwFunction(
+                .<SubflowExecution<?>>map(throwFunction(
                     split -> {
                         int iteration = currentIteration.getAndIncrement();
                         // these are special variable that can be passed to the subflow
@@ -220,7 +220,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
 
                         // these are special outputs to be able to compute iteration map of the parent taskrun
                         var outputs = Output.builder().numberOfBatches(splits.size()).build();
-                        return ExecutableUtils.workerTaskExecution(
+                        return ExecutableUtils.subflowExecution(
                             runContext,
                             flowExecutorInterface,
                             currentExecution,
@@ -242,14 +242,14 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     }
 
     @Override
-    public Optional<WorkerTaskResult> createWorkerTaskResult(
+    public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
         Flow flow,
         Execution execution
     ) {
         // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list
-        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
+        return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
     }
 
     @Override
@@ -284,8 +284,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
             title = "The counter of iterations for each subflow execution state.",
-            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter per subflow execution state, as well as a `max` counter that represents the maximum number of iterations (i.e. the total number of batches)."
-            description = "This output will be updated in real-time with the subflow executions.\n It will contains one counter by subflow execution state."
+            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter by subflow execution state."
         )
         private final Map<State.Type, Integer> iterations;
 

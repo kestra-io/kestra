@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
@@ -44,7 +45,7 @@ import java.util.*;
     }
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
-    @NotNull
+    @NotEmpty
     @Schema(
         title = "The namespace of the subflow to be executed"
     )
@@ -108,11 +109,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
     private Map<String, Object> outputs;
 
     @Override
-    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(RunContext runContext,
-                                                                   FlowExecutorInterface flowExecutorInterface,
-                                                                   io.kestra.core.models.flows.Flow currentFlow,
-                                                                   Execution currentExecution,
-                                                                   TaskRun currentTaskRun) throws InternalException {
+    public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
+                                                             FlowExecutorInterface flowExecutorInterface,
+                                                             io.kestra.core.models.flows.Flow currentFlow,
+                                                             Execution currentExecution,
+                                                             TaskRun currentTaskRun) throws InternalException {
         Map<String, Object> inputs = new HashMap<>();
         if (this.inputs != null) {
             inputs.putAll(runContext.render(this.inputs));
@@ -129,7 +130,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
             }
         }
 
-        return List.of(ExecutableUtils.workerTaskExecution(
+        return List.of(ExecutableUtils.subflowExecution(
             runContext,
             flowExecutorInterface,
             currentExecution,
@@ -137,13 +138,12 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
             this,
             currentTaskRun,
             inputs,
-            labels,
-            null
+            labels
         ));
     }
 
     @Override
-    public Optional<WorkerTaskResult> createWorkerTaskResult(
+    public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
         io.kestra.core.models.flows.Flow flow,
@@ -168,8 +168,10 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
                     .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                     .withOutputs(builder.build().toMap());
 
-                return Optional.of(WorkerTaskResult.builder()
-                    .taskRun(taskRun)
+                return Optional.of(SubflowExecutionResult.builder()
+                    .executionId(execution.getId())
+                    .state(State.Type.FAILED)
+                    .parentTaskRun(taskRun)
                     .build());
             }
         }
@@ -181,7 +183,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
             taskRun = taskRun.withState(finalState);
         }
 
-        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
+        return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
     }
 
     @Override

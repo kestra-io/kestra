@@ -4,9 +4,11 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.tasks.flows.Flow;
+import io.kestra.core.tasks.flows.Subflow;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -34,10 +36,10 @@ import java.util.Optional;
         )
     }
 )
-public class BadExecutable extends Flow {
-    
+public class BadExecutable extends Subflow {
+
     @Override
-    public Optional<WorkerTaskResult> createWorkerTaskResult(RunContext runContext, TaskRun taskRun, io.kestra.core.models.flows.Flow flow, Execution execution) {
+    public Optional<SubflowExecutionResult> createSubflowExecutionResult(RunContext runContext, TaskRun taskRun, Flow flow, Execution execution) {
         throw new RuntimeException("An error!");
     }
 }

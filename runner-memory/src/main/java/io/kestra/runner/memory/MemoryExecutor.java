@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MemoryExecutor implements ExecutorInterface {
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, WorkerTaskExecution<?>> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, SubflowExecution<?>> SUBFLOWEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 
@@ -107,6 +107,10 @@ public class MemoryExecutor implements ExecutorInterface {
 
     private final MultipleConditionStorageInterface multipleConditionStorage = new MemoryMultipleConditionStorage();
 
+    @Inject
+    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
+    private QueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+
     @Override
     public void run() {
         flowListeners.run();
@@ -117,6 +121,7 @@ public class MemoryExecutor implements ExecutorInterface {
         this.executionQueue.receive(MemoryExecutor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
         this.killQueue.receive(MemoryExecutor.class, this::killQueue);
+        this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue);
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -202,6 +207,12 @@ public class MemoryExecutor implements ExecutorInterface {
                     .forEach(workerTaskResultQueue::emit);
             }
 
+            // subflow execution results
+            if (!executor.getSubflowExecutionResults().isEmpty()) {
+                executor.getSubflowExecutionResults()
+                    .forEach(subflowExecutionResultQueue::emit);
+            }
+
             if (!executor.getExecutionDelays().isEmpty()) {
                 executor.getExecutionDelays()
                     .forEach(workerTaskResultDelay -> {
@@ -236,16 +247,16 @@ public class MemoryExecutor implements ExecutorInterface {
             }
 
 
-            if (!executor.getWorkerTaskExecutions().isEmpty()) {
-                executor.getWorkerTaskExecutions()
-                    .forEach(workerTaskExecution -> {
-                        WORKERTASKEXECUTIONS_WATCHER.put(workerTaskExecution.getExecution().getId(), workerTaskExecution);
+            if (!executor.getSubflowExecutions().isEmpty()) {
+                executor.getSubflowExecutions()
+                    .forEach(subflowExecution -> {
+                        SUBFLOWEXECUTIONS_WATCHER.put(subflowExecution.getExecution().getId(), subflowExecution);
 
-                        executionQueue.emit(workerTaskExecution.getExecution());
+                        executionQueue.emit(subflowExecution.getExecution());
 
                         // send a running worker task result to track running vs created status
-                        if (workerTaskExecution.getTask().waitForExecution()) {
-                            sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun());
+                        if (subflowExecution.getParentTask().waitForExecution()) {
+                            sendSubflowExecutionResult(execution, subflowExecution, subflowExecution.getParentTaskRun());
                         }
                     });
             }
@@ -262,44 +273,44 @@ public class MemoryExecutor implements ExecutorInterface {
             }
 
             // worker task execution
-            if (conditionService.isTerminatedWithListeners(flow, execution) && WORKERTASKEXECUTIONS_WATCHER.containsKey(execution.getId())) {
-                WorkerTaskExecution<?> workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
+            if (conditionService.isTerminatedWithListeners(flow, execution) && SUBFLOWEXECUTIONS_WATCHER.containsKey(execution.getId())) {
+                SubflowExecution<?> subflowExecution = SUBFLOWEXECUTIONS_WATCHER.get(execution.getId());
 
                 // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                if (workerTaskExecution.getTask().waitForExecution()) {
-                    sendWorkerTaskResultForWorkerTaskExecution(execution, workerTaskExecution, workerTaskExecution.getTaskRun().withState(execution.getState().getCurrent()));
+                if (subflowExecution.getParentTask().waitForExecution()) {
+                    sendSubflowExecutionResult(execution, subflowExecution, subflowExecution.getParentTaskRun().withState(execution.getState().getCurrent()));
                 }
 
-                WORKERTASKEXECUTIONS_WATCHER.remove(execution.getId());
+                SUBFLOWEXECUTIONS_WATCHER.remove(execution.getId());
             }
         }
     }
 
-    private void sendWorkerTaskResultForWorkerTaskExecution(Execution execution, WorkerTaskExecution<?> workerTaskExecution, TaskRun taskRun) {
+    private void sendSubflowExecutionResult(Execution execution, SubflowExecution<?> subflowExecution, TaskRun taskRun) {
         try {
             Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
-            ExecutableTask<?> executableTask = workerTaskExecution.getTask();
+            ExecutableTask<?> executableTask = subflowExecution.getParentTask();
 
             RunContext runContext = runContextFactory.of(
                 workerTaskFlow,
-                workerTaskExecution.getTask(),
+                subflowExecution.getParentTask(),
                 execution,
-                workerTaskExecution.getTaskRun()
+                subflowExecution.getParentTaskRun()
             );
 
-            Optional<WorkerTaskResult> maybeWorkerTaskResult = executableTask
-                .createWorkerTaskResult(runContext, taskRun, workerTaskFlow, execution);
+            Optional<SubflowExecutionResult> subflowExecutionResult = executableTask
+                .createSubflowExecutionResult(runContext, taskRun, workerTaskFlow, execution);
 
-            maybeWorkerTaskResult.ifPresent(workerTaskResult -> this.workerTaskResultQueue.emit(workerTaskResult));
+            subflowExecutionResult.ifPresent(workerTaskResult -> this.subflowExecutionResultQueue.emit(workerTaskResult));
         } catch (Exception e) {
-            log.error("Unable to create the Worker Task Result", e);
-            // we send a fail worker task result to end the flow
-            this.workerTaskResultQueue.emit(
-                WorkerTaskResult.builder()
-                    .taskRun(taskRun.withState(State.Type.FAILED).withAttempts(
-                        Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build())
-                    ))
+            log.error("Unable to create the Subflow Execution Result", e);
+            // we send a fail subflow execution result to end the flow
+            this.subflowExecutionResultQueue.emit(
+                SubflowExecutionResult.builder()
+                    .executionId(execution.getId())
+                    .state(State.Type.FAILED)
+                    .parentTaskRun(taskRun.withState(State.Type.FAILED).withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build())))
                     .build()
             );
         }
@@ -396,6 +407,63 @@ public class MemoryExecutor implements ExecutorInterface {
             flow = transform(flow, EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution);
 
             this.toExecution(new Executor(EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution, null).withFlow(flow));
+        }
+    }
+
+    private void subflowExecutionResultQueue(Either<SubflowExecutionResult, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize the worker task result: {}", either.getRight().getMessage());
+            return;
+        }
+
+        SubflowExecutionResult message = either.getLeft();
+
+        if (skipExecutionService.skipExecution(message.getExecutionId())) {
+            log.warn("Skipping execution {}", message.getExecutionId());
+            return;
+        }
+        if (skipExecutionService.skipExecution(message.getParentTaskRun().getExecutionId())) {
+            log.warn("Skipping execution {}", message.getParentTaskRun().getExecutionId());
+            return;
+        }
+
+        synchronized (this) {
+            if (log.isDebugEnabled()) {
+                executorService.log(log, true, message);
+            }
+
+            // send metrics on terminated
+            if (message.getParentTaskRun().getState().isTerminated()) {
+                metricRegistry
+                    .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                    .increment();
+
+                metricRegistry
+                    .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                    .record(message.getParentTaskRun().getState().getDuration());
+            }
+
+            // save subflow execution result on current QueuedExecution
+            EXECUTIONS.compute(message.getParentTaskRun().getExecutionId(), (s, executionState) -> {
+                if (executionState == null) {
+                    throw new IllegalStateException("Execution state don't exist for " + s + ", receive " + message);
+                }
+
+                if (executionState.execution.hasTaskRunJoinable(message.getParentTaskRun())) {
+                    try {
+                        return executionState.from(message, this.flowRepository);
+                    } catch (InternalException e) {
+                        return new ExecutionState(executionState, executionState.execution.failedExecutionFromExecutor(e).getExecution());
+                    }
+                } else {
+                    return executionState;
+                }
+            });
+
+            Flow flow = this.flowRepository.findByExecution(EXECUTIONS.get(message.getParentTaskRun().getExecutionId()).execution);
+            flow = transform(flow, EXECUTIONS.get(message.getParentTaskRun().getExecutionId()).execution);
+
+            this.toExecution(new Executor(EXECUTIONS.get(message.getParentTaskRun().getExecutionId()).execution, null).withFlow(flow));
         }
     }
 
@@ -514,15 +582,7 @@ public class MemoryExecutor implements ExecutorInterface {
         public ExecutionState from(WorkerTaskResult workerTaskResult, ExecutorService executorService, ExecutionService executionService, FlowRepositoryInterface flowRepository) throws InternalException {
             Flow flow = flowRepository.findByExecution(this.execution);
 
-            // iterative tasks
-            Task task = flow.findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
-            TaskRun taskRun;
-            if (task instanceof ForEachItem forEachItem) {
-                taskRun = ExecutableUtils.manageIterations(workerTaskResult.getTaskRun(), this.execution, forEachItem.getTransmitFailed(), forEachItem.isAllowFailure());
-            } else {
-                taskRun = workerTaskResult.getTaskRun();
-            }
-
+            TaskRun taskRun = workerTaskResult.getTaskRun();
             this.taskRuns.compute(
                 taskRunKey(taskRun),
                 (key, value) -> taskRun
@@ -544,6 +604,26 @@ public class MemoryExecutor implements ExecutorInterface {
             if (execution != null) {
                 return new ExecutionState(this, execution);
             }
+
+            return this;
+        }
+
+        public ExecutionState from(SubflowExecutionResult subflowExecutionResult, FlowRepositoryInterface flowRepository) throws InternalException {
+            Flow flow = flowRepository.findByExecution(this.execution);
+
+            // iterative tasks
+            Task task = flow.findTaskByTaskId(subflowExecutionResult.getParentTaskRun().getTaskId());
+            TaskRun taskRun;
+            if (task instanceof ForEachItem forEachItem) {
+                taskRun = ExecutableUtils.manageIterations(subflowExecutionResult.getParentTaskRun(), this.execution, forEachItem.getTransmitFailed(), forEachItem.isAllowFailure());
+            } else {
+                taskRun = subflowExecutionResult.getParentTaskRun();
+            }
+
+            this.taskRuns.compute(
+                taskRunKey(taskRun),
+                (key, value) -> taskRun
+            );
 
             return this;
         }

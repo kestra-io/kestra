@@ -128,4 +128,11 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
         return new MysqlWorkerTriggerResultQueue(applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
+    public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
+        return new MysqlQueue<>(SubflowExecutionResult.class, applicationContext);
+    }
 }

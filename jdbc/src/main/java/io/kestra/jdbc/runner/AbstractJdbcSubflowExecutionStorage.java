@@ -1,6 +1,6 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.runners.WorkerTaskExecution;
+import io.kestra.core.runners.SubflowExecution;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public abstract class AbstractJdbcWorkerTaskExecutionStorage extends AbstractJdbcRepository {
-    protected io.kestra.jdbc.AbstractJdbcRepository<WorkerTaskExecution<?>> jdbcRepository;
+public abstract class AbstractJdbcSubflowExecutionStorage extends AbstractJdbcRepository {
+    protected io.kestra.jdbc.AbstractJdbcRepository<SubflowExecution<?>> jdbcRepository;
 
-    public AbstractJdbcWorkerTaskExecutionStorage(io.kestra.jdbc.AbstractJdbcRepository jdbcRepository) {
+    public AbstractJdbcSubflowExecutionStorage(io.kestra.jdbc.AbstractJdbcRepository jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 
-    public Optional<WorkerTaskExecution<?>> get(String executionId) {
+    public Optional<SubflowExecution<?>> get(String executionId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -35,21 +35,21 @@ public abstract class AbstractJdbcWorkerTaskExecutionStorage extends AbstractJdb
             });
     }
 
-    public void save(List<WorkerTaskExecution<?>> workerTaskExecutions) {
+    public void save(List<SubflowExecution<?>> subflowExecutions) {
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
                 // TODO batch insert
-                workerTaskExecutions.forEach(workerTaskExecution -> {
-                    Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(workerTaskExecution);
-                    this.jdbcRepository.persist(workerTaskExecution, context, fields);
+                subflowExecutions.forEach(subflowExecution -> {
+                    Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(subflowExecution);
+                    this.jdbcRepository.persist(subflowExecution, context, fields);
                 });
             });
     }
 
-    public void delete(WorkerTaskExecution<?> workerTaskExecution) {
-        this.jdbcRepository.delete(workerTaskExecution);
+    public void delete(SubflowExecution<?> subflowExecution) {
+        this.jdbcRepository.delete(subflowExecution);
     }
 }

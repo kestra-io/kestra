@@ -149,6 +149,67 @@ public class DeserializationIssuesCaseTest {
         }
         """;
 
+    public static final String INVALID_SUBFLOW_EXECUTION_KEY = "1XKpihp8y2m3KEHR0hVEKN";
+    public static final String INVALID_SUBFLOW_EXECUTION_VALUE =  """
+    {
+      "execution": {
+        "id": "1XKpihp8y2m3KEHR0hVEKN",
+        "state": {
+          "current": "CREATED",
+          "duration": 0.000201173,
+          "histories": [
+            {
+              "date": "2024-01-10T13:48:32.752Z",
+              "state": "CREATED"
+            }
+          ],
+          "startDate": "2024-01-10T13:48:32.752Z"
+        },
+        "flowId": "hello-world",
+        "deleted": false,
+        "trigger": {
+          "id": "subflow",
+          "type": "io.kestra.notfound.Invalid",
+          "variables": {
+            "flowId": "subflox",
+            "namespace": "company.team",
+            "executionId": "4NzSyOQBYj1CxVg3bTghbZ",
+            "flowRevision": 1
+          }
+        },
+        "namespace": "company.team",
+        "originalId": "1XKpihp8y2m3KEHR0hVEKN",
+        "flowRevision": 2
+      },
+      "parentTask": {
+        "id": "subflow",
+        "type": "io.kestra.notfound.Invalid"
+      },
+      "parentTaskRun": {
+        "id": "6Gc6Dkk7medsWtg1WJfZpN",
+        "state": {
+          "current": "RUNNING",
+          "duration": 0.039446974,
+          "histories": [
+            {
+              "date": "2024-01-10T13:48:32.713Z",
+              "state": "CREATED"
+            },
+            {
+              "date": "2024-01-10T13:48:32.752Z",
+              "state": "RUNNING"
+            }
+          ],
+          "startDate": "2024-01-10T13:48:32.713Z"
+        },
+        "flowId": "subflox",
+        "taskId": "subflow",
+        "namespace": "company.team",
+        "executionId": "4NzSyOQBYj1CxVg3bTghbZ"
+      }
+    }
+    """;
+
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;

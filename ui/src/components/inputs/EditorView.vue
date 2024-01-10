@@ -560,7 +560,7 @@
             user.isAllowed(
                 permission.FLOW,
                 action.DELETE,
-                namespace
+                props.namespace
             )
         );
     }
@@ -688,8 +688,8 @@
                     v-if="![editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType)"
                     :is-creating="props.isCreating"
                     :is-read-only="props.isReadOnly"
-                    :can-delete="canDelete"
-                    :is-allowed-edit="isAllowedEdit"
+                    :can-delete="canDelete()"
+                    :is-allowed-edit="isAllowedEdit()"
                     :have-change="haveChange"
                     :flow-have-tasks="flowHaveTasks()"
                     :flow-error="flowError"

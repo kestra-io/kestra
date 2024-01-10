@@ -37,7 +37,6 @@ import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -49,7 +48,6 @@ import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -468,7 +466,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 subflowExecutionStorage.get(execution.getId())
                     .ifPresent(subflowExecution -> {
                         // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                        if (subflowExecution.getParentTask().waitForExecution()) {
+                        if (subflowExecution.getParentTask() != null && subflowExecution.getParentTask().waitForExecution()) {
                             sendSubflowExecutionResult(execution, subflowExecution, subflowExecution.getParentTaskRun().withState(execution.getState().getCurrent()));
                         }
 

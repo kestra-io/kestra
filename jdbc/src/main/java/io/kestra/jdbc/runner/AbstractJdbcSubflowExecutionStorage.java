@@ -1,6 +1,11 @@
 package io.kestra.jdbc.runner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -13,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class AbstractJdbcSubflowExecutionStorage extends AbstractJdbcRepository {
+    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
     protected io.kestra.jdbc.AbstractJdbcRepository<SubflowExecution<?>> jdbcRepository;
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -32,7 +38,18 @@ public abstract class AbstractJdbcSubflowExecutionStorage extends AbstractJdbcRe
                         AbstractJdbcRepository.field("key").eq(executionId)
                     );
 
-                return this.jdbcRepository.fetchOne(select);
+                try {
+                    return this.jdbcRepository.fetchOne(select);
+                } catch (DeserializationException deserializationException) {
+                    // we may fail to deserialize a SubflowExecution if we fail to deserialize its task
+                    var jsonNode = MAPPER.readTree(deserializationException.getRecord());
+                    var taskRun = MAPPER.treeToValue(jsonNode.get("parentTaskRun"), TaskRun.class);
+                    var execution = MAPPER.treeToValue(jsonNode.get("execution"), Execution.class);
+                    return Optional.of(SubflowExecution.builder()
+                        .parentTaskRun(taskRun)
+                        .execution(execution)
+                        .build());
+                }
             });
     }
 

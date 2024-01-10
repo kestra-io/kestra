@@ -471,12 +471,10 @@ public class ExecutorService {
             .getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
-            .map(throwFunction(t -> {
-                return childWorkerTaskTypeToWorkerTask(
+            .map(t -> childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
-                    t
-                );
-            }))
+                    t)
+            )
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());

@@ -495,6 +495,11 @@ export default class YamlUtils {
     static updateMetadata(source, metadata) {
         // TODO: check how to keep comments
         const yamlDoc = yaml.parseDocument(source);
+
+        if (!yamlDoc.contents.items) {
+            return source;
+        }
+
         for (const property in metadata) {
             if (yamlDoc.contents.items.find(item => item.key.value === property)) {
                 yamlDoc.contents.items.find(item => item.key.value === property).value = metadata[property];
@@ -508,6 +513,11 @@ export default class YamlUtils {
     static cleanMetadata(source) {
         // Reorder and remove empty metadata
         const yamlDoc = yaml.parseDocument(source);
+
+        if (!yamlDoc.contents.items) {
+            return source;
+        }
+
         const order = ["id", "namespace", "description", "labels", "inputs", "variables", "tasks", "triggers", "errors", "taskDefaults", "concurrency"];
         const updatedItems = [];
         for (const prop of order) {
@@ -532,12 +542,23 @@ export default class YamlUtils {
     }
 
     static flowHaveTasks(source) {
-        const tasks = yaml.parseDocument(source).contents.items.find(item => item.key.value === "tasks");
+        const yamlDoc = yaml.parseDocument(source);
+
+        if (!yamlDoc.contents.items) {
+            return false;
+        }
+
+        const tasks = yamlDoc.contents.items.find(item => item.key.value === "tasks");
         return tasks?.value?.items?.length >= 1;
     }
 
     static deleteMetadata(source, metadata) {
         const yamlDoc = yaml.parseDocument(source);
+
+        if (!yamlDoc.contents.items) {
+            return source;
+        }
+
         const item = yamlDoc.contents.items.find(e => e.key.value === metadata);
         if (item) {
             yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(item), 1);

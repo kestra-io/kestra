@@ -234,7 +234,7 @@ public class Flow implements DeletedInterface, TenantInterface {
         return allTasks()
             .flatMap(t -> t.findById(taskId).stream())
             .findFirst()
-            .orElseThrow(() -> new InternalException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
+            .orElseThrow(() -> new InternalException("Can't find task with id '" + taskId + "' on flow '" + this.id + "'"));
     }
 
     public Flow updateTask(String taskId, Task newValue) throws InternalException {

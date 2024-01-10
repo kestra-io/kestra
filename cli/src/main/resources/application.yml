@@ -22,6 +22,12 @@ micronaut:
     idle-timeout: 60m
     netty:
       max-chunk-size: 10MB
+      responses:
+        file:
+          cache-seconds: 86400
+          cache-control:
+            public: true
+
   caches:
     default:
       maximum-weight: 10485760

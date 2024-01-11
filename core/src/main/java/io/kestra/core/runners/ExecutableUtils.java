@@ -108,6 +108,7 @@ public final class ExecutableUtils {
             .build();
     }
 
+    @SuppressWarnings("unchecked")
     public static TaskRun manageIterations(TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure) throws InternalException {
         Integer numberOfBatches = (Integer) taskRun.getOutputs().get("numberOfBatches");
         var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());

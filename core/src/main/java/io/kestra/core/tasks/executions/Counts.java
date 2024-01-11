@@ -112,6 +112,7 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
     @PluginProperty(dynamic = true)
     protected String expression;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();

@@ -10,7 +10,6 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -94,28 +93,6 @@ public class LocalStorage implements StorageInterface {
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException(e.getMessage());
         }
-    }
-
-    @Override
-    public Long size(String tenantId, URI uri) throws IOException {
-        try {
-            return Files.size(getPath(tenantId, uri));
-        } catch (NoSuchFileException e) {
-            throw new FileNotFoundException("Unable to find file at '" + uri + "'");
-        } catch (IOException e) {
-            throw new IOException("Unable to find file at '" + uri + "' with message '" + e.getMessage() + "'");
-        }
-    }
-
-    @Override
-    public Long lastModifiedTime(String tenantId, URI uri) throws IOException {
-        FileTime lastModifiedTime;
-        try {
-            lastModifiedTime = Files.getLastModifiedTime(getPath(tenantId, uri));
-        } catch (NoSuchFileException e) {
-            throw new FileNotFoundException(e.getMessage());
-        }
-        return lastModifiedTime.toMillis();
     }
 
     @Override

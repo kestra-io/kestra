@@ -34,6 +34,7 @@ public class MarketplaceFilter implements HttpServerFilter {
         return ServerFilterPhase.RENDERING.order();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         MutableHttpRequest<?> httpRequest = request.mutate();
@@ -46,9 +47,10 @@ public class MarketplaceFilter implements HttpServerFilter {
             headers.remove("Accept-Encoding");
         });
 
-        Map<String, Object> matchValues = request.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class)
+        Map<String, Object> matchValues = (Map<String, Object>) request.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class)
             .map(RouteMatch::getVariableValues)
             .orElse(Collections.emptyMap());
+
         MarketplaceRequestType type = Optional.ofNullable(matchValues.get("type"))
             .map(String.class::cast)
             .map(MarketplaceRequestType::fromString)

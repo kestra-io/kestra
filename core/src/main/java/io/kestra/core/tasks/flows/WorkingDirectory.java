@@ -18,11 +18,7 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.io.ByteArrayOutputStream;
@@ -204,6 +200,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     private NamespaceFiles namespaceFiles;
 
     @Getter(AccessLevel.PRIVATE)
+    @Builder.Default
     private transient long cacheDownloadedTime = 0L;
 
     @Override

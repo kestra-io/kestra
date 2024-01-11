@@ -382,6 +382,7 @@ public class RunContext {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
         this.initBean(applicationContext);
         this.initLogger(workerTask.getTaskRun(), workerTask.getTask());
@@ -652,7 +653,7 @@ public class RunContext {
 
     public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.lastModifiedTime(getTenantId(), uri)) : Optional.empty();
+        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.getAttributes(getTenantId(), uri).getLastModifiedTime()) : Optional.empty();
     }
 
     /**
@@ -845,7 +846,8 @@ public class RunContext {
         }
     }
 
-    private String getTenantId() {
+    @SuppressWarnings("unchecked")
+    public String getTenantId() {
         Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
         return flow != null ? flow.get("tenantId") : null;

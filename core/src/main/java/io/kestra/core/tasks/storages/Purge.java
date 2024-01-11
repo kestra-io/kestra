@@ -96,6 +96,7 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Builder.Default
     private boolean purgeStorage = true;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Purge.Output run(RunContext runContext) throws Exception {
         ExecutionService executionService = runContext.getApplicationContext().getBean(ExecutionService.class);

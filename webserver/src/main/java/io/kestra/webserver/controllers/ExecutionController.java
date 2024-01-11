@@ -601,7 +601,7 @@ public class ExecutionController {
         }
 
         return HttpResponse.ok(FileMetas.builder()
-            .size(storageInterface.size(tenantService.resolveTenant(), path))
+            .size(storageInterface.getAttributes(tenantService.resolveTenant(), path).getSize())
             .build()
         );
     }

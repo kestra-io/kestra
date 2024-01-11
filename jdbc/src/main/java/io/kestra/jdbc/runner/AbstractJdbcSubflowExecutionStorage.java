@@ -15,6 +15,7 @@ import java.util.Optional;
 public abstract class AbstractJdbcSubflowExecutionStorage extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<SubflowExecution<?>> jdbcRepository;
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public AbstractJdbcSubflowExecutionStorage(io.kestra.jdbc.AbstractJdbcRepository jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }

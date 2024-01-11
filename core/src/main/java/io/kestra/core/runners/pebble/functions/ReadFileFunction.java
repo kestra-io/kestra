@@ -44,6 +44,7 @@ public class ReadFileFunction implements Function {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         URI namespaceFile = URI.create(storageInterface.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
@@ -52,6 +53,7 @@ public class ReadFileFunction implements Function {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private String readFromInternalStorageUri(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");

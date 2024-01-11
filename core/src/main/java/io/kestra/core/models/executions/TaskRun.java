@@ -68,6 +68,11 @@ public class TaskRun implements TenantInterface {
         this.state = this.state.withState(State.Type.FAILED);
     }
 
+    @Deprecated
+    public void setItems(String items) {
+        // no-op for backward compatibility
+    }
+
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,

@@ -126,7 +126,7 @@ allprojects {
         implementation "ch.qos.logback:logback-classic"
         implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.19.0'
         implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.11'
         implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
 
         // jackson

@@ -135,13 +135,13 @@ jobs:
 
       # Upload artifacts
       - name: Upload jar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar
           path: build/libs/
 
       - name: Upload Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: exe
           path: build/executable/
@@ -256,7 +256,7 @@ jobs:
 
       # Artifact
       - name: Download executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: exe
           path: build/executable

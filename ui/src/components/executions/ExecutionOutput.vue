@@ -9,7 +9,7 @@
                     v-model="filter"
                     @input="onSearch"
                     @clear="onClear"
-                    :placeholder="$t('display output for specific task') + '...'"
+                    :placeholder="$t('select a task') + '...'"
                 >
                     <el-option
                         v-for="item in selectOptions"

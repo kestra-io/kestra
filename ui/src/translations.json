@@ -157,12 +157,12 @@
     "no data current task": "No data available for current task",
     "outputs": "Outputs",
     "output": "Output",
-    "eval": {
-      "title": "Eval expression",
-      "tooltip": "You need to choose a task to eval an expression."
+    "render": {
+      "title": "Render an output",
+      "tooltip": "Select a task to render an expression."
     },
     "attempt": "Attempt",
-    "toggle output display": "Toggle output display",
+    "toggle output display": "Toggle the output display",
     "name": "Name",
     "key": "Key",
     "value": "Value",
@@ -183,9 +183,9 @@
     "show task logs": "Show task logs",
     "show task outputs": "Show task outputs",
     "show task source": "Show task source",
-    "display output for specific task": "Display output for specific task",
-    "display metric for specific task": "Display metric for specific task",
-    "display direct sub tasks count": "Display direct sub tasks count",
+    "select a task": "Select a task",
+    "display metric for specific task": "Select a task",
+    "display direct sub tasks count": "Display the count of sub-tasks",
     "stream": "Stream",
     "execution statistics": "Execution statistics",
     "avg duration": "Avg. execution duration",
@@ -692,9 +692,9 @@
     "no data current task": "Aucune données pour cette tache",
     "outputs": "Sorties",
     "output": "Sortie",
-    "eval": {
-      "title": "Évaluer une expression",
-      "tooltip": "Vous devez choisir une tâche pour évaluer une expression."
+    "render": {
+      "title": "Rendre un résultat",
+      "tooltip": "Sélectionnez une tâche pour rendre une expression."
     },
     "attempt": "Essai",
     "toggle output display": "Permuter l'affichage de sortie",
@@ -719,8 +719,8 @@
     "show task outputs": "Afficher les outputs de la tâche",
     "show task source": "Afficher le code source de la tâche",
     "specific task": "Specific task",
-    "display output for specific task": "Afficher les output pour cette tâche",
-    "display metric for specific task": "Afficher les mesures pour cette tâche",
+    "select a task": "Sélectionnez une tâche",
+    "display metric for specific task": "Sélectionnez une tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
     "stream": "Flow",
     "execution statistics": "Statistiques d'exécution ",

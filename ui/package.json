@@ -37,7 +37,7 @@
     "md5": "^2.3.0",
     "moment": "^2.29.4",
     "moment-range": "4.0.2",
-    "moment-timezone": "^0.5.43",
+    "moment-timezone": "^0.5.44",
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
     "posthog-js": "^1.96.1",

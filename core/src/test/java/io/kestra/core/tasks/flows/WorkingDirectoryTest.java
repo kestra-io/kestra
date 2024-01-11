@@ -95,6 +95,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat((String) execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), startsWith("kestra://"));
         }
 
+        @SuppressWarnings("unchecked")
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist
             URI cache = URI.create(storageInterface.cachePrefix("io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");

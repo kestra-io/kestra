@@ -43,7 +43,7 @@ public class Size extends Task implements RunnableTask<Size.Output> {
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
-        Long size = storageInterface.getAttributes(runContext.getTenantId(), render).getSize();
+        Long size = storageInterface.getAttributes(runContext.tenantId(), render).getSize();
 
         return Output.builder()
             .size(size)

@@ -51,7 +51,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
-        boolean delete = storageInterface.delete(runContext.getTenantId(), render);
+        boolean delete = storageInterface.delete(runContext.tenantId(), render);
 
         if (errorOnMissing && !delete) {
             throw new NoSuchElementException("Unable to find file '" + render + "'");

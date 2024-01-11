@@ -24,6 +24,7 @@
     import Utils from "./utils/utils";
     import {pageFromRoute} from "./utils/eventsRouter";
     import VueTour from "./components/onboarding/VueTour.vue";
+    import posthog from 'posthog-js'
 
     export default {
         name: "App",
@@ -101,6 +102,37 @@
                     iid: config.uuid,
                     uid: uid,
                 });
+
+                this.$store.dispatch("api/loadConfig")
+                    .then(apiConfig => {
+                        this.initStats(apiConfig, config);
+                    })
+            },
+            initStats(apiConfig, config) {
+                if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
+                    return;
+                }
+
+                posthog.init(
+                    apiConfig.posthog.token,
+                    {
+                        api_host: apiConfig.posthog.apiHost,
+                        ui_host: 'https://eu.posthog.com',
+                        capture_pageview: false,
+                        autocapture: false,
+                    }
+                )
+
+                posthog.register_once({
+                    from: 'APP',
+                    app: {
+                        version: config.version
+                    }
+                })
+
+                if (!posthog.get_property("__alias")) {
+                    posthog.alias(apiConfig.id);
+                }
             },
             initGuidedTour() {
                 this.$store.dispatch("flow/findFlows", {size: 1})

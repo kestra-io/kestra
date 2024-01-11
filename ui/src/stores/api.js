@@ -1,4 +1,5 @@
 import axios from "axios";
+import posthog from 'posthog-js'
 
 let counter = 0;
 const API_URL = "https://api.kestra.io";
@@ -8,6 +9,7 @@ export default {
     state: {
         feeds: [],
         version: undefined,
+        apiConfig: undefined,
     },
 
     actions: {
@@ -25,7 +27,15 @@ export default {
                 return response.data;
             })
         },
-        events({rootGetters}, data) {
+        loadConfig({commit}) {
+            return axios.get(API_URL + "/v1/config")
+                .then(response => {
+                    commit("setApiConfig", response.data)
+
+                    return response.data;
+                })
+        },
+        events({rootGetters, dispatch}, data) {
             let configs = rootGetters["misc/configs"];
             let uid = localStorage.getItem("uid");
 
@@ -33,15 +43,43 @@ export default {
                 return;
             }
 
-            return axios.post(API_URL + "/v1/reports/events", {
+            if (configs === undefined || uid === null) {
+                return;
+            }
+
+            const additionalData = {
+                iid: configs.uuid,
+                uid: uid,
+                date: new Date().toISOString(),
+                counter: counter++,
+            };
+
+            const mergeData = {
                 ...data,
-                ...{
-                    iid: configs.uuid,
-                    uid: uid,
-                    date: new Date().toISOString(),
-                    counter: counter++,
-                }
-            });
+                ...additionalData
+            }
+
+            dispatch("posthogEvents", mergeData)
+
+            return axios.post(API_URL + "/v1/reports/events", mergeData);
+        },
+        posthogEvents(_, data) {
+            const type = data.type;
+            let finalData = {...data}
+
+            delete finalData.type;
+            delete finalData.date;
+            delete finalData.counter;
+            if (data.page) {
+                delete data.page.origin;
+                delete data.page.path;
+            }
+
+            if (type === "PAGE") {
+                posthog.capture('$pageview', finalData)
+            } else {
+                posthog.capture(data.type.toLowerCase(), finalData)
+            }
         },
         pluginIcons(_, __) {
             return axios.get(API_URL + "/v1/plugins/icons", {})
@@ -53,6 +91,9 @@ export default {
         },
         setVersion(state, version) {
             state.version = version
-        }
+        },
+        setApiConfig(state, config) {
+            state.apiConfig = config
+        },
     }
 }

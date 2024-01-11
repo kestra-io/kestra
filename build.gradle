@@ -79,7 +79,7 @@ allprojects {
             force("com.google.protobuf:protobuf-java-util:3.23.3")
 
             // ugly bug for elastic plugins
-            force("org.apache.httpcomponents:httpclient:4.5.13")
+            force("org.apache.httpcomponents:httpclient:4.5.14")
 
             // ugly bug on crypto plugin
             force('org.bouncycastle:bcprov-jdk18on:1.77')

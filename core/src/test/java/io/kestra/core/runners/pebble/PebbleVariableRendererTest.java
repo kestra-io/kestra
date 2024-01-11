@@ -154,13 +154,34 @@ class PebbleVariableRendererTest {
     void recursive() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
             "first", "1",
-            "second", "{{third}}",
-            "third", "{{first}}"
+            "second", "{{first}}",
+            "third", "{{second}}",
+            "fourth", "{{render(third, recursive=false)}}"
         );
 
-        String render = variableRenderer.render("{{ second }}", vars);
+        String render = variableRenderer.render("{{ third }}", vars);
+        assertThat(render, is("{{second}}"));
 
+        render = variableRenderer.render("{{ render(third) }}", vars);
         assertThat(render, is("1"));
+
+        // even if recursive = false in the underneath variable, we don't disable recursiveness since it's too hacky and an edge case
+        render = variableRenderer.render("{{ render(fourth) }}", vars);
+        assertThat(render, is("1"));
+    }
+
+    @Test
+    void recursiveRenderingAmountLimit() {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "first", "{{second}}",
+            "second", "{{first}}"
+        );
+
+        IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render("{{ render(first) }}", vars)
+        );
+        assertThat(illegalVariableEvaluationException.getMessage(), containsString("Too many rendering attempts"));
     }
 
     @Test

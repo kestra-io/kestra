@@ -17,6 +17,7 @@ import java.util.Map;
  * this deserializer allows using both types.
  */
 public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> implements ResolvableDeserializer {
+    @SuppressWarnings("unchecked")
     @Override
     public List<Label> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p.hasToken(JsonToken.VALUE_NULL)) {

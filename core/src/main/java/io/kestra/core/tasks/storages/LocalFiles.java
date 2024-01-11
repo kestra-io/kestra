@@ -30,45 +30,45 @@ import java.util.Map;
         full = true,
         title = "Output local files created in a Python task and load them to S3",
         code = """
-id: outputsFromPythonTask
-namespace: dev
+                id: outputsFromPythonTask
+                namespace: dev
 
-tasks:
-  - id: wdir
-    type: io.kestra.core.tasks.flows.WorkingDirectory
-    tasks:
-      - id: cloneRepository
-        type: io.kestra.plugin.git.Clone
-        url: https://github.com/kestra-io/examples
-        branch: main
+                tasks:
+                  - id: wdir
+                    type: io.kestra.core.tasks.flows.WorkingDirectory
+                    tasks:
+                      - id: cloneRepository
+                        type: io.kestra.plugin.git.Clone
+                        url: https://github.com/kestra-io/examples
+                        branch: main
 
-      - id: gitPythonScripts
-        type: io.kestra.plugin.scripts.python.Commands
-        warningOnStdErr: false
-        runner: DOCKER
-        docker:
-          image: ghcr.io/kestra-io/pydata:latest
-        beforeCommands:
-          - pip install faker > /dev/null
-        commands:
-          - python scripts/etl_script.py
-          - python scripts/generate_orders.py
+                      - id: gitPythonScripts
+                        type: io.kestra.plugin.scripts.python.Commands
+                        warningOnStdErr: false
+                        runner: DOCKER
+                        docker:
+                          image: ghcr.io/kestra-io/pydata:latest
+                        beforeCommands:
+                          - pip install faker > /dev/null
+                        commands:
+                          - python scripts/etl_script.py
+                          - python scripts/generate_orders.py
 
-      - id: outputFile
-        type: io.kestra.core.tasks.storages.LocalFiles
-        outputs:
-          - orders.csv
-          - "*.parquet"
+                      - id: outputFile
+                        type: io.kestra.core.tasks.storages.LocalFiles
+                        outputs:
+                          - orders.csv
+                          - "*.parquet"
 
-  - id: loadCsvToS3
-    type: io.kestra.plugin.aws.s3.Upload
-    accessKeyId: "{{secret('AWS_ACCESS_KEY_ID')}}"
-    secretKeyId: "{{secret('AWS_SECRET_ACCESS_KEY')}}"
-    region: eu-central-1
-    bucket: kestraio
-    key: stage/orders.csv
-    from: "{{outputs.outputFile.uris['orders.csv']}}"
-    disabled: true
+                  - id: loadCsvToS3
+                    type: io.kestra.plugin.aws.s3.Upload
+                    accessKeyId: "{{secret('AWS_ACCESS_KEY_ID')}}"
+                    secretKeyId: "{{secret('AWS_SECRET_ACCESS_KEY')}}"
+                    region: eu-central-1
+                    bucket: kestraio
+                    key: stage/orders.csv
+                    from: "{{outputs.outputFile.uris['orders.csv']}}"
+                    disabled: true
             """
     ),
     @Example(

@@ -12,7 +12,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.net.URI;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -44,17 +43,11 @@ public class Size extends Task implements RunnableTask<Size.Output> {
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
-        Long size = storageInterface.size(getTenantId(runContext), render);
+        Long size = storageInterface.getAttributes(runContext.getTenantId(), render).getSize();
 
         return Output.builder()
             .size(size)
             .build();
-    }
-
-    private String getTenantId(RunContext runContext) {
-        Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
-        // normally only tests should not have the flow variable
-        return flow != null ? flow.get("tenantId") : null;
     }
 
     @Builder

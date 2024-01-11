@@ -296,7 +296,7 @@ public abstract class StorageTestSuite {
     }
 
     private void exists(String prefix, String tenantId) throws Exception {
-        URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
+        putFile(tenantId, "/" + prefix + "/storage/put.yml");
         assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/put.yml")), is(true));
         assertThat(storageInterface.exists(tenantId, new URI("/" + prefix + "/storage/notfound.yml")), is(false));
     }
@@ -368,7 +368,7 @@ public abstract class StorageTestSuite {
 
     private void size(String prefix, String tenantId) throws Exception {
         URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
-        assertThat(storageInterface.size(tenantId, new URI("/" + prefix + "/storage/put.yml")), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/put.yml")).getSize(), is((long) contentString.length()));
     }
 
     @Test
@@ -384,7 +384,7 @@ public abstract class StorageTestSuite {
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
         assertThrows(IllegalArgumentException.class, () -> {
-            storageInterface.size(tenantId, new URI("/" + prefix + "/storage/level2/../1.yml"));
+            storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/level2/../1.yml")).getSize();
         });
     }
 
@@ -393,7 +393,7 @@ public abstract class StorageTestSuite {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.size(tenantId, new URI("/" + prefix + "/storage/"));
+            storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/")).getSize();
         });
     }
 
@@ -408,15 +408,15 @@ public abstract class StorageTestSuite {
         putFile(null, nullTenant);
 
         URI with = new URI(withTenant);
-        assertThat(storageInterface.size(tenantId, with), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(tenantId, with).getSize(), is((long) contentString.length()));
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.size(null, with);
+            storageInterface.getAttributes(null, with).getSize();
         });
 
         URI without = new URI(nullTenant);
-        assertThat(storageInterface.size(null, without), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(null, without).getSize(), is((long) contentString.length()));
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.size(tenantId, without);
+            storageInterface.getAttributes(tenantId, without).getSize();
         });
 
     }
@@ -427,7 +427,7 @@ public abstract class StorageTestSuite {
         String tenantId = IdUtils.create();
 
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
-        assertThat(storageInterface.size(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml")), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml")).getSize(), is((long) contentString.length()));
     }
     //endregion
 
@@ -449,8 +449,8 @@ public abstract class StorageTestSuite {
     }
 
     private void lastModifiedTime(String prefix, String tenantId) throws Exception {
-        URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
-        assertThat(storageInterface.lastModifiedTime(tenantId, new URI("/" + prefix + "/storage/put.yml")), notNullValue());
+        putFile(tenantId, "/" + prefix + "/storage/put.yml");
+        assertThat(storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/put.yml")).getLastModifiedTime(), notNullValue());
     }
 
     @Test
@@ -466,7 +466,7 @@ public abstract class StorageTestSuite {
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
         assertThrows(IllegalArgumentException.class, () -> {
-            storageInterface.lastModifiedTime(tenantId, new URI("/" + prefix + "/storage/level2/../1.yml"));
+            storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/level2/../1.yml")).getLastModifiedTime();
         });
     }
 
@@ -475,7 +475,7 @@ public abstract class StorageTestSuite {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.lastModifiedTime(tenantId, new URI("/" + prefix + "/storage/"));
+            storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/")).getLastModifiedTime();
         });
     }
 
@@ -490,15 +490,15 @@ public abstract class StorageTestSuite {
         putFile(null, nullTenant);
 
         URI with = new URI(withTenant);
-        assertThat(storageInterface.lastModifiedTime(tenantId, with), notNullValue());
+        assertThat(storageInterface.getAttributes(tenantId, with).getLastModifiedTime(), notNullValue());
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.lastModifiedTime(null, with);
+            storageInterface.getAttributes(null, with).getLastModifiedTime();
         });
 
         URI without = new URI(nullTenant);
-        assertThat(storageInterface.lastModifiedTime(null, without), notNullValue());
+        assertThat(storageInterface.getAttributes(null, without).getLastModifiedTime(), notNullValue());
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.lastModifiedTime(tenantId, without);
+            storageInterface.getAttributes(tenantId, without).getLastModifiedTime();
         });
 
     }
@@ -509,7 +509,7 @@ public abstract class StorageTestSuite {
         String tenantId = IdUtils.create();
 
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
-        assertThat(storageInterface.lastModifiedTime(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml")), notNullValue());
+        assertThat(storageInterface.getAttributes(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml")).getLastModifiedTime(), notNullValue());
     }
     //endregion
 

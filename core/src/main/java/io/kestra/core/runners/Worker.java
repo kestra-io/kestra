@@ -589,7 +589,6 @@ public class Worker implements Runnable, AutoCloseable {
             ));
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void close() throws Exception {
         closeWorker(Duration.ofMinutes(5));

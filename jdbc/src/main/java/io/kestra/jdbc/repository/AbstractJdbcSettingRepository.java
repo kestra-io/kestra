@@ -3,41 +3,20 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Setting;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.executions.statistics.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorState;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
-import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.*;
+import org.jooq.Field;
+import org.jooq.Record1;
+import org.jooq.Select;
+import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Singleton
 public abstract class AbstractJdbcSettingRepository extends AbstractJdbcRepository implements SettingRepositoryInterface {

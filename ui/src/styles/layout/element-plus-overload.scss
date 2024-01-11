@@ -130,6 +130,16 @@
             background-color: var(--bs-gray-200);
         }
     }
+
+    .el-select__wrapper {
+        background-color: var(--input-bg);
+
+        &.is-disabled {
+            html.dark & {
+                background-color: var(--bs-gray-400);
+            }
+        }
+    }
 }
 
 .el-select__popper {

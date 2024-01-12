@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble;
 
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.functions.*;
+import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
@@ -31,7 +32,8 @@ public class Extension extends AbstractExtension {
     private ReadFileFunction readFileFunction;
 
     @Inject
-    private VariableRenderer.VariableConfiguration variableConfiguration;
+    @Nullable
+    private RenderFunction renderFunction;
 
     @Override
     public List<TokenParser> getTokenParsers() {
@@ -95,8 +97,8 @@ public class Extension extends AbstractExtension {
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
         functions.put("secret", secretFunction);
         functions.put("read", readFileFunction);
-        if (!variableConfiguration.getRecursiveRendering()) {
-            functions.put("render", new RenderFunction());
+        if (this.renderFunction != null) {
+            functions.put("render", renderFunction);
         }
 
         return functions;

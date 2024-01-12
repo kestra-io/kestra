@@ -37,8 +37,10 @@ public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    public static Handlebars handlebars;
-    public static PebbleEngine pebbleEngine;
+    @Getter
+    private Handlebars handlebars;
+    @Getter
+    private PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
     @SuppressWarnings("unchecked")
@@ -47,7 +49,7 @@ public class VariableRenderer {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
 
         if (!this.variableConfiguration.getDisableHandlebars()) {
-            handlebars = new Handlebars()
+            this.handlebars = new Handlebars()
                 .with(EscapingStrategy.NOOP)
                 .registerHelpers(ConditionalHelpers.class)
                 .registerHelpers(EachHelper.class)
@@ -69,7 +71,7 @@ public class VariableRenderer {
 
             applicationContext.getBeansOfType(VariableRendererPlugins.class)
                 .forEach(variableRendererPlugins -> {
-                    handlebars.registerHelper(
+                    this.handlebars.registerHelper(
                         variableRendererPlugins.name(),
                         variableRendererPlugins.helper()
                     );
@@ -91,7 +93,7 @@ public class VariableRenderer {
             pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
         }
 
-        pebbleEngine = pebbleBuilder.build();
+        this.pebbleEngine = pebbleBuilder.build();
     }
 
     public static IllegalVariableEvaluationException properPebbleException(PebbleException e) {
@@ -118,8 +120,8 @@ public class VariableRenderer {
         }
 
         String result;
-        if (variableConfiguration.getRecursiveRendering()) {
-            result = renderRecursively(0, inline, variables);
+        if (this.variableConfiguration.getRecursiveRendering()) {
+            result = renderRecursively(inline, variables);
         } else {
             result = renderOnce(inline,  variables);
         }
@@ -128,25 +130,24 @@ public class VariableRenderer {
         return result;
     }
 
-    public static String renderOnce(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public String renderOnce(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         // pre-process raw tags
         Matcher rawMatcher = RAW_PATTERN.matcher(inline);
         Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
-        inline = rawMatcher.replaceAll(result -> {
+        String result = rawMatcher.replaceAll(matchResult -> {
             var uuid = UUID.randomUUID().toString();
-            replacers.put(uuid, result.group(1));
+            replacers.put(uuid, matchResult.group(1));
             return uuid;
         });
 
-        String result;
         try {
-            PebbleTemplate compiledTemplate = pebbleEngine.getLiteralTemplate(inline);
+            PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate(result);
 
             Writer writer = new JsonWriter(new StringWriter());
             compiledTemplate.evaluate(writer, variables);
             result = writer.toString();
         } catch (IOException | PebbleException e) {
-            if (handlebars == null) {
+            if (this.handlebars == null) {
                 if (e instanceof PebbleException) {
                     throw properPebbleException((PebbleException) e);
                 }
@@ -155,7 +156,7 @@ public class VariableRenderer {
             }
 
             try {
-                Template  template = handlebars.compileInline(inline);
+                Template  template = this.handlebars.compileInline(inline);
                 result = template.apply(variables);
             } catch (HandlebarsException | IOException hbE) {
                 throw new IllegalVariableEvaluationException(
@@ -174,12 +175,16 @@ public class VariableRenderer {
         return result;
     }
 
-    public static String renderRecursively(int renderingCount, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public String renderRecursively(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.renderRecursively(0, inline, variables);
+    }
+
+    public String renderRecursively(int renderingCount, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (renderingCount > MAX_RENDERING_AMOUNT) {
             throw new IllegalVariableEvaluationException("Too many rendering attempts");
         }
 
-        String result = renderOnce(inline, variables);
+        String result = this.renderOnce(inline, variables);
         if (result.equals(inline)) {
             return result;
         }

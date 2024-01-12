@@ -1,22 +1,28 @@
 package io.kestra.core.runners.pebble.functions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.util.StringUtils;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+@Singleton
+@Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
 public class RenderFunction implements Function {
+    @Inject
+    private ApplicationContext applicationContext;
+
     public List<String> getArgumentNames() {
         return List.of("template", "recursive");
     }
@@ -47,10 +53,13 @@ public class RenderFunction implements Function {
             .flatMap(scope -> scope.getKeys().stream())
             .distinct()
             .collect(HashMap::new, (m, v) -> m.put(v, context.getVariable(v)), HashMap::putAll);
+
+        VariableRenderer variableRenderer = applicationContext.getBean(VariableRenderer.class);
+
         try {
             return recursive
-                ? VariableRenderer.renderRecursively(1, template, variables)
-                : VariableRenderer.renderOnce(template, variables);
+                ? variableRenderer.renderRecursively(template, variables)
+                : variableRenderer.renderOnce(template, variables);
         } catch (IllegalVariableEvaluationException e) {
             throw new PebbleException(e, e.getMessage());
         }

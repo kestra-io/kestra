@@ -3,7 +3,7 @@ import posthog from 'posthog-js'
 import cloneDeep from 'lodash/cloneDeep'
 
 let counter = 0;
-const API_URL = "https://api.kestra.io";
+const API_URL = "https://api.kestra.com";
 
 export default {
     namespaced: true,
@@ -29,7 +29,7 @@ export default {
             })
         },
         loadConfig({commit}) {
-            return axios.get(API_URL + "/v1/config")
+            return axios.get(API_URL + "/v1/config", {withCredentials: true})
                 .then(response => {
                     commit("setApiConfig", response.data)
 
@@ -40,11 +40,7 @@ export default {
             let configs = rootGetters["misc/configs"];
             let uid = localStorage.getItem("uid");
 
-            // if (configs === undefined || uid === null || configs["isAnonymousUsageEnabled"] === false) {
-            //     return;
-            // }
-
-            if (configs === undefined || uid === null) {
+            if (configs === undefined || uid === null || configs["isAnonymousUsageEnabled"] === false) {
                 return;
             }
 

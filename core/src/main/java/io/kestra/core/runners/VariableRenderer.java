@@ -37,9 +37,7 @@ public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    @Getter
     private Handlebars handlebars;
-    @Getter
     private PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
@@ -179,7 +177,7 @@ public class VariableRenderer {
         return this.renderRecursively(0, inline, variables);
     }
 
-    public String renderRecursively(int renderingCount, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    private String renderRecursively(int renderingCount, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (renderingCount > MAX_RENDERING_AMOUNT) {
             throw new IllegalVariableEvaluationException("Too many rendering attempts");
         }

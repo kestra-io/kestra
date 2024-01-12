@@ -27,6 +27,7 @@ public @interface PluginSubGroup {
         STORAGE,
         MISC,
         TOOL,
-        AI
+        AI,
+        CORE
     }
 }

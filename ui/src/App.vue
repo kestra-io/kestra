@@ -92,10 +92,6 @@
 
                 this.$store.dispatch("plugin/icons")
                 const config = await this.$store.dispatch("misc/loadConfigs");
-                this.$store.dispatch("api/events", {
-                    type: "PAGE",
-                    page: pageFromRoute(this.$router.currentRoute.value)
-                });
 
                 this.$store.dispatch("api/loadFeeds", {
                     version: config.version,

@@ -43,7 +43,7 @@ class JqFilterTest {
             "third", "{{end}}"
         );
 
-        String render = variableRenderer.render("{{  first | jq(\".second.third\") }}", vars);
+        String render = variableRenderer.render("{{  render(first) | jq(\".second.third\") }}", vars);
         assertThat(render, is("[\"awesome\"]"));
     }
 

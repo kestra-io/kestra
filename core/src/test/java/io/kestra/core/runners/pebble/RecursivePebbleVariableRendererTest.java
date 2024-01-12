@@ -1,21 +1,18 @@
 package io.kestra.core.runners.pebble;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.utils.Rethrow;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
@@ -29,11 +26,29 @@ class RecursivePebbleVariableRendererTest {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
             "first", "1",
             "second", "{{first}}",
-            "third", "{{second}}"
+            "third", "{{second}}",
+            "map", ImmutableMap.of(
+                "third", "{{third}}"
+            ),
+            "list", ImmutableList.of(
+                "{{third}}"
+            ),
+            "set", ImmutableSet.of(
+                "{{third}}"
+            )
         );
 
         String render = variableRenderer.render("{{ third }}", vars);
         assertThat(render, is("1"));
+
+        render = variableRenderer.render("{{ map }}", vars);
+        assertThat(render, is("{\"third\":\"1\"}"));
+
+        render = variableRenderer.render("{{ list }}", vars);
+        assertThat(render, is("[\"1\"]"));
+
+        render = variableRenderer.render("{{ set }}", vars);
+        assertThat(render, is("[\"1\"]"));
     }
 
     @Test

@@ -5,12 +5,6 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
-import io.kestra.core.utils.IdUtils;
-import io.pebbletemplates.pebble.PebbleEngine;
-import io.pebbletemplates.pebble.error.AttributeNotFoundException;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.AbstractExtension;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.handlebars.VariableRendererPlugins;
 import io.kestra.core.runners.handlebars.helpers.*;
@@ -19,6 +13,15 @@ import io.kestra.core.runners.pebble.JsonWriter;
 import io.kestra.core.runners.pebble.PebbleLruCache;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.core.annotation.Nullable;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.error.AttributeNotFoundException;
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.AbstractExtension;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -26,11 +29,6 @@ import java.io.Writer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
@@ -108,6 +106,10 @@ public class VariableRenderer {
     }
 
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering());
+    }
+
+    public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -117,15 +119,9 @@ public class VariableRenderer {
             return inline;
         }
 
-        String result;
-        if (this.variableConfiguration.getRecursiveRendering()) {
-            result = renderRecursively(inline, variables);
-        } else {
-            result = renderOnce(inline,  variables);
-        }
-
-
-        return result;
+        return recursive
+            ? renderRecursively(inline, variables)
+            : renderOnce(inline, variables);
     }
 
     public String renderOnce(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -154,12 +150,12 @@ public class VariableRenderer {
             }
 
             try {
-                Template  template = this.handlebars.compileInline(inline);
+                Template template = this.handlebars.compileInline(inline);
                 result = template.apply(variables);
             } catch (HandlebarsException | IOException hbE) {
                 throw new IllegalVariableEvaluationException(
-                    "Pebble evaluation failed with '" + e.getMessage() +  "' " +
-                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'" ,
+                    "Pebble evaluation failed with '" + e.getMessage() + "' " +
+                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'",
                     e
                 );
             }
@@ -191,11 +187,15 @@ public class VariableRenderer {
     }
 
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.render(in, variables, this.variableConfiguration.getRecursiveRendering());
+    }
+
+    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         Map<String, Object> map = new HashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);
-            Object value = renderObject(r.getValue(), variables).orElse(r.getValue());
+            Object value = renderObject(r.getValue(), variables, recursive).orElse(r.getValue());
 
             map.putIfAbsent(
                 key,
@@ -206,24 +206,34 @@ public class VariableRenderer {
         return map;
     }
 
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.renderObject(object, variables, this.variableConfiguration.getRecursiveRendering());
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (object instanceof Map) {
-            return Optional.of(this.render((Map) object, variables));
-        } else if (object instanceof Collection) {
-            return Optional.of(this.renderList((List) object, variables));
-        } else if (object instanceof String) {
-            return Optional.of(this.render((String) object, variables));
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+        if (object instanceof Map map) {
+            return Optional.of(this.render(map, variables, recursive));
+        } else if (object instanceof List list) {
+            return Optional.of(this.renderList(list, variables, recursive));
+        } else if (object instanceof Set set) {
+            return Optional.of(this.render(set, variables, recursive));
+        } else if (object instanceof String string) {
+            return Optional.of(this.render(string, variables, recursive));
         }
 
         return Optional.empty();
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.renderList(list, variables, this.variableConfiguration.getRecursiveRendering());
+    }
+
+    public List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            this.renderObject(inline, variables)
+            this.renderObject(inline, variables, recursive)
                 .ifPresent(result::add);
         }
 
@@ -231,18 +241,26 @@ public class VariableRenderer {
     }
 
     public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.render(list, variables, this.variableConfiguration.getRecursiveRendering());
+    }
+
+    public List<String> render(List<String> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         List<String> result = new ArrayList<>();
         for (String inline : list) {
-            result.add(this.render(inline, variables));
+            result.add(this.render(inline, variables, recursive));
         }
 
         return result;
     }
 
-    public Set<String> render(Set<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public Set<String> render(Set<String> set, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.render(set, variables, this.variableConfiguration.getRecursiveRendering());
+    }
+
+    public Set<String> render(Set<String> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         Set<String> result = new HashSet<>();
         for (String inline : list) {
-            result.add(this.render(inline, variables));
+            result.add(this.render(inline, variables, recursive));
         }
 
         return result;

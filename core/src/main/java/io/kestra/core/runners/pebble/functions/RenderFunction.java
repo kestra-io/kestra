@@ -24,19 +24,15 @@ public class RenderFunction implements Function {
     private ApplicationContext applicationContext;
 
     public List<String> getArgumentNames() {
-        return List.of("template", "recursive");
+        return List.of("toRender", "recursive");
     }
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-        if (!args.containsKey("template")) {
-            throw new PebbleException(null, "The 'render' function expects an argument 'template'.", lineNumber, self.getName());
+        if (!args.containsKey("toRender")) {
+            throw new PebbleException(null, "The 'render' function expects an argument 'toRender'.", lineNumber, self.getName());
         }
-
-        if (!(args.get("template") instanceof String)) {
-            throw new PebbleException(null, "The 'render' function expects an argument 'template' with type string.", lineNumber, self.getName());
-        }
-        String template = (String) args.get("template");
+        Object toRender = args.get("toRender");
 
         Object recursiveArg = args.get("recursive");
         if (recursiveArg == null) {
@@ -57,9 +53,7 @@ public class RenderFunction implements Function {
         VariableRenderer variableRenderer = applicationContext.getBean(VariableRenderer.class);
 
         try {
-            return recursive
-                ? variableRenderer.renderRecursively(template, variables)
-                : variableRenderer.renderOnce(template, variables);
+            return variableRenderer.renderObject(toRender, variables, recursive).orElse(null);
         } catch (IllegalVariableEvaluationException e) {
             throw new PebbleException(e, e.getMessage());
         }

@@ -38,9 +38,9 @@ public class FirstDefinedEvalHelper implements Helper<String> {
         while (result == null && i < params.size()) {
             try {
                 String param = params.get(i++);
-                String finalTemplate = variableRenderer.recursiveRender(param, (Map<String, Object>) options.context.model());
+                String finalTemplate = variableRenderer.render(param, (Map<String, Object>) options.context.model());
 
-                result = variableRenderer.recursiveRender("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
+                result = variableRenderer.render("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
             } catch (IllegalVariableEvaluationException | IllegalStateException | HandlebarsException ignored) {
             }
         }

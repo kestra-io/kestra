@@ -1,6 +1,8 @@
 package io.kestra.core.runners.pebble;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.Rethrow;
@@ -154,13 +156,65 @@ class PebbleVariableRendererTest {
     void recursive() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
             "first", "1",
-            "second", "{{third}}",
-            "third", "{{first}}"
+            "second", "{{first}}",
+            "third", "{{second}}",
+            "fourth", "{{render(third, recursive=false)}}",
+            "map", ImmutableMap.of(
+                "third", "{{third}}"
+            ),
+            "list", ImmutableList.of(
+                "{{third}}"
+            ),
+            "set", ImmutableSet.of(
+                "{{third}}"
+            )
         );
 
-        String render = variableRenderer.render("{{ second }}", vars);
-
+        String render = variableRenderer.render("{{ third }}", vars);
+        assertThat(render, is("{{second}}"));
+        render = variableRenderer.render("{{ render(third, recursive=false) }}", vars);
+        assertThat(render, is("{{first}}"));
+        render = variableRenderer.render("{{ render(third) }}", vars);
         assertThat(render, is("1"));
+
+        // even if recursive = false in the underneath variable, we don't disable recursiveness since it's too hacky and an edge case
+        render = variableRenderer.render("{{ render(fourth) }}", vars);
+        assertThat(render, is("1"));
+
+        render = variableRenderer.render("{{ map }}", vars);
+        assertThat(render, is("{\"third\":\"{{third}}\"}"));
+        render = variableRenderer.render("{{ render(map, recursive=false) }}", vars);
+        assertThat(render, is("{\"third\":\"{{second}}\"}"));
+        render = variableRenderer.render("{{ render(map) }}", vars);
+        assertThat(render, is("{\"third\":\"1\"}"));
+
+        render = variableRenderer.render("{{ list }}", vars);
+        assertThat(render, is("[\"{{third}}\"]"));
+        render = variableRenderer.render("{{ render(list, recursive=false) }}", vars);
+        assertThat(render, is("[\"{{second}}\"]"));
+        render = variableRenderer.render("{{ render(list) }}", vars);
+        assertThat(render, is("[\"1\"]"));
+
+        render = variableRenderer.render("{{ set }}", vars);
+        assertThat(render, is("[\"{{third}}\"]"));
+        render = variableRenderer.render("{{ render(set, recursive=false) }}", vars);
+        assertThat(render, is("[\"{{second}}\"]"));
+        render = variableRenderer.render("{{ render(set) }}", vars);
+        assertThat(render, is("[\"1\"]"));
+    }
+
+    @Test
+    void recursiveRenderingAmountLimit() {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "first", "{{second}}",
+            "second", "{{first}}"
+        );
+
+        IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render("{{ render(first) }}", vars)
+        );
+        assertThat(illegalVariableEvaluationException.getMessage(), containsString("Too many rendering attempts"));
     }
 
     @Test

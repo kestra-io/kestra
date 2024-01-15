@@ -9,7 +9,7 @@ variables:
 tasks:
   - id: variable
     type: io.kestra.core.tasks.debugs.Return
-    format: "{{vars.third}}"
+    format: "{{render(vars.third)}}"
   - id: env
     type: io.kestra.core.tasks.debugs.Return
     format: "{{envs.test1}} {{envs.test2}}"

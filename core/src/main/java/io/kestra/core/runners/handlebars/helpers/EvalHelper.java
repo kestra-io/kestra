@@ -18,9 +18,9 @@ public class EvalHelper implements Helper<String> {
     @SneakyThrows
     @Override
     public CharSequence apply(final String value, final Options options) {
-        String finalTemplate = variableRenderer.recursiveRender(value, (Map<String, Object>) options.context.model());
+        String finalTemplate = variableRenderer.renderRecursively(value, (Map<String, Object>) options.context.model());
 
-        return variableRenderer.recursiveRender("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
+        return variableRenderer.renderRecursively("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
     }
 }
 

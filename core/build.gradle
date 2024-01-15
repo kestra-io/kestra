@@ -41,7 +41,7 @@ dependencies {
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.4.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.9.0'
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"

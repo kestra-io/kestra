@@ -36,6 +36,7 @@ import lombok.Getter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import net.jodah.failsafe.Timeout;
 import org.slf4j.Logger;
 
@@ -345,9 +346,25 @@ public class Worker implements Runnable, AutoCloseable {
 
         AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 
+        // creating the retry can fail
+        RetryPolicy<WorkerTask> workerTaskRetryPolicy;
+        try {
+            workerTaskRetryPolicy = AbstractRetry.retryPolicy(workerTask.getTask().getRetry());
+        } catch(IllegalStateException e) {
+            WorkerTask finalWorkerTask = workerTask.fail();
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask);
+            RunContext runContext = workerTask
+                .getRunContext()
+                .forWorker(this.applicationContext, workerTask);
+
+            runContext.logger().error("Exception while trying to build the retry policy", e);
+            this.workerTaskResultQueue.emit(workerTaskResult);
+            return workerTaskResult;
+        }
+
         // run
         WorkerTask finalWorkerTask = Failsafe
-            .with(AbstractRetry.<WorkerTask>retryPolicy(workerTask.getTask().getRetry())
+            .with(workerTaskRetryPolicy
                 .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
                         result.getTaskRun().lastAttempt().getState().getCurrent() == State.Type.FAILED &&
                         !killedExecution.contains(result.getTaskRun().getExecutionId())

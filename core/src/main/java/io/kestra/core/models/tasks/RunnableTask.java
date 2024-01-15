@@ -7,7 +7,7 @@ import io.kestra.core.runners.RunContext;
  */
 public interface RunnableTask <T extends Output> {
     /**
-     * Thsis method is called inside the Worker to run (execute) the task.
+     * This method is called inside the Worker to run (execute) the task.
      */
     T run(RunContext runContext) throws Exception;
 }

@@ -146,7 +146,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
             title = "The full body for the webhook request.",
-            description = "We try to deserialize the incoming request as json (array or object).\n" +
+            description = "We try to deserialize the incoming request as JSON (array or object).\n" +
                 "If we can't deserialize, the full body as string will be available."
         )
         @NotNull

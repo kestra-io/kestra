@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 public interface FlowableTask <T extends Output> {
     @Schema(
-        title = "List of tasks to run if any tasks failed on this FlowableTask"
+        title = "List of tasks to run if any tasks failed on this FlowableTask."
     )
     @PluginProperty
     List<Task> getErrors();

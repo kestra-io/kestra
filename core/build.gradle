@@ -20,7 +20,7 @@ dependencies {
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
-    implementation 'com.github.oshi:oshi-core:6.4.10'
+    implementation 'com.github.oshi:oshi-core:6.4.11'
     implementation 'io.pebbletemplates:pebble:3.2.2'
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.5.0'
     implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.22.0'

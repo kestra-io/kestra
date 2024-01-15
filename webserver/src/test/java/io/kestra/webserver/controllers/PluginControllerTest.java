@@ -55,7 +55,8 @@ class PluginControllerTest {
             assertThat(core.getCategories(), containsInAnyOrder(
                 PluginSubGroup.PluginCategory.FLOW,
                 PluginSubGroup.PluginCategory.STORAGE,
-                PluginSubGroup.PluginCategory.MISC
+                PluginSubGroup.PluginCategory.MISC,
+                PluginSubGroup.PluginCategory.CORE
             ));
 
             // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same

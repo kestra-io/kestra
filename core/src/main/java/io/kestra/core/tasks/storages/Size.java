@@ -19,7 +19,7 @@ import java.net.URI;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get the size of a file from the internal storage."
+    title = "Get the size of a file from the Kestra's internal storage."
 )
 @Plugin(
     examples = {
@@ -32,8 +32,8 @@ import java.net.URI;
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(
-        title = "the file",
-        description = "Must be a `kestra://` storage URL"
+        title = "The file whose size needs to be fetched.",
+        description = "Must be a `kestra://` storage URI."
     )
     @PluginProperty(dynamic = true)
     private String uri;
@@ -54,7 +54,7 @@ public class Size extends Task implements RunnableTask<Size.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The size of the file "
+            title = "The size of the file."
         )
         private final Long size;
     }

@@ -22,7 +22,7 @@ import java.io.FileNotFoundException;
 @Plugin(
     examples = {
         @Example(
-            title = "Delete the default state for the current flow",
+            title = "Delete the default state for the current flow.",
             code = {
                 "id: getState",
                 "type: io.kestra.core.tasks.states.Delete",
@@ -30,7 +30,7 @@ import java.io.FileNotFoundException;
             full = true
         ),
         @Example(
-            title = "Delete the `myState` state for the current flow",
+            title = "Delete the `myState` state for the current flow.",
             code = {
                 "id: getState",
                 "type: io.kestra.core.tasks.states.Delete",
@@ -42,7 +42,7 @@ import java.io.FileNotFoundException;
 )
 public class Delete extends AbstractState implements RunnableTask<Delete.Output> {
     @Schema(
-        title = "raise an error if the state is not found"
+        title = "Raise an error if the state is not found."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
@@ -54,7 +54,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
         boolean delete = this.delete(runContext);
 
         if (errorOnMissing && !delete) {
-            throw new FileNotFoundException("Unable to find file '" + runContext.render(this.name) + "'");
+            throw new FileNotFoundException("Unable to find the state file '" + runContext.render(this.name) + "'");
         }
 
         return Output.builder()
@@ -66,7 +66,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "If the files was really deleted"
+            title = "Whether the state file was deleted."
         )
         private final Boolean deleted;
     }

@@ -50,7 +50,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially in the same working directory",
+    title = "Run tasks sequentially in the same working directory.",
     description = "Tasks are stateless by default. Kestra will launch each task within a temporary working directory on a Worker. " +
         "The `WorkingDirectory` task allows reusing the same file system's working directory across multiple tasks " +
         "so that multiple sequential tasks can use output files from previous tasks without having to use the `outputs.taskId.outputName` syntax. " +
@@ -62,7 +62,7 @@ import javax.validation.constraints.NotNull;
     examples = {
         @Example(
             full = true,
-            title = "Clone a git repository into the Working Directory and run a Python script",
+            title = "Clone a git repository into the Working Directory and run a Python script.",
             code = {
                 "id: gitPython",
                 "namespace: dev",
@@ -85,7 +85,7 @@ import javax.validation.constraints.NotNull;
         ),
         @Example(
             full = true,
-            title = "Add input and output files within a Working Directory to use them in a Python script",
+            title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
                 id: apiJSONtoMongoDB
                 namespace: dev
@@ -136,7 +136,7 @@ import javax.validation.constraints.NotNull;
                     uri: mongodb://host.docker.internal:27017/
                     database: local
                     collection: github
-                    from: "{{outputs.jsonFiles.uris['output.json']}}"
+                    from: "{{ outputs.jsonFiles.uris['output.json'] }}"
                 """
         ),
         @Example(
@@ -162,7 +162,7 @@ import javax.validation.constraints.NotNull;
         ),
         @Example(
             full = true,
-            title = "A working directory with a cache of the node_modules directory",
+            title = "A working directory with a cache of the node_modules directory.",
             code = """
                 id: node-with-cache
                 namespace: dev
@@ -188,7 +188,7 @@ import javax.validation.constraints.NotNull;
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface {
 
     @Schema(
-        title = "Cache configuration",
+        title = "Cache configuration.",
         description = """
             When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the execution of the task and saved in Kestra's internal storage.
             Then at the beginning of the next execution of the task, the archive of the files is retrieved and the working directory initialized with it.
@@ -355,7 +355,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
         @Schema(
             title = "List of file [glob](https://en.wikipedia.org/wiki/Glob_(programming)) patterns to include in the cache.",
-            description = "For example 'node_modules/**' will include all files of the node_modules directory including sub-directories."
+            description = "For example, 'node_modules/**' will include all files of the node_modules directory including sub-directories."
         )
         @PluginProperty
         @NotNull

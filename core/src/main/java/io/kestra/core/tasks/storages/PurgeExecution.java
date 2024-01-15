@@ -18,8 +18,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge all files from the internal storage created by this execution.",
-    description = "Will delete all the generated files from a flow for the current execution. This will delete all files from:\n" +
+    title = "Purge all files from the Kestra's internal storage created by this execution.",
+    description = "This will delete all the generated files from a flow for the current execution. This will delete all files from:\n" +
         "- inputs\n" +
         "- outputs\n" +
         "- triggers\n\n" +
@@ -45,7 +45,7 @@ public class PurgeExecution extends Task implements RunnableTask<PurgeExecution.
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The deleted files"
+            title = "The deleted file URIs from Kestra's internal storage."
         )
         private final List<URI> uris;
     }

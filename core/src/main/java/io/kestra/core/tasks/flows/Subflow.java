@@ -31,7 +31,7 @@ import java.util.*;
 @Plugin(
     examples = {
         @Example(
-            title = "Run a subflow with custom inputs",
+            title = "Run a subflow with custom inputs.",
             code = {
                 "namespace: dev",
                 "flowId: subflow",
@@ -47,33 +47,33 @@ import java.util.*;
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
     @NotEmpty
     @Schema(
-        title = "The namespace of the subflow to be executed"
+        title = "The namespace of the subflow to be executed."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
     @Schema(
-        title = "The identifier of the subflow to be executed"
+        title = "The identifier of the subflow to be executed."
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
-        title = "The revision of the subflow to be executed",
+        title = "The revision of the subflow to be executed.",
         description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
     )
     @PluginProperty(dynamic = true)
     private Integer revision;
 
     @Schema(
-        title = "The inputs to pass to the subflow to be executed"
+        title = "The inputs to pass to the subflow to be executed."
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The labels to pass to the subflow to be executed"
+        title = "The labels to pass to the subflow to be executed."
     )
     @PluginProperty(dynamic = true)
     private Map<String, String> labels;
@@ -87,7 +87,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
 
     @Builder.Default
     @Schema(
-        title = "Whether to fail the current execution if the subflow execution fails or is killed",
+        title = "Whether to fail the current execution if the subflow execution fails or is killed.",
         description = "Note that this option works only if `wait` is set to `true`."
     )
     @PluginProperty
@@ -200,7 +200,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The id of the subflow execution."
+            title = "The ID of the subflow execution."
         )
         private final String executionId;
 

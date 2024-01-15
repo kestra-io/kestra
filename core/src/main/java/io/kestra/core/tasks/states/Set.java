@@ -21,18 +21,18 @@ import java.util.Map;
 @Schema(
     title = "Set a state in the state store.",
     description = "Values will be merged: \n" +
-        "* If you provide a new key, the new key will be added\n" +
-        "* If you provide an existing key, the previous key will be overwrite\n" +
+        "* If you provide a new key, the new key will be added.\n" +
+        "* If you provide an existing key, the previous key will be overwrite.\n" +
         "\n" +
         "::alert{type=\"warning\"}\n" +
-        "This method have no concurrency safe, if many executions for the same flow are concurrent, there is no guarantee on isolation on the value.\n" +
-        "The value can be overwrite by others executions.\n" +
+        "This method is not concurrency safe. If many executions for the same flow are concurrent, there is no guarantee on isolation on the value.\n" +
+        "The value can be overwritten by other executions.\n" +
         "::\n"
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Set the default state for the current flow",
+            title = "Set the default state for the current flow.",
             code = {
                 "id: setState",
                 "type: io.kestra.core.tasks.states.Set",
@@ -42,7 +42,7 @@ import java.util.Map;
             full = true
         ),
         @Example(
-            title = "Set the `myState` state for the current flow",
+            title = "Set the `myState` state for the current flow.",
             code = {
                 "id: setState",
                 "type: io.kestra.core.tasks.states.Set",
@@ -56,7 +56,7 @@ import java.util.Map;
 )
 public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Schema(
-        title = "The data to save into the state"
+        title = "The data to be stored in the state store."
     )
     @PluginProperty(dynamic = true, additionalProperties = Object.class)
     private Map<String, Object> data;
@@ -75,12 +75,12 @@ public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of properties found in the state"
+            title = "The count of properties found in the state."
         )
         private final int count;
 
         @Schema(
-            title = "The uri of the current state"
+            title = "The URI of the current state."
         )
         private final String uri;
     }

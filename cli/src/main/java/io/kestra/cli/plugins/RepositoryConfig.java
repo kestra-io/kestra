@@ -18,7 +18,6 @@ import lombok.experimental.SuperBuilder;
 public class RepositoryConfig {
     String id;
 
-    @Builder.Default
     String type = "default";
 
     String url;

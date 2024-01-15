@@ -1,5 +1,6 @@
 <template>
     <el-select
+        class="fit-text"
         :model-value="value"
         @update:model-value="onInput"
         clearable

@@ -69,7 +69,7 @@
     "jsdom": "^23.2.0",
     "monaco-editor": "0.39.0",
     "monaco-yaml": "4.0.0-alpha.0",
-    "prettier": "^3.1.1",
+    "prettier": "^3.2.2",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.69.7",

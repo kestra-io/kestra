@@ -123,6 +123,9 @@
 
 
 .el-select {
+    &.fit-text .el-select__input {
+        width: fit-content !important;
+    }
     .el-tag {
         color: var(--el-select-input-color);
 

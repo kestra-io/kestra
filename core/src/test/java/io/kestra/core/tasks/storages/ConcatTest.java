@@ -32,10 +32,10 @@ class ConcatTest {
 
     void run(Boolean json) throws Exception {
         RunContext runContext = runContextFactory.of();
-        URL resource = ConcatTest.class.getClassLoader().getResource("application.yml");
+        URL resource = ConcatTest.class.getClassLoader().getResource("application-test.yml");
 
         File file = new File(Objects.requireNonNull(ConcatTest.class.getClassLoader()
-            .getResource("application.yml"))
+            .getResource("application-test.yml"))
             .toURI());
 
         URI put = storageInterface.put(

@@ -20,7 +20,6 @@ out/
 ### Configurations
 docker-compose.override.yml
 cli/src/main/resources/application-*.yml
-*/src/test/resources/application-test.yml
 /local
 
 ### Javascript

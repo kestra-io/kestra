@@ -48,7 +48,7 @@ public abstract class AbstractExecutionServiceTest {
 
     @Test
     void purge() throws Exception {
-        URL resource = AbstractExecutionServiceTest.class.getClassLoader().getResource("application.yml");
+        URL resource = AbstractExecutionServiceTest.class.getClassLoader().getResource("application-test.yml");
         File tempFile = File.createTempFile("test", "");
         Files.copy(new FileInputStream(Objects.requireNonNull(resource).getFile()), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 

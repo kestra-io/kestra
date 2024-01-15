@@ -158,8 +158,8 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Eval expression",
-      "tooltip": "You need to choose a task to eval an expression."
+      "title": "Render expression",
+      "tooltip": "You need to choose a task to render an expression from."
     },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",
@@ -719,7 +719,7 @@
     "show task outputs": "Afficher les outputs de la tâche",
     "show task source": "Afficher le code source de la tâche",
     "specific task": "Specific task",
-    "display output for specific task": "Afficher les output pour cette tâche",
+    "display output for specific task": "Afficher les sorties pour cette tâche",
     "display metric for specific task": "Afficher les mesures pour cette tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
     "stream": "Flow",

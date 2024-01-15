@@ -23,6 +23,9 @@ export default {
         },
         isUnsaved({commit}, unsavedChange) {
             commit("setUnsavedChange", unsavedChange)
+        },
+        storeRoute({commit}, route) {
+            commit("setRoute", route)
         }
     },
     mutations: {
@@ -37,6 +40,9 @@ export default {
         },
         setGuidedProperties(state, guidedProperties) {
             state.guidedProperties = guidedProperties
+        },
+        setRoute(state, route) {
+            state.route = route
         }
     },
     getters: {
@@ -46,5 +52,8 @@ export default {
         guidedProperties(state) {
             return state.guidedProperties;
         },
+        route(state) {
+            return state.route;
+        }
     }
 }

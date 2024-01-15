@@ -148,6 +148,7 @@
         },
         watch: {
             $route(to) {
+                this.$store.dispatch("core/storeRoute", this.$route)
                 if (this.user && to.name === "home" && this.overallTotal === 0) {
                     this.$router.push({
                         name: "welcome",

@@ -404,7 +404,7 @@ public class ExecutionController {
 
         var flow = maybeFlow.get();
         if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute disabled flow");
+            throw new IllegalStateException("Cannot execute a disabled flow");
         }
 
         if (flow instanceof FlowWithException fwe) {
@@ -423,6 +423,7 @@ public class ExecutionController {
                     return webhookKey.equals(key);
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
+                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
                     return false;
                 }
             })

@@ -72,7 +72,7 @@ allprojects {
     configurations.all {
         resolutionStrategy {
             force("org.jooq:jooq:3.17.14")
-            force("org.slf4j:slf4j-api:1.7.36")
+            force("org.slf4j:slf4j-api:2.0.11")
 
             // ugly bug on google cloud plugins
             force("com.google.protobuf:protobuf-java:3.23.3")

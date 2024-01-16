@@ -101,10 +101,10 @@
 
                 this.$store.dispatch("api/loadConfig")
                     .then(apiConfig => {
-                        this.initStats(apiConfig, config);
+                        this.initStats(apiConfig, config, uid);
                     })
             },
-            initStats(apiConfig, config) {
+            initStats(apiConfig, config, uid) {
                 if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
                     return;
                 }
@@ -121,6 +121,8 @@
 
                 posthog.register_once({
                     from: 'APP',
+                    iid: config.uuid,
+                    uid: uid,
                     app: {
                         version: config.version
                     }

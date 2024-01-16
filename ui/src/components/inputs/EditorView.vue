@@ -706,7 +706,8 @@
         <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
         <div
             class="topology-display"
-            :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : viewType === editorViewTypes.TOPOLOGY ? 'vueflow': 'hide-view'"
+            v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
+            :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
         >
             <LowCodeEditor
                 v-if="flowGraph"
@@ -819,8 +820,8 @@
             v-if="[editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType)"
             :is-creating="props.isCreating"
             :is-read-only="props.isReadOnly"
-            :can-delete="canDelete"
-            :is-allowed-edit="isAllowedEdit"
+            :can-delete="canDelete()"
+            :is-allowed-edit="isAllowedEdit()"
             :have-change="haveChange"
             :flow-have-tasks="flowHaveTasks()"
             :flow-error="flowError"

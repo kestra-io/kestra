@@ -439,6 +439,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.empty());
 
                 Trigger build = Trigger.builder()
+                    .tenantId(f.getTriggerContext().getTenantId())
                     .date(nextDate.compareTo(now) < 0 ? nextDate : now)
                     .flowId(f.getFlow().getId())
                     .flowRevision(f.getFlow().getRevision())

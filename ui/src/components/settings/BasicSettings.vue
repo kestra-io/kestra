@@ -136,8 +136,8 @@
                     />
                 </el-select>
             </el-form-item>
-            <slot name="form-items"/>
         </el-form>
+        <slot name="form-items"/>
     </div>
 </template>
 

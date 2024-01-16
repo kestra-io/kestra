@@ -31,7 +31,8 @@ import java.util.concurrent.Callable;
 import jakarta.inject.Inject;
 
 @CommandLine.Command(
-    mixinStandardHelpOptions = true
+    mixinStandardHelpOptions = true,
+    showDefaultValues = true
 )
 @Slf4j
 @Introspected
@@ -45,19 +46,19 @@ abstract public class AbstractCommand implements Callable<Integer> {
     @Inject
     private StartupHookInterface startupHook;
 
-    @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.")
+    @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
     private boolean[] verbose = new boolean[0];
 
-    @CommandLine.Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES}; default: ${DEFAULT-VALUE})")
+    @CommandLine.Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
     private LogLevel logLevel = LogLevel.INFO;
 
-    @CommandLine.Option(names = {"--internal-log"}, description = "Change also log level for internal log, default: ${DEFAULT-VALUE})")
+    @CommandLine.Option(names = {"--internal-log"}, description = "Change also log level for internal log")
     private boolean internalLog = false;
 
-    @CommandLine.Option(names = {"-c", "--config"}, description = "Path to a configuration file, default: ${DEFAULT-VALUE})")
+    @CommandLine.Option(names = {"-c", "--config"}, description = "Path to a configuration file")
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
-    @CommandLine.Option(names = {"-p", "--plugins"}, description = "Path to plugins directory , default: ${DEFAULT-VALUE})")
+    @CommandLine.Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
     protected Path pluginsPath = System.getenv("KESTRA_PLUGINS_PATH") != null ? Paths.get(System.getenv("KESTRA_PLUGINS_PATH")) : null;
 
     public enum LogLevel {

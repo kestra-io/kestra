@@ -29,7 +29,7 @@ public class Executor {
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>();
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>();
     private SubflowExecutionResult joinedSubflowExecutionResult;
-    private ExecutionsRunning executionsRunning;
+    private ExecutionRunning executionRunning;
     private ExecutionQueued executionQueued;
 
     public Executor(Execution execution, Long offset) {
@@ -119,8 +119,8 @@ public class Executor {
         return this;
     }
 
-    public Executor withExecutionsRunning(ExecutionsRunning executionsRunning) {
-        this.executionsRunning = executionsRunning;
+    public Executor withExecutionRunning(ExecutionRunning executionRunning) {
+        this.executionRunning = executionRunning;
 
         return this;
     }

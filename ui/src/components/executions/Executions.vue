@@ -133,46 +133,60 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.startDate" v-if="displayColumn('state.startDate')"
-                                         sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                        <el-table-column
+                            prop="state.startDate"
+                            v-if="displayColumn('state.startDate')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('start date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.state.startDate" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.endDate" v-if="displayColumn('state.endDate')" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']"
-:label="$t('end date')">
+                        <el-table-column
+                            prop="state.endDate"
+                            v-if="displayColumn('state.endDate')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('end date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.state.endDate" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.duration" v-if="displayColumn('state.duration')"
-                                         sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                        <el-table-column
+                            prop="state.duration" v-if="displayColumn('state.duration')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('duration')"
+                        >
                             <template #default="scope">
-                                <span v-if="isRunning(scope.row)">{{
-                                        $filters.humanizeDuration(durationFrom(scope.row))
-                                }}</span>
+                                <span v-if="isRunning(scope.row)">{{$filters.humanizeDuration(durationFrom(scope.row)) }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>
 
-                        <el-table-column v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
-                                         prop="namespace"
-                                         sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('namespace')"
-                                         :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
+                        <el-table-column
+                            v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
+                            prop="namespace"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('namespace')"
+                            :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
+                        />
 
-                        <el-table-column v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
-                                         prop="flowId"
-                                         sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('flow')">
+                        <el-table-column
+                            v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
+                            prop="flowId"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('flow')"
+                        >
                             <template #default="scope">
-                                <router-link
-                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
                             </template>
@@ -184,39 +198,61 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.current" v-if="displayColumn('state.current')" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                        <el-table-column
+                            prop="state.current"
+                            v-if="displayColumn('state.current')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('state')"
+                        >
                             <template #default="scope">
                                 <status :status="scope.row.state.current" size="small" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="triggers" v-if="displayColumn('triggers')" :label="$t('triggers')"
-                                         class-name="shrink">
+                        <el-table-column
+                            prop="triggers"
+                            v-if="displayColumn('triggers')"
+                            :label="$t('triggers')"
+                            class-name="shrink"
+                        >
                             <template #default="scope">
                                 <trigger-avatar :execution="scope.row" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="flowRevision" v-if="displayColumn('flowRevision')" :label="$t('revision')"
-                                         class-name="shrink">
+                        <el-table-column
+                            prop="flowRevision"
+                            v-if="displayColumn('flowRevision')"
+                            :label="$t('revision')"
+                            class-name="shrink"
+                        >
                             <template #default="scope">
                                 <code>{{ scope.row.flowRevision }}</code>
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="inputs" v-if="displayColumn('inputs')" :label="$t('inputs')" align="center">
-                            <template #default="scope" >
+                        <el-table-column
+                            prop="inputs"
+                            v-if="displayColumn('inputs')"
+                            :label="$t('inputs')"
+                            align="center"
+                        >
+                            <template #default="scope">
                                 <el-tooltip>
                                     <template #content>
                                         <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, '\t') }}</pre>
                                     </template>
-                                    <Import v-if="scope.row.inputs" class="fs-5"/>
+                                    <Import v-if="scope.row.inputs" class="fs-5" />
                                 </el-tooltip>
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="taskRunList.taskId" v-if="displayColumn('taskRunList.taskId')" :label="$t('task id')">
+                        <el-table-column
+                            prop="taskRunList.taskId"
+                            v-if="displayColumn('taskRunList.taskId')"
+                            :label="$t('task id')"
+                        >
                             <template #header="scope">
                                 <el-tooltip :content="$t('taskid column details')">
                                     {{ scope.column.label }}
@@ -232,8 +268,7 @@
 
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
-                                <router-link
-                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
                                     </kicon>

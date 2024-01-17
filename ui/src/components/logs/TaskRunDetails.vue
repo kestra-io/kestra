@@ -401,9 +401,6 @@
                     });
                 }
             },
-            downloadName(currentTaskRunId) {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
-            },
             uniqueTaskRunDisplayFilter(currentTaskRun) {
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);
             },

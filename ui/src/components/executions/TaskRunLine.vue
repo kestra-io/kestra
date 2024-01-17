@@ -238,6 +238,9 @@
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
             },
+            downloadName(currentTaskRunId) {
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
+            },
             selectedAttempt(taskRun) {
                 return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0];
             },

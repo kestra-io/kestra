@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractApiCommand extends AbstractCommand {
-    @CommandLine.Option(names = {"--server"}, description = " Kestra server url", defaultValue = "http://localhost:8080")
+    @CommandLine.Option(names = {"--server"}, description = "Kestra server url", defaultValue = "http://localhost:8080")
     protected URL server;
 
-    @CommandLine.Option(names = {"--headers"}, description = "Headers to add to the request")
+    @CommandLine.Option(names = {"--headers"}, paramLabel = "<name=value>", description = "Headers to add to the request")
     protected Map<CharSequence, CharSequence> headers;
 
-    @CommandLine.Option(names = {"--user"}, description = "<user:password> Server user and password")
+    @CommandLine.Option(names = {"--user"}, paramLabel = "<user:password>", description = "Server user and password")
     protected String user;
 
     @CommandLine.Option(names = {"--tenant"}, description = "Tenant identifier (EE only, when multi-tenancy is enabled)")

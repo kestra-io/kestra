@@ -62,7 +62,7 @@ abstract public class PluginUtilsService {
                         tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
                     }
 
-                    result.put(s, "{{workingDir}}/" + tempFile.getName());
+                    result.put(s, additionalVars.get("workingDir") + "/" + tempFile.getName());
                 }));
 
             if (!isDir) {

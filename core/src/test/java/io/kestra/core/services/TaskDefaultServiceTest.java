@@ -85,6 +85,8 @@ class TaskDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
+        assertThat(((DefaultTriggerTester) injected.getTriggers().get(0)).getSet(), is(123));
+        assertThat(((VariableCondition) injected.getTriggers().get(0).getConditions().get(0)).getExpression(), is("{{ test }}"));
     }
 
     @Test
@@ -115,6 +117,47 @@ class TaskDefaultServiceTest {
         Flow injected = taskDefaultService.injectDefaults(flow);
 
         assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(123));
+    }
+
+    @Test
+    public void prefix() {
+        DefaultTester task = DefaultTester.builder()
+            .id("test")
+            .type(DefaultTester.class.getName())
+            .set(666)
+            .build();
+
+        Flow flow = Flow.builder()
+            .triggers(List.of(
+                DefaultTriggerTester.builder()
+                    .id("trigger")
+                    .type(DefaultTriggerTester.class.getName())
+                    .conditions(List.of(VariableCondition.builder()
+                        .type(VariableCondition.class.getName())
+                        .build())
+                    )
+                    .build()
+            ))
+            .tasks(Collections.singletonList(task))
+            .taskDefaults(List.of(
+                new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
+                    "set", 789
+                )),
+                new TaskDefault("io.kestra.core.services.", false, ImmutableMap.of(
+                    "value", 2,
+                    "set", 456,
+                    "arrays", Collections.singletonList(1)
+                )),
+                new TaskDefault("io.kestra.core.services2.", false, ImmutableMap.of(
+                    "value", 3
+                ))
+            ))
+            .build();
+
+        Flow injected = taskDefaultService.injectDefaults(flow);
+
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(666));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(2));
     }
 
     @SuperBuilder

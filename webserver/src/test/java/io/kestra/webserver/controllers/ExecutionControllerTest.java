@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
@@ -36,8 +37,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
@@ -45,14 +50,21 @@ import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionControllerTest extends JdbcH2ControllerTest {
+    public static final String URL_LABEL_VALUE = "https://some-url.com";
+    public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
     @Inject
     EmbeddedServer embeddedServer;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
@@ -72,7 +84,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("int", "42")
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
-        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
+        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application-test.yml")).getPath())
         .build();
 
     @Test
@@ -88,7 +100,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2" + (wait ? "&wait=true" : ""), requestBody)
+                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2,url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -96,7 +108,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     private MultipartBody createInputsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("application.yml")
+            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
         ).getPath());
 
         File logbackFile = new File(Objects.requireNonNull(
@@ -130,11 +142,12 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().containsKey("bool"), is(true));
         assertThat(result.getInputs().get("bool"), nullValue());
-        assertThat(result.getLabels().size(), is(4));
+        assertThat(result.getLabels().size(), is(5));
         assertThat(result.getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
         assertThat(result.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
         assertThat(result.getLabels().get(2), is(new Label("a", "label-1")));
         assertThat(result.getLabels().get(3), is(new Label("b", "label-2")));
+        assertThat(result.getLabels().get(4), is(new Label("url", URL_LABEL_VALUE)));
     }
 
     @Test
@@ -433,7 +446,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             FileMetas.class
         ).blockingFirst();
 
-        assertThat(metas.getSize(), equalTo(2876L));
+        assertThat(metas.getSize(), equalTo(3002L));
 
         String newExecutionId = IdUtils.create();
 
@@ -660,5 +673,60 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(executions.getTotal(), is(0L));
 
+        triggerInputsFlowExecution(false);
+
+        // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
+        executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search?page=1&size=25&labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(1L));
+    }
+
+    @Test
+    void kill() throws TimeoutException, InterruptedException {
+        // Run execution until it is paused
+        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
+        assertThat(runningExecution.getState().isRunning(), is(true));
+
+        // listen to the execution queue
+        CountDownLatch killingLatch = new CountDownLatch(1);
+        CountDownLatch killedLatch = new CountDownLatch(1);
+        executionQueue.receive(e -> {
+            if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLING) {
+                killingLatch.countDown();
+            }
+            if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLED) {
+                killedLatch.countDown();
+            }
+        });
+
+        // listen to the executionkilled queue
+        CountDownLatch executionKilledLatch = new CountDownLatch(1);
+        killQueue.receive(e -> {
+            if (e.getLeft().getExecutionId().equals(runningExecution.getId())) {
+                executionKilledLatch.countDown();
+            }
+        });
+
+        // kill the execution
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/executions/" + runningExecution.getId() + "/kill"));
+        assertThat(killResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        // check that the execution has been set to killing then killed
+        assertTrue(killingLatch.await(10, TimeUnit.SECONDS));
+        assertTrue(killedLatch.await(10, TimeUnit.SECONDS));
+        //check that an executionkilled message has been sent
+        assertTrue(executionKilledLatch.await(10, TimeUnit.SECONDS));
+
+        // retrieve the execution from the API and check that the task has been set to killed
+        Thread.sleep(500);
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + runningExecution.getId()),
+            Execution.class);
+        assertThat(execution.getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
     }
 }

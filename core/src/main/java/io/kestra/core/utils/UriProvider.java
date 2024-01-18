@@ -28,14 +28,27 @@ public class UriProvider {
     }
 
     public URI executionUrl(Execution execution) {
-        return this.build("/ui/executions/" + execution.getNamespace() + "/" + execution.getFlowId() + "/" + execution.getId());
+        return this.build("/ui/" +
+            (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
+            "executions/" +
+            execution.getNamespace() + "/" +
+            execution.getFlowId() + "/" +
+            execution.getId());
     }
 
     public URI flowUrl(Execution execution) {
-        return this.build("/ui/flows/" + execution.getNamespace() + "/" + execution.getFlowId());
+        return this.build("/ui/" +
+            (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
+            "flows/" +
+            execution.getNamespace() + "/" +
+            execution.getFlowId());
     }
 
     public URI flowUrl(Flow flow) {
-        return this.build("/ui/flows/" + flow.getNamespace() + "/" + flow.getId());
+        return this.build("/ui/" +
+            (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
+            "flows/" +
+            flow.getNamespace() + "/" +
+            flow.getId());
     }
 }

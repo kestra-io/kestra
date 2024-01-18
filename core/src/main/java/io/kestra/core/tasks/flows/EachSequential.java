@@ -41,40 +41,54 @@ import java.util.Optional;
         "The task list will be executed sequentially for each item.\n\n" +
         "We highly recommend triggering a subflow for each value. " +
         "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practice) " +
-        "and the [following Blueprint](https://demo.kestra.io/ui/blueprints/community/128) for more details."
+        "and the [following Blueprint](https://kestra.io/blueprints/128-run-a-subflow-for-each-value-in-parallel-and-wait-for-their-completion-recommended-pattern-to-iterate-over-hundreds-or-thousands-of-list-items) " +
+        "for more details."
 )
 @Plugin(
     examples = {
         @Example(
+            full = true,
             code = {
-                "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "id: each-sequential",
+                "namespace: io.kestra.tests",
+                "",
                 "tasks:",
-                "  - id: each-value",
-                "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "  - id: each-sequential",
+                "    type: io.kestra.core.tasks.flows.EachSequential",
+                "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "    tasks:",
+                "      - id: each-value",
+                "        type: io.kestra.core.tasks.debugs.Return",
+                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),
         @Example(
+            full = true,
             code = {
-                "value: ",
-                "- value 1",
-                "- value 2",
-                "- value 3",
+                "id: each-sequential",
+                "namespace: io.kestra.tests",
+                "",
                 "tasks:",
-                "  - id: each-value",
-                "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "  - id: each-sequential",
+                "    type: io.kestra.core.tasks.flows.EachSequential",
+                "    value: ",
+                "      - value 1",
+                "      - value 2",
+                "      - value 3",
+                "    tasks:",
+                "      - id: each-value",
+                "        type: io.kestra.core.tasks.debugs.Return",
+                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),
     }
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
-    @NotBlank
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The list of values for this task",
-        description = "The value car be passed as a String, a list of String, or a list of objects",
+        title = "The list of values for this task.",
+        description = "The value car be passed as a string, a list of strings, or a list of objects.",
         anyOf = {String.class, Object[].class}
     )
     private Object value;
@@ -103,7 +117,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        if (childTasks.size() == 0) {
+        if (childTasks.isEmpty()) {
             return Optional.of(State.Type.SUCCESS);
         }
 
@@ -112,7 +126,8 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
-            runContext
+            runContext,
+            this.isAllowFailure()
         );
     }
 

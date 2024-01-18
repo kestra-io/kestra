@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 public interface FlowableTask <T extends Output> {
     @Schema(
-        title = "List of tasks to run if any tasks failed on this FlowableTask"
+        title = "List of tasks to run if any tasks failed on this FlowableTask."
     )
     @PluginProperty
     List<Task> getErrors();
@@ -53,6 +53,11 @@ public interface FlowableTask <T extends Output> {
     List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException;
 
     /**
+     * Whether the task is allowed to fail.
+     */
+    boolean isAllowFailure();
+
+    /**
      * Resolve the state of a flowable task.
      */
     default Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
@@ -61,7 +66,8 @@ public interface FlowableTask <T extends Output> {
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
-            runContext
+            runContext,
+            isAllowFailure()
         );
     }
 

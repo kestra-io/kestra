@@ -1,5 +1,5 @@
 ---
-title: {{shortName}}
+title: {{shortName}} {{~#if deprecated }} - 🔒 Deprecated{{~/if}}
 editLink: false
 {{#if docDescription}}
 description: {{ json docDescription }}
@@ -109,7 +109,7 @@ icon: {{ icon }}
 {{~/inline~}}
 {{!-- {{                 Main doc                 }} --}}
 <h1>
-    {{#if icon ~}}<img width="25" src="data:image/svg+xml;base64,{{icon}}" alt="{{shortName}}" />{{/if }} {{shortName}} {{~#if deprecated }}- 🔒 Deprecated{{~/if}}
+    {{#if icon ~}}<img width="25" src="data:image/svg+xml;base64,{{icon}}" alt="{{shortName}}" />{{/if }} {{shortName}} {{~#if deprecated }} - 🔒 Deprecated{{~/if}}
 </h1>
 
 ```yaml

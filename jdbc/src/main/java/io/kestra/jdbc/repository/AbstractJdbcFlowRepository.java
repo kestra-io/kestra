@@ -61,14 +61,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             } catch (DeserializationException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
-                    return FlowWithException.builder()
-                        .id(jsonNode.get("id").asText())
-                        .tenantId(jsonNode.get("tenant_id") != null ? jsonNode.get("tenant_id").asText() : null)
-                        .namespace(jsonNode.get("namespace").asText())
-                        .revision(jsonNode.get("revision").asInt())
-                        .exception(e.getMessage())
-                        .tasks(List.of())
-                        .build();
+                    return FlowWithException.from(jsonNode, e).orElseThrow(() -> e);
                 } catch (JsonProcessingException ex) {
                     throw new DeserializationException(ex, source);
                 }
@@ -224,6 +217,28 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .and(this.defaultFilter(tenantId));
 
                 return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
+    public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record2<String, String>> select = DSL
+                    .using(configuration)
+                    .select(
+                        field("source_code", String.class),
+                        field("value", String.class)
+                    )
+                    .from(fromLastRevision(true))
+                    .where(field("namespace").eq(namespace))
+                    .and(this.defaultFilter(tenantId));
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    jdbcRepository.map(record),
+                    record.get("source_code", String.class)
+                ));
             });
     }
 

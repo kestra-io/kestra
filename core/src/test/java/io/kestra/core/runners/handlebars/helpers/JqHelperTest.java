@@ -26,7 +26,7 @@ class JqHelperTest {
             "third", "{{end}}"
         );
 
-        String render = variableRenderer.render("{{ jq first \".second.third\" }}", vars);
+        String render = variableRenderer.render("{{ jq (eval '{{first}}') \".second.third\" }}", vars);
 
         assertThat(render, is("[\"awesome\"]"));
     }

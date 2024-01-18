@@ -1,0 +1,23 @@
+id: task-allow-failure-executable-foreachitem
+namespace: io.kestra.tests
+
+inputs:
+  - name: file
+    type: FILE
+
+tasks:
+  - id: each
+    type: io.kestra.core.tasks.flows.ForEachItem
+    allowFailure: true
+    items: "{{ inputs.file }}"
+    batch:
+      rows: 4
+    namespace: io.kestra.tests
+    flowId: for-each-item-subflow-failed
+    wait: true
+    transmitFailed: true
+    inputs:
+      items: "{{ taskrun.items }}"
+  - id: log-allowed
+    type: io.kestra.core.tasks.log.Log
+    message: I'm allowed

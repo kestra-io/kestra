@@ -26,7 +26,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to have at least once conditions validated"
+    title = "Condition to have at least one condition validated."
 )
 @Plugin(
     examples = {
@@ -48,8 +48,8 @@ public class OrCondition extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
     @Schema(
-        title = "The list of conditions to exclude",
-        description = "If any conditions is true, it will allow events."
+        title = "The list of conditions to validate.",
+        description = "If any condition is true, it will allow the event's execution."
     )
     @PluginProperty
     private List<Condition> conditions;

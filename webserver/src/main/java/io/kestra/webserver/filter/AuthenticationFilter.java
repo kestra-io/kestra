@@ -65,6 +65,7 @@ public class AuthenticationFilter implements HttpServerFilter {
         return Flowable.fromPublisher(chain.proceed(request));
     }
 
+    @SuppressWarnings("rawtypes")
     private boolean isManagementEndpoint(HttpRequest<?> request) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?,?> method) {

@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially, one after the other, in the order they are defined",
+    title = "Run tasks sequentially, one after the other, in the order they are defined.",
     description = "Used to visually group tasks."
 )
 @Plugin(
@@ -52,13 +52,13 @@ import java.util.stream.Stream;
                 "    tasks:",
                 "      - id: 1st",
                 "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "        format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
                 "      - id: 2nd",
                 "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{task.id}} > {{taskrun.id}}\"",
+                "        format: \"{{ task.id }} > {{ taskrun.id }}\"",
                 "  - id: last",
                 "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
     }

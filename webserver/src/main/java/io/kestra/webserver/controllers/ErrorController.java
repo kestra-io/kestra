@@ -14,6 +14,7 @@ import io.micronaut.http.annotation.Error;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
+import io.micronaut.web.router.exceptions.UnsatisfiedBodyRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -128,6 +129,12 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidFormatException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
+    }
+
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, UnsatisfiedBodyRouteException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid route params");
     }
 
     @Error(global = true)

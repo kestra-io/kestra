@@ -2,17 +2,15 @@ package io.kestra.cli.commands.namespaces.files;
 
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.AbstractValidateCommand;
+import io.kestra.core.utils.KestraIgnore;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import lombok.extern.slf4j.Slf4j;
-import nl.basjes.gitignore.GitIgnore;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -49,12 +47,11 @@ public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
                 client.toBlocking().exchange(this.requestOptions(HttpRequest.DELETE(apiUri("/namespaces/") + namespace + "/files?path=" + to, null)));
             }
 
-            GitIgnore gitIgnore = parseKestraIgnore(from);
+            KestraIgnore kestraIgnore = new KestraIgnore(from);
 
             List<Path> paths = files
                 .filter(Files::isRegularFile)
-                .filter(path -> !path.endsWith(KESTRA_IGNORE_FILE))
-                .filter(path -> !Boolean.TRUE.equals(gitIgnore.isIgnoredFile(path.toString())))
+                .filter(path -> !kestraIgnore.isIgnoredFile(path.toString(), true))
                 .toList();
             paths.forEach(path -> {
                 MultipartBody body = MultipartBody.builder()
@@ -78,13 +75,5 @@ public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
         }
 
         return 0;
-    }
-
-    private GitIgnore parseKestraIgnore(Path directory) throws IOException {
-        File kestraIgnoreFile = Path.of(directory.toString(), KESTRA_IGNORE_FILE).toFile();
-        if (!kestraIgnoreFile.exists()) {
-            return new GitIgnore("");
-        }
-        return new GitIgnore(kestraIgnoreFile);
     }
 }

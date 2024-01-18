@@ -48,8 +48,7 @@ export default {
                         ...{
                             title: title || self.$t("saved"),
                             message: this._wrap(message),
-                            position: 'top-right',
-                            offset: 65,
+                            position: 'bottom-right',
                             type: "success",
                         },
                         ...(options || {})
@@ -60,8 +59,7 @@ export default {
                         ...{
                             title: title || self.$t("deleted"),
                             message: this._wrap(self.$t("deleted confirm", {name: name})),
-                            position: 'top-right',
-                            offset: 65,
+                            position: 'bottom-right',
                             type: "success",
                         },
                         ...(options || {})
@@ -72,8 +70,7 @@ export default {
                         ...{
                             title: title || self.$t("success"),
                             message: this._wrap(message),
-                            position: 'top-right',
-                            offset: 65,
+                            position: 'bottom-right',
                             type: "success",
                         },
                         ...(options || {})
@@ -84,8 +81,7 @@ export default {
                         ...{
                             title: title || self.$t("warning"),
                             message: this._wrap(message),
-                            position: 'top-right',
-                            offset: 65,
+                            position: 'bottom-right',
                             type: "warning",
                         },
                         ...(options || {})
@@ -96,8 +92,7 @@ export default {
                         ...{
                             title: title || self.$t("error"),
                             message: this._wrap(message),
-                            position: 'top-right',
-                            offset: 65,
+                            position: 'bottom-right',
                             type: "error",
                             duration: 0,
                             customClass: "large"

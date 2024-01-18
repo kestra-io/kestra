@@ -94,8 +94,8 @@ abstract public class TestsUtils {
 
     private static Flow mockFlow(StackTraceElement caller) {
         return Flow.builder()
-            .namespace(caller.getClassName())
-            .id(caller.getMethodName())
+            .namespace(caller.getClassName().toLowerCase())
+            .id(caller.getMethodName().toLowerCase())
             .revision(1)
             .build();
     }

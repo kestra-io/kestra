@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface OutputFilesInterface {
     @Schema(
-        title = "The files from the local filesystem to send to the internal storage.",
-        description = "Must be a list of [Glob](https://en.wikipedia.org/wiki/Glob_(programming)) expressions relative to the current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`"
+        title = "The files from the local filesystem to send to Kestra's internal storage.",
+        description = "Must be a list of [glob](https://en.wikipedia.org/wiki/Glob_(programming)) expressions relative to the current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`."
     )
     @PluginProperty(dynamic = true)
     List<String> getOutputFiles();

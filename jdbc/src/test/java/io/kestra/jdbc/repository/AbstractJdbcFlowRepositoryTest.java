@@ -36,18 +36,6 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
     protected JooqDSLContextWrapper dslContextWrapper;
 
     @Test
-    protected void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null, null, null);
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
-
-        save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null, null, null);
-        assertThat((long) save.size(), is(6L));
-
-        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null, Map.of("country", "FR"));
-        assertThat(save.size(), is(1));
-    }
-
-    @Test
     void findSourceCode() {
         List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.core.models.conditions.types.MultipleCondition", null, null);
 

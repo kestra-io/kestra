@@ -13,9 +13,9 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Template;
@@ -37,11 +37,7 @@ import org.junit.jupiter.api.TestInstance;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import javax.validation.ConstraintViolationException;
 
@@ -240,14 +236,34 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByNamespaceWithSource() {
+        Flow flow = builder()
+            .revision(3)
+            .build();
+        String flowSource = "# comment\n" + flow.generateSource();
+        flowRepository.create(flow, flowSource, taskDefaultService.injectDefaults(flow));
+
+        List<FlowWithSource> save = flowRepository.findByNamespaceWithSource(null, flow.getNamespace());
+        assertThat((long) save.size(), is(1L));
+
+        assertThat(save.get(0).getSource(), is(FlowService.cleanupSource(flowSource)));
+    }
+
+    @Test
     void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, 10),null, null, "io.kestra.tests", Collections.emptyMap());
-        assertThat((long) save.size(), is(10L));
+        List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), null, null, null, null);
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+
+        save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), null, null, null, null);
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
         save = flowRepository.find(Pageable.from(1),null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
 
-        save = flowRepository.find(Pageable.from(1),null, null, "io.kestra.tests", Map.of("key1", "value1"));
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null, Map.of("country", "FR"));
+        assertThat(save.size(), is(1));
+
+        save = flowRepository.find(Pageable.from(1),null, null, "io.kestra.tests", Map.of("key2", "value2"));
         assertThat((long) save.size(), is(1L));
 
         save = flowRepository.find(Pageable.from(1),null, null, "io.kestra.tests", Map.of("key1", "value2"));

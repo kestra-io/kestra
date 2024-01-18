@@ -1,0 +1,16 @@
+id: task-allow-failure-executable-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: fail
+    type: io.kestra.core.tasks.flows.Subflow
+    allowFailure: true
+    namespace: io.kestra.tests
+    flowId: for-each-item-subflow-failed
+    inputs:
+      items: "You will fail"
+    transmitFailed: true
+    wait: true
+  - id: log
+    type: io.kestra.core.tasks.log.Log
+    message: I'm allowed

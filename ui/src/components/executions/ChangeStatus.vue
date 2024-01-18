@@ -120,11 +120,11 @@
                             this.$router.push({
                                 name: "executions/update",
                                 params: {
-                                    ...{
-                                        namespace: execution.namespace,
-                                        flowId: execution.flowId,
-                                        id: execution.id
-                                    }, ...{tab: "gantt"}
+                                    namespace: execution.namespace,
+                                    flowId: execution.flowId,
+                                    id: execution.id,
+                                    tab: "gantt",
+                                    tenant: this.$route.params.tenant
                                 }
                             });
                         }
@@ -168,7 +168,7 @@
                     return false;
                 }
 
-                if (this.taskRun.state.current === "PAUSED") {
+                if (this.taskRun.state.current === "PAUSED" || this.taskRun.state.current === "CREATED") {
                     return true;
                 }
 

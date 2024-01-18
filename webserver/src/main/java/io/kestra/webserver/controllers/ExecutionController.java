@@ -404,7 +404,7 @@ public class ExecutionController {
 
         var flow = maybeFlow.get();
         if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute disabled flow");
+            throw new IllegalStateException("Cannot execute a disabled flow");
         }
 
         if (flow instanceof FlowWithException fwe) {
@@ -423,6 +423,7 @@ public class ExecutionController {
                     return webhookKey.equals(key);
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
+                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
                     return false;
                 }
             })
@@ -526,14 +527,8 @@ public class ExecutionController {
     }
 
     private List<Label> parseLabels(List<String> labels) {
-        return labels == null ? null : labels.stream()
-            .map(label ->  {
-                String[] split = label.split(":");
-                if (split.length != 2) {
-                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid labels parameter");
-                }
-                return new Label(split[0], split[1]);
-            })
+        return labels == null ? null : RequestUtils.toMap(labels).entrySet().stream()
+            .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
     }
 
@@ -607,7 +602,7 @@ public class ExecutionController {
         }
 
         return HttpResponse.ok(FileMetas.builder()
-            .size(storageInterface.size(tenantService.resolveTenant(), path))
+            .size(storageInterface.getAttributes(tenantService.resolveTenant(), path).getSize())
             .build()
         );
     }
@@ -1009,12 +1004,11 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue URI path,
         @Parameter(description = "The max row returns") @QueryValue @Nullable Integer maxRows,
-        @Parameter(description = "The file encoding as Java charset name. Defaults to UTF-8", example = "ISO-8859-1") @QueryValue @Nullable String encoding
+        @Parameter(description = "The file encoding as Java charset name. Defaults to UTF-8", example = "ISO-8859-1") @QueryValue(defaultValue = "UTF-8") String encoding
     ) throws IOException {
         this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
-        InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path);
         Optional<Charset> charset;
 
         try {
@@ -1023,13 +1017,15 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        FileRender fileRender = FileRenderBuilder.of(
-            extension,
-            fileStream,
-            charset,
-            maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
-        );
+        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)){
+            FileRender fileRender = FileRenderBuilder.of(
+                extension,
+                fileStream,
+                charset,
+                maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
+            );
 
-        return HttpResponse.ok(fileRender);
+            return HttpResponse.ok(fileRender);
+        }
     }
 }

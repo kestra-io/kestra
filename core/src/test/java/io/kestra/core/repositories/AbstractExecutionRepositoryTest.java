@@ -25,8 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -39,11 +38,15 @@ public abstract class AbstractExecutionRepositoryTest {
     protected ExecutionRepositoryInterface executionRepository;
 
     public static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
+        return builder(state, flowId, NAMESPACE);
+    }
+
+    public static Execution.ExecutionBuilder builder(State.Type state, String flowId, String namespace) {
         State finalState = randomDuration(state);
 
         Execution.ExecutionBuilder execution = Execution.builder()
             .id(FriendlyId.createFriendlyId())
-            .namespace(NAMESPACE)
+            .namespace(namespace)
             .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)
             .state(finalState);
@@ -110,7 +113,14 @@ public abstract class AbstractExecutionRepositoryTest {
                 .build();
         }
 
-        executionRepository.save(builder(State.Type.RUNNING, null).labels(List.of(new Label("key", "value"))).trigger(executionTrigger).build());
+        executionRepository.save(builder(State.Type.RUNNING, null)
+            .labels(List.of(
+                new Label("key", "value"),
+                new Label("key2", "value2")
+            ))
+            .trigger(executionTrigger)
+            .build()
+        );
         for (int i = 1; i < 28; i++) {
             executionRepository.save(builder(
                 i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
@@ -132,6 +142,9 @@ public abstract class AbstractExecutionRepositoryTest {
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value"), null);
         assertThat(executions.getTotal(), is(1L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value2"), null);
+        assertThat(executions.getTotal(), is(0L));
     }
 
     @Test
@@ -331,9 +344,21 @@ public abstract class AbstractExecutionRepositoryTest {
                 List.of(new State.History(State.Type.RUNNING, executionNow)))
             ).build();
 
+        String anotherNamespace = "another";
+        Execution executionSuccessAnotherNamespace = builder(State.Type.SUCCESS, FLOW, anotherNamespace)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(new State.History(
+                    State.Type.SUCCESS,
+                    executionNow.minus(30, ChronoUnit.MINUTES)
+                )))
+            ).build();
+
         executionRepository.save(executionOld);
         executionRepository.save(executionFailed);
         executionRepository.save(executionRunning);
+
+        executionRepository.save(executionSuccessAnotherNamespace);
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -343,12 +368,24 @@ public abstract class AbstractExecutionRepositoryTest {
                 List.of(
                     ExecutionRepositoryInterface.FlowFilter.builder()
                         .id(FLOW)
-                        .namespace(NAMESPACE).build()
+                        .namespace(NAMESPACE).build(),
+                    ExecutionRepositoryInterface.FlowFilter.builder()
+                        .id(FLOW)
+                        .namespace(anotherNamespace).build()
                 )
         );
 
-        assertThat(result.size(), is(1));
-        assertThat(result.get(0).getState(), is(executionFailed.getState()));
+        assertThat(result.size(), is(2));
+        assertThat(result, containsInAnyOrder(
+            allOf(
+                hasProperty("state", hasProperty("current", is(State.Type.FAILED))),
+                hasProperty("namespace", is(NAMESPACE))
+            ),
+            allOf(
+                hasProperty("state", hasProperty("current", is(State.Type.SUCCESS))),
+                hasProperty("namespace", is(anotherNamespace))
+            )
+        ));
     }
 
     @Test

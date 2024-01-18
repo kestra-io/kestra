@@ -21,6 +21,7 @@
                         v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
                         :execution-id="currentTaskRun.executionId"
                         :subflows-status="currentTaskRun?.outputs?.iterations"
+                        :max="currentTaskRun.outputs.numberOfBatches"
                     />
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
@@ -42,7 +43,7 @@
                                     :level="level"
                                     :log="item"
                                     :exclude-metas="excludeMetas"
-                                    v-if="filter === '' || item.message.toLowerCase().includes(filter)"
+                                    v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <task-run-details
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && currentTaskRun.outputs?.executionId"
@@ -53,6 +54,8 @@
                                     :allow-auto-expand-subflows="false"
                                     :target-execution-id="currentTaskRun.outputs.executionId"
                                     :class="$el.classList.contains('even') ? '' : 'even'"
+                                    :show-progress-bar="showProgressBar"
+                                    :show-logs="showLogs"
                                 />
                             </DynamicScrollerItem>
                         </template>
@@ -264,7 +267,7 @@
             },
             logsWithIndexByAttemptUid() {
                 const indexedLogs = this.logs
-                    .filter(logLine => this.filter === "" || logLine.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
+                    .filter(logLine => this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
@@ -314,6 +317,16 @@
                     (this.shownAttemptsUid.includes(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])) &&
                         this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
                     this.showLogs
+            },
+            followExecution(executionId) {
+                this.$store
+                    .dispatch("execution/followExecution", {id: executionId})
+                    .then(sse => {
+                        this.executionSSE = sse;
+                        this.executionSSE.onmessage = async (event) => {
+                            this.followedExecution = JSON.parse(event.data);
+                        }
+                    });
             },
             followLogs(executionId) {
                 this.$store
@@ -418,11 +431,14 @@
             toggleShowAttempt(attemptUid) {
                 this.shownAttemptsUid = _xor(this.shownAttemptsUid, [attemptUid])
             },
-            swapDisplayedAttempt(taskRunId, newDisplayedAttemptUid) {
+            swapDisplayedAttempt(event) {
+                const {taskRunId, attemptNumber: newDisplayedAttemptNumber} = event;
                 this.shownAttemptsUid = this.shownAttemptsUid.map(attemptUid => attemptUid.startsWith(`${taskRunId}-`)
-                    ? this.attemptUid(taskRunId, newDisplayedAttemptUid)
+                    ? this.attemptUid(taskRunId, newDisplayedAttemptNumber)
                     : attemptUid
                 );
+
+                this.selectedAttemptNumberByTaskRunId[taskRunId] = newDisplayedAttemptNumber;
             },
             taskType(taskRun) {
                 const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);

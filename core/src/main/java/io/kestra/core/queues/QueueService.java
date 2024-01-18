@@ -35,8 +35,10 @@ public class QueueService {
             return ((Trigger) object).uid();
         } else if (object.getClass() == MultipleConditionWindow.class) {
             return ((MultipleConditionWindow) object).uid();
-        } else if (object.getClass() == WorkerTaskExecution.class) {
-            return ((WorkerTaskExecution) object).getExecution().getId();
+        } else if (object.getClass() == SubflowExecution.class) {
+            return ((SubflowExecution<?>) object).getExecution().getId();
+        } else if (object.getClass() == SubflowExecutionResult.class) {
+            return ((SubflowExecutionResult) object).getParentTaskRun().getId();
         } else if (object.getClass() == ExecutionDelay.class) {
             return ((ExecutionDelay) object).uid();
         } else if (object.getClass() == ExecutorState.class) {

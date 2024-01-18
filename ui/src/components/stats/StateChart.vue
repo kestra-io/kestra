@@ -52,7 +52,6 @@
                 required: false,
                 default: undefined
             },
-
         },
         setup(props) {
             const moment = getCurrentInstance().appContext.config.globalProperties.$moment;
@@ -76,7 +75,7 @@
                             route,
                             {
                                 date: e.chart.data.labels[elements[0].index],
-                                status: e.chart.data.datasets[elements[0].datasetIndex].label,
+                                state: e.chart.data.datasets[elements[0].datasetIndex].label,
                                 namespace: props.namespace,
                                 flowId: props.flowId
                             }

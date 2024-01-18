@@ -28,6 +28,10 @@ public class Await {
     }
 
     public static void until(BooleanSupplier condition, Duration sleep, Duration timeout) throws TimeoutException {
+        until(null, condition, sleep, timeout);
+    }
+
+    public static void until(Supplier<String> errorMessageInCaseOfFailure, BooleanSupplier condition, Duration sleep, Duration timeout) throws TimeoutException {
         if (sleep == null) {
             sleep = defaultSleep;
         }
@@ -35,7 +39,11 @@ public class Await {
         long start = System.currentTimeMillis();
         while (!condition.getAsBoolean()) {
             if (System.currentTimeMillis() - start > timeout.toMillis()) {
-                throw new TimeoutException(String.format("Await failed to terminate within %s", timeout));
+                throw new TimeoutException(String.format(
+                    "Await failed to terminate within %s.%s",
+                    timeout,
+                    errorMessageInCaseOfFailure == null ? "" : " " + errorMessageInCaseOfFailure.get()
+                ));
             } else {
                 try {
                     Thread.sleep(sleep.toMillis());

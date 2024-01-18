@@ -73,7 +73,7 @@
             return {
                 tabIndex: undefined,
                 previousFlow: undefined,
-                depedenciesCount: undefined,
+                dependenciesCount: undefined,
                 expandedSubflows: [],
                 deleted: false
             };
@@ -102,7 +102,7 @@
                             this.$http
                                 .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
                                 .then(response => {
-                                    this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
+                                    this.dependenciesCount = response.data && response.data.nodes ? [...new Set(response.data.nodes.map(r => r.uid))].length - 1 : 0;
                                 })
                         }
                     });
@@ -141,10 +141,6 @@
                         name: "executions",
                         component: FlowExecutions,
                         title: this.$t("executions"),
-                        props: {
-                            expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted
-                        },
                     });
                 }
 
@@ -197,7 +193,7 @@
                         name: "dependencies",
                         component: FlowDependencies,
                         title: this.$t("dependencies"),
-                        count: this.depedenciesCount===0?0:this.depedenciesCount-1
+                        count: this.dependenciesCount
                     })
                 }
                 return tabs;
@@ -218,7 +214,8 @@
                     name: "flows/update", params: {
                         namespace: this.flow.namespace,
                         id: this.flow.id,
-                        tab: "editor"
+                        tab: "editor",
+                        tenant: this.$route.params.tenant
                     }
                 })
             },

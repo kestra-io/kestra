@@ -29,7 +29,7 @@ public abstract class AbstractState extends Task {
     private static final TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
 
     @Schema(
-        title = "The name of state file"
+        title = "The name of the state file."
     )
     @PluginProperty(dynamic = true)
     @NotNull
@@ -37,7 +37,7 @@ public abstract class AbstractState extends Task {
     protected String name = "default";
 
     @Schema(
-        title = "Share state for the current namespace",
+        title = "Share state for the current namespace.",
         description = "By default, the state is isolated by namespace **and** flow, setting to `true` will allow to share the state between the **same** namespace"
     )
     @PluginProperty(dynamic = true)
@@ -45,8 +45,8 @@ public abstract class AbstractState extends Task {
     private final Boolean namespace = false;
 
     @Schema(
-        title = "Isolate with `taskrun.value` the state",
-        description = "By default, the `taskrun.value` (during iteration with each) will isolated the state, setting to `false` will allow to use the same one for iteration."
+        title = "Isolate the state with `taskrun.value`.",
+        description = "By default, the state will be isolated with `taskrun.value` (during iteration with each). Setting to `false` will allow using the same state for every run of the iteration."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
@@ -54,9 +54,9 @@ public abstract class AbstractState extends Task {
 
 
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue);
-
-        return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
+        try (InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue)) {
+            return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
+        }
     }
 
     protected Pair<URI, Map<String, Object>> merge(RunContext runContext, Map<String, Object> map) throws IllegalVariableEvaluationException, IOException {

@@ -1,7 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Slugify;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
@@ -11,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -44,12 +44,16 @@ public class ReadFileFunction implements Function {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         URI namespaceFile = URI.create(storageInterface.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
-        return new String(storageInterface.get(flow.get("tenantId"), namespaceFile).readAllBytes(), StandardCharsets.UTF_8);
+        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), namespaceFile)) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
+    @SuppressWarnings("unchecked")
     private String readFromInternalStorageUri(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");
@@ -69,7 +73,9 @@ public class ReadFileFunction implements Function {
             }
         }
         URI internalStorageFile = URI.create(path);
-        return new String(storageInterface.get(flow.get("tenantId"), internalStorageFile).readAllBytes(), StandardCharsets.UTF_8);
+        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), internalStorageFile)) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     private boolean validateFileUri(String namespace, String flowId, String executionId, String path) {

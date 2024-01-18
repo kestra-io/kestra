@@ -39,6 +39,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
+import static io.kestra.core.utils.Rethrow.throwSupplier;
+
 @Slf4j
 @Singleton
 public abstract class AbstractScheduler implements Scheduler {
@@ -59,7 +61,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
 
     // The triggerStateSavedLock must be used when accessing triggerStateSaved
-    private final Object triggerStateSavedLock = new Object();
+    protected final Object triggerStateSavedLock = new Object();
     private final Map<String, Trigger> triggerStateSaved = new ConcurrentHashMap<>();
     protected SchedulerTriggerStateInterface triggerState;
 
@@ -249,12 +251,18 @@ public abstract class AbstractScheduler implements Scheduler {
                 .filter(f -> !this.isTriggerRunning(f))
                 .filter(f -> this.isExecutionNotRunning(f, now))
                 .map(f -> {
-                    Trigger lastTrigger = this.getLastTrigger(f, now);
+                    try {
+                        Trigger lastTrigger = this.getLastTrigger(f, now);
 
-                    return FlowWithPollingTriggerNextDate.of(
-                        f,
-                        f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(lastTrigger))
-                    );
+                        return FlowWithPollingTriggerNextDate.of(
+                            f,
+                            f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(lastTrigger))
+                        );
+                    } catch (Exception e) {
+                        logError(f, e);
+
+                        return null;
+                    }
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -332,7 +340,13 @@ public abstract class AbstractScheduler implements Scheduler {
     }
 
     private boolean isExecutionNotRunning(FlowWithPollingTrigger f, ZonedDateTime now) {
-        Trigger lastTrigger = this.getLastTrigger(f, now);
+        Trigger lastTrigger = null;
+        try {
+            lastTrigger = this.getLastTrigger(f, now);
+        } catch (Exception e) {
+            logError(f, e);
+            return false;
+        }
 
         if (lastTrigger.getExecutionId() == null) {
             return true;
@@ -418,13 +432,14 @@ public abstract class AbstractScheduler implements Scheduler {
         );
     }
 
-    private Trigger getLastTrigger(FlowWithPollingTrigger f, ZonedDateTime now) {
+    private Trigger getLastTrigger(FlowWithPollingTrigger f, ZonedDateTime now) throws Exception {
         return triggerState
             .findLast(f.getTriggerContext())
-            .orElseGet(() -> {
+            .orElseGet(throwSupplier(() -> {
                 ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.empty());
 
                 Trigger build = Trigger.builder()
+                    .tenantId(f.getTriggerContext().getTenantId())
                     .date(nextDate.compareTo(now) < 0 ? nextDate : now)
                     .flowId(f.getFlow().getId())
                     .flowRevision(f.getFlow().getRevision())
@@ -450,7 +465,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 }
 
                 return build;
-            });
+            }));
     }
 
     private boolean isEvaluationInterval(FlowWithPollingTrigger flowWithPollingTrigger, ZonedDateTime now) {

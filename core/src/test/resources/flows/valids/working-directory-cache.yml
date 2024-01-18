@@ -9,6 +9,10 @@ tasks:
       patterns:
         - "*.txt"
     tasks:
+      - id: exists
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - hello.txt
       - id: inputFiles
         type: io.kestra.core.tasks.storages.LocalFiles
         inputs:

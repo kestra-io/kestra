@@ -165,7 +165,7 @@ public class FlowTopologyService {
                 .filter(t -> t instanceof ExecutableTask)
                 .map(t -> (ExecutableTask<?>) t)
                 .anyMatch(t ->
-                    t.subflowId().namespace().equals(child.getNamespace()) && t.subflowId().flowId().equals(child.getId())
+                    t.subflowId() != null && t.subflowId().namespace().equals(child.getNamespace()) && t.subflowId().flowId().equals(child.getId())
                 );
         } catch (Exception e) {
             log.warn("Failed to detect flow task on namespace:'" + parent.getNamespace() + "', flowId:'" + parent.getId()  + "'", e);

@@ -1,0 +1,86 @@
+datasources:
+  postgres:
+    url: jdbc:postgresql://localhost:5432/kestra
+    driverClassName: org.postgresql.Driver
+    username: kestra
+    password: k3str4
+    dialect: POSTGRES
+
+flyway:
+  datasources:
+    postgres:
+      enabled: true
+      locations:
+        - classpath:migrations/postgres
+      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
+      ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true
+
+kestra:
+  server-type: STANDALONE
+  queue:
+    type: postgres
+  repository:
+    type: postgres
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
+  heartbeat:
+    frequency: 10s
+    heartbeat-missed: 3
+
+  jdbc:
+    tables:
+      queues:
+        table: "queues"
+      flows:
+        table: "flows"
+        cls: io.kestra.core.models.flows.Flow
+      executions:
+        table: "executions"
+        cls: io.kestra.core.models.executions.Execution
+      templates:
+        table: "templates"
+        cls: io.kestra.core.models.templates.Template
+      triggers:
+        table: "triggers"
+        cls: io.kestra.core.models.triggers.Trigger
+      logs:
+        table: "logs"
+        cls: io.kestra.core.models.executions.LogEntry
+      metrics:
+        table: "metrics"
+        cls: io.kestra.core.models.executions.MetricEntry
+      multipleconditions:
+        table: "multipleconditions"
+        cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
+      subflow_executions:
+        table: "subflow_executions"
+        cls: io.kestra.core.runners.SubflowExecution
+      executorstate:
+        table: "executorstate"
+        cls: io.kestra.core.runners.ExecutorState
+      executordelayed:
+        table: "executordelayed"
+        cls: io.kestra.core.runners.ExecutionDelay
+      settings:
+        table: "settings"
+        cls: io.kestra.core.models.Setting
+      flowtopologies:
+        table: "flow_topologies"
+        cls: io.kestra.core.models.topologies.FlowTopology
+      workerinstance:
+        cls: io.kestra.core.runners.WorkerInstance
+        table: "worker_instance"
+      workerjobrunning:
+        cls: io.kestra.core.runners.WorkerJobRunning
+        table: "worker_job_running"
+      executionqueued:
+        table: "execution_queued"
+        cls: io.kestra.core.runners.ExecutionQueued
+
+    queues:
+      min-poll-interval: 10ms
+      max-poll-interval: 100ms
+      poll-switch-interval: 5s

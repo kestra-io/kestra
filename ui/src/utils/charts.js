@@ -109,20 +109,24 @@ export function chartClick(moment, router, route, event) {
                 namespace: event.namespace,
                 id: event.flowId,
                 tab: "executions",
+                tenant: route.params.tenant
             },
             query: query
         });
-    }
+    } else {
+        if (event.namespace) {
+            query.namespace = event.namespace;
+        }
 
-    if (event.namespace) {
-        query.namespace = event.namespace;
+        router.push({
+            name: "executions/list",
+            params: {
+            tab: "executions",
+            tenant: route.params.tenant
+        },
+            query: query
+        });
     }
-
-    router.push({
-        name: "executions/list",
-        params: {tab: "executions"},
-        query: query
-    });
 }
 
 export function backgroundFromState(state, alpha = 1) {

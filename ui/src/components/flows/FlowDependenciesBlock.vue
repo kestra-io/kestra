@@ -70,7 +70,12 @@
             link() {
                 this.$router.push({
                     name: "flows/update",
-                    params: {"namespace": this.node.namespace, "id": this.node.id, tab: "dependencies"},
+                    params: {
+                        "namespace": this.node.namespace,
+                        "id": this.node.id,
+                        tab: "dependencies",
+                        tenant: this.$route.params.tenant
+                    },
                 });
             }
         },

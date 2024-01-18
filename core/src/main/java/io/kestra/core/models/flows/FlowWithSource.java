@@ -32,6 +32,7 @@ public class FlowWithSource extends Flow {
             .taskDefaults(this.taskDefaults)
             .disabled(this.disabled)
             .deleted(this.deleted)
+            .concurrency(this.concurrency)
             .build();
     }
 
@@ -58,6 +59,7 @@ public class FlowWithSource extends Flow {
 
     public static FlowWithSource of(Flow flow, String source) {
         return FlowWithSource.builder()
+            .tenantId(flow.tenantId)
             .id(flow.id)
             .namespace(flow.namespace)
             .revision(flow.revision)
@@ -73,6 +75,7 @@ public class FlowWithSource extends Flow {
             .disabled(flow.disabled)
             .deleted(flow.deleted)
             .source(source)
+            .concurrency(flow.concurrency)
             .build();
     }
 }

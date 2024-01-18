@@ -22,6 +22,12 @@ micronaut:
     idle-timeout: 60m
     netty:
       max-chunk-size: 10MB
+      responses:
+        file:
+          cache-seconds: 86400
+          cache-control:
+            public: true
+
   caches:
     default:
       maximum-weight: 10485760
@@ -32,6 +38,11 @@ micronaut:
         url: https://api.kestra.io
 
       remote-api:
+        read-idle-timeout: 180s
+        connect-timeout: 180s
+        read-timeout: 180s
+
+      proxy:
         read-idle-timeout: 180s
         connect-timeout: 180s
         read-timeout: 180s
@@ -119,9 +130,9 @@ kestra:
       multipleconditions:
         table: "multipleconditions"
         cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
-      workertaskexecutions:
-        table: "workertaskexecutions"
-        cls: io.kestra.core.runners.WorkerTaskExecution
+      subflow_executions:
+        table: "subflow_executions"
+        cls: io.kestra.core.runners.SubflowExecution
       executorstate:
         table: "executorstate"
         cls: io.kestra.core.runners.ExecutorState

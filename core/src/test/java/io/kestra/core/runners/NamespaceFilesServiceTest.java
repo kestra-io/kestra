@@ -6,6 +6,7 @@ import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -18,8 +19,7 @@ import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class NamespaceFilesServiceTest {
@@ -39,10 +39,12 @@ class NamespaceFilesServiceTest {
 
         put(null, namespace, "/a/b/c/1.sql", "1");
         put(null, namespace, "/a/1.sql", "2");
-        put(null, namespace, "/b/c/d/1.sql", "3");
+        String expectedFileContent = "3";
+        put(null, namespace, "/b/c/d/1.sql", expectedFileContent);
 
+        RunContext runContext = runContextFactory.of();
         List<URI> injected = namespaceFilesService.inject(
-            runContextFactory.of(),
+            runContext,
             null,
             namespace,
             basePath,
@@ -53,9 +55,36 @@ class NamespaceFilesServiceTest {
         );
 
         assertThat(injected.size(), is(3));
-
         List<Path> tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
         assertThat(tempDir.size(), is(3));
+        String fileContent = FileUtils.readFileToString(
+            tempDir.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
+            "UTF-8"
+        );
+        assertThat(fileContent, is(expectedFileContent));
+
+        // injecting a namespace file that collapse with an existing file will override its content
+        expectedFileContent = "4";
+        put(null, namespace, "/b/c/d/1.sql", expectedFileContent);
+        injected = namespaceFilesService.inject(
+            runContext,
+            null,
+            namespace,
+            basePath,
+            NamespaceFiles
+                .builder()
+                .enabled(true)
+                .build()
+        );
+
+        assertThat(injected.size(), is(3));
+        tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
+        assertThat(tempDir.size(), is(3));
+        fileContent = FileUtils.readFileToString(
+            tempDir.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
+            "UTF-8"
+        );
+        assertThat(fileContent, is(expectedFileContent));
     }
 
     @Test
@@ -64,8 +93,10 @@ class NamespaceFilesServiceTest {
         String namespace = "io.kestra." + IdUtils.create();
 
         put(null, namespace, "/a/b/c/1.sql", "1");
-        put(null, namespace, "/a/3.sql", "2");
-        put(null, namespace, "/b/c/d/1.sql", "3");
+        put(null, namespace, "/a/2.sql", "2");
+        put(null, namespace, "/b/c/d/3.sql", "3");
+        put(null, namespace, "/b/d/4.sql", "4");
+        put(null, namespace, "/c/5.sql", "5");
 
         List<URI> injected = namespaceFilesService.inject(
             runContextFactory.of(),
@@ -73,16 +104,27 @@ class NamespaceFilesServiceTest {
             namespace,
             basePath,
             NamespaceFiles.builder()
-                .include(List.of("/a/**"))
-                .exclude(List.of("**/3.sql"))
+                .include(List.of(
+                    "/a/**",
+                    "c/**"
+                ))
+                .exclude(List.of("**/2.sql"))
                 .build()
         );
 
-        assertThat(injected.size(), is(1));
-        assertThat(injected.get(0).getPath(), containsString("c/1.sql"));
-        List<Path> tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
-        assertThat(tempDir.size(), is(1));
-        assertThat(tempDir.get(0).toString(), is(Paths.get(basePath.toString(), "/a/b/c/1.sql").toString()));
+        assertThat(injected, containsInAnyOrder(
+            hasProperty("path", endsWith("1.sql")),
+            hasProperty("path", endsWith("3.sql")),
+            hasProperty("path", endsWith("5.sql"))
+        ));
+        List<String> tempDirEntries = Files.walk(basePath).filter(path -> path.toFile().isFile())
+            .map(Path::toString)
+            .toList();
+        assertThat(tempDirEntries, containsInAnyOrder(
+            is(Paths.get(basePath.toString(), "/a/b/c/1.sql").toString()),
+            is(Paths.get(basePath.toString(), "/b/c/d/3.sql").toString()),
+            is(Paths.get(basePath.toString(), "/c/5.sql").toString())
+        ));
     }
 
     @Test

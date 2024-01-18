@@ -86,8 +86,10 @@ export default {
         },
         findExecutions({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/search`, {params: options}).then(response => {
-                commit("setExecutions", response.data.results)
-                commit("setTotal", response.data.total)
+                if (options.commit !== false) {
+                    commit("setExecutions", response.data.results)
+                    commit("setTotal", response.data.total)
+                }
 
                 return response.data
             })

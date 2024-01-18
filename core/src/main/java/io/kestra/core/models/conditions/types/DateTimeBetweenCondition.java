@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allows events between two specific datetime"
+    title = "Condition to allow events between two specific datetime values."
 )
 @Plugin(
     examples = {
@@ -39,23 +39,23 @@ import javax.validation.constraints.NotNull;
 public class DateTimeBetweenCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
-        title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use `{{ now() }}`"
+        title = "The date to test.",
+        description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now() }}";
+    private final String date = "{{ trigger.date }}";
 
     @Schema(
-        title = "The date to test must be after this one",
-        description = "Must be a valid ISO 8601 datetime with the zone identifier (use 'Z' for the default zone identifier)"
+        title = "The date to test must be after this one.",
+        description = "Must be a valid ISO 8601 datetime with the zone identifier (use 'Z' for the default zone identifier)."
     )
     @PluginProperty
     private ZonedDateTime after;
 
     @Schema(
-        title = "The date to test must be before this one",
-        description = "Must be a valid ISO 8601 datetime with the zone identifier (use 'Z' for the default zone identifier)"
+        title = "The date to test must be before this one.",
+        description = "Must be a valid ISO 8601 datetime with the zone identifier (use 'Z' for the default zone identifier)."
     )
     @PluginProperty
     private ZonedDateTime before;

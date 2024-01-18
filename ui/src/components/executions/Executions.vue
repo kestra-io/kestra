@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="routeInfo.title">
+    <top-nav-bar v-if="topbar" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'flows/update'">
@@ -18,7 +18,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div :class="{'mt-3': !embed}" v-if="ready">
+    <div :class="{'mt-3': topbar}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
@@ -28,7 +28,7 @@
                     <namespace-select
                         data-type="flow"
                         v-if="$route.name !== 'flows/update'"
-                        :value="$route.query.namespace"
+                        :value="namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />
                 </el-form-item>
@@ -88,6 +88,8 @@
                     :data="daily"
                     :start-date="startDate"
                     :end-date="endDate"
+                    :namespace="namespace"
+                    :flow-id="flowId"
                 />
             </template>
 
@@ -131,46 +133,60 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.startDate" v-if="displayColumn('state.startDate')"
-                                         sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                        <el-table-column
+                            prop="state.startDate"
+                            v-if="displayColumn('state.startDate')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('start date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.state.startDate" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.endDate" v-if="displayColumn('state.endDate')" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']"
-:label="$t('end date')">
+                        <el-table-column
+                            prop="state.endDate"
+                            v-if="displayColumn('state.endDate')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('end date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.state.endDate" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.duration" v-if="displayColumn('state.duration')"
-                                         sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                        <el-table-column
+                            prop="state.duration" v-if="displayColumn('state.duration')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('duration')"
+                        >
                             <template #default="scope">
-                                <span v-if="isRunning(scope.row)">{{
-                                        $filters.humanizeDuration(durationFrom(scope.row))
-                                }}</span>
+                                <span v-if="isRunning(scope.row)">{{$filters.humanizeDuration(durationFrom(scope.row)) }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>
 
-                        <el-table-column v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
-                                         prop="namespace"
-                                         sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('namespace')"
-                                         :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)" />
+                        <el-table-column
+                            v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
+                            prop="namespace"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('namespace')"
+                            :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
+                        />
 
-                        <el-table-column v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
-                                         prop="flowId"
-                                         sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('flow')">
+                        <el-table-column
+                            v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
+                            prop="flowId"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('flow')"
+                        >
                             <template #default="scope">
-                                <router-link
-                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
                             </template>
@@ -182,39 +198,61 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="state.current" v-if="displayColumn('state.current')" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                        <el-table-column
+                            prop="state.current"
+                            v-if="displayColumn('state.current')"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('state')"
+                        >
                             <template #default="scope">
                                 <status :status="scope.row.state.current" size="small" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="triggers" v-if="displayColumn('triggers')" :label="$t('triggers')"
-                                         class-name="shrink">
+                        <el-table-column
+                            prop="triggers"
+                            v-if="displayColumn('triggers')"
+                            :label="$t('triggers')"
+                            class-name="shrink"
+                        >
                             <template #default="scope">
                                 <trigger-avatar :execution="scope.row" />
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="flowRevision" v-if="displayColumn('flowRevision')" :label="$t('revision')"
-                                         class-name="shrink">
+                        <el-table-column
+                            prop="flowRevision"
+                            v-if="displayColumn('flowRevision')"
+                            :label="$t('revision')"
+                            class-name="shrink"
+                        >
                             <template #default="scope">
                                 <code>{{ scope.row.flowRevision }}</code>
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="inputs" v-if="displayColumn('inputs')" :label="$t('inputs')" align="center">
-                            <template #default="scope" >
+                        <el-table-column
+                            prop="inputs"
+                            v-if="displayColumn('inputs')"
+                            :label="$t('inputs')"
+                            align="center"
+                        >
+                            <template #default="scope">
                                 <el-tooltip>
                                     <template #content>
                                         <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, '\t') }}</pre>
                                     </template>
-                                    <Import v-if="scope.row.inputs" class="fs-5"/>
+                                    <Import v-if="scope.row.inputs" class="fs-5" />
                                 </el-tooltip>
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="taskRunList.taskId" v-if="displayColumn('taskRunList.taskId')" :label="$t('task id')">
+                        <el-table-column
+                            prop="taskRunList.taskId"
+                            v-if="displayColumn('taskRunList.taskId')"
+                            :label="$t('task id')"
+                        >
                             <template #header="scope">
                                 <el-tooltip :content="$t('taskid column details')">
                                     {{ scope.column.label }}
@@ -230,8 +268,7 @@
 
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
-                                <router-link
-                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
                                     </kicon>
@@ -323,10 +360,24 @@
                 type: Boolean,
                 default: false
             },
+            topbar: {
+                type: Boolean,
+                default: true
+            },
             filter: {
                 type: Boolean,
                 default: false
-            }
+            },
+            namespace: {
+                type: String,
+                required: false,
+                default: undefined
+            },
+            flowId: {
+                type: String,
+                required: false,
+                default: undefined
+            },
         },
         data() {
             return {
@@ -433,10 +484,10 @@
                 return this.canDelete || this.canUpdate;
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.$route.query.namespace);
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.$route.query.namespace);
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
@@ -447,7 +498,7 @@
         },
         methods: {
             onDisplayColumnsChange(event) {
-                localStorage.setItem("displayExecutionsColumns", event);
+                localStorage.setItem(this.storageKey, event);
                 this.displayColumns = event;
             },
             displayColumn(column) {
@@ -479,9 +530,12 @@
                     delete queryFilter["endDate"];
                 }
 
-                if (this.$route.name === "flows/update") {
-                    queryFilter["namespace"] = this.$route.params.namespace;
-                    queryFilter["flowId"] = this.$route.params.id;
+                if (this.namespace) {
+                    queryFilter["namespace"] = this.namespace;
+                }
+
+                if (this.flowId) {
+                    queryFilter["flowId"] = this.flowId;
                 }
 
                 return _merge(base, queryFilter)
@@ -602,7 +656,8 @@
                     name: "flows/update", params: {
                         namespace: this.flow.namespace,
                         id: this.flow.id,
-                        tab: "editor"
+                        tab: "editor",
+                        tenant: this.$route.params.tenant
                     }
                 })
             },

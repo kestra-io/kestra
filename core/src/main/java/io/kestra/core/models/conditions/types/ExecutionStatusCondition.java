@@ -23,7 +23,7 @@ import javax.validation.Valid;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Condition based on execution status")
+@Schema(title = "Condition based on execution status.")
 @Plugin(
     examples = {
         @Example(
@@ -41,19 +41,19 @@ import javax.validation.Valid;
 )
 public class ExecutionStatusCondition extends Condition {
     @Valid
-    @Schema(title = "List of state that are authorized")
+    @Schema(title = "List of states that are authorized.")
     @PluginProperty
     private List<State.Type> in;
 
     @Valid
-    @Schema(title = "List of state that aren't authorized")
+    @Schema(title = "List of states that aren't authorized.")
     @PluginProperty
     private List<State.Type> notIn;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         if (conditionContext.getExecution() == null) {
-            throw new IllegalConditionEvaluation("Invalid condition with execution null");
+            throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
         boolean result = true;

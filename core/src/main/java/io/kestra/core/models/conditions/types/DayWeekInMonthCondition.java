@@ -23,7 +23,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for allows events on weekdays relative to current month (first, last, ...)"
+    title = "Condition to allow events on weekdays relative to current month (first, last, ...)"
 )
 @Plugin(
     examples = {
@@ -41,20 +41,20 @@ import javax.validation.constraints.NotNull;
 public class DayWeekInMonthCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
-        title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use `{{ now(format=\"iso_local_date\") }}`"
+        title = "The date to test.",
+        description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now(format=\"iso_local_date\") }}";
+    private final String date = "{{ trigger.date }}";
 
     @NotNull
-    @Schema(title = "The day of week")
+    @Schema(title = "The day of week.")
     @PluginProperty
     private DayOfWeek dayOfWeek;
 
     @NotNull
-    @Schema(title = "Are you looking at first or last day in month")
+    @Schema(title = "Are you looking for the first or the last day in the month?")
     @PluginProperty
     private DayWeekInMonthCondition.DayInMonth dayInMonth;
 

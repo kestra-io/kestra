@@ -22,8 +22,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fail the execution",
-    description = "Used to fail the execution for example on a switch branch or on some conditions based on the execution context."
+    title = "Fail the execution.",
+    description = "Used to fail the execution, for example, on a switch branch or on some conditions based on the execution context."
 )
 @Plugin(
     examples = {
@@ -79,7 +79,7 @@ import lombok.experimental.SuperBuilder;
                 "    format: I'm before the fail on condition \n" +
                 "  - id: fail\n" +
                 "    type: io.kestra.core.tasks.executions.Fail\n" +
-                "    condition: '{{inputs.param == \"fail\"}}'\n" +
+                "    condition: '{{ inputs.param == \"fail\" }}'\n" +
                 "  - id: after\n" +
                 "    type: io.kestra.core.tasks.debugs.Echo\n" +
                 "    format: I'm after the fail on condition "

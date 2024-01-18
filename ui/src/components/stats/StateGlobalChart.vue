@@ -7,6 +7,8 @@
                     :data="data"
                     :big="big"
                     :global="true"
+                    :namespace="namespace"
+                    :flowId="flowId"
                 />
             </template>
             <template v-else>
@@ -50,7 +52,17 @@
             type: {
                 type: String,
                 default: stateGlobalChartTypes.EXECUTIONS
-            }
+            },
+            namespace: {
+                type: String,
+                required: false,
+                default: undefined
+            },
+            flowId: {
+                type: String,
+                required: false,
+                default: undefined
+            },
         },
         computed: {
             formattedCount() {

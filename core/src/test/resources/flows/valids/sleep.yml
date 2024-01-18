@@ -1,0 +1,7 @@
+id: sleep
+namespace: io.kestra.tests
+
+tasks:
+  - id: sleep
+    type: io.kestra.core.tasks.test.Sleep
+    duration: 1000

@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +19,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Singleton
 @Slf4j
@@ -99,7 +97,7 @@ public class NamespaceFilesService {
             .stream()
             .anyMatch(s -> FileSystems
                 .getDefault()
-                .getPathMatcher("glob:" + s)
+                .getPathMatcher("glob:" + (s.matches("\\w+[\\s\\S]*") ? "**/" + s : s))
                 .matches(Paths.get(file))
             );
     }
@@ -107,7 +105,6 @@ public class NamespaceFilesService {
     private void copy(String tenantId, String namespace, Path basePath, List<URI> files) throws IOException {
         files
             .forEach(throwConsumer(f -> {
-                InputStream inputStream = storageInterface.get(tenantId, uri(namespace, f));
                 Path destination = Paths.get(basePath.toString(), f.getPath());
 
                 if (!destination.getParent().toFile().exists()) {
@@ -115,7 +112,9 @@ public class NamespaceFilesService {
                     destination.getParent().toFile().mkdirs();
                 }
 
-                Files.copy(inputStream, destination);
+                try (InputStream inputStream = storageInterface.get(tenantId, uri(namespace, f))) {
+                    Files.copy(inputStream, destination, REPLACE_EXISTING);
+                }
             }));
     }
 }

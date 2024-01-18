@@ -7,7 +7,9 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
+import org.jooq.Field;
 
+import java.sql.Timestamp;
 import java.util.Map;
 
 @Singleton
@@ -21,5 +23,10 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
         return MysqlExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
+    }
+
+    @Override
+    protected Field<Integer> weekFromTimestamp(Field<Timestamp> timestampField) {
+        return this.jdbcRepository.weekFromTimestamp(timestampField);
     }
 }

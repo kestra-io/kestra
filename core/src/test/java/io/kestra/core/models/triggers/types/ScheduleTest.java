@@ -124,7 +124,6 @@ class ScheduleTest {
 
         var inputs = evaluate.get().getInputs();
 
-        System.out.println(inputs);
         assertThat(inputs.size(), is(2));
         assertThat(inputs.get("input1"), is("input1"));
         assertThat(inputs.get("input2"), is("default"));
@@ -157,7 +156,7 @@ class ScheduleTest {
     }
 
     @Test
-    void noBackfillNextDate() {
+    void noBackfillNextDate() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
@@ -165,7 +164,7 @@ class ScheduleTest {
     }
 
     @Test
-    void noBackfillNextDateContext() {
+    void noBackfillNextDateContext() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").timezone("Europe/Paris").build();
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
@@ -174,7 +173,7 @@ class ScheduleTest {
     }
 
     @Test
-    void backfillNextDate() {
+    void backfillNextDate() throws Exception {
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
 
         Schedule trigger = Schedule.builder()
@@ -188,7 +187,7 @@ class ScheduleTest {
     }
 
     @Test
-    void backfillNextDateContext() {
+    void backfillNextDateContext() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
             .cron("0 0 * * *")
@@ -201,7 +200,7 @@ class ScheduleTest {
     }
 
     @Test
-    void emptyBackfillStartDate() {
+    void emptyBackfillStartDate() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 

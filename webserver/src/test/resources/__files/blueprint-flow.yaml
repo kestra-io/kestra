@@ -14,7 +14,7 @@ tasks:
     type: io.kestra.core.tasks.flows.EachParallel
     tasks:
       - id: subflow-etl-flow
-        type: io.kestra.core.tasks.flows.Flow
+        type: io.kestra.core.tasks.flows.Subflow
         namespace: io.kestra.demo.google
         inputs:
           file: \"{{ taskrun.value | jq ('.uri') | first }}\"

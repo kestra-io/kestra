@@ -94,7 +94,7 @@
                 <el-button v-if="canReadFlows" :icon="Download" size="large" @click="exportFlows()">
                     {{ $t('export all flows') }}
                 </el-button>
-                <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()">
+                <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()" :hidden="!configs.isTemplateEnabled">
                     {{ $t('export all templates') }}
                 </el-button>
             </el-form-item>
@@ -136,8 +136,8 @@
                     />
                 </el-select>
             </el-form-item>
-            <slot name="form-items"/>
         </el-form>
+        <slot name="form-items"/>
     </div>
 </template>
 

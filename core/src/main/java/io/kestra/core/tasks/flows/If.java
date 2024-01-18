@@ -39,8 +39,8 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process tasks conditionally depending on a contextual value",
-    description = "Allow some workflow based on context variables, for example branch a flow based on a previous task."
+    title = "Process tasks conditionally depending on a contextual value.",
+    description = "Allow some workflow based on context variables, for example, branch a flow based on a previous task."
 )
 @Plugin(
     examples = {
@@ -58,7 +58,7 @@ import java.util.stream.Stream;
                 "tasks:",
                 "  - id: if",
                 "    type: io.kestra.core.tasks.flows.If",
-                "    condition: \"{{inputs.string == 'Condition'}}\"",
+                "    condition: \"{{ inputs.string == 'Condition' }}\"",
                 "    then:",
                 "      - id: when_true",
                 "        type: io.kestra.core.tasks.log.Log",
@@ -159,7 +159,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
         List<ResolvedTask> childTask = this.childTasks(runContext, parentTaskRun);
         if (childTask == null) {
             // no next task to run, we guess the state from the parent task
-            return Optional.of(execution.guessFinalState(null, parentTaskRun));
+            return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure()));
         }
 
         return FlowableUtils.resolveState(
@@ -167,7 +167,8 @@ public class If extends Task implements FlowableTask<VoidOutput> {
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
-            runContext
+            runContext,
+            this.isAllowFailure()
         );
     }
 }

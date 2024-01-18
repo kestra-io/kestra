@@ -93,7 +93,8 @@ public class FlowableUtils {
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
         TaskRun parentTaskRun,
-        RunContext runContext
+        RunContext runContext,
+        boolean allowFailure
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
 
@@ -105,19 +106,19 @@ public class FlowableUtils {
                 execution.getId()
             );
 
-            return Optional.of(State.Type.FAILED);
+            return Optional.of(allowFailure ? State.Type.WARNING : State.Type.FAILED);
         } else if (currentTasks.stream().allMatch(t -> t.getTask().getDisabled()) && !currentTasks.isEmpty()) {
             // if all child tasks are disabled, we end in SUCCESS
             return Optional.of(State.Type.SUCCESS);
         } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analysed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun));
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
             if (execution.hasFailed(tasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun));
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure));
             }
         }
 

@@ -18,11 +18,8 @@ public abstract class MysqlFlowRepositoryService {
 
         if (labels != null) {
             labels.forEach((key, value) -> {
-                Field<String> keyField = DSL.field("JSON_SEARCH(value, 'one', '" + key + "', NULL, '$.labels[*].key')", String.class);
-                conditions.add(keyField.isNotNull());
-
-                Field<String> valueField = DSL.field("JSON_SEARCH(value, 'one', '" + value + "', NULL, '$.labels[*].value')", String.class);
-                conditions.add(valueField.isNotNull());
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                conditions.add(valueField.eq(value != null));
             });
         }
 

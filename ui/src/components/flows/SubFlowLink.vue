@@ -41,7 +41,13 @@
                 if (this.executionId && this.namespace && this.flowId) {
                     this.$router.push({
                         name: this.routeName,
-                        params: {namespace: this.namespace, flowId: this.flowId, id: this.executionId, tab: this.tab},
+                        params: {
+                            namespace: this.namespace,
+                            flowId: this.flowId,
+                            id: this.executionId,
+                            tab: this.tab,
+                            tenant: this.$route.params.tenant
+                        },
                     });
                 } else if (this.executionId) {
                     this.$store

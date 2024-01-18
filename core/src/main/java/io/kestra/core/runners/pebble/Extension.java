@@ -1,6 +1,8 @@
 package io.kestra.core.runners.pebble;
 
+import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.functions.*;
+import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
@@ -28,6 +30,10 @@ public class Extension extends AbstractExtension {
 
     @Inject
     private ReadFileFunction readFileFunction;
+
+    @Inject
+    @Nullable
+    private RenderFunction renderFunction;
 
     @Override
     public List<TokenParser> getTokenParsers() {
@@ -69,7 +75,7 @@ public class Extension extends AbstractExtension {
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
-
+        filters.put("flatten",new FlattenFilter());
         return filters;
     }
 
@@ -84,15 +90,18 @@ public class Extension extends AbstractExtension {
 
     @Override
     public Map<String, Function> getFunctions() {
-        Map<String, Function> tests = new HashMap<>();
+        Map<String, Function> functions = new HashMap<>();
 
-        tests.put("now", new NowFunction());
-        tests.put("json", new JsonFunction());
-        tests.put("currentEachOutput", new CurrentEachOutputFunction());
-        tests.put("secret", secretFunction);
-        tests.put("read", readFileFunction);
+        functions.put("now", new NowFunction());
+        functions.put("json", new JsonFunction());
+        functions.put("currentEachOutput", new CurrentEachOutputFunction());
+        functions.put("secret", secretFunction);
+        functions.put("read", readFileFunction);
+        if (this.renderFunction != null) {
+            functions.put("render", renderFunction);
+        }
 
-        return tests;
+        return functions;
     }
 
     @Override

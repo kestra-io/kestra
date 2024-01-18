@@ -77,6 +77,15 @@
             </template>
             <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
         </el-form-item>
+        <el-form-item v-if="concurrencySchema">
+            <template #label>
+                <code>concurrency</code>
+                <task-basic
+                    :schema="concurrencySchema"
+                    v-model="newMetadata.concurrency"
+                />
+            </template>
+        </el-form-item>
         <el-form-item>
             <template #label>
                 <code>taskDefaults</code>
@@ -103,6 +112,8 @@
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
+    import TaskRoot from "./tasks/TaskRoot.vue";
+    import TaskBasic from "./tasks/TaskBasic.vue";
 </script>
 <script>
     import {toRaw} from "vue";
@@ -111,11 +122,22 @@
     import MetadataVariables from "./MetadataVariables.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
+    import {mapState} from "vuex";
 
     export default {
         emits: ["update:modelValue"],
         created() {
             this.setup();
+        },
+        mounted() {
+            this.$store
+                .dispatch("plugin/loadSchemaType", {
+                    type: "flow",
+                })
+                .then((response) => {
+                    this.concurrencySchema = response.definitions["io.kestra.core.models.flows.Concurrency"]
+                    this.schemas = response
+                })
         },
         components: {
             markdown,
@@ -142,9 +164,12 @@
                     labels: [["", undefined]],
                     inputs: [],
                     variables: [["", undefined]],
+                    concurrency: {},
                     taskDefaults: [],
                     disabled: false
                 },
+                concurrencySchema: null,
+                schemas: {},
                 preview: false
             };
         },
@@ -164,6 +189,7 @@
                 this.newMetadata.labels = this.metadata.labels ? Object.entries(toRaw(this.metadata.labels)) : [["", undefined]]
                 this.newMetadata.inputs = this.metadata.inputs || []
                 this.newMetadata.variables = this.metadata.variables ? Object.entries(toRaw(this.metadata.variables)) : [["", undefined]]
+                this.newMetadata.concurrency = this.metadata.concurrency || {}
                 this.newMetadata.taskDefaults = yamlUtils.stringify(this.metadata.taskDefaults) || []
                 this.newMetadata.disabled = this.metadata.disabled || false
             },
@@ -200,9 +226,16 @@
             },
             update() {
                 this.$emit("update:modelValue", this.cleanMetadata);
+            },
+            cleanConcurrency(concurrency) {
+                if (concurrency?.limit === 0) {
+                    return null
+                }
+                return concurrency
             }
         },
         computed: {
+            ...mapState("plugin", ["inputSchema", "inputsType"]),
             cleanMetadata() {
                 const taskDefaults = yamlUtils.parse(this.newMetadata.taskDefaults);
                 const metadata = {
@@ -212,6 +245,7 @@
                     labels: this.arrayToObject(this.newMetadata.labels),
                     inputs: this.newMetadata.inputs.filter(e => e.name && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
+                    concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
                     taskDefaults: taskDefaults,
                     disabled: this.newMetadata.disabled
                 }

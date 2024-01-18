@@ -142,7 +142,7 @@
                         executionId: this.executionId,
                         path: this.value,
                         maxRows: this.maxPreview,
-                        encoding: this.encoding
+                        encoding: this.encoding.value
                     })
                     .then(() => {
                         this.isPreviewOpen = true;

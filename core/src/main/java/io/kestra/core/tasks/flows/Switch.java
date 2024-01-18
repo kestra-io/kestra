@@ -41,7 +41,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks conditionally, i.e. decide which branch of tasks should be executed based on a given value",
+    title = "Run tasks conditionally, i.e. decide which branch of tasks should be executed based on a given value.",
     description = "This task runs a set of tasks based on a given value.\n" +
         "The value is evaluated at runtime and compared to the list of cases.\n" +
         "If the value matches a case, the corresponding tasks are executed.\n" +
@@ -63,24 +63,24 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "tasks:",
                 "  - id: switch",
                 "    type: io.kestra.core.tasks.flows.Switch",
-                "    value: \"{{inputs.string}}\"",
+                "    value: \"{{ inputs.string }}\"",
                 "    cases:",
                 "      FIRST:",
                 "        - id: 1st",
                 "          type: io.kestra.core.tasks.debugs.Return",
-                "          format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "          format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
                 "      SECOND:",
                 "        - id: 2nd",
                 "          type: io.kestra.core.tasks.debugs.Return",
-                "          format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "          format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
                 "      THIRD:",
                 "        - id: 3th",
                 "          type: io.kestra.core.tasks.debugs.Return",
-                "          format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "          format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
                 "    defaults:",
                 "      - id: default",
                 "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{task.id}} > {{taskrun.startDate}}\""
+                "        format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
     }
@@ -91,7 +91,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @NotBlank
     @NotNull
     @Schema(
-        title = "The value to be evaluated"
+        title = "The value to be evaluated."
     )
     @PluginProperty(dynamic = true)
     private String value;
@@ -168,7 +168,8 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
-            runContext
+            runContext,
+            this.isAllowFailure()
         );
     }
 

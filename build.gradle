@@ -12,7 +12,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.49.0"
+    id "com.github.ben-manes.versions" version "0.50.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '8.0.0' apply false
@@ -79,11 +79,11 @@ allprojects {
             force("com.google.protobuf:protobuf-java-util:3.23.3")
 
             // ugly bug for elastic plugins
-            force("org.apache.httpcomponents:httpclient:4.5.13")
+            force("org.apache.httpcomponents:httpclient:4.5.14")
 
             // ugly bug on crypto plugin
-            force('org.bouncycastle:bcprov-jdk15on:1.70')
-            force('org.bouncycastle:bcpg-jdk15on:1.70')
+            force('org.bouncycastle:bcprov-jdk18on:1.77')
+            force('org.bouncycastle:bcpg-jdk18on:1.77')
 
             // ugly bug for jackson
             force("com.fasterxml.jackson:jackson-bom:" + jacksonVersion)
@@ -127,7 +127,7 @@ allprojects {
         implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.19.0'
         implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
         implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
-        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.0'
+        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
@@ -141,9 +141,9 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.14.0'
-        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.13.0'
+        api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
+        api group: 'commons-io', name: 'commons-io', version: '2.15.1'
+        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"
     }
 }
@@ -171,7 +171,7 @@ subprojects {
         testImplementation "io.micronaut.test:micronaut-test-junit5"
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
         testImplementation "org.junit.jupiter:junit-jupiter-params"
-        testImplementation "org.junit-pioneer:junit-pioneer:2.1.0"
+        testImplementation "org.junit-pioneer:junit-pioneer:2.2.0"
 
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -311,7 +311,7 @@ subprojects {
     }
 
     jacoco {
-        toolVersion = "0.8.9"
+        toolVersion = "0.8.11"
     }
 
     jacocoTestReport {
@@ -460,6 +460,8 @@ subprojects {
     }
 
     signing {
+        // only sign JARs that we publish to Sonatype
+        required { gradle.taskGraph.hasTask("publishSonatypePublicationPublicationToSonatypeRepository") }
         sign publishing.publications.sonatypePublication
     }
 }

@@ -25,7 +25,7 @@ import java.util.Optional;
 @Schema(
     title = "Debugging task that returns a rendered value.",
     description = "This task is mostly useful for debugging purpose.\n\n" +
-        "It allows you to see inputs or outputs variables or to debug some templated functions."
+        "It allows you to see inputs or output variables or to debug some templated functions."
 )
 @Plugin(
     examples = {
@@ -40,7 +40,7 @@ import java.util.Optional;
 )
 public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(
-        title = "The templated string to render"
+        title = "The templated string to render."
     )
     @PluginProperty(dynamic = true)
     private String format;
@@ -69,7 +69,7 @@ public class Return extends Task implements RunnableTask<Return.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The generated string"
+            title = "The generated string."
         )
         private String value;
     }

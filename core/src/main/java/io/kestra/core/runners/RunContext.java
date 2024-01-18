@@ -308,10 +308,6 @@ public class RunContext {
             builder.put("value", taskRun.getValue());
         }
 
-        if(taskRun.getItems() != null) {
-            builder.put("items", taskRun.getItems());
-        }
-
         return builder.build();
     }
 
@@ -386,6 +382,7 @@ public class RunContext {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
         this.initBean(applicationContext);
         this.initLogger(workerTask.getTaskRun(), workerTask.getTask());
@@ -501,7 +498,7 @@ public class RunContext {
         }
 
         if (uri.getScheme().equals("kestra")) {
-            return this.storageInterface.get(getTenantId(), uri);
+            return this.storageInterface.get(tenantId(), uri);
         }
 
         throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
@@ -561,7 +558,7 @@ public class RunContext {
         URI uri = URI.create(prefix);
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.put(getTenantId(), resolve, new BufferedInputStream(inputStream));
+        return this.storageInterface.put(tenantId(), resolve, new BufferedInputStream(inputStream));
     }
 
     private URI putTempFile(File file, String prefix, String name) throws IOException {
@@ -598,7 +595,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-       return this.storageInterface.get(getTenantId(), resolve);
+       return this.storageInterface.get(tenantId(), resolve);
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
@@ -635,7 +632,7 @@ public class RunContext {
         URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        return this.storageInterface.delete(getTenantId(), resolve);
+        return this.storageInterface.delete(tenantId(), resolve);
     }
 
     /**
@@ -651,12 +648,12 @@ public class RunContext {
      */
     public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.get(getTenantId(), uri)) : Optional.empty();
+        return this.storageInterface.exists(tenantId(), uri) ? Optional.of(this.storageInterface.get(tenantId(), uri)) : Optional.empty();
     }
 
     public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.lastModifiedTime(getTenantId(), uri)) : Optional.empty();
+        return this.storageInterface.exists(tenantId(), uri) ? Optional.of(this.storageInterface.getAttributes(tenantId(), uri).getLastModifiedTime()) : Optional.empty();
     }
 
     /**
@@ -680,11 +677,11 @@ public class RunContext {
 
     public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
         URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(getTenantId(), uri) ? Optional.of(this.storageInterface.delete(getTenantId(), uri)) : Optional.empty();
+        return this.storageInterface.exists(tenantId(), uri) ? Optional.of(this.storageInterface.delete(tenantId(), uri)) : Optional.empty();
     }
 
     public List<URI> purgeStorageExecution() throws IOException {
-        return this.storageInterface.deleteByPrefix(getTenantId(), this.storageExecutionPrefix);
+        return this.storageInterface.deleteByPrefix(tenantId(), this.storageExecutionPrefix);
     }
 
     public List<AbstractMetricEntry<?>> metrics() {
@@ -771,6 +768,30 @@ public class RunContext {
     }
 
     /**
+     * Resolve a path inside the working directory (a.k.a. the tempDir).
+     * If the resolved path escapes the working directory, an IllegalArgumentException will be thrown to protect against path traversal security issue.
+     * This method is null-friendly: it will return the working directory (a.k.a. the tempDir) if called with a null path.
+     */
+    public Path resolve(Path path) {
+        if (path == null) {
+            return tempDir();
+        }
+
+        if (path.toString().contains(".." + File.separator)) {
+            throw new IllegalArgumentException("The path to resolve must be a relative path inside the current working directory");
+        }
+
+        Path baseDir = tempDir();
+        Path resolved = baseDir.resolve(path).toAbsolutePath();
+
+        if (!resolved.startsWith(baseDir)) {
+            throw new IllegalArgumentException("The path to resolve must be a relative path inside the current working directory");
+        }
+
+        return resolved;
+    }
+
+    /**
      * @deprecated use {@link #tempFile(String)} instead
      */
     @Deprecated
@@ -825,7 +846,8 @@ public class RunContext {
         }
     }
 
-    private String getTenantId() {
+    @SuppressWarnings("unchecked")
+    public String tenantId() {
         Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
         return flow != null ? flow.get("tenantId") : null;

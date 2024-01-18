@@ -3,15 +3,15 @@ import {nextTick} from "vue";
 export const pageFromRoute = (route) => {
     return {
         origin: window.location.origin,
-            path: route.path,
+        path: route.path,
         params: Object.keys(route.params)
-        .map((key) => ({key: key, value: route.params[key]})),
+            .map((key) => ({key: key, value: route.params[key]})),
         queries: Object.keys(route.query)
-        .map((key) => {
-            return {key: key, values: (route.query[key] instanceof Array ? route.query[key] : [route.query[key]] )}
-        }),
+            .map((key) => {
+                return {key: key, values: (route.query[key] instanceof Array ? route.query[key] : [route.query[key]])}
+            }),
         name: route.name,
-        hash: route.hash !== "" ? route.hash: undefined,
+        hash: route.hash !== "" ? route.hash : undefined,
     }
 }
 

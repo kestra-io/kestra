@@ -1,20 +1,20 @@
-import {apiUrlWithoutTenants} from "override/utils/route";
+import {apiUrl} from "override/utils/route";
 
 export const yamlSchemas = (store) => [
     {
         fileMatch: ["flow-*.yaml"],
-        uri: [`${apiUrlWithoutTenants()}/plugins/schemas/flow`]
+        uri: [`${apiUrl(store)}/plugins/schemas/flow`]
     },
     {
         fileMatch: ["task-*.yaml"],
-        uri: [`${apiUrlWithoutTenants()}/plugins/schemas/task`]
+        uri: [`${apiUrl(store)}/plugins/schemas/task`]
     },
     {
         fileMatch: ["template-*.yaml"],
-        uri: [`${apiUrlWithoutTenants()}/plugins/schemas/template`]
+        uri: [`${apiUrl(store)}/plugins/schemas/template`]
     },
     {
         fileMatch: ["trigger-*.yaml"],
-        uri: [`${apiUrlWithoutTenants()}/plugins/schemas/trigger`]
+        uri: [`${apiUrl(store)}/plugins/schemas/trigger`]
     }
 ]

@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -10,6 +11,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.tasks.test.Sleep;
@@ -30,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.utils.Rethrow.throwSupplier;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -84,7 +87,7 @@ class WorkerTest {
     }
 
     @Test
-    void failOnWorkerTaskWithFlowable() throws TimeoutException {
+    void failOnWorkerTaskWithFlowable() throws TimeoutException, JsonProcessingException {
         Worker worker = new Worker(applicationContext, 8, null);
         worker.run();
 
@@ -122,6 +125,10 @@ class WorkerTest {
         workerTaskQueue.emit(workerTask);
 
         Await.until(
+            throwSupplier(() -> {
+                WorkerTaskResult taskResult = workerTaskResult.get();
+                return "WorkerTaskResult was " + (taskResult == null ? null : JacksonMapper.ofJson().writeValueAsString(taskResult));
+            }),
             () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isFailed(),
             Duration.ofMillis(100),
             Duration.ofMinutes(1)

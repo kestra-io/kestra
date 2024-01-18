@@ -65,7 +65,9 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
 
-        if (this.workerThread != null) {
+        if (this.workerThread != null  && this.workerThread == 0) {
+            standAloneRunner.setWorkerEnabled(false);
+        } else if (this.workerThread != null) {
             standAloneRunner.setWorkerThread(this.workerThread);
         }
 

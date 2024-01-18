@@ -34,7 +34,7 @@ class ReadFileFunctionTest {
         storageInterface.createDirectory(null, URI.create(storageInterface.namespaceFilePrefix(namespace)));
         storageInterface.put(null, URI.create(storageInterface.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
 
-        String render = variableRenderer.render("{{ read('" + filePath + "') }}", Map.of("flow", Map.of("namespace", namespace)));
+        String render = variableRenderer.render("{{ render(read('" + filePath + "')) }}", Map.of("flow", Map.of("namespace", namespace)));
         assertThat(render, is("Hello from " + namespace));
     }
 

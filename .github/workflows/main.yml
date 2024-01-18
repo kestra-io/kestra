@@ -24,6 +24,10 @@ on:
         type: string
         default: "false"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     env:
@@ -36,7 +40,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
           architecture: 'x64'
@@ -86,7 +90,7 @@ jobs:
 
       # JDK
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
@@ -104,6 +108,13 @@ jobs:
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check jacoco javadoc --no-daemon --priority=normal
+
+      # report test
+      - name: Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure()
+        with:
+          report_paths: '**/build/test-results/**/TEST-*.xml'
 
       - name: Analyze with Sonar
         if: ${{ env.SONAR_TOKEN != 0 }}
@@ -124,13 +135,13 @@ jobs:
 
       # Upload artifacts
       - name: Upload jar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar
           path: build/libs/
 
       - name: Upload Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: exe
           path: build/executable/
@@ -186,6 +197,7 @@ jobs:
               io.kestra.plugin:plugin-hightouch:LATEST
               io.kestra.plugin:plugin-jdbc-clickhouse:LATEST
               io.kestra.plugin:plugin-jdbc-duckdb:LATEST
+              io.kestra.plugin:plugin-jdbc-druid:LATEST
               io.kestra.plugin:plugin-jdbc-mysql:LATEST
               io.kestra.plugin:plugin-jdbc-oracle:LATEST
               io.kestra.plugin:plugin-jdbc-pinot:LATEST
@@ -221,6 +233,7 @@ jobs:
               io.kestra.plugin:plugin-script-powershell:LATEST
               io.kestra.plugin:plugin-script-python:LATEST
               io.kestra.plugin:plugin-script-r:LATEST
+              io.kestra.plugin:plugin-script-ruby:LATEST
               io.kestra.plugin:plugin-script-shell:LATEST
               io.kestra.plugin:plugin-serdes:LATEST
               io.kestra.plugin:plugin-servicenow:LATEST
@@ -243,7 +256,7 @@ jobs:
 
       # Artifact
       - name: Download executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: exe
           path: build/executable
@@ -338,7 +351,7 @@ jobs:
 
       # JDK
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17

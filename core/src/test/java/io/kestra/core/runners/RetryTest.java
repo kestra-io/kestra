@@ -46,4 +46,13 @@ public class RetryTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
+
+    @Test
+    void retryInvalid() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-invalid");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), nullValue());
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
 }

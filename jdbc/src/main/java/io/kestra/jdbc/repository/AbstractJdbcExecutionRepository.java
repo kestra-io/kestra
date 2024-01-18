@@ -663,6 +663,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         field("value"),
                         DSL.rowNumber().over(
                             DSL.partitionBy(
+                                field("namespace"),
                                 field("flow_id")
                             ).orderBy(field("end_date").desc())
                         ).as("row_num")

@@ -152,9 +152,10 @@
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import DateRange from "../layout/DateRange.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import HomeStartup from "override/mixins/homeStartup"
 
     export default {
-        mixins: [RouteContext, RestoreUrl],
+        mixins: [RouteContext, RestoreUrl, HomeStartup],
         components: {
             DateRange,
             OnboardingBottom,
@@ -232,7 +233,8 @@
             },
             haveExecutions() {
                 let params = {
-                    size: 1
+                    size: 1,
+                    commit: false
                 };
                 if (this.selectedNamespace) {
                     params["namespace"] = this.selectedNamespace;
@@ -241,7 +243,7 @@
                 if (this.flowId) {
                     params["flowId"] = this.flowId;
                 }
-                this.$store.dispatch("execution/findExecutions", params )
+                this.$store.dispatch("execution/findExecutions", params)
                     .then(executions => {
                         this.executionCounts = executions.total;
                     });

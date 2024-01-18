@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -94,6 +95,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat((String) execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), startsWith("kestra://"));
         }
 
+        @SuppressWarnings("unchecked")
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist
             URI cache = URI.create(storageInterface.cachePrefix("io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");
@@ -101,15 +103,29 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
-            assertThat(execution.getTaskRunList(), hasSize(2));
+            assertThat(execution.getTaskRunList(), hasSize(3));
+            assertThat(execution.getTaskRunList().stream()
+                    .filter(t -> t.getTaskId().equals("exists"))
+                    .findFirst().get()
+                    .getOutputs(),
+                nullValue()
+            );
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
             assertTrue(storageInterface.exists(null, cache));
 
-            // a second run should use the cache so the execution failed as the localfile cannot create the file as it already exist
+            // a second run should use the cache so the task `exists` should output the cached file
             execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
-            assertThat(execution.getTaskRunList(), hasSize(2));
-            assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+            assertThat(execution.getTaskRunList(), hasSize(3));
+            assertThat(((Map<String, String>) execution.getTaskRunList().stream()
+                    .filter(t -> t.getTaskId().equals("exists"))
+                    .findFirst().get()
+                    .getOutputs()
+                    .get("uris"))
+                    .containsKey("hello.txt"),
+                is(true)
+            );
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         }
 
         public void taskRun(RunnerUtils runnerUtils) throws TimeoutException, InternalException {

@@ -1,8 +1,5 @@
 package io.kestra.core.tasks.storages;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -10,9 +7,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageInterface;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.net.URI;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 @SuperBuilder
@@ -21,7 +20,7 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a file from the internal storage."
+    title = "Delete a file from the Kestra's internal storage."
 )
 @Plugin(
     examples = {
@@ -34,14 +33,14 @@ import java.util.NoSuchElementException;
 )
 public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Schema(
-        title = "the file to delete",
-        description = "Must be a `kestra://` storage url"
+        title = "The file to be deleted.",
+        description = "Must be a `kestra://` storage URI."
     )
     @PluginProperty(dynamic = true)
     private String uri;
 
     @Schema(
-        title = "raise an error if the file is not found"
+        title = "Raise an error if the file is not found."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
@@ -52,7 +51,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
-        boolean delete = storageInterface.delete(getTenantId(runContext), render);
+        boolean delete = storageInterface.delete(runContext.tenantId(), render);
 
         if (errorOnMissing && !delete) {
             throw new NoSuchElementException("Unable to find file '" + render + "'");
@@ -64,22 +63,16 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
             .build();
     }
 
-    private String getTenantId(RunContext runContext) {
-        Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
-        // normally only tests should not have the flow variable
-        return flow != null ? flow.get("tenantId") : null;
-    }
-
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The deleted "
+            title = "The deleted file URI."
         )
         private final URI uri;
 
         @Schema(
-            title = "If the files was really deleted"
+            title = "Whether the file was deleted."
         )
         private final Boolean deleted;
     }

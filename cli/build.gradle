@@ -22,8 +22,6 @@ dependencies {
         exclude group: 'org.eclipse.sisu'
     }
 
-    implementation 'nl.basjes.gitignore:gitignore-reader:0.3.1'
-
     // modules
     implementation project(":core")
 

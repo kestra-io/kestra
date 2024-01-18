@@ -12,7 +12,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.net.URI;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -20,7 +19,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get the size of a file from the internal storage."
+    title = "Get the size of a file from the Kestra's internal storage."
 )
 @Plugin(
     examples = {
@@ -33,8 +32,8 @@ import java.util.Map;
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(
-        title = "the file",
-        description = "Must be a `kestra://` storage URL"
+        title = "The file whose size needs to be fetched.",
+        description = "Must be a `kestra://` storage URI."
     )
     @PluginProperty(dynamic = true)
     private String uri;
@@ -44,24 +43,18 @@ public class Size extends Task implements RunnableTask<Size.Output> {
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
-        Long size = storageInterface.size(getTenantId(runContext), render);
+        Long size = storageInterface.getAttributes(runContext.tenantId(), render).getSize();
 
         return Output.builder()
             .size(size)
             .build();
     }
 
-    private String getTenantId(RunContext runContext) {
-        Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
-        // normally only tests should not have the flow variable
-        return flow != null ? flow.get("tenantId") : null;
-    }
-
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The size of the file "
+            title = "The size of the file."
         )
         private final Long size;
     }

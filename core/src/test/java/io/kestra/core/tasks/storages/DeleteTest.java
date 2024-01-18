@@ -28,7 +28,7 @@ class DeleteTest {
     @Test
     void run() throws Exception {
         RunContext runContext = runContextFactory.of();
-        URL resource = DeleteTest.class.getClassLoader().getResource("application.yml");
+        URL resource = DeleteTest.class.getClassLoader().getResource("application-test.yml");
 
         URI put = storageInterface.put(
             null,

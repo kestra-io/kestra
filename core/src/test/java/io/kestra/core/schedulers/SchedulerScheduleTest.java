@@ -1,13 +1,17 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.types.Schedule;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.junitpioneer.jupiter.RetryingTest;
 
@@ -29,11 +33,16 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
 
-    private static Flow createScheduleFlow() {
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    protected QueueInterface<LogEntry> logQueue;
+
+    private static Flow createScheduleFlow(String zone) {
         Schedule schedule = Schedule.builder()
             .id("hourly")
             .type(Schedule.class.getName())
             .cron("0 * * * *")
+            .timezone(zone)
             .inputs(Map.of(
                 "testInputs", "test-inputs"
             ))
@@ -65,12 +74,14 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         CountDownLatch queueCount = new CountDownLatch(5);
+        CountDownLatch invalidLogCount = new CountDownLatch(5);
         Set<String> date = new HashSet<>();
         Set<String> executionId = new HashSet<>();
 
-        Flow flow = createScheduleFlow();
+        Flow invalid = createScheduleFlow("Asia/Delhi");
+        Flow flow = createScheduleFlow("Europe/Paris");
 
-        doReturn(Collections.singletonList(flow))
+        doReturn(List.of(invalid, flow))
             .when(flowListenersServiceSpy)
             .flows();
 
@@ -93,11 +104,19 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
+            Runnable logStop = logQueue.receive(e -> {
+                if (e.getLeft().getMessage().contains("Unknown time-zone ID: Asia/Delhi")) {
+                    invalidLogCount.countDown();
+                }
+            });
+
             worker.run();
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
+            invalidLogCount.await(1, TimeUnit.MINUTES);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             assertionStop.run();
+            logStop.run();
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(date.size(), is(3));

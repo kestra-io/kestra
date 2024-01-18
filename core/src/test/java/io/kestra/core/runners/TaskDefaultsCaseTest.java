@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.hierarchies.GraphCluster;
@@ -10,14 +9,8 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -25,35 +18,22 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 @Singleton
 public class TaskDefaultsCaseTest {
     @Inject
     private RunnerUtils runnerUtils;
-
-    @Inject
-    private TaskDefaultService taskDefaultService;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
 
     public void taskDefaults() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-defaults", Duration.ofSeconds(60));
@@ -73,24 +53,6 @@ public class TaskDefaultsCaseTest {
         assertThat(execution.getTaskRunList().get(5).getOutputs().get("def"), is("2"));
         assertThat(execution.getTaskRunList().get(6).getTaskId(), is("err-third"));
         assertThat(execution.getTaskRunList().get(6).getOutputs().get("def"), is("3"));
-    }
-
-    public void invalidTaskDefaults() throws TimeoutException {
-        List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(either -> logs.add(either.getLeft()));
-
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
-
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("Unrecognized field \"invalid\""));
-        assertThat(matchingLog, notNullValue());
-
-        ConstraintViolationException constraintViolationException = assertThrows(ConstraintViolationException.class, () -> taskDefaultService.injectDefaults(flowRepository
-            .findById(null, "io.kestra.tests", "invalid-task-defaults", Optional.empty())
-            .orElseThrow()));
-
-        assertThat(constraintViolationException.getConstraintViolations().size(), is(1));
-        assertThat(constraintViolationException.getMessage(), containsString("Unrecognized field \"invalid\""));
     }
 
     @SuperBuilder

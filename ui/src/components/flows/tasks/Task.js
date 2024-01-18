@@ -21,11 +21,6 @@ export default {
         }
     },
     emits: ["update:modelValue"],
-    created() {
-        // if (this.schema.default && this.modelValue === undefined) {
-        //     this.$emit("update:modelValue", this.schema.default);
-        // }
-    },
     methods: {
         getKey(addKey) {
             return this.root ? this.root + "." + addKey : addKey;
@@ -56,6 +51,10 @@ export default {
 
             if (property.type === "integer") {
                 return "number";
+            }
+
+            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+                return "anyOf";
             }
 
             return property.type || "dynamic";

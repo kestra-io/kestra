@@ -10,9 +10,10 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -51,6 +52,27 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
+    public List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException {
+        Path fsPath = getPath(tenantId, prefix);
+        try (Stream<Path> walk = Files.walk(fsPath)) {
+            return walk.sorted(Comparator.reverseOrder())
+                .filter(path -> includeDirectories || !Files.isDirectory(path))
+                .map(path -> {
+                    Path relativePath = fsPath.relativize(path);
+                    return relativePath + (Files.isDirectory(path) && !relativePath.toString().isEmpty() ? "/" : "");
+                })
+                .filter(Predicate.not(String::isEmpty))
+                .map(path -> {
+                    String prefixPath = prefix.getPath();
+                    return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
+                })
+                .toList();
+        } catch (NoSuchFileException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
     public boolean exists(String tenantId, URI uri) {
         return Files.exists(getPath(tenantId, uri));
     }
@@ -71,28 +93,6 @@ public class LocalStorage implements StorageInterface {
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException(e.getMessage());
         }
-    }
-
-    @Override
-    public Long size(String tenantId, URI uri) throws IOException {
-        try {
-            return Files.size(getPath(tenantId, uri));
-        } catch (NoSuchFileException e) {
-            throw new FileNotFoundException("Unable to find file at '" + uri + "'");
-        } catch (IOException e) {
-            throw new IOException("Unable to find file at '" + uri + "' with message '" + e.getMessage() + "'");
-        }
-    }
-
-    @Override
-    public Long lastModifiedTime(String tenantId, URI uri) throws IOException {
-        FileTime lastModifiedTime;
-        try {
-            lastModifiedTime = Files.getLastModifiedTime(getPath(tenantId, uri));
-        } catch (NoSuchFileException e) {
-            throw new FileNotFoundException(e.getMessage());
-        }
-        return lastModifiedTime.toMillis();
     }
 
     @Override

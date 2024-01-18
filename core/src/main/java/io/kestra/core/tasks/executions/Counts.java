@@ -31,13 +31,13 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "List execution counts for a list of flow",
-    description = "Can be used to send an alert if a condition is met about execution counts."
+    title = "List execution counts for a list of flow.",
+    description = "This can be used to send an alert if a condition is met about execution counts."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Send a slack notification if no execution for a flow on the last 24h",
+            title = "Send a slack notification if there is no execution for a flow for the last 24 hours.",
             full = true,
             code = {
                 "id: executions-count",
@@ -59,7 +59,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "        payload: |",
                 "          {",
                 "            \"channel\": \"#run-channel\",",
-                "            \"text\": \":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution on last 24h !\"",
+                "            \"text\": \":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution for last 24h!\"",
                 "          }",
                 "        url: \"https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX\"",
                 "    value: \"{{ jq outputs.counts.results '. | select(. != null) | .[]' }}\"",
@@ -77,41 +77,42 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
     @NotNull
     @NotEmpty
     @Schema(
-        title = "A list of flows to be filtered"
+        title = "A list of flows to be filtered."
     )
     @PluginProperty
     protected List<Flow> flows;
 
     @Schema(
-        title = "A list of state to be filtered"
+        title = "A list of states to be filtered."
     )
     @PluginProperty
     protected List<State.Type> states;
 
     @NotNull
     @Schema(
-        title = "The start date"
+        title = "The start date."
     )
     @PluginProperty(dynamic = true)
     protected String startDate;
 
     @Schema(
-        title = "The end date"
+        title = "The end date."
     )
     @PluginProperty(dynamic = true)
     protected String endDate;
 
     @NotNull
     @Schema(
-        title = "The expression against each flows to look at",
-        description = "The expression is as handlebars expression must return `true` in order to keep the current line\n" +
-            "some examples: \n" +
-            "- `{{ eq count 0 }}`: no execution found\n" +
-            "- `{{ gte count 5 }}`: more than 5 executions\n"
+        title = "The expression to look at against each flow.",
+        description = "The expression is such that handlebars expression must return `true` in order to keep the current line.\n" +
+            "Some examples: \n" +
+            "- ```yaml {{ eq count 0 }} ```: no execution found\n" +
+            "- ```yaml {{ gte count 5 }} ```: more than 5 executions\n"
     )
     @PluginProperty(dynamic = true)
     protected String expression;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();

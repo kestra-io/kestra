@@ -8,13 +8,14 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerTaskExecution;
-import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,7 +46,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Schema(
     title = "Execute a subflow for each batch of items",
-    description = "Execute a subflow for each batch of items. The `items` value must be internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type."
+    description = """
+        The `items` value must be Kestra's internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type.
+        Two special variables are available to pass as inputs to the subflow:
+        - `taskrun.items` which is the URI of internal storage file containing the batch of items to process
+        - `taskrun.iteration` which is the iteration or batch number"""
 )
 @Plugin(
     examples = {
@@ -171,7 +176,7 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     private final Boolean inheritLabels = false;
 
     @Override
-    public List<WorkerTaskExecution<?>> createWorkerTaskExecutions(
+    public List<SubflowExecution<?>> createSubflowExecutions(
         RunContext runContext,
         FlowExecutorInterface flowExecutorInterface,
         Flow currentFlow,
@@ -191,27 +196,31 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
             AtomicInteger currentIteration = new AtomicInteger(1);
 
             return splits.stream()
-                .<WorkerTaskExecution<?>>map(throwFunction(
+                .<SubflowExecution<?>>map(throwFunction(
                     split -> {
-                        Map<String, Object> itemsVariable = Map.of("taskrun", Map.of("items", split.toString()));
+                        int iteration = currentIteration.getAndIncrement();
+                        // these are special variable that can be passed to the subflow
+                        Map<String, Object> itemsVariable = Map.of("taskrun",
+                            Map.of("items", split.toString(), "iteration", iteration));
                         Map<String, Object> inputs = new HashMap<>();
                         if (this.inputs != null) {
                             inputs.putAll(runContext.render(this.inputs, itemsVariable));
                         }
 
                         List<Label> labels = new ArrayList<>();
-                        if (this.inheritLabels) {
+                        if (this.inheritLabels && currentExecution.getLabels() != null && !currentExecution.getLabels().isEmpty()) {
                             labels.addAll(currentExecution.getLabels());
                         }
+
                         if (this.labels != null) {
                             for (Map.Entry<String, String> entry: this.labels.entrySet()) {
                                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
                             }
                         }
 
-                        int iteration = currentIteration.getAndIncrement();
-                        var outputs = Output.builder().iterations(Map.of("max", splits.size())).build();
-                        return ExecutableUtils.workerTaskExecution(
+                        // these are special outputs to be able to compute iteration map of the parent taskrun
+                        var outputs = Output.builder().numberOfBatches(splits.size()).build();
+                        return ExecutableUtils.subflowExecution(
                             runContext,
                             flowExecutorInterface,
                             currentExecution,
@@ -219,10 +228,9 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
                             this,
                             currentTaskRun
                                 .withOutputs(outputs.toMap())
-                                .withItems(split.toString()),
+                                .withIteration(iteration),
                             inputs,
-                            labels,
-                            iteration
+                            labels
                         );
                     }
                 ))
@@ -234,14 +242,14 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     }
 
     @Override
-    public Optional<WorkerTaskResult> createWorkerTaskResult(
+    public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
         Flow flow,
         Execution execution
     ) {
         // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list
-        return Optional.of(ExecutableUtils.workerTaskResult(taskRun));
+        return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
     }
 
     @Override
@@ -276,8 +284,13 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
             title = "The counter of iterations for each subflow execution state.",
-            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter per subflow execution state, as well as a `max` counter that represents the maximum number of iterations (i.e. the total number of batches)."
+            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter by subflow execution state."
         )
-        private final Map<String, Integer> iterations;
+        private final Map<State.Type, Integer> iterations;
+
+        @Schema(
+            title = "The number of batches."
+        )
+        private final Integer numberOfBatches;
     }
 }

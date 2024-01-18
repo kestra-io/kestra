@@ -53,7 +53,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
         poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
 
-        if(workerEnabled) {
+        if (workerEnabled) {
             Worker worker = new Worker(applicationContext, workerThread, null);
             applicationContext.registerSingleton(worker);
             poolExecutor.execute(worker);

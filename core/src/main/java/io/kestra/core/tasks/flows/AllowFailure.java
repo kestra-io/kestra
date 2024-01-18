@@ -48,7 +48,7 @@ import java.util.Optional;
                 "        - 'exit 1'",
                 "  - id: last",
                 "    type: io.kestra.core.tasks.debugs.Return",
-                "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
     }
@@ -64,7 +64,8 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
             resolvedTasks,
             resolvedErrors,
             parentTaskRun,
-            runContext
+            runContext,
+            this.isAllowFailure()
         );
 
         if (type.isEmpty()) {
@@ -75,7 +76,8 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
                 resolvedTasks,
                 null,
                 parentTaskRun,
-                runContext
+                runContext,
+                this.isAllowFailure()
             );
 
             if (normalState.isPresent() && normalState.get().isFailed()) {

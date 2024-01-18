@@ -30,6 +30,14 @@ public interface StorageInterface {
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(String tenantId, URI uri) throws IOException;
 
+    /**
+     * Returns all objects that start with the given prefix
+     * @param includeDirectories whether to include directories in the given results or not. If true, directories' uri will have a trailing '/'
+     * @return Kestra's internal storage uris of the found objects
+     */
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException;
+
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     List<FileAttributes> list(String tenantId, URI uri) throws IOException;
 
@@ -41,28 +49,14 @@ public interface StorageInterface {
      * @param tenantId the tenant identifier.
      * @return true if the uri points to a file/object that exist in the internal storage.
      */
+    @SuppressWarnings("try")
     default boolean exists(String tenantId, URI uri) {
-        try {
-            get(tenantId, uri);
+        try (InputStream ignored = get(tenantId, uri)){
             return true;
         } catch (IOException ieo) {
             return false;
         }
     }
-
-    /**
-     * @deprecated Use {@link #getAttributes(String, URI)}} instead of individual call for every attribute
-     */
-    @Deprecated
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    Long size(String tenantId, URI uri) throws IOException;
-
-    /**
-     * @deprecated Use {@link #getAttributes(String, URI)} instead of individual call for every attribute
-     */
-    @Deprecated
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    Long lastModifiedTime(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     FileAttributes getAttributes(String tenantId, URI uri) throws IOException;

@@ -11,7 +11,6 @@ import lombok.With;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
-import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,13 +59,18 @@ public class TaskRun implements TenantInterface {
     State state;
 
     @With
-    String items;
+    Integer iteration;
 
     public void destroyOutputs() {
         // DANGER ZONE: this method is only used to deals with issues with messages too big that must be stripped down
         // to avoid crashing the platform. Don't use it for anything else.
         this.outputs = Collections.emptyMap();
         this.state = this.state.withState(State.Type.FAILED);
+    }
+
+    @Deprecated
+    public void setItems(String items) {
+        // no-op for backward compatibility
     }
 
     public TaskRun withState(State.Type state) {
@@ -82,7 +86,28 @@ public class TaskRun implements TenantInterface {
             this.attempts,
             this.outputs,
             this.state.withState(state),
-            this.items
+            this.iteration
+        );
+    }
+
+    public TaskRun fail() {
+        var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
+        List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : this.attempts;
+        newAttempts.add(attempt);
+
+        return new TaskRun(
+            this.tenantId,
+            this.id,
+            this.executionId,
+            this.namespace,
+            this.flowId,
+            this.taskId,
+            this.parentTaskRunId,
+            this.value,
+            newAttempts,
+            this.outputs,
+            this.state.withState(State.Type.FAILED),
+            this.iteration
         );
     }
 
@@ -99,7 +124,7 @@ public class TaskRun implements TenantInterface {
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state == null ? this.getState() : state)
-            .items(this.getItems())
+            .iteration(this.getIteration())
             .build();
     }
 
@@ -168,7 +193,7 @@ public class TaskRun implements TenantInterface {
     public boolean isSame(TaskRun taskRun) {
         return this.getId().equals(taskRun.getId()) &&
             ((this.getValue() == null && taskRun.getValue() == null) || (this.getValue() != null && this.getValue().equals(taskRun.getValue()))) &&
-            ((this.getItems() == null && taskRun.getItems() == null) || (this.getItems() != null && this.getItems().equals(taskRun.getItems()))) ;
+            ((this.getIteration() == null && taskRun.getIteration() == null) || (this.getIteration() != null && this.getIteration().equals(taskRun.getIteration()))) ;
     }
 
     public String toString(boolean pretty) {

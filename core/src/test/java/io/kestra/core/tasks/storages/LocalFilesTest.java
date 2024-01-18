@@ -32,7 +32,7 @@ class LocalFilesTest {
     StorageInterface storageInterface;
 
     private URI internalFiles() throws IOException, URISyntaxException {
-        var resource = ConcatTest.class.getClassLoader().getResource("application.yml");
+        var resource = ConcatTest.class.getClassLoader().getResource("application-test.yml");
 
         return storageInterface.put(
             null,
@@ -53,7 +53,7 @@ class LocalFilesTest {
             .inputs(Map.of(
                 "hello-input.txt", "Hello Input",
                 "execution.txt", "{{toto}}",
-                "application.yml", storageFile.toString()
+                "application-test.yml", storageFile.toString()
             ))
             .outputs(List.of("hello-input.txt"))
             .build();
@@ -69,7 +69,7 @@ class LocalFilesTest {
         assertThat(runContext.tempDir().toFile().list().length, is(2));
         assertThat(Files.readString(runContext.tempDir().resolve("execution.txt")), is("tata"));
         assertThat(
-            Files.readString(runContext.tempDir().resolve("application.yml")),
+            Files.readString(runContext.tempDir().resolve("application-test.yml")),
             is(new String(storageInterface.get(null, storageFile).readAllBytes()))
         );
 
@@ -87,7 +87,7 @@ class LocalFilesTest {
             .inputs(Map.of(
                 "test/hello-input.txt", "Hello Input",
                 "test/sub/dir/2/execution.txt", "{{toto}}",
-                "test/sub/dir/3/application.yml", storageFile.toString()
+                "test/sub/dir/3/application-test.yml", storageFile.toString()
             ))
             .outputs(List.of("test/**"))
             .build();
@@ -106,7 +106,7 @@ class LocalFilesTest {
             is("tata")
         );
         assertThat(
-            new String(storageInterface.get(null, outputs.getUris().get("test/sub/dir/3/application.yml"))
+            new String(storageInterface.get(null, outputs.getUris().get( "test/sub/dir/3/application-test.yml"))
                 .readAllBytes()),
             is(new String(storageInterface.get(null, storageFile).readAllBytes()))
         );

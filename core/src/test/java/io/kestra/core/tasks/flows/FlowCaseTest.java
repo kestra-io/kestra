@@ -32,19 +32,23 @@ public class FlowCaseTest {
     protected RunnerUtils runnerUtils;
 
     public void waitSuccess() throws Exception {
-        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing");
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", true);
     }
 
     public void waitFailed() throws Exception {
-        this.run("THIRD", State.Type.FAILED, State.Type.FAILED, 4, "Error Trigger ! error-t1");
+        this.run("THIRD", State.Type.FAILED, State.Type.FAILED, 4, "Error Trigger ! error-t1", true);
     }
 
     public void invalidOutputs() throws Exception {
-        this.run("FIRST", State.Type.FAILED, State.Type.SUCCESS, 2, null);
+        this.run("FIRST", State.Type.FAILED, State.Type.SUCCESS, 2, null, true);
+    }
+
+    public void noLabels() throws Exception {
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", false);
     }
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
-    void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs) throws Exception {
+    void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs, boolean testInherited) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
@@ -59,11 +63,11 @@ public class FlowCaseTest {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
-            "task-flow",
+            testInherited ? "task-flow" : "task-flow-inherited-labels",
             null,
             (f, e) -> ImmutableMap.of("string", input),
             Duration.ofMinutes(1),
-            List.of(new Label("mainFlowExecutionLabel", "execFoo"))
+            testInherited ? List.of(new Label("mainFlowExecutionLabel", "execFoo")) : List.of()
         );
 
         countDownLatch.await(1, TimeUnit.MINUTES);
@@ -83,7 +87,7 @@ public class FlowCaseTest {
             assertThat(execution.getTaskRunList().get(0).getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
         }
 
-        assertThat(triggered.get().getTrigger().getType(), is(Flow.class.getName()));
+        assertThat(triggered.get().getTrigger().getType(), is(Subflow.class.getName()));
         assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
         assertThat(triggered.get().getTrigger().getVariables().get("flowId"), is(execution.getFlowId()));
         assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));
@@ -91,11 +95,19 @@ public class FlowCaseTest {
         assertThat(triggered.get().getTaskRunList(), hasSize(count));
         assertThat(triggered.get().getState().getCurrent(), is(triggerState));
 
-        assertThat(triggered.get().getLabels(), hasItems(
-            new Label("mainFlowExecutionLabel", "execFoo"),
-            new Label("mainFlowLabel", "flowFoo"),
-            new Label("launchTaskLabel", "launchFoo"),
-            new Label("switchFlowLabel", "switchFoo")
-        ));
+        if (testInherited) {
+            assertThat(triggered.get().getLabels(), hasItems(
+                new Label("mainFlowExecutionLabel", "execFoo"),
+                new Label("mainFlowLabel", "flowFoo"),
+                new Label("launchTaskLabel", "launchFoo"),
+                new Label("switchFlowLabel", "switchFoo")
+            ));
+        } else {
+            assertThat(triggered.get().getLabels().size(), is(2));
+            assertThat(triggered.get().getLabels(), hasItems(
+                new Label("launchTaskLabel", "launchFoo"),
+                new Label("switchFlowLabel", "switchFoo")
+            ));
+        }
     }
 }

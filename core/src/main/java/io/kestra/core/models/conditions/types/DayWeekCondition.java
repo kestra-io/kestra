@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for allows events on weekdays"
+    title = "Condition to allow events on weekdays."
 )
 @Plugin(
     examples = {
@@ -39,15 +39,15 @@ import javax.validation.constraints.NotNull;
 public class DayWeekCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
-        title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use `{{ now(format=\"iso_local_date\") }}`"
+        title = "The date to test.",
+        description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now(format=\"iso_local_date\") }}";
+    private final String date = "{{ trigger.date }}";
 
     @NotNull
-    @Schema(title = "The day of week")
+    @Schema(title = "The day of week.")
     @PluginProperty
     private DayOfWeek dayOfWeek;
 

@@ -17,25 +17,25 @@ import java.util.Map;
 @Getter
 public class FetchOutput implements Output {
     @Schema(
-        title = "List containing the fetched data",
+        title = "List containing the fetched data.",
         description = "Only populated if using `fetchType=FETCH`."
     )
     private List<Object> rows;
 
     @Schema(
-        title = "Map containing the first row of fetched data",
+        title = "Map containing the first row of fetched data.",
         description = "Only populated if using `fetchType=FETCH_ONE`."
     )
     private Map<String, Object> row;
 
     @Schema(
-        title = "The uri of stored data",
-        description = "Only populated if using `fetchType=STORE`"
+        title = "Kestra's internal storage URI of the stored data.",
+        description = "Only populated if using `fetchType=STORE`."
     )
     private URI uri;
 
     @Schema(
-        title = "The size of the fetched rows"
+        title = "The number of fetched rows."
     )
     private Long size;
 }

@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a flow namespace"
+    title = "Condition for a flow namespace."
 )
 @Plugin(
     examples = {
@@ -38,14 +38,14 @@ import javax.validation.constraints.NotNull;
 public class FlowNamespaceCondition extends Condition {
     @NotNull
     @Schema(
-        title = "The namespace of the flow or the prefix if `prefix` is true"
+        title = "The namespace of the flow or the prefix if `prefix` is true."
     )
     @PluginProperty
     private String namespace;
 
     @Builder.Default
     @Schema(
-        title = "If we must look at the flow namespace by prefix (simple startWith case sensitive)"
+        title = "If we must look at the flow namespace by prefix (checked using startWith). The prefix is case sensitive."
     )
     @PluginProperty
     private final Boolean prefix = false;

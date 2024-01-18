@@ -43,6 +43,7 @@ import TaskNumber from "../components/flows/tasks/TaskNumber.vue";
 import TaskObject from "../components/flows/tasks/TaskObject.vue";
 import TaskString from "../components/flows/tasks/TaskString.vue";
 import TaskTask from "../components/flows/tasks/TaskTask.vue";
+import TaskAnyOf from "../components/flows/tasks/TaskAnyOf.vue";
 
 export default (app, routes, stores, translations) => {
     // charts
@@ -137,6 +138,7 @@ export default (app, routes, stores, translations) => {
     app.component("TaskComplex", TaskComplex)
     app.component("TaskString", TaskString)
     app.component("TaskTask", TaskTask)
+    app.component("TaskAnyOf", TaskAnyOf)
 
     return {store, router};
 }

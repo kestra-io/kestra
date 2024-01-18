@@ -368,7 +368,7 @@ public class FlowController {
                 if (existingFlow.isPresent()) {
                     return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 } else {
-                    return create(flow, flowWithSource.getSource());
+                    return this.create(flow, flowWithSource.getSource());
                 }
             })
             .toList();
@@ -710,11 +710,11 @@ public class FlowController {
         @Part CompletedFileUpload fileUpload
     ) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
+        String tenantId = tenantService.resolveTenant();
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                Flow parsed = yamlFlowParser.parse(source, Flow.class);
-                importFlow(source, parsed);
+                this.importFlow(tenantId, source);
             }
         } else if (fileName.endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
@@ -725,8 +725,7 @@ public class FlowController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    Flow parsed = yamlFlowParser.parse(source, Flow.class);
-                    importFlow(source, parsed);
+                    this.importFlow(tenantId, source);
                 }
             }
         } else {
@@ -736,13 +735,8 @@ public class FlowController {
         return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
-    protected void importFlow(String source, Flow parsed) {
-        flowRepository
-            .findById(tenantService.resolveTenant(), parsed.getNamespace(), parsed.getId())
-            .ifPresentOrElse(
-                previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
-                () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
-            );
+    protected void importFlow(String tenantId, String source) {
+        flowService.importFlow(tenantId, source);
     }
 
     protected List<FlowWithSource> setFlowsDisableByIds(List<IdWithNamespace> ids, boolean disable) {

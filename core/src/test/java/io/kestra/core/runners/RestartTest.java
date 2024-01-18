@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 public class RestartTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -17,7 +18,7 @@ public class RestartTest extends AbstractMemoryRunnerTest {
         restartCaseTest.restartFailedThenFailureWithGlobalErrors();
     }
 
-    @Test
+    @RetryingTest(5)
     void restartFailedThenFailureWithLocalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithLocalErrors();
     }

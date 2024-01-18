@@ -1,4 +1,4 @@
-import {apiUrlWithoutTenants} from "override/utils/route";
+import {apiUrl} from "override/utils/route";
 
 export default {
     namespaced: true,
@@ -15,7 +15,7 @@ export default {
     },
     actions: {
         list({commit}) {
-            return this.$http.get(`${apiUrlWithoutTenants()}/plugins`, {}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/plugins`, {}).then(response => {
                 commit("setPlugins", response.data)
                 commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages)).flat())
                 return response.data;
@@ -26,7 +26,7 @@ export default {
                 throw new Error("missing required cls");
             }
 
-            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/${options.cls}`, {params: options}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/plugins/${options.cls}`, {params: options}).then(response => {
                 if (options.all === true) {
                     commit("setPluginAllProps", response.data)
                 } else {
@@ -37,7 +37,7 @@ export default {
         },
         icons({commit}) {
             return Promise.all([
-                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}),
+                this.$http.get(`${apiUrl(this)}/plugins/icons`, {}),
                 this.dispatch("api/pluginIcons")
             ]).then(responses => {
                 const icons = responses[0].data;
@@ -54,16 +54,21 @@ export default {
             });
         },
         loadInputsType({commit}) {
-            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/inputs`, {}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/plugins/inputs`, {}).then(response => {
                 commit("setInputsType", response.data)
 
                 return response.data;
             })
         },
         loadInputSchema({commit}, options) {
-            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/inputs/${options.type}`, {}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/plugins/inputs/${options.type}`, {}).then(response => {
                 commit("setInputSchema", response.data)
 
+                return response.data;
+            })
+        },
+        loadSchemaType(_, options) {
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
             })
         }

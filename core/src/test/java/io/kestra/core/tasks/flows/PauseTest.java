@@ -59,7 +59,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         protected QueueInterface<Execution> executionQueue;
 
         public void run(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause");
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause", null, null, Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
@@ -81,7 +81,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         }
 
         public void runDelay(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay");
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
@@ -98,7 +98,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         }
 
         public void runParallelDelay(RunnerUtils runnerUtils) throws TimeoutException {
-            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-pause", Duration.ofMinutes(5));
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-pause", Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
             assertThat(execution.getTaskRunList(), hasSize(7));
@@ -106,7 +106,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
 
         public void runTimeout(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-timeout");
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-timeout", null, null, Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));

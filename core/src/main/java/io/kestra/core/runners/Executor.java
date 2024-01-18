@@ -31,6 +31,8 @@ public class Executor {
     private SubflowExecutionResult joinedSubflowExecutionResult;
     private ExecutionRunning executionRunning;
     private ExecutionQueued executionQueued;
+    private ExecutionResumed executionResumed;
+    private ExecutionResumed joinedExecutionResumed;
 
     public Executor(Execution execution, Long offset) {
         this.execution = execution;
@@ -43,6 +45,10 @@ public class Executor {
 
     public Executor(SubflowExecutionResult subflowExecutionResult) {
         this.joinedSubflowExecutionResult = subflowExecutionResult;
+    }
+
+    public Executor(ExecutionResumed executionResumed) {
+        this.joinedExecutionResumed = executionResumed;
     }
 
     public Boolean canBeProcessed() {
@@ -121,6 +127,12 @@ public class Executor {
 
     public Executor withExecutionRunning(ExecutionRunning executionRunning) {
         this.executionRunning = executionRunning;
+
+        return this;
+    }
+
+    public Executor withExecutionResumed(ExecutionResumed executionResumed) {
+        this.executionResumed = executionResumed;
 
         return this;
     }

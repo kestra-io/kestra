@@ -59,6 +59,11 @@
             <h5>{{ $t('variables') }}</h5>
             <vars :execution="execution" :data="execution.variables" />
         </div>
+
+        <div v-if="execution.outputs" class="mt-4">
+            <h5>{{ $t('outputs') }}</h5>
+            <vars :execution="execution" :data="execution.outputs" />
+        </div>
     </div>
 </template>
 <script>

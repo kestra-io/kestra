@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -16,9 +17,12 @@ import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,16 +30,18 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -56,30 +62,29 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     examples = {
         @Example(
             title = """
-            Execute a subflow for each batch of items. The subflow `orders` is called from the parent flow `orders_parallel` using the `ForEachItem` task in order to start one subflow execution for each batch of items.
-            ```yaml
-            id: orders
-            namespace: prod
+                Execute a subflow for each batch of items. The subflow `orders` is called from the parent flow `orders_parallel` using the `ForEachItem` task in order to start one subflow execution for each batch of items.
+                ```yaml
+                id: orders
+                namespace: prod
 
-            inputs:
-              - name: order
-                type: STRING
+                inputs:
+                  - name: order
+                    type: STRING
 
-            tasks:
-              - id: read_file
-                type: io.kestra.plugin.scripts.shell.Commands
-                runner: PROCESS
-                commands:
-                  - cat "{{ inputs.order }}"
+                tasks:
+                  - id: read_file
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    runner: PROCESS
+                    commands:
+                      - cat "{{ inputs.order }}"
 
-              - id: read_file_content
-                type: io.kestra.core.tasks.log.Log
-                message: "{{ read(inputs.order) }}"
-            ```
-            """,
+                  - id: read_file_content
+                    type: io.kestra.core.tasks.log.Log
+                    message: "{{ read(inputs.order) }}"
+                ```
+                """,
             full = true,
-            code =
-                """
+            code = """
                 id: orders_parallel
                 namespace: prod
 
@@ -103,7 +108,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     wait: true # wait for the subflow execution
                     transmitFailed: true # fail the task run if the subflow execution fails
                     inputs:
-                      order: "{{ taskrun.items }}" # special variable that contains the items of the batch"""
+                      order: "{{ taskrun.items }}" # special variable that contains the items of the batch
+                """
         )
     }
 )
@@ -213,13 +219,17 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
                         }
 
                         if (this.labels != null) {
-                            for (Map.Entry<String, String> entry: this.labels.entrySet()) {
+                            for (Map.Entry<String, String> entry : this.labels.entrySet()) {
                                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
                             }
                         }
 
                         // these are special outputs to be able to compute iteration map of the parent taskrun
-                        var outputs = Output.builder().numberOfBatches(splits.size()).build();
+                        var outputs = Output.builder()
+                            .numberOfBatches(splits.size())
+                            // the passed URI may be used by the subflow to write execution outputs.
+                            .uri(URI.create(runContext.getStorageOutputPrefix().toString() + "/" + iteration + "/outputs.ion"))
+                            .build();
                         return ExecutableUtils.subflowExecution(
                             runContext,
                             flowExecutorInterface,
@@ -248,6 +258,44 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
         Flow flow,
         Execution execution
     ) {
+
+        // We only resolve subflow outputs for an execution result when the execution is terminated.
+        if (taskRun.getState().isTerminated() && flow.getOutputs() != null && waitForExecution()) {
+            final Map<String, Object> outputs = flow.getOutputs()
+                .stream()
+                .collect(Collectors.toMap(
+                    io.kestra.core.models.flows.Output::getId,
+                    io.kestra.core.models.flows.Output::getValue)
+                );
+            final ForEachItem.Output.OutputBuilder builder = Output
+                .builder()
+                .iterations((Map<State.Type, Integer>) taskRun.getOutputs().get("iterations"))
+                .numberOfBatches((Integer) taskRun.getOutputs().get("numberOfBatches"));
+
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                FileSerde.write(bos, runContext.render(outputs));
+                URI uri = runContext.storage().putFile(
+                    new ByteArrayInputStream(bos.toByteArray()),
+                    URI.create((String) taskRun.getOutputs().get("uri"))
+                );
+                builder.uri(uri);
+            } catch (Exception e) {
+                runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
+                var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
+                taskRun = taskRun
+                    .withState(state)
+                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
+                    .withOutputs(builder.build().toMap());
+
+                return Optional.of(SubflowExecutionResult.builder()
+                    .executionId(execution.getId())
+                    .state(State.Type.FAILED)
+                    .parentTaskRun(taskRun)
+                    .build());
+            }
+            taskRun = taskRun.withOutputs(builder.build().toMap());
+        }
+
         // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list
         return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
     }
@@ -292,5 +340,10 @@ public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Outp
             title = "The number of batches."
         )
         private final Integer numberOfBatches;
+
+        @Schema(
+            title = "The URI of the file gathering outputs from each subflow execution."
+        )
+        private final URI uri;
     }
 }

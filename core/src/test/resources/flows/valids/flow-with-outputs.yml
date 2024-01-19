@@ -1,0 +1,11 @@
+id: flow-with-outputs
+namespace: io.kestra.tests
+
+tasks:
+- id: return
+  type: io.kestra.core.tasks.debugs.Return
+  format: "{{ flow.id }}"
+
+outputs:
+- id: "key"
+  value: "{{ outputs.return }}"

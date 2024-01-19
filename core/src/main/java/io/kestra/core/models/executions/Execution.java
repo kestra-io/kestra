@@ -9,32 +9,38 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.TenantInterface;
-import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
-import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
-import io.swagger.v3.oas.annotations.Hidden;
-import lombok.Builder;
-import lombok.Value;
-import lombok.With;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.Label;
+import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.utils.MapUtils;
+import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.Hidden;
+import lombok.Builder;
+import lombok.Value;
+import lombok.With;
+import lombok.extern.slf4j.Slf4j;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
-import io.micronaut.core.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 @Value
 @Builder(toBuilder = true)
@@ -64,6 +70,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @With
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     Map<String, Object> inputs;
+
+    @With
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    Map<String, Object> outputs;
 
     @With
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
@@ -114,6 +124,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.flowRevision,
             this.taskRunList,
             this.inputs,
+            this.outputs,
             this.labels,
             this.variables,
             this.state.withState(state),
@@ -145,6 +156,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.flowRevision,
             newTaskRunList,
             this.inputs,
+            this.outputs,
             this.labels,
             this.variables,
             this.state,
@@ -164,6 +176,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.flowRevision,
             taskRunList,
             this.inputs,
+            this.outputs,
             this.labels,
             this.variables,
             state,
@@ -442,7 +455,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     @JsonIgnore
-    public boolean hasTaskRunJoinable(TaskRun taskRun)  {
+    public boolean hasTaskRunJoinable(TaskRun taskRun) {
         if (this.taskRunList == null) {
             return true;
         }
@@ -532,17 +545,17 @@ public class Execution implements DeletedInterface, TenantInterface {
             })
             .filter(Objects::nonNull)
             .orElseGet(() -> new FailedExecutionWithLog(
-                this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
-                RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
-            )
-        );
+                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
+                    RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
+                )
+            );
     }
 
     /**
      * Create a new attempt for failed worker execution
      *
      * @param taskRun the task run where we need to add an attempt
-     * @param e the exception raise
+     * @param e       the exception raise
      * @return new taskRun with added attempt
      */
     private static FailedTaskRunWithLog newAttemptsTaskRunForFailedExecution(TaskRun taskRun, Exception e) {
@@ -562,9 +575,9 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Add exception log to last attempts
      *
-     * @param taskRun the task run where we need to add an attempt
+     * @param taskRun     the task run where we need to add an attempt
      * @param lastAttempt the lastAttempt found to add
-     * @param e the exception raise
+     * @param e           the exception raise
      * @return new taskRun with updated attempt with logs
      */
     private static FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e) {
@@ -599,6 +612,7 @@ public class Execution implements DeletedInterface, TenantInterface {
 
     /**
      * Transform an exception to {@link ILoggingEvent}
+     *
      * @param e the current execption
      * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
      */

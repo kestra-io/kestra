@@ -671,7 +671,14 @@ public class JdbcExecutor implements ExecutorInterface {
                     Task task = flow.findTaskByTaskId(message.getParentTaskRun().getTaskId());
                     TaskRun taskRun;
                     if (task instanceof ForEachItem forEachItem) {
-                        taskRun = ExecutableUtils.manageIterations(message.getParentTaskRun(), current.getExecution(), forEachItem.getTransmitFailed(), forEachItem.isAllowFailure());
+                        RunContext runContext = runContextFactory.of(flow, task, current.getExecution(), message.getParentTaskRun());
+                        taskRun = ExecutableUtils.manageIterations(
+                            runContext.storage(),
+                            message.getParentTaskRun(),
+                            current.getExecution(),
+                            forEachItem.getTransmitFailed(),
+                            forEachItem.isAllowFailure()
+                        );
                     } else {
                         taskRun = message.getParentTaskRun();
                     }

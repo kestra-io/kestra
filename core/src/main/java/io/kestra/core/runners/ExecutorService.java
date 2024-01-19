@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -10,7 +11,12 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.ExecutableTask;
+import io.kestra.core.models.tasks.ExecutionUpdatableTask;
+import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
@@ -24,6 +30,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -83,8 +90,10 @@ public class ExecutorService {
                         .withExecutionQueued(executionQueued)
                         .withExecution(newExecution, "checkConcurrencyLimit");
                 }
-                case CANCEL -> executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
-                case FAIL -> executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
+                case CANCEL ->
+                    executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
+                case FAIL ->
+                    executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
             };
         }
 
@@ -322,10 +331,37 @@ public class ExecutorService {
     }
 
     private Executor onEnd(Executor executor) {
-        Execution newExecution = executor.getExecution()
-            .withState(executor.getExecution().guessFinalState(executor.getFlow()));
+        final Flow flow = executor.getFlow();
 
-        Logger logger = executor.getFlow().logger();
+        Logger logger = flow.logger();
+
+        Execution newExecution = executor.getExecution()
+            .withState(executor.getExecution().guessFinalState(flow));
+
+        if (flow.getOutputs() != null) {
+            try {
+                Map<String, Object> outputs = flow.getOutputs()
+                    .stream()
+                    .collect(Collectors.toMap(
+                        io.kestra.core.models.flows.Output::getId,
+                        io.kestra.core.models.flows.Output::getValue)
+                    );
+
+                RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                outputs = runContext.render(outputs);
+                newExecution = newExecution
+                    .withOutputs(outputs);
+            } catch (IllegalVariableEvaluationException e) {
+                logger.error("[namespace: {}] [flow: {}] [execution: {}] Failed to render output values",
+                    executor.getExecution().getNamespace(),
+                    executor.getExecution().getFlowId(),
+                    executor.getExecution().getId(),
+                    e
+                );
+                newExecution = newExecution
+                    .withState(State.Type.FAILED);
+            }
+        }
 
         logger.info(
             "[namespace: {}] [flow: {}] [execution: {}] Flow completed with state {} in {}",
@@ -470,8 +506,8 @@ public class ExecutorService {
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(t -> childWorkerTaskTypeToWorkerTask(
-                    Optional.of(State.Type.KILLED),
-                    t
+                Optional.of(State.Type.KILLED),
+                t
             ))
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -617,8 +653,7 @@ public class ExecutorService {
                                 .withTaskRun(executableTaskRun.withState(State.Type.SUCCESS)),
                             "handleExecutableTaskRunning.noExecution"
                         );
-                    }
-                    else {
+                    } else {
                         executions.addAll(subflowExecutions);
                         if (!executableTask.waitForExecution()) {
                             // send immediately all workerTaskResult to ends the executable task
@@ -629,12 +664,11 @@ public class ExecutorService {
                                     executor.getFlow(),
                                     subflowExecution.getExecution()
                                 );
-                                subflowExecutionResult.ifPresent(result -> subflowExecutionResults.add(result));
+                                subflowExecutionResult.ifPresent(subflowExecutionResults::add);
                             }
                         }
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     WorkerTaskResult failed = WorkerTaskResult.builder()
                         .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
                             .withAttempts(Collections.singletonList(
@@ -683,9 +717,9 @@ public class ExecutorService {
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
                             .taskRun(workerTask.getTaskRun().withAttempts(
-                                Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build())
-                            )
-                                .withState(State.Type.SUCCESS)
+                                        Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build())
+                                    )
+                                    .withState(State.Type.SUCCESS)
                             )
                             .build()
                     );
@@ -757,8 +791,7 @@ public class ExecutorService {
                 workerTask.getClass().getSimpleName(),
                 workerTask.getTaskRun().toStringState()
             );
-        }
-        else if (value instanceof WorkerTrigger workerTrigger){
+        } else if (value instanceof WorkerTrigger workerTrigger) {
             log.debug(
                 "{} {} : {}",
                 in ? "<< IN " : ">> OUT",

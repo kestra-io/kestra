@@ -84,3 +84,7 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
+
+  tasks:
+    subflow:
+      allow-parameter-outputs: true

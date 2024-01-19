@@ -6,10 +6,13 @@ import io.kestra.core.storages.StorageInterface;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
+import java.util.Random;
+
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,12 +29,15 @@ class SizeTest {
     @Test
     void run() throws Exception {
         RunContext runContext = runContextFactory.of();
-        URL resource = SizeTest.class.getClassLoader().getResource("application-test.yml");
+
+        final Long size = 42L;
+        byte[] randomBytes = new byte[size.intValue()];
+        new Random().nextBytes(randomBytes);
 
         URI put = storageInterface.put(
             null,
             new URI("/file/storage/get.yml"),
-            new FileInputStream(Objects.requireNonNull(resource).getFile())
+            new ByteArrayInputStream(randomBytes)
         );
 
         Size bash = Size.builder()
@@ -39,6 +45,6 @@ class SizeTest {
             .build();
 
         Size.Output run = bash.run(runContext);
-        assertThat(run.getSize(), is(775L));
+        assertThat(run.getSize(), is(size));
     }
 }

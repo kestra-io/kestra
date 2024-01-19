@@ -11,14 +11,29 @@ import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.*;
+import io.kestra.core.runners.ExecutableUtils;
+import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.runners.SubflowExecutionResult;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.*;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -45,6 +60,9 @@ import java.util.*;
     }
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
+
+    static final String ALLOW_PARAMETER_OUTPUTS_PROPERTY = "kestra.tasks.subflow.allow-parameter-outputs";
+
     @NotEmpty
     @Schema(
         title = "The namespace of the subflow to be executed."
@@ -101,11 +119,15 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
     @PluginProperty
     private final Boolean inheritLabels = false;
 
+    /**
+     * @deprecated Output value should now be defined part of the Flow definition.
+     */
     @Schema(
         title = "Outputs from the subflow executions.",
         description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution."
     )
     @PluginProperty(dynamic = true)
+    @Deprecated(since = "0.15.0'")
     private Map<String, Object> outputs;
 
     @Override
@@ -125,7 +147,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
         }
 
         if (this.labels != null) {
-            for (Map.Entry<String, String> entry: this.labels.entrySet()) {
+            for (Map.Entry<String, String> entry : this.labels.entrySet()) {
                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
             }
         }
@@ -154,14 +176,33 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
             return Optional.empty();
         }
 
-        Output.OutputBuilder builder = Output.builder()
+        // Ugly hack to get access to worker's configuration.
+        // MUST be changed when the RunContext class will be refactored, or remove when
+        // the `outputs` parameter is removed after being deprecated.
+        boolean isOutputsAllowed = runContext.getApplicationContext()
+            .getProperty(ALLOW_PARAMETER_OUTPUTS_PROPERTY, Boolean.class)
+            .orElse(false);
+
+        final Output.OutputBuilder builder = Output.builder()
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
-        if (this.getOutputs() != null) {
+
+        final Map<String, Object> subflowOutputs = Optional
+            .ofNullable(flow.getOutputs())
+            .map(outputs -> outputs
+                .stream()
+                .collect(Collectors.toMap(
+                    io.kestra.core.models.flows.Output::getId,
+                    io.kestra.core.models.flows.Output::getValue)
+                )
+            )
+            .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
+
+        if (subflowOutputs != null) {
             try {
-                builder.outputs(runContext.render(this.getOutputs()));
+                builder.outputs(runContext.render(subflowOutputs));
             } catch (Exception e) {
-                runContext.logger().warn("Failed to extract outputs with the error: '" + e.getMessage() + "'", e);
+                runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
                 taskRun = taskRun
                     .withState(state)

@@ -206,3 +206,9 @@ kestra:
   heartbeat:
     frequency: 10s
     heartbeat-missed: 3
+
+  tasks:
+    # Global configuration for task 'Subflow'
+    subflow:
+      # Enable/Disable the task parameter's outputs.
+      allow-parameter-outputs: false

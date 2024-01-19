@@ -1,0 +1,15 @@
+id: for-each-item-outputs-subflow
+namespace: io.kestra.tests
+
+inputs:
+  - name: items
+    type: STRING
+
+tasks:
+  - id: return
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ read(inputs.items) }}"
+
+outputs:
+  - id: value
+    value: "{{ outputs.return.value }}"

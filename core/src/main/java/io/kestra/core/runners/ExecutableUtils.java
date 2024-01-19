@@ -13,16 +13,30 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.storages.Storage;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.net.URI;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Vector;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public final class ExecutableUtils {
+
+    private static final String TASK_VARIABLE_ITERATIONS = "iterations";
+    private static final String TASK_VARIABLE_NUMBER_OF_BATCHES = "numberOfBatches";
+    private static final String TASK_VARIABLE_URI = "uri";
 
     private ExecutableUtils() {
         // prevent initialization
@@ -109,45 +123,88 @@ public final class ExecutableUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static TaskRun manageIterations(TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure) throws InternalException {
-        Integer numberOfBatches = (Integer) taskRun.getOutputs().get("numberOfBatches");
+    public static TaskRun manageIterations(Storage storage, TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure) throws InternalException {
+        Integer numberOfBatches = (Integer) taskRun.getOutputs().get(TASK_VARIABLE_NUMBER_OF_BATCHES);
         var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());
         if (previousTaskRun == null) {
             throw new IllegalStateException("Should never happen");
         }
 
         State.Type currentState = taskRun.getState().getCurrent();
-        Optional<State.Type> previousState = taskRun.getState().getHistories().size() > 1 ? Optional.of(taskRun.getState().getHistories().get(taskRun.getState().getHistories().size() - 2).getState()) : Optional.empty();
+        Optional<State.Type> previousState = taskRun.getState().getHistories().size() > 1 ?
+            Optional.of(taskRun.getState().getHistories().get(taskRun.getState().getHistories().size() - 2).getState()) :
+            Optional.empty();
 
         // search for the previous iterations, if not found, we init it with an empty map
-        Map<String, Integer> iterations = previousTaskRun.getOutputs() != null ? (Map<String, Integer>) previousTaskRun.getOutputs().get("iterations") : new HashMap<>();
+        Map<String, Integer> iterations = previousTaskRun.getOutputs() != null ?
+            (Map<String, Integer>) previousTaskRun.getOutputs().get(TASK_VARIABLE_ITERATIONS) :
+            new HashMap<>();
 
-        int currentStateIteration = iterations.getOrDefault(currentState.toString(),  0);
+        int currentStateIteration = iterations.getOrDefault(currentState.toString(), 0);
         iterations.put(currentState.toString(), currentStateIteration + 1);
         if (previousState.isPresent() && previousState.get() != currentState) {
-            int previousStateIterations = iterations.getOrDefault(previousState.get().toString(),  numberOfBatches);
+            int previousStateIterations = iterations.getOrDefault(previousState.get().toString(), numberOfBatches);
             iterations.put(previousState.get().toString(), previousStateIterations - 1);
         }
 
         // update the state to success if terminatedIterations == numberOfBatches
-        int terminatedIterations =  iterations.getOrDefault(State.Type.SUCCESS.toString(), 0) +
+        int terminatedIterations = iterations.getOrDefault(State.Type.SUCCESS.toString(), 0) +
             iterations.getOrDefault(State.Type.FAILED.toString(), 0) +
             iterations.getOrDefault(State.Type.KILLED.toString(), 0) +
             iterations.getOrDefault(State.Type.WARNING.toString(), 0) +
             iterations.getOrDefault(State.Type.CANCELLED.toString(), 0);
-         if (terminatedIterations == numberOfBatches) {
-            var state = transmitFailed ? findTerminalState(iterations, allowFailure) : State.Type.SUCCESS;
+
+        if (terminatedIterations == numberOfBatches) {
+            State.Type state = transmitFailed ? findTerminalState(iterations, allowFailure) : State.Type.SUCCESS;
+            final Map<String, Object> outputs = new HashMap<>();
+            outputs.put(TASK_VARIABLE_ITERATIONS, iterations);
+            outputs.put(TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches);
+
+            try {
+                // Build URIs for each sub-flow outputs.
+                List<URI> outputsURIs = IntStream.rangeClosed(1, terminatedIterations)
+                    .mapToObj(it -> "kestra://" + storage.getContextBaseURI().getPath() + "/" + it + "/outputs.ion")
+                    .map(throwFunction(URI::create))
+                    .filter(storage::isFileExist)
+                    .toList();
+
+                if (!outputsURIs.isEmpty()) {
+                    // Merge outputs from each sub-flow into a single stored in the internal storage.
+                    Enumeration<InputStream> streams = outputsURIs.stream()
+                        .map(throwFunction(storage::getFile))
+                        .collect(Collectors.toCollection(Vector::new))
+                        .elements();
+                    try (InputStream is = new SequenceInputStream(streams)) {
+                        outputs.put(TASK_VARIABLE_URI, storage.putFile(is, "outputs.ion"));
+                    }
+                }
+            } catch (Exception e) {
+                log.error("[namespace: {}] [flow: {}] [execution: {}] Failed to collect and merge outputs from each sub-flow with error: {}",
+                    execution.getNamespace(),
+                    execution.getFlowId(),
+                    execution.getId(),
+                    e.getLocalizedMessage(),
+                    e
+                );
+                if (transmitFailed) {
+                    state = State.Type.FAILED;
+                }
+            }
+
             return previousTaskRun
                 .withIteration(taskRun.getIteration())
-                .withOutputs(Map.of("iterations", iterations, "numberOfBatches", numberOfBatches))
+                .withOutputs(outputs)
                 .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                 .withState(state);
         }
 
-         // else we update the previous taskRun as it's the same taskRun that is still running
+        // else we update the previous taskRun as it's the same taskRun that is still running
         return previousTaskRun
             .withIteration(taskRun.getIteration())
-            .withOutputs(Map.of("iterations", iterations, "numberOfBatches", numberOfBatches));
+            .withOutputs(Map.of(
+                TASK_VARIABLE_ITERATIONS, iterations,
+                TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches
+            ));
     }
 
     private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure) {

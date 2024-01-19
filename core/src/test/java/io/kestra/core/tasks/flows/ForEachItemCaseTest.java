@@ -12,9 +12,12 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -29,11 +32,18 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.matchesRegex;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 @Singleton
 public class ForEachItemCaseTest {
+    static final String TEST_NAMESPACE = "io.kestra.tests";
+
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
@@ -58,7 +68,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item", null,
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -102,7 +112,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-no-wait", null,
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-no-wait", null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -147,7 +157,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "for-each-item-failed", null,
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -172,6 +182,57 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow-failed"));
         assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-failed/executions/.*/tasks/each/.*\\.txt"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
+    }
+
+    public void forEachItemWithSubflowOutputs() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
+        CountDownLatch countDownLatch = new CountDownLatch(3);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        executionQueue.receive(either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("for-each-item-outputs-subflow") && execution.getState().getCurrent().isTerminated()) {
+                countDownLatch.countDown();
+                triggered.set(execution);
+            }
+        });
+
+        URI file = storageUpload(10);
+        Map<String, Object> inputs = Map.of("file", file.toString());
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-outputs", null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
+
+        // we should have triggered 3 subflows
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+
+        // assert on the main flow execution
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Map<String, Object> outputs = execution.getTaskRunList().get(0).getOutputs();
+        assertThat(outputs.get("numberOfBatches"), is(3));
+        assertThat(outputs.get("iterations"), notNullValue());
+
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("CREATED"), is(0));
+        assertThat(iterations.get("RUNNING"), is(0));
+        assertThat(iterations.get("SUCCESS"), is(3));
+
+        // assert on the last subflow execution
+        assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggered.get().getFlowId(), is("for-each-item-outputs-subflow"));
+        assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-outputs/executions/.*/tasks/each/.*\\.txt"));
+        assertThat(triggered.get().getTaskRunList(), hasSize(1));
+
+        // asserts for subflow merged outputs
+        assertThat(outputs.get("uri"), notNullValue());
+        InputStream stream = storageInterface.get(null, URI.create((String) outputs.get("uri")));
+
+        try (var br = new BufferedReader(new InputStreamReader(stream))) {
+            // one line per sub-flows
+            assertThat(br.lines().count(), is(3L));
+        }
     }
 
     private URI storageUpload(int count) throws URISyntaxException, IOException {

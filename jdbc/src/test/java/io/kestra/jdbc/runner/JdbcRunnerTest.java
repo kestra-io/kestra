@@ -284,6 +284,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    void forEachItemSubflowOutputs() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+        forEachItemCaseTest.forEachItemWithSubflowOutputs();
+    }
+
+    @Test
     void concurrencyCancel() throws TimeoutException, InterruptedException {
         flowConcurrencyCaseTest.flowConcurrencyCancel();
     }

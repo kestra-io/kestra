@@ -1,6 +1,5 @@
 package io.kestra.core.runners.pebble;
 
-import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.functions.*;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.extension.*;
@@ -34,6 +33,12 @@ public class Extension extends AbstractExtension {
     @Inject
     @Nullable
     private RenderFunction renderFunction;
+
+    @Inject
+    private EncryptFunction encryptFunction;
+
+    @Inject
+    private DecryptFunction decryptFunction;
 
     @Override
     public List<TokenParser> getTokenParsers() {
@@ -100,6 +105,8 @@ public class Extension extends AbstractExtension {
         if (this.renderFunction != null) {
             functions.put("render", renderFunction);
         }
+        functions.put("encrypt", encryptFunction);
+        functions.put("decrypt", decryptFunction);
 
         return functions;
     }

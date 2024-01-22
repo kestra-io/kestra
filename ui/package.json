@@ -75,7 +75,7 @@
     "sass": "^1.69.7",
     "vite": "^5.0.11",
     "vite-plugin-rewrite-all": "1.0.1",
-    "vitest": "^1.2.0",
+    "vitest": "^1.2.1",
     "vscode-web": "^1.82.0"
   }
 }

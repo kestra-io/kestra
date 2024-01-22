@@ -16,6 +16,7 @@ export default {
     actions: {
         loadFeeds({commit}, options) {
             return axios.get(API_URL + "/v1/feeds", {
+                withCredentials: true,
                 params: {
                     iid: options.iid,
                     uid: options.uid,
@@ -58,7 +59,7 @@ export default {
 
             dispatch("posthogEvents", mergeData)
 
-            return axios.post(API_URL + "/v1/reports/events", mergeData);
+            return axios.post(API_URL + "/v1/reports/events", mergeData, {withCredentials: true});
         },
         posthogEvents(_, data) {
             const type = data.type;

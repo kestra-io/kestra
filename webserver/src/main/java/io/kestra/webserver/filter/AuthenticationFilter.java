@@ -1,7 +1,8 @@
 package io.kestra.webserver.filter;
 
+import io.kestra.core.utils.AuthUtils;
+import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
@@ -13,35 +14,28 @@ import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
 import io.reactivex.Flowable;
+import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
 
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 
 @Filter("/**")
-@Requires(property = "kestra.server.basic-auth.enabled", value = "true")
+@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 public class AuthenticationFilter implements HttpServerFilter {
     private static final String PREFIX = "Basic";
 
-    @Value("${kestra.server.basic-auth.username}")
-    private String username;
-
-    @Value("${kestra.server.basic-auth.password}")
-    private String password;
-
-    @Value("${kestra.server.basic-auth.realm:Kestra}")
-    private String realm;
-
-    @Value("${kestra.server.basic-auth.open-urls:[]}")
-    private List<String> openUrls;
-
-    @Value("${endpoints.all.port:8085}")
-    private int managementPort;
+    @Inject
+    private BasicAuthService basicAuthService;
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        boolean isOpenUrl = this.openUrls
+        if (!basicAuthService.isEnabled()) {
+            return chain.proceed(request);
+        }
+
+        BasicAuthService.SaltedBasicAuthConfiguration basicAuthConfiguration = this.basicAuthService.configuration();
+        boolean isOpenUrl = basicAuthConfiguration.getOpenUrls()
             .stream()
             .anyMatch(s -> request.getPath().startsWith(s));
 
@@ -56,10 +50,10 @@ public class AuthenticationFilter implements HttpServerFilter {
             .map(cred -> BasicAuth.from(cred.substring(PREFIX.length() + 1)));
 
         if (basicAuth.isEmpty() ||
-            !basicAuth.get().username().equals(username) ||
-            !basicAuth.get().password().equals(password)
+            !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
+            !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(), basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
         ) {
-            return Flowable.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + realm));
+            return Flowable.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
         }
 
         return Flowable.fromPublisher(chain.proceed(request));
@@ -68,7 +62,7 @@ public class AuthenticationFilter implements HttpServerFilter {
     @SuppressWarnings("rawtypes")
     private boolean isManagementEndpoint(HttpRequest<?> request) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
-        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?,?> method) {
+        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
             return method.getAnnotation(Endpoint.class) != null;
         }
         return false;

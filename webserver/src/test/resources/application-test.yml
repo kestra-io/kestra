@@ -43,7 +43,7 @@ kestra:
       enabled: false
     basic-auth:
       enabled: false
-      username: admin
+      username: admin@kestra.io
       password: kestra
       open-urls:
         - "/ping"

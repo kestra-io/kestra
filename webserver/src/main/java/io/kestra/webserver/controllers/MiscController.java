@@ -8,6 +8,7 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -40,6 +41,9 @@ public class MiscController {
 
     @Inject
     CollectorService collectorService;
+
+    @Inject
+    BasicAuthService basicAuthService;
 
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
@@ -82,7 +86,7 @@ public class MiscController {
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
                 .build()
-            );
+            ).isOauthEnabled(basicAuthService.isEnabled());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -123,6 +127,8 @@ public class MiscController {
         Environment environment;
 
         Preview preview;
+
+        Boolean isOauthEnabled;
     }
 
     @Value

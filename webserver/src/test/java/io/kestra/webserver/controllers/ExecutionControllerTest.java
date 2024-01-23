@@ -84,7 +84,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("int", "42")
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
-        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application-test.yml")).getPath())
+        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
         .build();
 
     @Test
@@ -439,14 +439,14 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             String.class
         );
 
-        assertThat(file, containsString("micronaut:"));
+        assertThat(file, is("hello"));
 
         FileMetas metas = client.retrieve(
             HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file/metas?path=" + path),
             FileMetas.class
         ).blockingFirst();
 
-        assertThat(metas.getSize(), greaterThanOrEqualTo(3003L));
+        assertThat(metas.getSize(), is(5L));
 
         String newExecutionId = IdUtils.create();
 

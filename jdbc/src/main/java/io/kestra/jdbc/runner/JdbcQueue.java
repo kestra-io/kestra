@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
-    protected static final ObjectMapper mapper = JdbcMapper.of();
+    protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private static ExecutorService poolExecutor;
 
@@ -86,7 +86,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Map<Field<Object>, Object> fields = new HashMap<>();
         fields.put(AbstractJdbcRepository.field("type"), this.cls.getName());
         fields.put(AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create());
-        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(mapper.writeValueAsString(message)));
+        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(MAPPER.writeValueAsString(message)));
 
         if (consumerGroup != null) {
             fields.put(AbstractJdbcRepository.field("consumer_group"), consumerGroup);
@@ -289,7 +289,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return fetch
             .map(record -> {
                 try {
-                    return Either.left(mapper.readValue(record.get("value", String.class), cls));
+                    return Either.left(MAPPER.readValue(record.get("value", String.class), cls));
                 } catch (JsonProcessingException e) {
                     return Either.right(new DeserializationException(e, record.get("value", String.class)));
                 }

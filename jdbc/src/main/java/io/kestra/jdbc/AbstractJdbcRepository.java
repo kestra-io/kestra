@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public abstract class AbstractJdbcRepository<T> {
-    protected static final ObjectMapper mapper = JdbcMapper.of();
+    protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
     protected final QueueService queueService;
 
@@ -165,7 +165,7 @@ public abstract class AbstractJdbcRepository<T> {
 
     public T deserialize(String record) {
         try {
-            return mapper.readValue(record, cls);
+            return MAPPER.readValue(record, cls);
         } catch (IOException e) {
             throw new DeserializationException(e, record);
         }

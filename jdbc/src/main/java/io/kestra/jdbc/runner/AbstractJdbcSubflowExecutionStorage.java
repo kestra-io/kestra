@@ -5,7 +5,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.runners.SubflowExecution;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class AbstractJdbcSubflowExecutionStorage extends AbstractJdbcRepository {
-    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private final static ObjectMapper MAPPER = JdbcMapper.of();
     protected io.kestra.jdbc.AbstractJdbcRepository<SubflowExecution<?>> jdbcRepository;
 
     @SuppressWarnings({"unchecked", "rawtypes"})

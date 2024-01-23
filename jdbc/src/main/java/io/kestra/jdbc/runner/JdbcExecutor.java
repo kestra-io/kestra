@@ -31,6 +31,7 @@ import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
+import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
@@ -58,7 +59,7 @@ import java.util.stream.Stream;
 @JdbcRunnerEnabled
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper MAPPER = JdbcMapper.of();;
 
     private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 

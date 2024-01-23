@@ -1,11 +1,11 @@
 package io.kestra.jdbc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public abstract class AbstractJdbcRepository<T> {
+    protected static final ObjectMapper mapper = JdbcMapper.of();
+
     protected final QueueService queueService;
 
     protected final Class<T> cls;
@@ -163,7 +165,7 @@ public abstract class AbstractJdbcRepository<T> {
 
     public T deserialize(String record) {
         try {
-            return JacksonMapper.ofJson().readValue(record, cls);
+            return mapper.readValue(record, cls);
         } catch (IOException e) {
             throw new DeserializationException(e, record);
         }

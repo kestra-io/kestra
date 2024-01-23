@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 @Singleton
 @Slf4j
 public class JdbcWorkerTriggerResultQueueService {
-    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private final static ObjectMapper MAPPER = JdbcMapper.of();
 
     private final JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue;
     @Inject

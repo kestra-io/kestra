@@ -21,7 +21,7 @@ public abstract class JdbcMapper {
 
     public static ObjectMapper of() {
         if (MAPPER == null) {
-            MAPPER = JacksonMapper.ofJson().copy();
+            MAPPER = JacksonMapper.ofJson(false).copy();
 
             final SimpleModule module = new SimpleModule();
             module.addSerializer(Instant.class, new JsonSerializer<>() {

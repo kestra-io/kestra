@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 // For this controller tests, we replace every Marketplace URLs with http://localhost:8081/{previous-host} to target Wiremock server
-@WireMockTest(httpPort = 8081)
+@WireMockTest(httpPort = 28181)
 class EditorControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
@@ -36,12 +36,12 @@ class EditorControllerTest extends JdbcH2ControllerTest {
         return new MarketplaceRequestMapper() {
             @Override
             public String url(MarketplaceRequestType type) {
-                return type.getUrl().replaceFirst("https?://", "http://localhost:8081/");
+                return type.getUrl().replaceFirst("https?://", "http://localhost:28181/");
             }
 
             @Override
             public String resourceBaseUrl(String publisher) {
-                return super.resourceBaseUrl(publisher).replaceFirst("https?://", "http://localhost:8081/");
+                return super.resourceBaseUrl(publisher).replaceFirst("https?://", "http://localhost:28181/");
             }
         };
     }
@@ -123,7 +123,7 @@ class EditorControllerTest extends JdbcH2ControllerTest {
 
     private MappingBuilder hasGoodHeaders(MappingBuilder mappingBuilder) {
         return mappingBuilder.withHeader("Origin", equalTo("http://localhost:8080"))
-            .withHeader("Host", equalTo("localhost:8081"))
+            .withHeader("Host", equalTo("localhost:28181"))
             .withHeader("Cookie", absent())
             .withHeader("Access-Control-Allow-Origin", absent());
     }

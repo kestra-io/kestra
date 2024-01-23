@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @MicronautTest
-@WireMockTest(httpPort = 8081)
+@WireMockTest(httpPort = 28181)
 class BlueprintControllerTest {
     @Inject
     @Client("/")

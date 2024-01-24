@@ -278,6 +278,17 @@ public class RunContext {
                 builder.put("trigger", execution.getTrigger().getVariables());
             }
 
+            if (execution.getLabels() != null) {
+                builder.put("labels", execution.getLabels()
+                    .stream()
+                    .map(label -> new AbstractMap.SimpleEntry<>(
+                        label.key(),
+                        label.value()
+                    ))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                );
+            }
+
             if (execution.getVariables() != null) {
                 builder.putAll(execution.getVariables());
             }

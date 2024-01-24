@@ -66,7 +66,7 @@ export default {
                 })
         },
         kill(_, options) {
-            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}/kill`);
+            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
         },
         bulkKill(_, options) {
             return this.$http.delete(`${apiUrl(this)}/executions/kill/by-ids`, {data: options.executionsId});

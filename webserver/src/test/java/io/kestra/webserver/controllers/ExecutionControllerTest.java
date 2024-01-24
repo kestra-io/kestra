@@ -662,7 +662,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/executions/" + pausedExecution.getId() + "/kill"));
-        assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+        assertThat(resumeResponse.getStatus(), is(HttpStatus.ACCEPTED));
 
         // check that the execution is no more paused
         Thread.sleep(100);
@@ -719,7 +719,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // kill the execution
         HttpResponse<?> killResponse = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/executions/" + runningExecution.getId() + "/kill"));
-        assertThat(killResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+        assertThat(killResponse.getStatus(), is(HttpStatus.ACCEPTED));
 
         // check that the execution has been set to killing then killed
         assertTrue(killingLatch.await(10, TimeUnit.SECONDS));

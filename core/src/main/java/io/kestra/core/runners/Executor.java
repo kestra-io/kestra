@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
@@ -34,6 +35,11 @@ public class Executor {
     private ExecutionResumed executionResumed;
     private ExecutionResumed joinedExecutionResumed;
 
+    /**
+     * List of {@link ExecutionKilled} to be propagated part of the execution.
+     */
+    private List<ExecutionKilled> executionKilled;
+
     public Executor(Execution execution, Long offset) {
         this.execution = execution;
         this.offset = offset;
@@ -49,6 +55,10 @@ public class Executor {
 
     public Executor(ExecutionResumed executionResumed) {
         this.joinedExecutionResumed = executionResumed;
+    }
+
+    public Executor(List<ExecutionKilled> executionKilled) {
+        this.executionKilled = executionKilled;
     }
 
     public Boolean canBeProcessed() {
@@ -133,7 +143,11 @@ public class Executor {
 
     public Executor withExecutionResumed(ExecutionResumed executionResumed) {
         this.executionResumed = executionResumed;
+        return this;
+    }
 
+    public Executor withExecutionKilled(final List<ExecutionKilled> executionKilled) {
+        this.executionKilled = executionKilled;
         return this;
     }
 

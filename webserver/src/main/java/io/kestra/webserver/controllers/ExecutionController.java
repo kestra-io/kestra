@@ -43,8 +43,20 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.*;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Delete;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Part;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Put;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -78,7 +90,13 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.Rethrow.throwBiFunction;
@@ -805,38 +823,38 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/{executionId}/kill")
+    @Delete(uri = "/{executionId}/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill an execution")
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "202", description = "Execution kill was requested successfully")
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public HttpResponse<?> kill(
-        @Parameter(description = "The execution id") @PathVariable String executionId
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
     ) throws InternalException {
+
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
             return HttpResponse.notFound();
         }
 
         var execution = maybeExecution.get();
-        if (execution.getState().isTerminated()) {
-            throw new IllegalStateException("Execution is already finished, can't kill it");
-        }
 
-        if (execution.getState().isPaused()) {
-            // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
-            // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
-            this.executionService.resume(execution, State.Type.KILLING);
-            return HttpResponse.noContent();
+        // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
+        if (execution.getState().isTerminated() && !isOnKillCascade) {
+            throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
         killQueue.emit(ExecutionKilled
             .builder()
+            .state(ExecutionKilled.State.REQUESTED)
             .executionId(executionId)
+            .isOnKillCascade(isOnKillCascade)
+            .tenantId(tenantService.resolveTenant())
             .build()
         );
 
-        return HttpResponse.noContent();
+        return HttpResponse.accepted();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -857,8 +875,8 @@ public class ExecutionController {
             throw new IllegalStateException("Execution is not paused, can't resume it");
         }
 
-        this.executionService.resume(execution, State.Type.RUNNING);
-
+        Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
+        this.executionQueue.emit(resumeExecution);
         return HttpResponse.noContent();
     }
 
@@ -906,23 +924,15 @@ public class ExecutionController {
         }
 
         executions.forEach(execution -> {
-            if (execution.getState().isPaused()) {
-                // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
-                // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
-                try {
-                    this.executionService.resume(execution, State.Type.KILLING);
-                } catch (InternalException e) {
-                    log.warn("Unable to kill the paused execution {}, ignoring it", execution.getId(), e);
-                }
-            } else {
-                killQueue.emit(ExecutionKilled
-                    .builder()
-                    .executionId(execution.getId())
-                    .build()
-                );
-            }
+            killQueue.emit(ExecutionKilled
+                .builder()
+                .state(ExecutionKilled.State.REQUESTED)
+                .executionId(execution.getId())
+                .isOnKillCascade(false) // Explicitly force cascade to false.
+                .tenantId(tenantService.resolveTenant())
+                .build()
+            );
         });
-
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
@@ -953,7 +963,7 @@ public class ExecutionController {
                 triggerExecutionId,
                 childFilter
             )
-            .map(execution -> execution.getId())
+            .map(Execution::getId)
             .collectList()
             .block();
 
@@ -1044,7 +1054,7 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)){
+        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)) {
             FileRender fileRender = FileRenderBuilder.of(
                 extension,
                 fileStream,

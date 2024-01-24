@@ -474,7 +474,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             String.class
         );
 
-        assertThat(defaultFile, containsString("micronaut:"));
+        assertThat(defaultFile, containsString("hello"));
 
         Map<String, Object> latin1FileInputs = ImmutableMap.<String, Object>builder()
             .put("failed", "NO")

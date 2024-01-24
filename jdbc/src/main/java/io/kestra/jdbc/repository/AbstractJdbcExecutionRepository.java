@@ -22,14 +22,25 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
-import org.jooq.*;
+import org.jooq.Record1;
+import org.jooq.Record2;
+import org.jooq.Result;
+import org.jooq.Results;
+import org.jooq.SQLDialect;
+import org.jooq.Select;
+import org.jooq.SelectConditionStep;
+import org.jooq.SelectForUpdateOfStep;
+import org.jooq.SelectHavingStep;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
-
-import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
@@ -39,8 +50,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,6 +93,30 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     public Boolean isTaskRunEnabled() {
         return false;
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public Flux<Execution> findAllByTriggerExecutionId(String tenantId,
+                                                       String triggerExecutionId) {
+        return Flux.create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration -> {
+                    SelectConditionStep<Record1<Object>> select = DSL
+                        .using(configuration)
+                        .select(field("value"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(tenantId))
+                        .and(field("trigger_execution_id").eq(triggerExecutionId));
+
+                    select.fetch()
+                        .map(this.jdbcRepository::map)
+                        .forEach(emitter::next);
+                    emitter.complete();
+                }),
+            FluxSink.OverflowStrategy.BUFFER
+        );
     }
 
     @Override
@@ -173,7 +212,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         .map(this.jdbcRepository::map)
                         .forEach(emitter::next);
 
-                    emitter.complete();;
+                    emitter.complete();
                 }),
             FluxSink.OverflowStrategy.BUFFER
         );
@@ -538,12 +577,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         e.getKey(),
                         Map.of(
                             "*",
-                                dailyStatisticsQueryMapRecord(
-                                    e.getValue(),
-                                    startDate,
-                                    endDate,
-                                    null
-                                )
+                            dailyStatisticsQueryMapRecord(
+                                e.getValue(),
+                                startDate,
+                                endDate,
+                                null
+                            )
                         )
                     );
                 } else {
@@ -578,7 +617,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             return fillDate(results, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww", groupByType.val());
         } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
             return fillDate(results, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD", groupByType.val());
-        }  else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
+        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
             return fillDate(results, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH", groupByType.val());
         } else {
             return fillDate(results, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm", groupByType.val());
@@ -623,7 +662,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return filledResult;
     }
 
-    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics>  result, String groupByType) {
+    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics> result, String groupByType) {
         long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value).sum();
         long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
 
@@ -768,14 +807,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 Table<Record2<Object, Integer>> cte = subquery.asTable("cte");
 
-               SelectConditionStep<? extends Record1<?>> mainQuery = context
+                SelectConditionStep<? extends Record1<?>> mainQuery = context
                     .select(cte.field("value"))
                     .from(cte)
                     .where(field("row_num").eq(1));
                 return mainQuery.fetch().map(this.jdbcRepository::map);
             });
     }
-
 
 
     @Override

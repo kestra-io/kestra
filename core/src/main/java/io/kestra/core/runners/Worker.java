@@ -115,16 +115,20 @@ public class Worker implements Runnable, AutoCloseable {
     @Override
     public void run() {
         this.executionKilledQueue.receive(executionKilled -> {
-            if (executionKilled != null && executionKilled.isLeft()) {
-                // @FIXME: the hashset will never expire killed execution
-                killedExecution.add(executionKilled.getLeft().getExecutionId());
-
-                synchronized (this) {
-                    workerThreadReferences
-                        .stream()
-                        .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
-                        .forEach(WorkerThread::kill);
-                }
+            if(executionKilled == null || !executionKilled.isLeft()) {
+                return;
+            }
+            ExecutionKilled.State state = executionKilled.getLeft().getState();
+            if (state != null && state != ExecutionKilled.State.EXECUTED) {
+                return;
+            }
+            // @FIXME: the hashset will never expire killed execution
+            killedExecution.add(executionKilled.getLeft().getExecutionId());
+            synchronized (this) {
+                workerThreadReferences
+                    .stream()
+                    .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
+                    .forEach(WorkerThread::kill);
             }
         });
 

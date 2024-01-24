@@ -21,11 +21,30 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.DefaultFlowExecutor;
+import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.Executor;
+import io.kestra.core.runners.ExecutorInterface;
 import io.kestra.core.runners.ExecutorService;
-import io.kestra.core.runners.*;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.*;
+import io.kestra.core.runners.ExecutorState;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.runners.WorkerInstance;
+import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.WorkerTaskRunning;
+import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkerTriggerRunning;
+import io.kestra.core.services.AbstractFlowTriggerService;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.flows.ForEachItem;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -46,12 +65,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,7 +83,7 @@ import java.util.stream.Stream;
 @JdbcRunnerEnabled
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
-    private static final ObjectMapper MAPPER = JdbcMapper.of();;
+    private static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
 
@@ -213,8 +237,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         try {
                             close();
                             applicationContext.stop();
-                        }
-                        catch (IOException ioe) {
+                        } catch (IOException ioe) {
                             log.error("Unable to properly close the executor", ioe);
                         }
                     }
@@ -238,8 +261,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         try {
                             close();
                             applicationContext.stop();
-                        }
-                        catch (IOException ioe) {
+                        } catch (IOException ioe) {
                             log.error("Unable to properly close the executor", ioe);
                         }
                     }
@@ -263,8 +285,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         log.error("Unexpected exception when trying to handle a deserialization error", e);
                         return;
                     }
-                }
-                else {
+                } else {
                     flow = either.getLeft();
                 }
 
@@ -300,8 +321,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             // if the execution is skipped, we remove the workerTaskRunning and skip its resubmission
                             log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getId());
                             workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
-                        }
-                        else {
+                        } else {
                             workerTaskQueue.emit(WorkerTask.builder()
                                 .taskRun(workerTaskRunning.getTaskRun())
                                 .task(workerTaskRunning.getTask())
@@ -733,33 +753,62 @@ public class JdbcExecutor implements ExecutorInterface {
             return;
         }
 
-        ExecutionKilled message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getExecutionId())) {
-            log.warn("Skipping execution {}", message.getExecutionId());
+        final ExecutionKilled event = either.getLeft();
+
+        // Check whether the event should be handled by the executor.
+        if (event.getState() == ExecutionKilled.State.EXECUTED) {
+            // Event was already handled by the Executor. Ignore it.
+            return;
+        }
+
+        if (skipExecutionService.skipExecution(event.getExecutionId())) {
+            log.warn("Skipping execution {}", event.getExecutionId());
             return;
         }
 
         if (log.isDebugEnabled()) {
-            executorService.log(log, true, message);
+            executorService.log(log, true, event);
         }
 
-        Executor executor = executionRepository.lock(message.getExecutionId(), pair -> {
-            Execution execution = pair.getLeft();
-            Executor current = new Executor(execution, null);
+        // Immediately fire the event in EXECUTED state to notify the Workers to kill
+        // any remaining tasks for that executing regardless of if the execution exist or not.
+        // Note, that this event will be a noop if all tasks for that execution are already killed or completed.
+        killQueue.emit(ExecutionKilled
+            .builder()
+            .executionId(event.getExecutionId())
+            .isOnKillCascade(false)
+            .state(ExecutionKilled.State.EXECUTED)
+            .build()
+        );
 
-            if (execution == null) {
-                throw new IllegalStateException("Execution state don't exist for " + message.getExecutionId() + ", receive " + message);
-            }
+        Executor executor = mayTransitExecutionToKillingStateAndGet(event.getExecutionId());
 
-            return Pair.of(
-                current.withExecution(executionService.kill(execution), "joinKillingExecution"),
-                pair.getRight()
-            );
-        });
+        // Check whether kill event should be propagated to downstream executions.
+        // By default, always propagate the ExecutionKill to sub-flows (for backward compatibility).
+        Boolean isOnKillCascade = Optional.ofNullable(event.getIsOnKillCascade()).orElse(true);
+        if (isOnKillCascade) {
+            executionService
+                .killSubflowExecutions(event.getTenantId(), event.getExecutionId())
+                .doOnNext(killQueue::emit)
+                .blockLast();
+        }
 
         if (executor != null) {
+            // Transmit the new execution state. Note that the execution
+            // will eventually transition to KILLED state before sub-flow executions are actually killed.
+            // This behavior is acceptable due to the fire-and-forget nature of the killing event.
             this.toExecution(executor);
         }
+    }
+
+    private Executor mayTransitExecutionToKillingStateAndGet(final String executionId) {
+        return executionRepository.lock(executionId, pair -> {
+            Execution currentExecution = pair.getLeft();
+            Execution killing = executionService.kill(currentExecution);
+            Executor current = new Executor(currentExecution, null)
+                .withExecution(killing, "joinKillingExecution");
+            return Pair.of(current, pair.getRight());
+        });
     }
 
     private void toExecution(Executor executor) {

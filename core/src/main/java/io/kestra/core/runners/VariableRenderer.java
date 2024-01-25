@@ -233,8 +233,7 @@ public class VariableRenderer {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            this.renderObject(inline, variables, recursive)
-                .ifPresent(result::add);
+            result.add(this.renderObject(inline, variables, recursive).orElse(inline));
         }
 
         return result;

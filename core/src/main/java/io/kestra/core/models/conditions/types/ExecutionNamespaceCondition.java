@@ -11,8 +11,8 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.function.BiPredicate;
 
 @SuperBuilder
 @ToString
@@ -39,17 +39,23 @@ import javax.validation.constraints.NotNull;
 public class ExecutionNamespaceCondition extends Condition {
     @NotNull
     @Schema(
-        description = "The namespace of the flow or the prefix if `prefix` is true."
+        description = "String against which to match the execution namespace depending on the provided comparison."
     )
     @PluginProperty
     private String namespace;
 
-    @Builder.Default
+    @Deprecated
     @Schema(
-        description = "If we must look at the flow namespace by prefix (checked using startWith). The prefix is case sensitive."
+        description = "If we must look at the flow namespace by prefix (checked using startsWith). The prefix is case sensitive."
     )
     @PluginProperty
-    private final Boolean prefix = false;
+    private Boolean prefix;
+
+    @Schema(
+        description = "Comparison to use when checking if namespace matches. If not provided, it will use `EQUALS`, or `PREFIX` if `prefix` is true for compatibility reasons."
+    )
+    @PluginProperty
+    private Comparison comparison;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -57,14 +63,26 @@ public class ExecutionNamespaceCondition extends Condition {
             throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
-        if (!prefix && conditionContext.getExecution().getNamespace().equals(this.namespace)) {
-            return  true;
+        Comparison comparisonToUse = this.comparison == null
+            ? (Boolean.TRUE.equals(this.prefix) ? Comparison.PREFIX : Comparison.EQUALS)
+            : this.comparison;
+
+        return comparisonToUse.test(conditionContext.getExecution().getNamespace(), this.namespace);
+    }
+
+    public enum Comparison {
+        EQUALS(String::equals),
+        PREFIX(String::startsWith),
+        SUFFIX(String::endsWith);
+        private final BiPredicate<String, String> checker;
+
+
+        Comparison(BiPredicate<String, String> checker) {
+            this.checker = checker;
         }
 
-        if (prefix && conditionContext.getExecution().getNamespace().startsWith(this.namespace)) {
-            return  true;
+        public boolean test(String actualNamespace, String matcher) {
+            return this.checker.test(actualNamespace, matcher);
         }
-
-        return false;
     }
 }

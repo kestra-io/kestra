@@ -30,6 +30,15 @@ class ExecutionNamespaceConditionTest {
         boolean test = conditionService.isValid(build, flow, execution);
 
         assertThat(test, is(true));
+
+        // Explicit
+        build = ExecutionNamespaceCondition.builder()
+            .namespace(flow.getNamespace())
+            .comparison(ExecutionNamespaceCondition.Comparison.EQUALS)
+            .build();
+
+        test = conditionService.isValid(build, flow, execution);
+        assertThat(test, is(true));
     }
 
     @Test
@@ -57,7 +66,50 @@ class ExecutionNamespaceConditionTest {
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
+        assertThat(test, is(true));
 
+        build = ExecutionNamespaceCondition.builder()
+            .namespace(flow.getNamespace().substring(0, 3))
+            .comparison(ExecutionNamespaceCondition.Comparison.PREFIX)
+            .build();
+
+        test = conditionService.isValid(build, flow, execution);
+        assertThat(test, is(true));
+    }
+
+    @Test
+    void defaultBehaviour() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
+        ExecutionNamespaceCondition build = ExecutionNamespaceCondition.builder()
+            .namespace(flow.getNamespace().substring(0, 3))
+            .prefix(true)
+            .build();
+
+        boolean test = conditionService.isValid(build, flow, execution);
+        assertThat(test, is(true));
+
+        // Should use EQUALS if prefix is not set
+        build = ExecutionNamespaceCondition.builder()
+            .namespace(flow.getNamespace().substring(0, 3))
+            .build();
+
+        test = conditionService.isValid(build, flow, execution);
+        assertThat(test, is(false));
+    }
+
+    @Test
+    void suffix() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
+        ExecutionNamespaceCondition build = ExecutionNamespaceCondition.builder()
+            .namespace(flow.getNamespace().substring(flow.getNamespace().length() - 4))
+            .comparison(ExecutionNamespaceCondition.Comparison.SUFFIX)
+            .build();
+
+        boolean test = conditionService.isValid(build, flow, execution);
         assertThat(test, is(true));
     }
 }

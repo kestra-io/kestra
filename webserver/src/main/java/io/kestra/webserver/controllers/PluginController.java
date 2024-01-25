@@ -25,7 +25,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +37,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/plugins/")
 public class PluginController {
+    public static final String PLUGINS_CACHE_KEY = "plugins";
+    public static final String INPUTS_CACHE_KEY = "inputs";
+
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -55,7 +61,7 @@ public class PluginController {
             .header("Cache-Control", "public, max-age=3600");
     }
 
-    @Cacheable("default")
+    @Cacheable(PLUGINS_CACHE_KEY)
     protected Map<String, Object> schemasCache(SchemaType type) {
         if (type == SchemaType.flow) {
             return jsonSchemaGenerator.schemas(Flow.class);
@@ -70,7 +76,7 @@ public class PluginController {
         }
     }
 
-    @Get(uri = "inputs")
+    @Get(uri = INPUTS_CACHE_KEY)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
@@ -106,7 +112,7 @@ public class PluginController {
             .header("Cache-Control", "public, max-age=3600");
     }
 
-    @Cacheable("default")
+    @Cacheable(INPUTS_CACHE_KEY)
     protected ClassInputDocumentation inputDocumentation(Input.Type type) throws ClassNotFoundException {
         Class<? extends Input<?>> inputCls = type.cls();
 
@@ -180,7 +186,7 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    @Cacheable("default")
+    @Cacheable(PLUGINS_CACHE_KEY)
     protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties) {
         RegisteredPlugin registeredPlugin = plugins
             .stream()

@@ -21,6 +21,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -29,8 +30,48 @@ import java.util.stream.Collectors;
 public class PluginScanner {
     ClassLoader parent;
 
+    private final Set<String> registeredPluginsFilePaths = new HashSet<>();
+
     public PluginScanner(ClassLoader parent) {
         this.parent = parent;
+    }
+
+    /**
+     * Scans the specified top-level plugin directory for plugins. Keeps the scan alive allowing plugins hot-reload
+     *
+     * @param pluginPaths the plugin path
+     * @param pluginRegistry the plugin registry
+     */
+    public void continuousScan(final Path pluginPaths, PluginRegistry pluginRegistry) {
+        try {
+            new PluginResolver(pluginPaths).watch(
+                plugin -> {
+                    RegisteredPlugin t = scanClassLoader(
+                        PluginClassLoader.of(
+                            plugin.getLocation(),
+                            plugin.getResources(),
+                            this.parent
+                        ),
+                        plugin,
+                        null
+                    );
+
+                    if (t.getManifest() != null) {
+                        if (registeredPluginsFilePaths.contains(plugin.getLocation().getFile())) {
+                            pluginRegistry.removePlugin(plugin.getLocation().getFile());
+                        }
+                        registeredPluginsFilePaths.add(plugin.getLocation().getFile());
+                        pluginRegistry.addPlugin(t);
+                    }
+                },
+                filePath -> {
+                    registeredPluginsFilePaths.remove(filePath);
+                    pluginRegistry.removePlugin(filePath);
+                }
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -40,7 +81,7 @@ public class PluginScanner {
      */
     public List<RegisteredPlugin> scan(final Path pluginPaths) {
         return new PluginResolver(pluginPaths)
-            .resolves()
+            .initialPlugins()
             .stream()
             .map(plugin -> {
                 log.debug("Loading plugins from path: {}", plugin.getLocation());

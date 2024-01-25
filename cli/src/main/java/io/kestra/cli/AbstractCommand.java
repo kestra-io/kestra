@@ -4,18 +4,18 @@ import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.contexts.KestraClassLoader;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginScanner;
+import io.kestra.core.utils.Rethrow;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
-import io.kestra.core.contexts.KestraClassLoader;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.PluginScanner;
-import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.core.utils.Rethrow;
 import picocli.CommandLine;
 
 import java.io.FileInputStream;
@@ -25,10 +25,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     mixinStandardHelpOptions = true,
@@ -196,9 +194,8 @@ abstract public class AbstractCommand implements Callable<Integer> {
         }
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
-        List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
-
-        PluginRegistry pluginRegistry = new PluginRegistry(scan);
+        PluginRegistry pluginRegistry = new PluginRegistry();
+        pluginScanner.continuousScan(pluginsPath, pluginRegistry);
         KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
 
         return pluginRegistry;

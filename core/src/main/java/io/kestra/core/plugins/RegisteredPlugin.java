@@ -8,9 +8,11 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +27,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @EqualsAndHashCode
 @Builder
-public class RegisteredPlugin {
+@Slf4j
+public class RegisteredPlugin implements Closeable {
     private final ExternalPlugin externalPlugin;
     private final Manifest manifest;
     private final ClassLoader classLoader;
@@ -245,5 +248,16 @@ public class RegisteredPlugin {
         }
 
         return b.toString();
+    }
+
+    @Override
+    public void close() {
+        if (this.classLoader instanceof PluginClassLoader) {
+            try {
+                ((PluginClassLoader) this.classLoader).close();
+            } catch (IOException e) {
+                log.error("Unable to close plugin classLoader", e);
+            }
+        }
     }
 }

@@ -5,15 +5,20 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Slf4j
-public class PluginResolver {
+public class PluginResolver implements AutoCloseable {
     private final Path pluginPath;
+    private final ExecutorService watcherThread = Executors.newSingleThreadExecutor();
+    private WatchService watchService;
 
     /**
      * Creates a new {@link PluginResolver} instance.
@@ -35,7 +40,45 @@ public class PluginResolver {
         return path.toString().toLowerCase().endsWith(".class");
     }
 
-    public List<ExternalPlugin> resolves() {
+    /**
+     * Watches the plugin path for new plugins and notifies the specified callbacks.
+     *
+     * @param onNewPlugin called with ExternalPlugin information when a new plugin is found
+     * @param onDeletePlugin called with the previous plugin path when a plugin is deleted
+     */
+    public void watch(Consumer<ExternalPlugin> onNewPlugin, Consumer<String> onDeletePlugin) throws Exception {
+        this.initialPlugins().forEach(onNewPlugin);
+        watchService = FileSystems.getDefault().newWatchService();
+
+        pluginPath.register(
+            watchService,
+            StandardWatchEventKinds.ENTRY_CREATE,
+            StandardWatchEventKinds.ENTRY_MODIFY,
+            StandardWatchEventKinds.ENTRY_DELETE
+        );
+
+        watcherThread.execute(throwRunnable(() -> {
+            WatchKey key;
+            try {
+                while ((key = watchService.take()) != null) {
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        WatchEvent.Kind<?> kind = event.kind();
+                        Path eventPath = pluginPath.resolve((Path) event.context());
+                        if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                            onNewPlugin.accept(toExternalPlugin(eventPath));
+                        } else {
+                            onDeletePlugin.accept(eventPath.toString());
+                        }
+                    }
+                    key.reset();
+                }
+            } catch (ClosedWatchServiceException e) {
+                // stop watch silently
+            }
+        }));
+    }
+
+    public List<ExternalPlugin> initialPlugins() {
         List<ExternalPlugin> plugins = new ArrayList<>();
         try (
             final DirectoryStream<Path> paths = Files.newDirectoryStream(
@@ -44,11 +87,7 @@ public class PluginResolver {
             )
         ) {
             for (Path path : paths) {
-                final List<URL> resources = resolveUrlsForPluginPath(path);
-                plugins.add(new ExternalPlugin(
-                    path.toUri().toURL(),
-                    resources.toArray(new URL[0])
-                ));
+                plugins.add(toExternalPlugin(path));
             }
         } catch (final InvalidPathException | MalformedURLException e) {
             log.error("Invalid plugin path '{}', path ignored.", pluginPath, e);
@@ -57,6 +96,14 @@ public class PluginResolver {
         }
 
         return plugins;
+    }
+
+    private static ExternalPlugin toExternalPlugin(Path path) throws IOException {
+        final List<URL> resources = resolveUrlsForPluginPath(path);
+        return new ExternalPlugin(
+            path.toUri().toURL(),
+            resources.toArray(new URL[0])
+        );
     }
 
     /**
@@ -118,5 +165,14 @@ public class PluginResolver {
         }
 
         return urls;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (watchService != null) {
+            watchService.close();
+            watcherThread.shutdown();
+            watcherThread.awaitTermination(1, TimeUnit.MINUTES);
+        }
     }
 }

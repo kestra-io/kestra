@@ -1,13 +1,12 @@
 package io.kestra.core;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
 import io.kestra.core.contexts.KestraApplicationContextBuilder;
 import io.kestra.core.contexts.KestraClassLoader;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginScanner;
-import io.kestra.core.plugins.RegisteredPlugin;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,14 +14,13 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class Helpers {
-    public static final long FLOWS_COUNT =  countFlows();
+    public static final long FLOWS_COUNT = countFlows();
 
     private static int countFlows() {
         int count = 0;
@@ -70,8 +68,8 @@ public class Helpers {
         }
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
-        List<RegisteredPlugin> scan = pluginScanner.scan(pluginsPath);
-        PluginRegistry pluginRegistry = new PluginRegistry(scan);
+        PluginRegistry pluginRegistry = new PluginRegistry();
+        pluginScanner.continuousScan(pluginsPath, pluginRegistry);
         KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
 
         return new KestraApplicationContextBuilder()

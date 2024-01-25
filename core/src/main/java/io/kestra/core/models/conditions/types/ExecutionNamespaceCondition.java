@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -12,6 +13,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 
 @SuperBuilder
@@ -30,8 +32,7 @@ import java.util.function.BiPredicate;
                 "- conditions:",
                 "    - type: io.kestra.core.models.conditions.types.ExecutionNamespaceCondition",
                 "      namespace: io.kestra.tests",
-                "      prefix: true",
-
+                "      comparison: PREFIX"
             }
         )
     }
@@ -44,18 +45,18 @@ public class ExecutionNamespaceCondition extends Condition {
     @PluginProperty
     private String namespace;
 
-    @Deprecated
     @Schema(
-        description = "If we must look at the flow namespace by prefix (checked using startsWith). The prefix is case sensitive."
-    )
-    @PluginProperty
-    private Boolean prefix;
-
-    @Schema(
-        description = "Comparison to use when checking if namespace matches. If not provided, it will use `EQUALS`, or `PREFIX` if `prefix` is true for compatibility reasons."
+        description = "Comparison to use when checking if namespace matches. If not provided, it will use `EQUALS` by default."
     )
     @PluginProperty
     private Comparison comparison;
+
+    @JsonSetter
+    public void setPrefix(boolean prefix) {
+        if (this.comparison == null) {
+            this.comparison = prefix ? Comparison.PREFIX : Comparison.EQUALS;
+        }
+    }
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -63,11 +64,8 @@ public class ExecutionNamespaceCondition extends Condition {
             throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
-        Comparison comparisonToUse = this.comparison == null
-            ? (Boolean.TRUE.equals(this.prefix) ? Comparison.PREFIX : Comparison.EQUALS)
-            : this.comparison;
-
-        return comparisonToUse.test(conditionContext.getExecution().getNamespace(), this.namespace);
+        return Optional.ofNullable(this.comparison).orElse(Comparison.EQUALS)
+            .test(conditionContext.getExecution().getNamespace(), this.namespace);
     }
 
     public enum Comparison {

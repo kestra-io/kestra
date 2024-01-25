@@ -17,6 +17,11 @@ public class ConfigurationUsage {
     private final String secretType;
     private final Boolean javaSecurityEnabled;
 
+    // TODO: Once kestra-io/kestra-ee#588 is done, we should target the proper property instead
+    public static ConfigurationUsage of(String tenantId, ApplicationContext applicationContext) {
+        return ConfigurationUsage.of(applicationContext);
+    }
+
     public static ConfigurationUsage of(ApplicationContext applicationContext) {
         return ConfigurationUsage.builder()
             .repositoryType(applicationContext.getProperty("kestra.repository.type", String.class).orElse(null))

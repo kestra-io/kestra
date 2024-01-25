@@ -24,14 +24,20 @@ public class FlowUsage {
     private final Map<String, Long> taskTypeCount;
     private final Map<String, Long> triggerTypeCount;
 
-    public static FlowUsage of(FlowRepositoryInterface flowRepository) {
-        List<Flow> allFlows = flowRepository.findAllForAllTenants();
+    public static FlowUsage of(String tenantId, FlowRepositoryInterface flowRepository) {
+        return FlowUsage.of(flowRepository.findAll(tenantId));
+    }
 
+    public static FlowUsage of(FlowRepositoryInterface flowRepository) {
+        return FlowUsage.of(flowRepository.findAllForAllTenants());
+    }
+
+    public static FlowUsage of(List<Flow> flows) {
         return FlowUsage.builder()
-            .count(count(allFlows))
-            .namespacesCount(namespacesCount(allFlows))
-            .taskTypeCount(taskTypeCount(allFlows))
-            .triggerTypeCount(triggerTypeCount(allFlows))
+            .count(count(flows))
+            .namespacesCount(namespacesCount(flows))
+            .taskTypeCount(taskTypeCount(flows))
+            .triggerTypeCount(triggerTypeCount(flows))
             .build();
     }
 

@@ -74,7 +74,7 @@ public class RunnerUtils {
                     throw new RuntimeException("Can't upload");
                 }
 
-                URI from = storageInterface.from(flow, execution, file.getFilename(), tempFile);
+                URI from = storageInterface.from(execution, file.getFilename(), tempFile);
                 //noinspection ResultOfMethodCallIgnored
                 tempFile.delete();
 
@@ -211,7 +211,7 @@ public class RunnerUtils {
                     } else {
                         return Optional.of(new AbstractMap.SimpleEntry<>(
                             input.getName(),
-                            storageInterface.from(flow, execution, input, new File(((String) current)))
+                            storageInterface.from(execution, input.getName(), new File(((String) current)))
                         ));
                     }
                 } catch (Exception e) {

@@ -1,10 +1,10 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.ImmutableFileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Rethrow;
@@ -276,7 +276,7 @@ public class NamespaceFileController {
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
-        return URI.create("kestra://" + storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
+        return URI.create("kestra://" + StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
     }
 
     private void ensureWritableNamespaceFile(URI path) {

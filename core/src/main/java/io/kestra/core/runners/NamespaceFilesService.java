@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -67,7 +68,7 @@ public class NamespaceFilesService {
     }
 
     private URI uri(String namespace, @Nullable URI path) {
-        return URI.create(storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(path)
+        return URI.create(StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(path)
             .map(URI::getPath)
             .orElse("")
         );

@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.tasks.NamespaceFiles;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -170,7 +171,7 @@ class NamespaceFilesServiceTest {
     private void put(@Nullable String tenantId, String namespace, String path, String content) throws IOException {
         storageInterface.put(
             tenantId,
-            URI.create(storageInterface.namespaceFilePrefix(namespace)  + path),
+            URI.create(StorageContext.namespaceFilePrefix(namespace)  + path),
             new ByteArrayInputStream(content.getBytes())
         );
     }

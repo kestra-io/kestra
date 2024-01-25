@@ -17,6 +17,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.GraphUtils;
@@ -271,8 +272,8 @@ public class ExecutionService {
                 }
 
                 if (purgeStorage) {
-                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), URI.create("kestra://" + storageInterface.executionPrefix(
-                        execution))).size());
+                    URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
+                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), uri).size());
                 }
 
                 return (PurgeResult) builder.build();

@@ -70,7 +70,7 @@ public abstract class AbstractState extends Task {
 
         Map<String, Object> merge = MapUtils.merge(current, runContext.render(map));
 
-        URI uri = runContext.putTaskStateFile(
+        URI uri = runContext.storage().putTaskStateFile(
             JacksonMapper.ofJson(false).writeValueAsBytes(merge),
             "tasks-states",
             runContext.render(this.name),
@@ -82,6 +82,6 @@ public abstract class AbstractState extends Task {
     }
 
     protected boolean delete(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        return runContext.deleteTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue);
+        return runContext.storage().deleteTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue);
     }
 }

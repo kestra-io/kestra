@@ -26,6 +26,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
@@ -44,7 +45,6 @@ import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -543,24 +543,28 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find flow id '" + executionId + "'");
         }
 
-        String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
+        String prefix = StorageContext
+            .forExecution(execution.get())
+            .getExecutionStorageURI().getPath();
+
         if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
         // maybe state
-        prefix = storageInterface.statePrefix(flow.get().getNamespace(), flow.get().getId(), null, null);
+        StorageContext context = StorageContext.forFlow(flow.get());
+        prefix = context.getStateStorePrefix(null, false, null);
         if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
-        prefix = storageInterface.statePrefix(flow.get().getNamespace(), null, null, null);
+        prefix = context.getStateStorePrefix(null, true, null);
         if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
         // maybe redirect to correct execution
-        Optional<String> redirectedExecution = storageInterface.extractExecutionId(path);
+        Optional<String> redirectedExecution = StorageContext.extractExecutionId(path);
 
         if (redirectedExecution.isPresent()) {
             return HttpResponse.redirect(URI.create((basePath != null ? basePath : "") +

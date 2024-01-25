@@ -71,8 +71,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             flow,
             Execution.builder()
                 .id("test")
-                .namespace("test")
+                .namespace(flow.getNamespace())
                 .flowRevision(1)
+                .flowId(flow.getId())
                 .build(),
             map
         );

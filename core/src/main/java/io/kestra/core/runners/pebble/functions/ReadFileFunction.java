@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -47,7 +48,7 @@ public class ReadFileFunction implements Function {
     @SuppressWarnings("unchecked")
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        URI namespaceFile = URI.create(storageInterface.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
+        URI namespaceFile = URI.create(StorageContext.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
         try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), namespaceFile)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }

@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
@@ -17,9 +18,11 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.Storage;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.NoArgsConstructor;
@@ -27,11 +30,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,17 +58,13 @@ public class RunContext {
     private MetricRegistry meterRegistry;
     private Path tempBasedPath;
     private RunContextCache runContextCache;
-
-    private URI storageOutputPrefix;
-    private URI storageExecutionPrefix;
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private RunContextLogger runContextLogger;
     private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
-
     protected transient Path temporaryDirectory;
-
     private String triggerExecutionId;
+    private Storage storage;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -82,8 +90,8 @@ public class RunContext {
      */
     public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.initBean(applicationContext);
-        this.initContext(flow, task, execution, taskRun);
         this.initLogger(taskRun, task);
+        this.initContext(flow, task, execution, taskRun);
     }
 
     /**
@@ -107,13 +115,21 @@ public class RunContext {
     @VisibleForTesting
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
         this.initBean(applicationContext);
-
         this.variables = new HashMap<>();
         this.variables.putAll(this.variables(null, null, null, null, null));
         this.variables.putAll(variables);
-
-        this.storageOutputPrefix = URI.create("");
         this.runContextLogger = new RunContextLogger();
+        this.storage = new InternalStorage(
+            logger(),
+            new StorageContext() {
+                @Override
+                public URI getContextStorageURI() {
+                    return URI.create("");
+                }
+            },
+            storageInterface
+        );
+
     }
 
     protected void initBean(ApplicationContext applicationContext) {
@@ -130,8 +146,13 @@ public class RunContext {
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.variables = this.variables(flow, task, execution, taskRun, null);
+
         if (taskRun != null && this.storageInterface != null) {
-            this.storageOutputPrefix = this.storageInterface.outputPrefix(flow, task, execution, taskRun);
+            this.storage = new InternalStorage(
+                logger(),
+                StorageContext.forTask(taskRun),
+                storageInterface
+            );
         }
     }
 
@@ -194,11 +215,6 @@ public class RunContext {
 
     public Map<String, Object> getVariables() {
         return variables;
-    }
-
-    @SuppressWarnings("unused")
-    public URI getStorageOutputPrefix() {
-        return storageOutputPrefix;
     }
 
     @JsonIgnore
@@ -374,8 +390,7 @@ public class RunContext {
         runContext.variableRenderer = this.variableRenderer;
         runContext.applicationContext = this.applicationContext;
         runContext.storageInterface = this.storageInterface;
-        runContext.storageOutputPrefix = this.storageOutputPrefix;
-        runContext.storageExecutionPrefix = this.storageExecutionPrefix;
+        runContext.storage = this.storage;
         runContext.variables = variables;
         runContext.metrics = new ArrayList<>();
         runContext.meterRegistry = this.meterRegistry;
@@ -388,20 +403,33 @@ public class RunContext {
 
     public RunContext forScheduler(TriggerContext triggerContext, AbstractTrigger trigger) {
         this.triggerExecutionId = IdUtils.create();
-        this.storageOutputPrefix = this.storageInterface.outputPrefix(triggerContext, trigger, triggerExecutionId);
-
+        StorageContext context = StorageContext.forTrigger(
+            triggerContext.getTenantId(),
+            triggerContext.getNamespace(),
+            triggerContext.getFlowId(),
+            triggerExecutionId,
+            trigger.getId()
+        );
+        this.storage = new InternalStorage(
+            logger(),
+            context,
+            storageInterface
+        );
         return this;
     }
 
     @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
         this.initBean(applicationContext);
-        this.initLogger(workerTask.getTaskRun(), workerTask.getTask());
+
+        final TaskRun taskRun = workerTask.getTaskRun();
+
+        this.initLogger(taskRun, workerTask.getTask());
 
         Map<String, Object> clone = new HashMap<>(this.variables);
 
         clone.remove("taskrun");
-        clone.put("taskrun", this.variables(workerTask.getTaskRun()));
+        clone.put("taskrun", this.variables(taskRun));
 
         clone.remove("task");
         clone.put("task", this.variables(workerTask.getTask()));
@@ -417,8 +445,7 @@ public class RunContext {
         }
 
         this.variables = ImmutableMap.copyOf(clone);
-        this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(workerTask.getTaskRun()));
-
+        this.storage = new InternalStorage(logger(), StorageContext.forTask(taskRun), storageInterface);
         return this;
     }
 
@@ -499,31 +526,46 @@ public class RunContext {
         return runContextLogger.logger();
     }
 
+    /**
+     * Gets a {@link InputStream} for the given file URI.
+     *
+     * @param uri   the file URI.
+     * @return      the {@link InputStream}.
+     * @throws IOException
+     * @deprecated use {@link Storage#getFile(URI)}.
+     */
+    @Deprecated
     public InputStream uriToInputStream(URI uri) throws IOException {
-        if (uri == null) {
-            throw new IllegalArgumentException("Invalid internal storage uri, got null");
-        }
+        return this.storage.getFile(uri);
+    }
 
-        if (uri.getScheme() == null) {
-            throw new IllegalArgumentException("Invalid internal storage uri, got uri '" + uri + "'");
-        }
+    // for serialization backward-compatibility
+    @JsonIgnore
+    public URI getStorageOutputPrefix() {
+        return storage.getContextBaseURI();
+    }
 
-        if (uri.getScheme().equals("kestra")) {
-            return this.storageInterface.get(tenantId(), uri);
-        }
-
-        throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
+    /**
+     * Gets access to the Kestra's storage.
+     *
+     * @return  a {@link Storage} object.
+     */
+    public Storage storage() {
+        return storage;
     }
 
     /**
      * Put the temporary file on storage and delete it after.
      *
-     * @param file the temporary file to upload to storage
-     * @return the {@code StorageObject} created
+     * @param file  the temporary file to upload to storage
+     * @return      the {@code StorageObject} created
      * @throws IOException If the temporary file can't be read
+     *
+     * @deprecated use {@link #storage()} and {@link InternalStorage#putFile(File)}.
      */
+    @Deprecated
     public URI putTempFile(File file) throws IOException {
-        return this.putTempFile(file, this.storageOutputPrefix.toString(), (String) null);
+        return this.storage.putFile(file);
     }
 
     /**
@@ -533,166 +575,52 @@ public class RunContext {
      * @param name overwrite file name
      * @return the {@code StorageObject} created
      * @throws IOException If the temporary file can't be read
+     *
+     * @deprecated use {@link #storage()} and {@link InternalStorage#putFile(File, String)}.
      */
+    @Deprecated
     public URI putTempFile(File file, String name) throws IOException {
-        return this.putTempFile(file, this.storageOutputPrefix.toString(), name);
+        return this.storage.putFile(file, name);
     }
 
-    /**
-     * Put the temporary file on storage and delete it after.
-     * This method is meant to be used by polling triggers, the name of the destination file is derived from the
-     * executionId and the trigger passed as parameters.
-     *
-     * @param file the temporary file to upload to storage
-     * @param executionId overwrite file name
-     * @param trigger the trigger
-     * @return the {@code StorageObject} created
-     * @throws IOException If the temporary file can't be read
-     */
-    public URI putTempFile(File file, String executionId, AbstractTrigger trigger) throws IOException {
-        return this.putTempFile(
-            file,
-            this.storageOutputPrefix.toString() + "/" + String.join(
-                "/",
-                Arrays.asList(
-                    "executions",
-                    executionId,
-                    "trigger",
-                    Slugify.of(trigger.getId())
-                )
-            ),
-            (String) null
-        );
-    }
-
-    private URI putTempFile(InputStream inputStream, String prefix, String name) throws IOException {
-        URI uri = URI.create(prefix);
-        URI resolve = uri.resolve(uri.getPath() + "/" + name);
-
-        return this.storageInterface.put(tenantId(), resolve, new BufferedInputStream(inputStream));
-    }
-
-    private URI putTempFile(File file, String prefix, String name) throws IOException {
-        try (InputStream fileInput = new FileInputStream(file)) {
-            return this.putTempFile(fileInput, prefix, (name != null ? name : file.getName()));
-        } finally {
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                runContextLogger.logger().warn("Failed to delete temporary file '{}'", file.toPath(), e);
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private String taskStateFilePathPrefix(String name, Boolean isNamespace, Boolean useTaskRun) {
-        Map<String, String> taskrun = (Map<String, String>) this.getVariables().get("taskrun");
-        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
-
-        return "/" + this.storageInterface.statePrefix(
-            flow.get("namespace"),
-            isNamespace ? null : flow.get("id"),
-            name,
-            taskrun != null && useTaskRun ? taskrun.getOrDefault("value", null) : null
-        );
-    }
-
+    @Deprecated
     public InputStream getTaskStateFile(String state, String name) throws IOException {
-        return this.getTaskStateFile(state, name, false, true);
+        return this.storage.getTaskStateFile(state, name);
     }
 
-
+    @Deprecated
     public InputStream getTaskStateFile(String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException {
-        URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
-        URI resolve = uri.resolve(uri.getPath() + "/" + name);
-
-       return this.storageInterface.get(tenantId(), resolve);
+        return this.storage.getTaskStateFile(state, name, isNamespace, useTaskRun);
     }
 
+    @Deprecated
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
-        return this.putTaskStateFile(content, state, name, false, true);
+        return this.storage.putTaskStateFile(content, state, name);
     }
 
+    @Deprecated
     public URI putTaskStateFile(byte[] content, String state, String name, Boolean namespace, Boolean useTaskRun) throws IOException {
-        try (InputStream inputStream = new ByteArrayInputStream(content)) {
-            return this.putTempFile(
-                inputStream,
-                this.taskStateFilePathPrefix(state, namespace, useTaskRun),
-                name
-            );
-        }
+        return this.storage.putTaskStateFile(content, state, name, namespace, useTaskRun);
     }
 
+    @Deprecated
     public URI putTaskStateFile(File file, String state, String name) throws IOException {
-        return this.putTaskStateFile(file, state, name, false, true);
+        return this.storage.putTaskStateFile(file, state, name);
     }
 
+    @Deprecated
     public URI putTaskStateFile(File file, String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException {
-        return this.putTempFile(
-            file,
-            this.taskStateFilePathPrefix(state, isNamespace, useTaskRun),
-            name
-        );
+        return this.storage.putTaskStateFile(file, state, name, isNamespace, useTaskRun);
     }
 
+    @Deprecated
     public boolean deleteTaskStateFile(String state, String name) throws IOException {
-        return this.deleteTaskStateFile(state, name, false, true);
+        return this.storage.deleteTaskStateFile(state, name);
     }
 
+    @Deprecated
     public boolean deleteTaskStateFile(String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException {
-        URI uri = URI.create(this.taskStateFilePathPrefix(state, isNamespace, useTaskRun));
-        URI resolve = uri.resolve(uri.getPath() + "/" + name);
-
-        return this.storageInterface.delete(tenantId(), resolve);
-    }
-
-    /**
-     * Get from the internal storage the cache file corresponding to this task.
-     * If the cache file didn't exist, an empty Optional is returned.
-     *
-     * @param namespace the flow namespace
-     * @param flowId the flow identifier
-     * @param taskId the task identifier
-     * @param value optional, the task run value
-     *
-     * @return an Optional with the cache input stream or empty.
-     */
-    public Optional<InputStream> getTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(tenantId(), uri) ? Optional.of(this.storageInterface.get(tenantId(), uri)) : Optional.empty();
-    }
-
-    public Optional<Long> getTaskCacheFileLastModifiedTime(String namespace, String flowId, String taskId, String value) throws IOException {
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(tenantId(), uri) ? Optional.of(this.storageInterface.getAttributes(tenantId(), uri).getLastModifiedTime()) : Optional.empty();
-    }
-
-    /**
-     * Put into the internal storage the cache file corresponding to this task.
-     *
-     * @param file the cache as a ZIP archive
-     * @param namespace the flow namespace
-     * @param flowId the flow identifier
-     * @param taskId the task identifier
-     * @param value optional, the task run value
-     *
-     * @return the URI of the file inside the internal storage.
-     */
-    public URI putTaskCacheFile(File file, String namespace, String flowId, String taskId, String value) throws IOException {
-        return this.putTempFile(
-            file,
-            "/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value),
-            "cache.zip"
-        );
-    }
-
-    public Optional<Boolean> deleteTaskCacheFile(String namespace, String flowId, String taskId, String value) throws IOException {
-        URI uri = URI.create("/" + this.storageInterface.cachePrefix(namespace, flowId, taskId, value) + "/cache.zip");
-        return this.storageInterface.exists(tenantId(), uri) ? Optional.of(this.storageInterface.delete(tenantId(), uri)) : Optional.empty();
-    }
-
-    public List<URI> purgeStorageExecution() throws IOException {
-        return this.storageInterface.deleteByPrefix(tenantId(), this.storageExecutionPrefix);
+        return this.storage.deleteTaskStateFile(state, name, isNamespace, useTaskRun);
     }
 
     public List<AbstractMetricEntry<?>> metrics() {

@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.annotation.Nullable;
@@ -310,7 +311,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
-        return URI.create(storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse(""));
+        return URI.create(StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse(""));
     }
 
     @Getter

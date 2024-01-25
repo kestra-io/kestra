@@ -255,6 +255,43 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
+    public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
+        boolean isTaskRun
+    ) {
+        if (isTaskRun) {
+            throw new UnsupportedOperationException();
+        }
+
+        Results results = dailyStatisticsQueryForAllTenants(
+            List.of(
+                field("state_current", String.class)
+            ),
+            query,
+            namespace,
+            flowId,
+            null,
+            startDate,
+            endDate,
+            groupBy
+        );
+
+        return dailyStatisticsQueryMapRecord(
+            results.resultsOrRows()
+                .get(0)
+                .result(),
+            startDate,
+            endDate,
+            groupBy
+        );
+    }
+
+    @Override
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable String tenantId,
@@ -321,10 +358,57 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .collect(Collectors.toList()), startDate, endDate);
     }
 
+    private Results dailyStatisticsQueryForAllTenants(
+        List<Field<?>> fields,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        List<FlowFilter> flows,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy
+    ) {
+        return dailyStatisticsQuery(
+            this.defaultFilter(),
+            fields,
+            query,
+            namespace,
+            flowId,
+            flows,
+            startDate,
+            endDate,
+            groupBy
+        );
+    }
+
     private Results dailyStatisticsQuery(
         List<Field<?>> fields,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        List<FlowFilter> flows,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy
+    ) {
+        return dailyStatisticsQuery(
+            this.defaultFilter(tenantId),
+            fields,
+            query,
+            namespace,
+            flowId,
+            flows,
+            startDate,
+            endDate,
+            groupBy
+        );
+    }
+
+    private Results dailyStatisticsQuery(
+        Condition defaultFilter,
+        List<Field<?>> fields,
+        @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -353,7 +437,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 SelectConditionStep<?> select = context
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
+                    .where(defaultFilter)
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 

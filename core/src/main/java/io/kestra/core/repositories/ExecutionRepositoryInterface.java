@@ -72,6 +72,16 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Integer maxTaskRunSetting();
 
+    List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
+        boolean isTaskRun
+    );
+
     List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable String tenantId,

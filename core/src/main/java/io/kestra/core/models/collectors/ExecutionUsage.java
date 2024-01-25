@@ -20,7 +20,7 @@ public class ExecutionUsage {
     private final List<DailyExecutionStatistics> dailyExecutionsCount;
     private final List<DailyExecutionStatistics> dailyTaskRunsCount;
 
-    public static ExecutionUsage of(ExecutionRepositoryInterface executionRepository) {
+    public static ExecutionUsage of(String tenantId, ExecutionRepositoryInterface executionRepository) {
         ZonedDateTime startDate = ZonedDateTime.now()
             .toLocalDate()
             .atStartOfDay(ZoneId.systemDefault())
@@ -31,7 +31,7 @@ public class ExecutionUsage {
         try {
             dailyTaskRunsCount = executionRepository.dailyStatistics(
                 null,
-                null,
+                tenantId,
                 null,
                 null,
                 startDate,
@@ -46,6 +46,42 @@ public class ExecutionUsage {
         return ExecutionUsage.builder()
             .dailyExecutionsCount(executionRepository.dailyStatistics(
                 null,
+                tenantId,
+                null,
+                null,
+                startDate,
+                ZonedDateTime.now(),
+                DateUtils.GroupType.DAY,
+                false
+            ))
+            .dailyTaskRunsCount(dailyTaskRunsCount)
+            .build();
+    }
+
+    public static ExecutionUsage of(ExecutionRepositoryInterface executionRepository) {
+        ZonedDateTime startDate = ZonedDateTime.now()
+            .toLocalDate()
+            .atStartOfDay(ZoneId.systemDefault())
+            .minusDays(1);
+
+        List<DailyExecutionStatistics> dailyTaskRunsCount = null;
+
+        try {
+            dailyTaskRunsCount = executionRepository.dailyStatisticsForAllTenants(
+                null,
+                null,
+                null,
+                startDate,
+                ZonedDateTime.now(),
+                DateUtils.GroupType.DAY,
+                true
+            );
+        } catch (UnsupportedOperationException ignored) {
+
+        }
+
+        return ExecutionUsage.builder()
+            .dailyExecutionsCount(executionRepository.dailyStatisticsForAllTenants(
                 null,
                 null,
                 null,

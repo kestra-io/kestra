@@ -343,7 +343,7 @@ Here are some examples of the available plugins:
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-script-python">Python</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-rockset">Rockset</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-script-powershell">RScript</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-script-r">RScript</a></td>
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-fs#sftp">SFTP</a></td>

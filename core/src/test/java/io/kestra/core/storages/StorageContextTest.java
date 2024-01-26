@@ -75,9 +75,9 @@ class StorageContextTest {
     void shouldGetValidStatePrefixForTaskContext() {
         StorageContext context = StorageContext.forFlow(Flow.builder().namespace("namespace").id("flowid").build());
         assertThat(context.getStateStorePrefix("name", false, null), is("/namespace/flowid/states/name"));
-        assertThat(context.getStateStorePrefix("name", false, "aaa"), startsWith("/namespace/flowid/states/name/"));
+        assertThat(context.getStateStorePrefix("name", false, "aaa"), is("/namespace/flowid/states/name/eb6dd8bbadb13fbe0af798a4f5b2056d"));
         assertThat(context.getStateStorePrefix("name", true, null), is("/namespace/states/name"));
-        assertThat(context.getStateStorePrefix("name", true, "aaa"), startsWith("/namespace/states/name/"));
+        assertThat(context.getStateStorePrefix("name", true, "aaa"), is("/namespace/states/name/eb6dd8bbadb13fbe0af798a4f5b2056d"));
         assertThat(context.getStateStorePrefix(null, true, null), is("/namespace/states"));
     }
 
@@ -116,6 +116,6 @@ class StorageContextTest {
             .namespace("namespace")
             .id("flowid")
             .build()
-        ).getCacheURI("taskid", "value").toString(), startsWith("/namespace/flowid/taskid/cache/"));
+        ).getCacheURI("taskid", "value"), is(URI.create("/namespace/flowid/taskid/cache/7d04fd3bbbc0946dc06caf7356fdf051/cache.zip")));
     }
 }

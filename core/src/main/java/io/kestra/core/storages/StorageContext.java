@@ -1,11 +1,10 @@
 package io.kestra.core.storages;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
-import com.google.common.hash.Hashing;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
@@ -178,9 +177,7 @@ public class StorageContext {
                 Slugify.of(cacheId)
             );
         } else {
-            String hashedObjectId = Hashing.goodFastHash(64)
-                .hashString(objectId, Charsets.UTF_8)
-                .toString();
+            String hashedObjectId = Hashing.hashToString(objectId);
             prefix = String.format(
                 PREFIX_FORMAT_CACHE_OBJECT,
                 getNamespaceAsPath(),
@@ -218,11 +215,7 @@ public class StorageContext {
         }
 
         if (value != null) {
-            paths.add(Hashing
-                .goodFastHash(64)
-                .hashString(value, Charsets.UTF_8)
-                .toString()
-            );
+            paths.add(Hashing.hashToString(value));
         }
 
         return "/" + String.join("/", paths);

@@ -7,7 +7,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.hash.Hashing;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -29,6 +28,7 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.Hashing;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -595,10 +595,7 @@ public class Worker implements Runnable, AutoCloseable {
         String[] tags = this.metricRegistry.tags(workerTask, workerGroup);
         Arrays.sort(tags);
 
-        long index = Hashing
-            .goodFastHash(64)
-            .hashString(String.join("-", tags), Charsets.UTF_8)
-            .asLong();
+        long index = Hashing.hashToLong(String.join("-", tags));
 
         return this.metricRunningCount
             .computeIfAbsent(index, l -> metricRegistry.gauge(

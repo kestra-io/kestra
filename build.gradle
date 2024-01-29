@@ -120,7 +120,7 @@ allprojects {
         implementation "io.micrometer:micrometer-core"
         implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
         implementation "io.micronaut:micronaut-http-client"
-        implementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
+        implementation "io.micronaut.reactor:micronaut-reactor-http-client"
 
         // logs
         implementation "org.slf4j:slf4j-api"

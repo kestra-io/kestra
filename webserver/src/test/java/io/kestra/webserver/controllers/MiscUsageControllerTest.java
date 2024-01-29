@@ -3,7 +3,7 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.Helpers;
 import io.kestra.core.models.collectors.Usage;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -16,7 +16,7 @@ class MiscUsageControllerTest {
     @Test
     void usages() throws URISyntaxException {
         Helpers.runApplicationContext(new String[]{"test"}, Map.of("kestra.server-type", "STANDALONE"), (applicationContext, embeddedServer) -> {
-            try (RxHttpClient client = RxHttpClient.create(embeddedServer.getURL())) {
+            try (ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL())) {
 
                 var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/usages/all"), Usage.class);
 

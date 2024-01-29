@@ -20,13 +20,13 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -119,20 +119,20 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
-    public Flowable<Event<LogEntry>> follow(
+    public Flux<Event<LogEntry>> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
         List<String> levels = LogEntry.findLevelsByMin(minLevel);
 
-        return Flowable
+        return Flux
             .<Event<LogEntry>>create(emitter -> {
                 // fetch repository first
                 logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel, null)
                     .stream()
                     .filter(logEntry -> levels.contains(logEntry.getLevel().name()))
-                    .forEach(logEntry -> emitter.onNext(Event.of(logEntry).id("progress")));
+                    .forEach(logEntry -> emitter.next(Event.of(logEntry).id("progress")));
 
                 // consume in realtime
                 Runnable receive = this.logQueue.receive(either -> {
@@ -143,13 +143,13 @@ public class LogController {
                     LogEntry current = either.getLeft();
                     if (current.getExecutionId() != null && current.getExecutionId().equals(executionId)) {
                         if (levels.contains(current.getLevel().name())) {
-                            emitter.onNext(Event.of(current).id("progress"));
+                            emitter.next(Event.of(current).id("progress"));
                         }
                     }
                 });
 
                 cancel.set(receive);
-            }, BackpressureStrategy.BUFFER)
+            }, FluxSink.OverflowStrategy.BUFFER)
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

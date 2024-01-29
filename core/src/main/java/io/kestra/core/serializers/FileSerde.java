@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.reactivex.FlowableOnSubscribe;
+import reactor.core.publisher.FluxSink;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.function.Consumer;
 
 abstract public class FileSerde {
@@ -24,27 +25,33 @@ abstract public class FileSerde {
         }
     }
 
-    public static FlowableOnSubscribe<Object> reader(BufferedReader input) {
+    public static Consumer<FluxSink<Object>> reader(BufferedReader input) {
         return s -> {
             String row;
 
-            while ((row = input.readLine()) != null) {
-                s.onNext(convert(row));
+            try {
+                while ((row = input.readLine()) != null) {
+                    s.next(convert(row));
+                }
+                s.complete();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
-
-            s.onComplete();
         };
     }
 
-    public static <T> FlowableOnSubscribe<T> reader(BufferedReader input, Class<T> cls) {
+    public static <T> Consumer<FluxSink<T>> reader(BufferedReader input, Class<T> cls) {
         return s -> {
             String row;
 
-            while ((row = input.readLine()) != null) {
-                s.onNext(convert(row, cls));
+            try {
+                while ((row = input.readLine()) != null) {
+                    s.next(convert(row, cls));
+                }
+                s.complete();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
-
-            s.onComplete();
         };
     }
 

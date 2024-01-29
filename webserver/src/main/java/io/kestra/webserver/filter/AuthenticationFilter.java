@@ -13,9 +13,9 @@ import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
-import io.reactivex.Flowable;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -40,7 +40,7 @@ public class AuthenticationFilter implements HttpServerFilter {
             .anyMatch(s -> request.getPath().startsWith(s));
 
         if (isOpenUrl || isManagementEndpoint(request)) {
-            return Flowable.fromPublisher(chain.proceed(request));
+            return Flux.from(chain.proceed(request));
         }
 
         var basicAuth = request
@@ -53,10 +53,10 @@ public class AuthenticationFilter implements HttpServerFilter {
             !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
             !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(), basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
         ) {
-            return Flowable.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
+            return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
         }
 
-        return Flowable.fromPublisher(chain.proceed(request));
+        return Flux.from(chain.proceed(request));
     }
 
     @SuppressWarnings("rawtypes")

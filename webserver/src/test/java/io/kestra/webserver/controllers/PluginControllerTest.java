@@ -8,7 +8,7 @@ import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.tasks.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
 
@@ -23,7 +23,7 @@ class PluginControllerTest {
     @Test
     void plugins() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             List<Plugin> list = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins"),
@@ -72,7 +72,7 @@ class PluginControllerTest {
     @Test
     void icons() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             Map<String, PluginIcon> list = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/icons"),
@@ -88,7 +88,7 @@ class PluginControllerTest {
     @Test
     void returnTask() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.debugs.Return"),
@@ -108,7 +108,7 @@ class PluginControllerTest {
     @Test
     void docs() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask"),
@@ -124,7 +124,7 @@ class PluginControllerTest {
     @Test
     void docWithAlert() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.states.Set"),
@@ -141,7 +141,7 @@ class PluginControllerTest {
     @Test
     void taskWithBase() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask?all=true"),
@@ -160,7 +160,7 @@ class PluginControllerTest {
     @Test
     void flow() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             Map<String, Object> doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/schemas/flow"),
                 Argument.mapOf(String.class, Object.class)
@@ -173,7 +173,7 @@ class PluginControllerTest {
     @Test
     void template() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             Map<String, Object> doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/schemas/template"),
                 Argument.mapOf(String.class, Object.class)
@@ -186,7 +186,7 @@ class PluginControllerTest {
     @Test
     void task() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             Map<String, Object> doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/schemas/task"),
                 Argument.mapOf(String.class, Object.class)
@@ -199,7 +199,7 @@ class PluginControllerTest {
     @Test
     void inputs() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             List<InputType> doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/inputs"),
                 Argument.listOf(InputType.class)
@@ -213,7 +213,7 @@ class PluginControllerTest {
     @Test
     void input() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
-            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+            ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             DocumentationWithSchema doc = client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/plugins/inputs/STRING"),
                 DocumentationWithSchema.class

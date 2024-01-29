@@ -39,7 +39,6 @@ dependencies {
     testImplementation project(':storage-local')
 
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"
     testImplementation "io.micronaut:micronaut-management"
 }

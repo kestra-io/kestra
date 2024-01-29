@@ -51,9 +51,6 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -68,6 +65,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,6 +81,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.utils.Rethrow.throwBiFunction;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
@@ -326,7 +327,7 @@ public class ExecutionController {
                 return 1;
             })
             .reduce(Integer::sum)
-            .blockingGet();
+            .block();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
@@ -468,7 +469,7 @@ public class ExecutionController {
         @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
-    ) {
+    ) throws IOException {
         Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id, revision);
         if (find.isEmpty()) {
             return null;
@@ -486,7 +487,7 @@ public class ExecutionController {
         Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
         Execution current = runnerUtils.newExecution(
             found,
-            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputMap, files),
+            throwBiFunction((flow, execution) -> runnerUtils.typedInputs(flow, execution, inputMap, files)),
             parseLabels(labels)
         );
 
@@ -499,7 +500,7 @@ public class ExecutionController {
 
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
-        return Single
+        return Mono
             .<Execution>create(emitter -> {
                 Runnable receive = this.executionQueue.receive(either -> {
                     if (either.isRight()) {
@@ -512,19 +513,19 @@ public class ExecutionController {
                         Flow flow = flowRepository.findByExecution(current);
 
                         if (this.isStopFollow(flow, item)) {
-                            emitter.onSuccess(item);
+                            emitter.success(item);
                         }
                     }
                 });
 
                 cancel.set(receive);
             })
-            .doFinally(() -> {
+            .doFinally((signalType) -> {
                 if (cancel.get() != null) {
                     cancel.get().run();
                 }
             })
-            .blockingGet();
+            .block();
     }
 
     private List<Label> parseLabels(List<String> labels) {
@@ -695,7 +696,7 @@ public class ExecutionController {
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
-    ) {
+    ) throws Exception {
         Integer count = executionRepository
             .find(
                 query,
@@ -708,14 +709,14 @@ public class ExecutionController {
                 RequestUtils.toMap(labels),
                 triggerExecutionId
             )
-            .map(e -> {
+            .map(throwFunction(e -> {
                 Execution restart = executionService.restart(e, null);
                 executionQueue.emit(restart);
                 eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
                 return 1;
-            })
+            }))
             .reduce(Integer::sum)
-            .blockingGet();
+            .block();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
@@ -932,8 +933,8 @@ public class ExecutionController {
                 triggerExecutionId
             )
             .map(execution -> execution.getId())
-            .toList()
-            .blockingGet();
+            .collectList()
+            .block();
 
         return killByIds(ids);
     }
@@ -946,12 +947,12 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Executions"}, summary = "Follow an execution")
-    public Flowable<Event<Execution>> follow(
+    public Flux<Event<Execution>> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
-        return Flowable
+        return Flux
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
                 Execution execution = Await.until(
@@ -961,13 +962,13 @@ public class ExecutionController {
                 Flow flow = flowRepository.findByExecution(execution);
 
                 if (this.isStopFollow(flow, execution)) {
-                    emitter.onNext(Event.of(execution).id("end"));
-                    emitter.onComplete();
+                    emitter.next(Event.of(execution).id("end"));
+                    emitter.complete();
                     return;
                 }
 
                 // emit the repository one first in order to wait the queue connections
-                emitter.onNext(Event.of(execution).id("progress"));
+                emitter.next(Event.of(execution).id("progress"));
 
                 // consume new value
                 Runnable receive = this.executionQueue.receive(either -> {
@@ -979,17 +980,17 @@ public class ExecutionController {
                     Execution current = either.getLeft();
                     if (current.getId().equals(executionId)) {
 
-                        emitter.onNext(Event.of(current).id("progress"));
+                        emitter.next(Event.of(current).id("progress"));
 
                         if (this.isStopFollow(flow, current)) {
-                            emitter.onNext(Event.of(current).id("end"));
-                            emitter.onComplete();
+                            emitter.next(Event.of(current).id("end"));
+                            emitter.complete();
                         }
                     }
                 });
 
                 cancel.set(receive);
-            }, BackpressureStrategy.BUFFER)
+            }, FluxSink.OverflowStrategy.BUFFER)
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

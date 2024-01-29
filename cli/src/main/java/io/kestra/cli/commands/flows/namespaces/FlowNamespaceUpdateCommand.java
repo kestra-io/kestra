@@ -14,7 +14,7 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;

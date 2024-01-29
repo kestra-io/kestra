@@ -12,8 +12,8 @@ import lombok.Builder;
 import lombok.Value;
 import org.slf4j.event.Level;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;

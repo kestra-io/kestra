@@ -34,7 +34,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
-import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -45,8 +44,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;

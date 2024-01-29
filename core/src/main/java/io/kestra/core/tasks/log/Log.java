@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Collection;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;

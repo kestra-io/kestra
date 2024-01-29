@@ -1,10 +1,10 @@
 package io.kestra.webserver.models.events;
 
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
 import java.time.Instant;
 
 @Getter

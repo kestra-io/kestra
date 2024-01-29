@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Builder
 @Getter

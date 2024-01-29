@@ -7,7 +7,7 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.triggers.AbstractTrigger;
 
 import java.util.Map;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Value
 @Builder

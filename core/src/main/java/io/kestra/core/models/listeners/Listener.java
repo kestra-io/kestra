@@ -7,8 +7,8 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
 @Value
 @Builder

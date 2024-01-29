@@ -4,8 +4,8 @@ import io.micronaut.core.annotation.NonNull;
 import lombok.Getter;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.validation.ElementKind;
-import javax.validation.Path;
+import jakarta.validation.ElementKind;
+import jakarta.validation.Path;
 
 @Getter
 public class ManualPropertyNode implements Path.PropertyNode {

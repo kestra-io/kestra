@@ -1,9 +1,9 @@
 package io.kestra.webserver.models.events;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
 import java.time.Instant;
 
 @Getter

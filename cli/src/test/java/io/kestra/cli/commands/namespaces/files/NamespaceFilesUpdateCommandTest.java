@@ -7,7 +7,7 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URISyntaxException;

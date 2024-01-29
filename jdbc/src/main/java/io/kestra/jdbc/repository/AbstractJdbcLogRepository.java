@@ -11,7 +11,7 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;

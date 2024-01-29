@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.time.Instant;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Value
 @AllArgsConstructor

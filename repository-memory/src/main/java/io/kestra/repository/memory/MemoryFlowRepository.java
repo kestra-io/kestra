@@ -21,10 +21,12 @@ import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
 import org.apache.commons.lang3.NotImplementedException;
 
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
+
 import java.util.*;
 import java.util.stream.Collectors;
 

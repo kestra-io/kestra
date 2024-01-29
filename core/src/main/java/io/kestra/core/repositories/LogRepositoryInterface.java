@@ -5,7 +5,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.micronaut.data.model.Pageable;
 import org.slf4j.event.Level;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.List;
 

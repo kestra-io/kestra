@@ -4,10 +4,10 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
-import javax.annotation.PostConstruct;
 
 @Singleton
 @JdbcRunnerEnabled

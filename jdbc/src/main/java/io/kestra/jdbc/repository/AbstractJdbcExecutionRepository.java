@@ -31,7 +31,7 @@ import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;

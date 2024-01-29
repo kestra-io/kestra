@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.util.Set;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 @SuperBuilder
 @Getter

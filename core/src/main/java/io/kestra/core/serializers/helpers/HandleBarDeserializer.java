@@ -18,7 +18,7 @@ import lombok.AllArgsConstructor;
 
 import java.io.IOException;
 import java.util.Collections;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 @AllArgsConstructor
 public class HandleBarDeserializer extends StringDeserializer {

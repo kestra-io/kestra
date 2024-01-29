@@ -8,7 +8,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +23,7 @@ class StatsControllerTest extends JdbcH2ControllerTest {
 
     @Inject
     @Client("/")
-    RxHttpClient client;
+    ReactorHttpClient client;
 
     @Test
     void dailyStatistics() {

@@ -8,8 +8,8 @@ import io.kestra.webserver.services.MarketplaceRequestMapper;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.is;
 class EditorControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
-    private RxHttpClient client;
+    private ReactorHttpClient client;
 
     @Inject
     private EmbeddedServer embeddedServer;

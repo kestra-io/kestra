@@ -17,15 +17,16 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.http.multipart.StreamingFileUpload;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,6 +41,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 public class RunnerUtils {
@@ -58,17 +61,17 @@ public class RunnerUtils {
     @Inject
     private ConditionService conditionService;
 
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) {
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) throws IOException {
         if (files == null) {
             return this.typedInputs(flow, execution, in);
         }
 
-        Map<String, String> uploads = Flowable.fromPublisher(files)
-            .subscribeOn(Schedulers.io())
-            .map(file -> {
+        Map<String, String> uploads = Flux.from(files)
+            .subscribeOn(Schedulers.boundedElastic())
+            .map(throwFunction(file -> {
                 File tempFile = File.createTempFile(file.getFilename() + "_", ".upl");
                 Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
-                Boolean bool = Single.fromPublisher(uploadPublisher).blockingGet();
+                Boolean bool = Mono.from(uploadPublisher).block();
 
                 if (!bool) {
                     throw new RuntimeException("Can't upload");
@@ -82,9 +85,9 @@ public class RunnerUtils {
                     file.getFilename(),
                     from.toString()
                 );
-            })
-            .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
-            .blockingGet();
+            }))
+            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
+            .block();
 
         Map<String, Object> merged = new HashMap<>();
         if (in != null) {

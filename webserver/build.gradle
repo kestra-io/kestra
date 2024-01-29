@@ -18,7 +18,6 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
-    implementation "io.micronaut.rxjava2:micronaut-rxjava2"
 
     // test
     testImplementation project(':core').sourceSets.test.output

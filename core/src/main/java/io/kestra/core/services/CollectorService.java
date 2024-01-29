@@ -16,7 +16,7 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class CollectorService {
 
     @Inject
     @Client
-    protected RxHttpClient client;
+    protected ReactorHttpClient client;
 
     @Inject
     protected ApplicationContext applicationContext;

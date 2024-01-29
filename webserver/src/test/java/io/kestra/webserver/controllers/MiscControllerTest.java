@@ -2,7 +2,7 @@ package io.kestra.webserver.controllers;
 
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.notNullValue;
 class MiscControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
-    RxHttpClient client;
+    ReactorHttpClient client;
 
     @Test
     void ping() {

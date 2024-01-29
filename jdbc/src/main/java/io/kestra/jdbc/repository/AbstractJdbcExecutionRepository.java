@@ -22,8 +22,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,6 +30,9 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import jakarta.annotation.Nullable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -138,7 +139,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public Flowable<Execution> find(
+    public Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
         @Nullable String namespace,
@@ -149,7 +150,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId
     ) {
-        return Flowable.create(
+        return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
                 .transaction(configuration -> {
@@ -170,11 +171,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                     select.fetch()
                         .map(this.jdbcRepository::map)
-                        .forEach(emitter::onNext);
+                        .forEach(emitter::next);
 
-                    emitter.onComplete();
+                    emitter.complete();;
                 }),
-            BackpressureStrategy.BUFFER
+            FluxSink.OverflowStrategy.BUFFER
         );
     }
 

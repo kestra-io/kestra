@@ -6,7 +6,7 @@ import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.is;
 class WorkerInstanceControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
-    RxHttpClient client;
+    ReactorHttpClient client;
 
     @Inject
     AbstractJdbcWorkerInstanceRepository jdbcWorkerInstanceRepository;

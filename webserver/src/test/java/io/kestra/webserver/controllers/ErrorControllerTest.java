@@ -11,7 +11,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ErrorControllerTest {
     @Inject
     @Client("/")
-    RxHttpClient client;
+    ReactorHttpClient client;
 
     @Test
     void type() {

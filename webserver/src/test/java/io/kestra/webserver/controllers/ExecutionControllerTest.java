@@ -28,9 +28,9 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.reactor.http.client.ReactorSseClient;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
-import io.micronaut.rxjava2.http.client.sse.RxSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Inject
     @Client("/")
-    RxHttpClient client;
+    ReactorHttpClient client;
+
+    @Inject
+    @Client("/")
+    ReactorSseClient sseClient;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
@@ -166,7 +170,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Execution foundExecution = client.retrieve(
             HttpRequest.GET("/api/v1/executions/" + result.getId()),
             Execution.class
-        ).blockingFirst();
+        ).block();
 
         assertThat(foundExecution.getId(), is(result.getId()));
         assertThat(foundExecution.getNamespace(), is(result.getNamespace()));
@@ -201,12 +205,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     void triggerAndFollow() {
         Execution result = triggerInputsFlowExecution(false);
 
-        RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class, embeddedServer.getURL());
-
         List<Event<Execution>> results = sseClient
             .eventStream("/api/v1/executions/" + result.getId() + "/follow", Execution.class)
-            .toList()
-            .blockingGet();
+            .collectList()
+            .block();
 
         assertThat(results.size(), is(greaterThan(0)));
         assertThat(results.get(results.size() - 1).getData().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -444,7 +446,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         FileMetas metas = client.retrieve(
             HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file/metas?path=" + path),
             FileMetas.class
-        ).blockingFirst();
+        ).block();
 
         assertThat(metas.getSize(), is(5L));
 

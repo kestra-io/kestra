@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,5 +50,10 @@ public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterfa
         triggerQueue.emit(trigger);
 
         return trigger;
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
+        return triggers.values().stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
     }
 }

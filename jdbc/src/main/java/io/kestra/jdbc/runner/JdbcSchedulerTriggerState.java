@@ -9,6 +9,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
+import java.time.ZonedDateTime;
+import java.util.List;
 
 @Singleton
 @JdbcRunnerEnabled
@@ -53,5 +55,10 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
         triggerRepository.save(trigger);
 
         return trigger;
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
+        return this.triggerRepository.findByNextExecutionDateReady(now, scheduleContext);
     }
 }

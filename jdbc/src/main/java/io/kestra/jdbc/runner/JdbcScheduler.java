@@ -23,6 +23,7 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -118,7 +119,8 @@ public class JdbcScheduler extends AbstractScheduler {
             DSLContext context = DSL.using(configuration);
             JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(context);
 
-            List<Trigger> triggers = this.triggerRepository.findByNextExecutionDateReady(now, schedulerContext);
+//            List<Trigger> triggers = this.triggerRepository.findByNextExecutionDateReady(now, schedulerContext);
+            List<Trigger> triggers = new ArrayList<>();
 
             consumer.accept(triggers, schedulerContext);
 

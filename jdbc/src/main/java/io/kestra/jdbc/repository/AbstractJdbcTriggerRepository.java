@@ -82,6 +82,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             .from(this.jdbcRepository.getTable())
             .where(
                 field("next_execution_date").lessThan(now.toOffsetDateTime())
+                    // we check for null for backwards compatibility
                     .or(field("next_execution_date").isNull())
             )
             .forUpdate()

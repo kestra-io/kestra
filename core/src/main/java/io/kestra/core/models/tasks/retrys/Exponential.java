@@ -9,7 +9,7 @@ import net.jodah.failsafe.RetryPolicy;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @Getter

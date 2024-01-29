@@ -17,7 +17,7 @@ import jakarta.inject.Singleton;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 @Singleton
 @MemoryRepositoryEnabled

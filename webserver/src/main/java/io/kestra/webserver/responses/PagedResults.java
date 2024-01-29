@@ -5,7 +5,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Getter
 @NoArgsConstructor

@@ -27,8 +27,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;

@@ -12,12 +12,12 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.*;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;

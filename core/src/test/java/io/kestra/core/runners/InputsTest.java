@@ -11,7 +11,7 @@ import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;

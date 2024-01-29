@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
-import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

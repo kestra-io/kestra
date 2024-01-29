@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
     Boolean isTaskRunEnabled();

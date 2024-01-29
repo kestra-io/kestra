@@ -3,7 +3,7 @@ package io.kestra.core.validations;
 import io.kestra.core.validations.validator.ScheduleValidator;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import javax.validation.Constraint;
+import jakarta.validation.Constraint;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = ScheduleValidator.class)

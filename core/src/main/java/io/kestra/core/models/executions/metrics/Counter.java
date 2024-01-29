@@ -8,7 +8,7 @@ import lombok.ToString;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 
 @ToString

@@ -12,6 +12,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.utils.GraphUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,8 +25,6 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;

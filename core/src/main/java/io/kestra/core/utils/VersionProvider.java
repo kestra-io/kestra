@@ -3,12 +3,13 @@ package io.kestra.core.utils;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertiesPropertySourceLoader;
 import io.micronaut.core.util.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.PostConstruct;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 

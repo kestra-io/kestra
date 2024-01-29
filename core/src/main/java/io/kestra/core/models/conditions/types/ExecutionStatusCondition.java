@@ -16,7 +16,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.State;
 
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @SuperBuilder
 @ToString

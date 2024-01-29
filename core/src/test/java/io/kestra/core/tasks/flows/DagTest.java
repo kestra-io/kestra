@@ -10,7 +10,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.File;
 import java.net.URL;
 import java.util.Optional;

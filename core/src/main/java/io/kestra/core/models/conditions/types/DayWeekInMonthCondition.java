@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString

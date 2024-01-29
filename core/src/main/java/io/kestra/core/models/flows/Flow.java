@@ -34,10 +34,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.*;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 
 @SuperBuilder(toBuilder = true)
 @Getter

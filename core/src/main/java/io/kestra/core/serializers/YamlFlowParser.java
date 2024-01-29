@@ -14,7 +14,7 @@ import jakarta.inject.Singleton;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

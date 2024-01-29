@@ -10,8 +10,7 @@ import lombok.experimental.SuperBuilder;
 import net.jodah.failsafe.RetryPolicy;
 
 import java.time.Duration;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({

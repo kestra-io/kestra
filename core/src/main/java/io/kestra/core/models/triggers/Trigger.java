@@ -9,9 +9,9 @@ import io.kestra.core.models.flows.Flow;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
+
 import io.micronaut.core.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
 @ToString

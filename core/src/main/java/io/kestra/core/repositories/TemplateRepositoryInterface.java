@@ -5,7 +5,7 @@ import io.kestra.core.models.templates.Template;
 
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 public interface TemplateRepositoryInterface {
     Optional<Template> findById(String tenantId, String namespace, String id);

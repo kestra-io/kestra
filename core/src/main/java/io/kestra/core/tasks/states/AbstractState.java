@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString

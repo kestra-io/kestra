@@ -39,7 +39,7 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;

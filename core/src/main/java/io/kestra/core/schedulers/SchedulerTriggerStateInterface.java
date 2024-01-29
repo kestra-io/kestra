@@ -4,7 +4,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 
 import java.util.Optional;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 public interface SchedulerTriggerStateInterface {
     Optional<Trigger> findLast(TriggerContext trigger);

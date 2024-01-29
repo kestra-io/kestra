@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;

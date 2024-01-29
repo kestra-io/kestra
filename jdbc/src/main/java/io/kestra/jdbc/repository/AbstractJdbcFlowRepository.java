@@ -29,8 +29,8 @@ import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
 import java.util.*;
 
 @Singleton

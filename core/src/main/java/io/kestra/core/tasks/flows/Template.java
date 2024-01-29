@@ -38,8 +38,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.function.TriFunction;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;

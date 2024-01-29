@@ -40,7 +40,7 @@
     "moment-timezone": "^0.5.44",
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
-    "posthog-js": "^1.98.2",
+    "posthog-js": "^1.103.1",
     "prismjs": "^1.29.0",
     "throttle-debounce": "^5.0.0",
     "vue": "^3.4.13",

@@ -44,7 +44,7 @@ class MetricControllerTest extends JdbcH2ControllerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
+                .POST("/api/v1/executions/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );

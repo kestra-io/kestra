@@ -104,7 +104,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2,url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : ""), requestBody)
+                .POST("/api/v1/executions/" + namespace + "/" + flowId + "?labels=a:label-1,b:label-2,url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );

@@ -95,7 +95,7 @@ export default {
             })
         },
         triggerExecution(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}`, options.formData, {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"

@@ -461,7 +461,24 @@ public class ExecutionController {
     @Post(uri = "/trigger/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
+    @Deprecated
     public Execution trigger(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The inputs") HttpRequest<?> inputs,
+        @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
+        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
+        @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
+    ) throws IOException {
+        return this.create(namespace, id, inputs, labels, files, wait, revision);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Executions"}, summary = "Create a new execution for a flow")
+    @ApiResponse(responseCode = "409", description = "if the flow is disabled")
+    public Execution create(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The inputs") HttpRequest<?> inputs, // FIXME we had to inject the HttpRequest here due to https://github.com/micronaut-projects/micronaut-core/issues/9694

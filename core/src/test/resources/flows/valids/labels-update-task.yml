@@ -4,15 +4,15 @@ labels:
   flowLabelKey: flowLabelValue
   overriddenFlowLabelKey: flowValueThatWillGetOverridden
 inputs:
-  - name: labelsJson
+  - id: labelsJson
     type: JSON
-  - name: labelsMapKey
+  - id: labelsMapKey
     type: STRING
-  - name: labelsMapValue
+  - id: labelsMapValue
     type: STRING
-  - name: labelsListKey
+  - id: labelsListKey
     type: STRING
-  - name: labelsListValue
+  - id: labelsListValue
     type: STRING
 tasks:
   - id: from-render

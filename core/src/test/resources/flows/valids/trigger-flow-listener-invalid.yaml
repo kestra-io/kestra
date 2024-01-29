@@ -2,7 +2,7 @@ id: trigger-flow-listener-invalid
 namespace: io.kestra.tests
 
 inputs:
-  - name: from-parent
+  - id: from-parent
     type: STRING
 
 tasks:

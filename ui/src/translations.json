@@ -393,7 +393,7 @@
     "onboarding-flow": {
       "onboardComment1": "Flow declaration with a mandatory unique ID, a namespace, and an optional description.",
       "onboardComment2": "Flow ID must be unique within a namespace.",
-      "inputs": "Flow inputs: each input has a name, a type, and an optional default value.",
+      "inputs": "Flow inputs: each input has an id, a type, and an optional default value.",
       "inputsDetails1": "We define one input of name 'user' with a default value 'Kestra user'",
       "tasks1": "List of tasks that will be executed one after the other.",
       "tasks2": "Each task must have an identifier unique for the flow and a type.",
@@ -923,7 +923,7 @@
     "onboarding-flow": {
       "onboardComment1": "Déclaration d'un flow avec un identifiant unique et un namespace obligatoire, ainsi qu'une description facultative.",
       "onboardComment2": "Les identifiants d'un flow sont uniques à l'intérieur d'un namespace.",
-      "inputs": "Flow inputs: chaque entrée possède un nom, un type et une valeur par défaut facultative.",
+      "inputs": "Flow inputs: chaque entrée possède un id, un type et une valeur par défaut facultative.",
       "inputsDetails1": "Nous définissons une entrée de nom 'csvUrl' avec comme valeur par défaut l'URL du fichier de données de test.",
       "inputsDetails2": "Ces données de test proviennent du portail France Open Data et contiennent des consommations d'électricité en français au format CSV.",
       "tasks1": "Liste de tâches qui seront exécutées les unes après les autres.",

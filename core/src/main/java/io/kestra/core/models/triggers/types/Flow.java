@@ -42,7 +42,7 @@ import jakarta.validation.constraints.NotNull;
             "namespace: io.kestra.tests\n" +
             "\n" +
             "inputs:\n" +
-            "  - name: from-parent\n" +
+            "  - id: from-parent\n" +
             "    type: STRING\n" +
             "\n" +
             "tasks:\n" +

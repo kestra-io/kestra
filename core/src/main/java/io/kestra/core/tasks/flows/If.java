@@ -51,7 +51,7 @@ import java.util.stream.Stream;
                 "namespace: io.kestra.tests",
                 "",
                 "inputs:",
-                "  - name: string",
+                "  - id: string",
                 "    type: STRING",
                 "    required: true",
                 "",

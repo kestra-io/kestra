@@ -29,7 +29,7 @@ public class DateTimeInput extends Input<Instant> {
                     "Invalid input",
                     this,
                     DateTimeInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -40,7 +40,7 @@ public class DateTimeInput extends Input<Instant> {
                     "Invalid input",
                     this,
                     DateTimeInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

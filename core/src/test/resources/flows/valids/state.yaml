@@ -2,7 +2,7 @@ id: state
 namespace: io.kestra.tests
 
 inputs:
-  - name: state
+  - id: state
     type: STRING
 
 tasks:

@@ -2,20 +2,20 @@ id: restart_with_inputs
 namespace: io.kestra.tests
 
 inputs:
-  - name: string
+  - id: string
     type: STRING
-  - name: optional
+  - id: optional
     type: STRING
     required: false
-  - name: int
+  - id: int
     type: INT
-  - name: float
+  - id: float
     type: FLOAT
-  - name: instant
+  - id: instant
     type: DATETIME
-  - name: file
+  - id: file
     type: FILE
-  - name: optionalFile
+  - id: optionalFile
     type: FILE
     required: false
 

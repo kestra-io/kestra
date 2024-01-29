@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
@@ -39,7 +40,8 @@ public abstract class Input<T> {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][.a-zA-Z0-9_-]*")
-    String name;
+    String id;
+
 
     @NotNull
     @Valid
@@ -53,6 +55,14 @@ public abstract class Input<T> {
     Object defaults;
 
     public abstract void validate(T input) throws ConstraintViolationException;
+
+    @JsonSetter
+    @Deprecated
+    public void setName(String name) {
+        if (this.id == null) {
+            this.id = name;
+        }
+    }
 
     @Introspected
     public enum Type {

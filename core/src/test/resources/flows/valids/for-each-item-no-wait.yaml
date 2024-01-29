@@ -2,7 +2,7 @@ id: for-each-item-no-wait
 namespace: io.kestra.tests
 
 inputs:
-  - name: file
+  - id: file
     type: FILE
 
 tasks:

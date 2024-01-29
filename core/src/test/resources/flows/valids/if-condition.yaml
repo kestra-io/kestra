@@ -2,7 +2,7 @@ id: if-condition
 namespace: io.kestra.tests
 
 inputs:
-  - name: param
+  - id: param
     type: STRING
 
 tasks:

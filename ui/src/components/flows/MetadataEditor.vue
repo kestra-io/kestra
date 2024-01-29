@@ -243,7 +243,7 @@
                     namespace: this.newMetadata.namespace,
                     description: this.newMetadata.description,
                     labels: this.arrayToObject(this.newMetadata.labels),
-                    inputs: this.newMetadata.inputs.filter(e => e.name && e.type),
+                    inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
                     concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
                     taskDefaults: taskDefaults,

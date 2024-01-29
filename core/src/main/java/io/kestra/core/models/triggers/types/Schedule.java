@@ -264,7 +264,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         if (flow.getInputs() != null) {
             flow.getInputs().stream()
                 .filter(input -> input.getDefaults() != null)
-                .forEach(input -> inputs.put(input.getName(), input.getDefaults()));
+                .forEach(input -> inputs.put(input.getId(), input.getDefaults()));
         }
 
         if (this.inputs != null) {

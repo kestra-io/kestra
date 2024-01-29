@@ -65,7 +65,7 @@ public class FlowValidator  implements ConstraintValidator<FlowValidation, Flow>
         if (value.getInputs() != null) {
             List<String> inputNames = value.getInputs()
                 .stream()
-                .map(Input::getName)
+                .map(Input::getId)
                 .toList();
             List<String> inputDuplicates = inputNames
                 .stream()

@@ -29,7 +29,7 @@ public class DateInput extends Input<LocalDate> {
                     "Invalid input",
                     this,
                     DateInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -40,7 +40,7 @@ public class DateInput extends Input<LocalDate> {
                     "Invalid input",
                     this,
                     DateInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

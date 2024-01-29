@@ -2,7 +2,7 @@ id: if-without-else
 namespace: io.kestra.tests
 
 inputs:
-  - name: param
+  - id: param
     type: STRING
 
 tasks:

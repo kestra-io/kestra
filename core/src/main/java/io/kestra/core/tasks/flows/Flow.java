@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
             code = {
                 "namespace: dev",
                 "flowId: subflow",
-                "inputs:",
+                "id:",
                 "  user: \"Rick Astley\"",
                 "  favorite_song: \"Never Gonna Give You Up\"",
                 "wait: true",

@@ -5,82 +5,82 @@ labels:
   flow-label-2: flow-label-2
 
 inputs:
-- name: string
+- id: string
   type: STRING
-- name: optional
+- id: optional
   type: STRING
   required: false
-- name: int
+- id: int
   type: INT
-- name: bool
+- id: bool
   type: BOOLEAN
   required: false
-- name: float
+- id: float
   type: FLOAT
-- name: instant
+- id: instant
   type: DATETIME
-- name: date
+- id: date
   type: DATE
   required: false
-- name: time
+- id: time
   type: TIME
   required: false
-- name: duration
+- id: duration
   type: DURATION
   required: false
-- name: file
+- id: file
   type: FILE
-- name: optionalFile
+- id: optionalFile
   type: FILE
   required: false
-- name: instantDefaults
+- id: instantDefaults
   type: DATETIME
   defaults: "2013-08-09T14:19:00Z"
-- name: json
+- id: json
   type: JSON
   required: false
-- name: uri
+- id: uri
   type: URI
   required: false
-- name: nested.string
+- id: nested.string
   type: STRING
   required: false
-- name: nested.more.int
+- id: nested.more.int
   type: INT
   required: false
-- name: nested.bool
+- id: nested.bool
   type: BOOLEAN
   required: false
-- name: validatedString
+- id: validatedString
   type: STRING
   validator: A\d+
   required: false
-- name: validatedInt
+- id: validatedInt
   type: INT
   min: 10
   max: 20
   required: false
-- name: validatedDate
+- id: validatedDate
   type: DATE
   after: 2023-01-01
   before: 2023-12-31
   required: false
-- name: validatedDateTime
+- id: validatedDateTime
   type: DATETIME
   after: "2023-01-01T00:00:00Z"
   before: "2023-12-31T23:59:59Z"
   required: false
-- name: validatedDuration
+- id: validatedDuration
   type: DURATION
   min: PT10S
   max: PT20S
   required: false
-- name: validatedFloat
+- id: validatedFloat
   type: FLOAT
   min: 0.1
   max: 0.5
   required: false
-- name: validatedTime
+- id: validatedTime
   type: TIME
   after: "01:00:00"
   before: "11:59:59"

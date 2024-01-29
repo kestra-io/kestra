@@ -2,9 +2,9 @@ id: with-template
 namespace: io.kestra.tests
 
 inputs:
-  - name: with-string
+  - id: with-string
     type: STRING
-  - name: with-optional
+  - id: with-optional
     type: STRING
     required: false
 

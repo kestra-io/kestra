@@ -2,7 +2,7 @@ id: fail-on-condition
 namespace: io.kestra.tests
 
 inputs:
-  - name: param
+  - id: param
     type: STRING
     required: true
 

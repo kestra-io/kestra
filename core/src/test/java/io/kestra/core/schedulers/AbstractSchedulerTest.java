@@ -27,7 +27,6 @@ import lombok.experimental.SuperBuilder;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @MicronautTest
@@ -50,13 +49,13 @@ abstract public class AbstractSchedulerTest {
             .inputs(List.of(
                 StringInput.builder()
                     .type(Input.Type.STRING)
-                    .name("testInputs")
+                    .id("testInputs")
                     .required(false)
                     .defaults("test")
                     .build(),
                 StringInput.builder()
                     .type(Input.Type.STRING)
-                    .name("def")
+                    .id("def")
                     .required(false)
                     .defaults("awesome")
                     .build()

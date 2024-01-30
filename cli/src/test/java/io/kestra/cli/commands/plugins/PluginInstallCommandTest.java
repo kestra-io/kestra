@@ -26,7 +26,6 @@ class PluginInstallCommandTest {
     }
 
     @Test
-    @Disabled("Notification plugin must be re-compiled with Jakarta annotations") //FIXME
     void fixedVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
@@ -43,7 +42,6 @@ class PluginInstallCommandTest {
     }
 
     @Test
-    @Disabled("Notification plugin must be re-compiled with Jakarta annotations") //FIXME
     void latestVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
@@ -61,7 +59,6 @@ class PluginInstallCommandTest {
     }
 
     @Test
-    @Disabled("Notification plugin must be re-compiled with Jakarta annotations") //FIXME
     void rangeVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();

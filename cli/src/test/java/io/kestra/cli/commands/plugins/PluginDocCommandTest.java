@@ -31,15 +31,14 @@ class PluginDocCommandTest {
     }
 
     @Test
-    @Disabled("Example plugin must be re-compiled with Jakarta annotations") //FIXME
     void run() throws IOException, URISyntaxException {
         Path pluginsPath = Files.createTempDirectory(PluginListCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 
         FileUtils.copyFile(
             new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()
-                .getResource("plugins/plugin-template-test-0.9.0-SNAPSHOT.jar")).toURI()),
-            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.9.0-SNAPSHOT.jar"))
+                .getResource("plugins/plugin-template-test-0.15.0-SNAPSHOT.jar")).toURI()),
+            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.15.0-SNAPSHOT.jar"))
         );
 
         Path docPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
@@ -58,54 +57,62 @@ class PluginDocCommandTest {
             assertThat(directory.listFiles().length, is(3));
 
             var readme = directory.toPath().resolve("index.md");
-            assertThat(new String(Files.readAllBytes(readme)), containsString("---\n" +
-                "title: Template test\n" +
-                "description: \"Plugin template for Kestra\"\n" +
-                "editLink: false\n\n" +
-                "---\n" +
-                "# Template test\n" +
-                "\n" +
-                "Plugin template for Kestra\n" +
-                "\n" +
-                "This is a more complex description of the plugin.\n" +
-                "\n" +
-                "This is in markdown and will be inline inside the plugin page.\n"));
+            assertThat(new String(Files.readAllBytes(readme)), containsString("""
+                ---
+                title: Template test
+                description: "Plugin template for Kestra"
+                editLink: false
+
+                ---
+                # Template test
+
+                Plugin template for Kestra
+
+                This is a more complex description of the plugin.
+
+                This is in markdown and will be inline inside the plugin page.
+                """));
             assertThat(new String(Files.readAllBytes(readme)), containsString(
-                "Subgroup title\n" +
-                "    \n" +
-                "Subgroup description\n" +
-                "### Tasks\n" +
-                "\n" +
-                "* [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)\n" +
-                "\n" +
-                "## Guides\n" +
-                "* [Authentication](./guides/authentication.md)\n" +
-                "    \n" +
-                "* [Reporting](./guides/reporting.md)\n" +
-                "    \n"));
+                """
+                    Subgroup title
+                       \s
+                    Subgroup description
+                    ### Tasks
+
+                    * [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)
+
+                    ## Guides
+                    * [Authentication](./guides/authentication.md)
+                       \s
+                    * [Reporting](./guides/reporting.md)
+                       \s
+                    """));
 
             // check @PluginProperty from an interface
             var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
             String taskDoc = new String(Files.readAllBytes(task));
-            assertThat(taskDoc, containsString("### `example`\n" +
-                "\n" +
-                "* **Type:** ==string==\n" +
-                "* **Dynamic:** ✔️\n" +
-                "* **Required:** ❌\n" +
-                "\n" +
-                "\n" +
-                "\n" +
-                "> Example interface\n"));
-            assertThat(taskDoc, containsString("### `requiredExample`\n" +
-                "\n" +
-                "* **Type:** ==string==\n" +
-                "* **Dynamic:** ❌\n" +
-                "* **Required:** ✔️\n" +
-                "* **Min length:** `1`\n" +
-                "\n" +
-                "\n" +
-                "\n" +
-                "> Required Example interface\n"));
+            System.out.println(taskDoc);
+            assertThat(taskDoc, containsString("""
+                ### `example`
+
+                * **Type:** ==string==
+                * **Dynamic:** ✔️
+                * **Required:** ❌
+
+
+
+                > Example interface
+                """));
+            assertThat(taskDoc, containsString("""
+                ### `from`
+
+                * **Type:**
+                            ==string==
+                            ==array==
+                            [==Example==](#example)
+                * **Dynamic:** ✔️
+                * **Required:** ✔️
+                """));
 
             var authenticationGuide = directory.toPath().resolve("guides/authentication.md");
             assertThat(new String(Files.readAllBytes(authenticationGuide)), containsString("This is how to authenticate for this plugin:"));

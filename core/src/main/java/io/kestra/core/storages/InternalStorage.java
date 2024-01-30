@@ -215,12 +215,8 @@ public class InternalStorage implements Storage {
     }
 
     private String getStatePrefix(String name, Boolean isNamespace, Boolean useTaskRun) {
-        if (useTaskRun) {
-            return getTaskStorageContext()
-                .map(context -> context.getStateStorePrefix(name, isNamespace, context.getTaskRunValue()))
-                .orElseThrow(() -> new IllegalStateException("Cannot get task state from: " + context));
-        }
-        return context.getStateStorePrefix(name, isNamespace, null);
+        String value = useTaskRun ? getTaskStorageContext().map(StorageContext.Task::getTaskRunValue).orElse(null) : null;
+        return context.getStateStorePrefix(name, isNamespace, value);
 
     }
 

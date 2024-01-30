@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.*;
 class ClassPluginDocumentationTest {
     @SuppressWarnings("unchecked")
     @Test
-    @Disabled("Example plugin must be re-compiled with Jakarta annotations") //FIXME
     void tasks() throws URISyntaxException {
         Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);

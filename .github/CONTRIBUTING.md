@@ -92,6 +92,22 @@ micronaut:
             - http://localhost:5173
 ```
 
+#### Build and deploy Kestra locally
+
+For testing purposes, you can use the `Makefile` provided at the project's root to build and deploy Kestra locally.
+By default, Kestra will be installed under: `$HOME/.kestra/current`. Set the `KESTRA_HOME` environment variable to override default.
+
+```bash
+# build and install Kestra
+make install
+# install plugins (plugins installation is based on the `.plugins` or `.plugins.override` files located at the root of the project.
+make install-plugins
+# start Kestra in standalone mode with Postgres as backend
+make start-standalone-postgres
+```
+
+Note: the local installation writes logs into the ` ~/.kestra/current/logs/` directory.
+
 #### Develop plugins
 A complete documentation for developing plugin can be found [here](https://kestra.io/docs/plugin-developer-guide/).
 

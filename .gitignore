@@ -48,3 +48,7 @@ docker/app/secrets/*.yml
 
 ### Build
 core/src/main/resources/gradle.properties
+.plugins.override
+
+# H2 Database
+data

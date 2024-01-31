@@ -8,7 +8,6 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
@@ -58,8 +57,6 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     protected void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-
-        TestsUtils.loads(repositoryLoader);
 
         if (!runner.isRunning()) {
             runner.setSchedulerEnabled(true);
@@ -147,31 +144,17 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void nextExecutionDateSchedule() throws InterruptedException, TimeoutException {
+    void nextExecutionDate() throws InterruptedException, TimeoutException {
         Flow flow = generateFlow();
         jdbcFlowRepository.create(flow, flow.generateSource(), flow);
         Await.until(
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec-schedule"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 1,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
             Duration.ofMillis(100),
             Duration.ofMinutes(2)
         );
-        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec-schedule"), Argument.of(PagedResults.class, Trigger.class));
-        assertThat(triggers.getTotal(), greaterThan(1L));
+        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class));
         assertThat(triggers.getResults().get(0).getNextExecutionDate(), notNullValue());
-    }
-
-    @Test
-    void nextExecutionDatePolling() throws InterruptedException, TimeoutException {
-        Flow flow = generateFlow();
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
-        Await.until(
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec-polling"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 1,
-            Duration.ofMillis(100),
-            Duration.ofMinutes(2)
-        );
-        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec-polling"), Argument.of(PagedResults.class, Trigger.class));
-        assertThat(triggers.getTotal(), is(1L));
-        assertThat(triggers.getResults().get(0).getNextExecutionDate(), notNullValue());
+        assertThat(triggers.getResults().get(1).getNextExecutionDate(), notNullValue());
     }
 
     private Flow generateFlow() {

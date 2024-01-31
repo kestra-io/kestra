@@ -3,6 +3,9 @@ package io.kestra.core.models.collectors;
 import io.kestra.core.models.ServerType;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -11,13 +14,12 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @Jacksonized
 @Introspected
+@AllArgsConstructor
 public class Usage {
     @NotNull
     private final String uuid;

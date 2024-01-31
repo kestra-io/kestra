@@ -18,6 +18,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Optional;
 
 @Filter("/**")
@@ -35,9 +36,10 @@ public class AuthenticationFilter implements HttpServerFilter {
         }
 
         BasicAuthService.SaltedBasicAuthConfiguration basicAuthConfiguration = this.basicAuthService.configuration();
-        boolean isOpenUrl = basicAuthConfiguration.getOpenUrls()
-            .stream()
-            .anyMatch(s -> request.getPath().startsWith(s));
+        boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
+            .map(Collection::stream)
+            .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
+            .orElse(false);
 
         if (isOpenUrl || isManagementEndpoint(request)) {
             return Flux.from(chain.proceed(request));

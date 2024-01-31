@@ -46,8 +46,7 @@ public class BasicAuthService {
 
     @PostConstruct
     private void init() {
-        BasicAuthConfiguration configuration = this.configuration();
-        if (configuration == null && Boolean.TRUE.equals(this.basicAuthConfiguration.getEnabled())) {
+        if (Boolean.TRUE.equals(this.basicAuthConfiguration.getEnabled())) {
             this.save(this.basicAuthConfiguration);
         }
     }
@@ -62,6 +61,10 @@ public class BasicAuthService {
     }
 
     public void save(BasicAuthConfiguration basicAuthConfiguration) {
+        save(null, basicAuthConfiguration);
+    }
+
+    public void save(String uid, BasicAuthConfiguration basicAuthConfiguration) {
         if (basicAuthConfiguration.getUsername() != null && !EMAIL_PATTERN.matcher(basicAuthConfiguration.getUsername()).matches()) {
             throw new IllegalArgumentException("Invalid username for Basic Authentication. Please provide a valid email address.");
         }
@@ -88,6 +91,7 @@ public class BasicAuthService {
 
             ossAuthEventPublisher.publishEventAsync(
                 OssAuthEvent.builder()
+                    .uid(uid)
                     .iid(instanceService.fetch())
                     .date(Instant.now())
                     .ossAuth(OssAuthEvent.OssAuth.builder()
@@ -143,6 +147,13 @@ public class BasicAuthService {
             this.password = password;
             this.realm = Optional.ofNullable(realm).orElse("Kestra");
             this.openUrls = Optional.ofNullable(openUrls).orElse(Collections.emptyList());
+        }
+
+        public BasicAuthConfiguration(
+            String username,
+            String password
+        ) {
+            this(true, username, password, null, null);
         }
 
         public BasicAuthConfiguration(BasicAuthConfiguration basicAuthConfiguration) {

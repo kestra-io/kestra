@@ -23,7 +23,6 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -77,11 +76,7 @@ public class JdbcScheduler extends AbstractScheduler {
                         triggerRepository
                             .findByExecution(execution)
                             .ifPresent(trigger -> {
-                                try {
-                                    this.triggerBlockingQueue.put(trigger.resetExecution());
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
+                                this.triggerState.update(trigger.resetExecution());
                             });
                     } else {
                         // update execution state on each state change so the scheduler knows the execution is running
@@ -89,11 +84,7 @@ public class JdbcScheduler extends AbstractScheduler {
                             .findByExecution(execution)
                             .filter(trigger -> execution.getState().getCurrent() != trigger.getExecutionCurrentState())
                             .ifPresent(trigger -> {
-                                try {
-                                    this.triggerBlockingQueue.put(Trigger.of(execution, trigger));
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
+                                this.triggerState.update(Trigger.of(execution, trigger));
                             });
                     }
                 }
@@ -119,8 +110,7 @@ public class JdbcScheduler extends AbstractScheduler {
             DSLContext context = DSL.using(configuration);
             JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(context);
 
-//            List<Trigger> triggers = this.triggerRepository.findByNextExecutionDateReady(now, schedulerContext);
-            List<Trigger> triggers = new ArrayList<>();
+            List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyForAllTenants(now, schedulerContext);
 
             consumer.accept(triggers, schedulerContext);
 

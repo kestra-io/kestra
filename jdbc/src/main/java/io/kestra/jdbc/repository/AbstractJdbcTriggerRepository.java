@@ -74,7 +74,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
-    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
+    public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
 
         return jdbcSchedulerContext.getContext()
@@ -85,11 +85,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     // we check for null for backwards compatibility
                     .or(field("next_execution_date").isNull())
             )
+            .orderBy(field("next_execution_date").asc())
             .forUpdate()
             .fetch()
             .map(r -> this.jdbcRepository.deserialize(r.get("value").toString()));
-
-
     }
 
     @Override
@@ -121,6 +120,20 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     @Override
     public void delete(Trigger trigger) {
         this.jdbcRepository.delete(trigger);
+    }
+
+    public Trigger update(Trigger trigger) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSL.using(configuration)
+                    .update(this.jdbcRepository.getTable())
+                    .set(this.jdbcRepository.persistFields((trigger)))
+                    .where(field("key").eq(trigger.uid()))
+                    .execute();
+
+                return trigger;
+            });
     }
 
     @Override

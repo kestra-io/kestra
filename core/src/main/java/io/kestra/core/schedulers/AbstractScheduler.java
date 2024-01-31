@@ -55,13 +55,12 @@ public abstract class AbstractScheduler implements Scheduler {
     private final TaskDefaultService taskDefaultService;
     private final WorkerGroupService workerGroupService;
     protected Boolean isReady = false;
+    protected Boolean isInitialized = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
 
     protected SchedulerTriggerStateInterface triggerState;
-    protected final LinkedBlockingQueue<Trigger> triggerBlockingQueue = new LinkedBlockingQueue<>();
-    protected final Map<String, Trigger> localTriggerState = new ConcurrentHashMap<>();
 
     // schedulable and schedulableNextDate must be volatile and their access synchronized as they are updated and read by different threads.
     @Getter
@@ -91,7 +90,6 @@ public abstract class AbstractScheduler implements Scheduler {
     @Override
     public void run() {
         flowListeners.run();
-        this.initializedTriggers(flowListeners.flows());
 
         ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
@@ -126,7 +124,6 @@ public abstract class AbstractScheduler implements Scheduler {
                     .findRemovedTrigger(flow, previous);
                 triggersDeleted.forEach(abstractTrigger -> {
                     Trigger trigger = Trigger.of(flow, abstractTrigger);
-                    this.localTriggerState.remove(trigger.uid());
                     this.triggerQueue.delete(trigger);
                 });
             }
@@ -136,7 +133,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         if (abstractTrigger instanceof PollingTriggerInterface) {
                             RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                             ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                            Optional<Trigger> lastTrigger = Optional.ofNullable(this.localTriggerState.get(Trigger.of(flow, abstractTrigger).uid()));
+                            Optional<Trigger> lastTrigger = this.triggerState.findLast(Trigger.of(flow, abstractTrigger));
                             try {
                                 Trigger updatedTrigger = Trigger.builder()
                                     .tenantId(flow.getTenantId())
@@ -147,7 +144,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                     .date(now())
                                     .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
                                     .build();
-                                triggerBlockingQueue.put(updatedTrigger);
+                                this.triggerState.update(updatedTrigger);
                             } catch (Exception e) {
                                 logError(conditionContext, flow, abstractTrigger, e);
                             }
@@ -159,7 +156,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                             ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
                             try {
-                                Trigger triggerContext = Trigger.builder()
+                                this.triggerState.save(Trigger.builder()
                                     .tenantId(flow.getTenantId())
                                     .namespace(flow.getNamespace())
                                     .flowId(flow.getId())
@@ -167,9 +164,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                     .triggerId(abstractTrigger.getId())
                                     .date(now())
                                     .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty()))
-                                    .build();
-                                this.triggerBlockingQueue.put(triggerContext);
-                                this.localTriggerState.put(triggerContext.uid(), triggerContext);
+                                    .build());
                             } catch (Exception e) {
                                 logError(conditionContext, flow, abstractTrigger, e);
                             }
@@ -207,11 +202,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         ((PollingTriggerInterface) workerTriggerResult.getTrigger()).getInterval() != null) {
 
                         ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) workerTriggerResult.getTrigger()).nextEvaluationDate();
-                        try {
-                            triggerBlockingQueue.put(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
-                        } catch (InterruptedException e) {
-                            logBlockingQueuePutError(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate), e);
-                        }
+                        this.triggerState.save(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
                     }
                 }
             }
@@ -224,11 +215,9 @@ public abstract class AbstractScheduler implements Scheduler {
     private void initializedTriggers(List<Flow> flows) {
         List<Trigger> triggers = triggerState.findAllForAllTenants();
 
-        triggers.forEach(trigger -> this.localTriggerState.put(trigger.uid(), trigger));
-
         flows.forEach(flow -> {
             ListUtils.emptyOnNull(flow.getTriggers()).forEach(abstractTrigger -> {
-                if (!this.localTriggerState.containsKey(Trigger.uid(flow, abstractTrigger)) && abstractTrigger instanceof PollingTriggerInterface pollingAbstractTrigger) {
+                if (triggers.stream().noneMatch(trigger -> trigger.uid().equals(Trigger.uid(flow, abstractTrigger))) && abstractTrigger instanceof PollingTriggerInterface pollingAbstractTrigger) {
                     RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
                     try {
@@ -241,8 +230,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .date(now())
                             .nextExecutionDate(pollingAbstractTrigger.nextEvaluationDate(conditionContext, Optional.empty()))
                             .build();
-                        this.localTriggerState.put(newTrigger.uid(), newTrigger);
-                        this.triggerBlockingQueue.put(newTrigger);
+                        this.triggerState.save(newTrigger);
                     } catch (Exception e) {
                         logError(conditionContext, flow, abstractTrigger, e);
                     }
@@ -280,8 +268,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             triggerContext = lastTrigger.toBuilder()
                                 .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(lastTrigger)))
                                 .build();
-                            this.triggerBlockingQueue.put(triggerContext);
-                            this.localTriggerState.put(triggerContext.uid(), triggerContext);
+                            this.triggerState.save(triggerContext, scheduleContext);
                         } else {
                             triggerContext = lastTrigger;
                         }
@@ -308,33 +295,31 @@ public abstract class AbstractScheduler implements Scheduler {
             log.warn("Scheduler is not ready, waiting");
         }
 
+        if (!this.isInitialized) {
+            this.initializedTriggers(flowListeners.flows());
+            this.isInitialized = true;
+        }
+
         // FIXME: do not clear the whole list
         schedulableNextDate.clear();
 
         // Update triggers modified from other threads
-        if (!this.triggerBlockingQueue.isEmpty()) {
-            List<Trigger> triggers = new ArrayList<>();
-            this.triggerBlockingQueue.drainTo(triggers);
-            triggers.forEach(trigger -> {
-                if (this.localTriggerState.containsKey(trigger.uid())) {
-                    this.triggerState.save(trigger);
-                    this.localTriggerState.put(trigger.uid(), trigger);
-                }
-            });
-        }
+//        if (!this.triggerBlockingQueue.isEmpty()) {
+//            List<Trigger> triggers = new ArrayList<>();
+//            this.triggerBlockingQueue.drainTo(triggers);
+//            triggers.forEach(trigger -> {
+//                if (this.localTriggerState.containsKey(trigger.uid())) {
+//                    this.triggerState.save(trigger);
+//                    this.localTriggerState.put(trigger.uid(), trigger);
+//                }
+//            });
+//        }
 
         ZonedDateTime now = now();
 
-        this.handleNext(now, (TODELETE, scheduleContext) -> {
+        this.handleNext(now, (triggers, scheduleContext) -> {
 
-            List<Trigger> nexts = new ArrayList<>();
-            for (var trigger : this.localTriggerState.entrySet()) {
-                if (trigger.getValue().getNextExecutionDate() != null && trigger.getValue().getNextExecutionDate().isBefore(now)) {
-                    nexts.add(trigger.getValue());
-                }
-            }
-
-            List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), nexts, scheduleContext);
+            List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), triggers, scheduleContext);
 
             metricRegistry
                 .counter(MetricRegistry.SCHEDULER_LOOP_COUNT)
@@ -409,9 +394,9 @@ public abstract class AbstractScheduler implements Scheduler {
                         Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
 
                         try {
-                            this.triggerBlockingQueue.put(triggerRunning);
+                            this.triggerState.save(triggerRunning, scheduleContext);
                             this.sendPollingTriggerToWorker(f);
-                        } catch (InternalException | InterruptedException e) {
+                        } catch (InternalException e) {
                             logger.error(
                                 "[namespace: {}] [flow: {}] [trigger: {}] Unable to send polling trigger to worker",
                                 f.getFlow().getNamespace(),
@@ -420,13 +405,12 @@ public abstract class AbstractScheduler implements Scheduler {
                                 e
                             );
                         }
-                    }
-                    else if (f.getPollingTrigger() instanceof Schedule) {
+                    } else if (f.getPollingTrigger() instanceof Schedule) {
                         // This is the Schedule, all other triggers should have an interval.
                         // So we evaluate it now as there is no need to send it to the worker.
                         // Schedule didn't use the triggerState to allow backfill.
                         try {
-                            var schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
+                            SchedulerExecutionWithTrigger schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
                             this.handleEvaluateSchedulingTriggerResult(schedulerExecutionWithTrigger, scheduleContext);
                         } catch (Exception e) {
                             logger.error(
@@ -446,8 +430,6 @@ public abstract class AbstractScheduler implements Scheduler {
                         );
                     }
                 });
-
-            scheduleContext.commit();
         });
     }
 
@@ -465,15 +447,8 @@ public abstract class AbstractScheduler implements Scheduler {
                     );
                     // Check if the localTriggerState contains it
                     // however, its mean it has been deleted during the execution time
-                    if (this.localTriggerState.containsKey(trigger.uid())) {
-                        // Persist trigger & emit a new execution
-                        try {
-                            this.triggerBlockingQueue.put(trigger);
-                            this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
-                        } catch (InterruptedException e) {
-                            logBlockingQueuePutError(trigger, e);
-                        }
-                    }
+                    this.triggerState.update(trigger);
+                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
                 }
             );
     }
@@ -491,17 +466,8 @@ public abstract class AbstractScheduler implements Scheduler {
                         executionWithTrigger.getExecution(),
                         ZonedDateTime.parse((String) executionWithTrigger.getExecution().getTrigger().getVariables().get("next"))
                     );
-                    // Check if the localTriggerState contains it
-                    // however, its mean it has been deleted
-                    if (this.localTriggerState.containsKey(trigger.uid())) {
-                        // Persist trigger & emit a new execution
-                        try {
-                            this.triggerBlockingQueue.put(trigger);
-                            this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
-                        } catch (InterruptedException e) {
-                            logBlockingQueuePutError(trigger, e);
-                        }
-                    }
+                    this.triggerState.save(trigger, scheduleContext);
+                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
                 }
             );
     }
@@ -705,18 +671,6 @@ public abstract class AbstractScheduler implements Scheduler {
             logger.trace(Throwables.getStackTraceAsString(e));
         }
 
-    }
-
-    private void logBlockingQueuePutError(Trigger trigger, Exception e) {
-        log.warn(
-            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Putting trigger in blocking queue failed with error '{}'",
-            trigger.getNamespace(),
-            trigger.getFlowId(),
-            trigger.getTriggerId(),
-            now(),
-            e.getMessage(),
-            e
-        );
     }
 
     private void sendPollingTriggerToWorker(FlowWithPollingTrigger flowWithTrigger) throws InternalException {

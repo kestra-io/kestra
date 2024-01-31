@@ -58,7 +58,14 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     }
 
     @Override
-    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
-        return this.triggerRepository.findByNextExecutionDateReady(now, scheduleContext);
+    public Trigger update(Trigger trigger) {
+        triggerRepository.update(trigger);
+
+        return trigger;
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
+        return this.triggerRepository.findByNextExecutionDateReadyForAllTenants(now, scheduleContext);
     }
 }

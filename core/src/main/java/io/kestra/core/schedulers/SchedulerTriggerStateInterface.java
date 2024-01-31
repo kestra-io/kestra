@@ -17,5 +17,7 @@ public interface SchedulerTriggerStateInterface {
 
     Trigger save(Trigger trigger) throws ConstraintViolationException;
 
-    List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContext);
+    Trigger update(Trigger trigger);
+
+    List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext);
 }

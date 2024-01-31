@@ -53,7 +53,15 @@ public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterfa
     }
 
     @Override
-    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
+    public Trigger update(Trigger trigger) {
+        triggers.put(trigger.uid(), trigger);
+        triggerQueue.emit(trigger);
+
+        return trigger;
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
         return triggers.values().stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
     }
 }

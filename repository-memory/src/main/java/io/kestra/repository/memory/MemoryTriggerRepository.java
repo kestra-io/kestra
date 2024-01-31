@@ -36,7 +36,7 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     }
 
     @Override
-    public List<Trigger> findByNextExecutionDateReady(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
+    public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         return this.triggers.stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
     }
 
@@ -57,6 +57,13 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     @Override
     public void delete(Trigger trigger) {
         triggers.remove(trigger);
+    }
+
+    @Override
+    public Trigger update(Trigger trigger) {
+        triggers.add(trigger);
+
+        return trigger;
     }
 
     @Override

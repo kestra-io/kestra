@@ -526,12 +526,8 @@ public class ExecutionController {
                     }
 
                     Execution item = either.getLeft();
-                    if (item.getId().equals(current.getId())) {
-                        Flow flow = flowRepository.findByExecution(current);
-
-                        if (this.isStopFollow(flow, item)) {
-                            emitter.success(item);
-                        }
+                    if (item.getId().equals(current.getId()) && this.isStopFollow(found, item)) {
+                        emitter.success(item);
                     }
                 });
 

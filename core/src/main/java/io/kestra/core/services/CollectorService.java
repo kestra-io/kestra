@@ -86,8 +86,7 @@ public class CollectorService {
     }
 
     public Usage metrics() {
-        Usage.UsageBuilder<?, ?> builder = defaultUsage()
-            .toBuilder()
+        Usage.UsageBuilder<?, ?> builder = defaultUsage().toBuilder()
             .uuid(IdUtils.create());
 
         if (serverType == ServerType.EXECUTOR || serverType == ServerType.STANDALONE) {

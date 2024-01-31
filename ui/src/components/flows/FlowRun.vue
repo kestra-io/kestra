@@ -338,27 +338,6 @@
 </script>
 
 <style scoped lang="scss">
-    .bottom-buttons {
-        margin-top: 36px;
-        display: flex;
-
-        > * {
-            flex: 1;
-
-            * {
-                margin: 0;
-            }
-        }
-
-        .left-align :deep(div) {
-            flex-direction: row
-        }
-
-        .right-align :deep(div) {
-            flex-direction: row-reverse;
-        }
-    }
-
     :deep(.el-switch__label) {
         color: var(--el-text-color-regular);
     }

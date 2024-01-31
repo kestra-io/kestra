@@ -47,6 +47,18 @@
     &.no-focus {
         outline: none !important;
     }
+
+    &.wh-15 {
+        padding: 0;
+        border: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+
+        * {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+    }
 }
 
 .el-input-group__append, .el-input-group__prepend {
@@ -376,7 +388,6 @@ form.ks-horizontal {
     .el-card__header {
         padding: $card-cap-padding-y $card-cap-padding-x;
         font-weight: bold;
-        font-size: var(--font-size-sm)
     }
 
 }
@@ -750,6 +761,35 @@ form.ks-horizontal {
 
     .el-dialog__headerbtn .el-dialog__close {
         color: var(--bs-primary);
+    }
+
+    .bottom-buttons {
+        margin-top: 36px;
+        display: flex;
+
+        > * {
+            flex: 1;
+
+            * {
+                margin: 0;
+            }
+        }
+
+        .left-align {
+            &, & div {
+                gap: $spacer;
+                display: flex;
+                flex-direction: row
+            }
+        }
+
+        .right-align {
+            &, & div {
+                gap: $spacer;
+                display: flex;
+                flex-direction: row-reverse;
+            }
+        }
     }
 }
 

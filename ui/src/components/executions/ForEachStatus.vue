@@ -122,18 +122,12 @@
     }
 
     .count-button {
-        color: var(--text-color);
         padding: 4px 8px;
         margin-right: 0.5rem;
         align-items: center;
         gap: 8px;
         border-radius: 2px;
-        background: #fff;
-        html.dark & {
-            background: #404559;
-        }
         font-size: 0.75rem;
-
     }
 
     .counter {

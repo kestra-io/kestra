@@ -12,17 +12,13 @@ import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.*;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Value;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -90,7 +86,7 @@ public class MiscController {
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
                 .build()
-            ).isOauthEnabled(basicAuthService.isEnabled());
+            ).isBasicAuthEnabled(basicAuthService.isEnabled());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -109,6 +105,17 @@ public class MiscController {
     @Operation(tags = {"Misc"}, summary = "Get instance usage information")
     public Usage usages() {
         return collectorService.metrics();
+    }
+
+    @Post(uri = "/api/v1{/tenant}/basicAuth")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Misc"}, summary = "Add basic auth to current instance")
+    public HttpResponse<Void> addBasicAuth(
+        @Body BasicAuthCredentials basicAuthCredentials
+    ) {
+        basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
+
+        return HttpResponse.noContent();
     }
 
     @Getter
@@ -132,7 +139,7 @@ public class MiscController {
 
         Preview preview;
 
-        Boolean isOauthEnabled;
+        Boolean isBasicAuthEnabled;
     }
 
     @Value
@@ -147,5 +154,13 @@ public class MiscController {
     public static class Preview {
         Integer initial;
         Integer max;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class BasicAuthCredentials {
+        private String uid;
+        private String username;
+        private String password;
     }
 }

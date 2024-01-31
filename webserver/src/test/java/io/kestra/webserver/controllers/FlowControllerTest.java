@@ -173,8 +173,8 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         // f3 & f4 must be updated
         updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
         assertThat(updated.size(), is(4));
-        assertThat(updated.get(2).getInputs().get(0).getName(), is("3-3"));
-        assertThat(updated.get(3).getInputs().get(0).getName(), is("4"));
+        assertThat(updated.get(2).getInputs().get(0).getId(), is("3-3"));
+        assertThat(updated.get(3).getInputs().get(0).getId(), is("4"));
 
         // f1 & f2 must be deleted
         assertThrows(HttpClientResponseException.class, () -> {
@@ -211,7 +211,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
         // flow is not updated
         retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f4"), String.class));
-        assertThat(retrieve.getInputs().get(0).getName(), is("4"));
+        assertThat(retrieve.getInputs().get(0).getId(), is("4"));
 
         // send 2 same id
         e = assertThrows(
@@ -268,11 +268,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
         assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         Flow get = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), String.class));
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("a"));
+        assertThat(get.getInputs().get(0).getId(), is("a"));
     }
 
     @Test
@@ -323,7 +323,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         flow = generateFlow(flowId, "io.kestra.unittest", "b");
 
@@ -333,7 +333,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("b"));
+        assertThat(get.getInputs().get(0).getId(), is("b"));
 
         Flow finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
@@ -438,11 +438,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getId(), is(assertFlow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         FlowWithSource get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/" + assertFlow.getId() + "?source=true"), FlowWithSource.class);
         assertThat(get.getId(), is(assertFlow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("a"));
+        assertThat(get.getInputs().get(0).getId(), is("a"));
         assertThat(get.getSource(), containsString(" Comment i added"));
     }
 
@@ -470,7 +470,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getId(), is(assertFlow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
 
@@ -480,7 +480,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(get.getId(), is(assertFlow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("b"));
+        assertThat(get.getInputs().get(0).getId(), is("b"));
 
         String finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
@@ -733,7 +733,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         return Flow.builder()
             .id(friendlyId)
             .namespace(namespace)
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name(inputName).build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id(inputName).build()))
             .tasks(Collections.singletonList(generateTask("test", "test")))
             .build();
     }
@@ -772,7 +772,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             "# Comment i added\n" +
             "namespace: %s\n" +
             "inputs:\n" +
-            "  - name: %s\n" +
+            "  - id: %s\n" +
             "    type: STRING\n" +
             "tasks:\n" +
             "  - id: test\n" +
@@ -787,7 +787,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             "# Comment i added\n" +
             "namespace: %s\n" +
             "inputs:\n" +
-            "  - name: %s\n" +
+            "  - id: %s\n" +
             "    type: STRING\n" +
             "tasks:\n" +
             "  - id: test\n" +

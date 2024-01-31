@@ -436,8 +436,8 @@ class ScheduleTest {
                 )
             )
             .inputs(List.of(
-                StringInput.builder().name("input1").type(Input.Type.STRING).required(false).build(),
-                StringInput.builder().name("input2").type(Input.Type.STRING).defaults("default").build()
+                StringInput.builder().id("input1").type(Input.Type.STRING).required(false).build(),
+                StringInput.builder().id("input2").type(Input.Type.STRING).defaults("default").build()
             ))
             .build();
 

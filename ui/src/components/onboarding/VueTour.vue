@@ -348,7 +348,7 @@
                     "\n# " + this.$t("onboarding-flow.inputs") + "\n" +
                     "inputs:" + "\n" +
                     "  # " + this.$t("onboarding-flow.inputsDetails1") + "\n" +
-                    "- name: user" + "\n" +
+                    "- id: user" + "\n" +
                     "  type: STRING" + "\n" +
                     "  defaults: Kestra user",
                     "\n# " + this.$t("onboarding-flow.tasks1") + "\n" +

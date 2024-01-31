@@ -2,7 +2,7 @@ id: restart-each
 namespace: io.kestra.tests
 
 inputs:
-  - name: failed
+  - id: failed
     type: STRING
 
 tasks:

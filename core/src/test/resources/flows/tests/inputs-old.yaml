@@ -1,9 +1,8 @@
-id: empty
+id: inputs-old
 namespace: io.kestra.tests
 inputs:
-  - id: badValidatorSyntax
+  - id: "myInput"
     type: STRING
-    validator: \
 tasks:
   - id: date
     type: io.kestra.core.tasks.debugs.Return

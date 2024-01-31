@@ -9,30 +9,30 @@
             <el-form-item
                 v-for="input in flow.inputs || []"
                 :key="input.id"
-                :label="input.name"
+                :label="input.id"
                 :required="input.required !== false"
-                :prop="input.name"
+                :prop="input.id"
             >
                 <editor
                     :full-height="false"
                     :input="true"
                     :navbar="false"
                     v-if="input.type === 'STRING' || input.type === 'URI'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                 />
                 <el-input-number
                     v-if="input.type === 'INT'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                     :step="1"
                 />
                 <el-input-number
                     v-if="input.type === 'FLOAT'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                     :step="0.001"
                 />
                 <el-radio-group
                     v-if="input.type === 'BOOLEAN'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                 >
                     <el-radio-button label="true" />
                     <el-radio-button label="false" />
@@ -40,32 +40,32 @@
                 </el-radio-group>
                 <el-date-picker
                     v-if="input.type === 'DATETIME'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                     type="datetime"
                 />
                 <el-date-picker
                     v-if="input.type === 'DATE'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                     type="date"
                 />
                 <el-time-picker
                     v-if="input.type === 'TIME' || input.type === 'DURATION'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                     type="time"
                 />
                 <div class="el-input el-input-file">
                     <div class="el-input__wrapper" v-if="input.type === 'FILE'">
                         <input
-                            :id="input.name+'-file'"
+                            :id="input.id+'-file'"
                             class="el-input__inner"
                             type="file"
                             @change="onFileChange(input, $event)"
                             autocomplete="off"
-                            :style="{display: typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///') ? 'none': ''}"
+                            :style="{display: typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///') ? 'none': ''}"
                         >
                         <label
-                            v-if="typeof(inputs[input.name]) === 'string' && inputs[input.name].startsWith('kestra:///')"
-                            :for="input.name+'-file'"
+                            v-if="typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///')"
+                            :for="input.id+'-file'"
                         >Kestra Internal Storage File</label>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
                     :navbar="false"
                     v-if="input.type === 'JSON'"
                     lang="json"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                 />
 
                 <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
@@ -152,10 +152,10 @@
         emits: ["executionTrigger"],
         created() {
             for (const input of this.flow.inputs || []) {
-                this.inputs[input.name] = input.defaults;
+                this.inputs[input.id] = input.defaults;
 
                 if (input.type === "BOOLEAN" && input.defaults === undefined){
-                    this.inputs[input.name] = "undefined";
+                    this.inputs[input.id] = "undefined";
                 }
             }
         },
@@ -190,8 +190,8 @@
             cleanInputs() {
                 var inputs = this.inputs
                 for (const input of this.flow.inputs || []) {
-                    if (input.type === "BOOLEAN" && inputs[input.name] === "undefined") {
-                        inputs[input.name] = undefined;
+                    if (input.type === "BOOLEAN" && inputs[input.id] === "undefined") {
+                        inputs[input.id] = undefined;
                     }
                 }
                 return inputs;
@@ -222,9 +222,9 @@
 
                 const nonEmptyInputNames = Object.keys(this.execution.inputs);
                 this.inputs = Object.fromEntries(
-                    this.flow.inputs.filter(input => nonEmptyInputNames.includes(input.name))
+                    this.flow.inputs.filter(input => nonEmptyInputNames.includes(input.id))
                         .map(input => {
-                            const inputName = input.name;
+                            const inputName = input.id;
                             const inputType = input.type;
                             let inputValue = this.execution.inputs[inputName];
                             if (inputType === "DATE" || inputType === "DATETIME") {
@@ -308,7 +308,7 @@
                 if (!files.length) {
                     return;
                 }
-                this.inputs[input.name] = e.target.files[0];
+                this.inputs[input.id] = e.target.files[0];
             },
             state(input) {
                 const required = input.required === undefined ? true : input.required;

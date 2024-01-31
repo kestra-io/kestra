@@ -1,7 +1,7 @@
 id: empty
 namespace: io.kestra.tests
 inputs:
-  - name: "wrong one"
+  - id: "wrong one"
 tasks:
   - id: date
     type: io.kestra.core.tasks.debugs.Return

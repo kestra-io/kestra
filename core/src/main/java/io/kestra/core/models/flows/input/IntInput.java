@@ -28,7 +28,7 @@ public class IntInput extends Input<Integer> {
                     "Invalid input",
                     this,
                     IntInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -39,7 +39,7 @@ public class IntInput extends Input<Integer> {
                     "Invalid input",
                     this,
                     IntInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

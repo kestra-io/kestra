@@ -132,6 +132,16 @@ class YamlFlowParserTest {
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
     }
 
+
+    @Test
+    void inputsOld() {
+        Flow flow = this.parse("flows/tests/inputs-old.yaml");
+
+        assertThat(flow.getInputs().size(), is(1));
+        assertThat(flow.getInputs().get(0).getId(), is("myInput"));
+        assertThat(flow.getInputs().get(0).getType(), is(Input.Type.STRING));
+    }
+
     @Test
     void inputsBadType() {
         ConstraintViolationException exception = assertThrows(

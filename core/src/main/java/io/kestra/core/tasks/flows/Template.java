@@ -62,7 +62,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "namespace: io.kestra.tests",
                 "",
                 "inputs:",
-                "  - name: with-string",
+                "  - id: with-string",
                 "    type: STRING",
                 "",
                 "tasks:",

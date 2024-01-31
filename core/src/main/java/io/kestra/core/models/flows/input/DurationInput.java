@@ -29,7 +29,7 @@ public class DurationInput extends Input<Duration> {
                     "Invalid input",
                     this,
                     DurationInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -40,7 +40,7 @@ public class DurationInput extends Input<Duration> {
                     "Invalid input",
                     this,
                     DurationInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

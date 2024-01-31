@@ -28,7 +28,7 @@ public class FloatInput extends Input<Float> {
                     "Invalid input",
                     this,
                     FloatInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -39,7 +39,7 @@ public class FloatInput extends Input<Float> {
                     "Invalid input",
                     this,
                     FloatInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

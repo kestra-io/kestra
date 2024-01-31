@@ -30,7 +30,7 @@ public class StringInput extends Input<String> {
                     "Invalid input",
                     this,
                     StringInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

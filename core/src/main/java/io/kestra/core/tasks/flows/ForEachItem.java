@@ -68,7 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 namespace: prod
 
                 inputs:
-                  - name: order
+                  - id: order
                     type: STRING
 
                 tasks:

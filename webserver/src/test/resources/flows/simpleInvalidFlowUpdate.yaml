@@ -2,7 +2,7 @@ id: test-flow-invalid
 # Comment changed
 namespace: io.kestra2.unittest
 inputs:
-  - name: b
+  - id: b
     type: STRING
 tasks:
   - id: test

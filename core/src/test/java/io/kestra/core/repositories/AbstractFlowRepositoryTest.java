@@ -120,7 +120,7 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("a").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id("a").build()))
             .build();
         // create with repository
         FlowWithSource flow = flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
@@ -140,7 +140,7 @@ public abstract class AbstractFlowRepositoryTest {
                     .message("Hello World")
                     .build()
             ))
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id("b").build()))
             .build();
 
         // revision is incremented
@@ -305,7 +305,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("a").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id("a").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
@@ -316,7 +316,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow update = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest2")
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id("b").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
         ;

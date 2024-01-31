@@ -29,7 +29,7 @@ public class TimeInput extends Input<LocalTime> {
                     "Invalid input",
                     this,
                     TimeInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -40,7 +40,7 @@ public class TimeInput extends Input<LocalTime> {
                     "Invalid input",
                     this,
                     TimeInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

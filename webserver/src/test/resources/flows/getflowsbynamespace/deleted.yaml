@@ -2,7 +2,7 @@ id: getbynamespace-test-flow-deleted
 # Comment i added
 namespace: io.kestra.unittest.flowsbynamespace
 inputs:
-  - name: a
+  - id: a
     type: STRING
 tasks:
   - id: getbynamespace-test2-deleted

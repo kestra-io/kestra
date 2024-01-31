@@ -2,7 +2,7 @@ id: for-each-item-outputs-subflow
 namespace: io.kestra.tests
 
 inputs:
-  - name: items
+  - id: items
     type: STRING
 
 tasks:

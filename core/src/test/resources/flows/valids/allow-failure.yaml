@@ -2,7 +2,7 @@ id: allow-failure
 namespace: io.kestra.tests
 
 inputs:
-  - name: crash
+  - id: crash
     type: STRING
 
 tasks:

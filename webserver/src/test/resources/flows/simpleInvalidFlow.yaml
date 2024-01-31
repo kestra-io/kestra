@@ -1,7 +1,7 @@
 id: test-flow-invalid
 namespace: io.kestra.unittest
 inputs:
-  - name: a
+  - id: a
     type: STRING
 tasks:
   - id: test

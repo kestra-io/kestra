@@ -56,7 +56,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "namespace: io.kestra.tests",
                 "",
                 "inputs:",
-                "  - name: string",
+                "  - id: string",
                 "    type: STRING",
                 "    required: true",
                 "",

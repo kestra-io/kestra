@@ -14,6 +14,6 @@ public class JdbcSchedulerContext implements ScheduleContextInterface {
     }
 
     public void commit() {
-        this.context.commits();
+        this.context.commit();
     }
 }

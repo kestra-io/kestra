@@ -8,8 +8,8 @@
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
     "test:unit": "vitest run",
-    "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --ignore-path ../.gitignore",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path ../.gitignore"
+    "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix"
   },
   "dependencies": {
     "@kestra-io/ui-libs": "^0.0.36",

@@ -60,7 +60,7 @@
                 :icon="ContentSave"
                 @click="forwardEvent('save', $event)"
                 v-if="isAllowedEdit"
-                :type="flowError ? 'danger' : 'primary'"
+                :type="buttonType"
                 :disabled="!haveChange && !isCreating"
                 class="edit-flow-save-button"
             >
@@ -107,9 +107,24 @@
                 type: Boolean,
                 default: false
             },
-            flowError: {
-                type: String,
-                default: null
+            errors: {
+                type: Array,
+                default: undefined
+            },
+            warnings: {
+                type: Array,
+                default: undefined
+            }
+        },
+        computed: {
+            buttonType() {
+                if (this.errors) {
+                    return "danger";
+                }
+
+                return this.warnings
+                    ? "warning"
+                    : "primary";
             }
         },
         methods: {

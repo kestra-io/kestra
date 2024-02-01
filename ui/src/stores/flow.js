@@ -20,8 +20,7 @@ export default {
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,
-        flowError: undefined,
-        flowDeprecations: undefined,
+        flowValidation: undefined,
         taskError: undefined,
         metrics: [],
         aggregatedMetrics: undefined,
@@ -244,9 +243,8 @@ export default {
         validateFlow({commit}, options) {
             return axios.post(`${apiUrl(this)}/flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
-                    commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
-                    commit("setFlowDeprecations", response.data[0] ? response.data[0].deprecationPaths : undefined)
-                    return response.data
+                    commit("setFlowValidation", response.data[0])
+                    return response.data[0]
                 })
         },
         validateTask({commit}, options) {
@@ -363,11 +361,8 @@ export default {
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph
         },
-        setFlowError(state, flowError) {
-            state.flowError = flowError
-        },
-        setFlowDeprecations(state, flowDeprecations) {
-            state.flowDeprecations = flowDeprecations
+        setFlowValidation(state, flowValidation) {
+            state.flowValidation = flowValidation
         },
         setTaskError(state, taskError) {
             state.taskError = taskError
@@ -388,14 +383,9 @@ export default {
                 return state.flow;
             }
         },
-        flowError(state) {
-            if (state.flowError) {
-                return state.flowError;
-            }
-        },
-        flowDeprecations(state) {
-            if (state.flowDeprecations) {
-                return state.flowDeprecations;
+        flowValidation(state) {
+            if (state.flowValidation) {
+                return state.flowValidation;
             }
         },
         taskError(state) {

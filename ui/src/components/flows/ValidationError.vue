@@ -1,19 +1,19 @@
 <template>
     <span>
         <!-- Valid -->
-        <el-button v-if="!error && !warnings" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
+        <el-button v-if="!errors && !warnings" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
             <check-circle class="text-success" />
         </el-button>
 
         <!-- Errors -->
         <el-tooltip
-            v-if="error"
+            v-if="errors"
             popper-class="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :show-arrow="false"
             raw-content
             transition=""
-            :persistent="false"
+            :persistent="true"
             :hide-after="0"
         >
             <template #content>
@@ -24,7 +24,7 @@
                             {{ $t("error detected") }}
                         </span>
                     </el-header>
-                    <el-main>{{ error.split(/, ?/).join("\n") }}</el-main>
+                    <el-main>{{ errors.join("\n") }}</el-main>
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error">
@@ -41,7 +41,7 @@
             :show-arrow="false"
             raw-content
             transition=""
-            :persistent="false"
+            :persistent="true"
             :hide-after="0"
         >
             <template #content>
@@ -76,8 +76,8 @@
             Alert
         },
         props: {
-            error: {
-                type: String,
+            errors: {
+                type: Array,
                 default: undefined
             },
             warnings: {

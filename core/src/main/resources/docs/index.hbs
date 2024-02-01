@@ -10,6 +10,19 @@ editLink: false
 
 {{ longDescription }}
 
+{{~#if name}}
+## Installation
+
+If you use one of our Docker images tagged __*-full__, this plugin is already included.
+If not, you can install it with the following command:
+
+```shell
+./kestra plugins install io.kestra.plugin:{{ name }}:LATEST
+```
+
+This command will automatically install the latest available version. You can replace `LATEST` with a specific version or a version range like `[0.12,0.13.0-SNAPSHOT)`.
+{{/if}}
+
 {{~#each classPlugins }}
     {{~#if @key.title}}
 ## {{#if @key.icon ~}}<img width="25" src="data:image/svg+xml;base64,{{@key.icon}}" /> {{/if }}{{ @key.title }}

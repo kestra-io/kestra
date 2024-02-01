@@ -89,6 +89,10 @@ public class DocumentationGenerator {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
         builder.put("title", plugin.title().replace("plugin-", ""));
+        if (!"core".equals(Slugify.of(plugin.path()))) {
+            // handlebar 'if' can only check on booleans or empty values
+            builder.put("name", Slugify.of(plugin.path()));
+        }
 
         if (plugin.description() != null) {
             builder.put("description", plugin.description());

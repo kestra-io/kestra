@@ -295,29 +295,17 @@ public abstract class AbstractScheduler implements Scheduler {
             log.warn("Scheduler is not ready, waiting");
         }
 
-        if (!this.isInitialized) {
-            this.initializedTriggers(flowListeners.flows());
-            this.isInitialized = true;
-        }
-
-        // FIXME: do not clear the whole list
-        schedulableNextDate.clear();
-
-        // Update triggers modified from other threads
-//        if (!this.triggerBlockingQueue.isEmpty()) {
-//            List<Trigger> triggers = new ArrayList<>();
-//            this.triggerBlockingQueue.drainTo(triggers);
-//            triggers.forEach(trigger -> {
-//                if (this.localTriggerState.containsKey(trigger.uid())) {
-//                    this.triggerState.save(trigger);
-//                    this.localTriggerState.put(trigger.uid(), trigger);
-//                }
-//            });
+        // FIXME: New flow doesnt seems to pass in the flowListeners
+//        if (!this.isInitialized && !flowListeners.flows().isEmpty()) {
+        this.initializedTriggers(flowListeners.flows());
+//            this.isInitialized = true;
 //        }
 
         ZonedDateTime now = now();
 
         this.handleNext(now, (triggers, scheduleContext) -> {
+
+            triggers.forEach(trigger -> schedulableNextDate.remove(trigger.uid()));
 
             List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), triggers, scheduleContext);
 
@@ -430,6 +418,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         );
                     }
                 });
+
         });
     }
 
@@ -563,30 +552,6 @@ public abstract class AbstractScheduler implements Scheduler {
             executionWithTrigger.getTriggerContext().getDate(),
             now
         );
-    }
-
-    // FIXME: probably useless now
-    private boolean isEvaluationInterval(FlowWithPollingTrigger flowWithPollingTrigger, ZonedDateTime now) {
-        if (flowWithPollingTrigger.getPollingTrigger().getInterval() == null) {
-            return true;
-        }
-
-        String key = flowWithPollingTrigger.getTriggerContext().uid();
-
-        if (!this.lastEvaluate.containsKey(key)) {
-            this.lastEvaluate.put(key, now);
-            return true;
-        }
-
-        boolean result = this.lastEvaluate.get(key)
-            .plus(flowWithPollingTrigger.getPollingTrigger().getInterval())
-            .compareTo(now) < 0;
-
-        if (result) {
-            this.lastEvaluate.put(key, now);
-        }
-
-        return result;
     }
 
     private static ZonedDateTime now() {

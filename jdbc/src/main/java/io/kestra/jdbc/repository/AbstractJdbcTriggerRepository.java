@@ -73,7 +73,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             });
     }
 
-    @Override
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
 
@@ -91,7 +90,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             .map(r -> this.jdbcRepository.deserialize(r.get("value").toString()));
     }
 
-    @Override
     public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
 

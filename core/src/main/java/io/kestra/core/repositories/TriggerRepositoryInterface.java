@@ -18,15 +18,9 @@ public interface TriggerRepositoryInterface {
 
     List<Trigger> findAllForAllTenants();
 
-    List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface);
-
-    Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface);
-
     Trigger save(Trigger trigger);
 
     void delete(Trigger trigger);
-
-    Trigger update(Trigger trigger);
 
     ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace);
 

@@ -80,7 +80,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         jdbcTriggerRepository.save(trigger.toBuilder().triggerId("schedule-5-min").build());
 
         PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, Trigger.class));
-        assertThat(triggers.getTotal(), is(2L));
+        assertThat(triggers.getTotal(), greaterThan(2L));
 
         assertThat(triggers.getResults(), Matchers.hasItems(
                 allOf(

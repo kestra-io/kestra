@@ -2,22 +2,22 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
+import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 
-import java.util.Optional;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Singleton
 @JdbcRunnerEnabled
 public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface {
-    protected TriggerRepositoryInterface triggerRepository;
+    protected AbstractJdbcTriggerRepository triggerRepository;
 
-    public JdbcSchedulerTriggerState(TriggerRepositoryInterface triggerRepository) {
+    public JdbcSchedulerTriggerState(AbstractJdbcTriggerRepository triggerRepository) {
         this.triggerRepository = triggerRepository;
     }
 
@@ -45,21 +45,21 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     @Override
     public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
-        triggerRepository.save(trigger, scheduleContextInterface);
+        this.triggerRepository.save(trigger, scheduleContextInterface);
 
         return trigger;
     }
 
     @Override
     public Trigger save(Trigger trigger) {
-        triggerRepository.save(trigger);
+        this.triggerRepository.save(trigger);
 
         return trigger;
     }
 
     @Override
     public Trigger update(Trigger trigger) {
-        triggerRepository.update(trigger);
+        this.triggerRepository.update(trigger);
 
         return trigger;
     }

@@ -432,6 +432,42 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(((FlowWithException) found.get()).getException(), containsString("Templates are disabled"));
     }
 
+    @Test
+    protected void lastRevision() {
+        String namespace = "io.kestra.unittest";
+        String flowId = IdUtils.create();
+        String tenantId = "tenant";
+
+        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), nullValue());
+
+        // create with builder
+        Flow first = Flow.builder()
+            .tenantId(tenantId)
+            .id(flowId)
+            .namespace(namespace)
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id("a").build()))
+            .build();
+        // create with repository
+        flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
+        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(1));
+
+        // submit new one with change
+
+        Flow flowRev2 = first.toBuilder()
+            .tasks(Collections.singletonList(
+                Log.builder()
+                    .id(IdUtils.create())
+                    .type(Log.class.getName())
+                    .message("Hello World")
+                    .build()
+            ))
+            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id("b").build()))
+            .build();
+
+        flowRepository.update(flowRev2, first, flowRev2.generateSource(), taskDefaultService.injectDefaults(flowRev2));
+        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(2));
+    }
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {

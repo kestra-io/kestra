@@ -54,6 +54,8 @@ public interface FlowRepositoryInterface {
 
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id);
 
+    Integer lastRevision(String tenantId, String namespace, String id);
+
     List<Flow> findAll(String tenantId);
 
     List<Flow> findAllForAllTenants();

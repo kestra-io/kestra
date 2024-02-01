@@ -16,7 +16,7 @@ public class MemoryFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
-        memoryFlowRepository.findAll(null).forEach(flow -> memoryFlowRepository.delete(flow));
+        memoryFlowRepository.findAllForAllTenants().forEach(flow -> memoryFlowRepository.delete(flow));
         super.init();
     }
 

@@ -463,4 +463,21 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .map(record -> record.getValue("namespace", String.class))
             );
     }
+
+    @Override
+    public Integer lastRevision(String tenantId, String namespace, String id) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .fetchValue(
+                    DSL.select(field("revision", Integer.class))
+                        .from(fromLastRevision(true))
+                        .where(this.defaultFilter(tenantId))
+                        .and(field("namespace").eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .limit(1)
+                )
+            );
+    }
 }

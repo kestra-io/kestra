@@ -23,7 +23,7 @@
                 <el-input
                     type="password"
                     v-if="input.type === 'SECRET'"
-                    v-model="inputs[input.name]"
+                    v-model="inputs[input.id]"
                     show-password
                 />
                 <el-input-number

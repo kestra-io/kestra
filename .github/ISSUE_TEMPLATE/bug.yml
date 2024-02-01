@@ -1,27 +1,28 @@
-name: Bug Report
+name: Bug report
 description: File a bug report
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting an issue, please review the task list below before submitting the issue. Your issue report will be closed if the issue is incomplete and the below tasks not completed.
-
-        NOTE: If you are unsure about something and the issue is more of a question a better place to ask questions is on [Github Discussions](https://github.com/kestra-io/kestra/discussions) or [Slack](https://kestra.io/slack).
+        Thanks for reporting an issue! Please provide a [Minima Reproducible Example](https://stackoverflow.com/help/minimal-reproducible-example) 
+        and share any additional information that may help reproduce, troubleshoot, and hopefully fix the issue, including screenshots, error traceback, and your Kestra server logs.
+        NOTE: If your issue is more of a question, please ping us directly on [Slack](https://kestra.io/slack).
   - type: textarea
     attributes:
-      label: Explain the bug
-      description: A concise description of the problem
-      placeholder: Describe the problem and provide steps to reproduce the behavior.
+      label: Describe the issue
+      description: A concise description of the issue and how we can reproduce it.
+      placeholder: Describe the issue step by step
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Environment Information
+      label: Environment
       description: Environment information where the problem occurs.
       value: |
         - Kestra Version:
-        - Operating System and Java Version (if not using Kestra Docker image):
+        - Operating System (OS/Docker/Kubernetes):
+        - Java Version (if you don't run kestra in Docker):
     validations:
-      required: true
+      required: false
 labels:
   - bug

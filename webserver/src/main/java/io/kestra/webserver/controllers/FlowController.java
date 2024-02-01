@@ -500,6 +500,12 @@ public class FlowController {
 
                 try {
                     Flow flowParse = yamlFlowParser.parse(flow, Flow.class);
+                    Integer sentRevision = flowParse.getRevision();
+                    if (sentRevision != null) {
+                        Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantService.resolveTenant(), flowParse.getNamespace(), flowParse.getId()))
+                            .orElse(0);
+                        validateConstraintViolationBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                    }
 
                     validateConstraintViolationBuilder.deprecationPaths(flowService.deprecationPaths(flowParse));
 

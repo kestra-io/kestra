@@ -31,6 +31,7 @@ public class ValidateConstraintViolation {
     private int index;
 
     private String constraints;
+    private boolean outdated;
     private List<String> deprecationPaths;
 
     @JsonIgnore

@@ -43,7 +43,7 @@
             ...mapState("flow", ["flow", "flowGraph"]),
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowError", undefined);
+            this.$store.commit("flow/setFlowValidation", undefined);
         },
         methods: {
             onExpandSubflow(event) {

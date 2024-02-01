@@ -21,6 +21,20 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "delete confirm": "Are you sure to delete <code>{name}</code>?",
+    "outdated revision save confirmation": {
+      "confirm": "Do you want to overwrite it?",
+      "update": {
+        "title": "Outdated revision",
+        "description": "The revision you are editing is outdated.",
+        "details": "Check the Revisions tab for more details about the latest version."
+      },
+      "create": {
+        "title": "Flow already exists",
+        "description": "A Flow with the same id / namespace already exists.",
+        "details": "Check the Flows menu for more details about the existing flow."
+      }
+    },
+    "is deprecated": "is deprecated",
     "success": "Success",
     "save": "Save",
     "saved": "Successfully saved",
@@ -567,6 +581,19 @@
     "Default page": "Page par défaut",
     "confirmation": "Confirmation",
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
+    "outdated revision save confirmation": {
+        "confirm": "Êtes-vous sûr de vouloir l'écraser ?",
+        "update": {
+          "title": "Révision dépassée",
+          "description": "Une révision plus récente du Flow existe.",
+          "details": "Regardez l'onglet Révisions pour plus de détails sur la dernière version."
+        },
+        "create": {
+          "description": "Un Flow avec le même id / namespace existe déjà.",
+          "details": "Regardez le menu Flows pour plus de détails sur le Flow existant."
+        }
+    },
+    "is deprecated": "est déprécié(e)",
     "success": "Succès",
     "save": "Enregistrer",
     "saved": "Enregistrement réussi",

@@ -108,6 +108,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
+    public Integer lastRevision(String tenantId, String namespace, String id) {
+        List<FlowWithSource> flowRevisions = findRevisions(tenantId, namespace, id);
+        return flowRevisions.isEmpty() ? null : flowRevisions.get(flowRevisions.size() - 1).getRevision();
+    }
+
+    @Override
     public List<Flow> findAll(String tenantId) {
         return flows.values().stream()
             .filter(flow -> (tenantId == null && flow.getTenantId() == null) || (tenantId != null && tenantId.equals(flow.getTenantId())))

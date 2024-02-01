@@ -6,11 +6,20 @@
         </el-button>
 
         <!-- Errors -->
-        <el-tooltip v-if="error" popper-class="p-0 bg-transparent" :placement="tooltipPlacement" :show-arrow="false" raw-content transition="" :persistent="false" :hide-after="0">
+        <el-tooltip
+            v-if="error"
+            popper-class="p-0 bg-transparent"
+            :placement="tooltipPlacement"
+            :show-arrow="false"
+            raw-content
+            transition=""
+            :persistent="false"
+            :hide-after="0"
+        >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <alert-circle class="align-middle text-danger"/>
+                        <alert-circle class="align-middle text-danger" />
                         <span class="align-middle">
                             {{ $t("error detected") }}
                         </span>
@@ -25,13 +34,22 @@
         </el-tooltip>
 
         <!-- Warnings -->
-        <el-tooltip v-if="warnings" popper-class="p-0 bg-transparent" :placement="tooltipPlacement" :show-arrow="false" raw-content transition="" :persistent="false" :hide-after="0">
+        <el-tooltip
+            v-if="warnings"
+            popper-class="p-0 bg-transparent"
+            :placement="tooltipPlacement"
+            :show-arrow="false"
+            raw-content
+            transition=""
+            :persistent="false"
+            :hide-after="0"
+        >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <alert class="align-middle text-warning"/>
+                        <alert class="align-middle text-warning" />
                         <span class="align-middle">
-                            {{$t("warning detected") }}
+                            {{ $t("warning detected") }}
                         </span>
                     </el-header>
                     <el-main>{{ warnings.join("\n") }}</el-main>

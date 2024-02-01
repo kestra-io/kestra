@@ -99,7 +99,7 @@ export default {
                     }
                 })
         },
-        saveFlow({commit, dispatch}, options) {
+        saveFlow({commit, _dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {

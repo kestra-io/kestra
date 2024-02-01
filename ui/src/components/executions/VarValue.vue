@@ -1,5 +1,5 @@
 <template>
-    <el-button-group v-if="isFile(value)" >
+    <el-button-group v-if="isFile(value)">
         <a class="el-button el-button--small el-button--primary" :href="itemUrl(value)" target="_blank">
             <Download />
             {{ $t('download') }}
@@ -59,7 +59,8 @@
         props: {
             value: {
                 type: [String, Object, Boolean, Number],
-                required: false
+                required: false,
+                default: undefined
             },
             execution: {
                 type: Object,

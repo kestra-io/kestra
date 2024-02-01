@@ -20,6 +20,9 @@
         components: {
             EditorView,
         },
+        emits: [
+            "expand-subflow"
+        ],
         props: {
             isReadOnly: {
                 type: Boolean,
@@ -27,7 +30,7 @@
             },
             expandedSubflows: {
                 type: Array,
-                default: []
+                default: () => []
             }
         },
         computed: {

@@ -1,6 +1,8 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">{{ $t("execute") }}</el-button>
+        <el-button :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
+            {{ $t("execute") }}
+        </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
@@ -24,7 +26,8 @@
         },
         props: {
             flowId: {
-                type: String
+                type: String,
+                default: undefined
             },
             namespace: {
                 type: String,

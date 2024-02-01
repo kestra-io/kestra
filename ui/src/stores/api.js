@@ -1,6 +1,6 @@
 import axios from "axios";
-import posthog from 'posthog-js'
-import cloneDeep from 'lodash/cloneDeep'
+import posthog from "posthog-js"
+import cloneDeep from "lodash/cloneDeep"
 
 let counter = 0;
 const API_URL = "https://api.kestra.io";
@@ -75,7 +75,7 @@ export default {
             }
 
             if (type === "PAGE") {
-                posthog.capture('$pageview', finalData)
+                posthog.capture("$pageview", finalData)
             } else {
                 posthog.capture(data.type.toLowerCase(), finalData)
             }

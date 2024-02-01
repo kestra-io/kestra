@@ -137,7 +137,7 @@
                 </el-select>
             </el-form-item>
         </el-form>
-        <slot name="form-items"/>
+        <slot name="form-items" />
     </div>
 </template>
 
@@ -176,8 +176,8 @@
                 dateFormat: undefined,
                 timezone: undefined,
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
-                  const timezoneMoment = this.$moment.tz(zone);
-                  return {
+                    const timezoneMoment = this.$moment.tz(zone);
+                    return {
                         zone,
                         offset: timezoneMoment.utcOffset(),
                         formattedOffset: timezoneMoment.format("Z")

@@ -18,19 +18,16 @@
 
 <script>
     import LeftMenu from "override/components/LeftMenu.vue";
-    import TopNavBar from "./components/layout/TopNavBar.vue";
     import ErrorToast from "./components/ErrorToast.vue";
     import {mapGetters, mapState} from "vuex";
     import Utils from "./utils/utils";
-    import {pageFromRoute} from "./utils/eventsRouter";
     import VueTour from "./components/onboarding/VueTour.vue";
-    import posthog from 'posthog-js'
+    import posthog from "posthog-js";
 
     export default {
         name: "App",
         components: {
             LeftMenu,
-            TopNavBar,
             ErrorToast,
             VueTour
         },
@@ -113,14 +110,14 @@
                     apiConfig.posthog.token,
                     {
                         api_host: apiConfig.posthog.apiHost,
-                        ui_host: 'https://eu.posthog.com',
+                        ui_host: "https://eu.posthog.com",
                         capture_pageview: false,
                         autocapture: false,
                     }
                 )
 
                 posthog.register_once({
-                    from: 'APP',
+                    from: "APP",
                     iid: config.uuid,
                     uid: uid,
                     app: {

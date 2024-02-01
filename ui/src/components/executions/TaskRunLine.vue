@@ -20,7 +20,7 @@
                     {{ $t("to") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
-                    <clock/>
+                    <clock />
                     <strong>{{ $t("duration") }}:</strong>
                     {{ $filters.humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
@@ -35,12 +35,12 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <duration :histories="selectedAttempt(currentTaskRun).state.histories"/>
+                <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
             </small>
         </div>
 
         <div class="task-status">
-            <status size="small" :status="selectedAttempt(currentTaskRun).state.current"/>
+            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
         <el-select
@@ -59,7 +59,7 @@
 
         <el-dropdown trigger="click">
             <el-button type="default" class="more-dropdown-button">
-                <DotsHorizontal title=""/>
+                <DotsHorizontal title="" />
             </el-button>
             <template #dropdown>
                 <el-dropdown-menu>
@@ -70,7 +70,7 @@
                         :execution-id="currentTaskRun.outputs.executionId"
                     />
 
-                    <metrics :task-run="currentTaskRun" :execution="followedExecution"/>
+                    <metrics :task-run="currentTaskRun" :execution="followedExecution" />
 
                     <outputs
                         :outputs="currentTaskRun.outputs"
@@ -126,7 +126,7 @@
             <ChevronUp
                 v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
             />
-            <ChevronDown v-else/>
+            <ChevronDown v-else />
         </el-button>
     </div>
 </template>

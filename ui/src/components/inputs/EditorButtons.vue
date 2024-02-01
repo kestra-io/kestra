@@ -3,7 +3,7 @@
         <div v-if="isAllowedEdit || canDelete" class="mx-2">
             <el-dropdown>
                 <el-button type="default" :disabled="isReadOnly">
-                    <DotsVertical title=""/>
+                    <DotsVertical title="" />
                     {{ $t("actions") }}
                 </el-button>
                 <template #dropdown>

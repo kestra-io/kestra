@@ -17,7 +17,8 @@
                 default: false
             },
             format: {
-                type: String
+                type: String,
+                default: undefined
             },
             className: {
                 type: String,

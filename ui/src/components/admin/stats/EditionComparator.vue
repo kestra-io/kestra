@@ -1,6 +1,6 @@
 <template>
     <el-row :gutter="32">
-        <el-col :span=8 v-for="characteristics in editionCharacteristics">
+        <el-col :span="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name">
             <edition-characteristics
                 class="h-100"
                 :name="characteristics.name"

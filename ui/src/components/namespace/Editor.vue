@@ -15,17 +15,27 @@
                 <template #dropdown>
                     <el-dropdown-menu>
                         <el-dropdown-item :icon="FilePlus" @click="pickFile">
-                            <input ref="filePicker" type="file"
-                                   multiple
-                                   style="display: none"
-                                   @change="importNsFiles" />
+                            <input
+                                ref="filePicker"
+                                type="file"
+                                multiple
+                                style="display: none"
+                                @change="importNsFiles"
+                            >
                             {{ $t("namespace files.import.file") }}
                         </el-dropdown-item>
                         <el-dropdown-item :icon="FolderPlus" @click="pickFolder">
-                            <input ref="folderPicker" type="file"
-                                   webkitdirectory mozdirectory msdirectory odirectory directory
-                                   style="display: none"
-                                   @change="importNsFiles" />
+                            <input
+                                ref="folderPicker"
+                                type="file"
+                                webkitdirectory
+                                mozdirectory
+                                msdirectory
+                                odirectory
+                                directory
+                                style="display: none"
+                                @change="importNsFiles"
+                            >
                             {{ $t("namespace files.import.folder") }}
                         </el-dropdown-item>
                     </el-dropdown-menu>

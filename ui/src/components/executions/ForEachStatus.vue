@@ -19,9 +19,10 @@
             </router-link>
             <div v-for="state in State.allStates()" :key="state.key">
                 <router-link :to="goToExecutionsList(state.key)" class="el-button count-button" v-if="localSubflowStatus[state.key] >= 0">
-                    <div class="dot rounded-5" :class="`bg-${state.colorClass}`"></div>
-                    {{ capitalizeFirstLetter(state.key) }}
-                    <span class="counter">{{ localSubflowStatus[state.key] }}</span>
+                    <div class="dot rounded-5" :class="`bg-${state.colorClass}`">
+                        {{ capitalizeFirstLetter(state.key) }}
+                        <span class="counter">{{ localSubflowStatus[state.key] }}</span>
+                    </div>
                 </router-link>
             </div>
         </div>

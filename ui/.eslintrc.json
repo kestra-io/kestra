@@ -13,6 +13,12 @@
     // https://eslint.vuejs.org/user-guide/#how-to-use-a-custom-parser
     "parser": "@typescript-eslint/parser"
   },
+  "globals": {
+    "KESTRA_UI_PATH": "readonly",
+    "KESTRA_API_URL": "readonly",
+    "THEME": "readonly",
+    "queryParams": "readonly"
+  },
   "rules": {
     "vue/html-indent": [
       "error",

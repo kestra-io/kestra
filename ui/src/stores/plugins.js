@@ -1,4 +1,4 @@
-import {apiUrl} from "override/utils/route";
+import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 
 export default {
     namespaced: true,

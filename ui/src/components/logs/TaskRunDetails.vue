@@ -115,7 +115,8 @@
             // allows to pass directly a raw execution (since it is already fetched by parent component)
             targetExecution: {
                 type: Object,
-                required: false
+                required: false,
+                default: undefined
             },
             // allows to fetch the execution at startup
             targetExecutionId: {
@@ -274,14 +275,14 @@
             },
             autoExpandTaskrunStates() {
                 switch (localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT) {
-                    case logDisplayTypes.ERROR:
-                        return [State.FAILED, State.RUNNING, State.PAUSED]
-                    case logDisplayTypes.ALL:
-                        return State.arrayAllStates().map(s => s.name)
-                    case logDisplayTypes.HIDDEN:
-                        return []
-                    default:
-                        return State.arrayAllStates().map(s => s.name)
+                case logDisplayTypes.ERROR:
+                    return [State.FAILED, State.RUNNING, State.PAUSED]
+                case logDisplayTypes.ALL:
+                    return State.arrayAllStates().map(s => s.name)
+                case logDisplayTypes.HIDDEN:
+                    return []
+                default:
+                    return State.arrayAllStates().map(s => s.name)
                 }
             }
         },

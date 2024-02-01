@@ -703,12 +703,19 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/validateMultipleValidFlows.yaml");
         String flow = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
 
+        String firstFlowSource = flow.split("(?m)^---")[0];
+        Flow firstFlow = parseFlow(firstFlowSource);
+        jdbcFlowRepository.create(firstFlow, firstFlowSource, firstFlow);
+
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
         List<ValidateConstraintViolation> body = response.body();
         assertThat(body.size(), is(2));
+        // We don't send any revision while the flow already exists so it's outdated
+        assertThat(body.get(0).isOutdated(), is(true));
         assertThat(body.get(0).getDeprecationPaths(), hasSize(3));
         assertThat(body.get(0).getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
+        assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), empty());
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", is(nullValue()))

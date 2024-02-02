@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.crypto.CryptoService;
 import io.kestra.core.exceptions.MissingRequiredInput;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -28,6 +29,7 @@ import reactor.core.scheduler.Schedulers;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -60,6 +62,9 @@ public class RunnerUtils {
 
     @Inject
     private ConditionService conditionService;
+
+    @Inject
+    private CryptoService cryptoService;
 
     public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) throws IOException {
         if (files == null) {
@@ -138,31 +143,41 @@ public class RunnerUtils {
 
     private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, Object current) {
         switch (input.getType()) {
-            case STRING:
+            case STRING -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getId(),
                     current
                 ));
-
-            case INT:
+            }
+            case SECRET -> {
+                try {
+                    return Optional.of(new AbstractMap.SimpleEntry<>(
+                        input.getId(),
+                        cryptoService.encrypt((String) current)
+                    ));
+                } catch (GeneralSecurityException e) {
+                    throw new MissingRequiredInput("Invalid SECRET format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                }
+            }
+            case INT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getId(),
                     current instanceof Integer ? current : Integer.valueOf((String) current)
                 ));
-
-            case FLOAT:
+            }
+            case FLOAT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getId(),
                     current instanceof Float ? current : Float.valueOf((String) current)
                 ));
-
-            case BOOLEAN:
+            }
+            case BOOLEAN -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     input.getId(),
                     current instanceof Boolean ? current : Boolean.valueOf((String) current)
                 ));
-
-            case DATETIME:
+            }
+            case DATETIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
@@ -171,8 +186,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case DATE:
+            }
+            case DATE -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
@@ -181,8 +196,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DATE format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case TIME:
+            }
+            case TIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
@@ -191,8 +206,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid TIME format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case DURATION:
+            }
+            case DURATION -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
@@ -201,8 +216,8 @@ public class RunnerUtils {
                 } catch (DateTimeParseException e) {
                     throw new MissingRequiredInput("Invalid DURATION format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case FILE:
+            }
+            case FILE -> {
                 try {
                     URI uri = URI.create(((String) current).replace(File.separator, "/"));
 
@@ -220,8 +235,8 @@ public class RunnerUtils {
                 } catch (Exception e) {
                     throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getId() + "'", e);
                 }
-
-            case JSON:
+            }
+            case JSON -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
@@ -230,9 +245,9 @@ public class RunnerUtils {
                 } catch (JsonProcessingException e) {
                     throw new MissingRequiredInput("Invalid JSON format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-
-            case URI:
-                Matcher matcher = URI_PATTERN.matcher(((String) current));
+            }
+            case URI -> {
+                Matcher matcher = URI_PATTERN.matcher((String) current);
                 if (matcher.matches()) {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
@@ -241,8 +256,8 @@ public class RunnerUtils {
                 } else {
                     throw new MissingRequiredInput("Invalid URI format for '" + input.getId() + "' for '" + current + "'");
                 }
-
-            default:
+            }
+            default ->
                 throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getId() + "'");
         }
     }

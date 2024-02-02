@@ -64,7 +64,7 @@
     "@typescript-eslint/parser": "^6.20.0",
     "@vitejs/plugin-vue": "^5.0.3",
     "@vue/eslint-config-prettier": "^9.0.0",
-    "@vue/test-utils": "^2.4.3",
+    "@vue/test-utils": "^2.4.4",
     "decompress": "^4.2.1",
     "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.20.1",

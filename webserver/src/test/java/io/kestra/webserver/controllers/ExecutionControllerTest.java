@@ -18,6 +18,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -52,6 +53,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
@@ -89,6 +91,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
+        .put("secret", "secret")
         .build();
 
     @Test
@@ -126,6 +129,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .addPart("instant", "2019-10-06T18:27:49Z")
             .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
+            .addPart("secret", "secret")
             .build();
     }
 
@@ -159,7 +163,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Execution result = triggerInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(result.getTaskRunList().size(), is(5));
+        assertThat(result.getTaskRunList().size(), is(6));
     }
 
     @Test
@@ -432,7 +436,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void downloadFile() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList(), hasSize(5));
+        assertThat(execution.getTaskRunList(), hasSize(6));
 
         String path = (String) execution.getInputs().get("file");
 
@@ -467,7 +471,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void filePreview() throws TimeoutException {
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList(), hasSize(5));
+        assertThat(defaultExecution.getTaskRunList(), hasSize(6));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -485,10 +489,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("float", "42.42")
             .put("instant", "2019-10-06T18:27:49Z")
             .put("file", Objects.requireNonNull(ExecutionControllerTest.class.getClassLoader().getResource("data/iso88591.txt")).getPath())
+            .put("secret", "secret")
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList(), hasSize(5));
+        assertThat(latin1Execution.getTaskRunList(), hasSize(6));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

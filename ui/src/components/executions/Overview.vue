@@ -118,6 +118,7 @@
             }
         },
         computed: {
+            ...mapState("flow", ["flow"]),
             ...mapState("execution", ["execution"]),
             items() {
                 if (!this.execution) {
@@ -168,7 +169,19 @@
                 return ret;
             },
             inputs() {
-                return toRaw(this.execution.inputs);
+              if (!this.flow) {
+                return []
+              }
+
+              let inputs = toRaw(this.execution.inputs);
+              Object.keys(inputs).forEach(key => {
+                this.flow.inputs.forEach(input => {
+                  if(key === input.name && input.type === 'SECRET') {
+                    inputs[key] = '******';
+                  }
+                })
+              })
+              return inputs;
             }
         },
     };

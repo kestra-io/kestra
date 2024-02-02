@@ -20,6 +20,12 @@
                     v-if="input.type === 'STRING' || input.type === 'URI'"
                     v-model="inputs[input.id]"
                 />
+                <el-input
+                    type="password"
+                    v-if="input.type === 'SECRET'"
+                    v-model="inputs[input.name]"
+                    show-password
+                />
                 <el-input-number
                     v-if="input.type === 'INT'"
                     v-model="inputs[input.id]"

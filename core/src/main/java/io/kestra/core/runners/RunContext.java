@@ -1,11 +1,11 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import io.kestra.core.crypto.CryptoService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
@@ -13,6 +13,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -36,13 +38,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.security.GeneralSecurityException;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,6 +61,7 @@ public class RunContext {
     protected transient Path temporaryDirectory;
     private String triggerExecutionId;
     private Storage storage;
+    private CryptoService cryptoService;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -137,6 +135,7 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
         this.runContextCache = applicationContext.findBean(RunContextCache.class).orElseThrow();
+        this.cryptoService = applicationContext.findBean(CryptoService.class).orElseThrow();
         this.tempBasedPath = Path.of(applicationContext
             .getProperty("kestra.tasks.tmp-dir.path", String.class)
             .orElse(System.getProperty("java.io.tmpdir"))
@@ -286,7 +285,21 @@ public class RunContext {
             }
 
             if (execution.getInputs() != null) {
-                builder.put("inputs", execution.getInputs());
+                Map<String, Object> inputs = new HashMap<>(execution.getInputs());
+                if (flow != null && flow.getInputs() != null) {
+                    // if some inputs are of type secret, we decode them
+                    for (Input<?> input : flow.getInputs()) {
+                        if (input instanceof SecretInput && inputs.containsKey(input.getId())) {
+                            try {
+                                String decoded = cryptoService.decrypt(((String) inputs.get(input.getId())));
+                                inputs.put(input.getId(), decoded);
+                            } catch (GeneralSecurityException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }
+                }
+                builder.put("inputs", inputs);
             }
 
             if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {

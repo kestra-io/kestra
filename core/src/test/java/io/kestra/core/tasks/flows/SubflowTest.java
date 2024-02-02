@@ -70,7 +70,7 @@ class SubflowTest {
     @Test
     void shouldNotReturnOutputsForSubflowOutputsDisabled() {
         // Given
-        Mockito.when(applicationContext.getProperty(Subflow.ALLOW_PARAMETER_OUTPUTS_PROPERTY, Boolean.class))
+        Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
             .thenReturn(Optional.of(false));
 
         Map<String, Object> outputs = Map.of("key", "value");
@@ -99,7 +99,7 @@ class SubflowTest {
     @Test
     void shouldReturnOutputsForSubflowOutputsEnabled() throws IllegalVariableEvaluationException {
         // Given
-        Mockito.when(applicationContext.getProperty(Subflow.ALLOW_PARAMETER_OUTPUTS_PROPERTY, Boolean.class))
+        Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
             .thenReturn(Optional.of(true));
 
         Map<String, Object> outputs = Map.of("key", "value");
@@ -132,7 +132,7 @@ class SubflowTest {
     @Test
     void shouldOnlyReturnOutputsFromFlowOutputs() throws IllegalVariableEvaluationException {
         // Given
-        Mockito.when(applicationContext.getProperty(Subflow.ALLOW_PARAMETER_OUTPUTS_PROPERTY, Boolean.class))
+        Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
             .thenReturn(Optional.of(true));
 
         Output output = Output.builder().id("key").value("value").build();

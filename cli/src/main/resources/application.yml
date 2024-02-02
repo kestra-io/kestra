@@ -176,7 +176,15 @@ kestra:
     repositories:
       central:
         url: https://repo.maven.apache.org/maven2/
-
+    configurations:
+      - type: io.kestra.core.tasks.flows.Subflow
+        values:
+          flowOutputs:
+            enabled: true # backward-compatibility with version prior to v0.15.0
+      - type: io.kestra.core.tasks.flows.Flow
+        values:
+          flowOutputs:
+            enabled: true # backward-compatibility with version prior to v0.15.0
   variables:
     env-vars-prefix: KESTRA_
     cache-enabled: true
@@ -205,9 +213,3 @@ kestra:
   heartbeat:
     frequency: 10s
     heartbeat-missed: 3
-
-  tasks:
-    # Global configuration for task 'Subflow'
-    subflow:
-      # Enable/Disable the task parameter's outputs.
-      allow-parameter-outputs: false

@@ -534,6 +534,10 @@ public class RunContext {
             ));
     }
 
+    public String encrypt(String plaintext) throws GeneralSecurityException {
+        return this.cryptoService.encrypt(plaintext);
+    }
+
     public org.slf4j.Logger logger() {
         return runContextLogger.logger();
     }

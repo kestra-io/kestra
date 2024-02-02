@@ -168,6 +168,22 @@ class NamespaceFilesServiceTest {
         assertThat(content, is("2"));
     }
 
+    @Test
+    public void nsFilesRootFolderDoesntExist() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        List<URI> injected = namespaceFilesService.inject(
+            runContextFactory.of(),
+            "tenant1",
+            "io.kestra." + IdUtils.create(),
+            runContext.tempDir(),
+            NamespaceFiles
+                .builder()
+                .enabled(true)
+                .build()
+        );
+        assertThat(injected.size(), is(0));
+    }
+
     private void put(@Nullable String tenantId, String namespace, String path, String content) throws IOException {
         storageInterface.put(
             tenantId,

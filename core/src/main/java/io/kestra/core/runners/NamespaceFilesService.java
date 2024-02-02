@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -78,7 +79,13 @@ public class NamespaceFilesService {
         URI uri = uri(namespace, path);
 
         List<URI> result = new ArrayList<>();
-        List<FileAttributes> list = storageInterface.list(tenantId, uri);
+        List<FileAttributes> list;
+        try {
+            list = storageInterface.list(tenantId, uri);
+        } catch (FileNotFoundException e) {
+            // prevent crashing upon trying to inject namespace files while the root namespace files folder doesn't exist
+            return result;
+        }
 
         for (var file: list) {
             URI current = URI.create((path != null ? path.getPath() : "") +  "/" + file.getFileName());

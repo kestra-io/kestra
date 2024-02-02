@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.plugins.PluginConfigurations;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;

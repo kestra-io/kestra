@@ -42,3 +42,15 @@ kestra:
     uri: http://localhost:8080/
 
   unittest: true
+
+  plugins:
+    configurations:
+      - type: io.kestra.plugin.Test0
+        values:
+          prop0: value0
+      - type: io.kestra.plugin.Test1
+        values:
+          prop1: value1
+      - type: io.kestra.plugin.Test2
+        values:
+          prop2: value2

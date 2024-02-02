@@ -18,6 +18,7 @@ import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.InternalStorage;
@@ -27,6 +28,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -62,6 +64,7 @@ public class RunContext {
     private String triggerExecutionId;
     private Storage storage;
     private CryptoService cryptoService;
+    private Map<String, Object> pluginConfiguration;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -89,6 +92,7 @@ public class RunContext {
         this.initBean(applicationContext);
         this.initLogger(taskRun, task);
         this.initContext(flow, task, execution, taskRun);
+        this.initPluginConfiguration(applicationContext, task.getType());
     }
 
     /**
@@ -101,6 +105,7 @@ public class RunContext {
 
         this.variables = this.variables(flow, null, null, null, trigger);
         this.initLogger(flow, trigger);
+        this.initPluginConfiguration(applicationContext, trigger.getType());
     }
 
     /**
@@ -127,6 +132,13 @@ public class RunContext {
             storageInterface
         );
 
+    }
+
+    private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
+        this.pluginConfiguration = applicationContext.findBean(PluginConfigurations.class)
+            .map(pluginConfigurations -> pluginConfigurations.getConfigurationByPluginType(plugin))
+            .map(Collections::unmodifiableMap)
+            .orElseThrow();
     }
 
     protected void initBean(ApplicationContext applicationContext) {
@@ -806,5 +818,30 @@ public class RunContext {
         Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
         return flow != null ? flow.get("tenantId") : null;
+    }
+
+    /**
+     * Returns the value of the specified configuration property for the plugin type
+     * associated to the current task or trigger.
+     *
+     * @param name  the configuration property name.
+     * @return      the {@link Optional} configuration property value.
+     *
+     * @param <T>   the type of the configuration property value.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> pluginConfiguration(final String name) {
+        Objects.requireNonNull(name,"Cannot get plugin configuration from null name");
+        return Optional.ofNullable((T)pluginConfiguration.get(name));
+    }
+
+    /**
+     * Returns a map containing all the static configuration properties for the plugin type
+     * associated to the current task or trigger.
+     *
+     * @return      an unmodifiable map of key/value properties.
+     */
+    public Map<String, Object> pluginConfigurations() {
+        return pluginConfiguration;
     }
 }

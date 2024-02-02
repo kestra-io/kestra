@@ -422,11 +422,11 @@ public class RunnerUtils {
     }
 
     public Predicate<Execution> isPausedExecution(Execution execution) {
-        return e -> e.getId().equals(execution.getId()) && e.getState().isPaused() && e.getTaskRunList().stream().anyMatch(t -> t.getState().isPaused());
+        return e -> e.getId().equals(execution.getId()) && e.getState().isPaused() && e.getTaskRunList() != null && e.getTaskRunList().stream().anyMatch(t -> t.getState().isPaused());
     }
 
     public Predicate<Execution> isRunningExecution(Execution execution) {
-        return e -> e.getId().equals(execution.getId()) && e.getState().isRunning() && e.getTaskRunList().stream().anyMatch(t -> t.getState().isRunning());
+        return e -> e.getId().equals(execution.getId()) && e.getState().isRunning() && e.getTaskRunList() != null && e.getTaskRunList().stream().anyMatch(t -> t.getState().isRunning());
     }
 
     private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {

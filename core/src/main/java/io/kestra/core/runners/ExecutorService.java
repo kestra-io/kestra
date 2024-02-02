@@ -64,17 +64,18 @@ public class ExecutorService {
     }
 
     public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
+        // if above the limit, handle concurrency limit based on its behavior
         if (count >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
                     var newExecution = execution.withState(State.Type.QUEUED);
 
-                    ExecutionQueued executionQueued = ExecutionQueued.builder()
+                    ExecutionRunning executionRunning = ExecutionRunning.builder()
                         .tenantId(flow.getTenantId())
                         .namespace(flow.getNamespace())
                         .flowId(flow.getId())
-                        .date(Instant.now())
                         .execution(newExecution)
+                        .concurrencyState(ExecutionRunning.ConcurrencyState.QUEUED)
                         .build();
 
                     // when max concurrency is reached, we throttle the execution and stop processing
@@ -87,7 +88,7 @@ public class ExecutorService {
                     );
                     // return the execution queued
                     yield executor
-                        .withExecutionQueued(executionQueued)
+                        .withExecutionRunning(executionRunning)
                         .withExecution(newExecution, "checkConcurrencyLimit");
                 }
                 case CANCEL ->
@@ -97,7 +98,15 @@ public class ExecutorService {
             };
         }
 
-        return executor;
+        // if under the limit, update the executor with a RUNNING ExecutionRunning to track them
+        var executionRunning = new ExecutionRunning(
+            flow.getTenantId(),
+            flow.getNamespace(),
+            flow.getId(),
+            executor.getExecution(),
+            ExecutionRunning.ConcurrencyState.RUNNING
+        );
+        return executor.withExecutionRunning(executionRunning);
     }
 
     public Executor process(Executor executor) {

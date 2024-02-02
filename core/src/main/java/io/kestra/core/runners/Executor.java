@@ -31,7 +31,6 @@ public class Executor {
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>();
     private SubflowExecutionResult joinedSubflowExecutionResult;
     private ExecutionRunning executionRunning;
-    private ExecutionQueued executionQueued;
     private ExecutionResumed executionResumed;
     private ExecutionResumed joinedExecutionResumed;
 
@@ -125,12 +124,6 @@ public class Executor {
     public Executor withSubflowExecutionResults(List<SubflowExecutionResult> subflowExecutionResults, String from) {
         this.subflowExecutionResults.addAll(subflowExecutionResults);
         this.from.add(from);
-
-        return this;
-    }
-
-    public Executor withExecutionQueued(ExecutionQueued executionQueued) {
-        this.executionQueued = executionQueued;
 
         return this;
     }

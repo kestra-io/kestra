@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.crypto.CryptoService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -34,6 +36,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
+@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -50,6 +53,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Inject
     MetricRegistry metricRegistry;
+
+    @Inject
+    CryptoService cryptoService;
 
     @Test
     void logs() throws TimeoutException {
@@ -206,5 +212,18 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThrows(IllegalArgumentException.class, () -> runContext.resolve(Path.of("/etc/passwd")));
         assertThrows(IllegalArgumentException.class, () -> runContext.resolve(Path.of("../../etc/passwd")));
         assertThrows(IllegalArgumentException.class, () -> runContext.resolve(Path.of("subdir/../../../etc/passwd")));
+    }
+
+    @Test
+    void encrypt() throws GeneralSecurityException {
+        // given
+        RunContext runContext = runContextFactory.of();
+        String plainText = "toto";
+
+        String encrypted = runContext.encrypt(plainText);
+        String decrypted = cryptoService.decrypt(encrypted);
+
+        assertThat(encrypted, not(plainText));
+        assertThat(decrypted, is(plainText));
     }
 }

@@ -79,7 +79,8 @@
         emits: ["update:modelValue"],
         props: {
             inputs: {
-                type: Object,
+                type: Array,
+                default: () => []
             }
         },
         computed: {

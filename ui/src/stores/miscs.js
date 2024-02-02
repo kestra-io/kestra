@@ -18,7 +18,7 @@ export default {
                 return response.data;
             })
         },
-        async addBasicAuth({commit, state}, options) {
+        async addBasicAuth({_commit, state}, options) {
             const email = options.username;
 
             await this.$http.post(`${apiUrl(this)}/basicAuth`, {

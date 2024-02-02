@@ -8,7 +8,8 @@
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
     "test:unit": "vitest run",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path ../.gitignore"
+    "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix"
   },
   "dependencies": {
     "@kestra-io/ui-libs": "^0.0.36",
@@ -60,6 +61,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.6.1",
+    "@typescript-eslint/parser": "^6.20.0",
     "@vitejs/plugin-vue": "^5.0.3",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/test-utils": "^2.4.3",
@@ -73,6 +75,7 @@
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.69.7",
+    "typescript": "^5.3.3",
     "vite": "^5.0.11",
     "vite-plugin-rewrite-all": "1.0.1",
     "vitest": "^1.2.0",

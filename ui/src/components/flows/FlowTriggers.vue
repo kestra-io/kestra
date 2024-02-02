@@ -51,7 +51,6 @@
             </el-table-column>
         </el-table>
     </el-drawer>
-
 </template>
 
 <script setup>

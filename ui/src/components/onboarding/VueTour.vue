@@ -341,63 +341,63 @@
                 ],
                 flowParts: [
                     "# " + this.$t("onboarding-flow.onboardComment1") + "\n" +
-                    "# " + this.$t("onboarding-flow.onboardComment2") + "\n" +
-                    "id: welcome" + "\n" +
-                    "namespace: company.team\n" +
-                    "description: Welcome to Kestra!",
+                        "# " + this.$t("onboarding-flow.onboardComment2") + "\n" +
+                        "id: welcome" + "\n" +
+                        "namespace: company.team\n" +
+                        "description: Welcome to Kestra!",
                     "\n# " + this.$t("onboarding-flow.inputs") + "\n" +
-                    "inputs:" + "\n" +
-                    "  # " + this.$t("onboarding-flow.inputsDetails1") + "\n" +
-                    "- id: user" + "\n" +
-                    "  type: STRING" + "\n" +
-                    "  defaults: Kestra user",
+                        "inputs:" + "\n" +
+                        "  # " + this.$t("onboarding-flow.inputsDetails1") + "\n" +
+                        "- id: user" + "\n" +
+                        "  type: STRING" + "\n" +
+                        "  defaults: Kestra user",
                     "\n# " + this.$t("onboarding-flow.tasks1") + "\n" +
-                    "# " + this.$t("onboarding-flow.tasks2") + "\n" +
-                    "# " + this.$t("onboarding-flow.tasks3") + "\n" +
-                    "tasks:",
+                        "# " + this.$t("onboarding-flow.tasks2") + "\n" +
+                        "# " + this.$t("onboarding-flow.tasks3") + "\n" +
+                        "tasks:",
                     "\n  # " + this.$t("onboarding-flow.taskLog1") + "\n" +
-                    "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
-                    "  # " + this.$t("onboarding-flow.taskLog3") + "\n" +
-                    "- id: hello" + "\n" +
-                    "  type: io.kestra.core.tasks.log.Log" + "\n" +
-                    "  message: Hey there, {{ inputs.user }}!",
+                        "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
+                        "  # " + this.$t("onboarding-flow.taskLog3") + "\n" +
+                        "- id: hello" + "\n" +
+                        "  type: io.kestra.core.tasks.log.Log" + "\n" +
+                        "  message: Hey there, {{ inputs.user }}!",
                     "\n  # " + this.$t("onboarding-flow.taskAPI") + "\n" +
-                    "- id: api" + "\n" +
-                    "  type: io.kestra.plugin.fs.http.Request" + "\n" +
-                    "  uri: https://dummyjson.com/products",
+                        "- id: api" + "\n" +
+                        "  type: io.kestra.plugin.fs.http.Request" + "\n" +
+                        "  uri: https://dummyjson.com/products",
                     "\n  # " + this.$t("onboarding-flow.taskPython") + "\n" +
-                    "- id: python" + "\n" +
-                    "  type: io.kestra.plugin.scripts.python.Script" + "\n" +
-                    "  docker:" + "\n" +
-                    "    image: python:slim" + "\n" +
-                    "  beforeCommands:" + "\n" +
-                    "    - pip install polars" + "\n" +
-                    "  warningOnStdErr: false" + "\n" +
-                    "  script: |" + "\n" +
-                    "    import polars as pl" + "\n" +
-                    "    data = {{outputs.api.body | jq('.products') | first}}" + "\n" +
-                    "    df = pl.from_dicts(data)" + "\n" +
-                    "    df.glimpse()" + "\n" +
-                    "    df.select([\"brand\", \"price\"]).write_csv(\"{{outputDir}}/products.csv\")",
+                        "- id: python" + "\n" +
+                        "  type: io.kestra.plugin.scripts.python.Script" + "\n" +
+                        "  docker:" + "\n" +
+                        "    image: python:slim" + "\n" +
+                        "  beforeCommands:" + "\n" +
+                        "    - pip install polars" + "\n" +
+                        "  warningOnStdErr: false" + "\n" +
+                        "  script: |" + "\n" +
+                        "    import polars as pl" + "\n" +
+                        "    data = {{outputs.api.body | jq('.products') | first}}" + "\n" +
+                        "    df = pl.from_dicts(data)" + "\n" +
+                        "    df.glimpse()" + "\n" +
+                        "    df.select([\"brand\", \"price\"]).write_csv(\"{{outputDir}}/products.csv\")",
                     "\n  # " + this.$t("onboarding-flow.taskQuery") + "\n" +
-                    "- id: sqlQuery" + "\n" +
-                    "  type: io.kestra.plugin.jdbc.duckdb.Query" + "\n" +
-                    "  inputFiles:" + "\n" +
-                    "    in.csv: \"{{ outputs.python.outputFiles['products.csv'] }}\"" + "\n" +
-                    "  sql: |" + "\n" +
-                    "    SELECT brand, round(avg(price), 2) as avg_price" + "\n" +
-                    "    FROM read_csv_auto('{{workingDir}}/in.csv', header=True)" + "\n" +
-                    "    GROUP BY brand" + "\n" +
-                    "    ORDER BY avg_price DESC;" + "\n" +
-                    "  store: true",
+                        "- id: sqlQuery" + "\n" +
+                        "  type: io.kestra.plugin.jdbc.duckdb.Query" + "\n" +
+                        "  inputFiles:" + "\n" +
+                        "    in.csv: \"{{ outputs.python.outputFiles['products.csv'] }}\"" + "\n" +
+                        "  sql: |" + "\n" +
+                        "    SELECT brand, round(avg(price), 2) as avg_price" + "\n" +
+                        "    FROM read_csv_auto('{{workingDir}}/in.csv', header=True)" + "\n" +
+                        "    GROUP BY brand" + "\n" +
+                        "    ORDER BY avg_price DESC;" + "\n" +
+                        "  store: true",
                     "\n # " + this.$t("onboarding-flow.triggers") + "\n" +
-                    "triggers:" + "\n" +
-                    "  # " + this.$t("onboarding-flow.triggerSchedule1") + "\n" +
-                    "- id: everyMinute" + "\n" +
-                    "  type: io.kestra.core.models.triggers.types.Schedule" + "\n" +
-                    "  cron: \"*/1 * * * *\"" + "\n" +
-                    "  inputs:" + "\n" +
-                    "    name: Kestra pro user"
+                        "triggers:" + "\n" +
+                        "  # " + this.$t("onboarding-flow.triggerSchedule1") + "\n" +
+                        "- id: everyMinute" + "\n" +
+                        "  type: io.kestra.core.models.triggers.types.Schedule" + "\n" +
+                        "  cron: \"*/1 * * * *\"" + "\n" +
+                        "  inputs:" + "\n" +
+                        "    name: Kestra pro user"
                 ]
             }
         },

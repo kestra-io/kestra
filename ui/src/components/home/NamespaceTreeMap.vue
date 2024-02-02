@@ -1,7 +1,6 @@
 <template>
     <div :id="uuid" class="namespace-treemap" v-if="dataReady">
         <el-tooltip
-            popper-class="tooltip-stats"
             :persistent="false"
             :hide-after="0"
             transition=""
@@ -22,7 +21,6 @@
     import TreeMapChart from "../../charts/TreeMapChart"
     import {defaultConfig, chartClick, backgroundFromState} from "../../utils/charts";
     import {color} from "chart.js/helpers";
-    import State from "../../utils/state";
 
     export default defineComponent({
         components: {TreeMapChart},

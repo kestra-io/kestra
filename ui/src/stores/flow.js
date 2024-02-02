@@ -99,7 +99,7 @@ export default {
                     }
                 })
         },
-        saveFlow({commit, dispatch}, options) {
+        saveFlow({commit, _dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
@@ -190,7 +190,7 @@ export default {
                     return Promise.reject(error);
                 })
         },
-        getGraphFromSourceResponse({commit}, options) {
+        getGraphFromSourceResponse({_commit}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow

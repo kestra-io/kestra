@@ -1,7 +1,9 @@
 <template>
     <div class="d-flex" v-if="!configs.isBasicAuthEnabled">
         <el-text>Your data is not secure. Don't loose it. <b>Enable our free security features or try our paid offering.</b></el-text>
-        <el-button class="ms-auto" @click="promptForCredentials"><b>Activate Basic Authentication</b></el-button>
+        <el-button class="ms-auto" @click="promptForCredentials">
+            <b>Activate Basic Authentication</b>
+        </el-button>
 
         <el-dialog v-if="promptOAuthCredentials" v-model="promptOAuthCredentials" destroy-on-close :append-to-body="true">
             <template #header>
@@ -56,9 +58,9 @@
                 rules: {
                     email: [
                         {
-                            message: 'Please input correct email address',
-                            trigger: ['blur'],
-                            pattern: '^$|^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$'
+                            message: "Please input correct email address",
+                            trigger: ["blur"],
+                            pattern: "^$|^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$"
                         },
                     ],
                     confirmPassword: [

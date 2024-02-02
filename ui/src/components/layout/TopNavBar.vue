@@ -26,35 +26,46 @@
                     </el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <a href="https://kestra.io/slack"
-                               target="_blank"
-                               class="d-flex gap-2 el-dropdown-menu__item">
+                            <a
+                                href="https://kestra.io/slack"
+                                target="_blank"
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
                                 <HelpBox class="align-middle" /> {{ $t("live help") }}
                             </a>
-                            <a href="https://kestra.io/docs"
-                               target="_blank"
-                               class="d-flex gap-2 el-dropdown-menu__item">
+                            <a
+                                href="https://kestra.io/docs"
+                                target="_blank"
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
                                 <BookMultipleOutline class="align-middle" /> {{ $t("documentation.documentation") }}
                             </a>
                             <router-link
                                 :to="{name: 'plugins/list'}"
-                                class="d-flex gap-2 el-dropdown-menu__item">
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
                                 <GoogleCirclesExtended class="align-middle" /> {{ $t("plugins.names") }}
                             </router-link>
-                            <a href="https://github.com/kestra-io/kestra/issues"
-                               target="_blank"
-                               class="d-flex gap-2 el-dropdown-menu__item">
+                            <a
+                                href="https://github.com/kestra-io/kestra/issues"
+                                target="_blank"
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
                                 <Github class="align-middle" /> {{ $t("documentation.github") }}
                             </a>
-                            <a href="https://kestra.io/slack"
-                               target="_blank"
-                               class="d-flex gap-2 el-dropdown-menu__item">
+                            <a
+                                href="https://kestra.io/slack"
+                                target="_blank"
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
                                 <Slack class="align-middle" /> {{ $t("join community") }}
                             </a>
-                            <a v-if="version"
-                               :href="version.url"
-                               target="_blank"
-                               class="el-dropdown-menu__item">
+                            <a
+                                v-if="version"
+                                :href="version.url"
+                                target="_blank"
+                                class="el-dropdown-menu__item"
+                            >
                                 New version available!
                             </a>
                         </el-dropdown-menu>
@@ -68,32 +79,24 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
     import Auth from "override/components/auth/Auth.vue";
     import News from "./News.vue";
-    import SearchField from "./SearchField.vue";
-    import Keyboard from "vue-material-design-icons/Keyboard.vue";
     import HelpBox from "vue-material-design-icons/HelpBox.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
     import Github from "vue-material-design-icons/Github.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
     import GlobalSearch from "./GlobalSearch.vue"
 
     export default {
         components: {
-            HomeOutline,
             Auth,
             News,
-            SearchField,
-            Keyboard,
             HelpBox,
             BookMultipleOutline,
             GoogleCirclesExtended,
             Github,
             Slack,
-            Magnify,
             GlobalSearch
         },
         props: {

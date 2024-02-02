@@ -2,10 +2,15 @@
     <el-card class="d-flex flex-column gap-3">
         <template #header>
             <el-text>{{ name }}</el-text>
-            <el-text class="d-block fw-normal" v-if="price">{{ price }}</el-text>
+            <el-text class="d-block fw-normal" v-if="price">
+                {{ price }}
+            </el-text>
         </template>
         <ul>
-            <li v-for="feature in features">
+            <li
+                v-for="feature in features"
+                :key="feature"
+            >
                 <Check class="me-2 text-success" /><el-text>{{ feature }}</el-text>
             </li>
         </ul>
@@ -13,7 +18,9 @@
         <a v-if="button?.href" class="mt-auto" :href="button.href">
             <el-button type="primary" class="w-100">{{ button.text }}</el-button>
         </a>
-        <el-button v-else-if="button" class="mt-auto w-100" disabled>{{ button.text }}</el-button>
+        <el-button v-else-if="button" class="mt-auto w-100" disabled>
+            {{ button.text }}
+        </el-button>
     </el-card>
 </template>
 <script setup>
@@ -27,11 +34,12 @@
                 required: true
             },
             price: {
-                type: String
+                type: String,
+                default: undefined
             },
             features: {
                 type: Array,
-                default: []
+                default: () => []
             },
             /**
              * {
@@ -41,6 +49,7 @@
              */
             button: {
                 type: Object,
+                default: undefined
             }
         }
     };

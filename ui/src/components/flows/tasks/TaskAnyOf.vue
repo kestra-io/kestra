@@ -4,7 +4,7 @@
         :disabled="true"
     >
         <template #append>
-            <el-button :icon="Eye" @click="isOpen = true"/>
+            <el-button :icon="Eye" @click="isOpen = true" />
         </template>
     </el-input>
 
@@ -60,9 +60,6 @@
 <script setup>
     import Eye from "vue-material-design-icons/Eye.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import Markdown from "../../layout/Markdown.vue";
-    import Help from "vue-material-design-icons/HelpBox.vue";
-    import TaskObject from "./TaskObject.vue";
 </script>
 
 <script>

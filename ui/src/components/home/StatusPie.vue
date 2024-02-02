@@ -1,7 +1,6 @@
 <template>
     <div class="status-pie" v-if="dataReady">
         <el-tooltip
-            popper-class="tooltip-stats"
             placement="right"
             :persistent="false"
             :hide-after="0"
@@ -20,7 +19,6 @@
     import {defineComponent, computed, ref} from "vue";
     import {DoughnutChart} from "vue-chart-3"
     import {tooltip, defaultConfig, backgroundFromState} from "../../utils/charts.js";
-    import State from "../../utils/state";
     import {cssVariable} from "../../utils/global";
 
     export default defineComponent({

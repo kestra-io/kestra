@@ -36,7 +36,7 @@
             placeholder: {
                 type: String,
                 required: false,
-                default: 'search'
+                default: "search"
             },
             readonly: {
                 type: Boolean

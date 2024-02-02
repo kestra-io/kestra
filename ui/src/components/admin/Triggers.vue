@@ -23,7 +23,6 @@
                     </el-form-item>
                 </template>
                 <template #table>
-
                     <el-table
                         :data="triggers"
                         ref="table"
@@ -33,10 +32,17 @@
                         fixed
                         @sort-change="onSort"
                     >
-                        <el-table-column prop="triggerId" sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('id')" />
-                        <el-table-column prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('flow')">
+                        <el-table-column
+                            prop="triggerId"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('id')"
+                        />
+                        <el-table-column
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('flow')"
+                        >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
@@ -50,8 +56,12 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('namespace')">
+                        <el-table-column
+                            prop="namespace"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('namespace')"
+                        >
                             <template #default="scope">
                                 {{ $filters.invisibleSpace(scope.row.namespace) }}
                             </template>
@@ -89,7 +99,9 @@
                                 <el-button text v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
-                                        placement="left" @click="triggerToUnlock = scope.row">
+                                        placement="left"
+                                        @click="triggerToUnlock = scope.row"
+                                    >
                                         <lock-off />
                                     </kicon>
                                 </el-button>

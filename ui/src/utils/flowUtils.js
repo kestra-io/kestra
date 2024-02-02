@@ -25,7 +25,7 @@ export default class FlowUtils {
         if (Array.isArray(item)) {
             item.flatMap(item => this.loopOver(item, predicate, result));
         } else if (item instanceof Object) {
-            Object.entries(item).flatMap(([key, value]) => {
+            Object.entries(item).flatMap(([_key, value]) => {
                 this.loopOver(value, predicate, result);
             });
         }

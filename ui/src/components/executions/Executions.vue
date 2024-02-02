@@ -11,8 +11,12 @@
                         </template>
                     </li>
                     <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled || isReadOnly" :flow-id="flow.id"
-                                      :namespace="flow.namespace" />
+                        <trigger-flow
+                            v-if="flow"
+                            :disabled="flow.disabled || isReadOnly"
+                            :flow-id="flow.id"
+                            :namespace="flow.namespace"
+                        />
                     </li>
                 </template>
             </ul>
@@ -126,8 +130,12 @@
                         </bulk-select>
                     </template>
                     <template #default>
-                        <el-table-column prop="id" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                        <el-table-column
+                            prop="id"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('id')"
+                        >
                             <template #default="scope">
                                 <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(scope.row)" />
                             </template>
@@ -158,13 +166,14 @@
                         </el-table-column>
 
                         <el-table-column
-                            prop="state.duration" v-if="displayColumn('state.duration')"
+                            prop="state.duration"
+                            v-if="displayColumn('state.duration')"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('duration')"
                         >
                             <template #default="scope">
-                                <span v-if="isRunning(scope.row)">{{$filters.humanizeDuration(durationFrom(scope.row)) }}</span>
+                                <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>

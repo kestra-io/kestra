@@ -2,63 +2,91 @@
     <el-card class="p-3 pt-2 pb-2" :header="$t('your usage')" v-if="usages">
         <el-row class="mt-1 mb-1 align-items-center">
             <AspectRatio />
-            <el-text size="small">{{ $t("namespaces") }}</el-text>
+            <el-text size="small">
+                {{ $t("namespaces") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ namespaces }}</el-text>
+            <el-text size="small">
+                {{ namespaces }}
+            </el-text>
             <router-link :to="{name: 'flows/list'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
         <el-row class="mt-1 mb-1 align-items-center">
             <FileTreeOutline />
-            <el-text size="small">{{ $t("flows") }}</el-text>
+            <el-text size="small">
+                {{ $t("flows") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ flows }}</el-text>
+            <el-text size="small">
+                {{ flows }}
+            </el-text>
             <router-link :to="{name: 'flows/list'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
         <el-row class="mt-1 mb-1 align-items-center">
             <ListBoxOutline />
-            <el-text size="small">{{ $t("tasks") }}</el-text>
+            <el-text size="small">
+                {{ $t("tasks") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ tasks }}</el-text>
+            <el-text size="small">
+                {{ tasks }}
+            </el-text>
             <router-link :to="{name: 'flows/list'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
         <el-row class="mt-1 mb-1 align-items-center">
             <LightningBolt />
-            <el-text size="small">{{ $t("triggers") }}</el-text>
+            <el-text size="small">
+                {{ $t("triggers") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ triggers }}</el-text>
+            <el-text size="small">
+                {{ triggers }}
+            </el-text>
             <router-link :to="{name: 'admin/triggers'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
         <el-row class="mt-1 mb-1 align-items-center">
             <TimelineClock />
-            <el-text size="small">{{ $t("executions") }}</el-text>
+            <el-text size="small">
+                {{ $t("executions") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ executionsOverTwoDays }} ({{ $t("last 48 hours") }})</el-text>
+            <el-text size="small">
+                {{ executionsOverTwoDays }} ({{ $t("last 48 hours") }})
+            </el-text>
             <router-link :to="{name: 'executions/list'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
         <el-row v-if="taskrunsOverTwoDays" class="mt-1 mb-1 align-items-center">
             <ChartTimeline />
-            <el-text size="small">{{ $t("taskruns") }}</el-text>
+            <el-text size="small">
+                {{ $t("taskruns") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ taskrunsOverTwoDays }} ({{ $t("last 48 hours") }})</el-text>
+            <el-text size="small">
+                {{ taskrunsOverTwoDays }} ({{ $t("last 48 hours") }})
+            </el-text>
             <router-link :to="{name: 'taskruns/list'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
         <el-row class="mt-1 mb-1 align-items-center">
             <TableClock />
-            <el-text size="small">{{ $t("executions duration (in minutes)") }}</el-text>
+            <el-text size="small">
+                {{ $t("executions duration (in minutes)") }}
+            </el-text>
             <el-divider class="m-auto" />
-            <el-text size="small">{{ executionsDurationOverTwoDays }} ({{ $t("last 48 hours") }})</el-text>
+            <el-text size="small">
+                {{ executionsDurationOverTwoDays }} ({{ $t("last 48 hours") }})
+            </el-text>
             <router-link :to="{name: 'executions/list'}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
@@ -77,11 +105,9 @@
     import TableClock from "vue-material-design-icons/TableClock.vue";
 </script>
 <script>
-    import TopNavBar from "../../../components/layout/TopNavBar.vue";
     import {mapGetters} from "vuex";
 
     export default {
-        components: {TopNavBar},
         data() {
             return {
                 usages: undefined
@@ -99,7 +125,8 @@
         },
         props: {
             fetchedUsages: {
-                type: Object
+                type: Object,
+                default: undefined
             }
         },
         methods: {

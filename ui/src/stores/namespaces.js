@@ -13,7 +13,7 @@ export default {
                 commit("setNamespaces", response.data)
             })
         },
-        importFile({commit}, options) {
+        importFile({_commit}, options) {
             const file = options.file;
             const formData = new FormData();
             formData.append("fileContent", file);
@@ -32,7 +32,7 @@ export default {
                 {headers: {"Content-Type": "multipart/form-data"}}
             );
         },
-        exportFiles({commit}, options) {
+        exportFiles({_commit}, options) {
             this.$http.get(`${apiUrl(this)}/namespaces/${options.namespace}/files/export`)
                 .then(response => Utils.downloadUrl(response.request.responseURL, options.namespace + "_files.zip"));
         }

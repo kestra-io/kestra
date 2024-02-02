@@ -13,7 +13,7 @@
             computeHeaderSize() {
                 const tableElement = this.$refs.table.$el;
                 this.$el.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
-                this.$el.style.setProperty("--table-header-height", `${tableElement.querySelector('thead').clientHeight}px`);
+                this.$el.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
             }
         },
         props: {
@@ -22,9 +22,13 @@
                 default: true
             },
             data: {
-                type: Array
+                type: Array,
+                default: () => []
             }
         },
+        emits: [
+            "selection-change"
+        ],
         mounted() {
             window.addEventListener("resize", this.computeHeaderSize);
         },

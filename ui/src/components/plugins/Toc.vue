@@ -23,7 +23,7 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" :icons="icons"/>
+                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" :icons="icons" />
                                                 </div>
                                                 {{ cls }}
                                             </router-link>

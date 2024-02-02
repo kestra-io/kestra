@@ -98,7 +98,7 @@
                 this.notifications = ElNotification({
                     title: this.title || "Error",
                     message: h("div",  children),
-                    position: 'bottom-right',
+                    position: "bottom-right",
                     type: "error",
                     duration: 0,
                     dangerouslyUseHTMLString: true,

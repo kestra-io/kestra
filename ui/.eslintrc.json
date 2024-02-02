@@ -4,9 +4,21 @@
     "node": true
   },
   "extends": [
-    "plugin:vue/vue3-strongly-recommended",
-    "eslint:recommended"
+    "eslint:recommended",
+    "plugin:vue/vue3-strongly-recommended"
   ],
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    // support TypeScript-based Vue components
+    // https://eslint.vuejs.org/user-guide/#how-to-use-a-custom-parser
+    "parser": "@typescript-eslint/parser"
+  },
+  "globals": {
+    "KESTRA_UI_PATH": "readonly",
+    "KESTRA_API_URL": "readonly",
+    "THEME": "readonly",
+    "queryParams": "readonly"
+  },
   "rules": {
     "vue/html-indent": [
       "error",
@@ -42,6 +54,13 @@
     ],
     "vue/multi-word-component-names": [
       "off"
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        // vars prefixed with '_' are ignored
+        "argsIgnorePattern": "^_"
+      }
     ]
   }
 }

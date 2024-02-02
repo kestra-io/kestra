@@ -24,7 +24,7 @@ import Stats from "override/components/admin/stats/Stats.vue";
 
 export default [
     //Flows
-    {name: "root", path: '/', redirect: {name: 'home'}},
+    {name: "root", path: "/", redirect: {name: "home"}},
     {name: "home", path: "/:tenant?/dashboard", component: Home},
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
 

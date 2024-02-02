@@ -112,7 +112,6 @@
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
-    import TaskRoot from "./tasks/TaskRoot.vue";
     import TaskBasic from "./tasks/TaskBasic.vue";
 </script>
 <script>

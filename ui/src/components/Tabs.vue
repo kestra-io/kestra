@@ -9,7 +9,7 @@
                 :disabled="tab.disabled"
             >
                 <template #label>
-                    <component :is="embedActiveTab ? 'a' : 'router-link'" @click.native="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
+                    <component :is="embedActiveTab ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
                         {{ tab.title }}
                         <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
                     </component>
@@ -73,7 +73,7 @@
         },
         methods: {
             embeddedTabChange(tab) {
-                this.$emit('changed', tab);
+                this.$emit("changed", tab);
             },
             setActiveName() {
                 this.activeName = this.activeTab.name || "default";

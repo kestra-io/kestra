@@ -57,6 +57,7 @@
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import Collapse from "../layout/Collapse.vue";
     import State from "../../utils/state";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -100,12 +101,7 @@
                         minLevel: this.level
                     }
                 }).then((response) => {
-                    const url = window.URL.createObjectURL(new Blob([response]));
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.setAttribute("download", this.downloadName);
-                    document.body.appendChild(link);
-                    link.click();
+                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
                 });
             },
             forwardEvent(type, event) {

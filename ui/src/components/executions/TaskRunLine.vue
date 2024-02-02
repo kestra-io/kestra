@@ -150,6 +150,7 @@
     import _groupBy from "lodash/groupBy";
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Duration from "../layout/Duration.vue";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -258,12 +259,7 @@
                     executionId: this.followedExecution.id,
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
-                    const url = window.URL.createObjectURL(new Blob([response]));
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.setAttribute("download", this.downloadName(currentTaskRunId));
-                    document.body.appendChild(link);
-                    link.click();
+                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
                 });
             },
             forwardEvent(type, event) {

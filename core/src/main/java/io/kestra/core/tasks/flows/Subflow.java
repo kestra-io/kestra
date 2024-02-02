@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
 
-    static final String ALLOW_PARAMETER_OUTPUTS_PROPERTY = "kestra.tasks.subflow.allow-parameter-outputs";
+    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "flowOutputs.enabled";
 
     @NotEmpty
     @Schema(
@@ -176,12 +176,9 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
             return Optional.empty();
         }
 
-        // Ugly hack to get access to worker's configuration.
-        // MUST be changed when the RunContext class will be refactored, or remove when
-        // the `outputs` parameter is removed after being deprecated.
-        boolean isOutputsAllowed = runContext.getApplicationContext()
-            .getProperty(ALLOW_PARAMETER_OUTPUTS_PROPERTY, Boolean.class)
-            .orElse(false);
+        boolean isOutputsAllowed = runContext
+            .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
+            .orElse(true);
 
         final Output.OutputBuilder builder = Output.builder()
             .executionId(execution.getId())

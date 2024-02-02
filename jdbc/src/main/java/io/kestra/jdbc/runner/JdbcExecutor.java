@@ -26,25 +26,8 @@ import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorInterface;
 import io.kestra.core.runners.ExecutorService;
-import io.kestra.core.runners.ExecutorState;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.SubflowExecution;
-import io.kestra.core.runners.SubflowExecutionResult;
-import io.kestra.core.runners.WorkerInstance;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTaskRunning;
-import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.runners.WorkerTriggerRunning;
-import io.kestra.core.services.AbstractFlowTriggerService;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.services.TaskDefaultService;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.runners.*;
+import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.ForEachItem;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -396,8 +379,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 executor = executorService.checkConcurrencyLimit(executor, flow, execution, count.getCount());
 
                 // the execution has been queued, we save the queued execution and stops here
-                if (executor.getExecutionQueued() != null) {
-                    executionQueuedStorage.save(executor.getExecutionQueued());
+                if (executor.getExecutionRunning() != null && executor.getExecutionRunning().getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                    executionQueuedStorage.save(ExecutionQueued.fromExecutionRunning(executor.getExecutionRunning()));
                     return Pair.of(
                         executor,
                         executorState

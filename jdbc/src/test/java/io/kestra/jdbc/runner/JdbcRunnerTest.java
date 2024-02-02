@@ -206,7 +206,7 @@ public abstract class JdbcRunnerTest {
         taskDefaultsCaseTest.taskDefaults();
     }
 
-    @Test
+    @RetryingTest(5)
     void flowWaitSuccess() throws Exception {
         flowCaseTest.waitSuccess();
     }

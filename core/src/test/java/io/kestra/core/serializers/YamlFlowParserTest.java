@@ -182,27 +182,6 @@ class YamlFlowParserTest {
     }
 
     @Test
-    void include() {
-        Flow flow = parse("flows/helpers/include.yaml");
-
-        assertThat(flow.getId(), is("include"));
-        assertThat(flow.getTasks().size(), is(2));
-
-        assertThat(((Return) flow.getTasks().get(0)).getFormat(), containsString("Lorem Ipsum"));
-        assertThat(((Return) flow.getTasks().get(0)).getFormat(), containsString("\n"));
-        assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("Lorem Ipsum"));
-        assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("\n"));
-
-        // This ensures Handlebars TemplateFileLoader is reset between usages.
-        // Moreover, it also asserts that in case of loading a flow from a string (and not a file) leads to non-existent directory location to load files from
-        ConstraintViolationException constraintViolationException = assertThrows(
-            ConstraintViolationException.class,
-            () -> parseString("flows/helpers/include.yaml")
-        );
-        assertThat(constraintViolationException.getMessage(), endsWith("The partial '/lorem.txt.hbs' at '/lorem.txt.hbs' could not be found"));
-    }
-
-    @Test
     void trigger() {
         Flow parse = this.parse("flows/tests/trigger.yaml");
         assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), is(ZonedDateTime.parse("2020-01-01T00:00:00+02:00")));
@@ -250,17 +229,6 @@ class YamlFlowParserTest {
         Flow parse = yamlFlowParser.parse(flow, Flow.class, false);
 
         assertThat(parse.getId(), is("duplicate"));
-    }
-
-    @Test
-    void includeFailed() {
-        ConstraintViolationException exception = assertThrows(
-            ConstraintViolationException.class,
-            () -> this.parse("flows/helpers/include-failed.yaml")
-        );
-
-        assertThat(exception.getConstraintViolations().size(), is(1));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("File not found at location"));
     }
 
     @Test

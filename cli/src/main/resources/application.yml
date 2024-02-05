@@ -179,7 +179,6 @@ kestra:
 
   variables:
     env-vars-prefix: KESTRA_
-    disable-handlebars: true
     cache-enabled: true
     cache-size: 1000
 

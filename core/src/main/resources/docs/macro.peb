@@ -1,0 +1,106 @@
+{% macro type(data) %}
+    {%- if data['$ref'] -%}
+    [=={{- data['$ref'] | slice(8) -}}==](#{{- data['$ref'] | slice(8) | lower -}})
+    {%- else -%}
+    =={{- data.type -}}==
+    {%- endif -%}
+{% endmacro %}
+
+
+{% macro fieldType(data) -%}
+{%- if data['$deprecated'] != null -%}
+::alert{type="warning"}
+🔒 Deprecated
+::
+{%- endif %}
+
+{%- if data.type != null -%}
+* **Type:** {{ type(data) -}}
+{%- elseif data['$ref'] -%}
+* **Type:** {{ type(data) }}
+{%- elseif data.anyOf != null -%}
+* **Type:**
+{%- for current in data.anyOf %}
+  * {{ type(current) -}}
+{%- endfor -%}
+{%- else -%}
+* **Type:** ==object==
+{% endif -%}
+
+{%- if data.items != null %}
+* **SubType:** {{ type(data.items) }}
+{% endif -%}
+
+{%- if data.additionalProperties != null %}
+* **SubType:** {{ type(data.additionalProperties) }}
+{% endif -%}
+{% endmacro %}
+
+
+
+{% macro fieldDetail(data) %}
+{%- if data.default != null -%}
+* **Default:** `{{ data.default }}`
+{% endif -%}
+
+{%- if data.pattern != null -%}
+* **Validation regExp:** `{{ data.pattern }}`
+{% endif -%}
+
+{%- if data.minLength != null -%}
+* **Min length:** `{{ data.minLength }}`
+{% endif -%}
+
+{%- if data.maxLength != null -%}
+* **Max length:** `{{ data.maxLength }}`
+{% endif -%}
+
+{%- if data.minItems != null -%}
+* **Min items:** `{{ data.minItems }}`
+{% endif -%}
+
+{%- if data.maxItems != null -%}
+* **Max items:** `{{ data.maxItems }}`
+{% endif -%}
+
+{%- if data.minimum != null -%}
+* **Minimum:** `>= {{ data.minimum }}`
+{% endif -%}
+
+{%- if data.exclusiveMinimum != null -%}
+* **Minimum:** `> {{ data.exclusiveMinimum }}`
+{% endif -%}
+
+{%- if data.maximum != null -%}
+* **Maximum:** `<= {{ data.maximum }}`
+{% endif -%}
+
+{%- if data.exclusiveMaximum  != null -%}
+* **Maximum:** `< {{ data.exclusiveMaximum }}`
+{% endif -%}
+
+{%- if data.format != null -%}
+* **Format:** `{{ data.format }}`
+{% endif -%}
+{% endmacro %}
+
+
+
+{% macro body(data) %}
+{%- if data.enum != null -%}
+* **Possible Values:**
+    {%- for current in data.enum %}
+  * `{{current}}`
+    {%- endfor -%}
+{%- endif -%}
+
+{%- if data.title %}
+> {{ data.title }}
+{%- endif -%}
+
+{%- if data.description %}
+{{ data.description }}
+{%- endif %}
+
+{% endmacro %}
+

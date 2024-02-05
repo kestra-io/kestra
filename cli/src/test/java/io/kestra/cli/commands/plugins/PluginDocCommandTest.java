@@ -75,11 +75,15 @@ class PluginDocCommandTest {
             assertThat(new String(Files.readAllBytes(readme)), containsString(
                 """
                     Subgroup title
-                       \s
-                    Subgroup description
-                    ### Tasks
 
+                    Subgroup description
+
+
+                    ### Tasks
                     * [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)
+
+
+
 
                     ## Guides
                     * [Authentication](./guides/authentication.md)
@@ -91,25 +95,21 @@ class PluginDocCommandTest {
             // check @PluginProperty from an interface
             var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
             String taskDoc = new String(Files.readAllBytes(task));
-            System.out.println(taskDoc);
             assertThat(taskDoc, containsString("""
                 ### `example`
-
                 * **Type:** ==string==
                 * **Dynamic:** ✔️
-                * **Required:** ❌
-
+                * **Required:** ❓
 
 
                 > Example interface
                 """));
             assertThat(taskDoc, containsString("""
                 ### `from`
-
                 * **Type:**
-                            ==string==
-                            ==array==
-                            [==Example==](#example)
+                  * ==string==
+                  * ==array==
+                  * [==io.kestra.core.models.annotations.Example==](#io.kestra.core.models.annotations.example)
                 * **Dynamic:** ✔️
                 * **Required:** ✔️
                 """));

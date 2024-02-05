@@ -129,7 +129,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Echo"));
-        assertThat(render, containsString("- \uD83D\uDD12 Deprecated"));
+        assertThat(render, containsString("\uD83D\uDD12 Deprecated"));
     }
 
     @Test
@@ -154,6 +154,6 @@ class DocumentationGeneratorTest {
         List<Document> docs = documentationGenerator.generate(core);
         Document doc = docs.get(0);
         assertThat(doc.getIcon(), is(notNullValue()));
-        assertThat(doc.getBody(), containsString("##  <img width=\"25\" src=\"data:image/svg+xml;base64,"));
+        assertThat(doc.getBody(), containsString("## <img width=\"25\" src=\"data:image/svg+xml;base64,"));
     }
 }

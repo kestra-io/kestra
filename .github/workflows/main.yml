@@ -124,7 +124,7 @@ jobs:
         run: ./gradlew sonar --info
 
       # Codecov
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

@@ -46,7 +46,7 @@
                                     v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <task-run-details
-                                    v-if="!taskRunId && isSubflow(currentTaskRun) && currentTaskRun.outputs?.executionId"
+                                    v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
                                     ref="subflows-logs"
                                     :level="level"
                                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
@@ -156,7 +156,8 @@
                 executionSSE: undefined,
                 logsSSE: undefined,
                 flow: undefined,
-                logsBuffer: []
+                logsBuffer: [],
+                shownSubflowsIds: [],
             };
         },
         watch: {
@@ -360,6 +361,18 @@
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
             },
+
+            shouldDisplaySubflow(taskRunIndex, taskRun) {
+                const subflowExecutionId = taskRun.outputs.executionId;
+                const index = this.shownSubflowsIds.findIndex(item => item.subflowExecutionId === subflowExecutionId)
+                if (index === -1) {
+                    this.shownSubflowsIds.push({subflowExecutionId: subflowExecutionId, taskRunIndex: taskRunIndex});
+                    return true;
+                } else {
+                    return this.shownSubflowsIds[index].taskRunIndex === taskRunIndex;
+                }
+            },
+
             expandAll() {
                 if (!this.followedExecution) {
                     setTimeout(() => this.expandAll(), 50);

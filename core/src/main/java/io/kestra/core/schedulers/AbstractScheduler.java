@@ -55,7 +55,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private final TaskDefaultService taskDefaultService;
     private final WorkerGroupService workerGroupService;
     protected Boolean isReady = false;
-    private List<String> flowIds = new ArrayList<>();
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -89,6 +88,7 @@ public abstract class AbstractScheduler implements Scheduler {
     @Override
     public void run() {
         this.flowListeners.run();
+        this.flowListeners.listen(this::initializedTriggers);
 
         ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
@@ -261,12 +261,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private void handle() {
         if (!this.isReady) {
             log.warn("Scheduler is not ready, waiting");
-        }
-
-        // Using this method outside make test fails
-        if (!flowListeners.flows().stream().map(Flow::getId).toList().equals(this.flowIds)) {
-            this.initializedTriggers(flowListeners.flows());
-            this.flowIds = flowListeners.flows().stream().map(Flow::getId).toList();
         }
 
         ZonedDateTime now = now();

@@ -1,6 +1,6 @@
 datasources:
   mysql:
-    url: jdbc:mysql://localhost:3306/kestra
+    url: jdbc:mysql://localhost:3306/kestra_unit
     driverClassName: com.mysql.cj.jdbc.Driver
     username: kestra
     password: k3str4

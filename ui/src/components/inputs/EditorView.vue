@@ -406,6 +406,16 @@
 
     const onEdit = (event) => {
         flowYaml.value = event;
+        if (!props.isCreating && (routeParams.id !== flowParsed.value.id || routeParams.namespace !== flowParsed.value.namespace)) {
+            store.dispatch("core/showMessage", {
+                variant: "error",
+                title: t("readonly property"),
+                message: t("namespace and id readonly"),
+            })
+            flowYaml.value = YamlUtils.replaceIdAndNamespace(flowYaml.value, routeParams.id, routeParams.namespace);
+            return;
+        }
+
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
         clearTimeout(timer.value)
@@ -524,13 +534,24 @@
         }
     }
 
-    const saveWithoutRevisionGuard = async () => {
-        let flowParsed;
+    const flowParsed = computed(() => {
         try {
-            flowParsed = YamlUtils.parse(flowYaml.value);
+            return YamlUtils.parse(flowYaml.value);
         } catch (e) {
-            console.log("Error while parsing flow : ", e);
+            return undefined;
         }
+    })
+
+    const saveWithoutRevisionGuard = async () => {
+        if (flowParsed.value === undefined) {
+            store.dispatch("core/showMessage", {
+                variant: "error",
+                title: t("invalid flow"),
+                message: t("invalid yaml"),
+            })
+            return;
+        }
+
         if (flowErrors.value) {
             saveAsDraft(flowErrors.value);
             return;
@@ -544,23 +565,14 @@
                     router.push({
                         name: "flows/update",
                         params: {
-                            id: flowParsed.id,
-                            namespace: flowParsed.namespace,
+                            id: flowParsed.value.id,
+                            namespace: flowParsed.value.namespace,
                             tab: "editor",
                             tenant: routeParams.tenant
                         }
                     });
                 })
         } else {
-            if (routeParams.id !== flowParsed.id || routeParams.namespace !== flowParsed.namespace) {
-                store.dispatch("core/showMessage", {
-                    variant: "error",
-                    title: t("can not save"),
-                    message: t("namespace and id readonly"),
-                })
-                flowYaml.value = YamlUtils.replaceIdAndNamespace(flowYaml.value, routeParams.id, routeParams.namespace);
-                return;
-            }
             await store.dispatch("flow/saveFlow", {flow: flowYaml.value})
                 .then((response) => {
                     toast.saved(response.id);

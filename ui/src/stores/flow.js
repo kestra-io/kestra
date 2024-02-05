@@ -168,10 +168,12 @@ export default {
                     commit("setFlowGraph", response.data)
 
                     let flow = YamlUtils.parse(options.flow);
+                    flow.id = state.flow?.id ?? flow.id;
+                    flow.namespace = state.flow?.namespace ?? flow.namespace;
                     flow.source = options.flow;
                     // prevent losing revision when loading graph from source
                     flow.revision = state.flow?.revision;
-                    commit("setFlow", flow)
+                    commit("setFlow", flow);
                     commit("setFlowGraphParam", {
                         namespace: flow.namespace ? flow.namespace : "default",
                         id: flow.id ? flow.id : "default",

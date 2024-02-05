@@ -23,9 +23,6 @@
     <!--- Error registering AppInfo mbean -->
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="ERROR" />
 
-    <!-- Helper '{}' has been replaced by '{}' -->
-    <logger name="com.github.jknack.handlebars.HelperRegistry" level="ERROR" />
-
     <!-- Docker api log before exception -->
     <logger name="com.github.dockerjava.api" level="OFF" />
 

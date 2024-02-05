@@ -1,13 +1,6 @@
 package io.kestra.core.runners;
 
-import com.github.jknack.handlebars.EscapingStrategy;
-import com.github.jknack.handlebars.Handlebars;
-import com.github.jknack.handlebars.HandlebarsException;
-import com.github.jknack.handlebars.Template;
-import com.github.jknack.handlebars.helper.*;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.handlebars.VariableRendererPlugins;
-import io.kestra.core.runners.handlebars.helpers.*;
 import io.kestra.core.runners.pebble.ExtensionCustomizer;
 import io.kestra.core.runners.pebble.JsonWriter;
 import io.kestra.core.runners.pebble.PebbleLruCache;
@@ -35,7 +28,6 @@ public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    private Handlebars handlebars;
     private PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
@@ -43,36 +35,6 @@ public class VariableRenderer {
     @Inject
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
-
-        if (!this.variableConfiguration.getDisableHandlebars()) {
-            this.handlebars = new Handlebars()
-                .with(EscapingStrategy.NOOP)
-                .registerHelpers(ConditionalHelpers.class)
-                .registerHelpers(EachHelper.class)
-                .registerHelpers(LogHelper.class)
-                .registerHelpers(StringHelpers.class)
-                .registerHelpers(OtherStringsHelper.class)
-                .registerHelpers(UnlessHelper.class)
-                .registerHelpers(WithHelper.class)
-                .registerHelpers(DateHelper.class)
-                .registerHelpers(JsonHelper.class)
-                .registerHelpers(MiscHelper.class)
-                .registerHelpers(OtherBooleansHelper.class)
-                .registerHelper("eval", new EvalHelper(this))
-                .registerHelper("firstDefinedEval", new FirstDefinedEvalHelper(this))
-                .registerHelper("jq", new JqHelper())
-                .registerHelperMissing((context, options) -> {
-                    throw new IllegalStateException("Missing variable: " + options.helperName);
-                });
-
-            applicationContext.getBeansOfType(VariableRendererPlugins.class)
-                .forEach(variableRendererPlugins -> {
-                    this.handlebars.registerHelper(
-                        variableRendererPlugins.name(),
-                        variableRendererPlugins.helper()
-                    );
-                });
-        }
 
         PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
             .registerExtensionCustomizer(ExtensionCustomizer::new)
@@ -141,23 +103,15 @@ public class VariableRenderer {
             compiledTemplate.evaluate(writer, variables);
             result = writer.toString();
         } catch (IOException | PebbleException e) {
-            if (this.handlebars == null) {
+            String alternativeRender = this.alternativeRender(e, inline, variables);
+            if (alternativeRender == null) {
                 if (e instanceof PebbleException) {
                     throw properPebbleException((PebbleException) e);
                 }
 
                 throw new IllegalVariableEvaluationException(e);
-            }
-
-            try {
-                Template template = this.handlebars.compileInline(inline);
-                result = template.apply(variables);
-            } catch (HandlebarsException | IOException hbE) {
-                throw new IllegalVariableEvaluationException(
-                    "Pebble evaluation failed with '" + e.getMessage() + "' " +
-                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'",
-                    e
-                );
+            } else {
+                result = alternativeRender;
             }
         }
 
@@ -167,6 +121,10 @@ public class VariableRenderer {
         }
 
         return result;
+    }
+
+    protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return null;
     }
 
     public String renderRecursively(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -269,13 +227,11 @@ public class VariableRenderer {
     @ConfigurationProperties("kestra.variables")
     public static class VariableConfiguration {
         public VariableConfiguration() {
-            this.disableHandlebars = true;
             this.cacheEnabled = true;
             this.cacheSize = 1000;
             this.recursiveRendering = false;
         }
 
-        Boolean disableHandlebars;
         Boolean cacheEnabled;
         Integer cacheSize;
         Boolean recursiveRendering;

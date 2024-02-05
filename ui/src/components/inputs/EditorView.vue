@@ -221,8 +221,12 @@
     const initYamlSource = async () => {
         flowYaml.value = props.flow.source;
 
-        if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
-            await generateGraph();
+        if (flowHaveTasks()) {
+            if ([editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
+                await fetchGraph();
+            } else {
+                fetchGraph();
+            }
         }
 
         if (!props.isReadOnly) {
@@ -408,7 +412,7 @@
         return store.dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
             .then(value => {
                 if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
-                    generateGraph()
+                    fetchGraph()
                 }
 
                 if(validationDomElement.value) {
@@ -417,10 +421,6 @@
 
                 return value;
             });
-    }
-
-    const generateGraph = () => {
-        fetchGraph();
     }
 
     const loadingState = (value) => {

@@ -153,7 +153,7 @@ export default {
                 return response.data;
             })
         },
-        loadGraphFromSource({commit}, options) {
+        loadGraphFromSource({commit, state}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow
@@ -169,6 +169,8 @@ export default {
 
                     let flow = YamlUtils.parse(options.flow);
                     flow.source = options.flow;
+                    // prevent losing revision when loading graph from source
+                    flow.revision = state.flow?.revision;
                     commit("setFlow", flow)
                     commit("setFlowGraphParam", {
                         namespace: flow.namespace ? flow.namespace : "default",

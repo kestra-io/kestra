@@ -61,7 +61,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
         Flow flow = createScheduleFlow();
 
-        triggerState.save(Trigger.builder()
+        triggerState.create(Trigger.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())

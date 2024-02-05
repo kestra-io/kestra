@@ -114,7 +114,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             worker.run();
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
-//            invalidLogCount.await(1, TimeUnit.MINUTES);
+            invalidLogCount.await(1, TimeUnit.MINUTES);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             assertionStop.run();
             logStop.run();

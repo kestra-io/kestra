@@ -1,6 +1,9 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -115,6 +118,20 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
         return trigger;
     }
 
+    public Trigger create(Trigger trigger) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSL.using(configuration)
+                    .insertInto(this.jdbcRepository.getTable())
+                    .set(AbstractJdbcRepository.field("key"), this.jdbcRepository.key(trigger))
+                    .set(this.jdbcRepository.persistFields(trigger))
+                    .execute();
+
+                return trigger;
+            });
+    }
+
     @Override
     public void delete(Trigger trigger) {
         this.jdbcRepository.delete(trigger);
@@ -131,6 +148,33 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .execute();
 
                 return trigger;
+            });
+    }
+
+    // Allow to update a trigger from a flow & an abstract trigger
+    // using forUpdate to avoid the lastTrigger to be updated by another thread
+    // before doing the update
+    public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                Optional<Trigger> lastTrigger = this.jdbcRepository.fetchOne(DSL
+                        .using(configuration)
+                        .select(field("value"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(field("key").eq(Trigger.uid(flow, abstractTrigger)))
+                        .forUpdate()
+                );
+
+                Trigger updatedTrigger = Trigger.of(flow, abstractTrigger, conditionContext, lastTrigger);
+
+                DSL.using(configuration)
+                    .update(this.jdbcRepository.getTable())
+                    .set(this.jdbcRepository.persistFields(updatedTrigger))
+                    .where(field("key").eq(updatedTrigger.uid()))
+                    .execute();
+
+                return updatedTrigger;
             });
     }
 

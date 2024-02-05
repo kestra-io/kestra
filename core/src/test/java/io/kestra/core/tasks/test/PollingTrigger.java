@@ -21,7 +21,7 @@ public class PollingTrigger extends AbstractTrigger implements PollingTriggerInt
     @PluginProperty
     @NotNull
     @Builder.Default
-    private Long duration = 2000L;
+    private Long duration = 1000L;
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {

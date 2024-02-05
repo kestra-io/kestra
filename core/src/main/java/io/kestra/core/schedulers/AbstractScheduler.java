@@ -55,10 +55,9 @@ public abstract class AbstractScheduler implements Scheduler {
     private final TaskDefaultService taskDefaultService;
     private final WorkerGroupService workerGroupService;
     protected Boolean isReady = false;
-    protected Boolean isInitialized = false;
+    private List<String> flowIds = new ArrayList<>();
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
-    private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
 
     protected SchedulerTriggerStateInterface triggerState;
 
@@ -89,7 +88,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
     @Override
     public void run() {
-        flowListeners.run();
+        this.flowListeners.run();
 
         ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
@@ -133,44 +132,13 @@ public abstract class AbstractScheduler implements Scheduler {
                         if (abstractTrigger instanceof PollingTriggerInterface) {
                             RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                             ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                            Optional<Trigger> lastTrigger = this.triggerState.findLast(Trigger.of(flow, abstractTrigger));
                             try {
-                                Trigger updatedTrigger = Trigger.builder()
-                                    .tenantId(flow.getTenantId())
-                                    .namespace(flow.getNamespace())
-                                    .flowId(flow.getId())
-                                    .flowRevision(flow.getRevision())
-                                    .triggerId(abstractTrigger.getId())
-                                    .date(now())
-                                    .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
-                                    .build();
-                                this.triggerState.update(updatedTrigger);
+                                this.triggerState.update(flow, abstractTrigger, conditionContext);
                             } catch (Exception e) {
                                 logError(conditionContext, flow, abstractTrigger, e);
                             }
                         }
                     });
-            } else {
-                ListUtils.emptyOnNull(flow.getTriggers()).forEach(abstractTrigger -> {
-                        if (abstractTrigger instanceof PollingTriggerInterface) {
-                            RunContext runContext = runContextFactory.of(flow, abstractTrigger);
-                            ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                            try {
-                                this.triggerState.save(Trigger.builder()
-                                    .tenantId(flow.getTenantId())
-                                    .namespace(flow.getNamespace())
-                                    .flowId(flow.getId())
-                                    .flowRevision(flow.getRevision())
-                                    .triggerId(abstractTrigger.getId())
-                                    .date(now())
-                                    .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty()))
-                                    .build());
-                            } catch (Exception e) {
-                                logError(conditionContext, flow, abstractTrigger, e);
-                            }
-                        }
-                    }
-                );
             }
         });
 
@@ -202,7 +170,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         ((PollingTriggerInterface) workerTriggerResult.getTrigger()).getInterval() != null) {
 
                         ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) workerTriggerResult.getTrigger()).nextEvaluationDate();
-                        this.triggerState.save(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
+                        this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
                     }
                 }
             }
@@ -230,7 +198,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .date(now())
                             .nextExecutionDate(pollingAbstractTrigger.nextEvaluationDate(conditionContext, Optional.empty()))
                             .build();
-                        this.triggerState.save(newTrigger);
+                        this.triggerState.create(newTrigger);
                     } catch (Exception e) {
                         logError(conditionContext, flow, abstractTrigger, e);
                     }
@@ -288,22 +256,22 @@ public abstract class AbstractScheduler implements Scheduler {
             .filter(Objects::nonNull).toList();
     }
 
-    abstract public void handleNext(ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
+    abstract public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
 
     private void handle() {
         if (!this.isReady) {
             log.warn("Scheduler is not ready, waiting");
         }
 
-        // FIXME: New flow doesnt seems to pass in the flowListeners
-//        if (!this.isInitialized && !flowListeners.flows().isEmpty()) {
-        this.initializedTriggers(flowListeners.flows());
-//            this.isInitialized = true;
-//        }
+        // Using this method outside make test fails
+        if (!flowListeners.flows().stream().map(Flow::getId).toList().equals(this.flowIds)) {
+            this.initializedTriggers(flowListeners.flows());
+            this.flowIds = flowListeners.flows().stream().map(Flow::getId).toList();
+        }
 
         ZonedDateTime now = now();
 
-        this.handleNext(now, (triggers, scheduleContext) -> {
+        this.handleNext(this.flowListeners.flows(), now, (triggers, scheduleContext) -> {
 
             triggers.forEach(trigger -> schedulableNextDate.remove(trigger.uid()));
 
@@ -622,7 +590,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private void logError(ConditionContext conditionContext, Flow flow, AbstractTrigger trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
-        logger.warn(
+        logger.error(
             "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
             flow.getNamespace(),
             flow.getId(),
@@ -631,11 +599,6 @@ public abstract class AbstractScheduler implements Scheduler {
             e.getMessage(),
             e
         );
-
-        if (logger.isTraceEnabled()) {
-            logger.trace(Throwables.getStackTraceAsString(e));
-        }
-
     }
 
     private void sendPollingTriggerToWorker(FlowWithPollingTrigger flowWithTrigger) throws InternalException {

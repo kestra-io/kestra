@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -19,8 +20,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -105,16 +104,13 @@ public class JdbcScheduler extends AbstractScheduler {
     }
 
     @Override
-    public void handleNext(ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
-        dslContextWrapper.transaction(configuration -> {
-            DSLContext context = DSL.using(configuration);
-            JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(context);
+    public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
+        JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(this.dslContextWrapper);
 
-            List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyForAllTenants(now, schedulerContext);
+        schedulerContext.startTransaction(scheduleContextInterface -> {
+            List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyForAllTenants(now, scheduleContextInterface);
 
-            consumer.accept(triggers, schedulerContext);
-
-            schedulerContext.commit();
+            consumer.accept(triggers, scheduleContextInterface);
         });
     }
 }

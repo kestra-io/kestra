@@ -1,5 +1,8 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.schedulers.ScheduleContextInterface;
@@ -7,6 +10,7 @@ import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -51,8 +55,8 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     }
 
     @Override
-    public Trigger save(Trigger trigger) {
-        this.triggerRepository.save(trigger);
+    public Trigger create(Trigger trigger) {
+        this.triggerRepository.create(trigger);
 
         return trigger;
     }
@@ -64,8 +68,17 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
         return trigger;
     }
 
+    public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
+        return this.triggerRepository.update(flow, abstractTrigger, conditionContext);
+    }
+
     @Override
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
         return this.triggerRepository.findByNextExecutionDateReadyForAllTenants(now, scheduleContext);
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<Flow> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext) {
+        throw new NotImplementedException();
     }
 }

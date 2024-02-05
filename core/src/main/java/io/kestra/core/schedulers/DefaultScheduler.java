@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -62,10 +63,10 @@ public class DefaultScheduler extends AbstractScheduler {
                 Trigger trigger = Await.until(()  -> watchingTrigger.get(execution.getId()), Duration.ofSeconds(5));
                 var flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElse(null);
                 if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
-                    triggerState.save(trigger.resetExecution());
+                    triggerState.update(trigger.resetExecution());
                     watchingTrigger.remove(execution.getId());
                 } else {
-                    triggerState.save(Trigger.of(execution, trigger));
+                    triggerState.update(Trigger.of(execution, trigger));
                 }
             }
         });
@@ -86,7 +87,7 @@ public class DefaultScheduler extends AbstractScheduler {
     }
 
     @Override
-    public void handleNext(ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
+    public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
         List<Trigger> triggers =  triggerState.findAllForAllTenants().stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
         DefaultScheduleContext schedulerContext = new DefaultScheduleContext();
         consumer.accept(triggers, schedulerContext);

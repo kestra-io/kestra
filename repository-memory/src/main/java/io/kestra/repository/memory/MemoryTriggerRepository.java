@@ -5,11 +5,9 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

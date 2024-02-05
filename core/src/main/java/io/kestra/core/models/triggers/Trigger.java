@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -13,9 +14,8 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-
-import io.micronaut.core.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -184,6 +184,18 @@ public class Trigger extends TriggerContext {
             .nextExecutionDate(trigger.getNextExecutionDate())
             .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
+            .build();
+    }
+
+    public static Trigger of(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<Trigger> lastTrigger) throws Exception {
+        return Trigger.builder()
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .triggerId(abstractTrigger.getId())
+            .date(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+            .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
             .build();
     }
 

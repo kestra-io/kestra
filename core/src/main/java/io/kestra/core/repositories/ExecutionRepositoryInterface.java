@@ -38,7 +38,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     );
 
     Flux<Execution> find(
@@ -50,7 +51,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     );
 
     ArrayListTotal<TaskRun> findTaskRun(
@@ -63,7 +65,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     );
 
     Execution delete(Execution execution);
@@ -131,5 +134,10 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return s -> s;
+    }
+
+    enum ChildFilter {
+        CHILD,
+        MAIN
     }
 }

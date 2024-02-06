@@ -549,7 +549,15 @@
     "show": "Show",
     "advanced configuration": "Advanced configuration",
     "all executions": "All executions",
-    "trigger execution id": "Parent Id",
+    "trigger execution id": "Trigger Execution Id",
+    "trigger filter": {
+      "title": "Filter children executions",
+      "options": {
+        "ALL": "All",
+        "CHILD": "Is child executions",
+        "MAIN": "Is main executions"
+      }
+    },
     "namespace files": {
       "import": {
         "file": "Import from ZIP or add file(s)",
@@ -1102,6 +1110,14 @@
     "encoding": "Encodage",
     "all executions": "Toutes les exécutions",
     "trigger execution id": "Id parent",
+    "trigger filter": {
+      "title": "Filtrer les enfants",
+      "options": {
+        "ALL": "Tous",
+        "CHILD": "Les exécutions enfantes",
+        "MAIN": "Les exécutions principales"
+      }
+    },
     "namespace files": {
       "import": {
         "file": "Importer depuis un ZIP ou ajouter des fichiers",

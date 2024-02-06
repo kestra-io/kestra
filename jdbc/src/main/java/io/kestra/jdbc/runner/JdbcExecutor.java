@@ -482,37 +482,6 @@ public class JdbcExecutor implements ExecutorInterface {
                     });
             }
 
-            // multiple condition
-            if (
-                conditionService.isTerminatedWithListeners(flow, execution) &&
-                    this.deduplicateFlowTrigger(execution, executorState)
-            ) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
-                    .forEach(this.executionQueue::emit);
-            }
-
-            // when terminated: handle queued executions and subflow executions
-            if (conditionService.isTerminatedWithListeners(flow, execution)) {
-                subflowExecutionStorage.get(execution.getId())
-                    .ifPresent(subflowExecution -> {
-                        // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
-                        if (subflowExecution.getParentTask() != null && subflowExecution.getParentTask().waitForExecution()) {
-                            sendSubflowExecutionResult(execution, subflowExecution, subflowExecution.getParentTaskRun().withState(execution.getState().getCurrent()));
-                        }
-
-                        subflowExecutionStorage.delete(subflowExecution);
-                    });
-
-                if (flow.getConcurrency() != null && flow.getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
-                    // as the execution is terminated, we can check if there exist a queued execution and submit it to the execution queue
-                    executionQueuedStorage.pop(flow.getTenantId(),
-                        flow.getNamespace(),
-                        flow.getId(),
-                        queued -> executionQueue.emit(queued.withState(State.Type.RUNNING))
-                    );
-                }
-            }
-
             return Pair.of(
                 executor,
                 executorState
@@ -793,6 +762,35 @@ public class JdbcExecutor implements ExecutorInterface {
         if (executorService.canBePurged(executor)) {
             executorStateStorage.delete(executor.getExecution());
         }
+
+        // handle actions on terminated state
+        // the terminated state can only come from the execution queue, and in this case we always have a flow in the executor
+        if (executor.getFlow() != null && conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+            Execution execution = executor.getExecution();
+            // handle flow triggers
+            flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
+                .forEach(this.executionQueue::emit);
+
+            // purge subflow execution storage
+            subflowExecutionStorage.get(execution.getId())
+                .ifPresent(subflowExecution -> {
+                    // If we didn't wait for the flow execution, the worker task execution has already been created by the Executor service.
+                    if (subflowExecution.getParentTask() != null && subflowExecution.getParentTask().waitForExecution()) {
+                        sendSubflowExecutionResult(execution, subflowExecution, subflowExecution.getParentTaskRun().withState(execution.getState().getCurrent()));
+                    }
+
+                    subflowExecutionStorage.delete(subflowExecution);
+                });
+
+            // check if there exist a queued execution and submit it to the execution queue
+            if (executor.getFlow().getConcurrency() != null && executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
+                executionQueuedStorage.pop(executor.getFlow().getTenantId(),
+                    executor.getFlow().getNamespace(),
+                    executor.getFlow().getId(),
+                    queued -> executionQueue.emit(queued.withState(State.Type.RUNNING))
+                );
+            }
+        }
     }
 
     private Flow transform(Flow flow, Execution execution) {
@@ -886,18 +884,6 @@ public class JdbcExecutor implements ExecutorInterface {
             return false;
         } else {
             executorState.getSubflowExecutionDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
-            return true;
-        }
-    }
-
-    private boolean deduplicateFlowTrigger(Execution execution, ExecutorState executorState) {
-        Boolean flowTriggerDeduplication = executorState.getFlowTriggerDeduplication();
-
-        if (flowTriggerDeduplication) {
-            log.trace("Duplicate Flow Trigger on execution '{}'", execution.getId());
-            return false;
-        } else {
-            executorState.setFlowTriggerDeduplication(true);
             return true;
         }
     }

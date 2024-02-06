@@ -50,6 +50,35 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <label-filter
+                        :model-value="$route.query.labels"
+                        @update:model-value="onDataTableValue('labels', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-input
+                        :placeholder="$t('trigger execution id')"
+                        clearable
+                        :model-value="$route.query.triggerExecutionId"
+                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-select
+                        :placeholder="$t('trigger filter.title')"
+                        v-model="childFilter"
+                        :persistent="false"
+                        @update:model-value="onDataTableValue('childFilter', $event === 'ALL' ? undefined : $event)"
+                    >
+                        <el-option
+                            v-for="(col, val) in $tm('trigger filter.options')"
+                            :key="val"
+                            :label="col"
+                            :value="val"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
                     <el-select
                         v-model="displayColumns"
                         multiple
@@ -64,20 +93,6 @@
                             :value="col.prop"
                         />
                     </el-select>
-                </el-form-item>
-                <el-form-item>
-                    <el-input
-                        :placeholder="$t('trigger execution id')"
-                        clearable
-                        :model-value="$route.query.triggerExecutionId"
-                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <label-filter
-                        :model-value="$route.query.labels"
-                        @update:model-value="onDataTableValue('labels', $event)"
-                    />
                 </el-form-item>
                 <el-form-item>
                     <refresh-button class="float-right" @refresh="refresh" />
@@ -453,6 +468,7 @@
                     }
                 ],
                 displayColumns: [],
+                childFilter: "ALL",
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS
             };
         },

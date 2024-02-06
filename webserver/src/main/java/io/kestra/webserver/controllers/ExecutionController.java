@@ -147,7 +147,8 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) {
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
@@ -159,7 +160,8 @@ public class ExecutionController {
             endDate,
             state,
             RequestUtils.toMap(labels),
-            triggerExecutionId
+            triggerExecutionId,
+            childFilter
         ));
     }
 
@@ -308,7 +310,8 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) {
         Integer count = executionRepository
             .find(
@@ -320,7 +323,8 @@ public class ExecutionController {
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
-                triggerExecutionId
+                triggerExecutionId,
+                childFilter
             )
             .map(e -> {
                 executionRepository.delete(e);
@@ -708,7 +712,8 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
         Integer count = executionRepository
             .find(
@@ -720,7 +725,8 @@ public class ExecutionController {
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
-                triggerExecutionId
+                triggerExecutionId,
+                childFilter
             )
             .map(throwFunction(e -> {
                 Execution restart = executionService.restart(e, null);
@@ -931,7 +937,8 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) {
         var ids = executionRepository
             .find(
@@ -943,7 +950,8 @@ public class ExecutionController {
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
-                triggerExecutionId
+                triggerExecutionId,
+                childFilter
             )
             .map(execution -> execution.getId())
             .collectList()

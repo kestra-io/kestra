@@ -29,17 +29,17 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Execution> find(Pageable pageable, String query, String tenantId, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId) {
+    public ArrayListTotal<Execution> find(Pageable pageable, String query, String tenantId, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Flux<Execution> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId) {
+    public Flux<Execution> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         return null;
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId) {
+    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         throw new UnsupportedOperationException();
     }
 

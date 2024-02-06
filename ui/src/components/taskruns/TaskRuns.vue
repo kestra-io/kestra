@@ -34,6 +34,29 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <el-input
+                        :placeholder="$t('trigger execution id')"
+                        clearable
+                        :model-value="$route.query.triggerExecutionId"
+                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-select
+                        :placeholder="$t('trigger filter.title')"
+                        :model-value="$route.query.childFilter"
+                        :persistent="false"
+                        @update:model-value="onDataTableValue('childFilter', $event === 'ALL' ? undefined : $event)"
+                    >
+                        <el-option
+                            v-for="(col, val) in $tm('trigger filter.options')"
+                            :key="val"
+                            :label="col"
+                            :value="val"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" />
                 </el-form-item>
             </template>

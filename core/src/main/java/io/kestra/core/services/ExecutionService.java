@@ -254,6 +254,7 @@ public class ExecutionService {
                 endDate,
                 state,
                 null,
+                null,
                 null
             )
             .map(throwFunction(execution -> {

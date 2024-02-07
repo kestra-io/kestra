@@ -4,6 +4,7 @@ import io.kestra.core.crypto.CryptoService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.flows.State;
@@ -225,5 +226,21 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         assertThat(encrypted, not(plainText));
         assertThat(decrypted, is(plainText));
+    }
+
+    @Test
+    void encryptedStringOutput() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        TaskRun hello = execution.findTaskRunsByTaskId("hello").get(0);
+        Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
+        assertThat(valueOutput.size(), is(2));
+        assertThat(valueOutput.get("type"), is("io.kestra.core.models.tasks.common.EncryptedString"));
+        // the value is encrypted so it's not the plaintext value of the task property
+        assertThat(valueOutput.get("value"), not("Hello World"));
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").get(0);
+        // the output is automatically decrypted so the return has the decrypted value of the hello task output
+        assertThat(returnTask.getOutputs().get("value"), is("Hello World"));
     }
 }

@@ -16,6 +16,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -293,7 +294,9 @@ public class RunContext {
                 .put("execution", executionMap.build());
 
             if (execution.getTaskRunList() != null) {
-                builder.put("outputs", execution.outputs());
+                Map<String, Object> outputs = new HashMap<>(execution.outputs());
+                decryptOutputs(outputs);
+                builder.put("outputs", outputs);
             }
 
             if (execution.getInputs() != null) {
@@ -343,6 +346,24 @@ public class RunContext {
         }
 
         return builder.build();
+    }
+
+    private void decryptOutputs(Map<String, Object> outputs) {
+        for (var entry: outputs.entrySet()) {
+            if (entry.getValue() instanceof Map map) {
+                // if some outputs are of type EncryptedString we decode them and replace the object
+                if (EncryptedString.class.getName().equals(map.get("type"))) {
+                    try {
+                        String decoded = cryptoService.decrypt((String) map.get("value"));
+                        outputs.put(entry.getKey(), decoded);
+                    } catch (GeneralSecurityException e) {
+                        throw new RuntimeException(e);
+                    }
+                }  else {
+                    decryptOutputs((Map<String, Object>) map);
+                }
+            }
+        }
     }
 
     private Map<String, Object> variables(TaskRun taskRun) {

@@ -1,0 +1,10 @@
+id: encrypted-string
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.test.Encrypted
+    format: "Hello World"
+  - id: return
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{outputs.hello.value}}"

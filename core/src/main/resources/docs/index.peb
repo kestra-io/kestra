@@ -10,8 +10,9 @@ editLink: false
 
 {{ longDescription }}
 
+
 {% for entry in classPlugins %}
-## {% if entry.key.icon -%}<img width="25" src="data:image/svg+xml;base64,{{entry.key.icon}}" /> {% endif %}{{ entry.key.title ?? entry.key.name }}
+## {% if entry.key.icon -%}<img width="25" src="data:image/svg+xml;base64,{{entry.key.icon}}" /> {% endif %}{{ (entry.key.title and entry.key.title != "" ? entry.key.title : entry.key.name) | capitalize }}
 
 {{ entry.key.description }}
 

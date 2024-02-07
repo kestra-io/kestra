@@ -74,7 +74,7 @@ class PluginDocCommandTest {
                 """));
             assertThat(new String(Files.readAllBytes(readme)), containsString(
                 """
-                    Subgroup title
+                    /> Subgroup title
 
                     Subgroup description
 

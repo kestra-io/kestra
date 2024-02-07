@@ -187,6 +187,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return logEntry;
     }
 
+    @Override
+    public void delete(LogEntry logEntry) {
+        this.jdbcRepository.delete(logEntry);
+    }
+
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()

@@ -158,6 +158,13 @@ export default {
                 return response.data
             })
         },
+        deleteLogs(_, options) {
+            return this.$http.delete(`${apiUrl(this)}/logs/${options.executionId}`, {
+                params: options.params
+            }).then(response => {
+                return response.data
+            })
+        },
         filePreview({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.executionId}/file/preview`, {
                 params: options

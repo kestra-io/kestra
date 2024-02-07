@@ -16,6 +16,7 @@
                         :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
                         :shown-attempts-uid="shownAttemptsUid"
                         :logs="logs"
+                        @update-logs="loadLogs($event)"
                     />
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"

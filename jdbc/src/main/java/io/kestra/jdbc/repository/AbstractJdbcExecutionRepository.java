@@ -471,11 +471,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter
     ) {
-        if (flowId != null && namespace != null) {
-            select = select.and(field("namespace").eq(namespace));
-            select = select.and(field("flow_id").eq(flowId));
-        } else if (namespace != null) {
-            select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+        if (namespace != null) {
+            if (flowId != null) {
+                select = select.and(field("namespace").eq(namespace));
+            } else {
+                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+            }
+        }
+
+        if (flowId != null) {
+            select = select.and(DSL.or(field("flow_id").eq(flowId)));
         }
 
         if (query != null || labels != null) {

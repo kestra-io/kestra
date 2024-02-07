@@ -145,6 +145,15 @@ public abstract class AbstractExecutionRepositoryTest {
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value2"), null, null);
         assertThat(executions.getTotal(), is(0L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, "second", null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(13L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, NAMESPACE, "second", null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(13L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, "io.kestra", null, null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(28L));
     }
 
     @Test

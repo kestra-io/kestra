@@ -56,16 +56,24 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     @Override
     public Trigger create(Trigger trigger) {
-        this.triggerRepository.create(trigger);
 
-        return trigger;
+        return this.triggerRepository.create(trigger);
     }
 
     @Override
     public Trigger update(Trigger trigger) {
-        this.triggerRepository.update(trigger);
 
-        return trigger;
+        return this.triggerRepository.update(trigger);
+    }
+
+    public Trigger updateExecution(Trigger trigger) {
+
+        return this.triggerRepository.updateExecution(trigger);
+    }
+
+    public Trigger resetExecution(Trigger trigger) {
+
+        return this.triggerRepository.resetExecution(trigger);
     }
 
     public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {

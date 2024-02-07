@@ -151,6 +151,59 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             });
     }
 
+    // update/reset execution need to be done in a transaction
+    // to be sure we get the correct date/nextDate when updating
+    public Trigger updateExecution(Trigger trigger) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(
+                        field("key").eq(trigger.uid())
+                    ).forUpdate());
+
+                if (optionalTrigger.isPresent()) {
+                    Trigger current = optionalTrigger.get();
+                    current = current.toBuilder()
+                        .executionId(trigger.getExecutionId())
+                        .executionCurrentState(trigger.getExecutionCurrentState())
+                        .updatedDate(trigger.getUpdatedDate())
+                        .build();
+                    this.save(context, current);
+
+                    return current;
+                }
+
+                return null;
+            });
+    }
+
+    // update/reset execution need to be done in a transaction
+    // to be sure we get the correct date/nextDate when updating
+    public Trigger resetExecution(Trigger trigger) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(
+                        field("key").eq(trigger.uid())
+                    ).forUpdate());
+
+                if (optionalTrigger.isPresent()) {
+                    Trigger current = optionalTrigger.get();
+                    this.save(context, current.resetExecution());
+
+                    return current;
+                }
+
+                return null;
+            });
+    }
+
     // Allow to update a trigger from a flow & an abstract trigger
     // using forUpdate to avoid the lastTrigger to be updated by another thread
     // before doing the update
@@ -159,11 +212,11 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 Optional<Trigger> lastTrigger = this.jdbcRepository.fetchOne(DSL
-                        .using(configuration)
-                        .select(field("value"))
-                        .from(this.jdbcRepository.getTable())
-                        .where(field("key").eq(Trigger.uid(flow, abstractTrigger)))
-                        .forUpdate()
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(field("key").eq(Trigger.uid(flow, abstractTrigger)))
+                    .forUpdate()
                 );
 
                 Trigger updatedTrigger = Trigger.of(flow, abstractTrigger, conditionContext, lastTrigger);

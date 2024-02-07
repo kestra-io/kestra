@@ -12,7 +12,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.50.0"
+    id "com.github.ben-manes.versions" version "0.51.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '8.0.0' apply false

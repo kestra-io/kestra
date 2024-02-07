@@ -56,7 +56,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -66,7 +66,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -74,7 +74,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
@@ -82,7 +82,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: SonarCloud cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -96,7 +96,7 @@ jobs:
           java-version: 17
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
 
       # Gradle check
       - name: Build with Gradle
@@ -124,7 +124,7 @@ jobs:
         run: ./gradlew sonar --info
 
       # Codecov
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -325,7 +325,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -335,7 +335,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -343,7 +343,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}

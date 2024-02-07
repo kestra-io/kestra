@@ -553,9 +553,9 @@
     "trigger filter": {
       "title": "Filter children executions",
       "options": {
-        "ALL": "All",
-        "CHILD": "Is child executions",
-        "MAIN": "Is main executions"
+        "ALL": "All Executions",
+        "CHILD": "Child Executions",
+        "MAIN": "Parent Executions"
       }
     },
     "namespace files": {
@@ -1115,7 +1115,7 @@
       "options": {
         "ALL": "Tous",
         "CHILD": "Les exécutions enfantes",
-        "MAIN": "Les exécutions principales"
+        "MAIN": "Les exécutions parentes"
       }
     },
     "namespace files": {

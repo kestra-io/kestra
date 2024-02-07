@@ -92,4 +92,9 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     public Integer purge(Execution execution) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void delete(LogEntry logEntry) {
+        throw new UnsupportedOperationException();
+    }
 }

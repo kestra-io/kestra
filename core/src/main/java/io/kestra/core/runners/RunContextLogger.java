@@ -12,6 +12,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.utils.IdUtils;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
@@ -61,6 +62,7 @@ public class RunContextLogger {
         long i = 0;
         for (String s : split) {
             result.add(LogEntry.builder()
+                .id(IdUtils.create())
                 .namespace(logEntry.getNamespace())
                 .tenantId(logEntry.getTenantId())
                 .flowId(logEntry.getFlowId())

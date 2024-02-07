@@ -41,4 +41,6 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
     LogEntry save(LogEntry log);
 
     Integer purge(Execution execution);
+
+    void delete(LogEntry logEntry);
 }

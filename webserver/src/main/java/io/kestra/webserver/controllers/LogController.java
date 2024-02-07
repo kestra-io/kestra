@@ -11,10 +11,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
@@ -160,5 +157,31 @@ public class LogController {
                     cancel.get().run();
                 }
             });
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "logs/{executionId}")
+    @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
+    public void delete(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
+        @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
+    ) {
+        List<LogEntry> logEntries;
+        if (taskId != null) {
+            logEntries = logRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, minLevel);
+        } else if (taskRunId != null) {
+            if (attempt != null) {
+                logEntries = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantService.resolveTenant(), executionId, taskRunId, minLevel, attempt);
+            } else {
+                logEntries = logRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, minLevel);
+            }
+        } else {
+            logEntries = logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel);
+        }
+
+        logEntries.forEach(log -> logRepository.delete(log));
     }
 }

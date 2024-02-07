@@ -112,6 +112,12 @@
                     >
                         {{ $t("download logs") }}
                     </el-dropdown-item>
+                    <el-dropdown-item
+                        :icon="Delete"
+                        @click="deleteLogs(currentTaskRun.id)"
+                    >
+                        {{ $t("delete logs") }}
+                    </el-dropdown-item>
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
@@ -151,6 +157,7 @@
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
+    import Delete from "vue-material-design-icons/Delete.vue";
 
     export default {
         components: {
@@ -207,6 +214,9 @@
             }
         },
         computed: {
+            Delete() {
+                return Delete
+            },
             Download() {
                 return Download
             },
@@ -260,6 +270,15 @@
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
+                });
+            },
+            deleteLogs(currentTaskRunId) {
+                const params = this.params
+                this.$store.dispatch("execution/deleteLogs", {
+                    executionId: this.followedExecution.id,
+                    params: {...params, taskRunId: currentTaskRunId}
+                }).then((_) => {
+                    this.forwardEvent("update-logs", this.followedExecution.id)
                 });
             },
             forwardEvent(type, event) {

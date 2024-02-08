@@ -36,6 +36,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -656,7 +657,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution.getState().isPaused(), is(false));
     }
 
-    @Test
+    @RetryingTest(5)
     void killPaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");

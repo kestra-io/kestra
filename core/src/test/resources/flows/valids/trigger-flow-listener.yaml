@@ -1,5 +1,5 @@
 id: trigger-flow-listener
-namespace: io.kestra.tests
+namespace: io.kestra.tests.trigger
 
 inputs:
   - id: from-parent
@@ -20,5 +20,5 @@ triggers:
         in:
           - SUCCESS
       - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-        namespace: io.kestra.tests
+        namespace: io.kestra.tests.trigger
         flowId: trigger-flow

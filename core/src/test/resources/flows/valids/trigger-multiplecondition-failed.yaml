@@ -1,5 +1,5 @@
 id: trigger-multiplecondition-failed
-namespace: io.kestra.tests
+namespace: io.kestra.tests.trigger
 
 tasks:
   - id: only-listener
@@ -20,9 +20,9 @@ triggers:
         conditions:
           flow-a:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-            namespace: io.kestra.tests
+            namespace: io.kestra.tests.trigger
             flowId: trigger-multiplecondition-flow-d
           flow-b:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-            namespace: io.kestra.tests
+            namespace: io.kestra.tests.trigger
             flowId: trigger-multiplecondition-flow-c

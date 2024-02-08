@@ -48,7 +48,7 @@ public class RestartCaseTest {
 
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> !execution.getFlowId().equals("trigger-flow-listener-no-condition") && execution.getState().getCurrent() == State.Type.SUCCESS,
+            execution -> execution.getState().getCurrent() == State.Type.SUCCESS,
             throwRunnable(() -> {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);

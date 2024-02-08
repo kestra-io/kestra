@@ -72,7 +72,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             );
 
             execution = runnerUtils.awaitExecution(
-                e -> !e.getFlowId().equals("trigger-flow-listener-no-condition") && e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> executionQueue.emit(restarted),
                 Duration.ofSeconds(5)
             );
@@ -87,7 +87,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             execution = runnerUtils.awaitExecution(
-                e -> !e.getFlowId().equals("trigger-flow-listener-no-condition") && e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> {},
                 Duration.ofSeconds(5)
             );

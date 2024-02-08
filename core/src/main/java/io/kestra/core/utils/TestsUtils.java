@@ -61,6 +61,10 @@ abstract public class TestsUtils {
         return matchingLogs.isEmpty() ? null : matchingLogs.get(0);
     }
 
+    public static List<LogEntry> awaitLogs(List<LogEntry> logs, Integer exactCount) {
+        return awaitLogs(logs, logEntry -> true, exactCount::equals);
+    }
+
     public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Integer exactCount) {
         return awaitLogs(logs, logMatcher, exactCount::equals);
     }

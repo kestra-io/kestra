@@ -17,9 +17,9 @@ import org.slf4j.event.Level;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Value
 @Builder(toBuilder = true)
@@ -121,5 +121,20 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static String toPrettyString(LogEntry logEntry) {
         return logEntry.getTimestamp().toString() + " " + logEntry.getLevel() + " " + logEntry.getMessage();
+    }
+
+    public Map<String, String> toMap() {
+        return Stream
+            .of(
+                new AbstractMap.SimpleEntry<>("tenantId", this.tenantId),
+                new AbstractMap.SimpleEntry<>("namespace", this.namespace),
+                new AbstractMap.SimpleEntry<>("flowId", this.flowId),
+                new AbstractMap.SimpleEntry<>("taskId", this.taskId),
+                new AbstractMap.SimpleEntry<>("executionId", this.executionId),
+                new AbstractMap.SimpleEntry<>("taskRunId", this.taskRunId),
+                new AbstractMap.SimpleEntry<>("triggerId", this.triggerId)
+            )
+            .filter(e -> e.getValue() != null)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

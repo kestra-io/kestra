@@ -373,7 +373,7 @@ public class ExecutorService {
         );
 
         if (logger.isTraceEnabled()) {
-            logger.debug(newExecution.toString(true));
+            logger.trace(newExecution.toString(true));
         }
 
         metricRegistry

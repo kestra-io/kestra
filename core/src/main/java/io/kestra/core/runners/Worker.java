@@ -343,10 +343,6 @@ public class Worker implements Runnable, AutoCloseable {
             workerTask.getTask().getClass().getSimpleName()
         );
 
-        if (workerTask.logger().isDebugEnabled()) {
-            workerTask.logger().debug("Variables\n{}", JacksonMapper.log(workerTask.getRunContext().getVariables()));
-        }
-
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING));
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
 
@@ -559,15 +555,6 @@ public class Worker implements Runnable, AutoCloseable {
         TaskRunAttempt taskRunAttempt = builder
             .build()
             .withState(state);
-
-        // logs
-        if (workerThread.getTaskOutput() != null && log.isDebugEnabled()) {
-            log.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
-        }
-
-        if (!runContext.metrics().isEmpty() && log.isTraceEnabled()) {
-            log.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
-        }
 
         // metrics
         runContext.metrics().forEach(metric -> this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric)));

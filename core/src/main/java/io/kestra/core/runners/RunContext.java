@@ -5,7 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import io.kestra.core.crypto.CryptoService;
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
@@ -64,8 +64,8 @@ public class RunContext {
     protected transient Path temporaryDirectory;
     private String triggerExecutionId;
     private Storage storage;
-    private CryptoService cryptoService;
     private Map<String, Object> pluginConfiguration;
+    private Optional<String> secretKey;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -132,7 +132,6 @@ public class RunContext {
             },
             storageInterface
         );
-
     }
 
     private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
@@ -148,11 +147,11 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
         this.runContextCache = applicationContext.findBean(RunContextCache.class).orElseThrow();
-        this.cryptoService = applicationContext.findBean(CryptoService.class).orElseThrow();
         this.tempBasedPath = Path.of(applicationContext
             .getProperty("kestra.tasks.tmp-dir.path", String.class)
             .orElse(System.getProperty("java.io.tmpdir"))
         );
+        this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
@@ -306,7 +305,7 @@ public class RunContext {
                     for (Input<?> input : flow.getInputs()) {
                         if (input instanceof SecretInput && inputs.containsKey(input.getId())) {
                             try {
-                                String decoded = cryptoService.decrypt(((String) inputs.get(input.getId())));
+                                String decoded = decrypt(((String) inputs.get(input.getId())));
                                 inputs.put(input.getId(), decoded);
                             } catch (GeneralSecurityException e) {
                                 throw new RuntimeException(e);
@@ -354,7 +353,7 @@ public class RunContext {
                 // if some outputs are of type EncryptedString we decode them and replace the object
                 if (EncryptedString.class.getName().equals(map.get("type"))) {
                     try {
-                        String decoded = cryptoService.decrypt((String) map.get("value"));
+                        String decoded = decrypt((String) map.get("value"));
                         outputs.put(entry.getKey(), decoded);
                     } catch (GeneralSecurityException e) {
                         throw new RuntimeException(e);
@@ -569,8 +568,26 @@ public class RunContext {
             ));
     }
 
+    private String decrypt(String encrypted) throws GeneralSecurityException {
+        if (secretKey.isPresent()) {
+            return EncryptionService.decrypt(secretKey.get(), encrypted);
+        } else {
+            logger().warn("Unable to decrypt the output as encryption is not configured");
+            return encrypted;
+        }
+    }
+
+    /**
+     * Encrypt a plaintext string using the {@link EncryptionService} and the default encryption key.
+     * If the key is not configured, it will log a WARNING and return the plaintext string as is.
+     */
     public String encrypt(String plaintext) throws GeneralSecurityException {
-        return this.cryptoService.encrypt(plaintext);
+        if (secretKey.isPresent()) {
+            return EncryptionService.encrypt(secretKey.get(), plaintext);
+        } else {
+            logger().warn("Unable to encrypt the output as encryption is not configured");
+            return plaintext;
+        }
     }
 
     public org.slf4j.Logger logger() {

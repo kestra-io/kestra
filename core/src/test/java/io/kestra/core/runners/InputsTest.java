@@ -8,7 +8,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +31,6 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
-@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 public class InputsTest extends AbstractMemoryRunnerTest {
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")

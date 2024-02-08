@@ -53,7 +53,6 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));

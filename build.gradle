@@ -74,8 +74,8 @@ allprojects {
             force("org.slf4j:slf4j-api:$slf4jVersion")
 
             // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.25.1")
-            force("com.google.protobuf:protobuf-java-util:3.25.1")
+            force("com.google.protobuf:protobuf-java:3.25.2")
+            force("com.google.protobuf:protobuf-java-util:3.25.2")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.14")
@@ -95,6 +95,7 @@ allprojects {
             force("com.fasterxml.jackson.core:jackson-annotations:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
+            force("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:" + jacksonVersion)
         }
     }
 

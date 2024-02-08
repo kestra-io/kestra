@@ -54,5 +54,5 @@ abstract public class AbstractTrigger {
     @Valid
     private WorkerGroup workerGroup;
 
-    private Level minLogLevel;
+    private Level logLevel;
 }

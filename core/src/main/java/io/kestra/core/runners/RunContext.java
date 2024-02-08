@@ -29,7 +29,6 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import jakarta.inject.Inject;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -43,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -199,7 +199,7 @@ public class RunContext {
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
             LogEntry.of(triggerContext, trigger),
-            trigger.getMinLogLevel()
+            trigger.getLogLevel()
         );
     }
 
@@ -211,7 +211,7 @@ public class RunContext {
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
             LogEntry.of(flow, trigger),
-            trigger.getMinLogLevel()
+            trigger.getLogLevel()
         );
     }
 
@@ -488,6 +488,8 @@ public class RunContext {
             clone.remove("taskrun");
             clone.put("taskrun", taskrun);
         }
+
+        clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
 
         this.variables = ImmutableMap.copyOf(clone);
         this.storage = new InternalStorage(logger(), StorageContext.forTask(taskRun), storageInterface);

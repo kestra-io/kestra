@@ -9,7 +9,7 @@ import java.security.GeneralSecurityException;
 
 @Getter
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true)
-@Schema(title = "A string that will be automatically encrypted and decrypted using AES.")
+@Schema(hidden = true)
 public class EncryptedString {
     private final String value;
 

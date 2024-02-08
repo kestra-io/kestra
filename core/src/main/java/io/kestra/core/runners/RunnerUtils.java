@@ -2,7 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.crypto.CryptoService;
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.MissingRequiredInput;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -17,6 +17,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -63,8 +64,8 @@ public class RunnerUtils {
     @Inject
     private ConditionService conditionService;
 
-    @Inject
-    private CryptoService cryptoService;
+    @Value("${kestra.encryption.secret-key}")
+    private Optional<String> secretKey;
 
     public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) throws IOException {
         if (files == null) {
@@ -151,9 +152,13 @@ public class RunnerUtils {
             }
             case SECRET -> {
                 try {
+                    if (secretKey.isEmpty()) {
+                        throw new MissingRequiredInput("Unable to use a SECRET input as encryption is not configured");
+                    }
+
                     return Optional.of(new AbstractMap.SimpleEntry<>(
                         input.getId(),
-                        cryptoService.encrypt((String) current)
+                        EncryptionService.encrypt(secretKey.get(), (String) current)
                     ));
                 } catch (GeneralSecurityException e) {
                     throw new MissingRequiredInput("Invalid SECRET format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);

@@ -175,43 +175,8 @@ class ScheduleTest {
     }
 
     @Test
-    void backfillNextDate() throws Exception {
-        ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule")
-            .cron("0 0 * * *")
-            .backfill(Schedule.ScheduleBackfill.builder().start(date).build())
-            .build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
-
-        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.format(DateTimeFormatter.ISO_LOCAL_DATE)));
-    }
-
-    @Test
-    void backfillNextDateContext() throws Exception {
-        Schedule trigger = Schedule.builder()
-            .id("schedule")
-            .cron("0 0 * * *")
-            .backfill(Schedule.ScheduleBackfill.builder().start(ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]")).build())
-            .build();
-        ZonedDateTime date = ZonedDateTime.parse("2020-03-01T00:00:00+01:00[Europe/Paris]");
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
-
-        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(next.format(DateTimeFormatter.ISO_LOCAL_DATE)));
-    }
-
-    @Test
-    void emptyBackfillStartDate() throws Exception {
-        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
-
-        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
-    }
-
-    @Test
     @SuppressWarnings("unchecked")
-    void backfillChangedFromCronExpression() throws Exception {
+    void systemBackfillChangedFromCronExpression() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("30 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
@@ -309,10 +274,10 @@ class ScheduleTest {
             .id("schedule")
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .backfill(Schedule.ScheduleBackfill.builder()
-                .start(ZonedDateTime.parse("2021-01-01T00:00:00+02:00"))
-                .build()
-            )
+//            .backfill(Schedule.ScheduleBackfill.builder()
+//                .start(ZonedDateTime.parse("2021-01-01T00:00:00+02:00"))
+//                .build()
+//            )
             .scheduleConditions(List.of(
                 DayWeekInMonthCondition.builder()
                     .dayOfWeek(DayOfWeek.MONDAY)

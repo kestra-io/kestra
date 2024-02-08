@@ -25,13 +25,10 @@ class ScheduleTest {
             .id(IdUtils.create())
             .type(Schedule.class.getName())
             .cron("* * * * *")
-            .backfill(Schedule.ScheduleBackfill.builder().start(ZonedDateTime.now()).build())
             .lateMaximumDelay(Duration.ofSeconds(10))
             .build();
 
-
         assertThat(modelValidator.isValid(build).isPresent(), is(true));
-        assertThat(modelValidator.isValid(build).get().getMessage(), containsString("backfill and lateMaximumDelay are incompatible options"));
     }
 
     @Test

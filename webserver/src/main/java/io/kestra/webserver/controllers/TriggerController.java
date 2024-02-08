@@ -9,7 +9,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
@@ -46,7 +46,8 @@ public class TriggerController {
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             query,
             tenantService.resolveTenant(),
-            namespace
+            namespace,
+            null
         ));
     }
 
@@ -79,4 +80,134 @@ public class TriggerController {
 
         return HttpResponse.ok(trigger);
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{namespace}/{flowId}")
+    @Operation(tags = {"Triggers"}, summary = "Get all triggers for a flow")
+    public PagedResults<Trigger> find(
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id") @Nullable @QueryValue String flowId
+    ) throws HttpStatusException {
+        return PagedResults.of(triggerRepository.find(
+            PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
+            query,
+            tenantService.resolveTenant(),
+            namespace,
+            flowId
+        ));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/")
+    @Operation(tags = {"Triggers"}, summary = "Update a trigger")
+    public HttpResponse<Trigger> update(
+        @Parameter(description = "The trigger") @Body final Trigger trigger
+    ) throws HttpStatusException {
+        Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), (current) -> {
+            Trigger updated = trigger;
+            if (trigger.getBackfill() != null) {
+                updated = trigger.toBuilder()
+                    .backfill(
+                        trigger
+                            .getBackfill()
+                            .toBuilder()
+                            .currentDate(
+                                trigger.getBackfill().getStart()
+                            )
+                            .previousNextExecutionDate(
+                                current.getNextExecutionDate())
+                            .build())
+                    .build();
+            }
+
+            updated = Trigger.update(current, updated);
+            triggerQueue.emit(updated);
+
+            return updated;
+        });
+
+        if (updatedTrigger == null) {
+
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(updatedTrigger);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/backfill/pause")
+    @Operation(tags = {"Triggers"}, summary = "Pause a backfill")
+    public HttpResponse<Trigger> pauseBackfill(
+        @Parameter(description = "The trigger") @Body Trigger trigger
+    ) {
+        Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), (current) -> {
+            if (current.getBackfill() == null) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "No backfill found");
+            }
+            Trigger updating = current.toBuilder().backfill(current.getBackfill().toBuilder().paused(true).build()).build();
+            triggerQueue.emit(updating);
+
+            return updating;
+        });
+
+        if (updatedTrigger == null) {
+
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(updatedTrigger);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/backfill/unpause")
+    @Operation(tags = {"Triggers"}, summary = "Unpause a backfill")
+    public HttpResponse<Trigger> unpauseBackfill(
+        @Parameter(description = "The trigger") @Body Trigger trigger
+    ) {
+        Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), (current) -> {
+            if (current.getBackfill() == null) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "No backfill found");
+            }
+            Trigger updating = current.toBuilder().backfill(current.getBackfill().toBuilder().paused(false).build()).build();
+            triggerQueue.emit(updating);
+
+            return updating;
+        });
+
+        if (updatedTrigger == null) {
+
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(updatedTrigger);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/backfill/delete")
+    @Operation(tags = {"Triggers"}, summary = "Delete a backfill")
+    public HttpResponse<Trigger> deleteBackfill(
+        @Parameter(description = "The trigger") @Body Trigger trigger
+    ) {
+        Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), (current) -> {
+            if (current.getBackfill() == null) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "No backfill found");
+            }
+            Trigger updating = current.toBuilder().nextExecutionDate(current.getBackfill().getPreviousNextExecutionDate()).backfill(null).build();
+            triggerQueue.emit(updating);
+
+            return updating;
+        });
+
+        if (updatedTrigger == null) {
+
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(updatedTrigger);
+    }
+
 }

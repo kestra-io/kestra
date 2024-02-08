@@ -90,6 +90,7 @@ public class Trigger extends TriggerContext {
             .flowRevision(triggerContext.getFlowRevision())
             .triggerId(triggerContext.getTriggerId())
             .date(triggerContext.getDate())
+            .backfill(triggerContext.getBackfill())
             .build();
     }
 
@@ -105,13 +106,13 @@ public class Trigger extends TriggerContext {
             .triggerId(triggerContext.getTriggerId())
             .date(triggerContext.getDate())
             .nextExecutionDate(nextExecutionDate)
+            .backfill(triggerContext.getBackfill())
             .build();
     }
 
-
     /**
      * Create a new Trigger with execution information.
-     *
+     * <p>
      * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
      */
     public static Trigger of(TriggerContext triggerContext, Execution execution) {
@@ -125,13 +126,14 @@ public class Trigger extends TriggerContext {
             .executionId(execution.getId())
             .updatedDate(Instant.now())
             .nextExecutionDate(triggerContext.getNextExecutionDate())
+            .backfill(triggerContext.getBackfill())
             .build();
     }
 
     /**
      * Create a new Trigger with execution information and specific nextExecutionDate.
      * This one is use when starting a schedule execution as the nextExecutionDate come from the execution variables
-     *
+     * <p>
      * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
      */
     public static Trigger of(TriggerContext triggerContext, Execution execution, ZonedDateTime nextExecutionDate) {
@@ -145,12 +147,13 @@ public class Trigger extends TriggerContext {
             .executionId(execution.getId())
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
+            .backfill(triggerContext.getBackfill())
             .build();
     }
 
     /**
      * Create a new Trigger with execution information.
-     *
+     * <p>
      * This is used to update the trigger with the execution information, it will also erase the trigger date.
      */
     public static Trigger of(Execution execution, Trigger trigger) {
@@ -165,12 +168,13 @@ public class Trigger extends TriggerContext {
             .executionId(execution.getId())
             .executionCurrentState(execution.getState().getCurrent())
             .updatedDate(Instant.now())
+            .backfill(trigger.getBackfill())
             .build();
     }
 
     /**
      * Create a new Trigger with an evaluate running date.
-     *
+     * <p>
      * This is used to lock the trigger evaluation.
      */
     public static Trigger of(Trigger trigger, ZonedDateTime evaluateRunningDate) {
@@ -184,6 +188,7 @@ public class Trigger extends TriggerContext {
             .nextExecutionDate(trigger.getNextExecutionDate())
             .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
+            .backfill(trigger.getBackfill())
             .build();
     }
 
@@ -199,6 +204,13 @@ public class Trigger extends TriggerContext {
             .build();
     }
 
+    public static Trigger update(Trigger currentTrigger, Trigger newTrigger) {
+        return currentTrigger.toBuilder()
+            .nextExecutionDate(ZonedDateTime.now())
+            .backfill(newTrigger.getBackfill())
+            .build();
+    }
+
     public Trigger resetExecution() {
         return Trigger.builder()
             .tenantId(this.getTenantId())
@@ -208,6 +220,27 @@ public class Trigger extends TriggerContext {
             .triggerId(this.getTriggerId())
             .date(this.getDate())
             .nextExecutionDate(this.getNextExecutionDate())
+            .backfill(this.getBackfill())
             .build();
+    }
+    // if the next date is after the backfill end, we remove the backfill
+    // if not, we update the backfill with the next Date
+    // which will be the base date to calculate the next one
+    public Trigger checkBackfill() {
+        if (this.getBackfill() != null) {
+            Backfill backfill = this.getBackfill();
+            if (this.getNextExecutionDate().isAfter(backfill.getEnd())) {
+
+                return this.toBuilder().nextExecutionDate(backfill.getPreviousNextExecutionDate()).backfill(null).build();
+            } else {
+
+                return this.toBuilder()
+                    .backfill(
+                        backfill.toBuilder().currentDate(this.getNextExecutionDate()).build()
+                    )
+                    .build();
+            }
+        }
+        return this;
     }
 }

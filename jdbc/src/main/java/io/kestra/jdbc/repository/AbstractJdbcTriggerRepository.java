@@ -137,6 +137,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
         this.jdbcRepository.delete(trigger);
     }
 
+    @Override
     public Trigger update(Trigger trigger) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -232,7 +233,35 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
+    public Trigger lock(String triggerUid, Function<Trigger, Trigger> function) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(
+                        field("key").eq(triggerUid)
+                    ).forUpdate());
+
+                if (optionalTrigger.isPresent()) {
+                    Trigger trigger = function.apply(optionalTrigger.get());
+
+                    this.save(context, trigger);
+                    return trigger;
+                }
+
+                return null;
+            });
+    }
+
+    @Override
     public ArrayListTotal<Trigger> find(Pageable pageable, String query, String tenantId, String namespace) {
+        return this.find(pageable, query, tenantId, namespace, null);
+    }
+
+    @Override
+    public ArrayListTotal<Trigger> find(Pageable pageable, String query, String tenantId, String namespace, String flowId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -247,6 +276,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
                 if (namespace != null) {
                     select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                }
+
+                if (flowId != null) {
+                    select.and(field("flow_id").eq(flowId));
                 }
 
                 select.and(this.defaultFilter());

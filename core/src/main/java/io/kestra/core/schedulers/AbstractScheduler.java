@@ -269,6 +269,10 @@ public abstract class AbstractScheduler implements Scheduler {
 
         this.handleNext(this.flowListeners.flows(), now, (triggers, scheduleContext) -> {
 
+            if (triggers.isEmpty()) {
+                return;
+            }
+
             triggers.forEach(trigger -> schedulableNextDate.remove(trigger.uid()));
 
             List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), triggers, scheduleContext);
@@ -304,6 +308,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         .triggerId(flowWithTriggers.getAbstractTrigger().getId())
                         .date(now())
                         .nextExecutionDate(flowWithTriggers.getTriggerContext().getNextExecutionDate())
+                        .backfill(flowWithTriggers.getTriggerContext().getBackfill())
                         .build()
                     )
                     .build())
@@ -419,6 +424,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         executionWithTrigger.getExecution(),
                         ZonedDateTime.parse((String) executionWithTrigger.getExecution().getTrigger().getVariables().get("next"))
                     );
+                    trigger = trigger.checkBackfill();
                     this.triggerState.save(trigger, scheduleContext);
                     this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
                 }
@@ -673,6 +679,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .triggerId(f.getTriggerContext().getTriggerId())
                     .date(f.getTriggerContext().getNextExecutionDate())
                     .nextExecutionDate(f.getTriggerContext().getNextExecutionDate())
+                    .backfill(f.getTriggerContext().getBackfill())
                     .build()
                 )
                 .next(f.getTriggerContext().getNextExecutionDate())

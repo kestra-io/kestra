@@ -144,6 +144,30 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void updated() {
+        Trigger trigger = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId("controllerUpdated")
+            .executionId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.create(trigger);
+
+        Trigger updatedBad = Trigger
+            .builder()
+            .executionId("hello")
+            .build();
+
+        Trigger afterUpdatedBad = client.toBlocking().retrieve(HttpRequest.PUT(("/api/v1/triggers"), updatedBad), Trigger.class);
+
+        // Assert that triggerId cannot be edited
+        assertThat(afterUpdatedBad.getExecutionId(), is(null));
+
+
+    }
+
+    @Test
     void nextExecutionDate() throws InterruptedException, TimeoutException {
         Flow flow = generateFlow();
         jdbcFlowRepository.create(flow, flow.generateSource(), flow);

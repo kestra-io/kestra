@@ -20,7 +20,13 @@ public interface TriggerRepositoryInterface {
 
     void delete(Trigger trigger);
 
+    Trigger update(Trigger trigger);
+
+    Trigger lock(String triggerUid, Function<Trigger, Trigger> function);
+
     ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace);
+
+    ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId) throws IllegalArgumentException;
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();

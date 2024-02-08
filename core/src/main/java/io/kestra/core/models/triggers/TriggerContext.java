@@ -42,6 +42,9 @@ public class TriggerContext implements TenantInterface {
     @Nullable
     private ZonedDateTime nextExecutionDate;
 
+    @Nullable
+    private Backfill backfill;
+
     public String uid() {
         return uid(this);
     }

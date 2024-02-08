@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.util.LogbackMDCAdapter;
 import ch.qos.logback.core.AppenderBase;
@@ -14,13 +15,12 @@ import com.google.common.base.Throwables;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.IdUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RunContextLogger {
@@ -31,6 +31,7 @@ public class RunContextLogger {
     private QueueInterface<LogEntry> logQueue;
     private LogEntry logEntry;
     private Level loglevel;
+    private List<String> useSecrets = new ArrayList<>();
 
     @VisibleForTesting
     public RunContextLogger() {
@@ -125,6 +126,10 @@ public class RunContextLogger {
         return result;
     }
 
+    public void usedSecret(String secret) {
+        this.useSecrets.add(secret);
+    }
+
     public org.slf4j.Logger logger() {
         if (this.logger == null) {
             LoggerContext loggerContext = new LoggerContext();
@@ -137,7 +142,7 @@ public class RunContextLogger {
 
             // unit test don't need the logqueue
             if (this.logQueue != null && this.logEntry != null) {
-                ContextAppender contextAppender = new ContextAppender(this.logQueue, this.logEntry);
+                ContextAppender contextAppender = new ContextAppender(this, this.logger, this.logQueue, this.logEntry);
                 contextAppender.setContext(loggerContext);
                 contextAppender.start();
 
@@ -146,7 +151,7 @@ public class RunContextLogger {
                 MDC.setContextMap(this.logEntry.toMap());
             }
 
-            ForwardAppender forwardAppender = new ForwardAppender();
+            ForwardAppender forwardAppender = new ForwardAppender(this, this.logger);
             forwardAppender.setContext(loggerContext);
             forwardAppender.start();
             this.logger.addAppender(forwardAppender);
@@ -158,24 +163,108 @@ public class RunContextLogger {
         return this.logger;
     }
 
-    public static class ContextAppender extends AppenderBase<ILoggingEvent> {
+    @Slf4j
+    public abstract static class BaseAppender extends AppenderBase<ILoggingEvent> {
+        protected RunContextLogger runContextLogger;
+        protected Logger logger;
+
+        protected BaseAppender(RunContextLogger runContextLogger, Logger logger) {
+            this.runContextLogger = runContextLogger;
+            this.logger = logger;
+        }
+
+        private String replaceSecret(String data) {
+            for (String s : runContextLogger.useSecrets) {
+                if (data.contains(s)) {
+                    data = data.replace(s, "*".repeat(s.length()));
+                    data = data.replaceFirst("[*]{9}", "**masked*");
+                }
+            }
+
+            return data;
+        }
+
+        private Object recursive(Object object) {
+            if (object instanceof Map<?, ?> value) {
+                return value
+                    .entrySet()
+                    .stream()
+                    .map(e -> new AbstractMap.SimpleEntry<>(
+                        recursive(e.getKey()),
+                        recursive(e.getValue())
+                    ))
+                    .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+            } else if (object instanceof Collection<?> value) {
+                return value
+                    .stream()
+                    .map(this::recursive)
+                    .collect(Collectors.toList());
+            } else if (object instanceof String string) {
+                return replaceSecret(string);
+            } else {
+                return object;
+            }
+        }
+
+        private Object[] replaceSecret(Object[] data) {
+            if (data == null) {
+                return data;
+            }
+
+            Object[] result = new Object[data.length];
+
+            for (int i = 0; i < data.length; i++) {
+                result[i] = recursive(data[i]);
+            }
+
+            return result;
+        }
+
+        protected ILoggingEvent transform(ILoggingEvent event) {
+            try {
+                String message = replaceSecret(event.getMessage());
+                Object[] argumentArray = replaceSecret(event.getArgumentArray());
+
+                return new LoggingEvent(
+                    "ch.qos.logback.classic.Logger",
+                    this.logger,
+                    event.getLevel(),
+                    message,
+                    event.getThrowableProxy() instanceof ThrowableProxy ? ((ThrowableProxy) event.getThrowableProxy()).getThrowable() : null,
+                    argumentArray
+                );
+            } catch (Throwable e) {
+                log.warn("Unable to replace secret", e);
+                return event;
+            }
+        }
+    }
+
+    public static class ContextAppender extends BaseAppender {
         private final QueueInterface<LogEntry> logQueue;
         private final LogEntry logEntry;
 
-        public ContextAppender(QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
+        public ContextAppender(RunContextLogger runContextLogger, Logger logger, QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
+            super(runContextLogger, logger);
             this.logQueue = logQueue;
             this.logEntry = logEntry;
         }
 
         @Override
         protected void append(ILoggingEvent e) {
+            e = this.transform(e);
+
             logEntries(e, logEntry)
                 .forEach(logQueue::emitAsync);
         }
     }
 
-    public static class ForwardAppender extends AppenderBase<ILoggingEvent> {
+    public static class ForwardAppender extends BaseAppender {
         private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
+
+        protected ForwardAppender(RunContextLogger runContextLogger, Logger logger) {
+            super(runContextLogger, logger);
+        }
 
         @Override
         public void start() {
@@ -189,6 +278,8 @@ public class RunContextLogger {
 
         @Override
         protected void append(ILoggingEvent e) {
+            e = this.transform(e);
+
             if (LOGGER.isEnabledFor(e.getLevel())) {
                 LOGGER.callAppenders(e);
             }

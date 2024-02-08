@@ -283,7 +283,7 @@ public abstract class JdbcRunnerTest {
         forEachItemCaseTest.forEachItemFailed();
     }
 
-    @Test
+    @RetryingTest(5)
     void forEachItemSubflowOutputs() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }

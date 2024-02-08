@@ -18,7 +18,7 @@ public class WorkerGroupValidator  implements ConstraintValidator<WorkerGroupVal
         @Nullable WorkerGroup value,
         @NonNull AnnotationValue<WorkerGroupValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
-        if (value == null) {
+        if (value == null|| value.getKey() == null) {
             return true;
         }
 

@@ -1,5 +1,5 @@
 id: trigger-flow-listener-no-condition
-namespace: io.kestra.tests
+namespace: io.kestra.tests.trigger
 
 inputs:
   - id: from-parent

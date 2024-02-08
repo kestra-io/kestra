@@ -2,8 +2,8 @@
     <el-dropdown v-if="enabled">
         <el-button type="default" @click="kill(true)">
             {{ $t("kill") }}
-            <DotsVertical title=""/>
-        </el-button v-if="enabled">
+            <DotsVertical title="" />
+        </el-button>
         <template #dropdown>
             <el-dropdown-menu class="m-dropdown-menu">
                 <el-dropdown-item
@@ -11,22 +11,22 @@
                     size="large"
                     @click="kill(true)"
                 >
-                   {{ $t('kill parents and subflow') }}
+                    {{ $t('kill parents and subflow') }}
                 </el-dropdown-item>
                 <el-dropdown-item
                     :icon="StopCircleOutline"
                     size="large"
                     @click="kill(false)"
                 >
-                   {{ $t('kill only parents') }}
+                    {{ $t('kill only parents') }}
                 </el-dropdown-item>
             </el-dropdown-menu>
         </template>
     </el-dropdown>
 </template>
 <script setup>
-import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
-import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
 <script>
 

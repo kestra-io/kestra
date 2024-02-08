@@ -76,8 +76,8 @@ public class RunContext {
      */
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
         this.initBean(applicationContext);
-        this.initContext(flow, null, execution, null);
         this.initLogger(execution);
+        this.initContext(flow, null, execution, null);
     }
 
     /**
@@ -103,9 +103,8 @@ public class RunContext {
      */
     public RunContext(ApplicationContext applicationContext, Flow flow, AbstractTrigger trigger) {
         this.initBean(applicationContext);
-
-        this.variables = this.variables(flow, null, null, null, trigger);
         this.initLogger(flow, trigger);
+        this.variables = this.variables(flow, null, null, null, trigger);
         this.initPluginConfiguration(applicationContext, trigger.getType());
     }
 

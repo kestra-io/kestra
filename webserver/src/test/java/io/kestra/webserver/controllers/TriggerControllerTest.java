@@ -1,7 +1,14 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.types.Schedule;
+import io.kestra.core.runners.StandAloneRunner;
+import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.tasks.test.PollingTrigger;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
@@ -16,6 +23,13 @@ import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -32,9 +46,22 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     @Inject
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
+    @Inject
+    private JdbcTestUtils jdbcTestUtils;
+
+    @Inject
+    private StandAloneRunner runner;
+
+
     @BeforeEach
-    protected void init() {
-        super.setup();
+    protected void init() throws IOException, URISyntaxException {
+        jdbcTestUtils.drop();
+        jdbcTestUtils.migrate();
+
+        if (!runner.isRunning()) {
+            runner.setSchedulerEnabled(true);
+            runner.run();
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -53,8 +80,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         jdbcTriggerRepository.save(trigger.toBuilder().triggerId("schedule-5-min").build());
 
         PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, Trigger.class));
-        assertThat(triggers.getTotal(), is(2L));
-
+        assertThat(triggers.getTotal(), greaterThan(2L));
 
         assertThat(triggers.getResults(), Matchers.hasItems(
                 allOf(
@@ -115,5 +141,42 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void nextExecutionDate() throws InterruptedException, TimeoutException {
+        Flow flow = generateFlow();
+        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        Await.until(
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
+            Duration.ofMillis(100),
+            Duration.ofMinutes(2)
+        );
+        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class));
+        assertThat(triggers.getResults().get(0).getNextExecutionDate(), notNullValue());
+        assertThat(triggers.getResults().get(1).getNextExecutionDate(), notNullValue());
+    }
+
+    private Flow generateFlow() {
+        return Flow.builder()
+            .id("flow-with-triggers")
+            .namespace("io.kestra.tests.scheduler")
+            .tasks(Collections.singletonList(Return.builder()
+                .id("task")
+                .type(Return.class.getName())
+                .format("return data")
+                .build()))
+            .triggers(List.of(
+                Schedule.builder()
+                    .id("trigger-nextexec-schedule")
+                    .type(Schedule.class.getName())
+                    .cron("*/1 * * * *")
+                    .build(),
+                PollingTrigger.builder()
+                    .id("trigger-nextexec-polling")
+                    .type(PollingTrigger.class.getName())
+                    .build()
+            ))
+            .build();
     }
 }

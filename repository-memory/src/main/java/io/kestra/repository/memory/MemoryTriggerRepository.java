@@ -5,11 +5,12 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-
-import java.util.*;
-
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 @MemoryRepositoryEnabled

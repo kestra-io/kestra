@@ -172,6 +172,16 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
+    public static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
+        return ListUtils.emptyOnNull(previous.getTriggers())
+            .stream()
+            .filter(oldTrigger -> ListUtils.emptyOnNull(flow.getTriggers())
+                .stream()
+                .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !trigger.equals(oldTrigger))
+            )
+            .toList();
+    }
+
     public static String cleanupSource(String source) {
         return source.replaceFirst("(?m)^revision: \\d+\n?", "");
     }

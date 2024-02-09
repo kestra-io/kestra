@@ -25,6 +25,7 @@ import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -38,6 +39,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 
+@Slf4j
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
@@ -178,10 +180,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
         ExecutionTime executionTime = this.executionTime();
-
+        ZonedDateTime nextDate;
         if (last.isPresent()) {
             ZonedDateTime lastDate = convertDateTime(last.get().getDate());
-
             // previous present & scheduleConditions
             if (this.scheduleConditions != null) {
                 Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
@@ -190,63 +191,65 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                     lastDate,
                     true
                 );
-
                 if (next.isPresent()) {
+
                     return next.get().truncatedTo(ChronoUnit.SECONDS);
                 }
             }
-
             // previous present but no scheduleConditions
-            return computeNextEvaluationDate(executionTime, lastDate).orElse(null);
+            nextDate = computeNextEvaluationDate(executionTime, lastDate).orElse(null);
         }
-
-
         // no previous present but backfill
-        if (backfill != null && backfill.getStart() != null) {
-            return this.timezone != null ?
+        else if (backfill != null && backfill.getStart() != null) {
+            nextDate = this.timezone != null ?
                 backfill.getStart().withZoneSameLocal(ZoneId.of(this.timezone)) :
                 backfill.getStart();
         }
-
         // no previous present & no backfill, just provide now
-        return computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+        else {
+            nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+        }
+        // if max delay reach, we calculate a new date
+        if (this.lateMaximumDelay != null && nextDate != null) {
+            Output scheduleDates = this.scheduleDates(executionTime, nextDate).orElse(null);
+            scheduleDates = this.handleMaxDelay(scheduleDates);
+            if (scheduleDates != null) {
+                nextDate = scheduleDates.getDate();
+            } else {
+                return null;
+            }
+        }
+
+        return nextDate;
     }
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();
-        ZonedDateTime previousDate = convertDateTime(context.getDate());
+        ZonedDateTime currentDateTimeExecution = convertDateTime(context.getDate());
 
-        Output output = this.output(executionTime, previousDate).orElse(null);
+        Output scheduleDates = this.scheduleDates(executionTime, currentDateTimeExecution).orElse(null);
 
-        // if max delay reach, we calculate a new date
-        output = this.handleMaxDelay(output);
-
-        if (output == null || output.getDate() == null) {
+        if (scheduleDates == null || scheduleDates.getDate() == null) {
             return Optional.empty();
         }
 
-        ZonedDateTime next = output.getDate();
-
-        // we try at the exact time / standard behaviour
-        boolean isReady = next.compareTo(previousDate) == 0;
-
-        // in case on cron expression changed, the next date will never match, so we allow past operation to start
-        boolean isLate = next.compareTo(ZonedDateTime.now().minus(Duration.ofMinutes(1))) < 0;
-
-        if (!isReady && !isLate) {
-            return Optional.empty();
-        }
+        ZonedDateTime next = scheduleDates.getDate();
 
         // we are in the future don't allow
+        // No use case, just here for prevention but it should never happen
         if (next.compareTo(ZonedDateTime.now().plus(Duration.ofSeconds(1))) > 0) {
+            if (log.isTraceEnabled()) {
+                log.trace("Schedule is in the future, execution skipped, this behavior should never happen.");
+            }
             return Optional.empty();
         }
 
         // inject outputs variables for scheduleCondition
-        conditionContext = conditionContext(conditionContext, output);
+        conditionContext = conditionContext(conditionContext, scheduleDates);
 
+        // FIXME make scheduleConditions generic
         // control scheduleConditions
         if (scheduleConditions != null) {
             boolean conditionResults = this.validateScheduleCondition(conditionContext);
@@ -255,7 +258,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             }
 
             // recalculate true output for previous and next based on conditions
-            output = this.trueOutputWithCondition(executionTime, conditionContext, output);
+            scheduleDates = this.trueOutputWithCondition(executionTime, conditionContext, scheduleDates);
         }
 
         Map<String, Object> inputs = new HashMap<>();
@@ -274,9 +277,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         Map<String, Object> variables;
         if (this.timezone != null) {
-            variables = output.toMap(ZoneId.of(this.timezone));
+            variables = scheduleDates.toMap(ZoneId.of(this.timezone));
         } else {
-            variables = output.toMap();
+            variables = scheduleDates.toMap();
         }
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
@@ -305,27 +308,27 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return Optional.of(execution);
     }
 
-    private Optional<Output> output(ExecutionTime executionTime, ZonedDateTime date) {
+    private Optional<Output> scheduleDates(ExecutionTime executionTime, ZonedDateTime date) {
         Optional<ZonedDateTime> next = executionTime.nextExecution(date.minus(Duration.ofSeconds(1)));
 
         if (next.isEmpty()) {
             return Optional.empty();
         }
 
-        Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
+        Output.OutputBuilder<?, ?> outputDatesBuilder = Output.builder()
             .date(convertDateTime(next.get()));
 
         computeNextEvaluationDate(executionTime, next.get())
             .map(this::convertDateTime)
-            .ifPresent(outputBuilder::next);
+            .ifPresent(outputDatesBuilder::next);
 
         executionTime.lastExecution(date)
             .map(this::convertDateTime)
-            .ifPresent(outputBuilder::previous);
+            .ifPresent(outputDatesBuilder::previous);
 
-        Output output = outputBuilder.build();
+        Output scheduleDates = outputDatesBuilder.build();
 
-        return Optional.of(output);
+        return Optional.of(scheduleDates);
     }
 
     private ConditionContext conditionContext(ConditionContext conditionContext, Output output) {
@@ -383,7 +386,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 return currentDate;
             }
 
-            Optional<Output> currentOutput = this.output(executionTime, currentDate.get());
+            Optional<Output> currentOutput = this.scheduleDates(executionTime, currentDate.get());
 
             if (currentOutput.isEmpty()) {
                 return Optional.empty();
@@ -416,7 +419,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 (output.getDate().getYear() > ZonedDateTime.now().getYear() - 10)
         ) {
             if (output.getDate().plus(this.lateMaximumDelay).compareTo(ZonedDateTime.now()) < 0) {
-                output = this.output(executionTime, output.getNext()).orElse(null);
+                output = this.scheduleDates(executionTime, output.getNext()).orElse(null);
                 if (output == null) {
                     return null;
                 }

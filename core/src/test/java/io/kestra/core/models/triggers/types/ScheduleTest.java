@@ -4,17 +4,18 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.DateTimeBetweenCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
@@ -22,9 +23,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import jakarta.inject.Inject;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -358,16 +360,14 @@ class ScheduleTest {
             .withSecond(0)
             .truncatedTo(ChronoUnit.SECONDS);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        ZonedDateTime evaluate = trigger.nextEvaluationDate(
             conditionContext(trigger),
-            TriggerContext.builder()
+            Optional.of(TriggerContext.builder()
                 .date(date)
-                .build()
+                .build())
         );
 
-        assertThat(evaluate.isPresent(), is(true));
-        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-        assertThat(dateFromVars(vars.get("date"), date), is(expected));
+        assertThat(evaluate, is(expected));
 
     }
 

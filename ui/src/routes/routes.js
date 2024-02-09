@@ -51,7 +51,7 @@ export default [
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: Plugin},
-    {name: "plugins/view", path: "/:tenant?/plugins/:cls", component: Plugin},
+    {name: "plugins/view", path: "/:tenant?/plugins/:cls",   component: Plugin},
 
     //Templates
     {name: "templates/list", path: "/:tenant?/templates", component: Templates},

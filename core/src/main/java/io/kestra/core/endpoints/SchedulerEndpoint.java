@@ -1,20 +1,20 @@
 package io.kestra.core.endpoints;
 
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.management.endpoint.annotation.Endpoint;
-import io.micronaut.management.endpoint.annotation.Read;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.schedulers.AbstractScheduler;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.management.endpoint.annotation.Endpoint;
+import io.micronaut.management.endpoint.annotation.Read;
+import jakarta.inject.Inject;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 @Endpoint(id = "scheduler", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")
@@ -29,13 +29,13 @@ public class SchedulerEndpoint {
         List<SchedulerEndpointSchedule> result = scheduler.getSchedulable()
             .stream()
             .map(flowWithTrigger -> {
-                String uid = Trigger.uid(flowWithTrigger.getFlow(), flowWithTrigger.getTrigger());
+                String uid = Trigger.uid(flowWithTrigger.getFlow(), flowWithTrigger.getAbstractTrigger());
 
                 return new SchedulerEndpointSchedule(
                     flowWithTrigger.getFlow().getId(),
                     flowWithTrigger.getFlow().getNamespace(),
                     flowWithTrigger.getFlow().getRevision(),
-                    flowWithTrigger.getTrigger(),
+                    flowWithTrigger.getAbstractTrigger(),
                     schedulableNextDate.containsKey(uid) ? schedulableNextDate.get(uid).getNext() : null
                 );
             })

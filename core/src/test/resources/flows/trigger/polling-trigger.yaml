@@ -1,0 +1,11 @@
+id: polling-trigger
+namespace: io.kestra.tests.trigger
+
+triggers:
+  - id: watch
+    type: io.kestra.core.tasks.test.PollingTrigger
+
+tasks:
+  - id: end
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

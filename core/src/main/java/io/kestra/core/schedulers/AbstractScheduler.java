@@ -189,6 +189,8 @@ public abstract class AbstractScheduler implements Scheduler {
                     RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
                     try {
+                        // new polling triggers will be evaluated immediately except schedule that will be evaluated at the next cron schedule
+                        ZonedDateTime nextExecutionDate = pollingAbstractTrigger instanceof Schedule ? pollingAbstractTrigger.nextEvaluationDate(conditionContext, Optional.empty()): now();
                         Trigger newTrigger = Trigger.builder()
                             .tenantId(flow.getTenantId())
                             .namespace(flow.getNamespace())
@@ -196,7 +198,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .flowRevision(flow.getRevision())
                             .triggerId(abstractTrigger.getId())
                             .date(now())
-                            .nextExecutionDate(pollingAbstractTrigger.nextEvaluationDate(conditionContext, Optional.empty()))
+                            .nextExecutionDate(nextExecutionDate)
                             .build();
                         this.triggerState.create(newTrigger);
                     } catch (Exception e) {
@@ -231,7 +233,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         // If trigger is not found in triggers to evaluate, then we ignore it
                         if (lastTrigger == null) {
                             return null;
-                            // Backwards compatibility
+                            // Backwards compatibility: we add a next execution date that we compute, this avoid re-triggering all existing trigger
                         } else if (lastTrigger.getNextExecutionDate() == null) {
                             triggerContext = lastTrigger.toBuilder()
                                 .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(lastTrigger)))

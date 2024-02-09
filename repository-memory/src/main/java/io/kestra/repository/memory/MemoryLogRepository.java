@@ -94,7 +94,7 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
-    public void delete(LogEntry logEntry) {
+    public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
         throw new UnsupportedOperationException();
     }
 }

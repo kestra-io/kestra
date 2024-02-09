@@ -66,7 +66,6 @@ public class RunContextLogger {
         long i = 0;
         for (String s : split) {
             result.add(LogEntry.builder()
-                .id(IdUtils.create())
                 .namespace(logEntry.getNamespace())
                 .tenantId(logEntry.getTenantId())
                 .flowId(logEntry.getFlowId())

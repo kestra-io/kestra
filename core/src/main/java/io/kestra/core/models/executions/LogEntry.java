@@ -1,13 +1,11 @@
 package io.kestra.core.models.executions;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Builder;
@@ -24,9 +22,6 @@ import java.util.stream.Stream;
 @Value
 @Builder(toBuilder = true)
 public class LogEntry implements DeletedInterface, TenantInterface {
-    @NotNull
-    String id;
-
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -78,7 +73,6 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static LogEntry of(Execution execution) {
         return LogEntry.builder()
-            .id(IdUtils.create())
             .tenantId(execution.getTenantId())
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
@@ -88,7 +82,6 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static LogEntry of(TaskRun taskRun) {
         return LogEntry.builder()
-            .id(IdUtils.create())
             .tenantId(taskRun.getTenantId())
             .namespace(taskRun.getNamespace())
             .flowId(taskRun.getFlowId())
@@ -101,7 +94,6 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static LogEntry of(Flow flow, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
-            .id(IdUtils.create())
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
@@ -111,7 +103,6 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
-            .id(IdUtils.create())
             .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())

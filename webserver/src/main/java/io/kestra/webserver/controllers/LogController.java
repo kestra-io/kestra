@@ -169,19 +169,6 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        List<LogEntry> logEntries;
-        if (taskId != null) {
-            logEntries = logRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, minLevel);
-        } else if (taskRunId != null) {
-            if (attempt != null) {
-                logEntries = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantService.resolveTenant(), executionId, taskRunId, minLevel, attempt);
-            } else {
-                logEntries = logRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, minLevel);
-            }
-        } else {
-            logEntries = logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel);
-        }
-
-        logEntries.forEach(log -> logRepository.delete(log));
+        logRepository.deleteByQuery(tenantService.resolveTenant(), executionId, taskId, taskRunId, minLevel, attempt);
     }
 }

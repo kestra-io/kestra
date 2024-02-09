@@ -55,4 +55,13 @@ abstract public class AbstractTrigger {
     private WorkerGroup workerGroup;
 
     private Level logLevel;
+
+    /**
+     * For backward compatibility: we rename minLogLevel to logLevel.
+     * @deprecated use {@link #logLevel} instead
+     */
+    @Deprecated
+    public void setMinLogLevel(Level minLogLevel) {
+        this.logLevel = minLogLevel;
+    }
 }

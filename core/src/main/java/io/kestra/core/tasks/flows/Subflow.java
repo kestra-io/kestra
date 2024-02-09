@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
 
-    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "flowOutputs.enabled";
+    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "outputs.enabled";
 
     @NotEmpty
     @Schema(
@@ -124,10 +124,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
      */
     @Schema(
         title = "Outputs from the subflow executions.",
-        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution."
+        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution." +
+            "This property is deprecated since v0.15.0, please use the `outputs` property on the Subflow definition for defining the output values available and exposed to this task execution."
     )
     @PluginProperty(dynamic = true)
-    @Deprecated(since = "0.15.0'")
+    @Deprecated(since = "0.15.0")
     private Map<String, Object> outputs;
 
     @Override

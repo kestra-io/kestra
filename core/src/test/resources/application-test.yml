@@ -37,8 +37,7 @@ kestra:
           lists:
           - val:
               key: test
-    subflow:
-      allow-parameter-outputs: true
+
   anonymous-usage-report:
     enabled: false
     uri: http://localhost:8080/

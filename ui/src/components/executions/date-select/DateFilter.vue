@@ -52,10 +52,10 @@
         },
         computed: {
             startRange() {
-                return this.$route.query.startDateRange ? this.$route.query.startDateRange : "P1M";
+                return this.$route.query.startDateRange ? this.$route.query.startDateRange : "P30D";
             },
             endRange() {
-                return this.$route.query.endDateRange ? this.$route.query.endDateRange : "PT0";
+                return this.$route.query.endDateRange ? this.$route.query.endDateRange : "PT0S";
             },
             startDate() {
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate).add(-30, "days").toISOString(true);

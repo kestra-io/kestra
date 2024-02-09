@@ -22,7 +22,6 @@ public abstract class AbstractLogRepositoryTest {
 
     private static LogEntry.LogEntryBuilder logEntry(Level level) {
         return LogEntry.builder()
-            .id(IdUtils.create())
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
             .taskId("taskId")
@@ -89,13 +88,13 @@ public abstract class AbstractLogRepositoryTest {
         builder.executionId(executionId);
 
         for (int i = 0; i < 80; i++) {
-            logRepository.save(builder.id(IdUtils.create()).build());
+            logRepository.save(builder.build());
         }
 
         builder = logEntry(Level.INFO).executionId(executionId).taskId("taskId2").taskRunId("taskRunId2");
         LogEntry logEntry2 = logRepository.save(builder.build());
         for (int i = 0; i < 20; i++) {
-            logRepository.save(builder.id(IdUtils.create()).build());
+            logRepository.save(builder.build());
         }
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, executionId, null, Pageable.from(1, 50));
@@ -133,7 +132,7 @@ public abstract class AbstractLogRepositoryTest {
         LogEntry log1 = logEntry(Level.INFO).build();
         logRepository.save(log1);
 
-        logRepository.delete(log1);
+        logRepository.deleteByQuery(null, log1.getExecutionId(), null, null, null, null);
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size(), is(0));

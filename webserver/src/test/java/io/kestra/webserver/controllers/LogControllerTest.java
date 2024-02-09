@@ -62,7 +62,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
     @Test
     void findByExecution() {
         LogEntry log1 = logEntry(Level.INFO);
-        LogEntry log2 = log1.toBuilder().message("another message").id(IdUtils.create()).build();
+        LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
         logRepository.save(log1);
         logRepository.save(log2);
@@ -80,7 +80,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
     @Test
     void download() {
         LogEntry log1 = logEntry(Level.INFO);
-        LogEntry log2 = log1.toBuilder().message("another message").id(IdUtils.create()).build();
+        LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
         logRepository.save(log1);
         logRepository.save(log2);
@@ -97,7 +97,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
     @Test
     void delete() {
         LogEntry log1 = logEntry(Level.INFO);
-        LogEntry log2 = log1.toBuilder().message("another message").id(IdUtils.create()).build();
+        LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
         logRepository.save(log1);
         logRepository.save(log2);
@@ -117,7 +117,6 @@ class LogControllerTest extends JdbcH2ControllerTest {
 
     private static LogEntry logEntry(Level level) {
         return LogEntry.builder()
-            .id(IdUtils.create())
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
             .taskId("taskId")

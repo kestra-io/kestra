@@ -2,7 +2,7 @@
     <el-config-provider>
         <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <main :class="menuCollapsed" v-if="loaded">
+        <main :class="mainClasses" v-if="loaded">
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />
@@ -33,7 +33,8 @@
         },
         data() {
             return {
-                menuCollapsed: "",
+                menuCollapsed: false,
+                fullPage: false,
                 created: false,
                 loaded: false,
             };
@@ -53,6 +54,16 @@
             },
             envName() {
                 return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
+            },
+            mainClasses() {
+                if (this.fullPage) {
+                    return "";
+                }
+
+                return {
+                    "menu-collapsed": this.menuCollapsed,
+                    "menu-not-collapsed": !this.menuCollapsed,
+                };
             }
         },
         async created() {
@@ -65,9 +76,10 @@
         },
         methods: {
             onMenuCollapse(collapse) {
-                this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
+                this.menuCollapsed = collapse;
             },
-            displayApp() {
+            displayApp(fullPage = false) {
+                this.fullPage = fullPage;
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
                 Utils.switchTheme();
 

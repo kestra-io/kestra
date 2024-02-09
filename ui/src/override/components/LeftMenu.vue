@@ -7,11 +7,7 @@
         :collapsed="collapsed"
     >
         <template #header>
-            <div class="logo">
-                <router-link :to="{name: 'home'}">
-                    <span class="img" />
-                </router-link>
-            </div>
+            <Logo link />
             <Environment />
         </template>
 
@@ -46,6 +42,7 @@
     import AccountHardHatOutline from "vue-material-design-icons/AccountHardHatOutline.vue";
     import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
     import {shallowRef} from "vue";
+    import Logo from "../../components/home/Logo.vue";
 
     export default {
         components: {
@@ -53,6 +50,7 @@
             ChevronRight,
             SidebarMenu,
             Environment,
+            Logo
         },
         emits: ["menu-collapse"],
         methods: {
@@ -267,36 +265,6 @@
     #side-menu {
         z-index: 1039;
         border-right: 1px solid var(--bs-border-color);
-
-        .logo {
-            overflow: hidden;
-            padding: 35px 0;
-            height: 113px;
-            position: relative;
-
-            a {
-                transition: 0.2s all;
-                position: absolute;
-                left: 37px;
-                display: block;
-                height: 55px;
-                width: 100%;
-                overflow: hidden;
-
-                span.img {
-                    height: 100%;
-                    background: url(../../../src/assets/logo.svg) 0 0 no-repeat;
-                    background-size: 179px 55px;
-                    display: block;
-                    transition: 0.2s all;
-
-                    html.dark & {
-                        background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
-                        background-size: 179px 55px;
-                    }
-                }
-            }
-        }
 
         span.version {
             transition: 0.2s all;

@@ -24,24 +24,28 @@
 
 // main layout
 main {
-    margin-right: auto;
-    margin-left: auto;
+    width: calc(100vw - var(--offset-from-menu));
+    height: 100vh;
+    display: flex;
+    align-items: center;
 
     padding-bottom: global-var.$spacer !important;
     transition: all 0.3s ease;
 
-    &.menu-collapsed {
-        #{--offset-from-menu}: 15px;
-        padding-left: var(--menu-collapsed-width);
-    }
-
-    &.menu-not-collapsed {
-        #{--offset-from-menu}: var(--spacer);
-        @include mixin.res(lg) {
-            #{--offset-from-menu}: calc(var(--spacer) * 4);
+    &.menu {
+        &.menu-collapsed {
+            #{--offset-from-menu}: 15px;
+            padding-left: var(--menu-collapsed-width);
         }
 
-        padding-left: var(--menu-width);
+        &.menu-not-collapsed {
+            #{--offset-from-menu}: var(--spacer);
+            @include mixin.res(lg) {
+                #{--offset-from-menu}: calc(var(--spacer) * 4);
+            }
+
+            padding-left: var(--menu-width);
+        }
     }
 
     // apply start & end margin for top-bar neighbours

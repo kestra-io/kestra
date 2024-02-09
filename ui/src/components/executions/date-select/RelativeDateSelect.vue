@@ -47,16 +47,16 @@
                         label: "datepicker.last24hours"
                     },
                     {
-                        value: "P1W",
-                        label: "datepicker.thisWeekSoFar"
+                        value: "P7D",
+                        label: "datepicker.last7days"
                     },
                     {
-                        value: "P1M",
-                        label: "datepicker.thisMonthSoFar"
+                        value: "P30D",
+                        label: "datepicker.last30days"
                     },
                     {
-                        value: "P1Y",
-                        label: "datepicker.thisYearSoFar"
+                        value: "P365D",
+                        label: "datepicker.last365days"
                     }
                 ]
             }
@@ -73,7 +73,7 @@
         },
         computed: {
             timeFilterPresetsEnd() {
-                return [ {value: "PT0", label: "now"} ].concat(this.timeFilterPresets);
+                return [ {value: "PT0S", label: "now"} ].concat(this.timeFilterPresets);
             },
             applicableFilterPresets() {
                 return this.timeFilterPresets.filter((filterPreset) => this.$moment.duration(filterPreset.value) > this.$moment.duration(this.endRange));

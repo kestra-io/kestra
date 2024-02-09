@@ -700,6 +700,19 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
+
+        executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search?startDateRange=PT12H"), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(1L));
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDateRange=P1Y"))
+        );
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 
     @Test

@@ -58,7 +58,7 @@ import java.util.Optional;
                 "    tasks:",
                 "      - id: each-value",
                 "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
             }
         ),
         @Example(
@@ -77,7 +77,7 @@ import java.util.Optional;
                 "    tasks:",
                 "      - id: each-value",
                 "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
             }
         ),
         @Example(

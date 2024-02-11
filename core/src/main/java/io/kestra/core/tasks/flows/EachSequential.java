@@ -94,15 +94,14 @@ import java.util.Optional;
                     tasks:
                       - id: before_if
                         type: io.kestra.core.tasks.debugs.Return
-                        format: "Before if {{ taskrun.value }}"
+                        format: 'Before if {{ taskrun.value }}'
                       - id: if
                         type: io.kestra.core.tasks.flows.If
-                        condition: "{{ taskrun.value == 'value 2' }}"
+                        condition: '{{ taskrun.value == "value 2" }}'
                         then:
                           - id: after_if
                             type: io.kestra.core.tasks.debugs.Return
-                            format: "After if {{ parent.taskrun.value }}"            
-                """
+                            format: 'After if {{ parent.taskrun.value }}'"""
         ),        
     }
 )

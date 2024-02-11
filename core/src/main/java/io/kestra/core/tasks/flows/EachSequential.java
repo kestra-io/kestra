@@ -80,6 +80,30 @@ import java.util.Optional;
                 "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),
+        @Example(
+            full = true,
+            description = "The taskrun.value from the `each_sequential` task is available only to immediate child tasks such as the `before_if` and the `if` tasks. The access the taskrun value in child tasks of the `if` task in the `after_if` task, you need to use the syntax `{{ parent.taskrun.value }}` as this allows you to access the taskrun value of the parent task `each_sequential`.",
+            code = """
+                id: loop_example
+                namespace: dev
+
+                tasks:
+                  - id: each_sequential
+                    type: io.kestra.core.tasks.flows.EachSequential
+                    value: ["value 1", "value 2", "value 3"]
+                    tasks:
+                      - id: before_if
+                        type: io.kestra.core.tasks.debugs.Return
+                        format: "Before if {{ taskrun.value }}"
+                      - id: if
+                        type: io.kestra.core.tasks.flows.If
+                        condition: "{{ taskrun.value == 'value 2' }}"
+                        then:
+                          - id: after_if
+                            type: io.kestra.core.tasks.debugs.Return
+                            format: "After if {{ parent.taskrun.value }}"            
+                """
+        ),        
     }
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {

@@ -54,7 +54,7 @@ import java.util.Optional;
                 "tasks:",
                 "  - id: each-sequential",
                 "    type: io.kestra.core.tasks.flows.EachSequential",
-                "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "    value: [\"value 1\", \"value 2\", \"value 3\"]",
                 "    tasks:",
                 "      - id: each-value",
                 "        type: io.kestra.core.tasks.debugs.Return",

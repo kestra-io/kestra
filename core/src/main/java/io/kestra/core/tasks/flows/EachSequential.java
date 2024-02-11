@@ -47,41 +47,6 @@ import java.util.Optional;
     examples = {
         @Example(
             full = true,
-            code = {
-                "id: each-sequential",
-                "namespace: io.kestra.tests",
-                "",
-                "tasks:",
-                "  - id: each-sequential",
-                "    type: io.kestra.core.tasks.flows.EachSequential",
-                "    value: [\"value 1\", \"value 2\", \"value 3\"]",
-                "    tasks:",
-                "      - id: each-value",
-                "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
-            }
-        ),
-        @Example(
-            full = true,
-            code = {
-                "id: each-sequential",
-                "namespace: io.kestra.tests",
-                "",
-                "tasks:",
-                "  - id: each-sequential",
-                "    type: io.kestra.core.tasks.flows.EachSequential",
-                "    value: ",
-                "      - value 1",
-                "      - value 2",
-                "      - value 3",
-                "    tasks:",
-                "      - id: each-value",
-                "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
-            }
-        ),
-        @Example(
-            full = true,
             title = "The taskrun.value from the `each_sequential` task is available only to immediate child tasks such as the `before_if` and the `if` tasks. To access the taskrun value in child tasks of the `if` task (such as in the `after_if` task), you need to use the syntax `{{ parent.taskrun.value }}` as this allows you to access the taskrun value of the parent task `each_sequential`.",
             code = """
                 id: loop_example
@@ -102,6 +67,26 @@ import java.util.Optional;
                           - id: after_if
                             type: io.kestra.core.tasks.debugs.Return
                             format: 'After if {{ parent.taskrun.value }}'"""
+        ),
+        @Example(
+            full = true,
+            title = "This task shows that the value can be a bullet-style list. The task iterates over the list of values and executes the `each-value` child task for each value.",
+            code = {
+                "id: each_sequential",
+                "namespace: dev",
+                "",
+                "tasks:",
+                "  - id: each-sequential",
+                "    type: io.kestra.core.tasks.flows.EachSequential",
+                "    value: ",
+                "      - value 1",
+                "      - value 2",
+                "      - value 3",
+                "    tasks:",
+                "      - id: each-value",
+                "        type: io.kestra.core.tasks.debugs.Return",
+                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
+            }
         ),        
     }
 )

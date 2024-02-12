@@ -75,7 +75,7 @@ public class TriggerController {
             throw new IllegalStateException("Trigger is not locked");
         }
 
-        trigger = trigger.resetExecution();
+        trigger = trigger.unlock();
         triggerQueue.emit(trigger);
 
         return HttpResponse.ok(trigger);

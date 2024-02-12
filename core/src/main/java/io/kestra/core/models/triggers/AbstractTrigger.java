@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,6 +56,12 @@ abstract public class AbstractTrigger {
     private WorkerGroup workerGroup;
 
     private Level logLevel;
+
+    @PluginProperty
+    @Schema(
+        title = "List of execution states after which a trigger should be stopped (a.k.a. disabled)."
+    )
+    private List<State.Type> stopAfter;
 
     /**
      * For backward compatibility: we rename minLogLevel to logLevel.

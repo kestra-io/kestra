@@ -75,7 +75,7 @@ public class JdbcScheduler extends AbstractScheduler {
                         triggerRepository
                             .findByExecution(execution)
                             .ifPresent(trigger -> {
-                                ((JdbcSchedulerTriggerState) this.triggerState).resetExecution(trigger.resetExecution());
+                                this.triggerState.update(trigger.resetExecution(execution.getState().getCurrent()));
                             });
                     } else {
                         // update execution state on each state change so the scheduler knows the execution is running

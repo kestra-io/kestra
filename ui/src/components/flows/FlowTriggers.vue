@@ -12,21 +12,21 @@
                 </code>
             </template>
         </el-table-column>
-        <el-table-column prop="type" :label="$t('type')" />
+        <el-table-column prop="type" :label="$t('type')"/>
         <el-table-column :label="$t('description')">
             <template #default="scope">
-                <Markdown :source="scope.row.description" />
+                <Markdown :source="scope.row.description"/>
             </template>
         </el-table-column>
 
-        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')" />
+        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')"/>
 
         <el-table-column column-key="backfill" class-name="row-multiple-actions">
             <template #default="scope">
                 <el-button
                     v-if="scheduleClassName === scope.row.type && !scope.row.backfill"
                     @click="setBackfillModal(scope.row, true)"
-                    class
+                    size="small"
                 >
                     {{ $t("backfill executions") }}
                 </el-button>
@@ -40,30 +40,29 @@
                                 :status="scope.row.backfill.paused ? 'warning' : 'default'"
                             />
                         </div>
-                        <el-tooltip
-                            v-if="!scope.row.backfill.paused"
-                            :content="$t('pause backfill')"
-                        >
-                            <Pause
-                                @click="pauseBackfill(scope.row)"
-                                class="icon-2x"
-                            />
-                        </el-tooltip>
-                        <el-tooltip
-                            v-else
-                            :content="$t('continue backfill')"
-                        >
-                            <Play
-                                @click="unpauseBackfill(scope.row)"
-                                class="icon-2x"
-                            />
-                        </el-tooltip>
-                        <el-tooltip :content="$t('delete backfill')">
-                            <Delete
-                                @click="deleteBackfill(scope.row)"
-                                class="icon-2x"
-                            />
-                        </el-tooltip>
+                        <a href="#" v-if="!scope.row.backfill.paused">
+                            <kicon :tooltip="$t('pause backfill')">
+                                <Pause
+                                    @click="pauseBackfill(scope.row)"
+                                />
+                            </kicon>
+                        </a>
+                        <div class="d-flex" v-else>
+                            <a href="#">
+                                <kicon :tooltip="$t('continue backfill')">
+                                    <Play
+                                        @click="unpauseBackfill(scope.row)"
+                                    />
+                                </kicon>
+                            </a>
+                            <a href="#">
+                                <kicon :tooltip="$t('delete backfill')">
+                                    <Delete
+                                        @click="deleteBackfill(scope.row)"
+                                    />
+                                </kicon>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -73,7 +72,7 @@
             <template #default="scope">
                 <a href="#" @click="triggerId = scope.row.id; isOpen = true">
                     <kicon :tooltip="$t('details')" placement="left">
-                        <TextSearch />
+                        <TextSearch/>
                     </kicon>
                 </a>
             </template>
@@ -82,7 +81,7 @@
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true" :width="470">
         <template #header>
-            <span v-html="$t('backfill executions')" />
+            <span v-html="$t('backfill executions')"/>
         </template>
         <el-form :model="backfill" label-position="top">
             <div class="pickers">
@@ -143,7 +142,7 @@
             <code>{{ triggerId }}</code>
         </template>
         <el-table stripe table-layout="auto" :data="triggerData">
-            <el-table-column prop="key" :label="$t('key')" />
+            <el-table-column prop="key" :label="$t('key')"/>
             <el-table-column prop="value" :label="$t('value')">
                 <template #default="scope">
                     <vars
@@ -230,13 +229,10 @@
                 this.selectedTrigger = trigger
             },
             checkBackfill() {
-                console.log(this.backfill)
                 if (!this.backfill.start && !this.backfill.end) {
-                    console.log("quit 1")
                     return true
                 }
                 if (this.backfill.start > this.backfill.end) {
-                    console.log("quit 2")
                     return true
                 }
                 if (this.flow.inputs) {
@@ -262,10 +258,10 @@
             },
             postBackfill() {
                 this.$store.dispatch("trigger/update",
-                                     {
-                                         ...this.selectedTrigger,
-                                         backfill: this.cleanBackfill
-                                     }).then(_ => {
+                    {
+                        ...this.selectedTrigger,
+                        backfill: this.cleanBackfill
+                    }).then(_ => {
                     this.loadData();
                     this.setBackfillModal(null, false);
                     this.backfill = {
@@ -308,8 +304,19 @@
         }
     }
 
-    .material-design-icon.icon-2x {
-        cursor: pointer;
+    a {
+        color: var(--bs-body-color);
+        width: 24px;
+        border-radius: var(--bs-border-radius);
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--bs-gray-400);
+
+        .material-design-icon__svg {
+            bottom: -0.125rem;
+        }
     }
 
     .progress-cell {

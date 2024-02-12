@@ -15,7 +15,7 @@
         <el-table-column prop="type" :label="$t('type')" />
         <el-table-column :label="$t('description')">
             <template #default="scope">
-                <Markdown :source="scope.row.description" />
+                <markdown :source="scope.row.description" />
             </template>
         </el-table-column>
 
@@ -145,10 +145,8 @@
             <el-table-column prop="key" :label="$t('key')" />
             <el-table-column prop="value" :label="$t('value')">
                 <template #default="scope">
-                    <vars
-                        v-if="scope.row.value instanceof Array || scope.row.value instanceof Object "
-                        :data="scope.row.value"
-                    />
+                    <markdown v-if="scope.row.key === 'description'" :source="scope.row.value" />
+                    <trigger-vars v-else-if="scope.row.value instanceof Array || scope.row.value instanceof Object" :data="scope.row.value" />
                 </template>
             </el-table-column>
         </el-table>
@@ -160,18 +158,18 @@
     import Pause from "vue-material-design-icons/Pause.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
-    import Vars from "../executions/Vars.vue";
     import LabelInput from "../labels/LabelInput.vue";
 </script>
 
 <script>
     import Markdown from "../layout/Markdown.vue";
+    import TriggerVars from "./TriggerVars.vue";
     import {mapGetters} from "vuex";
     import Kicon from "../Kicon.vue"
     import InputsForm from "../inputs/InputsForm.vue";
 
     export default {
-        components: {Markdown, Kicon, InputsForm},
+        components: {Markdown, Kicon, InputsForm, TriggerVars},
         data() {
             return {
                 triggerId: undefined,
@@ -322,5 +320,10 @@
     .progress-cell {
         width: 200px;
         margin-top: 0.6em;
+    }
+    :deep(.markdown) {
+        p {
+            margin-bottom: auto;
+        }
     }
 </style>

@@ -8,15 +8,11 @@
 
         <el-table-column prop="value" :label="$t('value')">
             <template #default="scope">
-                <template v-if="scope.row.date">
-                    <date-ago :inverted="true" :date="scope.row.value" />
-                </template>
-                <template v-else-if="scope.row.subflow">
-                    {{ scope.row.value }}
-                    <sub-flow-link :execution-id="scope.row.value" />
+                <template v-if="scope.row.key === 'description'">
+                    <markdown :source="scope.row.value" />
                 </template>
                 <template v-else>
-                    <var-value :execution="execution" :value="scope.row.value" />
+                    <var-value :value="scope.row.value" />
                 </template>
             </template>
         </el-table-column>
@@ -25,16 +21,13 @@
 
 <script>
     import Utils from "../../utils/utils";
-    import VarValue from "./VarValue.vue";
-    import DateAgo from "../../components/layout/DateAgo.vue";
-    import SubFlowLink from "../flows/SubFlowLink.vue"
-    import {mapState} from "vuex";
+    import VarValue from "../executions/VarValue.vue";
+    import Markdown from "../layout/Markdown.vue";
 
     export default {
         components: {
-            DateAgo,
             VarValue,
-            SubFlowLink
+            Markdown
         },
         props: {
             data: {
@@ -43,10 +36,17 @@
             }
         },
         computed: {
-            ...mapState("execution", ["execution"]),
             variables() {
                 return Utils.executionVars(this.data);
             },
         },
     };
 </script>
+
+<style lang="scss" scoped>
+    :deep(.markdown) {
+        p {
+            margin-bottom: auto;
+        }
+    }
+</style>

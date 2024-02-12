@@ -12,20 +12,23 @@
                 </code>
             </template>
         </el-table-column>
-        <el-table-column prop="type" :label="$t('type')"/>
+        <el-table-column prop="type" :label="$t('type')" />
         <el-table-column :label="$t('description')">
             <template #default="scope">
-                <Markdown :source="scope.row.description"/>
+                <Markdown :source="scope.row.description" />
             </template>
         </el-table-column>
 
-        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')"/>
+        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')" />
 
         <el-table-column column-key="backfill" class-name="row-multiple-actions">
             <template #default="scope">
-                <el-button v-if="scheduleClassName === scope.row.type && !scope.row.backfill"
-                           @click="setBackfillModal(scope.row, true)" class
-                >{{ $t("backfill executions") }}
+                <el-button
+                    v-if="scheduleClassName === scope.row.type && !scope.row.backfill"
+                    @click="setBackfillModal(scope.row, true)"
+                    class
+                >
+                    {{ $t("backfill executions") }}
                 </el-button>
                 <div v-else>
                     <div class="cell">
@@ -70,7 +73,7 @@
             <template #default="scope">
                 <a href="#" @click="triggerId = scope.row.id; isOpen = true">
                     <kicon :tooltip="$t('details')" placement="left">
-                        <TextSearch/>
+                        <TextSearch />
                     </kicon>
                 </a>
             </template>
@@ -79,7 +82,7 @@
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true" :width="470">
         <template #header>
-            <span v-html="$t('backfill executions')"/>
+            <span v-html="$t('backfill executions')" />
         </template>
         <el-form :model="backfill" label-position="top">
             <div class="pickers">
@@ -89,7 +92,7 @@
                             v-model="backfill.start"
                             type="datetime"
                             placeholder="Start"
-                            :disabled-date="time =>  new Date() < time || backfill.end ? time > backfill.end : false"
+                            :disabled-date="time => new Date() < time || backfill.end ? time > backfill.end : false"
                         />
                     </el-form-item>
                 </div>
@@ -99,14 +102,14 @@
                             v-model="backfill.end"
                             type="datetime"
                             placeholder="End"
-                            :disabled-date="time =>  new Date() < time || backfill?.start > time"
+                            :disabled-date="time => new Date() < time || backfill?.start > time"
                         />
                     </el-form-item>
                 </div>
             </div>
             <el-form-item label="Inputs">
                 <inputs-form
-                    :flowInputs="flow.inputs"
+                    :flow-inputs="flow.inputs"
                     @update="backfill.inputs = $event"
                 />
             </el-form-item>
@@ -118,9 +121,10 @@
             </el-form-item>
         </el-form>
         <template #footer>
-            <el-button type="primary"
-                       @click="postBackfill()"
-                       :disabled="checkBackfill()"
+            <el-button
+                type="primary"
+                @click="postBackfill()"
+                :disabled="checkBackfill()"
             >
                 {{ $t("execute backfill") }}
             </el-button>
@@ -139,11 +143,12 @@
             <code>{{ triggerId }}</code>
         </template>
         <el-table stripe table-layout="auto" :data="triggerData">
-            <el-table-column prop="key" :label="$t('key')"/>
+            <el-table-column prop="key" :label="$t('key')" />
             <el-table-column prop="value" :label="$t('value')">
                 <template #default="scope">
-                    <vars v-if="scope.row.value instanceof Array || scope.row.value instanceof Object "
-                          :data="scope.row.value"
+                    <vars
+                        v-if="scope.row.value instanceof Array || scope.row.value instanceof Object "
+                        :data="scope.row.value"
                     />
                 </template>
             </el-table-column>
@@ -257,10 +262,10 @@
             },
             postBackfill() {
                 this.$store.dispatch("trigger/update",
-                    {
-                        ...this.selectedTrigger,
-                        backfill: this.cleanBackfill
-                    }).then(response => {
+                                     {
+                                         ...this.selectedTrigger,
+                                         backfill: this.cleanBackfill
+                                     }).then(response => {
                     this.loadData();
                     this.setBackfillModal(null, false);
                     this.backfill = {
@@ -302,6 +307,7 @@
             width: 49%;
         }
     }
+
     .material-design-icon.icon-2x {
         cursor: pointer;
     }

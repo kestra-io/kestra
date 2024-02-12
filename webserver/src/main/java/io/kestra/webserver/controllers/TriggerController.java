@@ -105,10 +105,10 @@ public class TriggerController {
     @Put(uri = "/")
     @Operation(tags = {"Triggers"}, summary = "Update a trigger")
     public HttpResponse<Trigger> update(
-        @Parameter(description = "The trigger") @Body final Trigger trigger
+        @Parameter(description = "The trigger") @Body final Trigger newTrigger
     ) throws HttpStatusException {
-        Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), (current) -> {
-            Trigger updated = Trigger.update(current, trigger);
+        Trigger updatedTrigger = this.triggerRepository.lock(newTrigger.uid(), (current) -> {
+            Trigger updated = Trigger.update(current, newTrigger);
             triggerQueue.emit(updated);
 
             return updated;

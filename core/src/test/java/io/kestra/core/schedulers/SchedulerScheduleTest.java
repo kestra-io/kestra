@@ -240,7 +240,5 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 lessThanOrEqualTo(lastTrigger.getNextExecutionDate().truncatedTo(ChronoUnit.HOURS)));
 
         }
-
-
     }
 }

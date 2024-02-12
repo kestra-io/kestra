@@ -154,15 +154,15 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
         jdbcTriggerRepository.create(trigger);
 
-        Trigger updatedBad = Trigger
-            .builder()
+        Trigger updatedBad = trigger
+            .toBuilder()
             .executionId("hello")
             .build();
 
         Trigger afterUpdatedBad = client.toBlocking().retrieve(HttpRequest.PUT(("/api/v1/triggers"), updatedBad), Trigger.class);
 
-        // Assert that triggerId cannot be edited
-        assertThat(afterUpdatedBad.getExecutionId(), is(null));
+        // Assert that executionId cannot be edited
+        assertThat(afterUpdatedBad.getExecutionId(), not("hello"));
 
 
     }

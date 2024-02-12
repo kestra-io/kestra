@@ -5,6 +5,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -298,6 +299,10 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         } else {
             variables = scheduleDates.toMap();
         }
+        List<Label> labels = conditionContext.getFlow().getLabels();
+        if (backfill != null && backfill.getLabels() != null) {
+            labels.addAll(backfill.getLabels());
+        }
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
@@ -307,14 +312,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .flowRevision(triggerContext.getFlowRevision())
-            .labels(conditionContext.getFlow().getLabels())
+            .labels(labels)
             .state(new State())
             .trigger(executionTrigger)
             // keep to avoid breaking compatibility
             .variables(ImmutableMap.of(
                 "schedule", executionTrigger.getVariables()
             ))
-            .labels(backfill != null ? backfill.getLabels() : null)
             .build();
 
         // add inputs and inject defaults

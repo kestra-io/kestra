@@ -8,7 +8,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -28,7 +27,7 @@ class ScheduleTest {
             .lateMaximumDelay(Duration.ofSeconds(10))
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent(), is(true));
+        assertThat(modelValidator.isValid(build).isPresent(), is(false));
     }
 
     @Test

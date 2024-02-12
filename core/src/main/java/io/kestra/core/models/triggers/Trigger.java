@@ -205,10 +205,12 @@ public class Trigger extends TriggerContext {
     }
 
     public static Trigger update(Trigger currentTrigger, Trigger newTrigger) {
-        Trigger updated = newTrigger;
-        // If a backfill is created, we set the nextExecutionDate() as the previous one
+        Trigger updated = currentTrigger;
+
+        // If a backfill is created, we update the currentTrigger
+        // and set the nextExecutionDate() as the previous one
         if (newTrigger.getBackfill() != null) {
-            updated = newTrigger.toBuilder()
+            updated = currentTrigger.toBuilder()
                 .backfill(
                     newTrigger
                         .getBackfill()

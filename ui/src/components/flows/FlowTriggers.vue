@@ -265,7 +265,7 @@
                                      {
                                          ...this.selectedTrigger,
                                          backfill: this.cleanBackfill
-                                     }).then(response => {
+                                     }).then(_ => {
                     this.loadData();
                     this.setBackfillModal(null, false);
                     this.backfill = {

@@ -85,9 +85,6 @@
     </el-form>
 </template>
 <script>
-
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Flash from "vue-material-design-icons/Flash.vue";
     import Editor from "./Editor.vue";
     import Markdown from "../layout/Markdown.vue";
 
@@ -97,10 +94,10 @@
             Markdown
         },
         props: {
-          flowInputs: {
-              type: Object,
-              default: null
-          }
+            flowInputs: {
+                type: Object,
+                default: null
+            }
         },
         data() {
             return {
@@ -109,7 +106,7 @@
         },
         watch: {
             inputs: {
-                handler(newValue) {
+                handler() {
                     this.$emit("update", this.inputs);
                 },
                 deep: true

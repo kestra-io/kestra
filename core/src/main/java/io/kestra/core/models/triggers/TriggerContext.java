@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
@@ -12,6 +13,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -42,6 +44,9 @@ public class TriggerContext {
 
     @Nullable
     private Backfill backfill;
+
+    @Nullable
+    private List<State.Type> stopAfter;
 
     @Builder.Default
     private Boolean disabled = Boolean.FALSE;

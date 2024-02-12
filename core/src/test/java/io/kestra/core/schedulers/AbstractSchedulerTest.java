@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-@MicronautTest(transactional = false)
+@MicronautTest(transactional = false, rebuildContext = true) // rebuild context to lower possible flaky tests
 abstract public class AbstractSchedulerTest {
     @Inject
     protected ApplicationContext applicationContext;

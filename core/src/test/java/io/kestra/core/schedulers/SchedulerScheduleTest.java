@@ -40,21 +40,24 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     protected QueueInterface<LogEntry> logQueue;
 
-    private static Flow createScheduleFlow(String zone, String triggerId, boolean invalid) {
-        Schedule schedule = Schedule.builder()
+    private Schedule.ScheduleBuilder<?, ?> createScheduleTrigger(String zone, String cron, String triggerId, boolean invalid) {
+        return Schedule.builder()
             .id(triggerId + (invalid ? "-invalid" : ""))
             .type(Schedule.class.getName())
-            .cron("0 * * * *")
+            .cron(cron)
             .timezone(zone)
             .inputs(Map.of(
                 "testInputs", "test-inputs"
-            ))
-            .build();
+            ));
+    }
+
+    private Flow createScheduleFlow(String zone, String triggerId, boolean invalid) {
+        Schedule schedule = createScheduleTrigger(zone, "0 * * * *", triggerId, invalid).build();
 
         return createFlow(Collections.singletonList(schedule));
     }
 
-    private static ZonedDateTime date(int minus) {
+    private ZonedDateTime date(int minus) {
         return ZonedDateTime.now()
             .minusHours(minus)
             .truncatedTo(ChronoUnit.HOURS);
@@ -283,6 +286,60 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             // Nothing changed because nothing happened
             assertThat(lastTrigger.getNextExecutionDate().truncatedTo(ChronoUnit.HOURS).isEqual(now), is(true));
+        }
+    }
+
+    @Test
+    void stopAfterSchedule() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "stopAfter", false).build();
+        Flow flow = createFlow(Collections.singletonList(schedule));
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId("stopAfter")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now().minusMinutes(1L))
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(2);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+            // wait for execution
+            Runnable assertionStop = executionQueue.receive(either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
+                assertThat(execution.getInputs().get("def"), is("awesome"));
+                assertThat(execution.getFlowId(), is(flow.getId()));
+
+                queueCount.countDown();
+                if (execution.getState().getCurrent() == State.Type.CREATED) {
+                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                }
+            });
+
+            worker.run();
+            scheduler.run();
+
+            queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            assertionStop.run();
+
+            assertThat(queueCount.getCount(), is(0L));
+
+            // Assert that the trigger is now disabled.
+            // It needs to await on assertion as it will be disabled AFTER we receive a success execution.
+            Trigger trigger = Trigger.of(flow, schedule);
+            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false), Duration.ofMillis(100), Duration.ofSeconds(10));
         }
     }
 }

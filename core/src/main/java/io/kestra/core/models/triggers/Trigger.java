@@ -73,6 +73,7 @@ public class Trigger extends TriggerContext {
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
             .triggerId(abstractTrigger.getId())
+            .stopAfter(abstractTrigger.getStopAfter())
             .build();
     }
 
@@ -88,6 +89,7 @@ public class Trigger extends TriggerContext {
             .triggerId(triggerContext.getTriggerId())
             .date(triggerContext.getDate())
             .backfill(triggerContext.getBackfill())
+            .stopAfter(triggerContext.getStopAfter())
             .disabled(triggerContext.getDisabled())
             .build();
     }
@@ -105,6 +107,7 @@ public class Trigger extends TriggerContext {
             .date(triggerContext.getDate())
             .nextExecutionDate(nextExecutionDate)
             .backfill(triggerContext.getBackfill())
+            .stopAfter(triggerContext.getStopAfter())
             .disabled(triggerContext.getDisabled())
             .build();
     }
@@ -126,6 +129,7 @@ public class Trigger extends TriggerContext {
             .updatedDate(Instant.now())
             .nextExecutionDate(triggerContext.getNextExecutionDate())
             .backfill(triggerContext.getBackfill())
+            .stopAfter(triggerContext.getStopAfter())
             .disabled(triggerContext.getDisabled())
             .build();
     }
@@ -148,6 +152,7 @@ public class Trigger extends TriggerContext {
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
             .backfill(triggerContext.getBackfill())
+            .stopAfter(triggerContext.getStopAfter())
             .disabled(triggerContext.getDisabled())
             .build();
     }
@@ -170,6 +175,7 @@ public class Trigger extends TriggerContext {
             .executionCurrentState(execution.getState().getCurrent())
             .updatedDate(Instant.now())
             .backfill(trigger.getBackfill())
+            .stopAfter(trigger.getStopAfter())
             .disabled(trigger.getDisabled())
             .build();
     }
@@ -191,6 +197,7 @@ public class Trigger extends TriggerContext {
             .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
             .backfill(trigger.getBackfill())
+            .stopAfter(trigger.getStopAfter())
             .disabled(trigger.getDisabled())
             .build();
     }
@@ -204,6 +211,7 @@ public class Trigger extends TriggerContext {
             .triggerId(abstractTrigger.getId())
             .date(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
+            .stopAfter(abstractTrigger.getStopAfter())
             .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
             .build();
     }
@@ -234,7 +242,24 @@ public class Trigger extends TriggerContext {
             .build();
     }
 
-    public Trigger resetExecution() {
+    public Trigger resetExecution(State.Type executionEndState) {
+        // switch disabled automatically if the executionEndState is one of the stopAfter states
+        Boolean disabled = this.getStopAfter() != null ? this.getStopAfter().contains(executionEndState) : this.getDisabled();
+
+        return Trigger.builder()
+            .tenantId(this.getTenantId())
+            .namespace(this.getNamespace())
+            .flowId(this.getFlowId())
+            .flowRevision(this.getFlowRevision())
+            .triggerId(this.getTriggerId())
+            .date(this.getDate())
+            .nextExecutionDate(this.getNextExecutionDate())
+            .stopAfter(this.getStopAfter())
+            .disabled(disabled)
+            .build();
+    }
+
+    public Trigger unlock() {
         return Trigger.builder()
             .tenantId(this.getTenantId())
             .namespace(this.getNamespace())
@@ -244,8 +269,11 @@ public class Trigger extends TriggerContext {
             .date(this.getDate())
             .nextExecutionDate(this.getNextExecutionDate())
             .backfill(this.getBackfill())
+            .stopAfter(this.getStopAfter())
+            .disabled(this.getDisabled())
             .build();
     }
+
     // if the next date is after the backfill end, we remove the backfill
     // if not, we update the backfill with the next Date
     // which will be the base date to calculate the next one

@@ -199,6 +199,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .triggerId(abstractTrigger.getId())
                             .date(now())
                             .nextExecutionDate(nextExecutionDate)
+                            .stopAfter(abstractTrigger.getStopAfter())
                             .build();
                         this.triggerState.create(newTrigger);
                     } catch (Exception e) {
@@ -274,8 +275,11 @@ public abstract class AbstractScheduler implements Scheduler {
             }
 
             triggers.forEach(trigger -> schedulableNextDate.remove(trigger.uid()));
+            List<Trigger> triggerContextsToEvaluate = triggers.stream()
+                .filter(trigger -> Boolean.FALSE.equals(trigger.getDisabled()))
+                .toList();
 
-            List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), triggers, scheduleContext);
+            List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), triggerContextsToEvaluate, scheduleContext);
 
             metricRegistry
                 .counter(MetricRegistry.SCHEDULER_LOOP_COUNT)
@@ -299,7 +303,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .abstractTrigger(flowWithTriggers.getAbstractTrigger())
                     .pollingTrigger((PollingTriggerInterface) flowWithTriggers.getAbstractTrigger())
                     .conditionContext(flowWithTriggers.getConditionContext())
-                    .triggerContext(flowWithTriggers.TriggerContext.toBuilder().date(now()).build())
+                    .triggerContext(flowWithTriggers.TriggerContext.toBuilder().date(now()).stopAfter(flowWithTriggers.getAbstractTrigger().getStopAfter()).build())
                     .build())
                 .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null && !f.getTriggerContext().getDisabled())
                 .filter(this::isExecutionNotRunning)
@@ -393,6 +397,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         executionWithTrigger.getTriggerContext(),
                         executionWithTrigger.getExecution()
                     );
+
                     // Check if the localTriggerState contains it
                     // however, its mean it has been deleted during the execution time
                     this.triggerState.update(trigger);
@@ -670,6 +675,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .date(f.getTriggerContext().getNextExecutionDate())
                     .nextExecutionDate(f.getTriggerContext().getNextExecutionDate())
                     .backfill(f.getTriggerContext().getBackfill())
+                    .stopAfter(f.getTriggerContext().getStopAfter())
                     .build()
                 )
                 .next(f.getTriggerContext().getNextExecutionDate())

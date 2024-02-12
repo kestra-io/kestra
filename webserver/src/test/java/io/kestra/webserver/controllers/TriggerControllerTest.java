@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -67,20 +68,21 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void search() {
-        String triggerFlowId = "schedule-trigger";
+        String triggerFlowId = "schedule-trigger-search";
         String triggerNamespace = "io.kestra.tests.schedule";
 
         Trigger trigger = Trigger.builder()
             .flowId(triggerFlowId)
             .namespace(triggerNamespace)
             .triggerId("schedule-every-min")
+            .date(ZonedDateTime.now())
             .build();
 
         jdbcTriggerRepository.save(trigger);
         jdbcTriggerRepository.save(trigger.toBuilder().triggerId("schedule-5-min").build());
 
-        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, Trigger.class));
-        assertThat(triggers.getTotal(), greaterThan(2L));
+        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, Trigger.class));
+        assertThat(triggers.getTotal(), greaterThanOrEqualTo(2L));
 
         assertThat(triggers.getResults(), Matchers.hasItems(
                 allOf(

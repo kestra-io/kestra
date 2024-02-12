@@ -108,23 +108,7 @@ public class TriggerController {
         @Parameter(description = "The trigger") @Body final Trigger trigger
     ) throws HttpStatusException {
         Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), (current) -> {
-            Trigger updated = trigger;
-            if (trigger.getBackfill() != null) {
-                updated = trigger.toBuilder()
-                    .backfill(
-                        trigger
-                            .getBackfill()
-                            .toBuilder()
-                            .currentDate(
-                                trigger.getBackfill().getStart()
-                            )
-                            .previousNextExecutionDate(
-                                current.getNextExecutionDate())
-                            .build())
-                    .build();
-            }
-
-            updated = Trigger.update(current, updated);
+            Trigger updated = Trigger.update(current, trigger);
             triggerQueue.emit(updated);
 
             return updated;

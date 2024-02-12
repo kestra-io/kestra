@@ -205,9 +205,25 @@ public class Trigger extends TriggerContext {
     }
 
     public static Trigger update(Trigger currentTrigger, Trigger newTrigger) {
-        return currentTrigger.toBuilder()
+        Trigger updated = newTrigger;
+        // If a backfill is created, we set the nextExecutionDate() as the previous one
+        if (newTrigger.getBackfill() != null) {
+            updated = newTrigger.toBuilder()
+                .backfill(
+                    newTrigger
+                        .getBackfill()
+                        .toBuilder()
+                        .currentDate(
+                            newTrigger.getBackfill().getStart()
+                        )
+                        .previousNextExecutionDate(
+                            currentTrigger.getNextExecutionDate())
+                        .build())
+                .build();
+        }
+
+        return updated.toBuilder()
             .nextExecutionDate(ZonedDateTime.now())
-            .backfill(newTrigger.getBackfill())
             .build();
     }
 

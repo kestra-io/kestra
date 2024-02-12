@@ -43,14 +43,14 @@ public class Backfill {
     ZonedDateTime currentDate;
 
     @Schema(
-        title = "If the backfill is paused."
+        title = "Whether the backfill is paused."
     )
     @Builder.Default
     @JsonInclude
     Boolean paused = false;
 
     @Schema(
-        title = "The input to pass to the backfilled flow."
+        title = "The inputs to pass to the backfilled executions."
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
@@ -58,7 +58,7 @@ public class Backfill {
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(
-        title = "The labels to pass to the backfilled flow."
+        title = "The labels to pass to the backfilled executions."
     )
     List<Label> labels;
 
@@ -66,12 +66,6 @@ public class Backfill {
         title = "The nextExecutionDate before the backfill was created."
     )
     ZonedDateTime previousNextExecutionDate;
-
-//    public Backfill(ZonedDateTime start, ZonedDateTime end) {
-//        this.start = start;
-//        this.end = end;
-//        this.currentDate = start;
-//    }
 
     public Backfill(ZonedDateTime start, ZonedDateTime end, ZonedDateTime currentDate, Boolean paused, Map<String, Object> inputs, List<Label> labels, ZonedDateTime previousNextExecutionDate) {
         this.start = start;

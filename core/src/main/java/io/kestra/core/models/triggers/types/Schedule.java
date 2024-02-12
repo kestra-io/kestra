@@ -165,6 +165,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Getter(AccessLevel.NONE)
     private transient ExecutionTime executionTime;
 
+    @Schema(
+        title = "Previous backfill",
+        description = "Now deprecated and will be removed in the future. Note that this has no more effect, please use the new backfill feature."
+    )
+    @PluginProperty
+    @Deprecated
+    private ScheduleBackfill backfill;
+
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         ExecutionTime executionTime = this.executionTime();
@@ -174,7 +182,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             ZonedDateTime lastDate;
             if (last.get().getBackfill() != null) {
                 backfill = last.get().getBackfill();
-                lastDate = last.get().getBackfill().getCurrentDate();
+                lastDate = backfill.getCurrentDate();
             } else {
                 lastDate = convertDateTime(last.get().getDate());
             }
@@ -472,4 +480,6 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         @NotNull
         private ZonedDateTime previous;
     }
+
+    private static class ScheduleBackfill {}
 }

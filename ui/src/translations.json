@@ -572,9 +572,9 @@
       },
       "export": "Export as a ZIP file"
     },
-    "continue backfill":"Continue backfill",
-    "delete backfill": "Delete backfill",
-    "pause backfill": "Pause backfill",
+    "continue backfill":"Continue the backfill",
+    "delete backfill": "Delete the backfill",
+    "pause backfill": "Pause the backfill",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
     "relative": "Relative",
@@ -652,6 +652,7 @@
     "date": "Date",
     "datepicker": {
       "last5minutes": "5 dernières minutes",
+      "last15minutes": "15 dernières minutes",
       "last1hour": "Dernière heure",
       "last12hours": "12 dernières heures",
       "last24hours": "24 dernières heures",

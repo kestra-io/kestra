@@ -485,5 +485,10 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         private ZonedDateTime previous;
     }
 
-    private static class ScheduleBackfill {}
+    @Deprecated
+    public static class ScheduleBackfill {
+        @Schema(
+            title = "The first start date."
+        )
+        ZonedDateTime start;}
 }

@@ -1,12 +1,15 @@
 package io.kestra.jdbc.runner;
 
 
+import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerInstance;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -22,6 +25,10 @@ import java.util.UUID;
 @Slf4j
 public class JdbcHeartbeat {
     private static final String HOSTNAME;
+
+    @Nullable
+    @Value("${kestra.server-type}")
+    protected ServerType serverType;
 
     static {
         try {
@@ -75,7 +82,9 @@ public class JdbcHeartbeat {
 
             if (workerInstanceRepository.heartbeatCheckUp(workerInstance.getWorkerUuid().toString()).isEmpty()) {
                 log.error("heartbeatCheckUp failed, unable to find current instance '{}', Shutting down now!", workerInstance.getWorkerUuid());
-                Runtime.getRuntime().exit(1);
+                if (serverType == ServerType.WORKER) {
+                    Runtime.getRuntime().exit(1);
+                }
             }
         }
     }

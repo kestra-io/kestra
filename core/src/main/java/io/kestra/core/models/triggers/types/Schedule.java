@@ -32,10 +32,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @SuperBuilder
@@ -299,7 +296,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         } else {
             variables = scheduleDates.toMap();
         }
-        List<Label> labels = conditionContext.getFlow().getLabels();
+        List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
         if (backfill != null && backfill.getLabels() != null) {
             labels.addAll(backfill.getLabels());
         }

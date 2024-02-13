@@ -12,14 +12,14 @@
                 </code>
             </template>
         </el-table-column>
-        <el-table-column prop="type" :label="$t('type')"/>
+        <el-table-column prop="type" :label="$t('type')" />
         <el-table-column :label="$t('description')">
             <template #default="scope">
-                <Markdown :source="scope.row.description"/>
+                <Markdown :source="scope.row.description" />
             </template>
         </el-table-column>
 
-        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')"/>
+        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')" />
 
         <el-table-column column-key="backfill" class-name="row-multiple-actions">
             <template #default="scope">
@@ -72,7 +72,7 @@
             <template #default="scope">
                 <a href="#" @click="triggerId = scope.row.id; isOpen = true">
                     <kicon :tooltip="$t('details')" placement="left">
-                        <TextSearch/>
+                        <TextSearch />
                     </kicon>
                 </a>
             </template>
@@ -81,7 +81,7 @@
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true" :width="470">
         <template #header>
-            <span v-html="$t('backfill executions')"/>
+            <span v-html="$t('backfill executions')" />
         </template>
         <el-form :model="backfill" label-position="top">
             <div class="pickers">
@@ -142,7 +142,7 @@
             <code>{{ triggerId }}</code>
         </template>
         <el-table stripe table-layout="auto" :data="triggerData">
-            <el-table-column prop="key" :label="$t('key')"/>
+            <el-table-column prop="key" :label="$t('key')" />
             <el-table-column prop="value" :label="$t('value')">
                 <template #default="scope">
                     <vars
@@ -258,10 +258,10 @@
             },
             postBackfill() {
                 this.$store.dispatch("trigger/update",
-                    {
-                        ...this.selectedTrigger,
-                        backfill: this.cleanBackfill
-                    }).then(_ => {
+                                     {
+                                         ...this.selectedTrigger,
+                                         backfill: this.cleanBackfill
+                                     }).then(_ => {
                     this.loadData();
                     this.setBackfillModal(null, false);
                     this.backfill = {

@@ -89,6 +89,7 @@
     import Markdown from "../layout/Markdown.vue";
 
     export default {
+        emits: ["update"],
         components: {
             Editor,
             Markdown

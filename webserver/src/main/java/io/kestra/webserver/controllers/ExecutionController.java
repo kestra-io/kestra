@@ -169,10 +169,6 @@ public class ExecutionController {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration startDateRange,
-        @Parameter(description = "An end time range filter relative to the current time", examples = {
-            @ExampleObject(name = "Filter up to 5 minutes", value = "PT5M"),
-            @ExampleObject(name = "Filter up to 24 hours", value = "P1D")
-        }) @Nullable @QueryValue Duration endDateRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -187,7 +183,7 @@ public class ExecutionController {
             namespace,
             flowId,
             resolveAbsoluteDateTime(startDate, startDateRange, now),
-            resolveAbsoluteDateTime(endDate, endDateRange, now),
+            null,
             state,
             RequestUtils.toMap(labels),
             triggerExecutionId,

@@ -68,6 +68,29 @@
             </template>
         </el-table-column>
 
+        <el-table-column column-key="disable" class-name="row-action">
+            <template #default="scope">
+                <el-switch
+                    size="small"
+                    :active-text="$t('enabled')"
+                    :value="!scope.row.disabled"
+                    @change="setDisabled(scope.row, $event)"
+                    class="switch-text"
+                    :active-action-icon="Check"
+                />
+            </template>
+        </el-table-column>
+
+        <el-table-column column-key="unlock" class-name="row-action">
+            <template #default="scope">
+                <a href="#" v-if="scope.row.executionId">
+                    <kicon :tooltip="$t('unlock')">
+                        <lock-off />
+                    </kicon>
+                </a>
+            </template>
+        </el-table-column>
+
         <el-table-column column-key="action" class-name="row-action">
             <template #default="scope">
                 <a href="#" @click="triggerId = scope.row.id; isOpen = true">
@@ -162,6 +185,8 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import Vars from "../executions/Vars.vue";
     import LabelInput from "../labels/LabelInput.vue";
+    import LockOff from "vue-material-design-icons/LockOff.vue";
+    import Check from "vue-material-design-icons/Check.vue";
 </script>
 
 <script>
@@ -286,6 +311,12 @@
             },
             deleteBackfill(trigger) {
                 this.$store.dispatch("trigger/deleteBackfill", trigger)
+                    .then(_ => {
+                        this.loadData();
+                    })
+            },
+            setDisabled(trigger, value) {
+                this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
                     .then(_ => {
                         this.loadData();
                     })

@@ -152,6 +152,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
             .namespace("io.kestra.unittest")
             .triggerId("controllerUpdated")
             .executionId(IdUtils.create())
+            .disabled(true)
             .build();
 
         jdbcTriggerRepository.create(trigger);
@@ -159,14 +160,15 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         Trigger updatedBad = trigger
             .toBuilder()
             .executionId("hello")
+            .disabled(false)
             .build();
 
-        Trigger afterUpdatedBad = client.toBlocking().retrieve(HttpRequest.PUT(("/api/v1/triggers"), updatedBad), Trigger.class);
+        Trigger afterUpdated = client.toBlocking().retrieve(HttpRequest.PUT(("/api/v1/triggers"), updatedBad), Trigger.class);
 
         // Assert that executionId cannot be edited
-        assertThat(afterUpdatedBad.getExecutionId(), not("hello"));
-
-
+        assertThat(afterUpdated.getExecutionId(), not("hello"));
+        // Assert that disabled can be edited
+        assertThat(afterUpdated.getDisabled(), is(false));
     }
 
     @Test

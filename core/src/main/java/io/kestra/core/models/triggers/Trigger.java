@@ -6,10 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -91,6 +88,7 @@ public class Trigger extends TriggerContext {
             .triggerId(triggerContext.getTriggerId())
             .date(triggerContext.getDate())
             .backfill(triggerContext.getBackfill())
+            .disabled(triggerContext.getDisabled())
             .build();
     }
 
@@ -107,6 +105,7 @@ public class Trigger extends TriggerContext {
             .date(triggerContext.getDate())
             .nextExecutionDate(nextExecutionDate)
             .backfill(triggerContext.getBackfill())
+            .disabled(triggerContext.getDisabled())
             .build();
     }
 
@@ -127,6 +126,7 @@ public class Trigger extends TriggerContext {
             .updatedDate(Instant.now())
             .nextExecutionDate(triggerContext.getNextExecutionDate())
             .backfill(triggerContext.getBackfill())
+            .disabled(triggerContext.getDisabled())
             .build();
     }
 
@@ -148,6 +148,7 @@ public class Trigger extends TriggerContext {
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
             .backfill(triggerContext.getBackfill())
+            .disabled(triggerContext.getDisabled())
             .build();
     }
 
@@ -169,6 +170,7 @@ public class Trigger extends TriggerContext {
             .executionCurrentState(execution.getState().getCurrent())
             .updatedDate(Instant.now())
             .backfill(trigger.getBackfill())
+            .disabled(trigger.getDisabled())
             .build();
     }
 
@@ -189,6 +191,7 @@ public class Trigger extends TriggerContext {
             .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
             .backfill(trigger.getBackfill())
+            .disabled(trigger.getDisabled())
             .build();
     }
 
@@ -201,6 +204,7 @@ public class Trigger extends TriggerContext {
             .triggerId(abstractTrigger.getId())
             .date(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
+            .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
             .build();
     }
 
@@ -226,6 +230,7 @@ public class Trigger extends TriggerContext {
 
         return updated.toBuilder()
             .nextExecutionDate(ZonedDateTime.now())
+            .disabled(newTrigger.getDisabled())
             .build();
     }
 

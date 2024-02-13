@@ -874,3 +874,9 @@ form.ks-horizontal {
         }
     }
 }
+
+
+.el-switch--small .el-switch__label {
+    color: var(--bs-white);
+    font-weight: bold;
+}

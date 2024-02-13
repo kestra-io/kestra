@@ -68,6 +68,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         );
     }
 
+
     @Test
     void schedule() throws Exception {
         // mock flow listeners
@@ -151,7 +152,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
 
-        Flow flow = createScheduleFlow("Europe/Paris", "schedule", false);
+        Flow flow = createScheduleFlow("Europe/Paris", "retroSchedule", false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -159,7 +160,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
         Trigger trigger = Trigger
             .builder()
-            .triggerId("schedule")
+            .triggerId("retroSchedule")
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
@@ -176,7 +177,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             Await.until(() -> {
                 Optional<Trigger> optionalTrigger = this.triggerState.findLast(trigger);
                 return optionalTrigger.filter(value -> value.getNextExecutionDate() != null).isPresent();
-            });
+            }, Duration.ofSeconds(1), Duration.ofSeconds(60));
 
             assertThat(this.triggerState.findLast(trigger).get().getNextExecutionDate().isAfter(trigger.getDate()), is(true));
         }
@@ -231,7 +232,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             Await.until(() -> {
                 Optional<Trigger> optionalTrigger = this.triggerState.findLast(lastTrigger);
-                return optionalTrigger.filter(value -> value.getBackfill() != null ).isPresent();
+                return optionalTrigger.filter(value -> value.getBackfill() != null).isPresent();
             }, Duration.ofSeconds(1), Duration.ofSeconds(15));
 
             Trigger lastTrigger2 = this.triggerState.findLast(trigger).get();
@@ -239,6 +240,49 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             assertThat(lastTrigger2.getNextExecutionDate(),
                 lessThanOrEqualTo(lastTrigger.getNextExecutionDate().truncatedTo(ChronoUnit.HOURS)));
 
+        }
+    }
+
+    @Test
+    void disabled() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        String triggerId = "disabled";
+
+        Flow flow = createScheduleFlow("Europe/Paris", triggerId, false);
+
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+        // Shortcut the scheduler and create trigger before it
+        // and set the trigger to disabled with a specific nextExecutionDate
+        Trigger trigger = Trigger
+            .builder()
+            .triggerId(triggerId)
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now())
+            .nextExecutionDate(now)
+            .disabled(true)
+            .build();
+
+        triggerState.create(trigger);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+            worker.run();
+            scheduler.run();
+
+            // Wait 5s to see if things happen
+            Thread.sleep(5000);
+
+            Trigger lastTrigger = this.triggerState.findLast(trigger).get();
+
+            // Nothing changed because nothing happened
+            assertThat(lastTrigger.getNextExecutionDate().truncatedTo(ChronoUnit.HOURS).isEqual(now), is(true));
         }
     }
 }

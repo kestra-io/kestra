@@ -148,6 +148,7 @@
 
     .el-select__wrapper {
         background-color: var(--input-bg);
+        font-size: var(--el-font-size-base);
 
         &.is-disabled {
             html.dark & {

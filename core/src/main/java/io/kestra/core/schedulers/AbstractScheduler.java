@@ -299,23 +299,13 @@ public abstract class AbstractScheduler implements Scheduler {
                     .abstractTrigger(flowWithTriggers.getAbstractTrigger())
                     .pollingTrigger((PollingTriggerInterface) flowWithTriggers.getAbstractTrigger())
                     .conditionContext(flowWithTriggers.getConditionContext())
-                    .triggerContext(Trigger
-                        .builder()
-                        .tenantId(flowWithTriggers.getFlow().getTenantId())
-                        .namespace(flowWithTriggers.getFlow().getNamespace())
-                        .flowId(flowWithTriggers.getFlow().getId())
-                        .flowRevision(flowWithTriggers.getFlow().getRevision())
-                        .triggerId(flowWithTriggers.getAbstractTrigger().getId())
-                        .date(now())
-                        .nextExecutionDate(flowWithTriggers.getTriggerContext().getNextExecutionDate())
-                        .backfill(flowWithTriggers.getTriggerContext().getBackfill())
-                        .build()
-                    )
+                    .triggerContext(flowWithTriggers.TriggerContext.toBuilder().date(now()).build())
                     .build())
-                .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null)
+                .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null && !f.getTriggerContext().getDisabled())
                 .filter(this::isExecutionNotRunning)
                 .map(f -> {
                     try {
+
                         return FlowWithPollingTriggerNextDate.of(f);
                     } catch (Exception e) {
                         logError(f, e);

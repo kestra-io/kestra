@@ -19,7 +19,6 @@
     <relative-date-select
         v-if="selectedFilterType === filterType.RELATIVE"
         :start-range="startRange"
-        :end-range="endRange"
         @update:model-value="onRelFilterChange($event)"
     />
 </template>
@@ -54,9 +53,6 @@
             startRange() {
                 return this.$route.query.startDateRange ? this.$route.query.startDateRange : "P30D";
             },
-            endRange() {
-                return this.$route.query.endDateRange ? this.$route.query.endDateRange : "PT0S";
-            },
             startDate() {
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate).add(-30, "days").toISOString(true);
             },
@@ -81,8 +77,7 @@
                 const filter = {
                     "startDate": undefined,
                     "endDate": undefined,
-                    "startDateRange": event.startDateRange,
-                    "endDateRange": event.endDateRange
+                    "startDateRange": event.startDateRange
                 };
                 this.updateFilter(filter);
             },

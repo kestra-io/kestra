@@ -1,15 +1,9 @@
 <template>
     <date-select
         :value="startRange"
-        :options="applicableFilterPresets"
+        :options="timeFilterPresets"
         :tooltip="$t('relative start date')"
         @change="onChangeStart($event)"
-    />
-    <date-select
-        :value="endRange"
-        :options="applicableFilterPresetsEnd"
-        :tooltip="$t('relative end date')"
-        @change="onChangeEnd($event)"
     />
 </template>
 
@@ -65,30 +59,12 @@
             startRange: {
                 type: String,
                 default: undefined
-            },
-            endRange: {
-                type: String,
-                default: undefined
-            }
-        },
-        computed: {
-            timeFilterPresetsEnd() {
-                return [ {value: "PT0S", label: "now"} ].concat(this.timeFilterPresets);
-            },
-            applicableFilterPresets() {
-                return this.timeFilterPresets.filter((filterPreset) => this.$moment.duration(filterPreset.value) > this.$moment.duration(this.endRange));
-            },
-            applicableFilterPresetsEnd() {
-                return this.timeFilterPresetsEnd.filter((filterPreset) => this.$moment.duration(filterPreset.value) < this.$moment.duration(this.startRange));
             }
         },
         methods: {
             onChangeStart(range) {
                 this.$emit("update:modelValue", {"startDateRange": range, "endDateRange": this.endRange});
             },
-            onChangeEnd(range) {
-                this.$emit("update:modelValue", {"startDateRange": this.startRange, "endDateRange": range});
-            }
         }
     }
 </script>

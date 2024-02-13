@@ -182,18 +182,6 @@ class YamlFlowParserTest {
     }
 
     @Test
-    void trigger() {
-        Flow parse = this.parse("flows/tests/trigger.yaml");
-        assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), is(ZonedDateTime.parse("2020-01-01T00:00:00+02:00")));
-    }
-
-    @Test
-    void triggerEmpty() {
-        Flow parse = this.parse("flows/tests/trigger-empty.yaml");
-        assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), nullValue());
-    }
-
-    @Test
     void invalidTask() {
         ConstraintViolationException exception = assertThrows(
             ConstraintViolationException.class,

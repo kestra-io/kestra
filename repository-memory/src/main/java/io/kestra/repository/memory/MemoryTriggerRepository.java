@@ -11,6 +11,7 @@ import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -41,12 +42,29 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     }
 
     @Override
+    public Trigger update(Trigger trigger) {
+        triggers.add(trigger);
+
+        return trigger;
+    }
+
+    @Override
+    public Trigger lock(String triggerUid, Function<Trigger, Trigger> consumer) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void delete(Trigger trigger) {
         triggers.remove(trigger);
     }
 
     @Override
     public ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId) {
         throw new UnsupportedOperationException();
     }
 }

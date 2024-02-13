@@ -19,8 +19,7 @@ import jakarta.validation.constraints.Pattern;
 @Getter
 @NoArgsConstructor
 @Introspected
-public class TriggerContext implements TenantInterface {
-    @Hidden
+public class TriggerContext {
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]")
     private String tenantId;
 
@@ -41,6 +40,9 @@ public class TriggerContext implements TenantInterface {
 
     @Nullable
     private ZonedDateTime nextExecutionDate;
+
+    @Nullable
+    private Backfill backfill;
 
     public String uid() {
         return uid(this);

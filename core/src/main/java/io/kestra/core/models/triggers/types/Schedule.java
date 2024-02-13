@@ -5,6 +5,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -13,16 +14,16 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.validations.CronExpression;
 import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -31,13 +32,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
+import java.util.*;
 
 @Slf4j
 @SuperBuilder
@@ -140,15 +135,6 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
-    @Schema(
-        title = "Backfill option in order to fill missing past dates.",
-        description = "Kestra could optionally handle a backfill. The concept of a backfill is to replay missing schedules when a flow is created but we need to schedule it before its creation date.\n" +
-            "\n" +
-            "A backfill will execute all schedules between a defined date and the current date, then the normal schedule will be executed."
-    )
-    @PluginProperty
-    private ScheduleBackfill backfill;
-
     @Schema(hidden = true)
     @Builder.Default
     @Null
@@ -177,12 +163,27 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Getter(AccessLevel.NONE)
     private transient ExecutionTime executionTime;
 
+    @Schema(
+        title = "Previous backfill",
+        description = "Now deprecated and will be removed in the future. Note that this has no more effect, please use the new backfill feature."
+    )
+    @PluginProperty
+    @Deprecated
+    private ScheduleBackfill backfill;
+
     @Override
-    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         ExecutionTime executionTime = this.executionTime();
         ZonedDateTime nextDate;
+        Backfill backfill = null;
         if (last.isPresent()) {
-            ZonedDateTime lastDate = convertDateTime(last.get().getDate());
+            ZonedDateTime lastDate;
+            if (last.get().getBackfill() != null) {
+                backfill = last.get().getBackfill();
+                lastDate = backfill.getCurrentDate();
+            } else {
+                lastDate = convertDateTime(last.get().getDate());
+            }
             // previous present & scheduleConditions
             if (this.scheduleConditions != null) {
                 Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
@@ -198,19 +199,21 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             }
             // previous present but no scheduleConditions
             nextDate = computeNextEvaluationDate(executionTime, lastDate).orElse(null);
-        }
-        // no previous present but backfill
-        else if (backfill != null && backfill.getStart() != null) {
-            nextDate = this.timezone != null ?
-                backfill.getStart().withZoneSameLocal(ZoneId.of(this.timezone)) :
-                backfill.getStart();
+
+            // if we have a current backfill but the nextDate
+            // is after the end, then we calculate again the nextDate
+            // based on now()
+            if (backfill != null && nextDate != null && nextDate.isAfter(backfill.getEnd())) {
+                nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+            }
         }
         // no previous present & no backfill, just provide now
         else {
             nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
         }
         // if max delay reach, we calculate a new date
-        if (this.lateMaximumDelay != null && nextDate != null) {
+        // except if we are doing a backfill
+        if (this.lateMaximumDelay != null && nextDate != null && backfill == null) {
             Output scheduleDates = this.scheduleDates(executionTime, nextDate).orElse(null);
             scheduleDates = this.handleMaxDelay(scheduleDates);
             if (scheduleDates != null) {
@@ -224,10 +227,18 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     }
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
+    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();
-        ZonedDateTime currentDateTimeExecution = convertDateTime(context.getDate());
+        ZonedDateTime currentDateTimeExecution = convertDateTime(triggerContext.getDate());
+        Backfill backfill = triggerContext.getBackfill();
+
+        if (backfill != null) {
+            if (backfill.getPaused()) {
+                return Optional.empty();
+            }
+            currentDateTimeExecution = backfill.getCurrentDate();
+        }
 
         Output scheduleDates = this.scheduleDates(executionTime, currentDateTimeExecution).orElse(null);
 
@@ -275,22 +286,30 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             inputs.putAll(runContext.render(this.inputs));
         }
 
+        if (backfill != null && backfill.getInputs() != null) {
+            inputs.putAll(runContext.render(backfill.getInputs()));
+        }
+
         Map<String, Object> variables;
         if (this.timezone != null) {
             variables = scheduleDates.toMap(ZoneId.of(this.timezone));
         } else {
             variables = scheduleDates.toMap();
         }
+        List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
+        if (backfill != null && backfill.getLabels() != null) {
+            labels.addAll(backfill.getLabels());
+        }
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
         Execution execution = Execution.builder()
             .id(runContext.getTriggerExecutionId())
-            .tenantId(context.getTenantId())
-            .namespace(context.getNamespace())
-            .flowId(context.getFlowId())
-            .flowRevision(context.getFlowRevision())
-            .labels(conditionContext.getFlow().getLabels())
+            .tenantId(triggerContext.getTenantId())
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .labels(labels)
             .state(new State())
             .trigger(executionTrigger)
             // keep to avoid breaking compatibility
@@ -463,12 +482,10 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         private ZonedDateTime previous;
     }
 
-    @Value
-    @Builder
+    @Deprecated
     public static class ScheduleBackfill {
         @Schema(
             title = "The first start date."
         )
-        ZonedDateTime start;
-    }
+        ZonedDateTime start;}
 }

@@ -21,12 +21,6 @@ public class ScheduleValidator  implements ConstraintValidator<Schedule, io.kest
             return true;
         }
 
-        if (value.getBackfill() != null && value.getBackfill().getStart() != null && value.getLateMaximumDelay() != null) {
-            context.messageTemplate("invalid schedule: backfill and lateMaximumDelay are incompatible options");
-
-            return false;
-        }
-
         return true;
     }
 }

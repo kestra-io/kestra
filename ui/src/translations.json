@@ -572,6 +572,11 @@
       },
       "export": "Export as a ZIP file"
     },
+    "continue backfill":"Continue the backfill",
+    "delete backfill": "Delete the backfill",
+    "pause backfill": "Pause the backfill",
+    "backfill executions": "Backfill executions",
+    "execute backfill": "Execute backfill",
     "relative": "Relative",
     "relative start date": "Relative start date",
     "relative end date": "Relative end date",
@@ -647,6 +652,7 @@
     "date": "Date",
     "datepicker": {
       "last5minutes": "5 dernières minutes",
+      "last15minutes": "15 dernières minutes",
       "last1hour": "Dernière heure",
       "last12hours": "12 dernières heures",
       "last24hours": "24 dernières heures",
@@ -1140,7 +1146,17 @@
         "error": "Une erreur est survenue lors de l'importation"
       },
       "export": "Export as ZIP file"
-    }
+    },
+    "relative": "Relative",
+    "relative start date": "Date de début relative",
+    "relative end date": "Date de fin relative",
+    "now": "Maintenant",
+    "absolute": "Absolu",
+    "continue backfill": "Continuer le backfill",
+    "delete backfill": "Supprimer le backfill",
+    "pause backfill": "Mettre en pause le backfill",
+    "backfill executions": "Backfill d'éxécutions",
+    "execute backfill": "Éxécuter le backfill"
   }
 }
 

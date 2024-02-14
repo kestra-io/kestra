@@ -12,6 +12,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -53,6 +54,9 @@ public class FlowService {
     @Inject
     ApplicationContext applicationContext;
 
+    @Value("${kestra.system-flows.namespace:system}")
+    private String systemFlowNamespace;
+
     public FlowWithSource importFlow(String tenantId, String source) {
         Flow withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
             .tenantId(tenantId)
@@ -74,6 +78,13 @@ public class FlowService {
 
     public List<String> deprecationPaths(Flow flow) {
         return deprecationTraversal("", flow).toList();
+    }
+
+    public List<String> warnings(Flow flow) {
+        if (flow != null && flow.getNamespace() != null && flow.getNamespace().equals(systemFlowNamespace)) {
+            return List.of("The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.");
+        }
+        return Collections.emptyList();
     }
 
     private Stream<String> deprecationTraversal(String prefix, Object object) {

@@ -1,7 +1,7 @@
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
- @use "@kestra-io/ui-libs/src/scss/app.scss";
+@use "@kestra-io/ui-libs/src/scss/app.scss";
 
 // element-plus
 @use "layout/element-plus-overload";
@@ -24,28 +24,24 @@
 
 // main layout
 main {
-    width: calc(100vw - var(--offset-from-menu));
-    height: 100vh;
-    display: flex;
-    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
 
     padding-bottom: global-var.$spacer !important;
     transition: all 0.3s ease;
 
-    &.menu {
-        &.menu-collapsed {
-            #{--offset-from-menu}: 15px;
-            padding-left: var(--menu-collapsed-width);
+    &.menu-collapsed {
+        #{--offset-from-menu}: 15px;
+        padding-left: var(--menu-collapsed-width);
+    }
+
+    &.menu-not-collapsed {
+        #{--offset-from-menu}: var(--spacer);
+        @include mixin.res(lg) {
+            #{--offset-from-menu}: calc(var(--spacer) * 4);
         }
 
-        &.menu-not-collapsed {
-            #{--offset-from-menu}: var(--spacer);
-            @include mixin.res(lg) {
-                #{--offset-from-menu}: calc(var(--spacer) * 4);
-            }
-
-            padding-left: var(--menu-width);
-        }
+        padding-left: var(--menu-width);
     }
 
     // apply start & end margin for top-bar neighbours

@@ -2,7 +2,7 @@
     <el-config-provider>
         <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <main :class="mainClasses" v-if="loaded">
+        <main :class="menuCollapsed" v-if="loaded">
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />
@@ -33,7 +33,7 @@
         },
         data() {
             return {
-                menuCollapsed: false,
+                menuCollapsed: "",
                 fullPage: false,
                 created: false,
                 loaded: false,
@@ -76,7 +76,7 @@
         },
         methods: {
             onMenuCollapse(collapse) {
-                this.menuCollapsed = collapse;
+                this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
             },
             displayApp(fullPage = false) {
                 this.fullPage = fullPage;

@@ -363,12 +363,19 @@ public abstract class AbstractScheduler implements Scheduler {
                         // So we evaluate it now as there is no need to send it to the worker.
                         // Schedule didn't use the triggerState to allow backfill.
                         try {
-                            Optional<SchedulerExecutionWithTrigger> maybe = evaluateScheduleTrigger(f);
-                            maybe.ifPresent(
-                                schedulerExecutionWithTrigger -> this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger, f.getConditionContext(), scheduleContext)
-                            );
-                            // TODO maybe compute the next date and save the trigger as Schedule are evaluated each second if evaluate didn't leads to an execution
-
+                            Optional<SchedulerExecutionWithTrigger> schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
+                            if (schedulerExecutionWithTrigger.isPresent()) {
+                                this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger.get(), f.getConditionContext(), scheduleContext);
+                            } else {
+                                // compute next date and save the trigger to avoid evaluating it each second
+                                schedule.nextEvaluationDate(f.getConditionContext(), Optional.empty());
+                                Trigger trigger = Trigger.of(
+                                    f.getTriggerContext(),
+                                    schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
+                                );
+                                trigger = trigger.checkBackfill();
+                                this.triggerState.save(trigger, scheduleContext);
+                            }
                         } catch (Exception e) {
                             logger.error(
                                 "[namespace: {}] [flow: {}] [trigger: {}] Evaluate schedule trigger failed",

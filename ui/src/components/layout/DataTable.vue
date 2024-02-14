@@ -9,9 +9,11 @@
         <el-container direction="vertical" v-loading="isLoading">
             <slot name="top" />
 
+            <pagination :size="size" :top="true" :page="page" :total="total" :max="max" @page-changed="onPageChanged" />
+
             <slot name="table" />
 
-            <pagination :size="size" :page="page" :total="total" :max="max" @page-changed="onPageChanged" />
+            <pagination v-if="total > 0" :size="size" :page="page" :total="total" :max="max" @page-changed="onPageChanged" />
         </el-container>
     </div>
 </template>

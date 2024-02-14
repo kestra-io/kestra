@@ -146,9 +146,12 @@
         }
     }
 
+    &:not(.el-select--small), &:not(.el-select--large) {
+        font-size: var(--el-font-size-base);
+    }
+
     .el-select__wrapper {
         background-color: var(--input-bg);
-        font-size: var(--el-font-size-base);
 
         &.is-disabled {
             html.dark & {
@@ -433,7 +436,7 @@ form.ks-horizontal {
 
 // message box
 .el-message-box {
-    --el-messagebox-title-color: var(--bs-body-text);
+    --el-messagebox-title-color: var(--bs-body-color);
     border: 1px solid var(--bs-border-color);
 
     &.full-screen {

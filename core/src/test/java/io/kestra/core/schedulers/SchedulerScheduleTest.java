@@ -294,7 +294,9 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void stopAfterSchedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "stopAfter", false).build();
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "stopAfter", false)
+            .stopAfter(List.of(State.Type.SUCCESS))
+            .build();
         Flow flow = createFlow(Collections.singletonList(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -340,7 +342,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             // Assert that the trigger is now disabled.
             // It needs to await on assertion as it will be disabled AFTER we receive a success execution.
             Trigger trigger = Trigger.of(flow, schedule);
-            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false), Duration.ofMillis(100), Duration.ofSeconds(10));
+            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false).booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(10));
         }
     }
 

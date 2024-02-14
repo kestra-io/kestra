@@ -25,7 +25,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div class="mt-3">
+    <div>
         <div v-if="ready">
             <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
         </div>

@@ -390,12 +390,21 @@ form.ks-horizontal {
 
         > * {
             padding: var(--spacer) calc(var(--spacer) * 1.5);
-            color: var(--bs-gray-700) !important;
+
+        }
+
+        a {
+            color: var(--bs-gray-700);
+            transition: 0.3s ease;
         }
 
         &.is-active > * {
             color: var(--bs-primary);
             font-weight: bold;
+        }
+
+        &.is-disabled a {
+            color: var(--bs-gray-600) !important;
         }
     }
 
@@ -414,7 +423,77 @@ form.ks-horizontal {
                 color: var(--bs-secondary);
             }
         }
+    }
 
+
+    &.top {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--bs-border-color);
+        margin: 0 calc(var(--spacer) * -1) var(--spacer);
+        padding: calc(var(--spacer) / 2);
+
+        @include res(lg) {
+            margin: 0 calc(var(--spacer) * -4) var(--spacer);
+        }
+
+        .el-tabs__active-bar {
+            display: none;
+        }
+
+        .el-tabs__nav-wrap::after {
+            display: none;
+        }
+
+        .el-tabs__header {
+            margin-bottom: 0;
+        }
+
+        .el-tabs__nav-prev {
+            &:after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: -15px;
+                height: 100%;
+                width: 15px;
+                background: linear-gradient(90deg, var(--card-bg) 0%, rgba(0, 0, 0, 0) 100%);
+                z-index: calc(var(--el-index-normal) + 2);
+            }
+        }
+
+        .el-tabs__nav-next {
+            &:before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -15px;
+                height: 100%;
+                width: 15px;
+                background: linear-gradient(-90deg, var(--card-bg) 0%, rgba(0, 0, 0, 0) 100%);
+                z-index: calc(var(--el-index-normal) + 2);
+            }
+        }
+
+        .el-tabs__item {
+            > * {
+                padding: calc(var(--spacer) / 2) calc(var(--spacer));
+            }
+
+            &.is-active > a {
+                font-weight: bold;
+                background: var(--bs-gray-100);
+                border-radius: var(--bs-border-radius);
+            }
+        }
+
+
+        html.dark & {
+            .el-tabs__item {
+                &.is-active > a {
+                    color: var(--bs-body-color);
+                }
+            }
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 <template>
     <div class="tabs-nav">
-        <el-tabs class="nav-tabs-flow-root router-link" v-model="activeName">
+        <el-tabs class="nav-tabs-flow-root router-link" :class="{top: top}" v-model="activeName">
             <el-tab-pane
                 v-for="tab in tabs"
                 :key="tab.name"
@@ -16,6 +16,7 @@
                 </template>
             </el-tab-pane>
         </el-tabs>
+
         <component
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"
@@ -36,6 +37,10 @@
             routeName: {
                 type: String,
                 default: ""
+            },
+            top: {
+                type: Boolean,
+                default: true
             },
             /**
              * The active embedded tab. If this component is not embedded, keep it undefined.

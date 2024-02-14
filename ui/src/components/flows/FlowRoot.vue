@@ -31,7 +31,7 @@
                 </ul>
             </template>
         </top-nav-bar>
-        <div class="mt-3">
+        <div>
             <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
         </div>
     </template>

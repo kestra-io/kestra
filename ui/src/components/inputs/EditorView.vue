@@ -66,6 +66,10 @@
             type: Boolean,
             default: true
         },
+        isDirty: {
+            type: Boolean,
+            default: false
+        },
         graphOnly: {
             type: Boolean,
             default: false
@@ -164,7 +168,7 @@
     const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const haveChange = ref(false)
+    const haveChange = ref(props.isDirty)
     const flowYaml = ref("")
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)

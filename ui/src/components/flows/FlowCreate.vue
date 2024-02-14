@@ -7,6 +7,7 @@
             :is-creating="true"
             :flow-graph="flowGraph"
             :is-read-only="false"
+            :is-dirty="true"
             :total="total"
             :guided-properties="guidedProperties"
             :flow-validation="flowValidation"

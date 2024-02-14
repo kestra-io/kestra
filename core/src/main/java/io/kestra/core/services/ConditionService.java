@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.cronutils.utils.VisibleForTesting;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 /**
  * Provides business logic to manipulate {@link Condition}
@@ -61,18 +64,10 @@ public class ConditionService {
         return this.valid(flow, conditions, conditionContext);
     }
 
-    public boolean isValid(Flow flow, List<ScheduleCondition> conditions, ConditionContext conditionContext) {
+    public boolean isValid(List<ScheduleCondition> conditions, ConditionContext conditionContext) throws InternalException {
         return conditions
             .stream()
-            .allMatch(condition -> {
-                try {
-                    return condition.test(conditionContext);
-                } catch (Exception e) {
-                    logException(flow, condition, conditionContext, e);
-
-                    return false;
-                }
-            });
+            .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
     }
 
     public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {

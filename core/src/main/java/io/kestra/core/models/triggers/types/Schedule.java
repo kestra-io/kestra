@@ -5,6 +5,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -87,7 +88,6 @@ import java.util.*;
                 "  - id: schedule",
                 "    cron: \"0 11 * * 1\"",
                 "    scheduleConditions:",
-                "      - id: monday",
                 "        type: io.kestra.core.models.conditions.types.DayWeekInMonthCondition",
                 "        date: \"{{ trigger.date }}\"",
                 "        dayOfWeek: \"MONDAY\"",
@@ -191,16 +191,20 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             }
             // previous present & scheduleConditions
             if (this.scheduleConditions != null) {
-                Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
-                    executionTime,
-                    conditionContext,
-                    lastDate,
-                    true
-                );
-                if (next.isPresent()) {
-
-                    return next.get().truncatedTo(ChronoUnit.SECONDS);
+                try {
+                    Optional<ZonedDateTime>next = this.truePreviousNextDateWithCondition(
+                        executionTime,
+                        conditionContext,
+                        lastDate,
+                        true
+                    );
+                    if (next.isPresent()) {
+                        return next.get().truncatedTo(ChronoUnit.SECONDS);
+                    }
+                } catch (InternalException e) {
+                    conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
                 }
+
             }
             // previous present but no scheduleConditions
             nextDate = computeNextEvaluationDate(executionTime, lastDate).orElse(null);
@@ -268,9 +272,26 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         // FIXME make scheduleConditions generic
         // control scheduleConditions
         if (scheduleConditions != null) {
-            boolean conditionResults = this.validateScheduleCondition(conditionContext);
-            if (!conditionResults) {
-                return Optional.empty();
+            try {
+                boolean conditionResults = this.validateScheduleCondition(conditionContext);
+                if (!conditionResults) {
+                    return Optional.empty();
+                }
+            } catch(InternalException ie) {
+                // validate schedule condition can fail to render variables
+                // in this case, we return a failed execution so the trigger is not evaluated each second
+                runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
+                List<Label> labels = getLabels(conditionContext, backfill);
+                Execution execution = Execution.builder()
+                    .id(runContext.getTriggerExecutionId())
+                    .tenantId(triggerContext.getTenantId())
+                    .namespace(triggerContext.getNamespace())
+                    .flowId(triggerContext.getFlowId())
+                    .flowRevision(triggerContext.getFlowRevision())
+                    .labels(labels)
+                    .state(new State().withState(State.Type.FAILED))
+                    .build();
+                return Optional.of(execution);
             }
 
             // recalculate true output for previous and next based on conditions
@@ -301,10 +322,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         } else {
             variables = scheduleDates.toMap();
         }
-        List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
-        if (backfill != null && backfill.getLabels() != null) {
-            labels.addAll(backfill.getLabels());
-        }
+        List<Label> labels = getLabels(conditionContext, backfill);
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
@@ -330,6 +348,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         return Optional.of(execution);
+    }
+
+    private static List<Label> getLabels(ConditionContext conditionContext, Backfill backfill) {
+        List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
+        if (backfill != null && backfill.getLabels() != null) {
+            labels.addAll(backfill.getLabels());
+        }
+        return labels;
     }
 
     private Optional<Output> scheduleDates(ExecutionTime executionTime, ZonedDateTime date) {
@@ -384,7 +410,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return executionTime.nextExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 
-    private Output trueOutputWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, Output output) {
+    private Output trueOutputWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, Output output) throws InternalException {
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
@@ -397,7 +423,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return outputBuilder.build();
     }
 
-    private Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) {
+    private Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
         while (
             (next && toTestDate.getYear() < ZonedDateTime.now().getYear() + 10) ||
                 (!next && toTestDate.getYear() > ZonedDateTime.now().getYear() - 10)
@@ -455,11 +481,10 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return output;
     }
 
-    private boolean validateScheduleCondition(ConditionContext conditionContext) {
+    private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
         if (scheduleConditions != null) {
             ConditionService conditionService = conditionContext.getRunContext().getApplicationContext().getBean(ConditionService.class);
             return conditionService.isValid(
-                conditionContext.getFlow(),
                 scheduleConditions,
                 conditionContext
             );

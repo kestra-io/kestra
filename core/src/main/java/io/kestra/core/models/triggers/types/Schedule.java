@@ -42,41 +42,46 @@ import java.util.*;
 @NoArgsConstructor
 @io.kestra.core.validations.Schedule
 @Schema(
-    title = "Schedule a flow based on a cron expression.",
-    description = "Kestra is able to trigger a flow based on a schedule. If you need to wait for another system " +
-        "to be ready and can't use any event mechanism, you can add one or more schedule(s) to a flow.\n" +
-        "\n" +
-        "The scheduler will keep the last execution date for this schedule. This allow you to change the " +
-        "cron expression without restarting all past executions (if backfill exists).\n" +
-        "If you changed the current ID, the scheduler will think it's a new schedule and will start with a fresh date and " +
-        "replay all backfill dates (if backfill exists)."
+    title = "Schedule a flow based on a CRON expression.",
+    description = "You can add multiple schedule(s) to a flow.\n" +
+        "The scheduler keeps track of the last scheduled date, allowing you to easily backfill missed executions.\n" +
+        "Keep in mind that if you change the trigger ID, the scheduler will consider this as a new schedule, and will start creating new scheduled executions from the current date."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "A schedule with a backfill.",
-            code = {
-                "triggers:",
-                "  - id: schedule",
-                "    type: io.kestra.core.models.triggers.types.Schedule",
-                "    cron: \"*/15 * * * *\"",
-                "    backfill:",
-                "      start: 2020-06-25T14:00:00Z"
-            },
-            full = true
+            title = "Schedule a flow every 15 minutes.",
+            full = true,
+            code = """
+            id: scheduled_flow
+            namespace: dev
+
+            tasks:
+              - id: sleep_randomly
+                type: io.kestra.plugin.scripts.shell.Commands
+                runner: PROCESS
+                commands:
+                  - echo "{{ execution.startDate ?? trigger.date }}"
+                  - sleep $((RANDOM % 60 + 1))
+
+            triggers:
+              - id: every_15_minutes
+                type: io.kestra.core.models.triggers.types.Schedule
+                cron: "*/15 * * * *"
+            """
         ),
         @Example(
-            title = "A schedule with a nickname.",
+            title = "Schedule a flow every hour using the cron nickname `@hourly`.",
             code = {
                 "triggers:",
-                "  - id: schedule",
+                "  - id: hourly",
                 "    type: io.kestra.core.models.triggers.types.Schedule",
                 "    cron: \"@hourly\"",
             },
             full = true
         ),
         @Example(
-            title = "A schedule that runs only on the first Monday on every month at 11 AM.",
+            title = "Schedule a flow on the first Monday of the month at 11 AM.",
             code = {
                 "triggers:",
                 "  - id: schedule",
@@ -142,20 +147,20 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @Valid
     @Schema(
-        title = "List of schedule conditions in order to limit schedule date."
+        title = "List of schedule conditions in order to limit the schedule trigger date."
     )
     @PluginProperty
     private List<ScheduleCondition> scheduleConditions;
 
     @Schema(
-        title = "The input to pass to the triggered flow."
+        title = "The inputs to pass to the scheduled flow."
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The maximum late delay accepted.",
-        description = "If the schedule didn't start after this delay, the execution will be skipped."
+        title = "The maximum delay that is accepted.",
+        description = "If the scheduled execution didn't start after this delay (e.g. due to infrastructure issues), the execution will be skipped."
     )
     @PluginProperty
     private Duration lateMaximumDelay;

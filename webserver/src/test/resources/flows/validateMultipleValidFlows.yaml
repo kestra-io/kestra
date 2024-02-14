@@ -1,5 +1,5 @@
 id: "first_flow"
-namespace: "validation"
+namespace: "system"
 revision: 1
 tasks:
   - id: task_one

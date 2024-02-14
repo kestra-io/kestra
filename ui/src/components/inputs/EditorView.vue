@@ -131,9 +131,12 @@
             ?.map(f => `${f} ${t("is deprecated")}.`)
             ?? [];
 
+        const otherWarnings = props.flowValidation?.warnings ?? [];
+
         const warnings = [
             ...outdatedWarning,
-            ...deprecationWarnings
+            ...deprecationWarnings,
+            ...otherWarnings
         ];
 
         return warnings.length === 0 ? undefined : warnings;

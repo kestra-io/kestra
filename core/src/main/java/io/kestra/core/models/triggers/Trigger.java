@@ -213,6 +213,7 @@ public class Trigger extends TriggerContext {
             .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
             .stopAfter(abstractTrigger.getStopAfter())
             .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
+            .backfill(lastTrigger.map(TriggerContext::getBackfill).orElse(null))
             .build();
     }
 
@@ -255,6 +256,7 @@ public class Trigger extends TriggerContext {
             .date(this.getDate())
             .nextExecutionDate(this.getNextExecutionDate())
             .stopAfter(this.getStopAfter())
+            .backfill(this.getBackfill())
             .disabled(disabled)
             .build();
     }

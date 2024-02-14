@@ -7,6 +7,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
@@ -357,13 +358,17 @@ public abstract class AbstractScheduler implements Scheduler {
                                 e
                             );
                         }
-                    } else if (f.getPollingTrigger() instanceof Schedule) {
+                    } else if (f.getPollingTrigger() instanceof Schedule schedule) {
                         // This is the Schedule, all other triggers should have an interval.
                         // So we evaluate it now as there is no need to send it to the worker.
                         // Schedule didn't use the triggerState to allow backfill.
                         try {
-                            SchedulerExecutionWithTrigger schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
-                            this.handleEvaluateSchedulingTriggerResult(schedulerExecutionWithTrigger, scheduleContext);
+                            Optional<SchedulerExecutionWithTrigger> maybe = evaluateScheduleTrigger(f);
+                            maybe.ifPresent(
+                                schedulerExecutionWithTrigger -> this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger, f.getConditionContext(), scheduleContext)
+                            );
+                            // TODO maybe compute the next date and save the trigger as Schedule are evaluated each second if evaluate didn't leads to an execution
+
                         } catch (Exception e) {
                             logger.error(
                                 "[namespace: {}] [flow: {}] [trigger: {}] Evaluate schedule trigger failed",
@@ -402,7 +407,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
                     // Check if the localTriggerState contains it
                     // however, its mean it has been deleted during the execution time
-                    this.triggerState.update(trigger);
+                    this.triggerState.update(trigger); //FIXME should be moved to saveLastTriggerAndEmitExecution as it creates duplicate emission in the Trigger topic in Kafka
                     this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
                 }
             );
@@ -411,21 +416,22 @@ public abstract class AbstractScheduler implements Scheduler {
     // Schedule triggers are being executed directly from
     // the handle method within the context where triggers are locked,
     // so we can save it now by pass the context
-    private void handleEvaluateSchedulingTriggerResult(SchedulerExecutionWithTrigger result, ScheduleContextInterface scheduleContext) {
-        Stream.of(result)
-            .filter(Objects::nonNull)
-            .peek(this::log)
-            .forEach(executionWithTrigger -> {
-                    Trigger trigger = Trigger.of(
-                        executionWithTrigger.getTriggerContext(),
-                        executionWithTrigger.getExecution(),
-                        ZonedDateTime.parse((String) executionWithTrigger.getExecution().getTrigger().getVariables().get("next"))
-                    );
-                    trigger = trigger.checkBackfill();
-                    this.triggerState.save(trigger, scheduleContext);
-                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
-                }
-            );
+    private void handleEvaluateSchedulingTriggerResult(Schedule schedule, SchedulerExecutionWithTrigger result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) {
+        log(result);
+        Trigger trigger = Trigger.of(
+            result.getTriggerContext(),
+            result.getExecution(),
+            schedule.nextEvaluationDate(conditionContext, Optional.of(result.getTriggerContext()))
+        );
+        trigger = trigger.checkBackfill();
+
+        // if the execution is already failed due to failed execution, we reset the trigger now
+        if (result.getExecution().getState().getCurrent() == State.Type.FAILED) {
+            trigger = trigger.resetExecution(State.Type.FAILED);
+        }
+
+        this.triggerState.save(trigger, scheduleContext); //FIXME should be moved to saveLastTriggerAndEmitExecution as it creates duplicate emission in the Trigger topic in Kafka
+        this.saveLastTriggerAndEmitExecution(result, trigger);
     }
 
     protected void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger, Trigger trigger) {
@@ -525,7 +531,7 @@ public abstract class AbstractScheduler implements Scheduler {
         return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private SchedulerExecutionWithTrigger evaluateScheduleTrigger(FlowWithPollingTrigger flowWithTrigger) {
+    private Optional<SchedulerExecutionWithTrigger> evaluateScheduleTrigger(FlowWithPollingTrigger flowWithTrigger) {
         try {
             FlowWithPollingTrigger flowWithPollingTrigger = flowWithTrigger.from(taskDefaultService.injectDefaults(
                 flowWithTrigger.getFlow(),
@@ -561,10 +567,10 @@ public abstract class AbstractScheduler implements Scheduler {
             return evaluate.map(execution -> new SchedulerExecutionWithTrigger(
                 execution,
                 flowWithTrigger.getTriggerContext()
-            )).orElse(null);
+            ));
         } catch (Exception e) {
             logError(flowWithTrigger, e);
-            return null;
+            return Optional.empty();
         }
     }
 

@@ -12,59 +12,54 @@
                 </code>
             </template>
         </el-table-column>
+
         <el-table-column prop="type" :label="$t('type')" />
-        <el-table-column :label="$t('description')">
+
+        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')">
             <template #default="scope">
-                <markdown :source="scope.row.description" />
+                <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
             </template>
         </el-table-column>
 
-        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')" />
-
-        <el-table-column column-key="backfill" class-name="row-multiple-actions">
+        <el-table-column column-key="backfill">
             <template #default="scope">
                 <el-button
+                    :icon="CalendarCollapseHorizontalOutline"
                     v-if="scheduleClassName === scope.row.type && !scope.row.backfill"
                     @click="setBackfillModal(scope.row, true)"
+                    :disabled="scope.row.disabled"
                     size="small"
+                    type="primary"
                 >
                     {{ $t("backfill executions") }}
                 </el-button>
-                <div v-else>
-                    <div class="cell">
-                        <div class="progress-cell">
-                            <el-progress
-                                :percentage="50"
-                                :show-text="false"
-                                :indeterminate="true"
-                                :status="scope.row.backfill.paused ? 'warning' : 'default'"
-                            />
-                        </div>
-                        <a href="#" v-if="!scope.row.backfill.paused">
+                <template v-else>
+                    <status :status="scope.row.backfill.paused ? 'PAUSED' : 'RUNNING'" size="small" />
+
+                    <template v-if="!scope.row.backfill.paused">
+                        <el-button size="small">
                             <kicon :tooltip="$t('pause backfill')">
                                 <Pause
                                     @click="pauseBackfill(scope.row)"
                                 />
                             </kicon>
-                        </a>
-                        <div class="d-flex" v-else>
-                            <a href="#">
-                                <kicon :tooltip="$t('continue backfill')">
-                                    <Play
-                                        @click="unpauseBackfill(scope.row)"
-                                    />
-                                </kicon>
-                            </a>
-                            <a href="#">
-                                <kicon :tooltip="$t('delete backfill')">
-                                    <Delete
-                                        @click="deleteBackfill(scope.row)"
-                                    />
-                                </kicon>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                        </el-button>
+                    </template>
+
+                    <template v-else>
+                        <el-button size="small">
+                            <kicon :tooltip="$t('continue backfill')">
+                                <Play @click="unpauseBackfill(scope.row)" />
+                            </kicon>
+                        </el-button>
+
+                        <el-button size="small">
+                            <kicon :tooltip="$t('delete backfill')">
+                                <Delete @click="deleteBackfill(scope.row)" />
+                            </kicon>
+                        </el-button>
+                    </template>
+                </template>
             </template>
         </el-table-column>
 
@@ -83,21 +78,21 @@
 
         <el-table-column column-key="unlock" class-name="row-action">
             <template #default="scope">
-                <a href="#" v-if="scope.row.executionId">
-                    <kicon :tooltip="$t('unlock')">
+                <el-button size="small" v-if="scope.row.executionId" @click="unlock">
+                    <kicon :tooltip="$t('unlock trigger.button')">
                         <lock-off />
                     </kicon>
-                </a>
+                </el-button>
             </template>
         </el-table-column>
 
         <el-table-column column-key="action" class-name="row-action">
             <template #default="scope">
-                <a href="#" @click="triggerId = scope.row.id; isOpen = true">
+                <el-button size="small" @click="triggerId = scope.row.id; isOpen = true">
                     <kicon :tooltip="$t('details')" placement="left">
                         <TextSearch />
                     </kicon>
-                </a>
+                </el-button>
             </template>
         </el-table-column>
     </el-table>
@@ -164,15 +159,9 @@
         <template #header>
             <code>{{ triggerId }}</code>
         </template>
-        <el-table stripe table-layout="auto" :data="triggerData">
-            <el-table-column prop="key" :label="$t('key')" />
-            <el-table-column prop="value" :label="$t('value')">
-                <template #default="scope">
-                    <markdown v-if="scope.row.key === 'description'" :source="scope.row.value" />
-                    <trigger-vars v-else-if="scope.row.value instanceof Array || scope.row.value instanceof Object" :data="scope.row.value" />
-                </template>
-            </el-table-column>
-        </el-table>
+
+        <markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
+        <vars :data="modalData" />
     </el-drawer>
 </template>
 
@@ -184,17 +173,20 @@
     import LabelInput from "../labels/LabelInput.vue";
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import Check from "vue-material-design-icons/Check.vue";
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 </script>
 
 <script>
     import Markdown from "../layout/Markdown.vue";
-    import TriggerVars from "./TriggerVars.vue";
     import {mapGetters} from "vuex";
     import Kicon from "../Kicon.vue"
     import InputsForm from "../inputs/InputsForm.vue";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Vars from "../executions/Vars.vue";
+    import Status from "../Status.vue";
 
     export default {
-        components: {Markdown, Kicon, InputsForm, TriggerVars},
+        components: {Markdown, Kicon, InputsForm, DateAgo, Vars, Status},
         data() {
             return {
                 triggerId: undefined,
@@ -217,15 +209,20 @@
         },
         computed: {
             ...mapGetters("flow", ["flow"]),
-            triggerData() {
+            modalData() {
                 return Object
-                    .entries(this.triggers.filter(trigger => trigger.triggerId === this.triggerId)[0])
-                    .map(([key, value]) => {
-                        return {
-                            key,
-                            value
-                        };
-                    });
+                    .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
+                    .filter(([key]) => !["tenantId", "namespace", "flowId", "flowRevision", "triggerId", "description"].includes(key))
+                    .reduce(
+                        (map, currentValue) => {
+                            map[currentValue[0]] = currentValue[1];
+                            return map;
+                        },
+                        {},
+                    );
+            },
+            triggerDefinition() {
+                return this.flow.triggers.find(trigger => trigger.id === this.triggerId);
             },
             triggersWithType() {
                 let flowTriggers = this.flow.triggers
@@ -280,57 +277,60 @@
                 return false
             },
             postBackfill() {
-                this.$store.dispatch("trigger/update",
-                                     {
-                                         ...this.selectedTrigger,
-                                         backfill: this.cleanBackfill
-                                     }).then(_ => {
-                    this.loadData();
-                    this.setBackfillModal(null, false);
-                    this.backfill = {
-                        start: null,
-                        end: null,
-                        inputs: null,
-                        labels: []
-                    }
+                this.$store.dispatch("trigger/update", {
+                    ...this.selectedTrigger,
+                    backfill: this.cleanBackfill
                 })
+                    .then(_ => {
+                        this.$toast().saved(trigger.id);
+                        this.loadData();
+                        this.setBackfillModal(null, false);
+                        this.backfill = {
+                            start: null,
+                            end: null,
+                            inputs: null,
+                            labels: []
+                        }
+                    })
+
             },
             pauseBackfill(trigger) {
                 this.$store.dispatch("trigger/pauseBackfill", trigger)
                     .then(_ => {
+                        this.$toast().saved(trigger.id);
                         this.loadData();
-                    })
+                    });
             },
             unpauseBackfill(trigger) {
                 this.$store.dispatch("trigger/unpauseBackfill", trigger)
                     .then(_ => {
+                        this.$toast().saved(trigger.id);
                         this.loadData();
                     })
             },
             deleteBackfill(trigger) {
                 this.$store.dispatch("trigger/deleteBackfill", trigger)
                     .then(_ => {
+                        this.$toast().deleted(trigger.id);
                         this.loadData();
                     })
             },
             setDisabled(trigger, value) {
                 this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
                     .then(_ => {
+                        this.$toast().saved(trigger.id);
                         this.loadData();
                     })
             },
             unlock(trigger) {
-               this.$store.dispatch("trigger/unlock", {
+                this.$store.dispatch("trigger/unlock", {
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
                 }).then(_ => {
-                   this.$message({
-                       message: this.$t("unlock trigger.success"),
-                       type: "success"
-                   });
-                   this.loadData();
-               })
+                    this.$toast().success(this.$t("unlock trigger.success"));
+                    this.loadData();
+                })
             }
         }
     };
@@ -343,31 +343,6 @@
 
         .small-picker {
             width: 49%;
-        }
-    }
-
-    a {
-        color: var(--bs-body-color);
-        width: 24px;
-        border-radius: var(--bs-border-radius);
-        text-align: center;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: var(--bs-gray-400);
-
-        .material-design-icon__svg {
-            bottom: -0.125rem;
-        }
-    }
-
-    .progress-cell {
-        width: 200px;
-        margin-top: 0.6em;
-    }
-    :deep(.markdown) {
-        p {
-            margin-bottom: auto;
         }
     }
 </style>

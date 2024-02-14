@@ -346,44 +346,6 @@ form.ks-horizontal {
             opacity: 0.5;
         }
     }
-
-    th.row-multiple-actions {
-        width: 250px;
-        min-width: 250px;
-    }
-
-    td.row-multiple-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-content: center;
-
-        .cell {
-            display: flex;
-            flex-direction: row;
-        }
-
-        a {
-            color: var(--bs-body-color);
-            width: 28px;
-            border-radius: var(--bs-border-radius);
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--bs-gray-400);
-            margin-left: 1rem;
-
-            .material-design-icon__svg {
-                bottom: -0.125rem;
-            }
-        }
-
-        button {
-            .material-design-icon__svg {
-                bottom: 0;
-            }
-        }
-    }
 }
 
 // tabs
@@ -966,8 +928,9 @@ form.ks-horizontal {
     }
 }
 
-
-.el-switch--small .el-switch__label {
-    color: var(--bs-white);
-    font-weight: bold;
+.el-switch {
+    .el-switch__label {
+        color: var(--bs-body-color);
+    }
 }
+

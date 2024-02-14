@@ -74,7 +74,7 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
         workerInstance.ifPresent(heartbeat -> {
             heartbeat.setStatus(WorkerInstance.Status.DEAD);
 
-            log.warn("Detected evicted worker: {}", heartbeat);
+            log.warn("Detected non-responding worker, stated to DEAD: {}", heartbeat);
 
             this.jdbcRepository.persist(heartbeat, context,  this.jdbcRepository.persistFields(heartbeat));
         });

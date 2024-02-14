@@ -4,11 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
@@ -21,10 +17,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.DefaultFlowExecutor;
-import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorInterface;
 import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
@@ -48,17 +41,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -340,6 +328,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 });
 
             workersToDelete.forEach(worker -> {
+                log.warn("Deleted dead worker: {}", worker);
                 workerInstanceRepository.delete(context, worker);
             });
 

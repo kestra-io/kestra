@@ -82,9 +82,7 @@ public class JdbcHeartbeat {
 
             if (workerInstanceRepository.heartbeatCheckUp(workerInstance.getWorkerUuid().toString()).isEmpty()) {
                 log.error("heartbeatCheckUp failed, unable to find current instance '{}', Shutting down now!", workerInstance.getWorkerUuid());
-                if (serverType == ServerType.WORKER) {
-                    Runtime.getRuntime().exit(1);
-                }
+                Runtime.getRuntime().exit(1);
             }
         }
     }

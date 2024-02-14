@@ -112,6 +112,19 @@
                                 </el-button>
                             </template>
                         </el-table-column>
+
+                        <el-table-column column-key="disable" class-name="row-action">
+                            <template #default="scope">
+                                <el-switch
+                                    size="small"
+                                    :active-text="$t('enabled')"
+                                    :value="!scope.row.disabled"
+                                    @change="setDisabled(scope.row, $event)"
+                                    class="switch-text"
+                                    :active-action-icon="Check"
+                                />
+                            </template>
+                        </el-table-column>
                     </el-table>
                 </template>
             </data-table>
@@ -136,6 +149,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import Check from "vue-material-design-icons/Check.vue";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -199,6 +213,12 @@
                 }
 
                 this.triggerToUnlock = undefined;
+            },
+            setDisabled(trigger, value) {
+                this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
+                    .then(_ => {
+                        this.loadData();
+                    })
             }
         },
         computed: {

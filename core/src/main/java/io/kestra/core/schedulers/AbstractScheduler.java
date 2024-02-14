@@ -39,6 +39,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -414,8 +415,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
                     // Check if the localTriggerState contains it
                     // however, its mean it has been deleted during the execution time
-                    this.triggerState.update(trigger); //FIXME should be moved to saveLastTriggerAndEmitExecution as it creates duplicate emission in the Trigger topic in Kafka
-                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
+                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger, triggerToSave -> this.triggerState.update(triggerToSave));
                 }
             );
     }
@@ -437,11 +437,12 @@ public abstract class AbstractScheduler implements Scheduler {
             trigger = trigger.resetExecution(State.Type.FAILED);
         }
 
-        this.triggerState.save(trigger, scheduleContext); //FIXME should be moved to saveLastTriggerAndEmitExecution as it creates duplicate emission in the Trigger topic in Kafka
-        this.saveLastTriggerAndEmitExecution(result, trigger);
+        this.saveLastTriggerAndEmitExecution(result, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
     }
 
-    protected void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger, Trigger trigger) {
+    protected void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger, Trigger trigger, Consumer<Trigger> saveAction) {
+        saveAction.accept(trigger);
+
         // we need to be sure that the tenantId is propagated from the trigger to the execution
         var execution = executionWithTrigger.getExecution().withTenantId(executionWithTrigger.getTriggerContext().getTenantId());
         this.executionQueue.emit(execution);

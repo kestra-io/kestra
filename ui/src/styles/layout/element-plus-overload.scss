@@ -190,6 +190,15 @@
     }
 }
 
+.el-date-table td.disabled .el-date-table-cell {
+    background: none;
+    color: var(--bs-gray-300);
+
+    html.dark & {
+        color: var(--bs-gray-600);
+    }
+}
+
 // form horizontal
 form.ks-horizontal {
     .el-form-item {

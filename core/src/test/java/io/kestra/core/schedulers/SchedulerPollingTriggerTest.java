@@ -121,7 +121,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             // Assert that the trigger is now disabled.
             // It needs to await on assertion as it will be disabled AFTER we receive a success execution.
             Trigger trigger = Trigger.of(flow, pollingTrigger);
-            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false), Duration.ofMillis(100), Duration.ofSeconds(10));
+            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false).booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(10));
         }
     }
 

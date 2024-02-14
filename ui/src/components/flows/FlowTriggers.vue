@@ -318,6 +318,19 @@
                     .then(_ => {
                         this.loadData();
                     })
+            },
+            unlock(trigger) {
+               this.$store.dispatch("trigger/unlock", {
+                    namespace: trigger.namespace,
+                    flowId: trigger.flowId,
+                    triggerId: trigger.triggerId
+                }).then(_ => {
+                   this.$message({
+                       message: this.$t("unlock trigger.success"),
+                       type: "success"
+                   });
+                   this.loadData();
+               })
             }
         }
     };

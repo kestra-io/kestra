@@ -37,25 +37,23 @@
                     <status :status="scope.row.backfill.paused ? 'PAUSED' : 'RUNNING'" size="small" />
 
                     <template v-if="!scope.row.backfill.paused">
-                        <el-button size="small">
+                        <el-button size="small" @click="pauseBackfill(scope.row)">
                             <kicon :tooltip="$t('pause backfill')">
-                                <Pause
-                                    @click="pauseBackfill(scope.row)"
-                                />
+                                <Pause />
                             </kicon>
                         </el-button>
                     </template>
 
                     <template v-else-if="userCan(action.UPDATE)">
-                        <el-button size="small">
+                        <el-button size="small" @click="unpauseBackfill(scope.row)">
                             <kicon :tooltip="$t('continue backfill')">
-                                <Play @click="unpauseBackfill(scope.row)" />
+                                <Play />
                             </kicon>
                         </el-button>
 
-                        <el-button size="small">
+                        <el-button size="small" @click="deleteBackfill(scope.row)" >
                             <kicon :tooltip="$t('delete backfill')">
-                                <Delete @click="deleteBackfill(scope.row)" />
+                                <Delete />
                             </kicon>
                         </el-button>
                     </template>
@@ -295,30 +293,50 @@
             },
             pauseBackfill(trigger) {
                 this.$store.dispatch("trigger/pauseBackfill", trigger)
-                    .then(_ => {
-                        this.$toast().saved(trigger.id);
-                        this.loadData();
-                    });
+                    .then(newTrigger => {
+                        this.$toast().saved(newTrigger.id);
+                        this.triggers = this.triggers.map(t => {
+                            if (t.id === newTrigger.id) {
+                                return newTrigger
+                            }
+                            return t
+                        })
+                    })
             },
             unpauseBackfill(trigger) {
                 this.$store.dispatch("trigger/unpauseBackfill", trigger)
-                    .then(_ => {
-                        this.$toast().saved(trigger.id);
-                        this.loadData();
+                    .then(newTrigger => {
+                        this.$toast().saved(newTrigger.id);
+                        this.triggers = this.triggers.map(t => {
+                            if (t.id === newTrigger.id) {
+                                return newTrigger
+                            }
+                            return t
+                        })
                     })
             },
             deleteBackfill(trigger) {
                 this.$store.dispatch("trigger/deleteBackfill", trigger)
-                    .then(_ => {
-                        this.$toast().deleted(trigger.id);
-                        this.loadData();
+                    .then(newTrigger => {
+                        this.$toast().saved(newTrigger.id);
+                        this.triggers = this.triggers.map(t => {
+                            if (t.id === newTrigger.id) {
+                                return newTrigger
+                            }
+                            return t
+                        })
                     })
             },
             setDisabled(trigger, value) {
                 this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
-                    .then(_ => {
-                        this.$toast().saved(trigger.id);
-                        this.loadData();
+                    .then(newTrigger => {
+                        this.$toast().saved(newTrigger.id);
+                        this.triggers = this.triggers.map(t => {
+                            if (t.id === newTrigger.id) {
+                                return newTrigger
+                            }
+                            return t
+                        })
                     })
             },
             unlock(trigger) {

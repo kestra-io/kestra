@@ -51,7 +51,7 @@
                             </kicon>
                         </el-button>
 
-                        <el-button size="small" @click="deleteBackfill(scope.row)" >
+                        <el-button size="small" @click="deleteBackfill(scope.row)">
                             <kicon :tooltip="$t('delete backfill')">
                                 <Delete />
                             </kicon>
@@ -76,7 +76,7 @@
 
         <el-table-column column-key="unlock" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-button size="small" v-if="scope.row.executionId" @click="unlock">
+                <el-button size="small" v-if="scope.row.executionId" @click="unlock(scope.row)">
                     <kicon :tooltip="$t('unlock trigger.button')">
                         <lock-off />
                     </kicon>
@@ -246,10 +246,10 @@
                 this.selectedTrigger = trigger
             },
             checkBackfill() {
-                if (!this.backfill.start && !this.backfill.end) {
+                if (!this.backfill.start) {
                     return true
                 }
-                if (this.backfill.start > this.backfill.end) {
+                if (this.backfill.end && this.backfill.start > this.backfill.end) {
                     return true
                 }
                 if (this.flow.inputs) {
@@ -278,9 +278,14 @@
                     ...this.selectedTrigger,
                     backfill: this.cleanBackfill
                 })
-                    .then(_ => {
-                        this.$toast().saved(this.selectedTrigger.id);
-                        this.loadData();
+                    .then(newTrigger => {
+                        this.$toast().saved(newTrigger.id);
+                        this.triggers = this.triggers.map(t => {
+                            if (t.id === newTrigger.id) {
+                                return newTrigger
+                            }
+                            return t
+                        })
                         this.setBackfillModal(null, false);
                         this.backfill = {
                             start: null,
@@ -340,13 +345,19 @@
                     })
             },
             unlock(trigger) {
+                console.log(trigger)
                 this.$store.dispatch("trigger/unlock", {
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
-                }).then(_ => {
-                    this.$toast().success(this.$t("unlock trigger.success"));
-                    this.loadData();
+                }).then(newTrigger => {
+                    this.$toast().saved(newTrigger.id);
+                    this.triggers = this.triggers.map(t => {
+                        if (t.id === newTrigger.id) {
+                            return newTrigger
+                        }
+                        return t
+                    })
                 })
             }
         }

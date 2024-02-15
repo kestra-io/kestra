@@ -31,6 +31,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -55,6 +56,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final ConditionService conditionService;
     private final TaskDefaultService taskDefaultService;
     private final WorkerGroupService workerGroupService;
+    private final LogService logService;
     protected Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -84,6 +86,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
+        this.logService = applicationContext.getBean(LogService.class);
     }
 
     @Override
@@ -350,11 +353,11 @@ public abstract class AbstractScheduler implements Scheduler {
                             this.triggerState.save(triggerRunning, scheduleContext);
                             this.sendPollingTriggerToWorker(f);
                         } catch (InternalException e) {
-                            logger.error(
-                                "[namespace: {}] [flow: {}] [trigger: {}] Unable to send polling trigger to worker",
-                                f.getFlow().getNamespace(),
-                                f.getFlow().getId(),
-                                f.getAbstractTrigger().getId(),
+                            logService.logTrigger(
+                                f.getTriggerContext(),
+                                logger,
+                                Level.ERROR,
+                                "Unable to send polling trigger to worker",
                                 e
                             );
                         }
@@ -370,20 +373,20 @@ public abstract class AbstractScheduler implements Scheduler {
                             // TODO maybe compute the next date and save the trigger as Schedule are evaluated each second if evaluate didn't leads to an execution
 
                         } catch (Exception e) {
-                            logger.error(
-                                "[namespace: {}] [flow: {}] [trigger: {}] Evaluate schedule trigger failed",
-                                f.getFlow().getNamespace(),
-                                f.getFlow().getId(),
-                                f.getAbstractTrigger().getId(),
+                            logService.logTrigger(
+                                f.getTriggerContext(),
+                                logger,
+                                Level.ERROR,
+                                "Evaluate schedule trigger failed",
                                 e
                             );
                         }
                     } else {
-                        logger.error(
-                            "[namespace: {}] [flow: {}] [trigger: {}] Polling trigger must have an interval (except the Schedule)",
-                            f.getFlow().getNamespace(),
-                            f.getFlow().getId(),
-                            f.getAbstractTrigger().getId()
+                        logService.logTrigger(
+                            f.getTriggerContext(),
+                            logger,
+                            Level.ERROR,
+                            "Polling trigger must have an interval (except the Schedule)"
                         );
                     }
                 });
@@ -456,11 +459,11 @@ public abstract class AbstractScheduler implements Scheduler {
             }
 
             if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
-                log.warn(
-                    "[namespace: {}] [flow: {}] [trigger: {}] Execution '{}' is not found, schedule is blocked since '{}'",
-                    lastTrigger.getNamespace(),
-                    lastTrigger.getFlowId(),
-                    lastTrigger.getTriggerId(),
+                logService.logTrigger(
+                    f.getTriggerContext(),
+                    log,
+                    Level.WARN,
+                    "Execution '{}' is not found, schedule is blocked since '{}'",
                     lastTrigger.getExecutionId(),
                     lastTrigger.getUpdatedDate()
                 );
@@ -476,11 +479,11 @@ public abstract class AbstractScheduler implements Scheduler {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug(
-                "[namespace: {}] [flow: {}] [trigger: {}] Execution '{}' is still '{}', updated at '{}'",
-                lastTrigger.getNamespace(),
-                lastTrigger.getFlowId(),
-                lastTrigger.getTriggerId(),
+            logService.logTrigger(
+                f.getTriggerContext(),
+                log,
+                Level.DEBUG,
+                "Execution '{}' is still '{}', updated at '{}'",
                 lastTrigger.getExecutionId(),
                 lastTrigger.getExecutionCurrentState(),
                 lastTrigger.getUpdatedDate()
@@ -516,11 +519,11 @@ public abstract class AbstractScheduler implements Scheduler {
             }
         }
 
-        log.info(
-            "[namespace: {}] [flow: {}] [trigger: {}] Scheduled execution {} at '{}' started at '{}'",
-            executionWithTrigger.getExecution().getNamespace(),
-            executionWithTrigger.getExecution().getFlowId(),
-            executionWithTrigger.getTriggerContext().getTriggerId(),
+        logService.logTrigger(
+            executionWithTrigger.getTriggerContext(),
+            log,
+            Level.INFO,
+            "Scheduled execution {} at '{}' started at '{}'",
             executionWithTrigger.getExecution().getId(),
             executionWithTrigger.getTriggerContext().getDate(),
             now
@@ -550,16 +553,14 @@ public abstract class AbstractScheduler implements Scheduler {
             );
 
             if (log.isDebugEnabled()) {
-                if (log.isDebugEnabled()) {
-                    log.debug(
-                        "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
-                        flowWithPollingTrigger.getFlow().getNamespace(),
-                        flowWithPollingTrigger.getFlow().getId(),
-                        flowWithPollingTrigger.getAbstractTrigger().getId(),
-                        flowWithPollingTrigger.getAbstractTrigger().getType(),
-                        evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
-                    );
-                }
+                logService.logTrigger(
+                    flowWithPollingTrigger.getTriggerContext(),
+                    log,
+                    Level.DEBUG,
+                    "[type: {}] {}",
+                    flowWithPollingTrigger.getAbstractTrigger().getType(),
+                    evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                );
             }
 
             flowWithPollingTrigger.getConditionContext().getRunContext().cleanup();
@@ -577,11 +578,11 @@ public abstract class AbstractScheduler implements Scheduler {
     private void logError(FlowWithPollingTrigger flowWithPollingTriggerNextDate, Throwable e) {
         Logger logger = flowWithPollingTriggerNextDate.getConditionContext().getRunContext().logger();
 
-        logger.warn(
-            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
-            flowWithPollingTriggerNextDate.getFlow().getNamespace(),
-            flowWithPollingTriggerNextDate.getFlow().getId(),
-            flowWithPollingTriggerNextDate.getTriggerContext().getTriggerId(),
+        logService.logTrigger(
+            flowWithPollingTriggerNextDate.getTriggerContext(),
+            logger,
+            Level.WARN,
+            "[date: {}] Evaluate Failed with error '{}'",
             flowWithPollingTriggerNextDate.getTriggerContext().getDate(),
             e.getMessage(),
             e
@@ -595,10 +596,11 @@ public abstract class AbstractScheduler implements Scheduler {
     private void logError(ConditionContext conditionContext, Flow flow, AbstractTrigger trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
-        logger.error(
-            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
-            flow.getNamespace(),
-            flow.getId(),
+        logService.logFlow(
+            flow,
+            logger,
+            Level.ERROR,
+            "[trigger: {}] [date: {}] Evaluate Failed with error '{}'",
             trigger.getId(),
             now(),
             e.getMessage(),
@@ -613,12 +615,12 @@ public abstract class AbstractScheduler implements Scheduler {
         );
 
         if (log.isDebugEnabled()) {
-            log.debug(
-                "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Scheduling evaluation to the worker",
-                flowWithTrigger.getFlow().getNamespace(),
-                flowWithTrigger.getFlow().getId(),
-                flowWithTrigger.getTriggerContext().getDate(),
-                flowWithTrigger.getTriggerContext().getTriggerId()
+            logService.logTrigger(
+                flowWithTrigger.getTriggerContext(),
+                log,
+                Level.DEBUG,
+                "[date: {}] Scheduling evaluation to the worker",
+                flowWithTrigger.getTriggerContext().getDate()
             );
         }
 

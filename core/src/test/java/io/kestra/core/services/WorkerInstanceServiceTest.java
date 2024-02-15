@@ -1,12 +1,12 @@
 package io.kestra.core.services;
 
+import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.WorkerInstance;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +24,7 @@ class WorkerInstanceServiceTest {
         );
 
         assertThat(workerInstance.size(), is(1));
-        assertThat(workerInstance.get(0).getWorkerUuid().toString(), is(first.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(0).getWorkerUuid(), is(first.getWorkerUuid()));
         assertThat(workerInstance.get(0).getPartitions().size(), is(0));
     }
 
@@ -38,7 +38,7 @@ class WorkerInstanceServiceTest {
         );
 
         assertThat(workerInstance.size(), is(1));
-        assertThat(workerInstance.get(0).getWorkerUuid().toString(), is(first.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(0).getWorkerUuid(), is(first.getWorkerUuid()));
         assertThat(workerInstance.get(0).getWorkerGroup(), is("workerGroup"));
         assertThat(workerInstance.get(0).getPartitions().size(), is(0));
     }
@@ -55,11 +55,11 @@ class WorkerInstanceServiceTest {
 
         List<WorkerInstance> workerInstance = WorkerInstanceService.removeEvictedPartitions(
             workerInstanceStream,
-            workerInstance(Arrays.asList(1, 2, 3, 4, 5, 6), willBeUpdated.getWorkerUuid())
+            workerInstance(Arrays.asList(1, 2, 3, 4, 5, 6), willBeUpdated.getWorkerUuid(), null)
         );
 
         assertThat(workerInstance.size(), is(1));
-        assertThat(workerInstance.get(0).getWorkerUuid().toString(), is(first.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(0).getWorkerUuid(), is(first.getWorkerUuid()));
         assertThat(workerInstance.get(0).getPartitions().size(), is(0));
     }
 
@@ -79,7 +79,7 @@ class WorkerInstanceServiceTest {
         );
 
         assertThat(workerInstance.size(), is(1));
-        assertThat(workerInstance.get(0).getWorkerUuid().toString(), is(first.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(0).getWorkerUuid(), is(first.getWorkerUuid()));
         assertThat(workerInstance.get(0).getWorkerGroup(), is("workerGroup"));
         assertThat(workerInstance.get(0).getPartitions().size(), is(0));
     }
@@ -97,15 +97,15 @@ class WorkerInstanceServiceTest {
 
         List<WorkerInstance> workerInstance = WorkerInstanceService.removeEvictedPartitions(
             workerInstanceStream,
-            workerInstance(Arrays.asList(2, 3, 4), UUID.randomUUID())
+            workerInstance(Arrays.asList(2, 3, 4))
         );
 
         assertThat(workerInstance.size(), is(2));
-        assertThat(workerInstance.get(0).getWorkerUuid().toString(), is(first.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(0).getWorkerUuid(), is(first.getWorkerUuid()));
         assertThat(workerInstance.get(0).getPartitions().size(), is(1));
         assertThat(workerInstance.get(0).getPartitions(), contains(1));
 
-        assertThat(workerInstance.get(1).getWorkerUuid().toString(), is(second.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(1).getWorkerUuid(), is(second.getWorkerUuid()));
         assertThat(workerInstance.get(1).getPartitions().size(), is(2));
         assertThat(workerInstance.get(1).getPartitions(), contains(5, 6));
     }
@@ -122,16 +122,16 @@ class WorkerInstanceServiceTest {
 
         List<WorkerInstance> workerInstance = WorkerInstanceService.removeEvictedPartitions(
             workerInstanceStream,
-            workerInstance(Arrays.asList(2, 3, 4), UUID.randomUUID(), "workerGroup")
+            workerInstance(Arrays.asList(2, 3, 4), "workerGroup")
         );
 
         assertThat(workerInstance.size(), is(2));
-        assertThat(workerInstance.get(0).getWorkerUuid().toString(), is(first.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(0).getWorkerUuid(), is(first.getWorkerUuid()));
         assertThat(workerInstance.get(0).getWorkerGroup(), is("workerGroup"));
         assertThat(workerInstance.get(0).getPartitions().size(), is(1));
         assertThat(workerInstance.get(0).getPartitions(), contains(1));
 
-        assertThat(workerInstance.get(1).getWorkerUuid().toString(), is(second.getWorkerUuid().toString()));
+        assertThat(workerInstance.get(1).getWorkerUuid(), is(second.getWorkerUuid()));
         assertThat(workerInstance.get(1).getWorkerGroup(), is("workerGroup"));
         assertThat(workerInstance.get(1).getPartitions().size(), is(2));
         assertThat(workerInstance.get(1).getPartitions(), contains(5, 6));
@@ -155,8 +155,7 @@ class WorkerInstanceServiceTest {
         WorkerInstance first = WorkerInstance
             .builder()
             .partitions(null)
-            .workerUuid(UUID.randomUUID())
-            .hostname("unit-test")
+            .workerUuid(IdUtils.create())
             .build();
 
         List<WorkerInstance> workerInstance = WorkerInstanceService.removeEvictedPartitions(
@@ -175,16 +174,11 @@ class WorkerInstanceServiceTest {
         return workerInstance(partitions, null, workerGroup);
     }
 
-    private WorkerInstance workerInstance(List<Integer> partitions, UUID uuid) {
-        return workerInstance(partitions, uuid, null);
-    }
-
-    private static WorkerInstance workerInstance(List<Integer> partitions, UUID uuid, String workerGroup) {
+    private static WorkerInstance workerInstance(List<Integer> partitions, String uuid, String workerGroup) {
         return WorkerInstance
             .builder()
             .partitions(new ArrayList<>(partitions))
-            .workerUuid(uuid == null ? UUID.randomUUID() : uuid)
-            .hostname("unit-test")
+            .workerUuid(uuid == null ? IdUtils.create() : uuid)
             .workerGroup(workerGroup)
             .build();
     }

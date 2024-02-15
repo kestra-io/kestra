@@ -16,7 +16,7 @@ import FlowCreate from "../components/flows/FlowCreate.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
-import Workers from "../components/admin/Workers.vue";
+import Services from "../components/admin/Services.vue";
 import Editor from "../components/namespace/Editor.vue";
 import Stats from "override/components/admin/stats/Stats.vue";
 
@@ -65,7 +65,7 @@ export default [
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: Triggers},
-    {name: "admin/workers", path: "/:tenant?/admin/workers", component: Workers},
+    {name: "admin/cluster/services", path: "/:tenant?/admin/services", component: Services},
     {name: "admin/stats", path: "/:tenant?/admin/stats", component: Stats},
 
     //Errors

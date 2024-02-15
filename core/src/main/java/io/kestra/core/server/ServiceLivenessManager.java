@@ -1,0 +1,356 @@
+package io.kestra.core.server;
+
+import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.server.ServiceStateTransition.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static io.kestra.core.server.ServiceLivenessManager.OnStateTransitionFailureCallback.NOOP;
+
+/**
+ * Service responsible for managing the state of local Kestra's Services.
+ * Moreover, this class periodically send state updates (a.k.a. heartbeats) to indicate service's liveness.
+ */
+public class ServiceLivenessManager extends AbstractServiceLivenessTask {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceLivenessManager.class);
+
+    private static final String TASK_NAME = "service-liveness-manager-task";
+    private final ServiceInstanceFactory serviceInstanceFactory;
+    private final ServiceInstanceRepositoryInterface serviceRepository;
+    private final ReentrantLock stateLock = new ReentrantLock();
+    protected final OnStateTransitionFailureCallback onStateTransitionFailureCallback;
+    private final ServiceRegistry serviceRegistry;
+
+    private Instant lastSucceedStateUpdated;
+
+    public ServiceLivenessManager(final ServerConfig configuration,
+                                  final ServiceRegistry serviceRegistry,
+                                  final ServiceInstanceFactory serviceInstanceFactory,
+                                  final ServiceInstanceRepositoryInterface repository,
+                                  final OnStateTransitionFailureCallback onStateTransitionFailureCallback) {
+        super(TASK_NAME, configuration);
+        this.serviceRegistry = serviceRegistry;
+        this.serviceInstanceFactory = serviceInstanceFactory;
+        this.serviceRepository = repository;
+        this.onStateTransitionFailureCallback = onStateTransitionFailureCallback;
+    }
+
+    /**
+     * Handles the given state change event.
+     *
+     * @param event The state change event.
+     */
+    public void onServiceStateChangeEvent(final ServiceStateChangeEvent event) {
+
+        final Service.ServiceState newState = event.getService().getState();
+
+        if (newState == null) {
+            return; // invalid service event.
+        }
+
+        // Check whether the state for this service is updatable.
+        // A service (e.g., Worker) is not updatable when its state has already been transitioned to
+        // a completed state (e.g., NOT_RUNNING) by an external service (e.g. Executor).
+        ServiceRegistry.LocalServiceState holder = serviceRegistry.get(event.getService().getType());
+        if (holder != null && !holder.isStateUpdatable().get()) {
+            ServiceInstance instance = holder.instance();
+            log.debug(
+                "[Service id={}, type={}, hostname={}] Service state is not updatable. StateChangeEvent[{}] skipped.",
+                instance.id(),
+                instance.type(),
+                instance.server().hostname(),
+                instance.state()
+            );
+            return;
+        }
+
+        switch (newState) {
+            case CREATED:
+                onCreateState(event);
+                break;
+            case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED:
+                updateServiceInstanceState(Instant.now(), event.getService(), newState, NOOP);
+                break;
+            default:
+                log.warn("Unsupported service state: {}. Ignored.", newState);
+        }
+    }
+
+    /**
+     * Handles {@link Service.ServiceState#CREATED}.
+     */
+    private void onCreateState(final ServiceStateChangeEvent event) {
+        Service service = event.getService();
+        ServiceInstance instance = serviceRepository.save(serviceInstanceFactory.newServiceInstance(
+            service,
+            event.properties()
+        ));
+        this.serviceRegistry.register(new ServiceRegistry.LocalServiceState(service, instance));
+        log.info("[Service id={}, type='{}', hostname='{}'] Connected.",
+            instance.id(),
+            instance.type(),
+            instance.server().hostname()
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    protected Duration getScheduleInterval() {
+        return serverConfig.liveness().heartbeatInterval();
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    protected void onSchedule(final Instant now) {
+
+        if (serviceRegistry.isEmpty()) {
+            log.trace("No service registered yet. Skip service state update.");
+            return;
+        }
+
+        // Try to update the state of each service.
+        serviceRegistry.all().stream()
+            .filter(localServiceState -> localServiceState.isStateUpdatable().get())
+            .forEach(localServiceState -> {
+                final long start = System.currentTimeMillis();
+                final ServiceInstance instance = localServiceState.instance();
+                final Service service = localServiceState.service();
+
+                // Execute the before hook.
+                if (!beforeScheduledStateUpdate(now, service, instance)) {
+                    return;
+                }
+
+                // Execute state update for current service (i.e., heartbeat).
+                updateServiceInstanceState(now, service, instance.state(), onStateTransitionFailureCallback);
+                log.trace("[Service id={}, type={}, hostname='{}'] Completed scheduled state update: '{}' ({}ms).",
+                    instance.id(),
+                    instance.type(),
+                    instance.server().hostname(),
+                    instance.state(),
+                    System.currentTimeMillis() - start
+                );
+            });
+    }
+
+    /**
+     * This method can be overridden to provide a hook before executing a scheduled service state update.
+     *
+     * @return {@code true} for continuing scheduled update.
+     */
+    protected boolean beforeScheduledStateUpdate(final Instant now,
+                                                 final Service service,
+                                                 final ServiceInstance instance) {
+        return true; // noop
+    }
+
+    /**
+     * Gets the Instant of the last time the state was successfully updated.
+     *
+     * @return the {@link Instant}.
+     */
+    protected Instant lastSucceedStateUpdated() {
+        return lastSucceedStateUpdated;
+    }
+
+
+    /**
+     * Updates the state of the local worker instance.
+     *
+     * @param newState           the new worker state.
+     * @param onStateChangeError the callback to invoke if the state cannot be changed.
+     */
+    protected ServiceInstance updateServiceInstanceState(final Instant now,
+                                                         final Service service,
+                                                         final Service.ServiceState newState,
+                                                         final OnStateTransitionFailureCallback onStateChangeError) {
+
+        // Pre-check the state transition validation with the known local state.
+        ServiceInstance localInstance = localService(service).instance();
+        if (!localInstance.state().isValidTransition(newState)) {
+            log.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
+                localInstance.id(),
+                localInstance.type(),
+                localInstance.server().hostname(),
+                localInstance.state(),
+                newState,
+                "Invalid transition"
+            );
+            mayDisableStateUpdate(service, localInstance);
+            return localInstance;
+        }
+
+        // Ensure only one thread can update any instance at a time.
+        stateLock.lock();
+        // Optional callback to be executed at the end.
+        Runnable returnCallback = null;
+        try {
+            localInstance = localService(service).instance();
+            ServiceStateTransition.Response response = serviceRepository.mayTransitionServiceTo(localInstance, newState);
+
+            ServiceInstance remoteInstance = response.instance();
+
+            boolean isStateTransitionSucceed = response.is(Result.SUCCEED);
+
+            if (response.is(Result.ABORTED)) {
+                // Force state transition due to inconsistent state; remote state does not exist (yet).
+                remoteInstance = serviceRepository.save(localInstance.updateState(newState, now));
+                isStateTransitionSucceed = true;
+            }
+
+            if (response.is(Result.FAILED)) {
+                if (remoteInstance.seqId() < localInstance.seqId()) {
+                    // Force state transition due to inconsistent state; remote state is not up-to-date.
+                    remoteInstance = serviceRepository.save(localInstance.updateState(newState, now));
+                    isStateTransitionSucceed = true;
+                } else {
+                    mayDisableStateUpdate(service, remoteInstance);
+
+                    // Register the OnStateTransitionFailureCallback
+                    final ServiceInstance instance = remoteInstance;
+                    returnCallback = () -> {
+                        Optional<ServiceInstance> result = onStateChangeError.execute(now, service, instance, isLivenessEnabled());
+                        if (result.isPresent()) {
+                            // Optionally recover from state-transition failure
+                            this.serviceRegistry.register(localService(service).with(serviceRepository.save(result.get())));
+                            this.lastSucceedStateUpdated = now;
+                        }
+                    };
+                }
+            }
+
+            if (isStateTransitionSucceed) {
+                this.lastSucceedStateUpdated = now;
+            }
+            // Update the local instance
+            this.serviceRegistry.register(localService(service).with(remoteInstance));
+        } catch (Exception e) {
+            log.error("[Service id={}, type='{}', hostname='{}'] Failed to update state. Error: {}",
+                localInstance.id(),
+                localInstance.type(),
+                localInstance.server().hostname(),
+                e.getMessage()
+            );
+        } finally {
+            stateLock.unlock();
+            // Because the callback may trigger a new thread that will update
+            // the service instance we must ensure that we run it after calling unlock.
+            if (returnCallback != null) {
+                returnCallback.run();
+            }
+        }
+        return localService(service).instance();
+    }
+
+    private void mayDisableStateUpdate(final Service service, final ServiceInstance instance) {
+        Service.ServiceState actualState = instance.state();
+        if (actualState.hasCompletedTermination()) {
+            log.error(
+                "[Service id={}, type={}, hostname={}] Termination already completed ({}). " +
+                 "This error may occur if the service has already been evicted by Kestra due to a prior error.",
+                instance.id(),
+                instance.type(),
+                instance.server().hostname(),
+                actualState
+            );
+            // Mark the service has not updatable to prevent any unnecessary state transition issues.
+            localService(service).isStateUpdatable().set(false);
+        }
+    }
+
+    private ServiceRegistry.LocalServiceState localService(final Service service) {
+        return serviceRegistry.get(service.getType());
+    }
+
+
+    /**
+     * Callback to be invoked when a state transition failed.
+     */
+    @FunctionalInterface
+    public interface OnStateTransitionFailureCallback {
+
+        OnStateTransitionFailureCallback NOOP = (now, service, instance, isLivenessEnabled) -> Optional.empty();
+
+        /**
+         * The callback method.
+         *
+         * @param service  the service.
+         * @param instance the service instance.
+         *
+         * @return an optional {@link ServiceInstance} that be used to force a state transition.
+         */
+        Optional<ServiceInstance> execute(Instant now,
+                                          Service service,
+                                          ServiceInstance instance,
+                                          boolean isLivenessEnabled);
+    }
+
+    public static final class DefaultStateTransitionFailureCallback implements OnStateTransitionFailureCallback {
+
+        /**
+         * {@inheritDoc}
+         **/
+        @Override
+        public Optional<ServiceInstance> execute(final Instant now,
+                                                 final Service service,
+                                                 final ServiceInstance instance,
+                                                 final boolean isLivenessEnabled) {
+            // Never shutdown STANDALONE server or WEB_SERVER service.
+            if (instance.server().type().equals(ServerInstance.Type.STANDALONE) ||
+                instance.is(Service.ServiceType.WEBSERVER)) {
+                // Force the RUNNING state.
+                return Optional.of(instance.updateState(Service.ServiceState.RUNNING, now, null));
+            }
+
+            if (isLivenessEnabled || instance.is(Service.ServiceState.ERROR)) {
+                log.error("[Service id={}, type={}, hostname='{}'] Terminating server.",
+                    instance.id(),
+                    instance.type(),
+                    instance.server().hostname()
+                );
+                Service.ServiceState state = instance.state();
+                // Skip graceful termination if the service was already considered being NOT_RUNNING by the coordinator.
+                // More especially, this handles the case where a WORKER is configured with a short gracefulTerminationPeriod
+                // and the JVM was unresponsive for more than this period.
+                // In this context, the worker's tasks have already been resubmitted by the executor; the worker must therefore stop immediately.
+                if (state.equals(Service.ServiceState.NOT_RUNNING) || state.equals(Service.ServiceState.EMPTY)) {
+                    service.skipGracefulTermination(true);
+                }
+                KestraContext.getContext().exit(1);
+                return Optional.empty();
+            }
+
+            // This should not happen, but let's log a WARN to keep a trace.
+            log.warn("[Service id={}, type={}, hostname='{}'] Received unexpected state [{}] transition error [bug].",
+                instance.id(),
+                instance.type(),
+                instance.state(),
+                instance.server().hostname()
+            );
+            return Optional.empty();
+        }
+    }
+
+    @VisibleForTesting
+    public List<ServiceInstance> allServiceInstances() {
+        return serviceRegistry.all().stream().map(ServiceRegistry.LocalServiceState::instance).toList();
+    }
+
+    @VisibleForTesting
+    public void updateServiceInstance(final Service service, final ServiceInstance instance) {
+        this.serviceRegistry.register(new ServiceRegistry.LocalServiceState(service, instance));
+    }
+}

@@ -33,11 +33,6 @@ public class MemoryWorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public void cleanup() {
-
-    }
-
-    @Override
     public void close() {
 
     }

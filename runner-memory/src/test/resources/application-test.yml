@@ -7,3 +7,6 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
+  worker:
+    liveness:
+      enabled: false

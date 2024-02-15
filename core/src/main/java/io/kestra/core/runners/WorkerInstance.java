@@ -1,49 +1,30 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @SuperBuilder(toBuilder = true)
 @ToString
 @NoArgsConstructor
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkerInstance {
     @NotNull
-    private UUID workerUuid;
-
-    @NotNull
-    private String hostname;
-    private Integer port;
-    private Integer managementPort;
+    private String workerUuid;
 
     private String workerGroup;
 
     @Builder.Default
     private List<Integer> partitions = new ArrayList<>();
-
-    @Builder.Default
-    @JsonInclude
-    private Status status = Status.UP;
-
-    @Builder.Default
-    private Instant heartbeatDate = Instant.now();
-
-    /**
-     * The Kestra server owning the worker.
-     */
-    @Builder.Default
-    private ServerInstance server = ServerInstance.getInstance();
-
-    public enum Status {
-        UP, DEAD
-    }
 
 }

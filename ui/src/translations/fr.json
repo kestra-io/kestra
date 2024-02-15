@@ -87,6 +87,8 @@
     },
     "created date": "Date de création",
     "updated date": "Date de mise à jour",
+    "started date": "Date de démarrage",
+    "healthcheck date": "Dernier Healthcheck",
     "next execution date": "Prochaine date d'exécution",
     "jump to...": "Aller à...",
     "source": "Source",

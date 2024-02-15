@@ -21,11 +21,11 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="backfill">
+        <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #default="scope">
                 <el-button
                     :icon="CalendarCollapseHorizontalOutline"
-                    v-if="scheduleClassName === scope.row.type && !scope.row.backfill"
+                    v-if="scheduleClassName === scope.row.type && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
                     :disabled="scope.row.disabled"
                     size="small"
@@ -33,7 +33,7 @@
                 >
                     {{ $t("backfill executions") }}
                 </el-button>
-                <template v-else>
+                <template v-else-if="userCan(action.UPDATE)">
                     <status :status="scope.row.backfill.paused ? 'PAUSED' : 'RUNNING'" size="small" />
 
                     <template v-if="!scope.row.backfill.paused">
@@ -46,7 +46,7 @@
                         </el-button>
                     </template>
 
-                    <template v-else>
+                    <template v-else-if="userCan(action.UPDATE)">
                         <el-button size="small">
                             <kicon :tooltip="$t('continue backfill')">
                                 <Play @click="unpauseBackfill(scope.row)" />
@@ -63,12 +63,12 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="disable" class-name="row-action">
+        <el-table-column column-key="disable" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-switch
                     size="small"
                     :active-text="$t('enabled')"
-                    :value="!scope.row.disabled"
+                    :model-value="!scope.row.disabled"
                     @change="setDisabled(scope.row, $event)"
                     class="switch-text"
                     :active-action-icon="Check"
@@ -76,7 +76,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="unlock" class-name="row-action">
+        <el-table-column column-key="unlock" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-button size="small" v-if="scope.row.executionId" @click="unlock">
                     <kicon :tooltip="$t('unlock trigger.button')">
@@ -97,7 +97,7 @@
         </el-table-column>
     </el-table>
 
-    <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true" :width="470">
+    <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
             <span v-html="$t('backfill executions')" />
         </template>
@@ -124,19 +124,13 @@
                     </el-form-item>
                 </div>
             </div>
-            <el-form-item label="Inputs">
-                <inputs-form
-                    :flow-inputs="flow.inputs"
-                    @update="backfill.inputs = $event"
-                />
-            </el-form-item>
-            <el-form-item :label="$t('execution labels')">
-                <label-input
-                    :placeholder="$t('execution labels')"
-                    v-model:labels="backfill.labels"
-                />
-            </el-form-item>
         </el-form>
+        <flow-run
+            @update-inputs="backfill.inputs = $event"
+            @update-labels="backfill.labels = $event"
+            :redirect="false"
+            :embed="true"
+        />
         <template #footer>
             <el-button
                 type="primary"
@@ -170,23 +164,24 @@
     import Pause from "vue-material-design-icons/Pause.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
-    import LabelInput from "../labels/LabelInput.vue";
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import Check from "vue-material-design-icons/Check.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import FlowRun from "./FlowRun.vue";
 </script>
 
 <script>
     import Markdown from "../layout/Markdown.vue";
-    import {mapGetters} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import Kicon from "../Kicon.vue"
-    import InputsForm from "../inputs/InputsForm.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
     import Status from "../Status.vue";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
-        components: {Markdown, Kicon, InputsForm, DateAgo, Vars, Status},
+        components: {Markdown, Kicon, DateAgo, Vars, Status},
         data() {
             return {
                 triggerId: undefined,
@@ -208,6 +203,7 @@
             this.loadData();
         },
         computed: {
+            ...mapState("auth", ["user"]),
             ...mapGetters("flow", ["flow"]),
             modalData() {
                 return Object
@@ -239,6 +235,9 @@
             }
         },
         methods: {
+            userCan(action) {
+                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
+            },
             loadData() {
                 this.$store
                     .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id})
@@ -282,7 +281,7 @@
                     backfill: this.cleanBackfill
                 })
                     .then(_ => {
-                        this.$toast().saved(trigger.id);
+                        this.$toast().saved(this.selectedTrigger.id);
                         this.loadData();
                         this.setBackfillModal(null, false);
                         this.backfill = {

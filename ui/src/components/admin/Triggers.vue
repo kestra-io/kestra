@@ -73,35 +73,39 @@
                                     v-if="scope.row.executionId"
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
                                 >
-                                    {{ scope.row.executionId }}
+                                    <id :value="scope.row.executionId" :shrink="true" />
                                 </router-link>
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="executionCurrentState" :label="$t('state')" />
+                        <el-table-column :label="$t('state')">
+                            <template #default="scope">
+                                <status :status="scope.row.executionCurrentState" size="small" />
+                            </template>
+                        </el-table-column>
                         <el-table-column :label="$t('date')">
                             <template #default="scope">
-                                {{ scope.row.date ? $filters.date(scope.row.date, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('updated date')">
                             <template #default="scope">
-                                {{ scope.row.updatedDate ? $filters.date(scope.row.updatedDate, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('next execution date')">
                             <template #default="scope">
-                                {{ scope.row.nextExecutionDate ? $filters.date(scope.row.nextExecutionDate, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('evaluation lock date')">
                             <template #default="scope">
-                                {{ scope.row.evaluateRunningDate ? $filters.date(scope.row.evaluateRunningDate, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.nextExecutionDatevaluateRunningDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="user.hasAnyAction(permission.FLOW, action.UPDATE)" column-key="action" class-name="row-action">
+                        <el-table-column v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)" column-key="action" class-name="row-action">
                             <template #default="scope">
-                                <el-button text v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                <el-button size="small" v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
                                         placement="left"
@@ -118,7 +122,7 @@
                                 <el-switch
                                     size="small"
                                     :active-text="$t('enabled')"
-                                    :value="!scope.row.disabled"
+                                    :model-value="!scope.row.disabled"
                                     @change="setDisabled(scope.row, $event)"
                                     class="switch-text"
                                     :active-action-icon="Check"
@@ -160,6 +164,9 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Id from "../Id.vue";
+    import Status from "../Status.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -169,7 +176,10 @@
             MarkdownTooltip,
             DataTable,
             SearchField,
-            NamespaceSelect
+            NamespaceSelect,
+            DateAgo,
+            Status,
+            Id,
         },
         data() {
             return {

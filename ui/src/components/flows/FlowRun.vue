@@ -1,5 +1,5 @@
 <template>
-    <div class="container" v-if="flow">
+    <template v-if="flow">
         <el-alert v-if="flow.disabled" type="warning" show-icon :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
@@ -100,7 +100,7 @@
                 </el-collapse-item>
             </el-collapse>
 
-            <div class="bottom-buttons">
+            <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">
                     <el-form-item>
                         <el-button v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
@@ -120,7 +120,7 @@
                 </div>
             </div>
         </el-form>
-    </div>
+    </template>
 </template>
 
 <script setup>
@@ -138,11 +138,15 @@
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
 
     export default {
-        components: {Editor, LabelInput},
+        components: {Editor, LabelInput, Markdown,},
         props: {
             redirect: {
                 type: Boolean,
                 default: true
+            },
+            embed: {
+                type: Boolean,
+                default: false
             }
         },
         data() {
@@ -155,7 +159,7 @@
                 newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB
             };
         },
-        emits: ["executionTrigger"],
+        emits: ["executionTrigger", "updateInputs", "updateLabels"],
         created() {
             for (const input of this.flow.inputs || []) {
                 this.inputs[input.id] = input.defaults;
@@ -331,6 +335,18 @@
             },
         },
         watch: {
+            inputs: {
+                handler() {
+                    this.$emit("updateInputs", this.inputs);
+                },
+                deep: true
+            },
+            executionLabels: {
+                handler() {
+                    this.$emit("updateLabels", this.executionLabels);
+                },
+                deep: true
+            },
             guidedProperties: {
                 handler() {
                     if (this.guidedProperties.validateInputs) {
@@ -344,11 +360,6 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(.el-switch__label) {
-        color: var(--el-text-color-regular);
-    }
-
-
     :deep(.el-collapse) {
         border-radius: var(--bs-border-radius);
         .el-collapse-item__header {

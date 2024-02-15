@@ -165,6 +165,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
     private QueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
 
+    @Inject
+    private LogService logService;
+
     @SneakyThrows
     @Override
     public void run() {
@@ -300,12 +303,11 @@ public class JdbcExecutor implements ExecutorInterface {
                                 .build()
                             );
 
-                            log.warn(
-                                "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
-                                workerTaskRunning.getTaskRun().getNamespace(),
-                                workerTaskRunning.getTaskRun().getFlowId(),
-                                workerTaskRunning.getTaskRun().getExecutionId(),
-                                workerTaskRunning.getTaskRun().getId()
+                            logService.logTaskRun(
+                                workerTaskRunning.getTaskRun(),
+                                log,
+                                Level.WARN,
+                                "WorkerTask is being resend"
                             );
                         }
 
@@ -316,11 +318,11 @@ public class JdbcExecutor implements ExecutorInterface {
                             .triggerContext(workerTriggerRunning.getTriggerContext())
                             .build());
 
-                        log.warn(
-                            "[namespace: {}] [flow: {}] [trigger: {}] WorkerTrigger is being resend",
-                            workerTriggerRunning.getTriggerContext().getNamespace(),
-                            workerTriggerRunning.getTriggerContext().getFlowId(),
-                            workerTriggerRunning.getTriggerContext().getTriggerId()
+                        logService.logTrigger(
+                            workerTriggerRunning.getTriggerContext(),
+                            log,
+                            Level.WARN,
+                            "WorkerTrigger is being resend"
                         );
                     } else {
                         throw new IllegalArgumentException("Object is of type " + workerJobRunning.getClass() + " which should never occurs");

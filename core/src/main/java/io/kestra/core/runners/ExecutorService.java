@@ -18,6 +18,7 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.LogService;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
@@ -25,8 +26,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,16 +42,19 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class ExecutorService {
     @Inject
-    protected ApplicationContext applicationContext;
+    private ApplicationContext applicationContext;
 
     @Inject
-    protected RunContextFactory runContextFactory;
+    private RunContextFactory runContextFactory;
 
     @Inject
-    protected MetricRegistry metricRegistry;
+    private MetricRegistry metricRegistry;
 
     @Inject
-    protected ConditionService conditionService;
+    private ConditionService conditionService;
+
+    @Inject
+    private LogService logService;
 
     protected FlowExecutorInterface flowExecutorInterface;
 
@@ -79,11 +83,11 @@ public class ExecutorService {
                         .build();
 
                     // when max concurrency is reached, we throttle the execution and stop processing
-                    flow.logger().info(
-                        "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded, {} running(s)",
-                        newExecution.getNamespace(),
-                        newExecution.getFlowId(),
-                        newExecution.getId(),
+                    logService.logExecution(
+                        newExecution,
+                        flow.logger(),
+                        Level.INFO,
+                        "Flow is queued due to concurrency limit exceeded, {} running(s)",
                         count
                     );
                     // return the execution queued
@@ -153,11 +157,11 @@ public class ExecutorService {
 
     public Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
-            log.trace(
-                "[namespace: {}] [flow: {}] [execution: {}] Found {} next(s) {}",
-                execution.getNamespace(),
-                execution.getFlowId(),
-                execution.getId(),
+            logService.logExecution(
+                execution,
+                flow.logger(),
+                Level.TRACE,
+                "Found {} next(s) {}",
                 nexts.size(),
                 nexts
             );
@@ -181,11 +185,11 @@ public class ExecutorService {
                 .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
                 .increment();
 
-            flow.logger().info(
-                "[namespace: {}] [flow: {}] [execution: {}] Flow started",
-                execution.getNamespace(),
-                execution.getFlowId(),
-                execution.getId()
+            logService.logExecution(
+                execution,
+                flow.logger(),
+                Level.INFO,
+                "Flow started"
             );
 
             newExecution = newExecution.withState(State.Type.RUNNING);
@@ -361,10 +365,11 @@ public class ExecutorService {
                 newExecution = newExecution
                     .withOutputs(outputs);
             } catch (IllegalVariableEvaluationException e) {
-                logger.error("[namespace: {}] [flow: {}] [execution: {}] Failed to render output values",
-                    executor.getExecution().getNamespace(),
-                    executor.getExecution().getFlowId(),
-                    executor.getExecution().getId(),
+                logService.logExecution(
+                    executor.getExecution(),
+                    logger,
+                    Level.ERROR,
+                    "Failed to render output values",
                     e
                 );
                 newExecution = newExecution
@@ -372,11 +377,11 @@ public class ExecutorService {
             }
         }
 
-        logger.info(
-            "[namespace: {}] [flow: {}] [execution: {}] Flow completed with state {} in {}",
-            newExecution.getNamespace(),
-            newExecution.getFlowId(),
-            newExecution.getId(),
+        logService.logExecution(
+            newExecution,
+            flow.logger(),
+            Level.INFO,
+            "Flow completed with state {} in {}",
             newExecution.getState().getCurrent(),
             newExecution.getState().humanDuration()
         );
@@ -576,11 +581,11 @@ public class ExecutorService {
             .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
             .increment();
 
-        executor.getFlow().logger().info(
-            "[namespace: {}] [flow: {}] [execution: {}] Flow restarted",
-            executor.getExecution().getNamespace(),
-            executor.getExecution().getFlowId(),
-            executor.getExecution().getId()
+        logService.logExecution(
+            executor.getExecution(),
+            executor.getFlow().logger(),
+            Level.INFO,
+            "Flow restarted"
         );
 
         return executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handleRestart");

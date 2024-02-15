@@ -51,7 +51,7 @@
                             </kicon>
                         </el-button>
 
-                        <el-button size="small" @click="deleteBackfill(scope.row)" >
+                        <el-button size="small" @click="deleteBackfill(scope.row)">
                             <kicon :tooltip="$t('delete backfill')">
                                 <Delete />
                             </kicon>

@@ -159,7 +159,8 @@ public abstract class AbstractScheduler implements Scheduler {
                         workerTriggerResult.getExecution().get(),
                         workerTriggerResult.getTriggerContext()
                     );
-                    this.handleEvaluatePollingTriggerResult(triggerExecution);
+                    ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) workerTriggerResult.getTrigger()).nextEvaluationDate();
+                    this.handleEvaluatePollingTriggerResult(triggerExecution, nextExecutionDate);
                 } else {
                     // previously, if no interval the trigger was executed immediately. I think only the Schedule trigger has no interval
                     // now that all triggers are sent to the worker, we need to do this to avoid issues with backfills
@@ -388,14 +389,15 @@ public abstract class AbstractScheduler implements Scheduler {
     // Polling triggers result is evaluated in another thread
     // with the workerTriggerResultQueue,
     // so we can't save them now
-    private void handleEvaluatePollingTriggerResult(SchedulerExecutionWithTrigger result) {
+    private void handleEvaluatePollingTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
         Stream.of(result)
             .filter(Objects::nonNull)
             .peek(this::log)
             .forEach(executionWithTrigger -> {
                     Trigger trigger = Trigger.of(
                         executionWithTrigger.getTriggerContext(),
-                        executionWithTrigger.getExecution()
+                        executionWithTrigger.getExecution(),
+                        nextExecutionDate
                     );
 
                     // Check if the localTriggerState contains it

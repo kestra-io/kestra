@@ -934,3 +934,25 @@ form.ks-horizontal {
     }
 }
 
+
+.el-radio-group.filter {
+    padding: 1px 4px;
+    box-shadow: 0 0 0 1px var(--el-border-color) inset;
+    background-color: var(--input-bg);
+    border-radius: var(--el-border-radius-base);
+    height: var(--el-component-size);
+
+    .el-radio-button__inner {
+        background-color: var(--input-bg);
+        padding: 4px 15px;
+        border: 0 !important;
+        box-shadow: none;
+
+        border-radius: var(--el-border-radius-base) !important;
+    }
+
+    .el-radio-button__original-radio:checked + .el-radio-button__inner {
+        box-shadow: none;
+        background: var(--bs-gray-500);
+    }
+}

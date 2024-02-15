@@ -2,6 +2,7 @@
     <el-radio-group
         v-model="selectedFilterType"
         @change="onSelectedFilterType()"
+        class="filter"
     >
         <el-radio-button :label="filterType.RELATIVE">
             {{ $t("relative") }}

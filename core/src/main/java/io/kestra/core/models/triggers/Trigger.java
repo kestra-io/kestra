@@ -206,6 +206,10 @@ public class Trigger extends TriggerContext {
     }
 
     public Trigger resetExecution(State.Type executionEndState) {
+        return resetExecution(executionEndState, this.getNextExecutionDate());
+    }
+
+    public Trigger resetExecution(State.Type executionEndState, ZonedDateTime nextExecutionDate) {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
         Boolean disabled = this.getStopAfter() != null ? this.getStopAfter().contains(executionEndState) : this.getDisabled();
 
@@ -216,7 +220,7 @@ public class Trigger extends TriggerContext {
             .flowRevision(this.getFlowRevision())
             .triggerId(this.getTriggerId())
             .date(this.getDate())
-            .nextExecutionDate(this.getNextExecutionDate())
+            .nextExecutionDate(nextExecutionDate)
             .stopAfter(this.getStopAfter())
             .backfill(this.getBackfill())
             .disabled(disabled)

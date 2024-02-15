@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.conditions.types.VariableCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -27,7 +28,6 @@ import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-@MicronautTest(transactional = false, rebuildContext = true) // without 'rebuildContext = true' the second test fail
 public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     @Inject
     private ApplicationContext applicationContext;
@@ -43,7 +43,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     void pollingTrigger() throws Exception {
         // mock flow listener
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        PollingTrigger pollingTrigger = createPollingTrigger(null);
+        PollingTrigger pollingTrigger = createPollingTrigger(null).build();
         Flow flow = createPollingTriggerFlow(pollingTrigger);
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -80,7 +80,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     void pollingTriggerStopAfter() throws Exception {
         // mock flow listener
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        PollingTrigger pollingTrigger = createPollingTrigger(List.of(State.Type.FAILED));
+        PollingTrigger pollingTrigger = createPollingTrigger(List.of(State.Type.FAILED)).build();
         Flow flow = createPollingTriggerFlow(pollingTrigger)
             .toBuilder()
             .tasks(List.of(Fail.builder().id("fail").type(Fail.class.getName()).build()))
@@ -125,17 +125,62 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         }
     }
 
+    @Test
+    void failedEvaluationTest() throws Exception {
+        // mock flow listener
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        PollingTrigger pollingTrigger = createPollingTrigger(null)
+            .conditions(
+                List.of(
+                    VariableCondition.builder()
+                        .type(VariableCondition.class.getName())
+                        .expression("{{ trigger.date | date() < now() }}")
+                        .build()
+                ))
+            .build();
+        Flow flow = createPollingTriggerFlow(pollingTrigger);
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        try (
+            AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+            Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)
+        ) {
+            AtomicReference<Execution> last = new AtomicReference<>();
+
+            Runnable executionQueueStop = executionQueue.receive(execution -> {
+                if (execution.getLeft().getFlowId().equals(flow.getId())) {
+                    last.set(execution.getLeft());
+                    queueCount.countDown();
+                }
+            });
+
+            worker.run();
+            scheduler.run();
+
+            queueCount.await(10, TimeUnit.SECONDS);
+            // close the execution queue consumer
+            executionQueueStop.run();
+
+            assertThat(queueCount.getCount(), is(0L));
+            assertThat(last.get(), notNullValue());
+            assertThat(last.get().getState().getCurrent(), is(State.Type.FAILED));
+        }
+    }
+
     private Flow createPollingTriggerFlow(PollingTrigger pollingTrigger) {
         return createFlow(Collections.singletonList(pollingTrigger));
     }
 
-    private PollingTrigger createPollingTrigger(List<State.Type> stopAfter) {
+    private PollingTrigger.PollingTriggerBuilder<?, ?> createPollingTrigger(List<State.Type> stopAfter) {
         return PollingTrigger.builder()
             .id("polling-trigger")
             .type(PollingTrigger.class.getName())
             .duration(500L)
-            .stopAfter(stopAfter)
-            .build();
+            .stopAfter(stopAfter);
     }
 
     private AbstractScheduler scheduler(FlowListeners flowListenersServiceSpy) {

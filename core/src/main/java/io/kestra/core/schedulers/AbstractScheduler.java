@@ -3,6 +3,7 @@ package io.kestra.core.schedulers;
 import com.google.common.base.Throwables;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -18,6 +19,7 @@ import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -294,7 +296,6 @@ public abstract class AbstractScheduler implements Scheduler {
             // Get all triggers that are ready for evaluation
             List<FlowWithPollingTriggerNextDate> readyForEvaluate = schedulable
                 .stream()
-                .filter(f -> conditionService.isValid(f.getFlow(), f.getAbstractTrigger(), f.getConditionContext()))
                 .map(flowWithTriggers -> FlowWithPollingTrigger.builder()
                     .flow(flowWithTriggers.getFlow())
                     .abstractTrigger(flowWithTriggers.getAbstractTrigger())
@@ -335,60 +336,72 @@ public abstract class AbstractScheduler implements Scheduler {
                 .forEach(f -> {
                     schedulableNextDate.put(f.getTriggerContext().uid(), f);
                     Logger logger = f.getConditionContext().getRunContext().logger();
+                    try {
+                        // conditionService.areValid can fail, so we cannot execute it early as we need to try/catch and send a failed executions
+                        List<Condition> conditions = f.getAbstractTrigger().getConditions() != null ? f.getAbstractTrigger().getConditions() : Collections.emptyList();
+                        boolean shouldEvaluate = conditionService.areValid(conditions, f.getConditionContext());
+                        if (shouldEvaluate) {
 
-                    if (f.getPollingTrigger().getInterval() != null) {
-                        // If have an interval, the trigger is executed by the Worker.
-                        // Normally, only the Schedule trigger has no interval.
-                        Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
+                            if (f.getPollingTrigger().getInterval() != null) {
+                                // If it has an interval, the Worker will execute the trigger.
+                                // Normally, only the Schedule trigger has no interval.
+                                Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
 
-                        try {
-                            this.triggerState.save(triggerRunning, scheduleContext);
-                            this.sendPollingTriggerToWorker(f);
-                        } catch (InternalException e) {
-                            logService.logTrigger(
-                                f.getTriggerContext(),
-                                logger,
-                                Level.ERROR,
-                                "Unable to send polling trigger to worker",
-                                e
-                            );
-                        }
-                    } else if (f.getPollingTrigger() instanceof Schedule schedule) {
-                        // This is the Schedule, all other triggers should have an interval.
-                        // So we evaluate it now as there is no need to send it to the worker.
-                        // Schedule didn't use the triggerState to allow backfill.
-                        try {
-                            Optional<SchedulerExecutionWithTrigger> schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
-                            if (schedulerExecutionWithTrigger.isPresent()) {
-                                this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger.get(), f.getConditionContext(), scheduleContext);
+                                try {
+                                    this.triggerState.save(triggerRunning, scheduleContext);
+                                    this.sendPollingTriggerToWorker(f);
+                                } catch (InternalException e) {
+                                    logService.logTrigger(
+                                        f.getTriggerContext(),
+                                        logger,
+                                        Level.ERROR,
+                                        "Unable to send polling trigger to worker",
+                                        e
+                                    );
+                                }
+                            } else if (f.getPollingTrigger() instanceof Schedule schedule) {
+                                // This is the Schedule, all other triggers should have an interval.
+                                // So we evaluate it now as there is no need to send it to the worker.
+                                // Schedule didn't use the triggerState to allow backfill.
+                                Optional<SchedulerExecutionWithTrigger> schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
+                                if (schedulerExecutionWithTrigger.isPresent()) {
+                                    this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger.get(), f.getConditionContext(), scheduleContext);
+                                } else {
+                                    // compute next date and save the trigger to avoid evaluating it each second
+                                    Trigger trigger = Trigger.fromEvaluateFailed(
+                                        f.getTriggerContext(),
+                                        schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
+                                    );
+                                    trigger = trigger.checkBackfill();
+                                    this.triggerState.save(trigger, scheduleContext);
+                                }
                             } else {
-                                // compute next date and save the trigger to avoid evaluating it each second
-                                Trigger trigger = Trigger.fromEvaluateFailed(
+                                logService.logTrigger(
                                     f.getTriggerContext(),
-                                    schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
+                                    logger,
+                                    Level.ERROR,
+                                    "Polling trigger must have an interval (except the Schedule)"
                                 );
-                                trigger = trigger.checkBackfill();
-                                this.triggerState.save(trigger, scheduleContext);
                             }
-                        } catch (Exception e) {
-                            logService.logTrigger(
-                                f.getTriggerContext(),
-                                logger,
-                                Level.ERROR,
-                                "Evaluate schedule trigger failed",
-                                e
-                            );
                         }
-                    } else {
-                        logService.logTrigger(
-                            f.getTriggerContext(),
-                            logger,
-                            Level.ERROR,
-                            "Polling trigger must have an interval (except the Schedule)"
-                        );
+                    } catch(InternalException ie) {
+                        // validate schedule condition can fail to render variables
+                        // in this case, we send a failed execution so the trigger is not evaluated each second.
+                        logger.error("Unable to evaluate the trigger '{}'", f.getAbstractTrigger().getId(), ie);
+                        Execution execution = Execution.builder()
+                            .id(IdUtils.create())
+                            .tenantId(f.getTriggerContext().getTenantId())
+                            .namespace(f.getTriggerContext().getNamespace())
+                            .flowId(f.getTriggerContext().getFlowId())
+                            .flowRevision(f.getTriggerContext().getFlowRevision())
+                            .labels(f.getFlow().getLabels())
+                            .state(new State().withState(State.Type.FAILED))
+                            .build();
+                        ZonedDateTime nextExecutionDate = f.getPollingTrigger().nextEvaluationDate();
+                        var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
+                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
                     }
                 });
-
         });
     }
 
@@ -405,7 +418,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
                     // Polling triggers result is evaluated in another thread with the workerTriggerResultQueue.
                     // We can then update the trigger directly.
-                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger, triggerToSave -> this.triggerState.update(triggerToSave));
+                    this.saveLastTriggerAndEmitExecution(executionWithTrigger.getExecution(), trigger, triggerToSave -> this.triggerState.update(triggerToSave));
                 }
             );
     }
@@ -426,15 +439,15 @@ public abstract class AbstractScheduler implements Scheduler {
 
         // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.
         // So we must save them by passing the scheduleContext.
-        this.saveLastTriggerAndEmitExecution(result, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
     }
 
-    protected void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger, Trigger trigger, Consumer<Trigger> saveAction) {
+    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger trigger, Consumer<Trigger> saveAction) {
         saveAction.accept(trigger);
 
         // we need to be sure that the tenantId is propagated from the trigger to the execution
-        var execution = executionWithTrigger.getExecution().withTenantId(executionWithTrigger.getTriggerContext().getTenantId());
-        this.executionQueue.emit(execution);
+        var newExecution = execution.withTenantId(trigger.getTenantId());
+        this.executionQueue.emit(newExecution);
     }
 
     private boolean isExecutionNotRunning(FlowWithPollingTrigger f) {

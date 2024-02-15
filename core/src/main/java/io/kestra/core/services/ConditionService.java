@@ -64,7 +64,21 @@ public class ConditionService {
         return this.valid(flow, conditions, conditionContext);
     }
 
+    /**
+     * Check that all conditions are valid.
+     * Warning, this method throws if a condition cannot be evaluated.
+     */
     public boolean isValid(List<ScheduleCondition> conditions, ConditionContext conditionContext) throws InternalException {
+        return conditions
+            .stream()
+            .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
+    }
+
+    /**
+     * Check that all conditions are valid.
+     * Warning, this method throws if a condition cannot be evaluated.
+     */
+    public boolean areValid(List<Condition> conditions, ConditionContext conditionContext) throws InternalException {
         return conditions
             .stream()
             .allMatch(throwPredicate(condition -> condition.test(conditionContext)));

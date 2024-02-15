@@ -34,7 +34,6 @@ public class Backfill {
     @Schema(
         title = "The end date."
     )
-    @NotNull
     ZonedDateTime end;
 
     @Schema(

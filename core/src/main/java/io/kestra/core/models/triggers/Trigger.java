@@ -202,6 +202,7 @@ public class Trigger extends TriggerContext {
             .build();
     }
 
+    // Used to update trigger in flowListeners
     public static Trigger of(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<Trigger> lastTrigger) throws Exception {
         return Trigger.builder()
             .tenantId(flow.getTenantId())
@@ -210,7 +211,7 @@ public class Trigger extends TriggerContext {
             .flowRevision(flow.getRevision())
             .triggerId(abstractTrigger.getId())
             .date(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-            .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, lastTrigger))
+            .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty()))
             .stopAfter(abstractTrigger.getStopAfter())
             .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
             .backfill(lastTrigger.map(TriggerContext::getBackfill).orElse(null))
@@ -228,6 +229,7 @@ public class Trigger extends TriggerContext {
                     newTrigger
                         .getBackfill()
                         .toBuilder()
+                        .end(newTrigger.getBackfill().getEnd() != null ? newTrigger.getBackfill().getEnd() : ZonedDateTime.now())
                         .currentDate(
                             newTrigger.getBackfill().getStart()
                         )

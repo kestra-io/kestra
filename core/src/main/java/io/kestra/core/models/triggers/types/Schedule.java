@@ -68,8 +68,7 @@ import java.util.*;
             triggers:
               - id: every_15_minutes
                 type: io.kestra.core.models.triggers.types.Schedule
-                cron: "*/15 * * * *"
-            """
+                cron: '*/15 * * * *'"""
         ),
         @Example(
             title = "Schedule a flow every hour using the cron nickname `@hourly`.",
@@ -94,7 +93,26 @@ import java.util.*;
                 "        dayInMonth: \"FIRST\"",
             },
             full = true
-        )
+        ),
+        @Example(
+            title = "Schedule a flow every day at 9:00 AM and pause a schedule trigger after a failed execution using the `stopAfter` property.",
+            full = true,
+            code = """
+            id: business_critical_flow
+            namespace: production
+
+            tasks:
+              - id: important_task
+                type: io.kestra.core.tasks.log.Log
+                message: "if this run fails, disable the schedule until the issue is fixed"
+
+            triggers:
+              - id: stop_after_failed
+                type: io.kestra.core.models.triggers.types.Schedule
+                cron: "0 9 * * *"
+                stopAfter:
+                  - FAILED"""
+        ),        
     }
 
 )

@@ -46,15 +46,13 @@
     import AccountHardHatOutline from "vue-material-design-icons/AccountHardHatOutline.vue";
     import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
     import {shallowRef} from "vue";
-    import Logo from "../../components/home/Logo.vue";
 
     export default {
         components: {
             ChevronLeft,
             ChevronRight,
             SidebarMenu,
-            Environment,
-            Logo
+            Environment
         },
         emits: ["menu-collapse"],
         methods: {

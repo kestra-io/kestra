@@ -957,6 +957,15 @@ form.ks-horizontal {
                         0 31px 9px 0 #7614B803;
         }
 
+        &.is-success .el-step__icon {
+            box-shadow: 0 2px 3px 0 #29DB9726,
+                        0 6px 6px 0 #29DB9721,
+                        0 14px 8px 0 #29DB9714,
+                        0 25px 10px 0 #29DB9705,
+                        0 39px 11px 0 #29DB9700;
+
+        }
+
         .el-step__line {
             width: 1px;
         }

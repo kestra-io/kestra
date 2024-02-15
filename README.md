@@ -113,7 +113,7 @@ tasks:
       maxAttempt: 5 # type: int
       warningOnRetry: true # type: boolean, default is false
 
-- id: parallel
+  - id: parallel
     type: io.kestra.core.tasks.flows.Parallel
     concurrent: 3
     tasks:
@@ -184,7 +184,7 @@ Alternatively, you can use `wget https://raw.githubusercontent.com/kestra-io/kes
 Start Kestra:
 
 ```sh
-docker compose up
+docker compose up -d
 ```
 
 
@@ -198,6 +198,7 @@ Here is a simple example logging hello world message to the terminal:
 ```yaml
 id: getting_started
 namespace: dev
+
 tasks:
   - id: hello_world
     type: io.kestra.core.tasks.log.Log
@@ -378,11 +379,6 @@ If you need help or have any questions, reach out using one of the following cha
 - [Slack](https://kestra.io/slack) - join the community and get the latest updates.
 - [GitHub discussions](https://github.com/kestra-io/kestra/discussions) - useful to start a conversation that is not a bug or feature request.
 - [Twitter](https://twitter.com/kestra_io) - to follow up with the latest updates.
-
-
-## Roadmap
-
-See the [open issues](https://github.com/kestra-io/kestra/issues) for a list of proposed features (and known issues) or look at the [project board](https://github.com/orgs/kestra-io/projects/2).
 
 
 ## Contributing

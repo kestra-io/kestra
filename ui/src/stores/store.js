@@ -14,7 +14,7 @@ import stat from "./stat"
 import template from "./template"
 import taskrun from "./taskruns"
 import trigger from "./trigger";
-import worker from "./worker";
+import service from "./service";
 
 export default {
     modules: {
@@ -34,6 +34,6 @@ export default {
         plugin,
         taskrun,
         trigger,
-        worker
+        service
     }
 }

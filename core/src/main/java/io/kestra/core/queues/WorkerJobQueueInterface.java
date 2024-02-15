@@ -12,5 +12,4 @@ public interface WorkerJobQueueInterface extends Closeable {
 
     void pause();
 
-    void cleanup();
 }

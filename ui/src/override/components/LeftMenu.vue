@@ -188,9 +188,9 @@
                                 }
                             },
                             {
-                                href: {name: "admin/workers"},
-                                routes: this.routeStartWith("admin/workers"),
-                                title: this.$t("workers"),
+                                href: {name: "admin/cluster/services"},
+                                routes: this.routeStartWith("admin/cluster/services"),
+                                title: this.$t("cluster"),
                                 icon: {
                                     element: shallowRef(ServerOutline),
                                     class: "menu-icon"

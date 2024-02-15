@@ -26,10 +26,6 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
-  heartbeat:
-    frequency: 10s
-    heartbeat-missed: 3
-
   jdbc:
     tables:
       queues:
@@ -70,9 +66,9 @@ kestra:
       flowtopologies:
         table: "flow_topologies"
         cls: io.kestra.core.models.topologies.FlowTopology
-      workerinstance:
-        cls: io.kestra.core.runners.WorkerInstance
-        table: "worker_instance"
+      serviceinstance:
+        cls: io.kestra.core.server.ServiceInstance
+        table: "service_instance"
       workerjobrunning:
         cls: io.kestra.core.runners.WorkerJobRunning
         table: "worker_job_running"
@@ -84,7 +80,9 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-
   tasks:
     subflow:
       allow-parameter-outputs: true
+  server:
+    liveness:
+      enabled: false

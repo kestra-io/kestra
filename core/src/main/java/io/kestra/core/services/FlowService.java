@@ -184,9 +184,9 @@ public class FlowService {
     }
 
     public static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
-        return ListUtils.emptyOnNull(previous.getTriggers())
+        return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
-            .filter(oldTrigger -> ListUtils.emptyOnNull(flow.getTriggers())
+            .filter(oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
                 .stream()
                 .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !trigger.equals(oldTrigger))
             )

@@ -1,9 +1,17 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.services.ConditionService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -18,6 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +39,16 @@ public class TriggerController {
     private QueueInterface<Trigger> triggerQueue;
 
     @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
     private TenantService tenantService;
+
+    @Inject
+    private  RunContextFactory runContextFactory;
+
+    @Inject
+    private  ConditionService conditionService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -107,8 +125,26 @@ public class TriggerController {
     public HttpResponse<Trigger> update(
         @Parameter(description = "The trigger") @Body final Trigger newTrigger
     ) throws HttpStatusException {
+
+        Optional<Flow> maybeFlow = this.flowRepository.findById(this.tenantService.resolveTenant(), newTrigger.getNamespace(), newTrigger.getFlowId());
+        if (maybeFlow.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, String.format("Flow of trigger %s not found", newTrigger.getTriggerId()));
+        }
+        AbstractTrigger abstractTrigger = maybeFlow.get().getTriggers().stream().filter(t -> t.getId().equals(newTrigger.getTriggerId())).findFirst().orElse(null);
+        if (abstractTrigger == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, String.format("Flow %s has no trigger %s", newTrigger.getFlowId(), newTrigger.getTriggerId()));
+        }
+
         Trigger updatedTrigger = this.triggerRepository.lock(newTrigger.uid(), (current) -> {
-            Trigger updated = Trigger.update(current, newTrigger);
+            Trigger updated = null;
+            try {
+                RunContext runContext = runContextFactory.of(maybeFlow.get(), abstractTrigger);
+                ConditionContext conditionContext = conditionService.conditionContext(runContext, maybeFlow.get(), null);
+                ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty());
+                updated = Trigger.update(current, newTrigger, nextExecutionDate);
+            } catch (Exception e) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            }
             triggerQueue.emit(updated);
 
             return updated;

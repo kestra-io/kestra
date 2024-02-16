@@ -6,7 +6,10 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -214,11 +217,11 @@ public class Trigger extends TriggerContext {
             .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty()))
             .stopAfter(abstractTrigger.getStopAfter())
             .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
-            .backfill(lastTrigger.map(TriggerContext::getBackfill).orElse(null))
+            .backfill(null)
             .build();
     }
 
-    public static Trigger update(Trigger currentTrigger, Trigger newTrigger) {
+    public static Trigger update(Trigger currentTrigger, Trigger newTrigger, ZonedDateTime nextExecutionDate) throws Exception {
         Trigger updated = currentTrigger;
 
         // If a backfill is created, we update the currentTrigger
@@ -237,10 +240,13 @@ public class Trigger extends TriggerContext {
                             currentTrigger.getNextExecutionDate())
                         .build())
                 .build();
+        } else {
+
         }
 
         return updated.toBuilder()
-            .nextExecutionDate(ZonedDateTime.now())
+            .nextExecutionDate(newTrigger.getDisabled() ?
+                null : nextExecutionDate)
             .disabled(newTrigger.getDisabled())
             .build();
     }

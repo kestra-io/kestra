@@ -79,6 +79,10 @@ public class TriggerContext {
         );
     }
 
+    public Boolean getDisabled() {
+        return this.disabled != null ? this.disabled : Boolean.FALSE;
+    }
+
     // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
     // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
     public static abstract class TriggerContextBuilder<C extends TriggerContext, B extends TriggerContextBuilder<C, B>> {

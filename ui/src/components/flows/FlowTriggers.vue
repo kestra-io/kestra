@@ -33,7 +33,7 @@
                 >
                     {{ $t("backfill executions") }}
                 </el-button>
-                <template v-else-if="userCan(action.UPDATE)">
+                <template v-else-if="scheduleClassName === scope.row.type && userCan(action.UPDATE)">
                     <status :status="scope.row.backfill.paused ? 'PAUSED' : 'RUNNING'" size="small" />
 
                     <template v-if="!scope.row.backfill.paused">
@@ -220,9 +220,11 @@
             },
             triggersWithType() {
                 let flowTriggers = this.flow.triggers
+                console.log(flowTriggers)
                 if (flowTriggers) {
                     return flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
+                        console.log(pollingTrigger)
                         return {...flowTrigger, ...(pollingTrigger || {})}
                     })
                 }
@@ -345,7 +347,6 @@
                     })
             },
             unlock(trigger) {
-                console.log(trigger)
                 this.$store.dispatch("trigger/unlock", {
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,

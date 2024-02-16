@@ -109,7 +109,15 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(TriggerContext triggerContext, Execution execution, ZonedDateTime nextExecutionDate) {
         return fromContext(triggerContext)
-            .executionId(execution.getId())
+            .executionId(execution != null ? execution.getId() : null)
+            .updatedDate(Instant.now())
+            .nextExecutionDate(nextExecutionDate)
+            .build();
+    }
+
+    public static Trigger fromEvaluateFailed(TriggerContext triggerContext, ZonedDateTime nextExecutionDate) {
+        return fromContext(triggerContext)
+            .executionId(null)
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
             .build();

@@ -6,7 +6,10 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -16,7 +19,7 @@ import java.util.Optional;
 
 @SuperBuilder(toBuilder = true)
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @NoArgsConstructor
 public class Trigger extends TriggerContext {
@@ -31,6 +34,18 @@ public class Trigger extends TriggerContext {
 
     @Nullable
     private ZonedDateTime evaluateRunningDate; // this is used as an evaluation lock to avoid duplicate evaluation
+
+    protected Trigger(TriggerBuilder<?, ?> b) {
+        super(b);
+        this.executionId = b.executionId;
+        this.executionCurrentState = b.executionCurrentState;
+        this.updatedDate = b.updatedDate;
+        this.evaluateRunningDate = b.evaluateRunningDate;
+    }
+
+    public static TriggerBuilder<?, ?> builder() {
+        return new TriggerBuilderImpl();
+    }
 
     public String uid() {
         return uid(this);
@@ -78,59 +93,11 @@ public class Trigger extends TriggerContext {
     }
 
     /**
-     * Create a new Trigger with no execution information and no evaluation lock.
-     */
-    public static Trigger of(TriggerContext triggerContext) {
-        return Trigger.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(triggerContext.getFlowRevision())
-            .triggerId(triggerContext.getTriggerId())
-            .date(triggerContext.getDate())
-            .backfill(triggerContext.getBackfill())
-            .stopAfter(triggerContext.getStopAfter())
-            .disabled(triggerContext.getDisabled())
-            .build();
-    }
-
-    /**
      * Create a new Trigger from polling trigger with no execution information and no evaluation lock.
      */
     public static Trigger of(TriggerContext triggerContext, ZonedDateTime nextExecutionDate) {
-        return Trigger.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(triggerContext.getFlowRevision())
-            .triggerId(triggerContext.getTriggerId())
-            .date(triggerContext.getDate())
+        return fromContext(triggerContext)
             .nextExecutionDate(nextExecutionDate)
-            .backfill(triggerContext.getBackfill())
-            .stopAfter(triggerContext.getStopAfter())
-            .disabled(triggerContext.getDisabled())
-            .build();
-    }
-
-    /**
-     * Create a new Trigger with execution information.
-     * <p>
-     * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
-     */
-    public static Trigger of(TriggerContext triggerContext, Execution execution) {
-        return Trigger.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(triggerContext.getFlowRevision())
-            .triggerId(triggerContext.getTriggerId())
-            .date(triggerContext.getDate())
-            .executionId(execution.getId())
-            .updatedDate(Instant.now())
-            .nextExecutionDate(triggerContext.getNextExecutionDate())
-            .backfill(triggerContext.getBackfill())
-            .stopAfter(triggerContext.getStopAfter())
-            .disabled(triggerContext.getDisabled())
             .build();
     }
 
@@ -141,19 +108,10 @@ public class Trigger extends TriggerContext {
      * This is used to lock the trigger while an execution is running, it will also erase the evaluation lock.
      */
     public static Trigger of(TriggerContext triggerContext, Execution execution, ZonedDateTime nextExecutionDate) {
-        return Trigger.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(triggerContext.getFlowRevision())
-            .triggerId(triggerContext.getTriggerId())
-            .date(triggerContext.getDate())
+        return fromContext(triggerContext)
             .executionId(execution.getId())
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
-            .backfill(triggerContext.getBackfill())
-            .stopAfter(triggerContext.getStopAfter())
-            .disabled(triggerContext.getDisabled())
             .build();
     }
 
@@ -186,19 +144,10 @@ public class Trigger extends TriggerContext {
      * This is used to lock the trigger evaluation.
      */
     public static Trigger of(Trigger trigger, ZonedDateTime evaluateRunningDate) {
-        return Trigger.builder()
-            .tenantId(trigger.getTenantId())
-            .namespace(trigger.getNamespace())
-            .flowId(trigger.getFlowId())
-            .flowRevision(trigger.getFlowRevision())
-            .triggerId(trigger.getTriggerId())
-            .date(trigger.getDate())
+        return fromContext(trigger)
             .nextExecutionDate(trigger.getNextExecutionDate())
             .evaluateRunningDate(evaluateRunningDate)
             .updatedDate(Instant.now())
-            .backfill(trigger.getBackfill())
-            .stopAfter(trigger.getStopAfter())
-            .disabled(trigger.getDisabled())
             .build();
     }
 
@@ -295,5 +244,25 @@ public class Trigger extends TriggerContext {
             }
         }
         return this;
+    }
+
+    // Add this line and all is good
+
+    private static TriggerBuilder<?, ?> fromContext(TriggerContext triggerContext) {
+        return Trigger.builder()
+            .tenantId(triggerContext.getTenantId())
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .triggerId(triggerContext.getTriggerId())
+            .date(triggerContext.getDate())
+            .backfill(triggerContext.getBackfill())
+            .stopAfter(triggerContext.getStopAfter())
+            .disabled(triggerContext.getDisabled());
+    }
+
+    // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
+    // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
+    public static abstract class TriggerBuilder<C extends Trigger, B extends TriggerBuilder<C, B>> extends TriggerContextBuilder<C, B> {
     }
 }

@@ -147,10 +147,14 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void updated() {
+        Flow flow = generateFlow();
+        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+
+
         Trigger trigger = Trigger.builder()
-            .flowId(IdUtils.create())
-            .namespace("io.kestra.unittest")
-            .triggerId("controllerUpdated")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .triggerId("trigger-nextexec-schedule")
             .executionId(IdUtils.create())
             .disabled(true)
             .build();

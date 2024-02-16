@@ -221,7 +221,7 @@ public class Trigger extends TriggerContext {
             .build();
     }
 
-    public static Trigger update(Trigger currentTrigger, Trigger newTrigger, AbstractTrigger abstractTrigger, ConditionContext conditionContext) throws Exception {
+    public static Trigger update(Trigger currentTrigger, Trigger newTrigger, ZonedDateTime nextExecutionDate) throws Exception {
         Trigger updated = currentTrigger;
 
         // If a backfill is created, we update the currentTrigger
@@ -246,9 +246,7 @@ public class Trigger extends TriggerContext {
 
         return updated.toBuilder()
             .nextExecutionDate(newTrigger.getDisabled() ?
-                null :
-                ((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty())
-            )
+                null : nextExecutionDate)
             .disabled(newTrigger.getDisabled())
             .build();
     }

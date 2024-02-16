@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
@@ -25,6 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -138,9 +140,10 @@ public class TriggerController {
             try {
                 RunContext runContext = runContextFactory.of(maybeFlow.get(), abstractTrigger);
                 ConditionContext conditionContext = conditionService.conditionContext(runContext, maybeFlow.get(), null);
-                updated = Trigger.update(current, newTrigger, abstractTrigger, conditionContext);
+                ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.empty());
+                updated = Trigger.update(current, newTrigger, nextExecutionDate);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
             }
             triggerQueue.emit(updated);
 

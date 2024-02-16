@@ -147,9 +147,8 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void updated() {
-        Flow flow = generateFlow();
+        Flow flow = generateFlow("flow-with-triggers-updated");
         jdbcFlowRepository.create(flow, flow.generateSource(), flow);
-
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
@@ -177,7 +176,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void nextExecutionDate() throws InterruptedException, TimeoutException {
-        Flow flow = generateFlow();
+        Flow flow = generateFlow("flow-with-triggers");
         jdbcFlowRepository.create(flow, flow.generateSource(), flow);
         Await.until(
             () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
@@ -189,9 +188,9 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         assertThat(triggers.getResults().get(1).getNextExecutionDate(), notNullValue());
     }
 
-    private Flow generateFlow() {
+    private Flow generateFlow(String flowId) {
         return Flow.builder()
-            .id("flow-with-triggers")
+            .id(flowId)
             .namespace("io.kestra.tests.scheduler")
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")

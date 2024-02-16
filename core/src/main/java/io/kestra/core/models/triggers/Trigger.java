@@ -109,7 +109,7 @@ public class Trigger extends TriggerContext {
      */
     public static Trigger of(TriggerContext triggerContext, Execution execution, ZonedDateTime nextExecutionDate) {
         return fromContext(triggerContext)
-            .executionId(execution != null ? execution.getId() : null)
+            .executionId(execution.getId())
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
             .build();

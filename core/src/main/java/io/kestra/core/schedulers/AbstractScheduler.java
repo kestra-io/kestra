@@ -362,7 +362,6 @@ public abstract class AbstractScheduler implements Scheduler {
                                 // compute next date and save the trigger to avoid evaluating it each second
                                 Trigger trigger = Trigger.fromEvaluateFailed(
                                     f.getTriggerContext(),
-                                    null,
                                     schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
                                 );
                                 trigger = trigger.checkBackfill();

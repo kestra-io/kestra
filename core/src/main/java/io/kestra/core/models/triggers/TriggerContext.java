@@ -6,7 +6,6 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -48,8 +47,24 @@ public class TriggerContext {
     @Nullable
     private List<State.Type> stopAfter;
 
-    @Builder.Default
     private Boolean disabled = Boolean.FALSE;
+
+    protected TriggerContext(TriggerContextBuilder<?, ?> b) {
+        this.tenantId = b.tenantId;
+        this.namespace = b.namespace;
+        this.flowId = b.flowId;
+        this.flowRevision = b.flowRevision;
+        this.triggerId = b.triggerId;
+        this.date = b.date;
+        this.nextExecutionDate = b.nextExecutionDate;
+        this.backfill = b.backfill;
+        this.stopAfter = b.stopAfter;
+        this.disabled = b.disabled;
+    }
+
+    public static TriggerContextBuilder<?, ?> builder() {
+        return new TriggerContextBuilderImpl();
+    }
 
     public String uid() {
         return uid(this);
@@ -62,5 +77,14 @@ public class TriggerContext {
             trigger.getFlowId(),
             trigger.getTriggerId()
         );
+    }
+
+    public Boolean getDisabled() {
+        return this.disabled != null ? this.disabled : Boolean.FALSE;
+    }
+
+    // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
+    // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
+    public static abstract class TriggerContextBuilder<C extends TriggerContext, B extends TriggerContextBuilder<C, B>> {
     }
 }

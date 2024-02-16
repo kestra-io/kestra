@@ -40,6 +40,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -166,17 +167,8 @@ public abstract class AbstractScheduler implements Scheduler {
                     ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) workerTriggerResult.getTrigger()).nextEvaluationDate();
                     this.handleEvaluatePollingTriggerResult(triggerExecution, nextExecutionDate);
                 } else {
-                    // previously, if no interval the trigger was executed immediately. I think only the Schedule trigger has no interval
-                    // now that all triggers are sent to the worker, we need to do this to avoid issues with backfills
-                    // as the same trigger will be evaluated multiple-time which is not supported by the 'addToRunning' method
-                    // if the trigger didn't trigger an execution, we will need to clear the evaluation lock
-                    // TODO now that Schedule is executed by the Scheduler this could be relaxed
-                    if (workerTriggerResult.getTrigger() instanceof PollingTriggerInterface &&
-                        ((PollingTriggerInterface) workerTriggerResult.getTrigger()).getInterval() != null) {
-
-                        ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) workerTriggerResult.getTrigger()).nextEvaluationDate();
-                        this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
-                    }
+                    ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) workerTriggerResult.getTrigger()).nextEvaluationDate();
+                    this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
                 }
             }
         );
@@ -366,12 +358,18 @@ public abstract class AbstractScheduler implements Scheduler {
                         // So we evaluate it now as there is no need to send it to the worker.
                         // Schedule didn't use the triggerState to allow backfill.
                         try {
-                            Optional<SchedulerExecutionWithTrigger> maybe = evaluateScheduleTrigger(f);
-                            maybe.ifPresent(
-                                schedulerExecutionWithTrigger -> this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger, f.getConditionContext(), scheduleContext)
-                            );
-                            // TODO maybe compute the next date and save the trigger as Schedule are evaluated each second if evaluate didn't leads to an execution
-
+                            Optional<SchedulerExecutionWithTrigger> schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
+                            if (schedulerExecutionWithTrigger.isPresent()) {
+                                this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger.get(), f.getConditionContext(), scheduleContext);
+                            } else {
+                                // compute next date and save the trigger to avoid evaluating it each second
+                                Trigger trigger = Trigger.fromEvaluateFailed(
+                                    f.getTriggerContext(),
+                                    schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
+                                );
+                                trigger = trigger.checkBackfill();
+                                this.triggerState.save(trigger, scheduleContext);
+                            }
                         } catch (Exception e) {
                             logService.logTrigger(
                                 f.getTriggerContext(),
@@ -394,9 +392,6 @@ public abstract class AbstractScheduler implements Scheduler {
         });
     }
 
-    // Polling triggers result is evaluated in another thread
-    // with the workerTriggerResultQueue,
-    // so we can't save them now
     private void handleEvaluatePollingTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
         Stream.of(result)
             .filter(Objects::nonNull)
@@ -408,17 +403,13 @@ public abstract class AbstractScheduler implements Scheduler {
                         nextExecutionDate
                     );
 
-                    // Check if the localTriggerState contains it
-                    // however, its mean it has been deleted during the execution time
-                    this.triggerState.update(trigger); //FIXME should be moved to saveLastTriggerAndEmitExecution as it creates duplicate emission in the Trigger topic in Kafka
-                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger);
+                    // Polling triggers result is evaluated in another thread with the workerTriggerResultQueue.
+                    // We can then update the trigger directly.
+                    this.saveLastTriggerAndEmitExecution(executionWithTrigger, trigger, triggerToSave -> this.triggerState.update(triggerToSave));
                 }
             );
     }
 
-    // Schedule triggers are being executed directly from
-    // the handle method within the context where triggers are locked,
-    // so we can save it now by pass the context
     private void handleEvaluateSchedulingTriggerResult(Schedule schedule, SchedulerExecutionWithTrigger result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) {
         log(result);
         Trigger trigger = Trigger.of(
@@ -433,11 +424,14 @@ public abstract class AbstractScheduler implements Scheduler {
             trigger = trigger.resetExecution(State.Type.FAILED);
         }
 
-        this.triggerState.save(trigger, scheduleContext); //FIXME should be moved to saveLastTriggerAndEmitExecution as it creates duplicate emission in the Trigger topic in Kafka
-        this.saveLastTriggerAndEmitExecution(result, trigger);
+        // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.
+        // So we must save them by passing the scheduleContext.
+        this.saveLastTriggerAndEmitExecution(result, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
     }
 
-    protected void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger, Trigger trigger) {
+    protected void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger, Trigger trigger, Consumer<Trigger> saveAction) {
+        saveAction.accept(trigger);
+
         // we need to be sure that the tenantId is propagated from the trigger to the execution
         var execution = executionWithTrigger.getExecution().withTenantId(executionWithTrigger.getTriggerContext().getTenantId());
         this.executionQueue.emit(execution);
@@ -541,7 +535,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 flowWithTrigger.getConditionContext().getRunContext().logger()
             ));
 
-            // @TODO: mutability dirty that force creation of a new triggerExecutionId
+            // mutability dirty hack that forces the creation of a new triggerExecutionId
             flowWithPollingTrigger.getConditionContext().getRunContext().forScheduler(
                 flowWithPollingTrigger.getTriggerContext(),
                 flowWithTrigger.getAbstractTrigger()

@@ -87,7 +87,7 @@ import java.util.*;
                 "  - id: schedule",
                 "    cron: \"0 11 * * 1\"",
                 "    scheduleConditions:",
-                "        type: io.kestra.core.models.conditions.types.DayWeekInMonthCondition",
+                "      - type: io.kestra.core.models.conditions.types.DayWeekInMonthCondition",
                 "        date: \"{{ trigger.date }}\"",
                 "        dayOfWeek: \"MONDAY\"",
                 "        dayInMonth: \"FIRST\"",
@@ -112,7 +112,7 @@ import java.util.*;
                 cron: "0 9 * * *"
                 stopAfter:
                   - FAILED"""
-        ),        
+        ),
     }
 
 )

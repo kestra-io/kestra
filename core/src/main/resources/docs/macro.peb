@@ -8,11 +8,11 @@
 
 
 {% macro fieldType(data) -%}
-{%- if data['$deprecated'] != null -%}
+{%- if data['$deprecated'] != null %}
 ::alert{type="warning"}
 🔒 Deprecated
 ::
-{%- endif %}
+{% endif %}
 
 {%- if data.type != null -%}
 * **Type:** {{ type(data) -}}

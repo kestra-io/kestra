@@ -101,7 +101,6 @@ class PluginDocCommandTest {
                 * **Dynamic:** ✔️
                 * **Required:** ❓
 
-
                 > Example interface
                 """));
             assertThat(taskDoc, containsString("""

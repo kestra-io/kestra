@@ -54,7 +54,6 @@ type: "{{ cls }}"
 * **Dynamic:** {{ entry.value['$dynamic'] == true ? "✔️" : (entry.value['$dynamic'] == false ? "❌" : "❓") }}
 * **Required:** {{ entry.value['$required'] == true ? "✔️" : (entry.value['$required'] == false ? "❌" : "❓") }}
 {{ fieldDetail(entry.value) }}
-{{ body(entry.value) }}
     {%- endfor -%}
 {% endif %}
 
@@ -67,7 +66,6 @@ type: "{{ cls }}"
 * **Dynamic:** {{ entry.value['$dynamic'] == true ? "✔️" : (entry.value['$dynamic'] == false ? "❌" : "❓") }}
 * **Required:** {{ entry.value['$required'] == true ? "✔️" : (entry.value['$required'] == false ? "❌" : "❓") }}
 {{ fieldDetail(entry.value) }}
-{{ body(entry.value) }}
     {%- endfor -%}
 {% endif %}
 
@@ -84,7 +82,6 @@ type: "{{ cls }}"
 * **Dynamic:** {{ entryProps.value['$dynamic'] == true ? "✔️" : (entryProps.value['$dynamic'] == false ? "❌" : "❓") }}
 * **Required:** {{ entryProps.value['$required'] == true ? "✔️" : (entryProps.value['$required'] == false ? "❌" : "❓") }}
 {{ fieldDetail(entryProps.value) }}
-{{ body(entryProps.value) }}
     {%- endfor -%}
 {% endif %}
 

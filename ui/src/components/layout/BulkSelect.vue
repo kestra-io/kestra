@@ -13,7 +13,7 @@
                 @click="toggleAll"
                 v-if="selections.length < total"
             >
-                {{ $t('selection.all', {count: total}) }}
+                <span v-html="$t('selection.all', {count: total})" />
             </el-button>
             <slot />
         </el-button-group>

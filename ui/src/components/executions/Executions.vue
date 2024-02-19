@@ -514,17 +514,14 @@
                 if (this.$route.query.endDate) {
                     return this.$route.query.endDate;
                 }
-                if (this.$route.query.endDateRange) {
-                    return this.$moment().subtract(this.$moment.duration(this.$route.query.endDateRange).as("milliseconds")).toISOString(true);
-                }
                 return undefined;
             },
             startDate() {
                 if (this.$route.query.startDate) {
                     return this.$route.query.startDate;
                 }
-                if (this.$route.query.startDateRange) {
-                    return this.$moment().subtract(this.$moment.duration(this.$route.query.startDateRange).as("milliseconds")).toISOString(true);
+                if (this.$route.query.timeRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.timeRange).as("milliseconds")).toISOString(true);
                 }
                 return undefined;
             },
@@ -572,8 +569,7 @@
                 let queryFilter = this.queryWithFilter();
 
                 if (stats) {
-                    delete queryFilter["startDateRange"];
-                    delete queryFilter["endDateRange"];
+                    delete queryFilter["timeRange"];
                     delete queryFilter["startDate"];
                     delete queryFilter["endDate"];
                 }

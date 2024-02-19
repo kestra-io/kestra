@@ -17,8 +17,8 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -695,21 +695,21 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&startDateRange=PT12H"))
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&timeRange=PT12H"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
 
         executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search?startDateRange=PT12H"), PagedResults.class
+            HttpRequest.GET("/api/v1/executions/search?timeRange=PT12H"), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));
 
         e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDateRange=P1Y"))
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?timeRange=P1Y"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
@@ -771,5 +771,42 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null), is(absoluteTimestamp));
         assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp), is(baseTimestamp.minus(offset)));
         assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
+    }
+
+    @Test
+    void delete() {
+        Execution result = triggerInputsFlowExecution(true);
+
+        var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/executions/" + result.getId()));
+        assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/executions/notfound")));
+        assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deleteByIds() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/executions/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void deleteByQuery() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/executions/by-query?namespace=" + result1.getNamespace()),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
     }
 }

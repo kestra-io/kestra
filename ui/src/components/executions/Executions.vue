@@ -159,7 +159,33 @@
                             <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
                                 {{ $t('delete') }}
                             </el-button>
+                            <el-button v-if="canUpdate" :icon="LabelMultiple" @click="isOpenLabelsModal = !isOpenLabelsModal">
+                                {{ $t('Set labels') }}
+                            </el-button>
                         </bulk-select>
+                        <el-dialog v-if="isOpenLabelsModal" v-model="isOpenLabelsModal" destroy-on-close :append-to-body="true">
+                            <template #header>
+                                <h5>{{ $t("Set labels") }}</h5>
+                            </template>
+
+                            <template #footer>
+                                <el-button @click="isOpenLabelsModal = false">
+                                    {{ $t("cancel") }}
+                                </el-button>
+                                <el-button type="primary" @click="setLabels()">
+                                    {{ $t("ok") }}
+                                </el-button>
+                            </template>
+
+                            <el-form>
+                                <el-form-item :label="$t('execution labels')">
+                                    <label-input
+                                        :key="executionLabels"
+                                        v-model:labels="executionLabels"
+                                    />
+                                </el-form-item>
+                            </el-form>
+                        </el-dialog>
                     </template>
                     <template #default>
                         <el-table-column
@@ -332,6 +358,7 @@
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Import from "vue-material-design-icons/Import.vue";
     import Utils from "../../utils/utils";
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
 </script>
 
 <script>
@@ -362,6 +389,7 @@
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {storageKeys} from "../../utils/constants";
+    import LabelInput from "../../components/labels/LabelInput.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -382,7 +410,8 @@
             Labels,
             Id,
             TriggerFlow,
-            TopNavBar
+            TopNavBar,
+            LabelInput
         },
         props: {
             hidden: {
@@ -487,7 +516,9 @@
                 displayColumns: [],
                 childFilter: "ALL",
                 canAutoRefresh: false,
-                storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS
+                storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
+                isOpenLabelsModal: false,
+                executionLabels: [],
             };
         },
         created() {
@@ -688,6 +719,38 @@
                                 .dispatch("execution/bulkKill", {executionsId: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {
+                    }
+                )
+            },
+            setLabels() {
+                this.$toast().confirm(
+                    this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/querySetLabels",  {
+                                    params: this.loadQuery({
+                                        sort: this.$route.query.sort || "state.startDate:desc",
+                                        state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                                    }, false),
+                                    data: this.executionLabels
+                                })
+                                .then(r => {
+                                    this.$toast().success(this.$t("bulk set labels", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkSetLabels", {executionsId: this.selection, executionLabels: this.executionLabels})
+                                .then(r => {
+                                    this.$toast().success(this.$t("bulk set labels", {executionCount: r.data.count}));
                                     this.loadData();
                                 }).catch(e => this.$toast().error(e.invalids.map(exec => {
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}

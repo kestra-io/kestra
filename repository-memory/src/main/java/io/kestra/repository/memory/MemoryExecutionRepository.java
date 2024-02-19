@@ -94,6 +94,11 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
+    public Execution update(Execution execution) {
+        return executions.put(execution.getId(), execution);
+    }
+
+    @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
         @Nullable String tenantId,

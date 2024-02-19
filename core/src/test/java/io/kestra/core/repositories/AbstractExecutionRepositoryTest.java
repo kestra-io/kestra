@@ -515,4 +515,19 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
     }
+
+    @Test
+    protected void update() {
+        Execution execution = ExecutionFixture.EXECUTION_1;
+        executionRepository.save(ExecutionFixture.EXECUTION_1);
+
+        Label label = new Label("key", "value");
+        Execution updated = execution.toBuilder().labels(List.of(label)).build();
+        executionRepository.update(updated);
+
+        Optional<Execution> validation = executionRepository.findById(null, updated.getId());
+        assertThat(validation.isPresent(), is(true));
+        assertThat(validation.get().getLabels().size(), is(1));
+        assertThat(validation.get().getLabels().get(0), is(label));
+    }
 }

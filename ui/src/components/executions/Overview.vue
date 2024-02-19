@@ -5,6 +5,7 @@
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
             <el-col :span="12" class="text-end">
+                <setLabels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
@@ -70,6 +71,7 @@
     import {mapState} from "vuex";
     import Status from "../Status.vue";
     import Vars from "./Vars.vue";
+    import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";
     import Kill from "./Kill.vue";
@@ -84,6 +86,7 @@
         components: {
             Duration,
             Status,
+            SetLabels,
             Restart,
             Vars,
             Resume,

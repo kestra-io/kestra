@@ -24,7 +24,7 @@
     "chart.js": "^4.4.1",
     "chartjs-chart-matrix": "^2.0.1",
     "chartjs-chart-treemap": "^2.3.0",
-    "core-js": "^3.35.0",
+    "core-js": "^3.36.0",
     "dagre": "^0.8.5",
     "element-plus": "^2.5.1",
     "humanize-duration": "^3.31.0",

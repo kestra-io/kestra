@@ -194,6 +194,7 @@
     "automatic refresh": "Automatic refresh",
     "toggle periodic refresh each 10 seconds": "Toggle periodic refresh every 10 seconds",
     "trigger refresh": "Trigger refresh",
+    "refresh": "Refresh",
     "topology-graph": {
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -585,7 +586,8 @@
     "relative start date": "Relative start date",
     "relative end date": "Relative end date",
     "now": "Now",
-    "absolute": "Absolute"
+    "absolute": "Absolute",
+    "backfill": "Backfill"
   },
   "fr": {
     "id": "Identifiant",
@@ -778,6 +780,7 @@
     "automatic refresh": "rafraîchissement automatique",
     "toggle periodic refresh each 10 seconds": "Activer le rafraîchissement toutes les 10 secondes",
     "trigger refresh": "Déclencher le rafraîchissement",
+    "refresh": "Rafraîchir",
     "topology-graph": {
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
@@ -1161,7 +1164,8 @@
     "delete backfill": "Supprimer le backfill",
     "pause backfill": "Mettre en pause le backfill",
     "backfill executions": "Backfill d'éxécutions",
-    "execute backfill": "Éxécuter le backfill"
+    "execute backfill": "Éxécuter le backfill",
+    "backfill": "Backfill"
   }
 }
 

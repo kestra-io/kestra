@@ -22,6 +22,15 @@
         </el-table-column>
 
         <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
+            <template #header>
+                {{ $t("backfill") }}
+                <refresh-button
+                    :can-auto-refresh="true"
+                    @refresh="loadData"
+                    :size="'small'"
+                    custom-class="mx-1"
+                />
+            </template>
             <template #default="scope">
                 <el-button
                     :icon="CalendarCollapseHorizontalOutline"
@@ -34,29 +43,38 @@
                     {{ $t("backfill executions") }}
                 </el-button>
                 <template v-else-if="scheduleClassName === scope.row.type && userCan(action.UPDATE)">
-                    <status :status="scope.row.backfill.paused ? 'PAUSED' : 'RUNNING'" size="small" />
+                    <div class="backfill-cell">
+                        <div class="progress-cell">
+                            <el-progress
+                                :percentage="backfillProgression(scope.row.backfill)"
+                                :status="scope.row.backfill.paused ? 'warning' : ''"
+                                :stroke-width="12"
+                                :show-text="!scope.row.backfill.paused"
+                                :striped="!scope.row.backfill.paused"
+                                striped-flow
+                            />
+                        </div>
+                        <template v-if="!scope.row.backfill.paused">
+                            <el-button size="small" @click="pauseBackfill(scope.row)">
+                                <kicon :tooltip="$t('pause backfill')">
+                                    <Pause />
+                                </kicon>
+                            </el-button>
+                        </template>
+                        <template v-else-if="userCan(action.UPDATE)">
+                            <el-button size="small" @click="unpauseBackfill(scope.row)">
+                                <kicon :tooltip="$t('continue backfill')">
+                                    <Play />
+                                </kicon>
+                            </el-button>
 
-                    <template v-if="!scope.row.backfill.paused">
-                        <el-button size="small" @click="pauseBackfill(scope.row)">
-                            <kicon :tooltip="$t('pause backfill')">
-                                <Pause />
-                            </kicon>
-                        </el-button>
-                    </template>
-
-                    <template v-else-if="userCan(action.UPDATE)">
-                        <el-button size="small" @click="unpauseBackfill(scope.row)">
-                            <kicon :tooltip="$t('continue backfill')">
-                                <Play />
-                            </kicon>
-                        </el-button>
-
-                        <el-button size="small" @click="deleteBackfill(scope.row)">
-                            <kicon :tooltip="$t('delete backfill')">
-                                <Delete />
-                            </kicon>
-                        </el-button>
-                    </template>
+                            <el-button size="small" @click="deleteBackfill(scope.row)">
+                                <kicon :tooltip="$t('delete backfill')">
+                                    <Delete />
+                                </kicon>
+                            </el-button>
+                        </template>
+                    </div>
                 </template>
             </template>
         </el-table-column>
@@ -166,6 +184,7 @@
     import Check from "vue-material-design-icons/Check.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import FlowRun from "./FlowRun.vue";
+    import RefreshButton from "../layout/RefreshButton.vue";
 </script>
 
 <script>
@@ -177,6 +196,7 @@
     import Status from "../Status.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import moment from "moment";
 
     export default {
         components: {Markdown, Kicon, DateAgo, Vars, Status},
@@ -220,11 +240,9 @@
             },
             triggersWithType() {
                 let flowTriggers = this.flow.triggers
-                console.log(flowTriggers)
                 if (flowTriggers) {
                     return flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
-                        console.log(pollingTrigger)
                         return {...flowTrigger, ...(pollingTrigger || {})}
                     })
                 }
@@ -360,6 +378,15 @@
                         return t
                     })
                 })
+            },
+            backfillProgression(backfill) {
+                const startMoment = moment(backfill.start);
+                const endMoment = moment(backfill.end);
+                const currentMoment = moment(backfill.currentDate);
+
+                const totalDuration = endMoment.diff(startMoment);
+                const elapsedDuration = currentMoment.diff(startMoment);
+                return Math.round((elapsedDuration / totalDuration) * 100);
             }
         }
     };
@@ -372,6 +399,22 @@
 
         .small-picker {
             width: 49%;
+        }
+    }
+
+    .backfill-cell {
+        display: flex;
+        align-items: center;
+    }
+
+    .progress-cell {
+        width: 200px;
+        margin-right: 1em;
+    }
+
+    :deep(.markdown) {
+        p {
+            margin-bottom: auto;
         }
     }
 </style>

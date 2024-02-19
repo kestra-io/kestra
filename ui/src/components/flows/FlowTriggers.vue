@@ -193,13 +193,12 @@
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
-    import Status from "../Status.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Status},
+        components: {Markdown, Kicon, DateAgo, Vars},
         data() {
             return {
                 triggerId: undefined,

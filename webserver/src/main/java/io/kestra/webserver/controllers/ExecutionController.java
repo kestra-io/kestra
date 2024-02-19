@@ -165,10 +165,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A start time range filter relative to the current time", examples = {
+        @Parameter(description = "A time range filter relative to the current time", examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-        }) @Nullable @QueryValue Duration startDateRange,
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -182,8 +182,8 @@ public class ExecutionController {
             tenantService.resolveTenant(),
             namespace,
             flowId,
-            resolveAbsoluteDateTime(startDate, startDateRange, now),
-            null,
+            resolveAbsoluteDateTime(startDate, timeRange, now),
+            endDate,
             state,
             RequestUtils.toMap(labels),
             triggerExecutionId,
@@ -195,7 +195,7 @@ public class ExecutionController {
     ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
         if (timeRange != null) {
             if (absoluteDateTime != null) {
-                throw new IllegalArgumentException("Parameters 'Date' and 'DateRange' are mutually exclusive");
+                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
             }
             return now.minus(timeRange.abs());
         }
@@ -346,6 +346,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -357,7 +361,7 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
@@ -748,6 +752,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -759,7 +767,7 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
@@ -965,6 +973,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -976,7 +988,7 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),

@@ -1,9 +1,9 @@
 <template>
     <date-select
-        :value="startRange"
+        :value="timeRange"
         :options="timeFilterPresets"
         :tooltip="$t('relative start date')"
-        @change="onChangeStart($event)"
+        @change="onChangeRange($event)"
     />
 </template>
 
@@ -56,14 +56,14 @@
             }
         },
         props: {
-            startRange: {
+            timeRange: {
                 type: String,
                 default: undefined
             }
         },
         methods: {
-            onChangeStart(range) {
-                this.$emit("update:modelValue", {"startDateRange": range, "endDateRange": this.endRange});
+            onChangeRange(range) {
+                this.$emit("update:modelValue", {"timeRange": range});
             },
         }
     }

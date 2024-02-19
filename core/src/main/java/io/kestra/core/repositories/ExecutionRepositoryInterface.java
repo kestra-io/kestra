@@ -139,7 +139,9 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate
     );
 
-    Execution save(Execution flow);
+    Execution save(Execution execution);
+
+    Execution update(Execution execution);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return s -> s;

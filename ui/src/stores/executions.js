@@ -171,6 +171,23 @@ export default {
             }).then(response => {
                 commit("setFilePreview", response.data)
             })
+        },
+        setLabels(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/${options.executionId}/labels`,
+                options.labels,
+                {
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                })
+        },
+        querySetLabels({_commit}, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/labels/by-query`, options.data, {
+                params: options.params})
+        },
+        bulkSetLabels({_commit}, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
         }
     },
     mutations: {

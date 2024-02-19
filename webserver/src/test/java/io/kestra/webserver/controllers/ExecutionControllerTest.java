@@ -53,8 +53,7 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
@@ -807,6 +806,57 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             HttpRequest.DELETE("/api/v1/executions/by-query?namespace=" + result1.getNamespace()),
             BulkResponse.class
         );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void setLabels() {
+        // update label on a terminated execution
+        Execution result = triggerInputsFlowExecution(true);
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+        Execution response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("key", "value"))),
+            Execution.class
+        );
+        assertThat(response.getLabels(), hasItem(new Label("key", "value")));
+
+        // update label on a not found execution
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/labels", List.of(new Label("key", "value"))))
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void setLabelsByIds() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/labels/by-ids",
+                new ExecutionController.SetLabelsByIdsRequest(List.of(result1.getId(), result2.getId(), result3.getId()), List.of(new Label("key", "value")))
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void setLabelsByQuery() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/labels/by-query?namespace=" + result1.getNamespace(),
+                List.of(new Label("key", "value"))
+            ),
+            BulkResponse.class
+        );
+
         assertThat(response.getCount(), is(3));
     }
 }

@@ -199,7 +199,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         ExecutionTime executionTime = this.executionTime();
         ZonedDateTime nextDate;
         Backfill backfill = null;
-        if (last.isPresent()) {
+        if (last.isPresent() && (last.get().getBackfill() != null || last.get().getDate() != null)) {
             ZonedDateTime lastDate;
             if (last.get().getBackfill() != null) {
                 backfill = last.get().getBackfill();
@@ -210,7 +210,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             // previous present & scheduleConditions
             if (this.scheduleConditions != null) {
                 try {
-                    Optional<ZonedDateTime>next = this.truePreviousNextDateWithCondition(
+                    Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
                         executionTime,
                         conditionContext,
                         lastDate,

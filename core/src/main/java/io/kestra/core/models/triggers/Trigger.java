@@ -194,8 +194,6 @@ public class Trigger extends TriggerContext {
                             currentTrigger.getNextExecutionDate())
                         .build())
                 .build();
-        } else {
-
         }
 
         return updated.toBuilder()
@@ -238,11 +236,34 @@ public class Trigger extends TriggerContext {
             .build();
     }
 
+    public Trigger initBackfill(Trigger newTrigger) {
+        // If a backfill is created, we update the currentTrigger
+        // and set the nextExecutionDate() as the previous one
+        if (newTrigger.getBackfill() != null) {
+
+            return this.toBuilder()
+                .backfill(
+                    newTrigger
+                        .getBackfill()
+                        .toBuilder()
+                        .end(newTrigger.getBackfill().getEnd() != null ? newTrigger.getBackfill().getEnd() : ZonedDateTime.now())
+                        .currentDate(
+                            newTrigger.getBackfill().getStart()
+                        )
+                        .previousNextExecutionDate(
+                            this.getNextExecutionDate())
+                        .build())
+                .build();
+        }
+
+        return this;
+    }
+
     // if the next date is after the backfill end, we remove the backfill
     // if not, we update the backfill with the next Date
     // which will be the base date to calculate the next one
     public Trigger checkBackfill() {
-        if (this.getBackfill() != null) {
+        if (this.getBackfill() != null && !this.getBackfill().getPaused()) {
             Backfill backfill = this.getBackfill();
             if (this.getNextExecutionDate().isAfter(backfill.getEnd())) {
 

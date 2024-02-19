@@ -1,5 +1,5 @@
 <template>
-    <el-button-group>
+    <el-button-group :size="size" :class="customClass">
         <el-button :disabled="!canAutoRefresh" :active="autoRefresh" @click="toggleAutoRefresh">
             <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
                 <component :is="autoRefresh ? 'auto-renew' : 'auto-renew-off'" class="auto-refresh-icon" />
@@ -24,6 +24,14 @@
             canAutoRefresh: {
                 type: Boolean,
                 default: true
+            },
+            size: {
+                type: String,
+                default: "'default'"
+            },
+            customClass: {
+                type: String,
+                default: ""
             }
         },
         data() {

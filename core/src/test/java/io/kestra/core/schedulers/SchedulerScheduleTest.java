@@ -216,7 +216,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             Await.until(() -> {
                 Optional<Trigger> optionalTrigger = this.triggerState.findLast(trigger);
                 return optionalTrigger.filter(value -> value.getNextExecutionDate() != null).isPresent();
-            });
+            }, Duration.ofSeconds(1), Duration.ofSeconds(15));
 
             Trigger lastTrigger = this.triggerState.findLast(trigger).get();
 

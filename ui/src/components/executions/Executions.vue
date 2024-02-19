@@ -162,6 +162,9 @@
                             <el-button v-if="canUpdate" :icon="LabelMultiple" @click="isOpenLabelsModal = !isOpenLabelsModal">
                                 {{ $t('Set labels') }}
                             </el-button>
+                            <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                {{ $t('resume') }}
+                            </el-button>
                         </bulk-select>
                         <el-dialog v-if="isOpenLabelsModal" v-model="isOpenLabelsModal" destroy-on-close :append-to-body="true">
                             <template #header>
@@ -352,6 +355,7 @@
 <script setup>
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
+    import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
@@ -641,6 +645,35 @@
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
+            },
+            resumeExecutions() {
+                this.$toast().confirm(
+                    this.$t("bulk resume", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/queryResumeExecution", this.loadQuery({
+                                    sort: this.$route.query.sort || "state.startDate:desc",
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                                }))
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkResumeExecution", {executionsId: this.selection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {
+                    }
+                )
             },
             restartExecutions() {
                 this.$toast().confirm(

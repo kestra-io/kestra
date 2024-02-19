@@ -656,6 +656,86 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution.getState().isPaused(), is(false));
     }
 
+    @Test
+    void resumeByIds() throws TimeoutException, InterruptedException {
+        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+
+        assertThat(pausedExecution1.getState().isPaused(), is(true));
+        assertThat(pausedExecution2.getState().isPaused(), is(true));
+
+        // resume executions
+        BulkResponse resumeResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/executions/resume/by-ids",
+                List.of(pausedExecution1.getId(), pausedExecution2.getId())
+            ),
+            BulkResponse.class
+        );
+        assertThat(resumeResponse.getCount(), is(2));
+
+        // check that the executions are no more paused
+        Thread.sleep(100);
+        Execution resumedExecution1 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution1.getId()),
+            Execution.class
+        );
+        Execution resumedExecution2 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution2.getId()),
+            Execution.class
+        );
+        assertThat(resumedExecution1.getState().isPaused(), is(false));
+        assertThat(resumedExecution2.getState().isPaused(), is(false));
+
+        // attempt to resume no more paused executions
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST(
+                "/api/v1/executions/resume/by-ids",
+                List.of(pausedExecution1.getId(), pausedExecution2.getId())
+            ))
+        );
+        assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void resumeByQuery() throws TimeoutException, InterruptedException {
+        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+
+        assertThat(pausedExecution1.getState().isPaused(), is(true));
+        assertThat(pausedExecution2.getState().isPaused(), is(true));
+
+        // resume executions
+        BulkResponse resumeResponse = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null),
+            BulkResponse.class
+        );
+        assertThat(resumeResponse.getCount(), is(2));
+
+        // check that the executions are no more paused
+        Thread.sleep(100);
+        Execution resumedExecution1 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution1.getId()),
+            Execution.class
+        );
+        Execution resumedExecution2 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution2.getId()),
+            Execution.class
+        );
+        assertThat(resumedExecution1.getState().isPaused(), is(false));
+        assertThat(resumedExecution2.getState().isPaused(), is(false));
+
+        // attempt to resume no more paused executions
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST(
+                "/api/v1/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null
+            ))
+        );
+        assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
+    }
+
     @RetryingTest(5)
     void killPaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused

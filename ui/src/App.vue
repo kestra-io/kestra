@@ -34,6 +34,7 @@
         data() {
             return {
                 menuCollapsed: "",
+                fullPage: false,
                 created: false,
                 loaded: false,
             };
@@ -53,6 +54,16 @@
             },
             envName() {
                 return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
+            },
+            mainClasses() {
+                if (this.fullPage) {
+                    return "";
+                }
+
+                return {
+                    "menu-collapsed": this.menuCollapsed,
+                    "menu-not-collapsed": !this.menuCollapsed,
+                };
             }
         },
         async created() {
@@ -67,7 +78,8 @@
             onMenuCollapse(collapse) {
                 this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
             },
-            displayApp() {
+            displayApp(fullPage = false) {
+                this.fullPage = fullPage;
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
                 Utils.switchTheme();
 

@@ -52,7 +52,7 @@
             ChevronLeft,
             ChevronRight,
             SidebarMenu,
-            Environment,
+            Environment
         },
         emits: ["menu-collapse"],
         methods: {
@@ -297,6 +297,7 @@
                 }
             }
         }
+
 
         span.version {
             transition: 0.2s all;

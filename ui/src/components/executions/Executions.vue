@@ -743,14 +743,14 @@
                                     data: this.executionLabels
                                 })
                                 .then(r => {
-                                    this.$toast().success(this.$t("bulk set labels", {executionCount: r.data.count}));
+                                    this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkSetLabels", {executionsId: this.selection, executionLabels: this.executionLabels})
                                 .then(r => {
-                                    this.$toast().success(this.$t("bulk set labels", {executionCount: r.data.count}));
+                                    this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
                                     this.loadData();
                                 }).catch(e => this.$toast().error(e.invalids.map(exec => {
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
@@ -760,6 +760,7 @@
                     () => {
                     }
                 )
+                this.isOpenLabelsModal = false;
             },
             editFlow() {
                 this.$router.push({

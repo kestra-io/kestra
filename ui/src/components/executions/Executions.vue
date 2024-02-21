@@ -805,6 +805,13 @@
                     }
                 })
             },
-        }
+        },
+        watch: {
+            isOpenLabelsModal(opening) {
+                if (opening) {
+                    this.executionLabels = [];
+                }
+            }
+        },
     };
 </script>

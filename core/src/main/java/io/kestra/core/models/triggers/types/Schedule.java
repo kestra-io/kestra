@@ -152,7 +152,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @TimezoneId
     @Schema(
-        title = "The time zone ID to use for evaluating the cron expression. Default value is the server default zone ID."
+        title = "The [time zone identifier](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (i.e. the second column in [the Wikipedia table](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)) to use for evaluating the cron expression. Default value is the server default zone ID."
     )
     @PluginProperty
     @Builder.Default

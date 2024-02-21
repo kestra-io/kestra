@@ -882,6 +882,62 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/kill/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public MutableHttpResponse<?> killByIds(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) {
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent() && execution.get().getState().isTerminated()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution already finished",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk kill")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        executions.forEach(execution -> {
+            killQueue.emit(ExecutionKilled
+                .builder()
+                .state(ExecutionKilled.State.REQUESTED)
+                .executionId(execution.getId())
+                .isOnKillCascade(false) // Explicitly force cascade to false.
+                .tenantId(tenantService.resolveTenant())
+                .build()
+            );
+        });
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/resume")
     @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
     @ApiResponse(responseCode = "204", description = "On success")
@@ -956,62 +1012,6 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/kill/by-ids")
-    @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
-    public MutableHttpResponse<?> killByIds(
-        @Parameter(description = "The execution id") @Body List<String> executionsId
-    ) {
-        List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
-
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && execution.get().getState().isTerminated()) {
-                invalids.add(ManualConstraintViolation.of(
-                    "execution already finished",
-                    executionId,
-                    String.class,
-                    "execution",
-                    executionId
-                ));
-            } else if (execution.isEmpty()) {
-                invalids.add(ManualConstraintViolation.of(
-                    "execution not found",
-                    executionId,
-                    String.class,
-                    "execution",
-                    executionId
-                ));
-            } else {
-                executions.add(execution.get());
-            }
-        }
-
-        if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(BulkErrorResponse
-                .builder()
-                .message("invalid bulk kill")
-                .invalids(invalids)
-                .build()
-            );
-        }
-
-        executions.forEach(execution -> {
-            killQueue.emit(ExecutionKilled
-                .builder()
-                .state(ExecutionKilled.State.REQUESTED)
-                .executionId(execution.getId())
-                .isOnKillCascade(false) // Explicitly force cascade to false.
-                .tenantId(tenantService.resolveTenant())
-                .build()
-            );
-        });
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-query")
     @Operation(tags = {"Executions"}, summary = "Resume executions filter by query parameters")
     public HttpResponse<?> resumeByQuery(
@@ -1020,6 +1020,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -1031,7 +1035,7 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),

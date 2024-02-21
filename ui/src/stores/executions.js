@@ -46,6 +46,19 @@ export default {
                 {params: options}
             )
         },
+        bulkResumeExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/resume/by-ids`,
+                options.executionsId
+            )
+        },
+        queryResumeExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/resume/by-query`,
+                {},
+                {params: options}
+            )
+        },
         replayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/replay`,

@@ -1176,14 +1176,14 @@
     "continue backfill": "Continuer le backfill",
     "delete backfill": "Supprimer le backfill",
     "pause backfill": "Mettre en pause le backfill",
-    "backfill executions": "Backfill d'éxécutions",
-    "execute backfill": "Éxécuter le backfill",
+    "backfill executions": "Backfill d'exécutions",
+    "execute backfill": "Exécuter le backfill",
     "backfill": "Backfill",
-    "Set labels tooltip": "Ajouter des labels à l'éxécution",
+    "Set labels tooltip": "Ajouter des labels à l'exécution",
     "Set labels": "Ajouter des labels",
-    "Set labels to execution": "Ajouter ou mettre à jour des labels à l'éxécution <code>{id}</code>",
-    "Set labels done": "Labels ajoutés avec succès à l'éxécution",
-    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  éxécutions(s)?"
+    "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
+    "Set labels done": "Labels ajoutés avec succès à l'exécution",
+    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?"
   }
 }
 

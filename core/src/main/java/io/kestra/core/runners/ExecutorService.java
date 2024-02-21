@@ -30,6 +30,7 @@ import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +56,9 @@ public class ExecutorService {
 
     @Inject
     private LogService logService;
+
+    @Inject
+    private RunnerUtils runnerUtils;
 
     protected FlowExecutorInterface flowExecutorInterface;
 
@@ -355,16 +359,12 @@ public class ExecutorService {
             try {
                 Map<String, Object> outputs = flow.getOutputs()
                     .stream()
-                    .collect(Collectors.toMap(
-                        io.kestra.core.models.flows.Output::getId,
-                        io.kestra.core.models.flows.Output::getValue)
-                    );
-
+                    .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
                 RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                 outputs = runContext.render(outputs);
-                newExecution = newExecution
-                    .withOutputs(outputs);
-            } catch (IllegalVariableEvaluationException e) {
+                outputs = runnerUtils.typedOutputs(flow, executor.getExecution(), outputs);
+                newExecution = newExecution.withOutputs(outputs);
+            } catch (Exception e) {
                 logService.logExecution(
                     executor.getExecution(),
                     logger,

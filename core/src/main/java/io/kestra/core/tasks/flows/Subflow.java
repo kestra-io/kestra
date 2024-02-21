@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -198,7 +199,12 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
 
         if (subflowOutputs != null) {
             try {
-                builder.outputs(runContext.render(subflowOutputs));
+                Map<String, Object> outputs = runContext.render(subflowOutputs);
+                RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class); // this is hacking
+                if (flow.getOutputs() != null && runnerUtils != null) {
+                    outputs = runnerUtils.typedOutputs(flow, execution, outputs);
+                }
+                builder.outputs(outputs);
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;

@@ -1,10 +1,11 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -46,7 +47,7 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
         TaskRun hello = execution.findTaskRunsByTaskId("hello").get(0);
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
         assertThat(valueOutput.size(), is(2));
-        assertThat(valueOutput.get("type"), is("io.kestra.core.models.tasks.common.EncryptedString"));
+        assertThat(valueOutput.get("type"), is(EncryptedString.TYPE));
         // the value is not encrypted as there is no encryption key
         assertThat(valueOutput.get("value"), is("Hello World"));
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").get(0);
@@ -64,6 +65,6 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
             .flowId(flow.getId())
             .build();
 
-        assertThrows(MissingRequiredInput.class, () -> runnerUtils.typedInputs(flow, execution, InputsTest.inputs));
+        assertThrows(MissingRequiredArgument.class, () -> runnerUtils.typedInputs(flow, execution, InputsTest.inputs));
     }
 }

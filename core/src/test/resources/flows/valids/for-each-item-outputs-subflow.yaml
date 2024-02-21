@@ -13,3 +13,4 @@ tasks:
 outputs:
   - id: value
     value: "{{ outputs.return.value }}"
+    type: STRING

@@ -7,7 +7,7 @@ import io.kestra.core.models.conditions.types.DayWeekCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -402,8 +402,8 @@ class ScheduleTest {
                 )
             )
             .inputs(List.of(
-                StringInput.builder().id("input1").type(Input.Type.STRING).required(false).build(),
-                StringInput.builder().id("input2").type(Input.Type.STRING).defaults("default").build()
+                StringInput.builder().id("input1").type(Type.STRING).required(false).build(),
+                StringInput.builder().id("input2").type(Type.STRING).defaults("default").build()
             ))
             .build();
 

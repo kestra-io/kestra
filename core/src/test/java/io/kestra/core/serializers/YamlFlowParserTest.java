@@ -4,12 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
-import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -23,7 +22,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -139,7 +137,7 @@ class YamlFlowParserTest {
 
         assertThat(flow.getInputs().size(), is(1));
         assertThat(flow.getInputs().get(0).getId(), is("myInput"));
-        assertThat(flow.getInputs().get(0).getType(), is(Input.Type.STRING));
+        assertThat(flow.getInputs().get(0).getType(), is(Type.STRING));
     }
 
     @Test

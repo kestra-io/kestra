@@ -350,7 +350,7 @@ public class RunContext {
         for (var entry: outputs.entrySet()) {
             if (entry.getValue() instanceof Map map) {
                 // if some outputs are of type EncryptedString we decode them and replace the object
-                if (EncryptedString.class.getName().equals(map.get("type"))) {
+                if (EncryptedString.TYPE.equalsIgnoreCase((String)map.get("type"))) {
                     try {
                         String decoded = decrypt((String) map.get("value"));
                         outputs.put(entry.getKey(), decoded);

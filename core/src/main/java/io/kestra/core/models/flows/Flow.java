@@ -118,6 +118,7 @@ public class Flow implements DeletedInterface, TenantInterface {
         description = "Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages."
     )
     @PluginProperty(dynamic = true)
+    @Valid
     List<Output> outputs;
 
     public Logger logger() {

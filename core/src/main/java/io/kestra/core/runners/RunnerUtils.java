@@ -3,12 +3,15 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.encryption.EncryptionService;
-import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -36,7 +39,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -121,7 +130,7 @@ public class RunnerUtils {
                 }
 
                 if (input.getRequired() && current == null) {
-                    throw new MissingRequiredInput("Missing required input value '" + input.getId() + "'");
+                    throw new MissingRequiredArgument("Missing required input value '" + input.getId() + "'");
                 }
 
                 if (!input.getRequired() && current == null) {
@@ -131,7 +140,7 @@ public class RunnerUtils {
                     ));
                 }
 
-                var parsedInput = parseInput(flow, execution, input, current);
+                var parsedInput = parseData(execution, input, current);
                 parsedInput.ifPresent(parsed -> input.validate(parsed.getValue()));
                 return parsedInput;
             })
@@ -142,84 +151,116 @@ public class RunnerUtils {
         return handleNestedInputs(results);
     }
 
-    private Optional<AbstractMap.SimpleEntry<String, Object>> parseInput(Flow flow, Execution execution, Input<?> input, Object current) {
-        switch (input.getType()) {
+    public Map<String, Object> typedOutputs(Flow flow, Execution execution, Map<String, Object> in) {
+        if (flow.getOutputs() == null) {
+            return ImmutableMap.of();
+        }
+        Map<String, Object> results = flow
+            .getOutputs()
+            .stream()
+            .map(output -> {
+                Object current = in == null ? null : in.get(output.getId());
+                return parseData(execution, output, current)
+                    .map(entry -> {
+                        if (output.getType().equals(Type.SECRET)) {
+                            return new AbstractMap.SimpleEntry<>(
+                                entry.getKey(),
+                                EncryptedString.from(entry.getValue().toString())
+                            );
+                        }
+                        return entry;
+                    });
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
+
+        // Ensure outputs are compliant with tasks outputs.
+        return JacksonMapper.toMap(results);
+    }
+
+    private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(Execution execution, Data data, Object current) {
+        if (data.getType() == null) {
+            return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
+        }
+        final String loggableType = data instanceof Input ? "input" : "output";
+        switch (data.getType()) {
             case STRING -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
-                    input.getId(),
+                    data.getId(),
                     current
                 ));
             }
             case SECRET -> {
                 try {
                     if (secretKey.isEmpty()) {
-                        throw new MissingRequiredInput("Unable to use a SECRET input as encryption is not configured");
+                        throw new MissingRequiredArgument("Unable to use a SECRET " + loggableType + " as encryption is not configured");
                     }
 
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         EncryptionService.encrypt(secretKey.get(), (String) current)
                     ));
                 } catch (GeneralSecurityException e) {
-                    throw new MissingRequiredInput("Invalid SECRET format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                    throw new MissingRequiredArgument("Invalid SECRET format for '" + data.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case INT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
-                    input.getId(),
+                    data.getId(),
                     current instanceof Integer ? current : Integer.valueOf((String) current)
                 ));
             }
             case FLOAT -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
-                    input.getId(),
+                    data.getId(),
                     current instanceof Float ? current : Float.valueOf((String) current)
                 ));
             }
             case BOOLEAN -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
-                    input.getId(),
+                    data.getId(),
                     current instanceof Boolean ? current : Boolean.valueOf((String) current)
                 ));
             }
             case DATETIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         Instant.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
-                    throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                    throw new MissingRequiredArgument("Invalid DATETIME format for '" + data.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case DATE -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         LocalDate.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
-                    throw new MissingRequiredInput("Invalid DATE format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                    throw new MissingRequiredArgument("Invalid DATE format for '" + data.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case TIME -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         LocalTime.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
-                    throw new MissingRequiredInput("Invalid TIME format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                    throw new MissingRequiredArgument("Invalid TIME format for '" + data.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case DURATION -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         Duration.parse(((String) current))
                     ));
                 } catch (DateTimeParseException e) {
-                    throw new MissingRequiredInput("Invalid DURATION format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                    throw new MissingRequiredArgument("Invalid DURATION format for '" + data.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case FILE -> {
@@ -228,42 +269,42 @@ public class RunnerUtils {
 
                     if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
                         return Optional.of(new AbstractMap.SimpleEntry<>(
-                            input.getId(),
+                            data.getId(),
                             uri
                         ));
                     } else {
                         return Optional.of(new AbstractMap.SimpleEntry<>(
-                            input.getId(),
-                            storageInterface.from(execution, input.getId(), new File(((String) current)))
+                            data.getId(),
+                            storageInterface.from(execution, data.getId(), new File(((String) current)))
                         ));
                     }
                 } catch (Exception e) {
-                    throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getId() + "'", e);
+                    throw new MissingRequiredArgument("Invalid " + loggableType + " arguments for file on " + loggableType + " '" + data.getId() + "'", e);
                 }
             }
             case JSON -> {
                 try {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         JacksonMapper.toObject(((String) current))
                     ));
                 } catch (JsonProcessingException e) {
-                    throw new MissingRequiredInput("Invalid JSON format for '" + input.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
+                    throw new MissingRequiredArgument("Invalid JSON format for '" + data.getId() + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
             }
             case URI -> {
                 Matcher matcher = URI_PATTERN.matcher((String) current);
                 if (matcher.matches()) {
                     return Optional.of(new AbstractMap.SimpleEntry<>(
-                        input.getId(),
+                        data.getId(),
                         current
                     ));
                 } else {
-                    throw new MissingRequiredInput("Invalid URI format for '" + input.getId() + "' for '" + current + "'");
+                    throw new MissingRequiredArgument("Invalid URI format for '" + data.getId() + "' for '" + current + "'");
                 }
             }
             default ->
-                throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getId() + "'");
+                throw new MissingRequiredArgument("Invalid data type '" + data.getType() + "' for '" + data.getId() + "'");
         }
     }
 
@@ -460,5 +501,4 @@ public class RunnerUtils {
 
         return execution;
     }
-
 }

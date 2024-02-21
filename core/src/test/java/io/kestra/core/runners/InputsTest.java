@@ -2,7 +2,7 @@ package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -297,7 +297,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
 
-        MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
+        MissingRequiredArgument e = assertThrows(MissingRequiredArgument.class, () -> {
             Map<String, Object> typeds = typedInputs(map);
         });
 

@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
@@ -237,7 +238,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         TaskRun hello = execution.findTaskRunsByTaskId("hello").get(0);
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
         assertThat(valueOutput.size(), is(2));
-        assertThat(valueOutput.get("type"), is("io.kestra.core.models.tasks.common.EncryptedString"));
+        assertThat(valueOutput.get("type"), is(EncryptedString.TYPE));
         // the value is encrypted so it's not the plaintext value of the task property
         assertThat(valueOutput.get("value"), not("Hello World"));
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").get(0);

@@ -9,3 +9,4 @@ tasks:
 outputs:
 - id: "key"
   value: "{{ invalid }}"
+  type: STRING

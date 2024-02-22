@@ -10,6 +10,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
@@ -19,6 +20,7 @@ import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.CronExpression;
 import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,6 +36,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 @SuperBuilder
@@ -41,7 +44,6 @@ import java.util.*;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@io.kestra.core.validations.Schedule
 @Schema(
     title = "Schedule a flow based on a CRON expression.",
     description = "You can add multiple schedule(s) to a flow.\n" +
@@ -86,7 +88,7 @@ import java.util.*;
                 "triggers:",
                 "  - id: schedule",
                 "    cron: \"0 11 * * 1\"",
-                "    scheduleConditions:",
+                "    conditions:",
                 "      - type: io.kestra.core.models.conditions.types.DayWeekInMonthCondition",
                 "        date: \"{{ trigger.date }}\"",
                 "        dayOfWeek: \"MONDAY\"",
@@ -167,7 +169,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @Valid
     @Schema(
-        title = "List of schedule conditions in order to limit the schedule trigger date."
+        title = "(Deprecated) Conditions on date. Use `conditions` instead.",
+        description = "List of schedule conditions in order to limit the schedule trigger date."
     )
     @PluginProperty
     private List<ScheduleCondition> scheduleConditions;
@@ -176,6 +179,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         title = "The inputs to pass to the scheduled flow."
     )
     @PluginProperty(dynamic = true)
+    @Deprecated
     private Map<String, Object> inputs;
 
     @Schema(
@@ -205,6 +209,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
+    public List<Condition> getConditions() {
+        return Stream.concat(ListUtils.emptyOnNull(this.conditions).stream(),
+            ListUtils.emptyOnNull(this.scheduleConditions).stream().map(c -> (Condition) c)).toList();
+    }
+
+    @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         ExecutionTime executionTime = this.executionTime();
         ZonedDateTime nextDate;
@@ -218,8 +228,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 lastDate = convertDateTime(last.get().getDate());
             }
 
-            // previous present & scheduleConditions
-            if (this.scheduleConditions != null) {
+            // previous present & conditions
+            if (this.conditions != null) {
                 try {
                     Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
                         executionTime,
@@ -236,7 +246,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 }
             }
 
-            // previous present but no scheduleConditions
+            // previous present but no conditions
             nextDate = computeNextEvaluationDate(executionTime, lastDate).orElse(null);
 
             // if we have a current backfill but the nextDate
@@ -327,9 +337,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         // inject outputs variables for scheduleCondition
         conditionContext = conditionContext(conditionContext, scheduleDates);
 
-        // FIXME make scheduleConditions generic
-        // control scheduleConditions
-        if (scheduleConditions != null) {
+        // FIXME make conditions generic
+        // control conditions
+        if (conditions != null) {
             try {
                 boolean conditionResults = this.validateScheduleCondition(conditionContext);
                 if (!conditionResults) {
@@ -551,10 +561,10 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     }
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
-        if (scheduleConditions != null) {
+        if (conditions != null) {
             ConditionService conditionService = conditionContext.getRunContext().getApplicationContext().getBean(ConditionService.class);
             return conditionService.isValid(
-                scheduleConditions,
+                conditions.stream().filter(c -> c instanceof ScheduleCondition).map(c -> (ScheduleCondition) c).toList(),
                 conditionContext
             );
         }

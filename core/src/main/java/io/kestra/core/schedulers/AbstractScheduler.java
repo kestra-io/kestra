@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.Condition;
@@ -252,34 +253,38 @@ public abstract class AbstractScheduler implements Scheduler {
                     RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
                     Trigger triggerContext = null;
-                    try {
-                        Trigger lastTrigger = triggerContextsToEvaluate
-                            .stream()
-                            .filter(triggerContextToFind -> triggerContextToFind.uid().equals(Trigger.uid(flow, abstractTrigger)))
-                            .findFirst()
-                            .orElse(null);
-                        // If a trigger is not found in triggers to evaluate, then we ignore it
-                        if (lastTrigger == null) {
-                            return null;
-                            // Backwards compatibility: we add a next execution date that we compute, this avoids re-triggering all existing triggers
-                        } else if (lastTrigger.getNextExecutionDate() == null) {
+                    Trigger lastTrigger = triggerContextsToEvaluate
+                        .stream()
+                        .filter(triggerContextToFind -> triggerContextToFind.uid().equals(Trigger.uid(flow, abstractTrigger)))
+                        .findFirst()
+                        .orElse(null);
+                    // If a trigger is not found in triggers to evaluate, then we ignore it
+                    if (lastTrigger == null) {
+                        return null;
+                        // Backwards compatibility: we add a next execution date that we compute, this avoids re-triggering all existing triggers
+                    } else if (lastTrigger.getNextExecutionDate() == null) {
+                        try {
                             triggerContext = lastTrigger.toBuilder()
                                 .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(lastTrigger)))
                                 .build();
-                            this.triggerState.save(triggerContext, scheduleContext);
-                        } else {
-                            triggerContext = lastTrigger;
+                        } catch (Exception e) {
+                            logError(conditionContext, flow, abstractTrigger, e);
+                            return null;
                         }
-                    } catch (Exception e) {
-                        logError(conditionContext, flow, abstractTrigger, e);
-                        return null;
+                        this.triggerState.save(triggerContext, scheduleContext);
+                    } else {
+                        triggerContext = lastTrigger;
                     }
                     return new FlowWithTriggers(
                         flow,
                         abstractTrigger,
                         triggerContext,
                         runContext,
-                        conditionService.conditionContext(runContext, flow, null)
+                        conditionContext.withVariables(
+                            ImmutableMap.of("trigger",
+                                ImmutableMap.of("date", triggerContext.getNextExecutionDate() != null ?
+                                    triggerContext.getNextExecutionDate().toOffsetDateTime() : now())
+                            ))
                     );
                 })
             )
@@ -334,16 +339,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .build())
                 .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null && !f.getTriggerContext().getDisabled())
                 .filter(this::isExecutionNotRunning)
-                .map(f -> {
-                    try {
-
-                        return FlowWithPollingTriggerNextDate.of(f);
-                    } catch (Exception e) {
-                        logError(f, e);
-
-                        return null;
-                    }
-                })
+                .map(FlowWithPollingTriggerNextDate::of)
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -388,7 +384,8 @@ public abstract class AbstractScheduler implements Scheduler {
                                         e
                                     );
                                 }
-                            } else if (f.getPollingTrigger() instanceof Schedule schedule) {
+                            }
+                            else if (f.getPollingTrigger() instanceof Schedule schedule) {
                                 // This is the Schedule, all other triggers should have an interval.
                                 // So we evaluate it now as there is no need to send it to the worker.
                                 // Schedule didn't use the triggerState to allow backfill.
@@ -412,8 +409,17 @@ public abstract class AbstractScheduler implements Scheduler {
                                     "Polling trigger must have an interval (except the Schedule)"
                                 );
                             }
+                        } else {
+                            ZonedDateTime nextExecutionDate = null;
+                            try {
+                                nextExecutionDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()));
+                            } catch (Exception e) {
+                                logError(f, e);
+                            }
+                            var trigger = f.getTriggerContext().toBuilder().nextExecutionDate(nextExecutionDate).build().checkBackfill();
+                            this.triggerState.save(trigger, scheduleContext);
                         }
-                    } catch(InternalException ie) {
+                    } catch (InternalException ie) {
                         // validate schedule condition can fail to render variables
                         // in this case, we send a failed execution so the trigger is not evaluated each second.
                         logger.error("Unable to evaluate the trigger '{}'", f.getAbstractTrigger().getId(), ie);
@@ -426,7 +432,12 @@ public abstract class AbstractScheduler implements Scheduler {
                             .labels(f.getFlow().getLabels())
                             .state(new State().withState(State.Type.FAILED))
                             .build();
-                        ZonedDateTime nextExecutionDate = f.getPollingTrigger().nextEvaluationDate();
+                        ZonedDateTime nextExecutionDate = null;
+                        try {
+                            nextExecutionDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()));
+                        } catch (Exception e) {
+                            logError(f, e);
+                        }
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
                         this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
                     }

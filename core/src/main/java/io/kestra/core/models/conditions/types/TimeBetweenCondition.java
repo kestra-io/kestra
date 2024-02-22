@@ -10,11 +10,11 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.OffsetTime;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -63,7 +63,7 @@ public class TimeBetweenCondition extends Condition implements ScheduleCondition
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
-        OffsetTime currentDate = DateUtils.parseOffsetTime(render);
+        OffsetTime currentDate = DateUtils.parseZonedDateTime(render).toOffsetDateTime().toOffsetTime();
 
         if (this.before != null && this.after != null) {
             return currentDate.isAfter(after) && currentDate.isBefore(before);

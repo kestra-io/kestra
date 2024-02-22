@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.storages.StorageInterface;
@@ -29,7 +28,7 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
     private StorageInterface storageInterface;
 
     @Test
-    void runnableTask() throws TimeoutException, InternalException {
+    void runnableTask() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-runnable");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
@@ -52,7 +51,7 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList(), hasSize(4));
     }
 
     @Test

@@ -273,7 +273,7 @@ public abstract class JdbcRunnerTest {
         forEachItemCaseTest.forEachItem();
     }
 
-    @Test
+    @RetryingTest(5)
     void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemNoWait();
     }

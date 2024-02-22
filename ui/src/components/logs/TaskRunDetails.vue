@@ -313,7 +313,7 @@
             },
             shouldDisplayProgressBar(taskRun) {
                 return this.showProgressBar &&
-                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem"
+                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
             },
             shouldDisplayLogs(taskRun) {
                 return (this.taskRunId ||

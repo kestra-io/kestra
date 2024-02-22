@@ -20,13 +20,10 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.net.URI;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Vector;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -34,9 +31,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public final class ExecutableUtils {
 
-    private static final String TASK_VARIABLE_ITERATIONS = "iterations";
-    private static final String TASK_VARIABLE_NUMBER_OF_BATCHES = "numberOfBatches";
-    private static final String TASK_VARIABLE_URI = "uri";
+    public static final String TASK_VARIABLE_ITERATIONS = "iterations";
+    public static final String TASK_VARIABLE_NUMBER_OF_BATCHES = "numberOfBatches";
+    public static final String TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI = "subflowOutputsBaseUri";
 
     private ExecutableUtils() {
         // prevent initialization
@@ -159,37 +156,7 @@ public final class ExecutableUtils {
             final Map<String, Object> outputs = new HashMap<>();
             outputs.put(TASK_VARIABLE_ITERATIONS, iterations);
             outputs.put(TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches);
-
-            try {
-                // Build URIs for each sub-flow outputs.
-                List<URI> outputsURIs = IntStream.rangeClosed(1, terminatedIterations)
-                    .mapToObj(it -> "kestra://" + storage.getContextBaseURI().getPath() + "/" + it + "/outputs.ion")
-                    .map(throwFunction(URI::create))
-                    .filter(storage::isFileExist)
-                    .toList();
-
-                if (!outputsURIs.isEmpty()) {
-                    // Merge outputs from each sub-flow into a single stored in the internal storage.
-                    Enumeration<InputStream> streams = outputsURIs.stream()
-                        .map(throwFunction(storage::getFile))
-                        .collect(Collectors.toCollection(Vector::new))
-                        .elements();
-                    try (InputStream is = new SequenceInputStream(streams)) {
-                        outputs.put(TASK_VARIABLE_URI, storage.putFile(is, "outputs.ion"));
-                    }
-                }
-            } catch (Exception e) {
-                log.error("[namespace: {}] [flow: {}] [execution: {}] Failed to collect and merge outputs from each sub-flow with error: {}",
-                    execution.getNamespace(),
-                    execution.getFlowId(),
-                    execution.getId(),
-                    e.getLocalizedMessage(),
-                    e
-                );
-                if (transmitFailed) {
-                    state = State.Type.FAILED;
-                }
-            }
+            outputs.put(TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI, storage.getContextBaseURI().getPath());
 
             return previousTaskRun
                 .withIteration(taskRun.getIteration())

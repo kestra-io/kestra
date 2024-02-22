@@ -617,7 +617,7 @@ public class MemoryExecutor implements ExecutorInterface {
             // iterative tasks
             Task task = flow.findTaskByTaskId(subflowExecutionResult.getParentTaskRun().getTaskId());
             TaskRun taskRun;
-            if (task instanceof ForEachItem forEachItem) {
+            if (task instanceof ForEachItem.ForEachItemExecutable forEachItem) {
                 RunContext runContext = runContextFactory.of(
                     flow,
                     task,

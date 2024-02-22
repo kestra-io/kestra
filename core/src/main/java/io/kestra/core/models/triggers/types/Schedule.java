@@ -173,13 +173,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         description = "List of schedule conditions in order to limit the schedule trigger date."
     )
     @PluginProperty
+    @Deprecated
     private List<ScheduleCondition> scheduleConditions;
 
     @Schema(
         title = "The inputs to pass to the scheduled flow."
     )
     @PluginProperty(dynamic = true)
-    @Deprecated
     private Map<String, Object> inputs;
 
     @Schema(
@@ -284,7 +284,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
         ExecutionTime executionTime = this.executionTime();
-        if (this.scheduleConditions != null) {
+        if (this.conditions != null) {
             try {
                 Optional<ZonedDateTime> previous = this.truePreviousNextDateWithCondition(
                     executionTime,

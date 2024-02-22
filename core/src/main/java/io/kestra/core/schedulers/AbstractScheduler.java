@@ -13,7 +13,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -283,7 +282,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         conditionContext.withVariables(
                             ImmutableMap.of("trigger",
                                 ImmutableMap.of("date", triggerContext.getNextExecutionDate() != null ?
-                                    triggerContext.getNextExecutionDate().toOffsetDateTime() : now())
+                                    triggerContext.getNextExecutionDate() : now())
                             ))
                     );
                 })
@@ -337,7 +336,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .conditionContext(flowWithTriggers.getConditionContext())
                     .triggerContext(flowWithTriggers.TriggerContext.toBuilder().date(now()).stopAfter(flowWithTriggers.getAbstractTrigger().getStopAfter()).build())
                     .build())
-                .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null && !f.getTriggerContext().getDisabled())
+                .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null)
                 .filter(this::isExecutionNotRunning)
                 .map(FlowWithPollingTriggerNextDate::of)
                 .filter(Objects::nonNull)

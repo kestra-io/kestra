@@ -11,8 +11,6 @@ import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.FlowListeners;
-import io.kestra.core.runners.TestMethodScopedWorker;
-import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -463,7 +461,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "failedEvaluation", false)
-            .scheduleConditions(
+            .conditions(
                 List.of(
                     VariableCondition.builder()
                         .type(VariableCondition.class.getName())

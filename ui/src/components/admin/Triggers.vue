@@ -80,7 +80,7 @@
 
                         <el-table-column :label="$t('state')">
                             <template #default="scope">
-                                <status :status="scope.row.executionCurrentState" size="small" />
+                                <status :status="scope.row.executionCurrentState || 'QUEUED'" size="small" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('date')">

@@ -95,5 +95,10 @@
                 executionLabels: [],
             };
         },
+        watch: {
+            isOpen() {
+                this.executionLabels = [];
+            }
+        },
     };
 </script>

@@ -187,7 +187,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverALLMissing() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        Flow flow = createScheduleFlow("Europe/Paris", "recoverALLMissing", false);
+        Flow flow = createScheduleFlow(null, "recoverALLMissing", false);
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -230,7 +230,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverLASTMissing() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        Schedule schedule = createScheduleTrigger("Europe/Paris", "0 * * * *", "recoverLASTMissing", false)
+        Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverLASTMissing", false)
             .recoverMissedSchedules(Schedule.RecoverMissedSchedules.LAST)
             .build();
         Flow flow = createFlow(List.of(schedule));
@@ -276,7 +276,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverNONEMissing() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        Schedule schedule = createScheduleTrigger("Europe/Paris", "0 * * * *", "recoverNONEMissing", false)
+        Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverNONEMissing", false)
             .recoverMissedSchedules(Schedule.RecoverMissedSchedules.NONE)
             .build();
         Flow flow = createFlow(List.of(schedule));

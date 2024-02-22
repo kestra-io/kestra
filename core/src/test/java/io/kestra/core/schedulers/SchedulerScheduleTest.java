@@ -111,8 +111,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(trigger.toBuilder().triggerId("schedule-invalid").flowId(invalid.getId()).build());
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Runnable assertionStop = executionQueue.receive(either -> {
                 Execution execution = either.getLeft();
@@ -135,7 +134,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 }
             });
 
-            worker.run();
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
             invalidLogCount.await(1, TimeUnit.MINUTES);
@@ -173,9 +171,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(trigger);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
-            worker.run();
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             Await.until(() -> {
@@ -209,8 +205,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Runnable assertionStop = executionQueue.receive(either -> {
                 Execution execution = either.getLeft();
@@ -218,7 +213,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 queueCount.countDown();
             });
 
-            worker.run();
             scheduler.run();
 
             queueCount.await(1, TimeUnit.MINUTES);
@@ -227,8 +221,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount(), is(0L));
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
-            assertThat(newTrigger.getDate(), is(lastDate.plusHours(1L).truncatedTo(ChronoUnit.HOURS)));
-            assertThat(newTrigger.getNextExecutionDate(), is(lastDate.plusHours(2L).truncatedTo(ChronoUnit.HOURS)));
+            assertThat(newTrigger.getDate().toLocalDateTime(), is(lastDate.plusHours(1L).truncatedTo(ChronoUnit.HOURS).toLocalDateTime()));
+            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime(), is(lastDate.plusHours(2L).truncatedTo(ChronoUnit.HOURS).toLocalDateTime()));
         }
     }
 
@@ -257,8 +251,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Runnable assertionStop = executionQueue.receive(either -> {
                 Execution execution = either.getLeft();
@@ -266,7 +259,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 queueCount.countDown();
             });
 
-            worker.run();
             scheduler.run();
 
             queueCount.await(1, TimeUnit.MINUTES);
@@ -275,8 +267,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount(), is(0L));
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
-            assertThat(newTrigger.getDate(), is(lastDate.plusHours(3L).truncatedTo(ChronoUnit.HOURS)));
-            assertThat(newTrigger.getNextExecutionDate(), is(lastDate.plusHours(4L).truncatedTo(ChronoUnit.HOURS)));
+            assertThat(newTrigger.getDate().toLocalDateTime(), is(lastDate.plusHours(3L).truncatedTo(ChronoUnit.HOURS).toLocalDateTime()));
+            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime(), is(lastDate.plusHours(4L).truncatedTo(ChronoUnit.HOURS).toLocalDateTime()));
         }
     }
 
@@ -303,16 +295,13 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(lastTrigger);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
-
-            worker.run();
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             Await.until(() -> scheduler.isReady(), Duration.ofMillis(100), Duration.ofSeconds(5));
 
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
-            assertThat(newTrigger.getNextExecutionDate(), is(lastDate.plusHours(4L).truncatedTo(ChronoUnit.HOURS)));
+            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime(), is(lastDate.plusHours(4L).truncatedTo(ChronoUnit.HOURS).toLocalDateTime()));
         }
     }
 
@@ -337,9 +326,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .build();
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
-            worker.run();
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             Await.until(() -> {
@@ -404,9 +391,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(trigger);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
-            worker.run();
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             // Wait 3s to see if things happen
@@ -444,8 +429,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Runnable assertionStop = executionQueue.receive(either -> {
                 Execution execution = either.getLeft();
@@ -459,7 +443,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 }
             });
 
-            worker.run();
             scheduler.run();
 
             queueCount.await(1, TimeUnit.MINUTES);
@@ -504,11 +487,10 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .build();
         triggerState.create(lastTrigger);
 
-        CountDownLatch queueCount = new CountDownLatch(2);
+        CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Runnable assertionStop = executionQueue.receive(either -> {
                 Execution execution = either.getLeft();
@@ -518,7 +500,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 queueCount.countDown();
             });
 
-            worker.run();
             scheduler.run();
 
             queueCount.await(1, TimeUnit.MINUTES);

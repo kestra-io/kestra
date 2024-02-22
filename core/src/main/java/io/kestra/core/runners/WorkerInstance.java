@@ -36,6 +36,12 @@ public class WorkerInstance {
     @Builder.Default
     private Instant heartbeatDate = Instant.now();
 
+    /**
+     * The Kestra server owning the worker.
+     */
+    @Builder.Default
+    private ServerInstance server = ServerInstance.getInstance();
+
     public enum Status {
         UP, DEAD
     }

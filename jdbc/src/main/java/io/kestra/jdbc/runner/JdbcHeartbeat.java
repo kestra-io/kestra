@@ -1,7 +1,9 @@
 package io.kestra.jdbc.runner;
 
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.ServerType;
+import io.kestra.core.runners.ServerInstance;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerInstance;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerInstanceRepository;
@@ -45,8 +47,11 @@ public class JdbcHeartbeat {
 
     private final ApplicationContext applicationContext;
 
+    private ServerInstance serverInstance;
+
     public JdbcHeartbeat(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+        this.serverInstance = ServerInstance.getInstance();
     }
 
     private void registerWorkerInstance(Worker worker)  {
@@ -58,6 +63,7 @@ public class JdbcHeartbeat {
                     .port(applicationContext.getEnvironment().getProperty("micronaut.server.port", Integer.class).orElse(8080))
                     .managementPort(applicationContext.getEnvironment().getProperty("endpoints.all.port", Integer.class).orElse(8081))
                     .workerGroup(worker.getWorkerGroup())
+                    .server(serverInstance)
                     .build();
 
                 if (log.isDebugEnabled()) {
@@ -85,6 +91,11 @@ public class JdbcHeartbeat {
                 Runtime.getRuntime().exit(1);
             }
         }
+    }
+
+    @VisibleForTesting
+    void setServerInstance(final ServerInstance serverInstance) {
+        this.serverInstance = serverInstance;
     }
 
     public WorkerInstance get()  {

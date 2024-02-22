@@ -117,7 +117,7 @@ import java.util.*;
 
 )
 public class Schedule extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<Schedule.Output> {
-    private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recover-missed-schedules";
+    private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
 
     public static final CronParser CRON_PARSER = new CronParser(CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()

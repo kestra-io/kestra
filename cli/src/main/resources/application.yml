@@ -189,7 +189,7 @@ kestra:
             enabled: true # backward-compatibility with version prior to v0.15.0
       - type: io.kestra.core.models.triggers.types.Schedule
         values:
-          recover-missed-schedules: ALL
+          recoverMissedSchedules: ALL
   variables:
     env-vars-prefix: KESTRA_
     cache-enabled: true

@@ -210,8 +210,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @Override
     public List<Condition> getConditions() {
-        return Stream.concat(ListUtils.emptyOnNull(this.conditions).stream(),
+        List<Condition> conditions = Stream.concat(ListUtils.emptyOnNull(this.conditions).stream(),
             ListUtils.emptyOnNull(this.scheduleConditions).stream().map(c -> (Condition) c)).toList();
+        return conditions.isEmpty() ? null : conditions;
     }
 
     @Override
@@ -229,7 +230,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             }
 
             // previous present & conditions
-            if (this.conditions != null) {
+            if (this.getConditions() != null) {
                 try {
                     Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
                         executionTime,
@@ -284,7 +285,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
         ExecutionTime executionTime = this.executionTime();
-        if (this.conditions != null) {
+        if (this.getConditions() != null) {
             try {
                 Optional<ZonedDateTime> previous = this.truePreviousNextDateWithCondition(
                     executionTime,
@@ -337,9 +338,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         // inject outputs variables for scheduleCondition
         conditionContext = conditionContext(conditionContext, scheduleDates);
 
-        // FIXME make conditions generic
         // control conditions
-        if (conditions != null) {
+        if (this.getConditions() != null) {
             try {
                 boolean conditionResults = this.validateScheduleCondition(conditionContext);
                 if (!conditionResults) {

@@ -431,12 +431,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .labels(f.getFlow().getLabels())
                             .state(new State().withState(State.Type.FAILED))
                             .build();
-                        ZonedDateTime nextExecutionDate = null;
-                        try {
-                            nextExecutionDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()));
-                        } catch (Exception e) {
-                            logError(f, e);
-                        }
+                        ZonedDateTime nextExecutionDate = f.getPollingTrigger().nextEvaluationDate();
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
                         this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
                     }

@@ -41,6 +41,7 @@ abstract public class AbstractTrigger {
 
     private String description;
 
+    @Valid
     @PluginProperty
     @Schema(
         title = "List of conditions in order to limit the flow trigger."

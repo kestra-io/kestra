@@ -3,6 +3,7 @@ package io.kestra.core.models.triggers.types;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.DateTimeBetweenCondition;
+import io.kestra.core.models.conditions.types.DayWeekCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -17,12 +18,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -389,6 +388,8 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
+
+
 
     private ConditionContext conditionContext(AbstractTrigger trigger) {
         Flow flow = Flow.builder()

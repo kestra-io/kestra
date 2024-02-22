@@ -52,7 +52,6 @@ public class JdbcScheduler extends AbstractScheduler {
         conditionService = applicationContext.getBean(ConditionService.class);
         flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
-        this.isReady = true;
     }
 
     @Override

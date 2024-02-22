@@ -117,6 +117,8 @@ import java.util.*;
 
 )
 public class Schedule extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<Schedule.Output> {
+    private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recover-missed-schedules";
+
     public static final CronParser CRON_PARSER = new CronParser(CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()
         .withHours().withValidRange(0, 23).withStrictRange().and()
@@ -194,6 +196,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Deprecated
     private ScheduleBackfill backfill;
 
+    @Schema(
+        title = "What to do in case of missed schedules",
+        description = "`ALL` will recover all missed schedules, `LAST`  will only recovered the last missing one, `NONE` will not recover any missing schedule.\n" +
+            "The default is `ALL` unless a different value is configured using the global plugin configuration."
+    )
+    @PluginProperty
+    private RecoverMissedSchedules recoverMissedSchedules;
+
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         ExecutionTime executionTime = this.executionTime();
@@ -203,10 +213,11 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             ZonedDateTime lastDate;
             if (last.get().getBackfill() != null) {
                 backfill = last.get().getBackfill();
-                lastDate = backfill.getCurrentDate();
+                lastDate = convertDateTime(backfill.getCurrentDate());
             } else {
                 lastDate = convertDateTime(last.get().getDate());
             }
+
             // previous present & scheduleConditions
             if (this.scheduleConditions != null) {
                 try {
@@ -216,14 +227,15 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                         lastDate,
                         true
                     );
+
                     if (next.isPresent()) {
                         return next.get().truncatedTo(ChronoUnit.SECONDS);
                     }
                 } catch (InternalException e) {
                     conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
                 }
-
             }
+
             // previous present but no scheduleConditions
             nextDate = computeNextEvaluationDate(executionTime, lastDate).orElse(null);
 
@@ -234,12 +246,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
             }
         }
-        // no previous present & no backfill, just provide now
+        // no previous present & no backfill or recover missed schedules, just provide now
         else {
             nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
         }
-        // if max delay reach, we calculate a new date
-        // except if we are doing a backfill
+
+        // if max delay reached, we calculate a new date except if we are doing a backfill
         if (this.lateMaximumDelay != null && nextDate != null && backfill == null) {
             Output scheduleDates = this.scheduleDates(executionTime, nextDate).orElse(null);
             scheduleDates = this.handleMaxDelay(scheduleDates);
@@ -251,6 +263,34 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         return nextDate;
+    }
+
+    @Override
+    public ZonedDateTime nextEvaluationDate() {
+        // it didn't take into account the schedule condition, but as they are taken into account inside eval() it's OK.
+        ExecutionTime executionTime = this.executionTime();
+        return computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(ZonedDateTime.now());
+    }
+
+    public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
+        ExecutionTime executionTime = this.executionTime();
+        if (this.scheduleConditions != null) {
+            try {
+                Optional<ZonedDateTime> previous = this.truePreviousNextDateWithCondition(
+                    executionTime,
+                    conditionContext,
+                    ZonedDateTime.now(),
+                    false
+                );
+
+                if (previous.isPresent()) {
+                    return previous.get().truncatedTo(ChronoUnit.SECONDS);
+                }
+            } catch (InternalException e) {
+                conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
+            }
+        }
+        return computePreviousEvaluationDate(executionTime, ZonedDateTime.now()).orElse(ZonedDateTime.now());
     }
 
     @Override
@@ -368,7 +408,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return Optional.of(execution);
     }
 
-    private static List<Label> getLabels(ConditionContext conditionContext, Backfill backfill) {
+    public RecoverMissedSchedules defaultRecoverMissedSchedules(RunContext runContext) {
+        return runContext
+            .<String>pluginConfiguration(PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES)
+            .map(conf -> RecoverMissedSchedules.valueOf(conf))
+            .orElse(RecoverMissedSchedules.ALL);
+    }
+
+    private List<Label> getLabels(ConditionContext conditionContext, Backfill backfill) {
         List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
         if (backfill != null && backfill.getLabels() != null) {
             labels.addAll(backfill.getLabels());
@@ -426,6 +473,10 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     private Optional<ZonedDateTime> computeNextEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
         return executionTime.nextExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    private Optional<ZonedDateTime> computePreviousEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
+        return executionTime.lastExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private Output trueOutputWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, Output output) throws InternalException {
@@ -535,5 +586,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         @Schema(
             title = "The first start date."
         )
-        ZonedDateTime start;}
+        ZonedDateTime start;
+    }
+
+    public enum RecoverMissedSchedules {
+        LAST,
+        NONE,
+        ALL
+    }
 }

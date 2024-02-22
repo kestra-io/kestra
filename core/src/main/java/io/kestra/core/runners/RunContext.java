@@ -458,6 +458,7 @@ public class RunContext {
             context,
             storageInterface
         );
+        this.initPluginConfiguration(applicationContext, trigger.getType());
         return this;
     }
 
@@ -491,6 +492,7 @@ public class RunContext {
 
         this.variables = ImmutableMap.copyOf(clone);
         this.storage = new InternalStorage(logger(), StorageContext.forTask(taskRun), storageInterface);
+        this.initPluginConfiguration(applicationContext, workerTask.getTask().getType());
         return this;
     }
 

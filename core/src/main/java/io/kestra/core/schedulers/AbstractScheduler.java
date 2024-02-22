@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -60,7 +61,9 @@ public abstract class AbstractScheduler implements Scheduler {
     private final TaskDefaultService taskDefaultService;
     private final WorkerGroupService workerGroupService;
     private final LogService logService;
-    protected Boolean isReady = false;
+
+    // must be volatile as it's updated by the flow listener thread and read by the scheduleExecutor thread
+    private volatile Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -90,6 +93,10 @@ public abstract class AbstractScheduler implements Scheduler {
         this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
         this.logService = applicationContext.getBean(LogService.class);
+    }
+
+    protected boolean isReady() {
+        return isReady;
     }
 
     @Override
@@ -176,37 +183,58 @@ public abstract class AbstractScheduler implements Scheduler {
         );
     }
 
-    // Initialized local trigger state
-    // and if some flows were created outside the box, for example from CLI
-    // then we may have some triggers that are not created yet
+    // Initialized local trigger state,
+    // and if some flows were created outside the box, for example from the CLI,
+    // then we may have some triggers that are not created yet.
     private void initializedTriggers(List<Flow> flows) {
+        record FlowAndTrigger(Flow flow, AbstractTrigger trigger) {}
         List<Trigger> triggers = triggerState.findAllForAllTenants();
 
-        flows.forEach(flow -> {
-            ListUtils.emptyOnNull(flow.getTriggers()).forEach(abstractTrigger -> {
-                if (triggers.stream().noneMatch(trigger -> trigger.uid().equals(Trigger.uid(flow, abstractTrigger))) && abstractTrigger instanceof PollingTriggerInterface pollingAbstractTrigger) {
-                    RunContext runContext = runContextFactory.of(flow, abstractTrigger);
-                    ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+        flows
+            .stream()
+            .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
+            .flatMap(flow -> flow.getTriggers().stream().filter(trigger -> trigger instanceof PollingTriggerInterface).map(trigger -> new FlowAndTrigger(flow, trigger)))
+            .forEach(flowAndTrigger -> {
+                Optional<Trigger> trigger = triggers.stream().filter(t -> t.uid().equals(Trigger.uid(flowAndTrigger.flow(), flowAndTrigger.trigger()))).findFirst(); // must have one or none
+                if (trigger.isEmpty()) {
+                    RunContext runContext = runContextFactory.of(flowAndTrigger.flow(), flowAndTrigger.trigger());
+                    ConditionContext conditionContext = conditionService.conditionContext(runContext, flowAndTrigger.flow(), null);
                     try {
                         // new polling triggers will be evaluated immediately except schedule that will be evaluated at the next cron schedule
-                        ZonedDateTime nextExecutionDate = pollingAbstractTrigger instanceof Schedule ? pollingAbstractTrigger.nextEvaluationDate(conditionContext, Optional.empty()): now();
+                        ZonedDateTime nextExecutionDate = flowAndTrigger.trigger() instanceof Schedule  schedule ? schedule.nextEvaluationDate(conditionContext, Optional.empty()): now();
                         Trigger newTrigger = Trigger.builder()
-                            .tenantId(flow.getTenantId())
-                            .namespace(flow.getNamespace())
-                            .flowId(flow.getId())
-                            .flowRevision(flow.getRevision())
-                            .triggerId(abstractTrigger.getId())
+                            .tenantId(flowAndTrigger.flow().getTenantId())
+                            .namespace(flowAndTrigger.flow().getNamespace())
+                            .flowId(flowAndTrigger.flow().getId())
+                            .flowRevision(flowAndTrigger.flow().getRevision())
+                            .triggerId(flowAndTrigger.trigger().getId())
                             .date(now())
                             .nextExecutionDate(nextExecutionDate)
-                            .stopAfter(abstractTrigger.getStopAfter())
+                            .stopAfter(flowAndTrigger.trigger().getStopAfter())
                             .build();
                         this.triggerState.create(newTrigger);
                     } catch (Exception e) {
-                        logError(conditionContext, flow, abstractTrigger, e);
+                        logError(conditionContext, flowAndTrigger.flow(), flowAndTrigger.trigger(), e);
+                    }
+                } else if (flowAndTrigger.trigger() instanceof Schedule schedule) {
+                    // we recompute the Schedule nextExecutionDate if needed
+                    RunContext runContext = runContextFactory.of(flowAndTrigger.flow(), flowAndTrigger.trigger());
+                    Schedule.RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules()).orElseGet(() -> schedule.defaultRecoverMissedSchedules(runContext));
+                    if (recoverMissedSchedules == Schedule.RecoverMissedSchedules.LAST) {
+                        ConditionContext conditionContext = conditionService.conditionContext(runContext, flowAndTrigger.flow(), null);
+                        ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
+                        if (previousDate.isAfter(trigger.get().getDate())) {
+                            Trigger updated = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
+                            this.triggerState.update(updated);
+                        }
+                    } else if (recoverMissedSchedules == Schedule.RecoverMissedSchedules.NONE ) {
+                        Trigger updated = trigger.get().toBuilder().nextExecutionDate(schedule.nextEvaluationDate()).build();
+                        this.triggerState.update(updated);
                     }
                 }
             });
-        });
+
+        this.isReady = true;
     }
 
     private List<FlowWithTriggers> computeSchedulable(List<Flow> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
@@ -230,10 +258,10 @@ public abstract class AbstractScheduler implements Scheduler {
                             .filter(triggerContextToFind -> triggerContextToFind.uid().equals(Trigger.uid(flow, abstractTrigger)))
                             .findFirst()
                             .orElse(null);
-                        // If trigger is not found in triggers to evaluate, then we ignore it
+                        // If a trigger is not found in triggers to evaluate, then we ignore it
                         if (lastTrigger == null) {
                             return null;
-                            // Backwards compatibility: we add a next execution date that we compute, this avoid re-triggering all existing trigger
+                            // Backwards compatibility: we add a next execution date that we compute, this avoids re-triggering all existing triggers
                         } else if (lastTrigger.getNextExecutionDate() == null) {
                             triggerContext = lastTrigger.toBuilder()
                                 .nextExecutionDate(((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(lastTrigger)))
@@ -261,8 +289,9 @@ public abstract class AbstractScheduler implements Scheduler {
     abstract public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
 
     private void handle() {
-        if (!this.isReady) {
+        if (!isReady()) {
             log.warn("Scheduler is not ready, waiting");
+            return;
         }
 
         ZonedDateTime now = now();
@@ -677,7 +706,7 @@ public abstract class AbstractScheduler implements Scheduler {
     public static class FlowWithPollingTriggerNextDate extends FlowWithPollingTrigger {
         private ZonedDateTime next;
 
-        public static FlowWithPollingTriggerNextDate of(FlowWithPollingTrigger f) {
+        private static FlowWithPollingTriggerNextDate of(FlowWithPollingTrigger f) {
             return FlowWithPollingTriggerNextDate.builder()
                 .flow(f.getFlow())
                 .abstractTrigger(f.getAbstractTrigger())

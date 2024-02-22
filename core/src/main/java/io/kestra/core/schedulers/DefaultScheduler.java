@@ -40,7 +40,6 @@ public class DefaultScheduler extends AbstractScheduler {
     ) {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
-        this.isReady = true;
 
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);

@@ -188,6 +188,135 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     }
 
     @Test
+    void recoverALLMissing() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Flow flow = createScheduleFlow("Europe/Paris", "recoverALLMissing", false);
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        ZonedDateTime lastDate = ZonedDateTime.now().minusHours(3L);
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId("recoverALLMissing")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(lastDate)
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+            // wait for execution
+            Runnable assertionStop = executionQueue.receive(either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution.getFlowId(), is(flow.getId()));
+                queueCount.countDown();
+            });
+
+            worker.run();
+            scheduler.run();
+
+            queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            assertionStop.run();
+
+            assertThat(queueCount.getCount(), is(0L));
+            Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
+            assertThat(newTrigger.getDate(), is(lastDate.plusHours(1L).truncatedTo(ChronoUnit.HOURS)));
+            assertThat(newTrigger.getNextExecutionDate(), is(lastDate.plusHours(2L).truncatedTo(ChronoUnit.HOURS)));
+        }
+    }
+
+    @Test
+    void recoverLASTMissing() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "0 * * * *", "recoverLASTMissing", false)
+            .recoverMissedSchedules(Schedule.RecoverMissedSchedules.LAST)
+            .build();
+        Flow flow = createFlow(List.of(schedule));
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        ZonedDateTime lastDate = ZonedDateTime.now().minusHours(3L);
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId("recoverLASTMissing")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(lastDate)
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+            // wait for execution
+            Runnable assertionStop = executionQueue.receive(either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution.getFlowId(), is(flow.getId()));
+                queueCount.countDown();
+            });
+
+            worker.run();
+            scheduler.run();
+
+            queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            assertionStop.run();
+
+            assertThat(queueCount.getCount(), is(0L));
+            Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
+            assertThat(newTrigger.getDate(), is(lastDate.plusHours(3L).truncatedTo(ChronoUnit.HOURS)));
+            assertThat(newTrigger.getNextExecutionDate(), is(lastDate.plusHours(4L).truncatedTo(ChronoUnit.HOURS)));
+        }
+    }
+
+    @Test
+    void recoverNONEMissing() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "0 * * * *", "recoverNONEMissing", false)
+            .recoverMissedSchedules(Schedule.RecoverMissedSchedules.NONE)
+            .build();
+        Flow flow = createFlow(List.of(schedule));
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        ZonedDateTime lastDate = ZonedDateTime.now().minusHours(3L);
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId("recoverNONEMissing")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(lastDate)
+            .build();
+        triggerState.create(lastTrigger);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+
+            worker.run();
+            scheduler.run();
+
+            Await.until(() -> scheduler.isReady(), Duration.ofMillis(100), Duration.ofSeconds(5));
+
+            Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
+            assertThat(newTrigger.getNextExecutionDate(), is(lastDate.plusHours(4L).truncatedTo(ChronoUnit.HOURS)));
+        }
+    }
+
+    @Test
     void backfill() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
@@ -280,8 +409,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             worker.run();
             scheduler.run();
 
-            // Wait 5s to see if things happen
-            Thread.sleep(5000);
+            // Wait 3s to see if things happen
+            Thread.sleep(3000);
 
             Trigger lastTrigger = this.triggerState.findLast(trigger).get();
 

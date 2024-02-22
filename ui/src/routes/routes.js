@@ -13,7 +13,6 @@ import Errors from "../components/errors/Errors.vue";
 import Home from "../components/home/Home.vue";
 import Welcome from "../components/onboarding/Welcome.vue";
 import FlowCreate from "../components/flows/FlowCreate.vue";
-import FlowMetrics from "../components/flows/FlowMetrics.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
@@ -27,6 +26,7 @@ export default [
     {name: "root", path: "/", redirect: {name: "home"}},
     {name: "home", path: "/:tenant?/dashboard", component: Home},
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
+    {name: "home", path: "/:tenant?/dashboard", component: Home},
 
     //Namespace file editor
     {name: "editor", path: "/:tenant?/editor/:namespace?", component: Editor},
@@ -36,7 +36,6 @@ export default [
     {name: "flows/search", path: "/:tenant?/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/:tenant?/flows/new", component: FlowCreate},
     {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
-    {name: "flows/metrics", path: "/:tenant?/flows/metrics", component: FlowMetrics},
 
     //Executions
     {name: "executions/list", path: "/:tenant?/executions", component: Executions},

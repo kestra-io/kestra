@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar v-if="!embed" :title="routeInfo.title" />
-    <div :class="{'mt-3': !embed}" class="log-panel">
+    <section :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
                 <template #navbar v-if="embed === false">
@@ -54,7 +54,7 @@
                 </template>
             </data-table>
         </div>
-    </div>
+    </section>
 </template>
 
 <script>

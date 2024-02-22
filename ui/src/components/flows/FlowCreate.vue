@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3">
+    <section class="full-container">
         <editor-view
             :flow-id="defaultFlowTemplate.id"
             :namespace="defaultFlowTemplate.namespace"
@@ -14,7 +14,7 @@
             :flow="sourceWrapper"
             :next-revision="1"
         />
-    </div>
+    </section>
     <div id="guided-right" />
 </template>
 

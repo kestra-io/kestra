@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3">
+    <section class="container">
         <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
                 <el-select :model-value="lang" @update:model-value="onLang">
@@ -138,7 +138,7 @@
             </el-form-item>
         </el-form>
         <slot name="form-items" />
-    </div>
+    </section>
 </template>
 
 <script setup>

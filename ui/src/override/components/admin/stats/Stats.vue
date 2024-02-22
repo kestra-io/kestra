@@ -1,10 +1,10 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3" v-show="ready">
+    <section class="container" v-show="ready">
         <Usages class="mb-2" @loaded="ready = true" />
         <BasicAuthPrompt class="mt-4 mb-2" />
         <EditionComparator class="mt-4" />
-    </div>
+    </section>
 </template>
 <script>
     import RouteContext from "../../../../mixins/routeContext";

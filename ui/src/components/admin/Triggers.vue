@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3" v-if="ready">
+    <section class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -145,7 +145,7 @@
                 </template>
             </el-dialog>
         </div>
-    </div>
+    </section>
 </template>
 <script setup>
     import LockOff from "vue-material-design-icons/LockOff.vue";

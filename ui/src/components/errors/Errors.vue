@@ -1,13 +1,13 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3 errors">
+    <section class="container errors">
         <div class="img" />
         <h2>{{ $t("errors." + code + ".title") }}</h2>
 
         <p>
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
-    </div>
+    </section>
 </template>
 
 <script>

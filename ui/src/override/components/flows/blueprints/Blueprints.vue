@@ -1,10 +1,10 @@
 <template>
     <top-nav-bar v-if="!embed" :title="routeInfo.title" />
     <blueprints-page-header v-if="!embed" class="ms-0 mw-100" />
-    <div :class="{'mt-3': !embed}" class="main-container" v-bind="$attrs">
+    <section :class="{'container': !embed}" class="main-container" v-bind="$attrs">
         <blueprint-detail v-if="selectedBlueprintId" :embed="embed" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined" />
         <blueprints-browser @loaded="$emit('loaded', $event)" :class="{'d-none': !!selectedBlueprintId}" :embed="embed" :blueprint-base-uri="blueprintUri" @go-to-detail="blueprintId => selectedBlueprintId = blueprintId" />
-    </div>
+    </section>
 </template>
 <script>
     import RouteContext from "../../../../mixins/routeContext";

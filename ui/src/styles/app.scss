@@ -22,16 +22,15 @@
     $indigo: global-var.$indigo
 );
 
-// main layout
-main {
-    margin-right: auto;
-    margin-left: auto;
+html, body, #app, #app-container {
+    height: 100%;
+}
 
-    padding-bottom: global-var.$spacer !important;
-    transition: all 0.3s ease;
+html {
+    transition: padding-left 0.3s ease;
 
     &.menu-collapsed {
-        #{--offset-from-menu}: 15px;
+        #{--offset-from-menu}: var(--spacer);
         padding-left: var(--menu-collapsed-width);
     }
 
@@ -43,11 +42,43 @@ main {
 
         padding-left: var(--menu-width);
     }
+}
 
-    // apply start & end margin for top-bar neighbours
-    .top-bar ~ *:not(iframe) {
-        margin-left: var(--offset-from-menu);
-        max-width: calc(100% - 2 * var(--offset-from-menu));
+// main layout
+main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+
+    &:has(section.full-container) {
+        max-height: 100%;
+    }
+
+    > section.container {
+        margin: var(--spacer) auto 0;
+        min-width: 100%;
+        transition: padding 0.3s ease;
+        padding: 0 calc(var(--offset-from-menu));
+
+        &.full-height {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            > * {
+                flex: 1;
+            }
+        }
+    }
+
+    > section.full-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        > * {
+            flex: 1;
+        }
     }
 }
 

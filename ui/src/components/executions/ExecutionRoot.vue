@@ -25,11 +25,9 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div>
-        <div v-if="ready">
-            <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
-        </div>
-    </div>
+    <template v-if="ready">
+        <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
+    </template>
 </template>
 
 <script setup>

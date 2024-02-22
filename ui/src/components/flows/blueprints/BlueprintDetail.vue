@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <div :class="{'mt-3': !embed}" class="blueprint-container">
+            <section :class="{'container': !embed}" class="blueprint-container">
                 <el-card>
                     <div class="embedded-topology" v-if="flowGraph">
                         <low-code-editor
@@ -67,7 +67,7 @@
                         </div>
                     </el-col>
                 </el-row>
-            </div>
+            </section>
         </template>
     </div>
 </template>

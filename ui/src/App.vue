@@ -2,7 +2,7 @@
     <el-config-provider>
         <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <main :class="menuCollapsed" v-if="loaded">
+        ²        <main v-if="loaded">
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />
@@ -45,26 +45,9 @@
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("flow", ["overallTotal"]),
             ...mapGetters("misc", ["configs"]),
-            displayNavBar() {
-                if (this.$router) {
-                    return this.$route.name !== "welcome";
-                }
-
-                return true;
-            },
             envName() {
                 return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
             },
-            mainClasses() {
-                if (this.fullPage) {
-                    return "";
-                }
-
-                return {
-                    "menu-collapsed": this.menuCollapsed,
-                    "menu-not-collapsed": !this.menuCollapsed,
-                };
-            }
         },
         async created() {
             if (this.created === false) {
@@ -76,7 +59,8 @@
         },
         methods: {
             onMenuCollapse(collapse) {
-                this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
+                document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed");
+                document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
             },
             displayApp(fullPage = false) {
                 this.fullPage = fullPage;

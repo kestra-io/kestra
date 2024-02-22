@@ -400,14 +400,10 @@ form.ks-horizontal {
     &.top {
         background: var(--card-bg);
         border-bottom: 1px solid var(--bs-border-color);
-        margin: 0 calc(var(--spacer) * -1 + 1px) var(--spacer);
         padding: calc(var(--spacer) / 2);
-
-        @include res(lg) {
-            main.menu-not-collapsed & {
-                margin: 0 calc(var(--spacer) * -4) var(--spacer);
-            }
-        }
+        position: sticky;
+        top: var(--top-navbar-height);
+        z-index: 1000;
 
         .el-tabs__active-bar {
             display: none;

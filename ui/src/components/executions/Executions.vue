@@ -22,7 +22,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div :class="{'mt-3': topbar}" v-if="ready">
+    <section :class="{'container': topbar}" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
@@ -349,7 +349,7 @@
                 </select-table>
             </template>
         </data-table>
-    </div>
+    </section>
 </template>
 
 <script setup>

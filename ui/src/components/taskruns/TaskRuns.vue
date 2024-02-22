@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3" v-if="ready">
+    <section class="container" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
                 <el-form-item>
@@ -155,7 +155,7 @@
                 </el-table>
             </template>
         </data-table>
-    </div>
+    </section>
 </template>
 <script setup>
     import Utils from "../../utils/utils";

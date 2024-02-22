@@ -58,7 +58,7 @@
                             @follow="forwardEvent('follow', $event)"
                             :target-execution="execution"
                             :target-flow="flow"
-                            :show-logs="taskType(currentTaskRun) !== 'io.kestra.core.tasks.flows.ForEachItem'"
+                            :show-logs="taskType(currentTaskRun) !== 'io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable' && taskType(currentTaskRun) !== undefined"
                         />
                     </td>
                 </tr>

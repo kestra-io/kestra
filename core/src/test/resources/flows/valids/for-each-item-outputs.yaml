@@ -20,4 +20,4 @@ tasks:
 
   - id: return
     type: io.kestra.core.tasks.debugs.Return
-    format: "{{ outputs.each.uri }}"
+    format: "{{ outputs.each_merge.subflowOutputs }}"

@@ -55,3 +55,6 @@ kestra:
       - type: io.kestra.plugin.Test2
         values:
           prop2: value2
+      - type: io.kestra.core.models.triggers.types.Schedule
+        values:
+          recover-missed-schedules: ALL

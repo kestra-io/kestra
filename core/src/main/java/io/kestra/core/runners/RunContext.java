@@ -42,10 +42,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @NoArgsConstructor
@@ -520,32 +522,36 @@ public class RunContext {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
-
+    @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
 
     public Set<String> render(Set<String> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
 
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
 
     public Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException {
@@ -553,20 +559,10 @@ public class RunContext {
             .entrySet()
             .stream()
             .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), mergeVariables(variables)),
-                this.render(entry.getValue(), mergeVariables(variables))
+                this.render(entry.getKey(), variables),
+                this.render(entry.getValue(), variables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private Map<String, Object> mergeVariables(Map<String, Object> variables) {
-        return Stream
-            .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (o, o2) -> o2
-            ));
     }
 
     private String decrypt(String encrypted) throws GeneralSecurityException {

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MapUtils {
@@ -108,5 +109,19 @@ public class MapUtils {
         } catch (Exception e) {
             return new ArrayList<>(elements);
         }
+    }
+
+    /**
+     * Utility method for merging multiple {@link Map}s that can contains nullable values.
+     * Note that the maps provided are assumed to be flat, so this method does not perform a recursive merge.
+     *
+     * @param maps  The Map to be merged.
+     * @return     the merged Map.
+     */
+    public static Map<String, Object> mergeWithNullableValues(final Map<String, Object>...maps) {
+        return Arrays.stream(maps)
+            .flatMap(map -> map.entrySet().stream())
+            // https://bugs.openjdk.org/browse/JDK-8148463
+            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
     }
 }

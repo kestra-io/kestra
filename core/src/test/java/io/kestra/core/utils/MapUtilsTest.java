@@ -1,5 +1,6 @@
 package io.kestra.core.utils;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -70,5 +71,25 @@ class MapUtilsTest {
         assertThat(((Map<String, Object>) merge.get("map")).size(), is(3));
         assertThat(((Map<String, Object>) merge.get("map")).get("map_c"), is("e"));
         assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null"), nullValue());
+    }
+
+    @Test
+    void shouldMergeWithNullableValuesGivenNullAndDuplicate() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> results = MapUtils.mergeWithNullableValues(
+            Map.of("k1", "v1", "k2", "v1", "k3", "v1"),
+            Map.of("k1", "v2"),
+            Map.of("k2", "v2"),
+            Map.of("k3", "v2"),
+            new HashMap<>() {{
+                put("k4", null);
+            }}
+        );
+
+        Assertions.assertEquals(4, results.size());
+        Assertions.assertEquals("v2", results.get("k1"));
+        Assertions.assertEquals("v2", results.get("k2"));
+        Assertions.assertEquals("v2", results.get("k3"));
+        Assertions.assertNull(results.get("k4"));
     }
 }

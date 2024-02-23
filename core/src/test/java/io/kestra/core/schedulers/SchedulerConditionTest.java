@@ -40,7 +40,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .inputs(Map.of(
                 "testInputs", "test-inputs"
             ))
-            .scheduleConditions(List.of(
+            .conditions(List.of(
                 DayWeekInMonthCondition.builder()
                     .type(DayWeekInMonthCondition.class.getName())
                     .date("{{ trigger.date }}")
@@ -94,7 +94,6 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
-            worker.run();
             scheduler.run();
             queueCount.await(15, TimeUnit.SECONDS);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually

@@ -8,6 +8,10 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,10 +19,6 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.event.Level;
 
 import java.util.List;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
@@ -46,7 +46,7 @@ abstract public class AbstractTrigger {
     @Schema(
         title = "List of conditions in order to limit the flow trigger."
     )
-    private List<Condition> conditions;
+    protected List<Condition> conditions;
 
     @NotNull
     @Builder.Default

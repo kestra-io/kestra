@@ -25,11 +25,11 @@ class TimeBetweenConditionTest {
 
     static Stream<Arguments> source() {
         return Stream.of(
-            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), null, OffsetTime.parse("16:19:11.000000+02:00").toString(), true),
-            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), null, OffsetTime.parse("17:19:12.000000+02:00").toString(), false),
-            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), OffsetTime.parse("16:20:12.000000+02:00"), OffsetTime.parse("16:18:12.000000+02:00"), true),
-            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), OffsetTime.parse("16:20:12.000000+02:00"), null, true),
-            Arguments.of(OffsetTime.parse("16:19:12.000000+02:00").toString(), OffsetTime.parse("16:18:12.000000+02:00"), null, false)
+            Arguments.of(ZonedDateTime.parse("2024-02-21T16:19:12.00+02:00").toString(), null, OffsetTime.parse("16:19:11.000000+02:00").toString(), true),
+            Arguments.of(ZonedDateTime.parse("2024-02-21T16:19:12.00+02:00").toString(), null, OffsetTime.parse("17:19:12.000000+02:00").toString(), false),
+            Arguments.of(ZonedDateTime.parse("2024-02-21T16:19:12.00+02:00").toString(), OffsetTime.parse("16:20:12.000000+02:00"), OffsetTime.parse("16:18:12.000000+02:00"), true),
+            Arguments.of(ZonedDateTime.parse("2024-02-21T16:19:12.00+02:00").toString(), OffsetTime.parse("16:20:12.000000+02:00"), null, true),
+            Arguments.of(ZonedDateTime.parse("2024-02-21T16:19:12.00+02:00").toString(), OffsetTime.parse("16:18:12.000000+02:00"), null, false)
         );
     }
 

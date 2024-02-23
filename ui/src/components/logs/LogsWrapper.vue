@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar v-if="!embed" :title="routeInfo.title" />
-    <section :class="{'container': !embed}" class="log-panel">
+    <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="embed === false">

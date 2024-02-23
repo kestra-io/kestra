@@ -12,7 +12,7 @@
                 <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">
                     <el-radio-button
                         :key="0"
-                        :label="0"
+                        :value="0"
                         class="hoverable"
                     >
                         {{ $t("all tags") }}
@@ -20,7 +20,7 @@
                     <el-radio-button
                         v-for="tag in Object.values(tags || {})"
                         :key="tag.id"
-                        :label="tag.id"
+                        :value="tag.id"
                         class="hoverable"
                     >
                         {{ tag.name }}

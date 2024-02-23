@@ -16,7 +16,7 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section :class="containerClass">
+    <section v-bind="$attrs" :class="containerClass">
         <component
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"

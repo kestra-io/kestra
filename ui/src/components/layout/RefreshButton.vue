@@ -27,7 +27,7 @@
             },
             size: {
                 type: String,
-                default: "'default'"
+                default: "default"
             },
             customClass: {
                 type: String,

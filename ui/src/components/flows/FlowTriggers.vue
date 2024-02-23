@@ -1,5 +1,6 @@
 <template>
     <el-table
+        v-bind="$attrs"
         :data="triggersWithType"
         stripe
         table-layout="auto"
@@ -27,7 +28,7 @@
                 <refresh-button
                     :can-auto-refresh="true"
                     @refresh="loadData"
-                    :size="'small'"
+                    size="small"
                     custom-class="mx-1"
                 />
             </template>

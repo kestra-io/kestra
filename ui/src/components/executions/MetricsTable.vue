@@ -86,7 +86,7 @@
             return {
                 loadInit: false,
                 metrics: undefined,
-                metricsTotal: undefined
+                metricsTotal: 0
             };
         },
         props: {

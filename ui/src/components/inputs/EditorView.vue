@@ -774,7 +774,7 @@
             @open-edit-metadata="isEditMetadataOpen = true;"
         />
     </div>
-    <div class="main-editor" v-loading="isLoading">
+    <div v-bind="$attrs" class="main-editor" v-loading="isLoading">
         <editor
             ref="editorDomElement"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"

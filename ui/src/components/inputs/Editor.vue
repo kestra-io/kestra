@@ -294,43 +294,47 @@
                     });
                 }
 
-                this.editor.onDidContentSizeChange(_ => {
-                    if (this.guidedProperties.monacoRange) {
-                        editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
-                        let decorations = [
-                            {
-                                range: this.guidedProperties.monacoRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "highlight-text"
+                if (this.editor.onDidContentSizeChange instanceof Function) {
+                    this.editor.onDidContentSizeChange(_ => {
+                        if (this.guidedProperties.monacoRange) {
+                            editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
+                            let decorations = [
+                                {
+                                    range: this.guidedProperties.monacoRange,
+                                    options: {
+                                        isWholeLine: true,
+                                        inlineClassName: "highlight-text"
+                                    },
+                                    className: "highlight-text",
+                                }
+                            ];
+                            decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
+                                {
+                                    range: this.guidedProperties.monacoDisableRange,
+                                    options: {
+                                        isWholeLine: true,
+                                        inlineClassName: "disable-text"
+                                    },
+                                    className: "disable-text",
                                 },
-                                className: "highlight-text",
-                            }
-                        ];
-                        decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
-                            {
-                                range: this.guidedProperties.monacoDisableRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "disable-text"
-                                },
-                                className: "disable-text",
-                            },
-                        ]) : decorations;
-                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
-                    } else {
-                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
-                    }
-                });
+                            ]) : decorations;
+                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                        } else {
+                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                        }
+                    });
+                }
 
-                this.editor.onDidChangeCursorPosition(() => {
-                    let position = this.editor.getPosition();
-                    let model = this.editor.getModel();
-                    clearTimeout(this.lastTimeout);
-                    this.lastTimeout = setTimeout(() => {
-                        this.$emit("cursor", {position: position, model: model})
-                    }, 100);
-                });
+                if (this.editor.onDidChangeCursorPosition instanceof Function) {
+                    this.editor.onDidChangeCursorPosition(() => {
+                        let position = this.editor.getPosition();
+                        let model = this.editor.getModel();
+                        clearTimeout(this.lastTimeout);
+                        this.lastTimeout = setTimeout(() => {
+                            this.$emit("cursor", {position: position, model: model})
+                        }, 100);
+                    });
+                }
             },
             autoFold(autoFold) {
                 if (autoFold) {

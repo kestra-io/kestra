@@ -1,5 +1,6 @@
 <template>
     <el-tooltip
+        v-if="isReplay || enabled"
         :persistent="false"
         transition=""
         :hide-after="0"
@@ -11,13 +12,13 @@
             :is="component"
             :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
             @click="isOpen = !isOpen"
-            v-if="component !== 'el-dropdown-item' && (isReplay || enabled)"
+            v-if="component !== 'el-dropdown-item'"
             :disabled="!enabled"
             :class="!isReplay ? 'restart me-1' : ''"
         >
             {{ $t(replayOrRestart) }}
         </component>
-        <span v-else-if="component === 'el-dropdown-item' && (isReplay || enabled)">
+        <span v-else-if="component === 'el-dropdown-item'">
             <component
                 :is="component"
                 :icon="!isReplay ? RestartIcon : PlayBoxMultiple"

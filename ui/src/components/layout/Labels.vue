@@ -4,7 +4,7 @@
         <el-tag
             v-for="(value, key) in labelMap"
             :key="key"
-            :type="checked(key, value) ? 'info' : 'default'"
+            :type="checked(key, value) ? 'primary' : 'info'"
             class="me-1 labels"
             size="small"
             disable-transitions
@@ -87,7 +87,7 @@
         }
 
         &.el-tag--info {
-            background: var(--bs-primary);
+            background: var(--bs-gray-600);
         }
     }
 </style>

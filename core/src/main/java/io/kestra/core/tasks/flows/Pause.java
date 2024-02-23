@@ -86,11 +86,6 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     @Deprecated
     private List<Task> tasks;
 
-    @Valid
-    @Deprecated
-    protected List<Task> errors;
-
-
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);

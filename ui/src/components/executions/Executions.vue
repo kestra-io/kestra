@@ -94,20 +94,6 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-input
-                        :placeholder="$t('trigger execution id')"
-                        clearable
-                        :model-value="$route.query.triggerExecutionId"
-                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <label-filter
-                        :model-value="$route.query.labels"
-                        @update:model-value="onDataTableValue('labels', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
                     <refresh-button
                         :can-auto-refresh="canAutoRefresh"
                         class="float-right"
@@ -558,7 +544,9 @@
                 if (this.$route.query.timeRange) {
                     return this.$moment().subtract(this.$moment.duration(this.$route.query.timeRange).as("milliseconds")).toISOString(true);
                 }
-                return undefined;
+
+                // the default is PT30D
+                return this.$moment().subtract(30, "days").toISOString(true);
             },
             displayButtons() {
                 return (this.$route.name === "flows/update");

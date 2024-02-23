@@ -2,7 +2,7 @@
     <el-config-provider>
         <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        ²        <main v-if="loaded">
+                <main v-if="loaded">
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />

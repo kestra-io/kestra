@@ -66,7 +66,7 @@
         </collapse>
     </nav>
 
-    <div v-loading="isLoading">
+    <div v-bind="$attrs" v-loading="isLoading">
         <el-card>
             <el-tooltip
                 placement="bottom"

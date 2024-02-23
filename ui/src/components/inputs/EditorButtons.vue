@@ -54,7 +54,7 @@
             </template>
         </el-dropdown>
     </div>
-    <div>
+    <div v-bind="$attrs">
         <el-button
             :icon="ContentSave"
             @click="forwardEvent('save', $event)"

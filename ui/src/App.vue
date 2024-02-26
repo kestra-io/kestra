@@ -17,6 +17,8 @@
 </script>
 
 <script>
+    import {ElMessageBox, ElSwitch} from "element-plus";
+    import {h, ref} from "vue";
     import LeftMenu from "override/components/LeftMenu.vue";
     import ErrorToast from "./components/ErrorToast.vue";
     import {mapGetters, mapState} from "vuex";
@@ -29,7 +31,7 @@
         components: {
             LeftMenu,
             ErrorToast,
-            VueTour
+            VueTour,
         },
         data() {
             return {
@@ -56,12 +58,55 @@
                 this.initGuidedTour();
             }
             this.setTitleEnvSuffix();
+
+            // save uptime before showing security advice.
+            if (localStorage.getItem("security.advice.uptime") === null) {
+                localStorage.setItem("security.advice.uptime", `${new Date().getTime()}`);
+                // 7 days. Use local-storage for ease testing
+                localStorage.setItem("security.advice.expired", "604800000");
+            }
+
+            // only show security advice after expiration
+            const uptime = parseInt(localStorage.getItem("security.advice.uptime"));
+            const expired = parseInt(localStorage.getItem("security.advice.expired"));
+            const isSecurityAdviceShow = localStorage.getItem("security.advice.show");
+
+            const isSecurityAdviceEnable = new Date().getTime() - uptime >= expired
+            if (!this.configs.isBasicAuthEnabled
+                && isSecurityAdviceShow === "true"
+                && isSecurityAdviceEnable) {
+                const checked = ref(false);
+                ElMessageBox({
+                    title: "Your data is not secured",
+                    message: () => {
+                        return h("div", null, [
+                            h("p", null, "Don't lose one bit. Enable our free security features"),
+                            h(ElSwitch, {
+                                modelValue: checked.value,
+                                "onUpdate:modelValue": (val) => {
+                                    checked.value = val
+                                    localStorage.setItem("security.advice.show", `${!val}`)
+                                },
+                                activeText: "Don't show again"
+                            }),
+                        ])
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: "Enabled security",
+                    cancelButtonText: "Dismiss",
+                    center: false,
+                    showClose: false,
+                }).then(() => {
+                    this.$router.push({path: "admin/stats"});
+                });
+            }
         },
         methods: {
             onMenuCollapse(collapse) {
                 document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed");
                 document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
-            },
+            }
+            ,
             displayApp(fullPage = false) {
                 this.fullPage = fullPage;
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
@@ -70,12 +115,14 @@
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
                 this.loaded = true;
-            },
+            }
+            ,
             setTitleEnvSuffix() {
                 const envSuffix = this.envName ? ` - ${this.envName}` : "";
 
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
-            },
+            }
+            ,
             async loadGeneralResources() {
                 let uid = localStorage.getItem("uid");
                 if (uid === null) {
@@ -96,7 +143,8 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
-            },
+            }
+            ,
             initStats(apiConfig, config, uid) {
                 if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
                     return;
@@ -124,7 +172,8 @@
                 if (!posthog.get_property("__alias")) {
                     posthog.alias(apiConfig.id);
                 }
-            },
+            }
+            ,
             initGuidedTour() {
                 this.$store.dispatch("flow/findFlows", {size: 1})
                     .then(flows => {
@@ -137,8 +186,10 @@
                             });
                         }
                     });
-            },
-        },
+            }
+            ,
+        }
+        ,
         watch: {
             $route(to) {
                 if (this.user && to.name === "home" && this.overallTotal === 0) {
@@ -149,7 +200,8 @@
                         }
                     });
                 }
-            },
+            }
+            ,
             envName() {
                 this.setTitleEnvSuffix();
             }
@@ -158,7 +210,7 @@
 </script>
 
 <style lang="scss">
-    @use "styles/vendor";
-    @use "styles/app";
+@use "styles/vendor";
+@use "styles/app";
 </style>
 

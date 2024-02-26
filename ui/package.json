@@ -57,7 +57,7 @@
     "vue3-tour": "git@github.com:kestra-io/vue3-tour.git",
     "vuex": "^4.1.0",
     "xss": "^1.0.14",
-    "yaml": "^2.3.4"
+    "yaml": "^2.4.0"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.6.1",

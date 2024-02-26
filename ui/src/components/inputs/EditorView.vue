@@ -790,7 +790,7 @@
             :navbar="false"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <div :style="combinedEditor ? {'flex-basis': rightEditorWidth} : {'display': 'none'}">
+        <div :style="combinedEditor ? {'flex-basis': rightEditorWidth} : viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
             <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
             <div
                 class="topology-display"

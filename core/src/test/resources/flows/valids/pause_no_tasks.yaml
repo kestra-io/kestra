@@ -1,0 +1,9 @@
+id: pause_no_tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.core.tasks.flows.Pause
+  - id: last
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}}"

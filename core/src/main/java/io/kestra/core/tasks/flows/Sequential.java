@@ -78,7 +78,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
 
         GraphUtils.sequential(
             subGraph,
-            this.tasks,
+            this.getTasks(),
             this.errors,
             taskRun,
             execution
@@ -91,15 +91,15 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     public List<Task> allChildTasks() {
         return Stream
             .concat(
-                this.tasks != null ? this.tasks.stream() : Stream.empty(),
-                this.errors != null ? this.errors.stream() : Stream.empty()
+                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
+                this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
             )
             .collect(Collectors.toList());
     }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
+        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
     }
 
     @Override
@@ -107,7 +107,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun
         );
     }

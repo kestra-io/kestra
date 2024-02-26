@@ -71,27 +71,30 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         String triggerFlowId = "schedule-trigger-search";
         String triggerNamespace = "io.kestra.tests.schedule";
 
+        Flow flow = generateFlow(triggerFlowId);
+        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+
         Trigger trigger = Trigger.builder()
             .flowId(triggerFlowId)
             .namespace(triggerNamespace)
-            .triggerId("schedule-every-min")
+            .triggerId("trigger-nextexec-schedule")
             .date(ZonedDateTime.now())
             .build();
 
         jdbcTriggerRepository.save(trigger);
-        jdbcTriggerRepository.save(trigger.toBuilder().triggerId("schedule-5-min").build());
+        jdbcTriggerRepository.save(trigger.toBuilder().triggerId("trigger-nextexec-polling").build());
 
-        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, Trigger.class));
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
         assertThat(triggers.getTotal(), greaterThanOrEqualTo(2L));
 
-        assertThat(triggers.getResults(), Matchers.hasItems(
+        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList(), Matchers.hasItems(
                 allOf(
-                    hasProperty("triggerId", is("schedule-every-min")),
+                    hasProperty("triggerId", is("trigger-nextexec-schedule")),
                     hasProperty("namespace", is(triggerNamespace)),
                     hasProperty("flowId", is(triggerFlowId))
                 ),
                 allOf(
-                    hasProperty("triggerId", is("schedule-5-min")),
+                    hasProperty("triggerId", is("trigger-nextexec-polling")),
                     hasProperty("namespace", is(triggerNamespace)),
                     hasProperty("flowId", is(triggerFlowId))
                 )
@@ -183,15 +186,15 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
             Duration.ofMillis(100),
             Duration.ofMinutes(2)
         );
-        PagedResults<Trigger> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class));
-        assertThat(triggers.getResults().get(0).getNextExecutionDate(), notNullValue());
-        assertThat(triggers.getResults().get(1).getNextExecutionDate(), notNullValue());
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+        assertThat(triggers.getResults().get(0).getTriggerContext().getNextExecutionDate(), notNullValue());
+        assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate(), notNullValue());
     }
 
     private Flow generateFlow(String flowId) {
         return Flow.builder()
             .id(flowId)
-            .namespace("io.kestra.tests.scheduler")
+            .namespace("io.kestra.tests.schedule")
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")
                 .type(Return.class.getName())
@@ -210,4 +213,6 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
             ))
             .build();
     }
+
+
 }

@@ -19,7 +19,7 @@
     "@vue-flow/core": "1.14.3",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.6.5",
-    "bootstrap": "^5.3.2",
+    "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.1",
     "chartjs-chart-matrix": "^2.0.1",

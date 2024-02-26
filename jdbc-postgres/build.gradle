@@ -5,7 +5,7 @@ dependencies {
     implementation project(":jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
-    runtimeOnly("org.postgresql:postgresql:42.7.1")
+    runtimeOnly("org.postgresql:postgresql:42.7.2")
     runtimeOnly('org.flywaydb:flyway-database-postgresql')
 
     testImplementation project(':core').sourceSets.test.output

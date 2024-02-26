@@ -24,7 +24,7 @@
                 </template>
                 <template #table>
                     <el-table
-                        :data="triggers"
+                        :data="triggersMerged"
                         ref="table"
                         :default-sort="{prop: 'flowId', order: 'ascending'}"
                         stripe
@@ -199,7 +199,9 @@
                 }).then(triggersData => {
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
-                    callback();
+                    if (callback) {
+                        callback();
+                    }
                 });
             },
             async unlock() {
@@ -225,6 +227,15 @@
                 this.triggerToUnlock = undefined;
             },
             setDisabled(trigger, value) {
+                if (trigger.codeDisabled) {
+                    this.$message({
+                        message: this.$t("triggerflow disabled"),
+                        type: "error",
+                        showClose: true,
+                        duration: 1500
+                    });
+                    return;
+                }
                 this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
                     .then(_ => {
                         this.loadData();
@@ -237,6 +248,11 @@
                 return {
                     title: this.$t("triggers")
                 }
+            },
+            triggersMerged() {
+                return this.triggers.map(triggers => {
+                    return {...triggers.abstractTrigger, ...triggers.triggerContext, codeDisabled: triggers.abstractTrigger.disabled}
+                })
             }
         }
     };

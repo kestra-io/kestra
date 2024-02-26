@@ -7,6 +7,7 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.RunContext;
@@ -25,12 +26,17 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Controller("/api/v1/triggers")
+@Slf4j
 public class TriggerController {
     @Inject
     private TriggerRepositoryInterface triggerRepository;
@@ -45,28 +51,57 @@ public class TriggerController {
     private TenantService tenantService;
 
     @Inject
-    private  RunContextFactory runContextFactory;
+    private RunContextFactory runContextFactory;
 
     @Inject
-    private  ConditionService conditionService;
+    private ConditionService conditionService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = {"Triggers"}, summary = "Search for triggers")
-    public PagedResults<Trigger> search(
+    public PagedResults<Triggers> search(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws HttpStatusException {
-        return PagedResults.of(triggerRepository.find(
+
+        ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             query,
             tenantService.resolveTenant(),
             namespace,
             null
-        ));
+        );
+
+        List<Triggers> triggers = new ArrayList<>();
+        triggerContexts.forEach(tc -> {
+            Optional<Flow> flow = flowRepository.findById(tc.getTenantId(), tc.getNamespace(), tc.getFlowId());
+            if (flow.isEmpty()) {
+                // Warn instead of throwing to avoid blocking the trigger UI
+                log.warn(String.format("Flow %s not found for trigger %s", tc.getFlowId(), tc.getTriggerId()));
+            }
+
+            AbstractTrigger abstractTrigger = flow.get().getTriggers().stream().filter(t -> t.getId().equals(tc.getTriggerId())).findFirst().orElse(null);
+            if (abstractTrigger == null) {
+                // Warn instead of throwing to avoid blocking the trigger UI
+                log.warn(String.format("Flow %s has no trigger %s", tc.getFlowId(), tc.getTriggerId()));
+            }
+
+            triggers.add(Triggers.builder()
+                .abstractTrigger(abstractTrigger)
+                .triggerContext(tc)
+                .build());
+        });
+        return PagedResults.of(new ArrayListTotal<>(triggers, triggerContexts.getTotal()));
+    }
+
+    @Builder
+    @Getter
+    public static class Triggers {
+        AbstractTrigger abstractTrigger;
+        TriggerContext triggerContext;
     }
 
     @ExecuteOn(TaskExecutors.IO)

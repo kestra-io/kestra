@@ -82,7 +82,7 @@
                 <el-checkbox :label="$t('Fold auto')" :model-value="autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
             </el-form-item>
 
-            <el-form-item :label="$t('Default namespace')">
+            <el-form-item :label="$t('Default namespace')" v-if="allowDefaultNamespace">
                 <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
             </el-form-item>
 
@@ -165,6 +165,12 @@
             NamespaceSelect,
             LogLevelSelector,
             TopNavBar
+        },
+        props: {
+            allowDefaultNamespace: {
+                type: Boolean,
+                default: true
+            }
         },
         data() {
             return {

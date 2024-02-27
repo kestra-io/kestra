@@ -185,7 +185,7 @@ public class RunnerUtils {
         }
         final String loggableType = data instanceof Input ? "input" : "output";
         switch (data.getType()) {
-            case STRING -> {
+            case ENUM, STRING -> {
                 return Optional.of(new AbstractMap.SimpleEntry<>(
                     data.getId(),
                     current

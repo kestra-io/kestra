@@ -30,10 +30,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class InputsTest extends AbstractMemoryRunnerTest {
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
+        .put("enum", "ENUM_VALUE")
         .put("int", "42")
         .put("float", "42.42")
         .put("bool", "false")
@@ -138,6 +138,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         typeds.put("bool", false);
 
         assertThat(typeds.get("string"), is("myString"));
+        assertThat(typeds.get("enum"), is("ENUM_VALUE"));
         assertThat(typeds.get("int"), is(42));
         assertThat(typeds.get("float"), is(42.42F));
         assertThat(typeds.get("bool"), is(false));
@@ -302,5 +303,17 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getMessage(), containsString("Invalid URI format"));
+    }
+
+    @Test
+    void inputEnumFailed() {
+        HashMap<String, Object> map = new HashMap<>(inputs);
+        map.put("enum", "INVALID");
+
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(map);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input 'INVALID', it must match the values '[ENUM_VALUE, OTHER_ONE]'"));
     }
 }

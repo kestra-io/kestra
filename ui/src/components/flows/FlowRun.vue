@@ -20,6 +20,22 @@
                     v-if="input.type === 'STRING' || input.type === 'URI'"
                     v-model="inputs[input.id]"
                 />
+                <el-select
+                    :full-height="false"
+                    :input="true"
+                    :navbar="false"
+                    v-if="input.type === 'ENUM'"
+                    v-model="inputs[input.id]"
+                >
+                    <el-option
+                        v-for="item in input.values"
+                        :key="item"
+                        :label="item"
+                        :value="item"
+                    >
+                        {{ item }}
+                    </el-option>
+                </el-select>
                 <el-input
                     type="password"
                     v-if="input.type === 'SECRET'"

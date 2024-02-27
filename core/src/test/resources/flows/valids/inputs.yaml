@@ -7,6 +7,11 @@ labels:
 inputs:
 - id: string
   type: STRING
+- id: enum
+  type: ENUM
+  values:
+    - ENUM_VALUE
+    - OTHER_ONE
 - id: optional
   type: STRING
   required: false

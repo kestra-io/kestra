@@ -1,17 +1,6 @@
 package io.kestra.core.models.flows;
 
-import io.kestra.core.models.flows.input.BooleanInput;
-import io.kestra.core.models.flows.input.DateInput;
-import io.kestra.core.models.flows.input.DateTimeInput;
-import io.kestra.core.models.flows.input.DurationInput;
-import io.kestra.core.models.flows.input.FileInput;
-import io.kestra.core.models.flows.input.FloatInput;
-import io.kestra.core.models.flows.input.IntInput;
-import io.kestra.core.models.flows.input.JsonInput;
-import io.kestra.core.models.flows.input.SecretInput;
-import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.flows.input.TimeInput;
-import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.*;
 import io.micronaut.core.annotation.Introspected;
 
 /**
@@ -20,6 +9,7 @@ import io.micronaut.core.annotation.Introspected;
 @Introspected
 public enum Type {
     STRING(StringInput.class.getName()),
+    ENUM(EnumInput.class.getName()),
     INT(IntInput.class.getName()),
     FLOAT(FloatInput.class.getName()),
     BOOLEAN(BooleanInput.class.getName()),

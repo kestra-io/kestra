@@ -18,9 +18,7 @@
                     </span>
                 </span>
             </div>
-            12123
             <span class="message" v-html="message" />
-            1233
         </div>
     </div>
 </template>

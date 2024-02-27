@@ -18,7 +18,9 @@
                     </span>
                 </span>
             </div>
+            12123
             <span class="message" v-html="message" />
+            1233
         </div>
     </div>
 </template>
@@ -102,7 +104,9 @@
                 );
             },
             message() {
-                return !this.log.message ? "" : convert.toHtml(xss(this.log.message));
+                return !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
+                    allowList: {"span": ["style"]}
+                }));
             }
         },
     };

@@ -59,4 +59,8 @@
             opacity: 1;
         }
     }
+
+    button.el-button--primary {
+        color: var(--bs-primary);
+    }
 </style>

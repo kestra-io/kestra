@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +23,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.Await;
@@ -39,6 +39,7 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import net.jodah.failsafe.Timeout;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -83,6 +84,8 @@ public class Worker implements Runnable, AutoCloseable {
     @Getter
     private final String workerGroup;
 
+    private final LogService logService;
+
     @SuppressWarnings("unchecked")
     public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
         this.applicationContext = applicationContext;
@@ -110,21 +113,27 @@ public class Worker implements Runnable, AutoCloseable {
 
         WorkerGroupService workerGroupService = applicationContext.getBean(WorkerGroupService.class);
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
+
+        this.logService = applicationContext.getBean(LogService.class);
     }
 
     @Override
     public void run() {
         this.executionKilledQueue.receive(executionKilled -> {
-            if (executionKilled != null && executionKilled.isLeft()) {
-                // @FIXME: the hashset will never expire killed execution
-                killedExecution.add(executionKilled.getLeft().getExecutionId());
-
-                synchronized (this) {
-                    workerThreadReferences
-                        .stream()
-                        .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
-                        .forEach(WorkerThread::kill);
-                }
+            if(executionKilled == null || !executionKilled.isLeft()) {
+                return;
+            }
+            ExecutionKilled.State state = executionKilled.getLeft().getState();
+            if (state != null && state != ExecutionKilled.State.EXECUTED) {
+                return;
+            }
+            // @FIXME: the hashset will never expire killed execution
+            killedExecution.add(executionKilled.getLeft().getExecutionId());
+            synchronized (this) {
+                workerThreadReferences
+                    .stream()
+                    .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
+                    .forEach(WorkerThread::kill);
             }
         });
 
@@ -243,11 +252,11 @@ public class Worker implements Runnable, AutoCloseable {
                         );
 
                         if (log.isDebugEnabled()) {
-                            log.debug(
-                                "[namespace: {}] [flow: {}] [trigger: {}] [type: {}] {}",
-                                workerTrigger.getTriggerContext().getNamespace(),
-                                workerTrigger.getTriggerContext().getFlowId(),
-                                workerTrigger.getTrigger().getId(),
+                            logService.logTrigger(
+                                workerTrigger.getTriggerContext(),
+                                log,
+                                Level.DEBUG,
+                                "[type: {}] {}",
                                 workerTrigger.getTrigger().getType(),
                                 evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
                             );
@@ -328,20 +337,13 @@ public class Worker implements Runnable, AutoCloseable {
             return workerTaskResult;
         }
 
-        workerTask.logger().info(
-            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] [value: {}] Type {} started",
-            workerTask.getTaskRun().getNamespace(),
-            workerTask.getTaskRun().getFlowId(),
-            workerTask.getTaskRun().getTaskId(),
-            workerTask.getTaskRun().getExecutionId(),
-            workerTask.getTaskRun().getId(),
-            workerTask.getTaskRun().getValue(),
+        logService.logTaskRun(
+            workerTask.getTaskRun(),
+            workerTask.logger(),
+            Level.INFO,
+            "Type {} started",
             workerTask.getTask().getClass().getSimpleName()
         );
-
-        if (workerTask.logger().isDebugEnabled()) {
-            workerTask.logger().debug("Variables\n{}", JacksonMapper.log(workerTask.getRunContext().getVariables()));
-        }
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING));
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
@@ -464,14 +466,11 @@ public class Worker implements Runnable, AutoCloseable {
             .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, metricRegistry.tags(workerTask, workerGroup))
             .record(workerTask.getTaskRun().getState().getDuration());
 
-        workerTask.logger().info(
-            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] [value: {}] Type {} with state {} completed in {}",
-            workerTask.getTaskRun().getNamespace(),
-            workerTask.getTaskRun().getFlowId(),
-            workerTask.getTaskRun().getTaskId(),
-            workerTask.getTaskRun().getExecutionId(),
-            workerTask.getTaskRun().getId(),
-            workerTask.getTaskRun().getValue(),
+        logService.logTaskRun(
+            workerTask.getTaskRun(),
+            workerTask.logger(),
+            Level.INFO,
+            "Type {} with state {} completed in {}",
             workerTask.getTask().getClass().getSimpleName(),
             workerTask.getTaskRun().getState().getCurrent(),
             workerTask.getTaskRun().getState().humanDuration()
@@ -481,11 +480,11 @@ public class Worker implements Runnable, AutoCloseable {
     private void logError(WorkerTrigger workerTrigger, Throwable e) {
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
 
-        logger.warn(
-            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
-            workerTrigger.getTriggerContext().getNamespace(),
-            workerTrigger.getTriggerContext().getFlowId(),
-            workerTrigger.getTriggerContext().getTriggerId(),
+        logService.logTrigger(
+            workerTrigger.getTriggerContext(),
+            logger,
+            Level.WARN,
+            "[date: {}] Evaluate Failed with error '{}'",
             workerTrigger.getTriggerContext().getDate(),
             e.getMessage(),
             e
@@ -555,15 +554,6 @@ public class Worker implements Runnable, AutoCloseable {
         TaskRunAttempt taskRunAttempt = builder
             .build()
             .withState(state);
-
-        // logs
-        if (workerThread.getTaskOutput() != null && log.isDebugEnabled()) {
-            log.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
-        }
-
-        if (!runContext.metrics().isEmpty() && log.isTraceEnabled()) {
-            log.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
-        }
 
         // metrics
         runContext.metrics().forEach(metric -> this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric)));

@@ -5,7 +5,7 @@ import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
@@ -427,7 +427,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(4));
+        assertThat(namespaces.size(), is(5));
     }
 
     @Test
@@ -715,8 +715,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.get(0).isOutdated(), is(true));
         assertThat(body.get(0).getDeprecationPaths(), hasSize(3));
         assertThat(body.get(0).getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
+        assertThat(body.get(0).getWarnings().size(), is(1));
+        assertThat(body.get(0).getWarnings().get(0), containsString("The system namespace is reserved for background workflows"));
         assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), empty());
+        assertThat(body.get(1).getWarnings(), empty());
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", is(nullValue()))
         ));
@@ -740,7 +743,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         return Flow.builder()
             .id(friendlyId)
             .namespace(namespace)
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).id(inputName).build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id(inputName).build()))
             .tasks(Collections.singletonList(generateTask("test", "test")))
             .build();
     }

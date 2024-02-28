@@ -85,7 +85,7 @@ public final class ExecutableUtils {
                 currentFlow.getNamespace(),
                 currentFlow.getId()
             )
-            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision + '" + subflowRevision.orElse(0) + "'"));
+            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'"));
 
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a flow which is disabled");

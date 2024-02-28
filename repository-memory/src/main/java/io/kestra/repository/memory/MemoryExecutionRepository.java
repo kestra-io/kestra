@@ -78,7 +78,23 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
+    public Flux<Execution> findAllByTriggerExecutionId(String tenantId, String triggerExecutionId) {
+        return Flux.fromStream(
+            executions.values()
+                .stream()
+                .filter(e -> (tenantId == null && e.getTenantId() == null) || (tenantId != null && tenantId.equals(e.getTenantId())))
+                .filter(execution -> Objects.nonNull(execution.getTrigger()))
+                .filter(execution -> execution.getTrigger().getVariables().get("executionId").equals(triggerExecutionId))
+        );
+    }
+
+    @Override
     public Execution save(Execution execution) {
+        return executions.put(execution.getId(), execution);
+    }
+
+    @Override
+    public Execution update(Execution execution) {
         return executions.put(execution.getId(), execution);
     }
 

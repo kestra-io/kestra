@@ -12,7 +12,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div :class="{'mt-3': !embed}" class="home" v-loading="!dailyReady">
+    <section :class="{'container': !embed}" class="home" v-loading="!dailyReady">
         <div v-if="displayCharts">
             <collapse>
                 <el-form-item v-if="!flowId && !namespaceRestricted">
@@ -125,7 +125,7 @@
             </el-card>
             <onboarding-bottom v-if="!flowId" />
         </div>
-    </div>
+    </section>
 </template>
 
 <script setup>

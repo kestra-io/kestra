@@ -36,6 +36,10 @@
             .el-form-item {
                 margin-right: 5px;
 
+                .el-radio-group {
+                    margin-right: 5px;
+                }
+
                 .el-form-item__content {
                     > * {
                         width: 200px;

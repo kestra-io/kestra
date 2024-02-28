@@ -123,9 +123,11 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
 
+            System.out.println(jsonSchema.get("properties"));
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(1),
-                hasKey("conditions")
+                Matchers.aMapWithSize(2),
+                hasKey("conditions"),
+                hasKey("stopAfter")
             ));
         });
     }

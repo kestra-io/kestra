@@ -54,7 +54,7 @@ import java.util.Map;
                           - python scripts/etl_script.py
                           - python scripts/generate_orders.py
 
-                      - id: outputFile
+                      - id: exportFiles
                         type: io.kestra.core.tasks.storages.LocalFiles
                         outputs:
                           - orders.csv
@@ -67,7 +67,7 @@ import java.util.Map;
                     region: eu-central-1
                     bucket: kestraio
                     key: stage/orders.csv
-                    from: "{{ outputs.outputFile.uris['orders.csv'] }}"
+                    from: "{{ outputs.exportFiles.outputFiles['orders.csv'] }}"
                     disabled: true
             """
     ),

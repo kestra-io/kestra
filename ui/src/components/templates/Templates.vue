@@ -30,7 +30,7 @@
         </template>
     </top-nav-bar>
     <templates-deprecated />
-    <div class="mt-3" v-if="ready">
+    <section class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -124,7 +124,7 @@
                 </template>
             </data-table>
         </div>
-    </div>
+    </section>
 </template>
 
 <script setup>

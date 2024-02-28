@@ -5,6 +5,8 @@ jackson:
   serialization-inclusion: non_default
 
 kestra:
+  encryption:
+    secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
   url: https://mysuperhost.com/subpath
   repository:
     type: memory
@@ -35,8 +37,7 @@ kestra:
           lists:
           - val:
               key: test
-    subflow:
-      allow-parameter-outputs: true
+
   anonymous-usage-report:
     enabled: false
     uri: http://localhost:8080/
@@ -54,3 +55,6 @@ kestra:
       - type: io.kestra.plugin.Test2
         values:
           prop2: value2
+      - type: io.kestra.core.models.triggers.types.Schedule
+        values:
+          recoverMissedSchedules: ALL

@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.docs.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
@@ -77,7 +78,7 @@ public class PluginController {
         summary = "Get all types for an inputs"
     )
     public List<InputType> inputs() throws ClassNotFoundException {
-        return Stream.of(Input.Type.values())
+        return Stream.of(Type.values())
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
             .collect(Collectors.toList());
     }
@@ -90,7 +91,7 @@ public class PluginController {
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
     public MutableHttpResponse<DocumentationWithSchema> inputSchemas(
-        @Parameter(description = "The schema needed") @PathVariable Input.Type type
+        @Parameter(description = "The schema needed") @PathVariable Type type
     ) throws ClassNotFoundException, IOException {
         ClassInputDocumentation classInputDocumentation = this.inputDocumentation(type);
 
@@ -107,7 +108,7 @@ public class PluginController {
     }
 
     @Cacheable("default")
-    protected ClassInputDocumentation inputDocumentation(Input.Type type) throws ClassNotFoundException {
+    protected ClassInputDocumentation inputDocumentation(Type type) throws ClassNotFoundException {
         Class<? extends Input<?>> inputCls = type.cls();
 
         return ClassInputDocumentation.of(jsonSchemaGenerator, inputCls);

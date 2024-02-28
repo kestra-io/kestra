@@ -1,17 +1,20 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.crypto.CryptoService;
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
@@ -36,7 +39,6 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
-@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -54,8 +56,8 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     MetricRegistry metricRegistry;
 
-    @Inject
-    CryptoService cryptoService;
+    @Value("${kestra.encryption.secret-key}")
+    private String secretKey;
 
     @Test
     void logs() throws TimeoutException {
@@ -221,9 +223,26 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         String plainText = "toto";
 
         String encrypted = runContext.encrypt(plainText);
-        String decrypted = cryptoService.decrypt(encrypted);
+        String decrypted = EncryptionService.decrypt(secretKey, encrypted);
 
         assertThat(encrypted, not(plainText));
         assertThat(decrypted, is(plainText));
+    }
+
+    @Test
+    void encryptedStringOutput() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        TaskRun hello = execution.findTaskRunsByTaskId("hello").get(0);
+        Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
+        assertThat(valueOutput.size(), is(2));
+        assertThat(valueOutput.get("type"), is(EncryptedString.TYPE));
+        // the value is encrypted so it's not the plaintext value of the task property
+        assertThat(valueOutput.get("value"), not("Hello World"));
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").get(0);
+        // the output is automatically decrypted so the return has the decrypted value of the hello task output
+        assertThat(returnTask.getOutputs().get("value"), is("Hello World"));
     }
 }

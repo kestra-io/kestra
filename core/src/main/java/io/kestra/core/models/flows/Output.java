@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -16,7 +17,7 @@ import jakarta.validation.constraints.Pattern;
 @Getter
 @NoArgsConstructor
 @Introspected
-public class Output {
+public class Output implements Data {
     /**
      * The output's unique id.
      */
@@ -33,4 +34,11 @@ public class Output {
      */
     @NotNull
     Object value;
+
+    /**
+     * The type of the output.
+     */
+    @NotNull
+    @Valid
+    Type type;
 }

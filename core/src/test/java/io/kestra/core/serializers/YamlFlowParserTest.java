@@ -4,12 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
-import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -23,7 +22,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -125,8 +123,8 @@ class YamlFlowParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size(), is(25));
-        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(7L));
+        assertThat(flow.getInputs().size(), is(26));
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(8L));
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(18L));
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(1L));
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
@@ -139,7 +137,7 @@ class YamlFlowParserTest {
 
         assertThat(flow.getInputs().size(), is(1));
         assertThat(flow.getInputs().get(0).getId(), is("myInput"));
-        assertThat(flow.getInputs().get(0).getType(), is(Input.Type.STRING));
+        assertThat(flow.getInputs().get(0).getType(), is(Type.STRING));
     }
 
     @Test
@@ -179,18 +177,6 @@ class YamlFlowParserTest {
         String s = mapper.writeValueAsString(flow);
         assertThat(s, not(containsString("\"-c\"")));
         assertThat(s, containsString("\"deleted\":false"));
-    }
-
-    @Test
-    void trigger() {
-        Flow parse = this.parse("flows/tests/trigger.yaml");
-        assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), is(ZonedDateTime.parse("2020-01-01T00:00:00+02:00")));
-    }
-
-    @Test
-    void triggerEmpty() {
-        Flow parse = this.parse("flows/tests/trigger-empty.yaml");
-        assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), nullValue());
     }
 
     @Test

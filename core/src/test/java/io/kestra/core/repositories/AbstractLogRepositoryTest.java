@@ -126,4 +126,15 @@ public abstract class AbstractLogRepositoryTest {
 
         assertThat(find.size(), is(0));
     }
+
+    @Test
+    void delete() {
+        LogEntry log1 = logEntry(Level.INFO).build();
+        logRepository.save(log1);
+
+        logRepository.deleteByQuery(null, log1.getExecutionId(), null, null, null, null);
+
+        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.size(), is(0));
+    }
 }

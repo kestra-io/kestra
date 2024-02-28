@@ -34,12 +34,6 @@ public class Extension extends AbstractExtension {
     @Nullable
     private RenderFunction renderFunction;
 
-    @Inject
-    private EncryptFunction encryptFunction;
-
-    @Inject
-    private DecryptFunction decryptFunction;
-
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -105,8 +99,8 @@ public class Extension extends AbstractExtension {
         if (this.renderFunction != null) {
             functions.put("render", renderFunction);
         }
-        functions.put("encrypt", encryptFunction);
-        functions.put("decrypt", decryptFunction);
+        functions.put("encrypt", new EncryptFunction());
+        functions.put("decrypt", new DecryptFunction());
 
         return functions;
     }

@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -10,13 +11,16 @@ import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import java.util.function.BiConsumer;
 
 @Slf4j
 @Singleton
@@ -36,7 +40,6 @@ public class DefaultScheduler extends AbstractScheduler {
     ) {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
-        this.isReady = true;
 
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
@@ -59,10 +62,10 @@ public class DefaultScheduler extends AbstractScheduler {
                 Trigger trigger = Await.until(()  -> watchingTrigger.get(execution.getId()), Duration.ofSeconds(5));
                 var flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElse(null);
                 if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
-                    triggerState.save(trigger.resetExecution());
+                    triggerState.update(trigger.resetExecution(execution.getState().getCurrent()));
                     watchingTrigger.remove(execution.getId());
                 } else {
-                    triggerState.save(Trigger.of(execution, trigger.getDate()));
+                    triggerState.update(Trigger.of(execution, trigger));
                 }
             }
         });
@@ -80,5 +83,12 @@ public class DefaultScheduler extends AbstractScheduler {
         });
 
         super.run();
+    }
+
+    @Override
+    public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
+        List<Trigger> triggers =  triggerState.findAllForAllTenants().stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
+        DefaultScheduleContext schedulerContext = new DefaultScheduleContext();
+        consumer.accept(triggers, schedulerContext);
     }
 }

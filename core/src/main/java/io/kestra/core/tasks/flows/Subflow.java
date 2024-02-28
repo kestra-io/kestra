@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
 
-    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "flowOutputs.enabled";
+    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "outputs.enabled";
 
     @NotEmpty
     @Schema(
@@ -124,10 +125,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
      */
     @Schema(
         title = "Outputs from the subflow executions.",
-        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution."
+        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution." +
+            "This property is deprecated since v0.15.0, please use the `outputs` property on the Subflow definition for defining the output values available and exposed to this task execution."
     )
     @PluginProperty(dynamic = true)
-    @Deprecated(since = "0.15.0'")
+    @Deprecated(since = "0.15.0")
     private Map<String, Object> outputs;
 
     @Override
@@ -197,7 +199,12 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
 
         if (subflowOutputs != null) {
             try {
-                builder.outputs(runContext.render(subflowOutputs));
+                Map<String, Object> outputs = runContext.render(subflowOutputs);
+                RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class); // this is hacking
+                if (flow.getOutputs() != null && runnerUtils != null) {
+                    outputs = runnerUtils.typedOutputs(flow, execution, outputs);
+                }
+                builder.outputs(outputs);
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;

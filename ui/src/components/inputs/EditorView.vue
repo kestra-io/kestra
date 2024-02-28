@@ -66,6 +66,10 @@
             type: Boolean,
             default: true
         },
+        isDirty: {
+            type: Boolean,
+            default: false
+        },
         graphOnly: {
             type: Boolean,
             default: false
@@ -127,9 +131,12 @@
             ?.map(f => `${f} ${t("is deprecated")}.`)
             ?? [];
 
+        const otherWarnings = props.flowValidation?.warnings ?? [];
+
         const warnings = [
             ...outdatedWarning,
-            ...deprecationWarnings
+            ...deprecationWarnings,
+            ...otherWarnings
         ];
 
         return warnings.length === 0 ? undefined : warnings;
@@ -161,10 +168,10 @@
 
     const editorDomElement = ref(null);
     const editorWidthStorageKey = "editor-width";
-    const editorWidthPercentage = ref(localStorage.getItem(editorWidthStorageKey));
+    const editorWidth = ref(localStorage.getItem(editorWidthStorageKey));
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const haveChange = ref(false)
+    const haveChange = ref(props.isDirty)
     const flowYaml = ref("")
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)
@@ -189,6 +196,14 @@
 
     const localStorageKey = computed(() => {
         return (props.isCreating ? "creation" : `${props.flow.namespace}.${props.flow.id}`) + "_draft";
+    })
+
+    const leftEditorWidth = computed(() => {
+        return (editorWidth.value > 50 ? (editorWidth.value - 50) * 2 : 0) + "%";
+    })
+
+    const rightEditorWidth = computed(() => {
+        return (editorWidth.value < 50 ? (50 - editorWidth.value) * 2 : 0) + "%";
     })
 
     const autoRestorelocalStorageKey = computed(() => {
@@ -248,7 +263,7 @@
         // validate flow on first load
         store.dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
             .then(value => {
-                if(validationDomElement.value) {
+                if(validationDomElement.value && editorDomElement.value) {
                     validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
                 }
 
@@ -257,13 +272,13 @@
     }
 
     const persistEditorWidth = () => {
-        if (editorWidthPercentage.value !== null) {
-            localStorage.setItem(editorWidthStorageKey, editorWidthPercentage.value);
+        if (editorWidth.value !== null) {
+            localStorage.setItem(editorWidthStorageKey, editorWidth.value);
         }
     }
 
     const onResize = () => {
-        if(validationDomElement.value) {
+        if(validationDomElement.value && editorDomElement.value) {
             validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
         }
     }
@@ -695,7 +710,7 @@
                 percent = 25
             }
 
-            editorWidthPercentage.value = percent + "%";
+            editorWidth.value = percent;
             validationDomElement.value.onResize(percent * parentWidth / 100);
         }
 
@@ -730,12 +745,38 @@
 </script>
 
 <template>
-    <el-card shadow="never" v-loading="isLoading">
+    <div class="button-top">
+        <switch-view
+            :type="viewType"
+            class="to-topology-button"
+            @switch-view="switchViewType"
+        />
+
+        <ValidationError ref="validationDomElement" class="validation" tooltip-placement="bottom-start" :errors="flowErrors" :warnings="flowWarnings" />
+
+        <EditorButtons
+            :is-creating="props.isCreating"
+            :is-read-only="props.isReadOnly"
+            :can-delete="canDelete()"
+            :is-allowed-edit="isAllowedEdit()"
+            :have-change="haveChange"
+            :flow-have-tasks="flowHaveTasks()"
+            :errors="flowErrors"
+            :warnings="flowWarnings"
+            @delete-flow="deleteFlow"
+            @save="save"
+            @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
+            @open-new-error="isNewErrorOpen = true;"
+            @open-new-trigger="isNewTriggerOpen = true;"
+            @open-edit-metadata="isEditMetadataOpen = true;"
+        />
+    </div>
+    <div class="main-editor" v-loading="isLoading">
         <editor
             ref="editorDomElement"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? {width: editorWidthPercentage} : {}"
+            :style="combinedEditor ? {'flex-basis': leftEditorWidth} : {}"
             @save="save"
             @execute="execute"
             v-model="flowYaml"
@@ -746,67 +787,44 @@
             :creating="isCreating"
             @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
             :read-only="isReadOnly"
-        >
-            <template #extends-navbar>
-                <ValidationError ref="validationDomElement" tooltip-placement="bottom-start" size="small" class="ms-2" :errors="flowErrors" :warnings="flowWarnings" />
-            </template>
-            <template #buttons>
-                <EditorButtons
-                    v-if="![editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType)"
-                    :is-creating="props.isCreating"
-                    :is-read-only="props.isReadOnly"
-                    :can-delete="canDelete()"
-                    :is-allowed-edit="isAllowedEdit()"
-                    :have-change="haveChange"
-                    :flow-have-tasks="flowHaveTasks()"
-                    :errors="flowErrors"
-                    :warnings="flowWarnings"
-                    @delete-flow="deleteFlow"
-                    @save="save"
-                    @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
-                    @open-new-error="isNewErrorOpen = true;"
-                    @open-new-trigger="isNewTriggerOpen = true;"
-                    @open-edit-metadata="isEditMetadataOpen = true;"
-                />
-            </template>
-        </editor>
-        <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
-        <div
-            class="topology-display"
-            v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
-            :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
-        >
-            <LowCodeEditor
-                v-if="flowGraph"
-                ref="lowCodeEditorRef"
-                @follow="forwardEvent('follow', $event)"
-                @on-edit="onEdit"
-                @loading="loadingState"
-                @expand-subflow="onExpandSubflow"
-                @swapped-task="onSwappedTask"
-                :flow-graph="flowGraph"
-                :flow-id="flowId"
-                :namespace="namespace"
-                :execution="execution"
-                :is-read-only="isReadOnly"
-                :source="flowYaml"
-                :is-allowed-edit="isAllowedEdit()"
-                :view-type="viewType"
-                :expanded-subflows="props.expandedSubflows"
-            >
-                <template #top-bar v-if="viewType === editorViewTypes.TOPOLOGY">
-                    <ValidationError tooltip-placement="bottom-start" size="small" class="ms-2" :errors="flowErrors" :warnings="flowWarnings" />
-                </template>
-            </LowCodeEditor>
-            <el-alert v-else type="warning" :closable="false">
-                {{ $t("unable to generate graph") }}
-            </el-alert>
-        </div>
-        <PluginDocumentation
-            v-if="viewType === editorViewTypes.SOURCE_DOC"
-            class="plugin-doc combined-right-view enhance-readability"
+            :navbar="false"
         />
+        <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
+        <div :style="combinedEditor ? {'flex-basis': rightEditorWidth} : viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
+            <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
+            <div
+                class="topology-display"
+                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
+                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
+            >
+                <LowCodeEditor
+                    v-if="flowGraph"
+                    ref="lowCodeEditorRef"
+                    @follow="forwardEvent('follow', $event)"
+                    @on-edit="onEdit"
+                    @loading="loadingState"
+                    @expand-subflow="onExpandSubflow"
+                    @swapped-task="onSwappedTask"
+                    :flow-graph="flowGraph"
+                    :flow-id="flowId"
+                    :namespace="namespace"
+                    :execution="execution"
+                    :is-read-only="isReadOnly"
+                    :source="flowYaml"
+                    :is-allowed-edit="isAllowedEdit()"
+                    :view-type="viewType"
+                    :expanded-subflows="props.expandedSubflows"
+                />
+                <el-alert v-else type="warning" :closable="false">
+                    {{ $t("unable to generate graph") }}
+                </el-alert>
+            </div>
+            <PluginDocumentation
+                v-if="viewType === editorViewTypes.SOURCE_DOC"
+                class="plugin-doc combined-right-view enhance-readability"
+            />
+        </div>
+
         <el-drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
@@ -879,29 +897,7 @@
                 </el-button>
             </template>
         </el-drawer>
-        <switch-view
-            :type="viewType"
-            class="to-topology-button"
-            @switch-view="switchViewType"
-        />
-        <EditorButtons
-            v-if="[editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType)"
-            :is-creating="props.isCreating"
-            :is-read-only="props.isReadOnly"
-            :can-delete="canDelete()"
-            :is-allowed-edit="isAllowedEdit()"
-            :have-change="haveChange"
-            :flow-have-tasks="flowHaveTasks()"
-            :errors="flowErrors"
-            :warnings="flowWarnings"
-            @delete-flow="deleteFlow"
-            @save="save"
-            @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
-            @open-new-error="isNewErrorOpen = true;"
-            @open-new-trigger="isNewTriggerOpen = true;"
-            @open-edit-metadata="isEditMetadataOpen = true;"
-        />
-    </el-card>
+    </div>
     <el-dialog v-if="confirmOutdatedSaveDialog" v-model="confirmOutdatedSaveDialog" destroy-on-close :append-to-body="true">
         <template #header>
             <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
@@ -922,36 +918,45 @@
 </template>
 
 <style lang="scss" scoped>
-    .el-card {
-        height: calc(100vh - 174px);
-        position: relative;
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-        :deep(.el-card__body) {
-            height: 100%;
-            display: flex;
+    .button-top {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--bs-border-color);
+        padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
+        display: flex;
+        justify-content: end;
+        flex-grow: 0;
+
+        :deep(.validation) {
+            border: 0;
+            padding-left: calc(var(--spacer) / 2);
+            padding-right: calc(var(--spacer) / 2);
         }
     }
 
-    .to-topology-button {
-        position: absolute;
-        top: 30px;
-        right: 45px;
-    }
-
-    .to-action-button {
-        position: absolute;
-        bottom: 30px;
-        right: 45px;
+    .main-editor {
+        padding: calc(var(--spacer) / 2) 0px;
+        background: var(--bs-body-bg);
         display: flex;
+        min-height: 0;
+        max-height: 100%;
+
+        > * {
+            flex: 1;
+        }
+
+        html.dark & {
+            background-color: var(--bs-gray-100);
+        }
     }
 
     .editor-combined {
-        height: 100%;
         width: 50%;
+        min-width: 0;
     }
 
     .vueflow {
-        height: 100%;
         width: 100%;
     }
 
@@ -963,6 +968,7 @@
         flex: 1;
         position: relative;
         overflow-y: auto;
+        height: 100%;
 
         &.enhance-readability {
             padding: calc(var(--spacer) * 1.5);
@@ -990,6 +996,7 @@
 
     .plugin-doc {
         overflow-x: hidden;
+        width: 100%;
     }
 
     .slider {
@@ -1004,6 +1011,10 @@
         &:hover {
             background-color: var(--bs-secondary);
         }
+    }
+
+    .vueflow {
+        height: 100%
     }
 
     .topology-display .el-alert {

@@ -185,6 +185,7 @@
             background-color: white;
             white-space: pre;
             border-top: 1px solid var(--bs-gray-300);
+            text-wrap: initial;
 
             html.dark & {
                 color: white;

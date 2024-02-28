@@ -99,8 +99,7 @@ class PluginDocCommandTest {
                 ### `example`
                 * **Type:** ==string==
                 * **Dynamic:** ✔️
-                * **Required:** ❓
-
+                * **Required:** ❌
 
                 > Example interface
                 """));

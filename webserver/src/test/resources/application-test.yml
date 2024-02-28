@@ -25,6 +25,8 @@ jackson:
     FAIL_ON_UNKNOWN_PROPERTIES: false
 
 kestra:
+  encryption:
+    secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
   server-type: STANDALONE
   storage:
     type: local
@@ -101,6 +103,7 @@ kestra:
       executionqueued:
         table: "execution_queued"
         cls: io.kestra.core.runners.ExecutionQueued
+
 datasources:
   h2:
     url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

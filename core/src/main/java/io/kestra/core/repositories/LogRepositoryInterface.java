@@ -41,4 +41,6 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
     LogEntry save(LogEntry log);
 
     Integer purge(Execution execution);
+
+    void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt);
 }

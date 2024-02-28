@@ -31,9 +31,7 @@
                 </ul>
             </template>
         </top-nav-bar>
-        <div class="mt-3">
-            <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
-        </div>
+        <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
     </template>
 </template>
 
@@ -151,6 +149,7 @@
                         name: "editor",
                         component: FlowEditor,
                         title: this.$t("editor"),
+                        containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit
@@ -162,6 +161,7 @@
                     tabs.push({
                         name: "revisions",
                         component: FlowRevisions,
+                        containerClass: "container full-height",
                         title: this.$t("revisions")
                     });
                 }

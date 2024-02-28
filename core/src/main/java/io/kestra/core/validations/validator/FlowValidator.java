@@ -1,7 +1,9 @@
 package io.kestra.core.validations.validator;
 
+import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.validations.FlowValidation;
@@ -63,17 +65,16 @@ public class FlowValidator  implements ConstraintValidator<FlowValidation, Flow>
 
         // input unique name
         if (value.getInputs() != null) {
-            List<String> inputNames = value.getInputs()
-                .stream()
-                .map(Input::getId)
-                .toList();
-            List<String> inputDuplicates = inputNames
-                .stream()
-                .distinct()
-                .filter(entry -> Collections.frequency(inputNames, entry) > 1)
-                .toList();
-            if (!inputDuplicates.isEmpty()) {
-                violations.add("Duplicate input with name [" + String.join(", ", inputDuplicates) + "]");
+            List<String> duplicates = getDuplicates(value.getInputs().stream().map(Data::getId).toList());
+            if (!duplicates.isEmpty()) {
+                violations.add("Duplicate input with name [" + String.join(", ", duplicates) + "]");
+            }
+        }
+        // output unique name
+        if (value.getOutputs() != null) {
+            List<String> duplicates = getDuplicates(value.getOutputs().stream().map(Data::getId).toList());
+            if (!duplicates.isEmpty()) {
+                violations.add("Duplicate output with name [" + String.join(", ", duplicates) + "]");
             }
         }
 

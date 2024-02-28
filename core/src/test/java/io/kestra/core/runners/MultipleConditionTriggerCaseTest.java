@@ -39,12 +39,12 @@ public class MultipleConditionTriggerCaseTest {
     public void trigger() throws InterruptedException, TimeoutException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
-        Flow flow = flowRepository.findById(null, "io.kestra.tests", "trigger-multiplecondition-listener").orElseThrow();
+        Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger", "trigger-multiplecondition-listener").orElseThrow();
 
         executionQueue.receive(either -> {
             Execution execution = either.getLeft();
             synchronized (ended) {
-                if (execution.getState().getCurrent() == State.Type.SUCCESS && !execution.getFlowId().equals("trigger-flow-listener-no-condition")) {
+                if (execution.getState().getCurrent() == State.Type.SUCCESS && !execution.getFlowId().equals("trigger-flow-listener-namespace-condition")) {
                     if (!ended.containsKey(execution.getId())) {
                         ended.put(execution.getId(), execution);
                         countDownLatch.countDown();
@@ -54,7 +54,7 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // first one
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "trigger-multiplecondition-flow-a", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-a", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -63,7 +63,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(ended.size(), is(1));
 
         // second one
-        execution = runnerUtils.runOne(null, "io.kestra.tests", "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
+        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -82,7 +82,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         assertThat(triggerExecution.getTrigger().getVariables().get("executionId"), is(execution.getId()));
-        assertThat(triggerExecution.getTrigger().getVariables().get("namespace"), is("io.kestra.tests"));
+        assertThat(triggerExecution.getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
         assertThat(triggerExecution.getTrigger().getVariables().get("flowId"), is("trigger-multiplecondition-flow-b"));
     }
 
@@ -93,7 +93,7 @@ public class MultipleConditionTriggerCaseTest {
         executionQueue.receive(either -> {
             synchronized (ended) {
                 Execution execution = either.getLeft();
-                if (execution.getState().getCurrent().isTerminated() && !execution.getFlowId().equals("trigger-flow-listener-no-condition")) {
+                if (execution.getState().getCurrent().isTerminated() && !execution.getFlowId().equals("trigger-flow-listener-namespace-condition")) {
                     if (!ended.containsKey(execution.getId())) {
                         ended.put(execution.getId(), execution);
                         countDownLatch.countDown();
@@ -103,7 +103,7 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // first one
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "trigger-multiplecondition-flow-c", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-c", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
@@ -112,7 +112,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(ended.size(), is(1));
 
         // second one
-        execution = runnerUtils.runOne(null, "io.kestra.tests", "trigger-multiplecondition-flow-d", Duration.ofSeconds(60));
+        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-d", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 

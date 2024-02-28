@@ -17,8 +17,8 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -36,11 +36,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -50,15 +53,15 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
     @Inject
     EmbeddedServer embeddedServer;
+    @Inject
+    ExecutionController executionController;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -87,6 +90,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("failed", "NO")
         .put("string", "myString")
+        .put("enum", "ENUM_VALUE")
         .put("int", "42")
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
@@ -124,6 +128,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         return MultipartBody.builder()
             .addPart("string", "myString")
+            .addPart("enum", "ENUM_VALUE")
             .addPart("int", "42")
             .addPart("float", "42.42")
             .addPart("instant", "2019-10-06T18:27:49Z")
@@ -485,6 +490,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Map<String, Object> latin1FileInputs = ImmutableMap.<String, Object>builder()
             .put("failed", "NO")
             .put("string", "myString")
+            .put("enum", "ENUM_VALUE")
             .put("int", "42")
             .put("float", "42.42")
             .put("instant", "2019-10-06T18:27:49Z")
@@ -654,6 +660,86 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void resumeByIds() throws TimeoutException, InterruptedException {
+        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+
+        assertThat(pausedExecution1.getState().isPaused(), is(true));
+        assertThat(pausedExecution2.getState().isPaused(), is(true));
+
+        // resume executions
+        BulkResponse resumeResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/executions/resume/by-ids",
+                List.of(pausedExecution1.getId(), pausedExecution2.getId())
+            ),
+            BulkResponse.class
+        );
+        assertThat(resumeResponse.getCount(), is(2));
+
+        // check that the executions are no more paused
+        Thread.sleep(100);
+        Execution resumedExecution1 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution1.getId()),
+            Execution.class
+        );
+        Execution resumedExecution2 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution2.getId()),
+            Execution.class
+        );
+        assertThat(resumedExecution1.getState().isPaused(), is(false));
+        assertThat(resumedExecution2.getState().isPaused(), is(false));
+
+        // attempt to resume no more paused executions
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST(
+                "/api/v1/executions/resume/by-ids",
+                List.of(pausedExecution1.getId(), pausedExecution2.getId())
+            ))
+        );
+        assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void resumeByQuery() throws TimeoutException, InterruptedException {
+        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
+
+        assertThat(pausedExecution1.getState().isPaused(), is(true));
+        assertThat(pausedExecution2.getState().isPaused(), is(true));
+
+        // resume executions
+        BulkResponse resumeResponse = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null),
+            BulkResponse.class
+        );
+        assertThat(resumeResponse.getCount(), is(2));
+
+        // check that the executions are no more paused
+        Thread.sleep(100);
+        Execution resumedExecution1 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution1.getId()),
+            Execution.class
+        );
+        Execution resumedExecution2 = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution2.getId()),
+            Execution.class
+        );
+        assertThat(resumedExecution1.getState().isPaused(), is(false));
+        assertThat(resumedExecution2.getState().isPaused(), is(false));
+
+        // attempt to resume no more paused executions
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST(
+                "/api/v1/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null
+            ))
+        );
+        assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
+    }
+
+    @RetryingTest(5)
     void killPaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
@@ -662,7 +748,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/executions/" + pausedExecution.getId() + "/kill"));
-        assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+        assertThat(resumeResponse.getStatus(), is(HttpStatus.ACCEPTED));
 
         // check that the execution is no more paused
         Thread.sleep(100);
@@ -688,6 +774,27 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(executions.getTotal(), is(1L));
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&timeRange=PT12H"))
+        );
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
+
+        executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search?timeRange=PT12H"), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(1L));
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?timeRange=P1Y"))
+        );
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 
     @Test
@@ -719,7 +826,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // kill the execution
         HttpResponse<?> killResponse = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/executions/" + runningExecution.getId() + "/kill"));
-        assertThat(killResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+        assertThat(killResponse.getStatus(), is(HttpStatus.ACCEPTED));
 
         // check that the execution has been set to killing then killed
         assertTrue(killingLatch.await(10, TimeUnit.SECONDS));
@@ -735,5 +842,104 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.KILLED));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
+    }
+
+    @Test
+    void resolveAbsoluteDateTime() {
+        final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());
+        final Duration offset = Duration.ofSeconds(5L);
+        final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6,10, 0, ZoneId.systemDefault());
+
+        assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null), is(absoluteTimestamp));
+        assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp), is(baseTimestamp.minus(offset)));
+        assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
+    }
+
+    @Test
+    void delete() {
+        Execution result = triggerInputsFlowExecution(true);
+
+        var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/executions/" + result.getId()));
+        assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/executions/notfound")));
+        assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deleteByIds() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/executions/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void deleteByQuery() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/executions/by-query?namespace=" + result1.getNamespace()),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void setLabels() {
+        // update label on a terminated execution
+        Execution result = triggerInputsFlowExecution(true);
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+        Execution response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("key", "value"))),
+            Execution.class
+        );
+        assertThat(response.getLabels(), hasItem(new Label("key", "value")));
+
+        // update label on a not found execution
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/labels", List.of(new Label("key", "value"))))
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void setLabelsByIds() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/labels/by-ids",
+                new ExecutionController.SetLabelsByIdsRequest(List.of(result1.getId(), result2.getId(), result3.getId()), List.of(new Label("key", "value")))
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void setLabelsByQuery() {
+        Execution result1 = triggerInputsFlowExecution(true);
+        Execution result2 = triggerInputsFlowExecution(true);
+        Execution result3 = triggerInputsFlowExecution(true);
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/labels/by-query?namespace=" + result1.getNamespace(),
+                List.of(new Label("key", "value"))
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount(), is(3));
     }
 }

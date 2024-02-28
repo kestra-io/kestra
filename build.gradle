@@ -74,8 +74,8 @@ allprojects {
             force("org.slf4j:slf4j-api:$slf4jVersion")
 
             // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.25.1")
-            force("com.google.protobuf:protobuf-java-util:3.25.1")
+            force("com.google.protobuf:protobuf-java:3.25.2")
+            force("com.google.protobuf:protobuf-java-util:3.25.2")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.14")
@@ -95,6 +95,7 @@ allprojects {
             force("com.fasterxml.jackson.core:jackson-annotations:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
+            force("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:" + jacksonVersion)
         }
     }
 
@@ -139,7 +140,7 @@ allprojects {
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20240207'
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
@@ -192,6 +193,7 @@ subprojects {
         systemProperty 'user.country', 'US'
 
         environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
+        environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
         environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
         environment 'SECRET_NON_B64_SECRET', "some secret value"
         environment 'KESTRA_TEST1', "true"

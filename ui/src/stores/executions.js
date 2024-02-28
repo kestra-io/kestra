@@ -46,6 +46,19 @@ export default {
                 {params: options}
             )
         },
+        bulkResumeExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/resume/by-ids`,
+                options.executionsId
+            )
+        },
+        queryResumeExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/resume/by-query`,
+                {},
+                {params: options}
+            )
+        },
         replayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/replay`,
@@ -66,7 +79,7 @@ export default {
                 })
         },
         kill(_, options) {
-            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}/kill`);
+            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
         },
         bulkKill(_, options) {
             return this.$http.delete(`${apiUrl(this)}/executions/kill/by-ids`, {data: options.executionsId});
@@ -158,12 +171,36 @@ export default {
                 return response.data
             })
         },
+        deleteLogs(_, options) {
+            return this.$http.delete(`${apiUrl(this)}/logs/${options.executionId}`, {
+                params: options.params
+            }).then(response => {
+                return response.data
+            })
+        },
         filePreview({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
                 commit("setFilePreview", response.data)
             })
+        },
+        setLabels(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/${options.executionId}/labels`,
+                options.labels,
+                {
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                })
+        },
+        querySetLabels({_commit}, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/labels/by-query`, options.data, {
+                params: options.params})
+        },
+        bulkSetLabels({_commit}, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
         }
     },
     mutations: {

@@ -4,17 +4,18 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.types.DateTimeBetweenCondition;
 import io.kestra.core.models.conditions.types.DayWeekInMonthCondition;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
@@ -22,9 +23,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import jakarta.inject.Inject;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -173,43 +175,8 @@ class ScheduleTest {
     }
 
     @Test
-    void backfillNextDate() throws Exception {
-        ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule")
-            .cron("0 0 * * *")
-            .backfill(Schedule.ScheduleBackfill.builder().start(date).build())
-            .build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
-
-        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.format(DateTimeFormatter.ISO_LOCAL_DATE)));
-    }
-
-    @Test
-    void backfillNextDateContext() throws Exception {
-        Schedule trigger = Schedule.builder()
-            .id("schedule")
-            .cron("0 0 * * *")
-            .backfill(Schedule.ScheduleBackfill.builder().start(ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]")).build())
-            .build();
-        ZonedDateTime date = ZonedDateTime.parse("2020-03-01T00:00:00+01:00[Europe/Paris]");
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
-
-        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(next.format(DateTimeFormatter.ISO_LOCAL_DATE)));
-    }
-
-    @Test
-    void emptyBackfillStartDate() throws Exception {
-        Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
-        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
-
-        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
-    }
-
-    @Test
     @SuppressWarnings("unchecked")
-    void backfillChangedFromCronExpression() throws Exception {
+    void systemBackfillChangedFromCronExpression() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("30 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
@@ -243,7 +210,7 @@ class ScheduleTest {
             .id("schedule")
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .scheduleConditions(List.of(
+            .conditions(List.of(
                 DayWeekInMonthCondition.builder()
                     .dayOfWeek(DayOfWeek.MONDAY)
                     .dayInMonth(DayWeekInMonthCondition.DayInMonth.FIRST)
@@ -276,7 +243,7 @@ class ScheduleTest {
             .id("schedule")
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .scheduleConditions(List.of(
+            .conditions(List.of(
                 DateTimeBetweenCondition.builder()
                     .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
                     .date("{{ trigger.date }}")
@@ -302,50 +269,6 @@ class ScheduleTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void conditionsWithBackfill() throws Exception {
-        Schedule trigger = Schedule.builder()
-            .id("schedule")
-            .cron("0 12 * * 1")
-            .timezone("Europe/Paris")
-            .backfill(Schedule.ScheduleBackfill.builder()
-                .start(ZonedDateTime.parse("2021-01-01T00:00:00+02:00"))
-                .build()
-            )
-            .scheduleConditions(List.of(
-                DayWeekInMonthCondition.builder()
-                    .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonthCondition.DayInMonth.FIRST)
-                    .date("{{ trigger.date }}")
-                    .build(),
-                DateTimeBetweenCondition.builder()
-                    .before(ZonedDateTime.parse("2021-05-01T12:00:00+02:00"))
-                    .date("{{ trigger.date }}")
-                    .build()
-            ))
-            .build();
-
-        ZonedDateTime date = ZonedDateTime.parse("2021-01-04T12:00:00+01:00");
-
-        for (int i = 0; i < 4; i++) {
-            Optional<Execution> evaluate = trigger.evaluate(
-                conditionContext(trigger),
-                triggerContext(date, trigger)
-            );
-
-            assertThat(evaluate.isPresent(), is(true));
-
-            var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-            assertThat(dateFromVars(vars.get("date"), date), is(date));
-            if (i == 3) {
-                assertThat(vars.containsKey("next"), is(false));
-            } else {
-                date = dateFromVars(vars.get("next"), date);
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
     void lateMaximumDelay() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
@@ -358,16 +281,14 @@ class ScheduleTest {
             .withSecond(0)
             .truncatedTo(ChronoUnit.SECONDS);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        ZonedDateTime evaluate = trigger.nextEvaluationDate(
             conditionContext(trigger),
-            TriggerContext.builder()
+            Optional.of(TriggerContext.builder()
                 .date(date)
-                .build()
+                .build())
         );
 
-        assertThat(evaluate.isPresent(), is(true));
-        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-        assertThat(dateFromVars(vars.get("date"), date), is(expected));
+        assertThat(evaluate, is(expected));
 
     }
 
@@ -425,6 +346,8 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
 
+
+
     private ConditionContext conditionContext(AbstractTrigger trigger) {
         Flow flow = Flow.builder()
             .id(IdUtils.create())
@@ -436,8 +359,8 @@ class ScheduleTest {
                 )
             )
             .inputs(List.of(
-                StringInput.builder().id("input1").type(Input.Type.STRING).required(false).build(),
-                StringInput.builder().id("input2").type(Input.Type.STRING).defaults("default").build()
+                StringInput.builder().id("input1").type(Type.STRING).required(false).build(),
+                StringInput.builder().id("input2").type(Type.STRING).defaults("default").build()
             ))
             .build();
 

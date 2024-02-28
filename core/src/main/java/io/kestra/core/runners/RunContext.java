@@ -5,7 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import io.kestra.core.crypto.CryptoService;
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
@@ -16,6 +16,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -28,7 +29,6 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import jakarta.inject.Inject;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -42,9 +42,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @NoArgsConstructor
@@ -63,8 +66,8 @@ public class RunContext {
     protected transient Path temporaryDirectory;
     private String triggerExecutionId;
     private Storage storage;
-    private CryptoService cryptoService;
     private Map<String, Object> pluginConfiguration;
+    private Optional<String> secretKey;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -75,8 +78,8 @@ public class RunContext {
      */
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
         this.initBean(applicationContext);
-        this.initContext(flow, null, execution, null);
         this.initLogger(execution);
+        this.initContext(flow, null, execution, null);
     }
 
     /**
@@ -102,9 +105,8 @@ public class RunContext {
      */
     public RunContext(ApplicationContext applicationContext, Flow flow, AbstractTrigger trigger) {
         this.initBean(applicationContext);
-
-        this.variables = this.variables(flow, null, null, null, trigger);
         this.initLogger(flow, trigger);
+        this.variables = this.variables(flow, null, null, null, trigger);
         this.initPluginConfiguration(applicationContext, trigger.getType());
     }
 
@@ -131,7 +133,6 @@ public class RunContext {
             },
             storageInterface
         );
-
     }
 
     private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
@@ -147,11 +148,11 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
         this.runContextCache = applicationContext.findBean(RunContextCache.class).orElseThrow();
-        this.cryptoService = applicationContext.findBean(CryptoService.class).orElseThrow();
         this.tempBasedPath = Path.of(applicationContext
             .getProperty("kestra.tasks.tmp-dir.path", String.class)
             .orElse(System.getProperty("java.io.tmpdir"))
         );
+        this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
@@ -198,7 +199,7 @@ public class RunContext {
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
             LogEntry.of(triggerContext, trigger),
-            trigger.getMinLogLevel()
+            trigger.getLogLevel()
         );
     }
 
@@ -210,7 +211,7 @@ public class RunContext {
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
             LogEntry.of(flow, trigger),
-            trigger.getMinLogLevel()
+            trigger.getLogLevel()
         );
     }
 
@@ -293,7 +294,9 @@ public class RunContext {
                 .put("execution", executionMap.build());
 
             if (execution.getTaskRunList() != null) {
-                builder.put("outputs", execution.outputs());
+                Map<String, Object> outputs = new HashMap<>(execution.outputs());
+                decryptOutputs(outputs);
+                builder.put("outputs", outputs);
             }
 
             if (execution.getInputs() != null) {
@@ -303,7 +306,7 @@ public class RunContext {
                     for (Input<?> input : flow.getInputs()) {
                         if (input instanceof SecretInput && inputs.containsKey(input.getId())) {
                             try {
-                                String decoded = cryptoService.decrypt(((String) inputs.get(input.getId())));
+                                String decoded = decrypt(((String) inputs.get(input.getId())));
                                 inputs.put(input.getId(), decoded);
                             } catch (GeneralSecurityException e) {
                                 throw new RuntimeException(e);
@@ -343,6 +346,24 @@ public class RunContext {
         }
 
         return builder.build();
+    }
+
+    private void decryptOutputs(Map<String, Object> outputs) {
+        for (var entry: outputs.entrySet()) {
+            if (entry.getValue() instanceof Map map) {
+                // if some outputs are of type EncryptedString we decode them and replace the object
+                if (EncryptedString.TYPE.equalsIgnoreCase((String)map.get("type"))) {
+                    try {
+                        String decoded = decrypt((String) map.get("value"));
+                        outputs.put(entry.getKey(), decoded);
+                    } catch (GeneralSecurityException e) {
+                        throw new RuntimeException(e);
+                    }
+                }  else {
+                    decryptOutputs((Map<String, Object>) map);
+                }
+            }
+        }
     }
 
     private Map<String, Object> variables(TaskRun taskRun) {
@@ -439,6 +460,7 @@ public class RunContext {
             context,
             storageInterface
         );
+        this.initPluginConfiguration(applicationContext, trigger.getType());
         return this;
     }
 
@@ -468,8 +490,11 @@ public class RunContext {
             clone.put("taskrun", taskrun);
         }
 
+        clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
+
         this.variables = ImmutableMap.copyOf(clone);
         this.storage = new InternalStorage(logger(), StorageContext.forTask(taskRun), storageInterface);
+        this.initPluginConfiguration(applicationContext, workerTask.getTask().getType());
         return this;
     }
 
@@ -497,32 +522,36 @@ public class RunContext {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
-
+    @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
 
     public Set<String> render(Set<String> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
 
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeVariables(variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
 
     public Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException {
@@ -530,24 +559,32 @@ public class RunContext {
             .entrySet()
             .stream()
             .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), mergeVariables(variables)),
-                this.render(entry.getValue(), mergeVariables(variables))
+                this.render(entry.getKey(), variables),
+                this.render(entry.getValue(), variables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private Map<String, Object> mergeVariables(Map<String, Object> variables) {
-        return Stream
-            .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (o, o2) -> o2
-            ));
+    private String decrypt(String encrypted) throws GeneralSecurityException {
+        if (secretKey.isPresent()) {
+            return EncryptionService.decrypt(secretKey.get(), encrypted);
+        } else {
+            logger().warn("Unable to decrypt the output as encryption is not configured");
+            return encrypted;
+        }
     }
 
+    /**
+     * Encrypt a plaintext string using the {@link EncryptionService} and the default encryption key.
+     * If the key is not configured, it will log a WARNING and return the plaintext string as is.
+     */
     public String encrypt(String plaintext) throws GeneralSecurityException {
-        return this.cryptoService.encrypt(plaintext);
+        if (secretKey.isPresent()) {
+            return EncryptionService.encrypt(secretKey.get(), plaintext);
+        } else {
+            logger().warn("Unable to encrypt the output as encryption is not configured");
+            return plaintext;
+        }
     }
 
     public org.slf4j.Logger logger() {

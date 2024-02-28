@@ -34,15 +34,15 @@ import jakarta.validation.constraints.Pattern;
     @JsonSubTypes.Type(value = JsonInput.class, name = "JSON"),
     @JsonSubTypes.Type(value = SecretInput.class, name = "SECRET"),
     @JsonSubTypes.Type(value = StringInput.class, name = "STRING"),
+    @JsonSubTypes.Type(value = EnumInput.class, name = "ENUM"),
     @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
     @JsonSubTypes.Type(value = URIInput.class, name = "URI")
 })
-public abstract class Input<T> {
+public abstract class Input<T> implements Data {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][.a-zA-Z0-9_-]*")
     String id;
-
 
     @NotNull
     @Valid
@@ -65,30 +65,4 @@ public abstract class Input<T> {
         }
     }
 
-    @Introspected
-    public enum Type {
-        STRING(StringInput.class.getName()),
-        INT(IntInput.class.getName()),
-        FLOAT(FloatInput.class.getName()),
-        BOOLEAN(BooleanInput.class.getName()),
-        DATETIME(DateTimeInput.class.getName()),
-        DATE(DateInput.class.getName()),
-        TIME(TimeInput.class.getName()),
-        DURATION(DurationInput.class.getName()),
-        FILE(FileInput.class.getName()),
-        JSON(JsonInput.class.getName()),
-        URI(URIInput.class.getName()),
-        SECRET(SecretInput.class.getName());
-
-        private final String clsName;
-
-        Type(String clsName) {
-            this.clsName = clsName;
-        }
-
-        @SuppressWarnings("unchecked")
-        public Class<? extends Input<?>> cls() throws ClassNotFoundException {
-            return (Class<? extends Input<?>>) Class.forName(this.clsName);
-        }
-    }
 }

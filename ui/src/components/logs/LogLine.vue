@@ -102,7 +102,9 @@
                 );
             },
             message() {
-                return !this.log.message ? "" : convert.toHtml(xss(this.log.message));
+                return !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
+                    allowList: {"span": ["style"]}
+                }));
             }
         },
     };

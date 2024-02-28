@@ -46,6 +46,11 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         suite.runTimeout(runnerUtils);
     }
 
+    @Test
+    void runEmptyTasks() throws Exception {
+        suite.runEmptyTasks(runnerUtils);
+    }
+
     @Singleton
     public static class Suite {
         @Inject
@@ -72,7 +77,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             );
 
             execution = runnerUtils.awaitExecution(
-                e -> !e.getFlowId().equals("trigger-flow-listener-no-condition") && e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> executionQueue.emit(restarted),
                 Duration.ofSeconds(5)
             );
@@ -87,7 +92,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             execution = runnerUtils.awaitExecution(
-                e -> !e.getFlowId().equals("trigger-flow-listener-no-condition") && e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> {},
                 Duration.ofSeconds(5)
             );
@@ -121,6 +126,28 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(1L));
             assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count(), is(1L));
             assertThat(execution.getTaskRunList(), hasSize(1));
+        }
+
+        public void runEmptyTasks(RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause_no_tasks", null, null, Duration.ofSeconds(30));
+
+            assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList(), hasSize(1));
+
+            Execution restarted = executionService.markAs(
+                execution,
+                execution.findTaskRunByTaskIdAndValue("pause", List.of()).getId(),
+                State.Type.RUNNING
+            );
+
+            execution = runnerUtils.awaitExecution(
+                e -> e.getState().getCurrent() == State.Type.SUCCESS,
+                () -> executionQueue.emit(restarted),
+                Duration.ofSeconds(5)
+            );
+
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         }
     }
 }

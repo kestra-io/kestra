@@ -28,6 +28,15 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable);
 
+    /**
+     * Finds all the executions that was triggered by the given execution id.
+     *
+     * @param tenantId           the tenant id.
+     * @param triggerExecutionId the id of the execution trigger.
+     * @return a {@link Flux} of one or more executions.
+     */
+    Flux<Execution> findAllByTriggerExecutionId(String tenantId, String triggerExecutionId);
+
     ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String query,
@@ -130,7 +139,9 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime endDate
     );
 
-    Execution save(Execution flow);
+    Execution save(Execution execution);
+
+    Execution update(Execution execution);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return s -> s;

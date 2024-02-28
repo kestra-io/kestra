@@ -32,9 +32,11 @@ micronaut:
       access-logger:
         enabled: true
         logger-name: io.kestra.webserver.access
-        log-format: "[Date: %{yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'}t] [Duration: %D ms] [Method: %m] [Url: %x] [Status: %s] [Length: %b] [Ip: %a] [Port: %p]"
+        log-format: "%{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}t | %r | status: %s | ip: %a | length: %b | duration: %D"
         exclusions:
           - /ui/.+
+          - /health
+          - /prometheus
   caches:
     default:
       maximum-weight: 10485760
@@ -179,12 +181,15 @@ kestra:
     configurations:
       - type: io.kestra.core.tasks.flows.Subflow
         values:
-          flowOutputs:
+          outputs:
             enabled: true # backward-compatibility with version prior to v0.15.0
       - type: io.kestra.core.tasks.flows.Flow
         values:
-          flowOutputs:
+          outputs:
             enabled: true # backward-compatibility with version prior to v0.15.0
+      - type: io.kestra.core.models.triggers.types.Schedule
+        values:
+          recoverMissedSchedules: ALL
   variables:
     env-vars-prefix: KESTRA_
     cache-enabled: true

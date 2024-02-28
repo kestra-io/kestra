@@ -27,6 +27,16 @@ public class ExecutionQueued {
     @NotNull
     Instant date;
 
+    public static ExecutionQueued fromExecutionRunning(ExecutionRunning executionRunning) {
+        return new ExecutionQueued(
+            executionRunning.getTenantId(),
+            executionRunning.getNamespace(),
+            executionRunning.getFlowId(),
+            executionRunning.getExecution(),
+            Instant.now()
+        );
+    }
+
     public String uid() {
         return IdUtils.fromParts(this.tenantId, this.namespace, this.flowId, this.execution.getId());
     }

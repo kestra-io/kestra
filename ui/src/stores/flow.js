@@ -218,7 +218,7 @@ export default {
                 });
         },
         exportFlowByQuery(_, options) {
-            return this.$http.get(`${apiUrl(this)}/flows/export/by-query`, {params: options})
+            return this.$http.get(`${apiUrl(this)}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "flows.zip");
                 });

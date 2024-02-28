@@ -60,11 +60,11 @@
         :src="vscodeIndexUrl"
         ref="vscodeIde"
     />
-    <div v-else class="m-3 mw-100">
+    <section v-else class="container">
         <el-alert type="info" :closable="false">
             {{ $t("namespace choice") }}
         </el-alert>
-    </div>
+    </section>
 </template>
 
 <script setup>

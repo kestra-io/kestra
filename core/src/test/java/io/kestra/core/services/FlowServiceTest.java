@@ -1,6 +1,5 @@
 package io.kestra.core.services;
 
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.Flow;
@@ -13,12 +12,10 @@ import java.util.stream.Stream;
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class FlowServiceTest {
-    @Inject
-    private FlowRepositoryInterface flowRepository;
     @Inject
     private FlowService flowService;
 
@@ -41,7 +38,7 @@ class FlowServiceTest {
     }
 
     @Test
-    public void sameRevisionWithDeletedOrdered() {
+    void sameRevisionWithDeletedOrdered() {
         Stream<Flow> stream = Stream.of(
             create("test", "test", 1),
             create("test", "test2", 2),
@@ -57,7 +54,7 @@ class FlowServiceTest {
     }
 
     @Test
-    public void sameRevisionWithDeletedSameRevision() {
+    void sameRevisionWithDeletedSameRevision() {
         Stream<Flow> stream = Stream.of(
             create("test2", "test2", 1),
             create("test", "test", 1),
@@ -74,7 +71,7 @@ class FlowServiceTest {
     }
 
     @Test
-    public void sameRevisionWithDeletedUnordered() {
+    void sameRevisionWithDeletedUnordered() {
         Stream<Flow> stream = Stream.of(
             create("test", "test", 1),
             create("test", "test2", 2),
@@ -90,7 +87,7 @@ class FlowServiceTest {
     }
 
     @Test
-    public void multipleFlow() {
+    void multipleFlow() {
         Stream<Flow> stream = Stream.of(
             create("test", "test", 2),
             create("test", "test2", 1),
@@ -107,5 +104,15 @@ class FlowServiceTest {
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision(), is(2));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test2")).findFirst().orElseThrow().getRevision(), is(3));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test3")).findFirst().orElseThrow().getRevision(), is(3));
+    }
+
+    @Test
+    void warnings() {
+        Flow flow = create("test", "test", 1).toBuilder().namespace("system").build();
+
+        List<String> warnings = flowService.warnings(flow);
+
+        assertThat(warnings.size(), is(1));
+        assertThat(warnings.get(0), containsString("The system namespace is reserved for background workflows"));
     }
 }

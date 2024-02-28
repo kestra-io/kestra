@@ -2,13 +2,12 @@ package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import io.kestra.core.exceptions.MissingRequiredInput;
+import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -31,11 +30,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
-@Property(name = "kestra.crypto.secret-key", value = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK")
 public class InputsTest extends AbstractMemoryRunnerTest {
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
+        .put("enum", "ENUM_VALUE")
         .put("int", "42")
         .put("float", "42.42")
         .put("bool", "false")
@@ -140,6 +138,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         typeds.put("bool", false);
 
         assertThat(typeds.get("string"), is("myString"));
+        assertThat(typeds.get("enum"), is("ENUM_VALUE"));
         assertThat(typeds.get("int"), is(42));
         assertThat(typeds.get("float"), is(42.42F));
         assertThat(typeds.get("bool"), is(false));
@@ -299,10 +298,22 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
 
-        MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
+        MissingRequiredArgument e = assertThrows(MissingRequiredArgument.class, () -> {
             Map<String, Object> typeds = typedInputs(map);
         });
 
         assertThat(e.getMessage(), containsString("Invalid URI format"));
+    }
+
+    @Test
+    void inputEnumFailed() {
+        HashMap<String, Object> map = new HashMap<>(inputs);
+        map.put("enum", "INVALID");
+
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
+            Map<String, Object> typeds = typedInputs(map);
+        });
+
+        assertThat(e.getMessage(), is("Invalid input 'INVALID', it must match the values '[ENUM_VALUE, OTHER_ONE]'"));
     }
 }

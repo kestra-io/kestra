@@ -8,11 +8,16 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -76,6 +81,28 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     @PluginProperty
     private Duration timeout;
 
+    @Valid
+    @PluginProperty
+    @Deprecated
+    private List<Task> tasks;
+
+    @Override
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+
+        List<Task> tasks = this.tasks != null && !this.tasks.isEmpty() ? this.tasks : List.of(this);
+
+        GraphUtils.sequential(
+            subGraph,
+            tasks,
+            this.errors,
+            taskRun,
+            execution
+        );
+
+        return subGraph;
+    }
+
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (this.needPause(parentTaskRun) || parentTaskRun.getState().getCurrent() == State.Type.PAUSED) {
@@ -99,6 +126,10 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (this.needPause(parentTaskRun)) {
             return Optional.of(State.Type.PAUSED);
+        }
+
+        if (this.tasks == null || this.tasks.isEmpty()) {
+            return Optional.of(State.Type.SUCCESS);
         }
 
         return super.resolveState(runContext, execution, parentTaskRun);

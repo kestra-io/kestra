@@ -40,12 +40,7 @@
             data: {
                 type: Object,
                 required: true
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            },
+            }
         },
         computed: {
             ...mapState("execution", ["execution"]),

@@ -1,19 +1,20 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3">
+    <section class="full-container">
         <editor-view
             :flow-id="defaultFlowTemplate.id"
             :namespace="defaultFlowTemplate.namespace"
             :is-creating="true"
             :flow-graph="flowGraph"
             :is-read-only="false"
+            :is-dirty="true"
             :total="total"
             :guided-properties="guidedProperties"
             :flow-validation="flowValidation"
             :flow="sourceWrapper"
             :next-revision="1"
         />
-    </div>
+    </section>
     <div id="guided-right" />
 </template>
 

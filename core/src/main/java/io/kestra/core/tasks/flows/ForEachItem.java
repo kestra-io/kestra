@@ -110,7 +110,65 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     inputs:
                       order: "{{ taskrun.items }}" # special variable that contains the items of the batch
                 """
-        )
+        ),
+        @Example(
+            title = """
+                Execute a subflow for each JSON item fetched from a REST API. The subflow `mysubflow` is called from the parent flow `iterate_over_json` using the `ForEachItem` task; this creates one subflow execution for each JSON object.
+                
+                Note how we first need to convert the JSON array to JSON-L format using the `JsonWriter` task. This is because the `items` attribute of the `ForEachItem` task expects a file where each line represents a single item. Suitable file types include Amazon ION (commonly produced by Query tasks), newline-separated JSON files, or CSV files formatted with one row per line and without a header. For other formats, you can use the conversion tasks available in the `io.kestra.plugin.serdes` module.
+
+                In this example, the subflow `mysubflow` expects a JSON object as input. The `JsonReader` task first reads the JSON array from the REST API and converts it to ION. Then, the `JsonWriter` task converts that ION file to JSON-L format, suitable for the `ForEachItem` task.
+
+                ```yaml
+                id: mysubflow
+                namespace: dev
+
+                inputs:
+                  - id: json
+                    type: JSON
+
+                tasks:
+                  - id: debug
+                    type: io.kestra.core.tasks.log.Log
+                    message: "{{ inputs.json }}"
+                ```
+                """,
+            full = true,
+            code = """
+                id: iterate_over_json
+                namespace: dev
+
+                tasks:
+                  - id: download
+                    type: io.kestra.plugin.fs.http.Download
+                    uri: "https://api.restful-api.dev/objects"
+                    contentType: application/json
+                    method: GET
+                    failOnEmptyResponse: true
+                    timeout: PT15S
+
+                  - id: json_to_ion
+                    type: io.kestra.plugin.serdes.json.JsonReader
+                    from: "{{ outputs.download.uri }}"
+                    newLine: false # regular json
+
+                  - id: ion_to_jsonl
+                    type: io.kestra.plugin.serdes.json.JsonWriter
+                    from: "{{ outputs.json_to_ion.uri }}"
+                    newLine: true # JSON-L
+
+                  - id: for_each_item
+                    type: io.kestra.core.tasks.flows.ForEachItem
+                    items: "{{ outputs.ion_to_jsonl.uri }}"
+                    batch:
+                      rows: 1
+                    namespace: dev
+                    flowId: mysubflow
+                    wait: true 
+                    transmitFailed: true 
+                    inputs:
+                      json: '{{ json(read(taskrun.items)) }}'"""
+        )        
     }
 )
 public class ForEachItem extends Task implements ExecutableTask<ForEachItem.Output> {

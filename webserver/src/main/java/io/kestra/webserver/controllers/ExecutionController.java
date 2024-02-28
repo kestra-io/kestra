@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -43,8 +44,20 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.*;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Delete;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Part;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Put;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -54,10 +67,12 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -80,6 +95,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwBiFunction;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -145,24 +161,42 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) {
+        final ZonedDateTime now = ZonedDateTime.now();
+
         return PagedResults.of(executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,
             tenantService.resolveTenant(),
             namespace,
             flowId,
-            startDate,
+            resolveAbsoluteDateTime(startDate, timeRange, now),
             endDate,
             state,
             RequestUtils.toMap(labels),
             triggerExecutionId,
             childFilter
         ));
+    }
+
+    @VisibleForTesting
+    ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
+        if (timeRange != null) {
+            if (absoluteDateTime != null) {
+                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
+            }
+            return now.minus(timeRange.abs());
+        }
+
+        return absoluteDateTime;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -308,6 +342,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -319,7 +357,7 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
@@ -710,6 +748,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -721,7 +763,7 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
@@ -805,61 +847,38 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/{executionId}/kill")
+    @Delete(uri = "/{executionId}/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill an execution")
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "202", description = "Execution kill was requested successfully")
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public HttpResponse<?> kill(
-        @Parameter(description = "The execution id") @PathVariable String executionId
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
     ) throws InternalException {
+
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
             return HttpResponse.notFound();
         }
 
         var execution = maybeExecution.get();
-        if (execution.getState().isTerminated()) {
-            throw new IllegalStateException("Execution is already finished, can't kill it");
-        }
 
-        if (execution.getState().isPaused()) {
-            // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
-            // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
-            this.executionService.resume(execution, State.Type.KILLING);
-            return HttpResponse.noContent();
+        // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
+        if (execution.getState().isTerminated() && !isOnKillCascade) {
+            throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
         killQueue.emit(ExecutionKilled
             .builder()
+            .state(ExecutionKilled.State.REQUESTED)
             .executionId(executionId)
+            .isOnKillCascade(isOnKillCascade)
+            .tenantId(tenantService.resolveTenant())
             .build()
         );
 
-        return HttpResponse.noContent();
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume")
-    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
-    @ApiResponse(responseCode = "204", description = "On success")
-    @ApiResponse(responseCode = "409", description = "if the executions is not paused")
-    public HttpResponse<?> resume(
-        @Parameter(description = "The execution id") @PathVariable String executionId
-    ) throws InternalException {
-        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (maybeExecution.isEmpty()) {
-            return HttpResponse.notFound();
-        }
-
-        var execution = maybeExecution.get();
-        if (!execution.getState().isPaused()) {
-            throw new IllegalStateException("Execution is not paused, can't resume it");
-        }
-
-        this.executionService.resume(execution, State.Type.RUNNING);
-
-        return HttpResponse.noContent();
+        return HttpResponse.accepted();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -906,24 +925,128 @@ public class ExecutionController {
         }
 
         executions.forEach(execution -> {
-            if (execution.getState().isPaused()) {
-                // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
-                // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
-                try {
-                    this.executionService.resume(execution, State.Type.KILLING);
-                } catch (InternalException e) {
-                    log.warn("Unable to kill the paused execution {}, ignoring it", execution.getId(), e);
-                }
-            } else {
-                killQueue.emit(ExecutionKilled
-                    .builder()
-                    .executionId(execution.getId())
-                    .build()
-                );
-            }
+            killQueue.emit(ExecutionKilled
+                .builder()
+                .state(ExecutionKilled.State.REQUESTED)
+                .executionId(execution.getId())
+                .isOnKillCascade(false) // Explicitly force cascade to false.
+                .tenantId(tenantService.resolveTenant())
+                .build()
+            );
         });
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/resume")
+    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
+    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the executions is not paused")
+    public HttpResponse<?> resume(
+        @Parameter(description = "The execution id") @PathVariable String executionId
+    ) throws InternalException {
+        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        var execution = maybeExecution.get();
+        if (!execution.getState().isPaused()) {
+            throw new IllegalStateException("Execution is not paused, can't resume it");
+        }
+
+        Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
+        this.executionQueue.emit(resumeExecution);
+        return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/resume/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Resume a list of paused executions")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Resumed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public MutableHttpResponse<?> resumeByIds(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) throws InternalException {
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent() && !execution.get().getState().isPaused()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not in state PAUSED",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk resume")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        for(Execution execution : executions) {
+            Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
+            this.executionQueue.emit(resumeExecution);
+        }
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/resume/by-query")
+    @Operation(tags = {"Executions"}, summary = "Resume executions filter by query parameters")
+    public HttpResponse<?> resumeByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+    ) throws InternalException {
+        var ids = executionRepository
+            .find(
+                query,
+                tenantService.resolveTenant(),
+                namespace,
+                flowId,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+                endDate,
+                state,
+                RequestUtils.toMap(labels),
+                triggerExecutionId,
+                childFilter
+            )
+            .map(Execution::getId)
+            .collectList()
+            .block();
+
+        return resumeByIds(ids);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -935,6 +1058,10 @@ public class ExecutionController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -946,14 +1073,14 @@ public class ExecutionController {
                 tenantService.resolveTenant(),
                 namespace,
                 flowId,
-                startDate,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
                 endDate,
                 state,
                 RequestUtils.toMap(labels),
                 triggerExecutionId,
                 childFilter
             )
-            .map(execution -> execution.getId())
+            .map(Execution::getId)
             .collectList()
             .block();
 
@@ -1044,7 +1171,7 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)){
+        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)) {
             FileRender fileRender = FileRenderBuilder.of(
                 extension,
                 fileStream,
@@ -1054,5 +1181,136 @@ public class ExecutionController {
 
             return HttpResponse.ok(fileRender);
         }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/labels")
+    @Operation(tags = {"Executions"}, summary = "Add or update labels of a terminated execution")
+    @ApiResponse(responseCode = "404", description = "If the execution cannot be found")
+    @ApiResponse(responseCode = "400", description = "If the execution is not terminated")
+    public HttpResponse<?> setLabels(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The labels to add to the execution") @Body @NotNull List<Label> labels
+    ) {
+        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        Execution execution = maybeExecution.get();
+        if (!execution.getState().getCurrent().isTerminated()) {
+            return HttpResponse.badRequest("The execution is not terminated");
+        }
+
+        Execution newExecution = setLabels(execution, labels);
+        return HttpResponse.ok(newExecution);
+    }
+
+    private Execution setLabels(Execution execution, List<Label> labels) {
+        Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(label -> label.key(), label -> label.value()));
+        if (execution.getLabels() != null) {
+            execution.getLabels().forEach(
+                label -> {
+                    // only add execution label if not updated
+                    if (!newLabels.containsKey(label.key())) {
+                        newLabels.put(label.key(), label.value());
+                    }
+                }
+            );
+        }
+
+        Execution newExecution = execution
+            .toBuilder()
+            .labels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).toList())
+            .build();
+        return executionRepository.save(newExecution);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/labels/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Set labels on a list of executions")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public MutableHttpResponse<?> setLabelsByIds(
+        @Parameter(description = "The request") @Body SetLabelsByIdsRequest setLabelsByIds
+    ) {
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : setLabelsByIds.executionsId()) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution is not terminated",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk set labels")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        executions.forEach(execution -> setLabels(execution, setLabelsByIds.executionLabels()));
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {}
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/labels/by-query")
+    @Operation(tags = {"Executions"}, summary = "Set label on executions filter by query parameters")
+    public HttpResponse<?> setLabelsByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "The labels to add to the execution") @Body @NotNull List<Label> setLabels
+    ) {
+        var ids = executionRepository
+            .find(
+                query,
+                tenantService.resolveTenant(),
+                namespace,
+                flowId,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+                endDate,
+                state,
+                RequestUtils.toMap(labels),
+                triggerExecutionId,
+                childFilter
+            )
+            .map(Execution::getId)
+            .collectList()
+            .block();
+
+        return setLabelsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }
 }

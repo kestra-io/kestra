@@ -16,7 +16,7 @@
                         </el-avatar>
                     </template>
                     <template #default>
-                        <vars :data="triggerData(trigger)" />
+                        <trigger-vars :data="trigger" />
                     </template>
                 </el-popover>
             </template>
@@ -24,8 +24,7 @@
     </div>
 </template>
 <script>
-    import Markdown from "../../utils/markdown";
-    import Vars from "../executions/Vars.vue";
+    import TriggerVars from "./TriggerVars.vue";
 
     export default {
         props: {
@@ -39,7 +38,7 @@
             },
         },
         components: {
-            Vars
+            TriggerVars
         },
         methods: {
             uid(trigger) {
@@ -49,13 +48,6 @@
                 let split = trigger.type.split(".");
 
                 return split[split.length - 1].substr(0, 1).toUpperCase();
-            },
-            triggerData(trigger) {
-                if (trigger.description) {
-                    return {...trigger, description: Markdown.render(trigger.description)}
-                }
-
-                return trigger
             },
         },
         computed: {

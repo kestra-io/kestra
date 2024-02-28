@@ -1,6 +1,6 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.validations.ModelValidator;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -19,7 +19,7 @@ class InputTest {
     void inputValidation() {
         final StringInput validInput = StringInput.builder()
             .id("test")
-            .type(Input.Type.STRING)
+            .type(Type.STRING)
             .validator("[A-Z]+")
             .build();
 

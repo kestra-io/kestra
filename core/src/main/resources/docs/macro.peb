@@ -8,11 +8,11 @@
 
 
 {% macro fieldType(data) -%}
-{%- if data['$deprecated'] != null -%}
+{%- if data['$deprecated'] != null %}
 ::alert{type="warning"}
 🔒 Deprecated
 ::
-{%- endif %}
+{% endif %}
 
 {%- if data.type != null -%}
 * **Type:** {{ type(data) -}}
@@ -28,11 +28,11 @@
 {% endif -%}
 
 {%- if data.items != null %}
-* **SubType:** {{ type(data.items) }}
+* **SubType:** {{ type(data.items) -}}
 {% endif -%}
 
 {%- if data.additionalProperties != null %}
-* **SubType:** {{ type(data.additionalProperties) }}
+* **SubType:** {{ type(data.additionalProperties) -}}
 {% endif -%}
 {% endmacro %}
 
@@ -82,11 +82,7 @@
 {%- if data.format != null -%}
 * **Format:** `{{ data.format }}`
 {% endif -%}
-{% endmacro %}
 
-
-
-{% macro body(data) %}
 {%- if data.enum != null -%}
 * **Possible Values:**
     {%- for current in data.enum %}
@@ -100,7 +96,8 @@
 
 {%- if data.description %}
 {{ data.description }}
-{%- endif %}
+{%- endif -%}
 
 {% endmacro %}
+
 

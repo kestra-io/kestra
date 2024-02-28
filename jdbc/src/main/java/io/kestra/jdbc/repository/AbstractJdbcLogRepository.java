@@ -187,6 +187,38 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return logEntry;
     }
 
+    @Override
+    public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                var delete = context
+                    .delete(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(field("execution_id").eq(executionId));
+
+                if (taskId != null) {
+                    delete.and(field("task_id").eq(taskId));
+                }
+
+                if (taskRunId != null) {
+                    delete.and(field("taskrun_id").eq(taskRunId));
+                }
+
+                if (minLevel != null) {
+                    delete.and(minLevel(minLevel));
+                }
+
+                if (attempt != null) {
+                    delete.and(field("attempt_number").eq(attempt));
+                }
+
+                delete.execute();
+            });
+    }
+
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()

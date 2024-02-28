@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -74,8 +75,8 @@ public class FlowTriggerCaseTest {
         assertThat(flowListenerNoInput.get().getState().getCurrent(), is(State.Type.SUCCESS));
 
         assertThat(flowListenerNamespace.get().getTaskRunList().size(), is(1));
-        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
         assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
-        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("flowId"), is("trigger-flow"));
+        // it will be triggered for 'trigger-flow' or any of the 'trigger-flow-listener*', so we only assert that it's one of them
+        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("flowId"), anyOf(is("trigger-flow"), is("trigger-flow-listener-no-inputs"), is("trigger-flow-listener")));
     }
 }

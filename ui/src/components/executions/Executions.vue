@@ -23,7 +23,7 @@
         </template>
     </top-nav-bar>
     <section :class="{'container': topbar}" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
                     <search-field />

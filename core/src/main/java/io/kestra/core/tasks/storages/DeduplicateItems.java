@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Schema(
-    title = "Deduplicate a file by retaining only the latest row for each extracted key.",
+    title = "Deduplicate a file by retaining only the latest item for each extracted key.",
     description = """
         The `Deduplicate` task involves reading the input file twice, rather than loading the entire file into memory.
         The first iteration is used to build a deduplication map in memory containing the last lines observed for each key.
@@ -41,13 +41,13 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
-            full = true,
             code = {
                 """
                 tasks:
                    - id: deduplicate
-                     type: io.kestra.core.tasks.storages.Deduplicate
-                     expr: " {{ key }}"
+                     type: io.kestra.core.tasks.storages.DeduplicateItems
+                     from: "{{ inputs.uri }}"
+                     expr: "{{ key }}"
                 """
             }
         )
@@ -57,10 +57,10 @@ import java.util.Map;
 @ToString
 @EqualsAndHashCode
 @Getter
-public class Deduplicate extends Task implements RunnableTask<Deduplicate.Output> {
+public class DeduplicateItems extends Task implements RunnableTask<DeduplicateItems.Output> {
 
     @Schema(
-        title = "The file to be compacted.",
+        title = "The file to be deduplicated.",
         description = "Must be a `kestra://` internal storage URI."
     )
     @PluginProperty(dynamic = true)
@@ -68,7 +68,7 @@ public class Deduplicate extends Task implements RunnableTask<Deduplicate.Output
     private String from;
 
     @Schema(
-        title = "The 'pebble' expression to be used for extracting a row key.",
+        title = "The 'pebble' expression to be used for extracting the deduplication key from each item.",
         description = "The 'pebble' expression can be used for constructing a composite key."
     )
     @PluginProperty
@@ -90,33 +90,47 @@ public class Deduplicate extends Task implements RunnableTask<Deduplicate.Output
         // 1st iteration: build a map of key->offset
         try (final BufferedReader reader = newBufferedReader(runContext, from)) {
             long offset = 0L;
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String key = keyExtractor.apply(line);
+            String item;
+            while ((item = reader.readLine()) != null) {
+                String key = keyExtractor.apply(item);
                 index.put(key, offset);
                 offset++;
             }
         }
+
+        // metrics
+        long processedItemsTotal = 0L;
+        long droppedItemsTotal = 0L;
+        long numKeys = index.size();
 
         final Path path = runContext.tempFile(".ion");
         // 2nd iteration: write deduplicate
         try (final BufferedWriter writer = Files.newBufferedWriter(path);
              final BufferedReader reader = newBufferedReader(runContext, from)) {
             long offset = 0L;
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String key = keyExtractor.apply(line);
+            String item;
+            while ((item = reader.readLine()) != null) {
+                String key = keyExtractor.apply(item);
                 Long lastOffset = index.get(key);
                 if (lastOffset != null && lastOffset == offset) {
-                    writer.write(line);
+                    writer.write(item);
                     writer.newLine();
+                } else {
+                    droppedItemsTotal++;
                 }
                 offset++;
+                processedItemsTotal++;
             }
         }
         URI uri = runContext.storage().putFile(path.toFile());
         index.clear();
-        return Output.builder().uri(uri).build();
+        return Output
+            .builder()
+            .uri(uri)
+            .numKeys(numKeys)
+            .processedItemsTotal(processedItemsTotal)
+            .droppedItemsTotal(droppedItemsTotal)
+            .build();
     }
 
     private PebbleFieldExtractor getKeyExtractor(RunContext runContext) {
@@ -135,6 +149,21 @@ public class Deduplicate extends Task implements RunnableTask<Deduplicate.Output
             title = "The deduplicated file URI."
         )
         private final URI uri;
+
+        @Schema(
+            title = "The number of distinct keys observed by the task."
+        )
+        private final Long numKeys;
+
+        @Schema(
+            title = "The total number of items that was processed by the task."
+        )
+        private final Long processedItemsTotal;
+
+        @Schema(
+            title = "The total number of items that was dropped by the task."
+        )
+        private final Long droppedItemsTotal;
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
@@ -27,9 +28,10 @@ public interface FlowableTask <T extends Output> {
     /**
      * Create the topology representation of a flowable task.
      * <p>
-     * A flowable task always contains subtask to it returns a cluster that displays the subtasks.
+     * If a flowable task contains subtask, it must return a cluster that displays the subtasks.
+     * If not, it must return a single GraphTask.
      */
-    GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException;
+    AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException;
 
     /**
      * @return all child tasks including errors

@@ -8,7 +8,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.GraphTask;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
@@ -87,14 +89,16 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     private List<Task> tasks;
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
-        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+    public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        if (this.tasks == null || this.tasks.isEmpty()) {
+            return new GraphTask(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+        }
 
-        List<Task> tasks = this.tasks != null && !this.tasks.isEmpty() ? this.tasks : List.of(this);
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
 
         GraphUtils.sequential(
             subGraph,
-            tasks,
+            this.tasks,
             this.errors,
             taskRun,
             execution

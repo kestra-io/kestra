@@ -836,15 +836,18 @@ form.ks-horizontal {
 
 // dialog
 .el-dialog {
+    --el-dialog-border-radius: var(--bs-border-radius-lg);
+
     .el-dialog__header {
         padding: var(--spacer);
         background-color: var(--bs-gray-300);
+        margin: calc(var(--spacer) * -1) calc(var(--spacer) * -1) var(--spacer);
+        border-top-right-radius: var(--bs-border-radius-lg);
+        border-top-left-radius: var(--bs-border-radius-lg);
 
         html.dark & {
             background-color: var(--bs-gray-100);
         }
-
-        margin-right: 0;
     }
 
     .el-dialog__title {

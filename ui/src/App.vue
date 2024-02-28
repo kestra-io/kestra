@@ -59,46 +59,50 @@
             }
             this.setTitleEnvSuffix();
 
-            // save uptime before showing security advice.
-            if (localStorage.getItem("security.advice.uptime") === null) {
-                localStorage.setItem("security.advice.uptime", `${new Date().getTime()}`);
-                // 7 days. Use local-storage for ease testing
-                localStorage.setItem("security.advice.expired", "604800000");
-            }
+            if (this.configs) {
+                // save uptime before showing security advice.
+                if (localStorage.getItem("security.advice.uptime") === null) {
+                    localStorage.setItem("security.advice.uptime", `${new Date().getTime()}`);
+                }
+                // use local-storage for ease testing
+                if (localStorage.getItem("security.advice.expired") === null) {
+                    localStorage.setItem("security.advice.expired", "604800000");  // 7 days.
+                }
 
-            // only show security advice after expiration
-            const uptime = parseInt(localStorage.getItem("security.advice.uptime"));
-            const expired = parseInt(localStorage.getItem("security.advice.expired"));
-            const isSecurityAdviceShow = localStorage.getItem("security.advice.show");
+                // only show security advice after expiration
+                const uptime = parseInt(localStorage.getItem("security.advice.uptime"));
+                const expired = parseInt(localStorage.getItem("security.advice.expired"));
+                const isSecurityAdviceShow = (localStorage.getItem("security.advice.show") || "true") === "true";
 
-            const isSecurityAdviceEnable = new Date().getTime() - uptime >= expired
-            if (!this.configs.isBasicAuthEnabled
-                && isSecurityAdviceShow === "true"
-                && isSecurityAdviceEnable) {
-                const checked = ref(false);
-                ElMessageBox({
-                    title: "Your data is not secured",
-                    message: () => {
-                        return h("div", null, [
-                            h("p", null, "Don't lose one bit. Enable our free security features"),
-                            h(ElSwitch, {
-                                modelValue: checked.value,
-                                "onUpdate:modelValue": (val) => {
-                                    checked.value = val
-                                    localStorage.setItem("security.advice.show", `${!val}`)
-                                },
-                                activeText: "Don't show again"
-                            }),
-                        ])
-                    },
-                    showCancelButton: true,
-                    confirmButtonText: "Enabled security",
-                    cancelButtonText: "Dismiss",
-                    center: false,
-                    showClose: false,
-                }).then(() => {
-                    this.$router.push({path: "admin/stats"});
-                });
+                const isSecurityAdviceEnable = new Date().getTime() - uptime >= expired
+                if (!this.configs.isBasicAuthEnabled
+                    && isSecurityAdviceShow
+                    && isSecurityAdviceEnable) {
+                    const checked = ref(false);
+                    ElMessageBox({
+                        title: "Your data is not secured",
+                        message: () => {
+                            return h("div", null, [
+                                h("p", null, "Don't lose one bit. Enable our free security features"),
+                                h(ElSwitch, {
+                                    modelValue: checked.value,
+                                    "onUpdate:modelValue": (val) => {
+                                        checked.value = val
+                                        localStorage.setItem("security.advice.show", `${!val}`)
+                                    },
+                                    activeText: "Don't show again"
+                                }),
+                            ])
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: "Enabled security",
+                        cancelButtonText: "Dismiss",
+                        center: false,
+                        showClose: false,
+                    }).then(() => {
+                        this.$router.push({path: "admin/stats"});
+                    });
+                }
             }
         },
         methods: {

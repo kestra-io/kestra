@@ -22,17 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 @MicronautTest
-class DeduplicateTest {
-    private static final List<KeyValue1> TEST_ITEMS_WITH_NULLS = List.of(
-        new KeyValue1("k1", "v1"),
-        new KeyValue1("k2", "v1"),
-        new KeyValue1("k3", "v1"),
-        new KeyValue1("k1", "v2"),
-        new KeyValue1("k2", "v2"),
-        new KeyValue1("k2", null),
-        new KeyValue1("k3", "v2"),
-        new KeyValue1("k1", "v3")
-    );
+class DeduplicateItemsTest {
 
     @Inject
     RunContextFactory runContextFactory;
@@ -41,29 +31,47 @@ class DeduplicateTest {
     StorageInterface storageInterface;
 
     @Test
-    void shouldCompactFileGivenKeyExpression() throws Exception {
+    void shouldDeduplicateFileGivenKeyExpression() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
 
-        Deduplicate task = Deduplicate
+        List<KeyValue1> values = List.of(
+            new KeyValue1("k1", "v1"),
+            new KeyValue1("k2", "v1"),
+            new KeyValue1("k3", "v1"),
+            new KeyValue1("k1", "v2"),
+            new KeyValue1("k2", "v2"),
+            new KeyValue1("k2", null),
+            new KeyValue1("k3", "v2"),
+            new KeyValue1("k1", "v3")
+        );
+
+        DeduplicateItems task = DeduplicateItems
             .builder()
-            .from(generateKeyValueFile(TEST_ITEMS_WITH_NULLS, runContext).toString())
-            .expr(" {{ key }}")
+            .from(generateKeyValueFile(values, runContext).toString())
+            .expr(" {{ key }} ")
             .build();
 
         // When
-        Deduplicate.Output output = task.run(runContext);
+        DeduplicateItems.Output output = task.run(runContext);
 
         // Then
         Assertions.assertNotNull(output);
         Assertions.assertNotNull(output.getUri());
+        Assertions.assertEquals(3, output.getNumKeys());
+        Assertions.assertEquals(5, output.getDroppedItemsTotal());
+        Assertions.assertEquals(8, output.getProcessedItemsTotal());
 
-        List<KeyValue1> expected = List.of(new KeyValue1("k2", null), new KeyValue1("k3", "v2"), new KeyValue1("k1", "v3"));
+        List<KeyValue1> expected = List.of(
+            new KeyValue1("k2", null),
+            new KeyValue1("k3", "v2"),
+            new KeyValue1("k1", "v3")
+        );
         assertSimpleCompactedFile(runContext, output, expected, KeyValue1.class);
     }
 
     @Test
-    void shouldCompactFileGivenKeyExpressionReturningArray() throws Exception {
+    void shouldDeduplicateFileGivenKeyExpressionReturningArray() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
 
@@ -77,18 +85,21 @@ class DeduplicateTest {
             new KeyValue2("k1", "k1", "v3")
         );
 
-        Deduplicate task = Deduplicate
+        DeduplicateItems task = DeduplicateItems
             .builder()
             .from(generateKeyValueFile(values, runContext).toString())
             .expr(" {{ key }}-{{ v1 }}")
             .build();
 
         // When
-        Deduplicate.Output output = task.run(runContext);
+        DeduplicateItems.Output output = task.run(runContext);
 
         // Then
         Assertions.assertNotNull(output);
         Assertions.assertNotNull(output.getUri());
+        Assertions.assertEquals(3, output.getNumKeys());
+        Assertions.assertEquals(4, output.getDroppedItemsTotal());
+        Assertions.assertEquals(7, output.getProcessedItemsTotal());
 
         List<KeyValue2> expected = List.of(
             new KeyValue2("k2", "k2", null),
@@ -99,7 +110,7 @@ class DeduplicateTest {
     }
 
     private static <T> void assertSimpleCompactedFile(final RunContext runContext,
-                                                      final Deduplicate.Output output,
+                                                      final DeduplicateItems.Output output,
                                                       final List<T> expected,
                                                       final Class<T> type) throws IOException {
         try (InputStream resource = runContext.storage().getFile(output.getUri());

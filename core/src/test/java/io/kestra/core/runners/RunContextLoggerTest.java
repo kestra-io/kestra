@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class RunContextLoggerTest {
@@ -62,6 +61,28 @@ class RunContextLoggerTest {
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null).getMessage(), is("info"));
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElse(null).getMessage(), is("warn"));
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.ERROR)).findFirst().orElse(null).getMessage(), is("error"));
+    }
+
+    @Test
+    void emptyLogMessage() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        List<LogEntry> matchingLog;
+        logQueue.receive(either -> logs.add(either.getLeft()));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logQueue,
+            LogEntry.of(execution),
+            Level.TRACE
+        );
+
+        Logger logger = runContextLogger.logger();
+        logger.info("");
+
+        matchingLog = TestsUtils.awaitLogs(logs, 1);
+        assertThat(matchingLog.stream().findFirst().orElseThrow().getMessage(), is(emptyString()));
     }
 
     @Test

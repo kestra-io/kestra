@@ -54,6 +54,7 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     String thread;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     String message;
 
     @NotNull

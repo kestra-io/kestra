@@ -92,8 +92,10 @@ public class TriggerController {
             triggers.add(Triggers.builder()
                 .abstractTrigger(abstractTrigger)
                 .triggerContext(tc)
-                .build());
+                .build()
+            );
         });
+
         return PagedResults.of(new ArrayListTotal<>(triggers, triggerContexts.getTotal()));
     }
 
@@ -101,7 +103,7 @@ public class TriggerController {
     @Getter
     public static class Triggers {
         AbstractTrigger abstractTrigger;
-        TriggerContext triggerContext;
+        Trigger triggerContext;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -266,5 +268,4 @@ public class TriggerController {
 
         return HttpResponse.ok(updatedTrigger);
     }
-
 }

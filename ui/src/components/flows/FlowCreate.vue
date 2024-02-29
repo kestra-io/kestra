@@ -42,12 +42,34 @@
                     return this.flow.source;
                 }
 
-                return `id: hello-world
-namespace: company.team
+                return `id: myflow
+namespace: myteam
+
+labels:
+  env: dev
+  project: myproject
+
 tasks:
-  - id: hello
+  - id: extract
+    type: io.kestra.plugin.fs.http.Request
+    uri: https://dummyjson.com/products
+    method: GET
+
+  - id: load
+    type: io.kestra.plugin.fs.http.Request
+    uri: https://reqres.in/api/products
+    method: POST
+    contentType: application/json
+    body: "{{ outputs.extract.body }}"
+
+  - id: enjoy
     type: io.kestra.core.tasks.log.Log
-    message: Kestra team wishes you a great day! 👋`;
+    message: Kestra team wishes you a great day!
+
+triggers:
+  - id: daily
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "0 9 * * *"`;
             },
             ...mapState("flow", ["flowGraph", "total"]),
             ...mapState("auth", ["user"]),

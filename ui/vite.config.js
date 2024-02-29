@@ -47,6 +47,7 @@ export default defineConfig({
         pluginRewriteAll(),
         visualizer(),
     ],
+    assetsInclude: ['**/*.md'],
     css: {
         devSourcemap: true
     },

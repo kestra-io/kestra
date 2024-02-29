@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.time.Instant;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Value
 @AllArgsConstructor
@@ -26,6 +26,16 @@ public class ExecutionQueued {
 
     @NotNull
     Instant date;
+
+    public static ExecutionQueued fromExecutionRunning(ExecutionRunning executionRunning) {
+        return new ExecutionQueued(
+            executionRunning.getTenantId(),
+            executionRunning.getNamespace(),
+            executionRunning.getFlowId(),
+            executionRunning.getExecution(),
+            Instant.now()
+        );
+    }
 
     public String uid() {
         return IdUtils.fromParts(this.tenantId, this.namespace, this.flowId, this.execution.getId());

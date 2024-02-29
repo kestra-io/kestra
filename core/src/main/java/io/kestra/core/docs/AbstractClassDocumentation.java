@@ -112,6 +112,8 @@ public abstract class AbstractClassDocumentation<T> {
             Map<String, Object> finalValue = (Map<String, Object>) current.getValue();
             if (required.contains(current.getKey())) {
                 finalValue.put("$required", true);
+            } else {
+                finalValue.put("$required", false);
             }
 
             result.put(flattenKey(current.getKey(), parentName), finalValue);

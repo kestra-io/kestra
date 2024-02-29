@@ -34,7 +34,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
-import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -45,8 +44,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -91,7 +90,7 @@ public class FlowController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/{id}/graph")
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow")
     public FlowGraph flowGraph(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -121,7 +120,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "graph", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "graph", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow source")
     public FlowGraph flowGraphSource(
         @Parameter(description = "The flow") @Body String flow,
@@ -133,12 +132,13 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/{id}")
     @Operation(tags = {"Flows"}, summary = "Get a flow")
     @Schema(
         anyOf = {FlowWithSource.class, Flow.class}
     )
-    public Flow index(
+    //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
+    public Object index(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "Include the source code") @QueryValue(defaultValue = "false") boolean source,
@@ -155,7 +155,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/{id}/revisions")
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
     public List<FlowWithSource> revisions(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -165,9 +165,11 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/{id}/tasks/{taskId}", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/{id}/tasks/{taskId}")
     @Operation(tags = {"Flows"}, summary = "Get a flow task")
-    public Task flowTask(
+    //FIXME we return Object instead of Task as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
+    @Schema(implementation = Task.class)
+    public Object flowTask(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The task id") @PathVariable String taskId,
@@ -186,7 +188,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/search", produces = MediaType.TEXT_JSON)
+    @Get(uri = "/search")
     @Operation(tags = {"Flows"}, summary = "Search for flows")
     public PagedResults<Flow> find(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
@@ -207,7 +209,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/{namespace}", produces = MediaType.TEXT_JSON)
+    @Get(uri = "/{namespace}")
     @Operation(tags = {"Flows"}, summary = "Retrieve all flows from a given namespace")
     public List<Flow> getFlowsByNamespace(
         @Parameter(description = "Namespace to filter flows") @PathVariable String namespace
@@ -216,7 +218,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/source", produces = MediaType.TEXT_JSON)
+    @Get(uri = "/source")
     @Operation(tags = {"Flows"}, summary = "Search for flows source code")
     public PagedResults<SearchResult<Flow>> source(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
@@ -230,7 +232,7 @@ public class FlowController {
 
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Create a flow from yaml source")
     public HttpResponse<FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
@@ -241,7 +243,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.ALL, produces = MediaType.TEXT_JSON)
+    @Post(consumes = MediaType.ALL)
     @Operation(tags = {"Flows"}, summary = "Create a flow from json object")
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
@@ -254,7 +256,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "{namespace}", consumes = MediaType.APPLICATION_YAML)
     @Operation(
         tags = {"Flows"},
         summary = "Update a complete namespace from yaml source",
@@ -279,7 +281,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
+    @Post(uri = "{namespace}")
     @Operation(
         tags = {"Flows"},
         summary = "Update a complete namespace from json object",
@@ -376,7 +378,7 @@ public class FlowController {
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).toList();
     }
 
-    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
     public HttpResponse<FlowWithSource> update(
@@ -394,7 +396,7 @@ public class FlowController {
         return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
 
-    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
+    @Put(uri = "{namespace}/{id}", consumes = MediaType.ALL)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
     public HttpResponse<Flow> update(
@@ -414,7 +416,7 @@ public class FlowController {
         return flowRepository.update(current, previous, source, taskDefaultService.injectDefaults(current));
     }
 
-    @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
+    @Patch(uri = "{namespace}/{id}/{taskId}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a single task on a flow")
     public HttpResponse<Flow> updateTask(
@@ -442,7 +444,7 @@ public class FlowController {
         }
     }
 
-    @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "{namespace}/{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Delete a flow")
     @ApiResponse(responseCode = "204", description = "On success")
@@ -460,7 +462,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
+    @Get(uri = "distinct-namespaces")
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
         return flowRepository.findDistinctNamespace(tenantService.resolveTenant());
@@ -468,7 +470,7 @@ public class FlowController {
 
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/{id}/dependencies", produces = MediaType.TEXT_JSON)
+    @Get(uri = "{namespace}/{id}/dependencies")
     @Operation(tags = {"Flows"}, summary = "Get flow dependencies")
     public FlowTopologyGraph dependencies(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -484,7 +486,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public List<ValidateConstraintViolation> validateFlows(
         @Parameter(description = "A list of flows") @Body String flows
@@ -498,9 +500,15 @@ public class FlowController {
 
                 try {
                     Flow flowParse = yamlFlowParser.parse(flow, Flow.class);
+                    Integer sentRevision = flowParse.getRevision();
+                    if (sentRevision != null) {
+                        Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantService.resolveTenant(), flowParse.getNamespace(), flowParse.getId()))
+                            .orElse(0);
+                        validateConstraintViolationBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                    }
 
                     validateConstraintViolationBuilder.deprecationPaths(flowService.deprecationPaths(flowParse));
-
+                    validateConstraintViolationBuilder.warnings(flowService.warnings(flowParse));
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
 
@@ -521,7 +529,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/validate/task", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public ValidateConstraintViolation validateTask(
         @Parameter(description = "A list of flows") @Body String task,
@@ -572,7 +580,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/export/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Post(uri = "/export/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
         tags = {"Flows"},
         summary = "Export flows as a ZIP archive of yaml sources."

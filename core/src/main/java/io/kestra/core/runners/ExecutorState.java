@@ -14,7 +14,6 @@ public class ExecutorState {
     private Map<String, State.Type> workerTaskDeduplication = new ConcurrentHashMap<>();
     private Map<String, String> childDeduplication = new ConcurrentHashMap<>();
     private Map<String, State.Type> subflowExecutionDeduplication = new ConcurrentHashMap<>();
-    private Boolean flowTriggerDeduplication = false;
 
     public ExecutorState(String executionId) {
         this.executionId = executionId;

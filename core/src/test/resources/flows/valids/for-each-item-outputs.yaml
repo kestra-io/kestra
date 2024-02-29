@@ -1,0 +1,23 @@
+id: for-each-item-outputs
+namespace: io.kestra.tests
+
+inputs:
+  - id: file
+    type: FILE
+
+tasks:
+  - id: each
+    type: io.kestra.core.tasks.flows.ForEachItem
+    items: "{{ inputs.file }}"
+    batch:
+      rows: 4
+    namespace: io.kestra.tests
+    flowId: for-each-item-outputs-subflow
+    wait: true
+    transmitFailed: true
+    inputs:
+      items: "{{ taskrun.items }}"
+
+  - id: return
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ outputs.each_merge.subflowOutputs }}"

@@ -1,19 +1,20 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3">
+    <section class="full-container">
         <editor-view
             :flow-id="defaultFlowTemplate.id"
             :namespace="defaultFlowTemplate.namespace"
             :is-creating="true"
             :flow-graph="flowGraph"
             :is-read-only="false"
+            :is-dirty="true"
             :total="total"
             :guided-properties="guidedProperties"
-            :flow-error="flowError"
-            :flow-deprecations="flowDeprecations"
+            :flow-validation="flowValidation"
             :flow="sourceWrapper"
+            :next-revision="1"
         />
-    </div>
+    </section>
     <div id="guided-right" />
 </template>
 
@@ -30,8 +31,7 @@
             TopNavBar
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowError", undefined);
-            this.$store.commit("flow/setFlowDeprecations", undefined);
+            this.$store.commit("flow/setFlowValidation", undefined);
         },
         computed: {
             sourceWrapper() {
@@ -53,7 +53,7 @@ tasks:
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flow", "flowError", "flowDeprecations"]),
+            ...mapGetters("flow", ["flow", "flowValidation"]),
             routeInfo() {
                 return {
                     title: this.$t("flows")

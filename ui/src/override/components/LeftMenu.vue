@@ -44,6 +44,7 @@
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
     import AccountHardHatOutline from "vue-material-design-icons/AccountHardHatOutline.vue";
+    import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
     import {shallowRef} from "vue";
 
     export default {
@@ -51,7 +52,7 @@
             ChevronLeft,
             ChevronRight,
             SidebarMenu,
-            Environment,
+            Environment
         },
         emits: ["menu-collapse"],
         methods: {
@@ -193,6 +194,15 @@
                                     element: shallowRef(AccountHardHatOutline),
                                     class: "menu-icon"
                                 },
+                            },
+                            {
+                                href: {name: "admin/stats"},
+                                routes: this.routeStartWith("admin/stats"),
+                                title: this.$t("stats"),
+                                icon: {
+                                    element: shallowRef(ChartBoxOutline),
+                                    class: "menu-icon"
+                                },
                             }
                         ]
                     },
@@ -287,6 +297,7 @@
                 }
             }
         }
+
 
         span.version {
             transition: 0.2s all;

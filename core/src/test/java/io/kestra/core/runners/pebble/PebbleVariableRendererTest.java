@@ -315,4 +315,18 @@ class PebbleVariableRendererTest {
             variableRenderer.render("{{ get missing }}", vars);
         });
     }
+
+    /**
+     * Ensures that we don't erase nested numbers list as there was a bug
+     */
+    @Test
+    void mapWithNestedNumberList() throws IllegalVariableEvaluationException {
+        Map<String, Object> map = Map.of(
+            "numbers", List.of(1, 2, 3)
+        );
+        assertThat(
+            variableRenderer.render(map, Map.of()),
+            is(map)
+        );
+    }
 }

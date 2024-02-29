@@ -9,7 +9,7 @@
             :statuses="['FAILED', 'KILLED', 'WARNING']"
             embed
             :topbar="false"
-            :hidden="['id', 'state.endDate', 'triggers', 'selection', 'labels', 'inputs', 'taskRunList.taskId']"
+            :hidden="['id', 'state.endDate', 'triggers', 'selection', 'labels', 'inputs', 'taskRunList.taskId' , 'flowRevision']"
         />
     </el-card>
 </template>

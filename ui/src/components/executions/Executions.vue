@@ -11,15 +11,19 @@
                         </template>
                     </li>
                     <li>
-                        <trigger-flow v-if="flow" :disabled="flow.disabled || isReadOnly" :flow-id="flow.id"
-                                      :namespace="flow.namespace" />
+                        <trigger-flow
+                            v-if="flow"
+                            :disabled="flow.disabled || isReadOnly"
+                            :flow-id="flow.id"
+                            :namespace="flow.namespace"
+                        />
                     </li>
                 </template>
             </ul>
         </template>
     </top-nav-bar>
-    <div :class="{'mt-3': topbar}" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+    <section :class="{'container': topbar}" v-if="ready">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
                     <search-field />
@@ -39,11 +43,39 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <date-range
-                        :start-date="startDate"
-                        :end-date="endDate"
-                        @update:model-value="onDataTableValue($event)"
+                    <date-filter
+                        @update:is-relative="onDateFilterTypeChange($event)"
+                        @update:filter-value="onDataTableValue($event)"
                     />
+                </el-form-item>
+                <el-form-item>
+                    <label-filter
+                        :model-value="$route.query.labels"
+                        @update:model-value="onDataTableValue('labels', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-input
+                        :placeholder="$t('trigger execution id')"
+                        clearable
+                        :model-value="$route.query.triggerExecutionId"
+                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-select
+                        :placeholder="$t('trigger filter.title')"
+                        v-model="childFilter"
+                        :persistent="false"
+                        @update:model-value="onDataTableValue('childFilter', $event === 'ALL' ? undefined : $event)"
+                    >
+                        <el-option
+                            v-for="(col, val) in $tm('trigger filter.options')"
+                            :key="val"
+                            :label="col"
+                            :value="val"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item>
                     <el-select
@@ -62,21 +94,11 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-input
-                        :placeholder="$t('trigger execution id')"
-                        clearable
-                        :model-value="$route.query.triggerExecutionId"
-                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    <refresh-button
+                        :can-auto-refresh="canAutoRefresh"
+                        class="float-right"
+                        @refresh="refresh"
                     />
-                </el-form-item>
-                <el-form-item>
-                    <label-filter
-                        :model-value="$route.query.labels"
-                        @update:model-value="onDataTableValue('labels', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <refresh-button class="float-right" @refresh="refresh" />
                 </el-form-item>
             </template>
 
@@ -123,11 +145,44 @@
                             <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
                                 {{ $t('delete') }}
                             </el-button>
+                            <el-button v-if="canUpdate" :icon="LabelMultiple" @click="isOpenLabelsModal = !isOpenLabelsModal">
+                                {{ $t('Set labels') }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                {{ $t('resume') }}
+                            </el-button>
                         </bulk-select>
+                        <el-dialog v-if="isOpenLabelsModal" v-model="isOpenLabelsModal" destroy-on-close :append-to-body="true">
+                            <template #header>
+                                <h5>{{ $t("Set labels") }}</h5>
+                            </template>
+
+                            <template #footer>
+                                <el-button @click="isOpenLabelsModal = false">
+                                    {{ $t("cancel") }}
+                                </el-button>
+                                <el-button type="primary" @click="setLabels()">
+                                    {{ $t("ok") }}
+                                </el-button>
+                            </template>
+
+                            <el-form>
+                                <el-form-item :label="$t('execution labels')">
+                                    <label-input
+                                        :key="executionLabels"
+                                        v-model:labels="executionLabels"
+                                    />
+                                </el-form-item>
+                            </el-form>
+                        </el-dialog>
                     </template>
                     <template #default>
-                        <el-table-column prop="id" sortable="custom"
-                                         :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                        <el-table-column
+                            prop="id"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('id')"
+                        >
                             <template #default="scope">
                                 <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(scope.row)" />
                             </template>
@@ -158,13 +213,14 @@
                         </el-table-column>
 
                         <el-table-column
-                            prop="state.duration" v-if="displayColumn('state.duration')"
+                            prop="state.duration"
+                            v-if="displayColumn('state.duration')"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('duration')"
                         >
                             <template #default="scope">
-                                <span v-if="isRunning(scope.row)">{{$filters.humanizeDuration(durationFrom(scope.row)) }}</span>
+                                <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>
@@ -279,18 +335,20 @@
                 </select-table>
             </template>
         </data-table>
-    </div>
+    </section>
 </template>
 
 <script setup>
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
+    import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Import from "vue-material-design-icons/Import.vue";
     import Utils from "../../utils/utils";
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
 </script>
 
 <script>
@@ -305,7 +363,7 @@
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
-    import DateRange from "../layout/DateRange.vue";
+    import DateFilter from "./date-select/DateFilter.vue";
     import RefreshButton from "../layout/RefreshButton.vue"
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
@@ -321,6 +379,7 @@
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {storageKeys} from "../../utils/constants";
+    import LabelInput from "../../components/labels/LabelInput.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -331,7 +390,7 @@
             SearchField,
             NamespaceSelect,
             LabelFilter,
-            DateRange,
+            DateFilter,
             RefreshButton,
             StatusFilterButtons,
             StateGlobalChart,
@@ -341,7 +400,8 @@
             Labels,
             Id,
             TriggerFlow,
-            TopNavBar
+            TopNavBar,
+            LabelInput
         },
         props: {
             hidden: {
@@ -444,7 +504,11 @@
                     }
                 ],
                 displayColumns: [],
-                storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS
+                childFilter: "ALL",
+                canAutoRefresh: false,
+                storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
+                isOpenLabelsModal: false,
+                executionLabels: [],
             };
         },
         created() {
@@ -455,6 +519,7 @@
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
+
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
@@ -467,15 +532,21 @@
                 };
             },
             endDate() {
-                // used to be able to force refresh the base interval when auto-reloading
-                this.recomputeInterval;
-                return this.$route.query.endDate ? this.$route.query.endDate : undefined;
+                if (this.$route.query.endDate) {
+                    return this.$route.query.endDate;
+                }
+                return undefined;
             },
             startDate() {
-                // used to be able to force refresh the base interval when auto-reloading
-                this.recomputeInterval;
-                return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
-                    .add(-30, "days").toISOString(true);
+                if (this.$route.query.startDate) {
+                    return this.$route.query.startDate;
+                }
+                if (this.$route.query.timeRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.timeRange).as("milliseconds")).toISOString(true);
+                }
+
+                // the default is PT30D
+                return this.$moment().subtract(30, "days").toISOString(true);
             },
             displayButtons() {
                 return (this.$route.name === "flows/update");
@@ -520,12 +591,8 @@
             loadQuery(base, stats) {
                 let queryFilter = this.queryWithFilter();
 
-                if ((!queryFilter["startDate"] || !queryFilter["endDate"]) && !stats) {
-                    queryFilter["startDate"] = this.startDate;
-                    queryFilter["endDate"] = this.endDate;
-                }
-
                 if (stats) {
+                    delete queryFilter["timeRange"];
                     delete queryFilter["startDate"];
                     delete queryFilter["endDate"];
                 }
@@ -561,8 +628,40 @@
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
             },
+            onDateFilterTypeChange(event) {
+                this.canAutoRefresh = event;
+            },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
+            },
+            resumeExecutions() {
+                this.$toast().confirm(
+                    this.$t("bulk resume", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/queryResumeExecution", this.loadQuery({
+                                    sort: this.$route.query.sort || "state.startDate:desc",
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                                }))
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkResumeExecution", {executionsId: this.selection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {
+                    }
+                )
             },
             restartExecutions() {
                 this.$toast().confirm(
@@ -651,6 +750,39 @@
                     }
                 )
             },
+            setLabels() {
+                this.$toast().confirm(
+                    this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("execution/querySetLabels",  {
+                                    params: this.loadQuery({
+                                        sort: this.$route.query.sort || "state.startDate:desc",
+                                        state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                                    }, false),
+                                    data: this.executionLabels
+                                })
+                                .then(r => {
+                                    this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
+                                    this.loadData();
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("execution/bulkSetLabels", {executionsId: this.selection, executionLabels: this.executionLabels})
+                                .then(r => {
+                                    this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
+                                    this.loadData();
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
+                        }
+                    },
+                    () => {
+                    }
+                )
+                this.isOpenLabelsModal = false;
+            },
             editFlow() {
                 this.$router.push({
                     name: "flows/update", params: {
@@ -661,6 +793,13 @@
                     }
                 })
             },
-        }
+        },
+        watch: {
+            isOpenLabelsModal(opening) {
+                if (opening) {
+                    this.executionLabels = [];
+                }
+            }
+        },
     };
 </script>

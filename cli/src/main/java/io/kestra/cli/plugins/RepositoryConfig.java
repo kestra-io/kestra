@@ -1,15 +1,10 @@
 package io.kestra.cli.plugins;
 
-import io.kestra.core.models.annotations.PluginProperty;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 @EachProperty("kestra.plugins.repositories")
 @Getter

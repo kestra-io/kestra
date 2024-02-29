@@ -8,6 +8,7 @@ import io.kestra.jdbc.JdbcWorkerTriggerResultQueueService;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -35,7 +36,8 @@ public class MysqlWorkerTriggerResultQueue extends MysqlQueue<WorkerTriggerResul
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
+        super.close();
         jdbcWorkerTriggerResultQueueService.close();
     }
 }

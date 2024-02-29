@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <included>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <withJansi>true</withJansi>
         <target>System.out</target>
         <immediateFlush>true</immediateFlush>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -18,7 +17,6 @@
     </appender>
 
     <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
-        <withJansi>true</withJansi>
         <target>System.err</target>
         <immediateFlush>true</immediateFlush>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">

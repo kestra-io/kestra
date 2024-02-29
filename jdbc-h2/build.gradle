@@ -10,5 +10,4 @@ dependencies {
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':storage-local')
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.4.0'
 }

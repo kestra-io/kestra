@@ -23,8 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +39,7 @@ import java.util.Optional;
         "You can access the current iteration value using the variable `{{ taskrun.value }}`. " +
         "The task list will be executed sequentially for each item.\n\n" +
         "We highly recommend triggering a subflow for each value. " +
-        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practice) " +
+        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practices) " +
         "and the [following Blueprint](https://kestra.io/blueprints/128-run-a-subflow-for-each-value-in-parallel-and-wait-for-their-completion-recommended-pattern-to-iterate-over-hundreds-or-thousands-of-list-items) " +
         "for more details."
 )
@@ -48,25 +47,33 @@ import java.util.Optional;
     examples = {
         @Example(
             full = true,
-            code = {
-                "id: each-sequential",
-                "namespace: io.kestra.tests",
-                "",
-                "tasks:",
-                "  - id: each-sequential",
-                "    type: io.kestra.core.tasks.flows.EachSequential",
-                "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
-                "    tasks:",
-                "      - id: each-value",
-                "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
-            }
+            title = "The taskrun.value from the `each_sequential` task is available only to immediate child tasks such as the `before_if` and the `if` tasks. To access the taskrun value in child tasks of the `if` task (such as in the `after_if` task), you need to use the syntax `{{ parent.taskrun.value }}` as this allows you to access the taskrun value of the parent task `each_sequential`.",
+            code = """
+                id: loop_example
+                namespace: dev
+
+                tasks:
+                  - id: each_sequential
+                    type: io.kestra.core.tasks.flows.EachSequential
+                    value: ["value 1", "value 2", "value 3"]
+                    tasks:
+                      - id: before_if
+                        type: io.kestra.core.tasks.debugs.Return
+                        format: 'Before if {{ taskrun.value }}'
+                      - id: if
+                        type: io.kestra.core.tasks.flows.If
+                        condition: '{{ taskrun.value == "value 2" }}'
+                        then:
+                          - id: after_if
+                            type: io.kestra.core.tasks.debugs.Return
+                            format: 'After if {{ parent.taskrun.value }}'"""
         ),
         @Example(
             full = true,
+            title = "This task shows that the value can be a bullet-style list. The task iterates over the list of values and executes the `each-value` child task for each value.",
             code = {
-                "id: each-sequential",
-                "namespace: io.kestra.tests",
+                "id: each_sequential",
+                "namespace: dev",
                 "",
                 "tasks:",
                 "  - id: each-sequential",
@@ -78,9 +85,9 @@ import java.util.Optional;
                 "    tasks:",
                 "      - id: each-value",
                 "        type: io.kestra.core.tasks.debugs.Return",
-                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
             }
-        ),
+        ),        
     }
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {

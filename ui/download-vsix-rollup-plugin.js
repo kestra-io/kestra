@@ -1,6 +1,5 @@
 import decompress from "decompress";
 import fs from "fs";
-import axios from "axios";
 import https from "https";
 
 async function fetchAndExtract(target) {
@@ -30,10 +29,10 @@ async function fetchAndExtract(target) {
 }
 
 export default (options = {}) => {
-    const { targets = [] } = options
+    const {targets = []} = options
     return {
-        name: 'download-vsix',
-        ['buildStart']: () => {
+        name: "download-vsix",
+        ["buildStart"]: () => {
             const extractions = targets.map(target => {
                 // extension is already downloaded and extracted
                 if (fs.existsSync(target.outputDir)) {

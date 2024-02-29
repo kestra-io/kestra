@@ -3,9 +3,12 @@ package io.kestra.core.tasks.flows;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
@@ -98,8 +102,21 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         @SuppressWarnings("unchecked")
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist
-            URI cache = URI.create(storageInterface.cachePrefix("io.kestra.tests", "working-directory-cache", "workingDir", null) + "/cache.zip");
-            storageInterface.delete(null, cache);
+            StorageContext storageContext = StorageContext.forFlow(Flow
+                .builder()
+                    .namespace("io.kestra.tests")
+                    .id("working-directory-cache")
+                .build()
+            );
+            InternalStorage storage = new InternalStorage(
+                null,
+                storageContext
+                , storageInterface
+            );
+            storage.deleteCacheFile("workingDir", null);
+
+            URI cacheURI = storageContext.getCacheURI("workingdir", null);
+            assertFalse(storageInterface.exists(null, cacheURI));
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
@@ -111,7 +128,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
                 nullValue()
             );
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertTrue(storageInterface.exists(null, cache));
+            assertTrue(storageInterface.exists(null, cacheURI));
 
             // a second run should use the cache so the task `exists` should output the cached file
             execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
@@ -163,7 +180,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         private void put(String path, String content) throws IOException {
             storageInterface.put(
                 null,
-                URI.create(storageInterface.namespaceFilePrefix("io.kestra.tests")  + path),
+                URI.create(StorageContext.namespaceFilePrefix("io.kestra.tests")  + path),
                 new ByteArrayInputStream(content.getBytes())
             );
         }

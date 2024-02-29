@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.repositories.WorkerInstanceRepositoryInterface;
+import io.kestra.core.runners.ServerInstance;
 import io.kestra.core.runners.WorkerInstance;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
@@ -69,12 +70,14 @@ public abstract class AbstractJdbcWorkerInstanceRepository extends AbstractJdbcR
                 .and(field("heartbeat_date").lessThan(Instant.now().minusSeconds(getNbMissed() * getFrequency().getSeconds())))
                 .forUpdate();
 
-        Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select);
+        Optional<WorkerInstance> workerInstance = this.jdbcRepository.fetchOne(select)
+            // exclude any worker running on the same server as the executor, to prevent the latter from shutting down.
+            .filter(instance -> !instance.getServer().equals(ServerInstance.getInstance()));
 
         workerInstance.ifPresent(heartbeat -> {
             heartbeat.setStatus(WorkerInstance.Status.DEAD);
 
-            log.warn("Detected evicted worker: {}", heartbeat);
+            log.warn("Detected non-responding worker, stated to DEAD: {}", heartbeat);
 
             this.jdbcRepository.persist(heartbeat, context,  this.jdbcRepository.persistFields(heartbeat));
         });

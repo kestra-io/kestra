@@ -13,7 +13,7 @@
                 @expand-subflow="onExpandSubflow($event)"
             />
             <el-alert v-else type="warning" :closable="false">
-                {{ $t("unable to generate graph")}}
+                {{ $t("unable to generate graph") }}
             </el-alert>
         </div>
     </el-card>
@@ -26,6 +26,9 @@
         components: {
             LowCodeEditor,
         },
+        emits: [
+            "expand-subflow"
+        ],
         props: {
             isReadOnly: {
                 type: Boolean,
@@ -33,14 +36,14 @@
             },
             expandedSubflows: {
                 type: Array,
-                default: []
+                default: () => []
             }
         },
         computed: {
             ...mapState("flow", ["flow", "flowGraph"]),
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowError", undefined);
+            this.$store.commit("flow/setFlowValidation", undefined);
         },
         methods: {
             onExpandSubflow(event) {

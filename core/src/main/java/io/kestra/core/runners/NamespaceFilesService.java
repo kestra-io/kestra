@@ -2,12 +2,14 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -67,7 +69,7 @@ public class NamespaceFilesService {
     }
 
     private URI uri(String namespace, @Nullable URI path) {
-        return URI.create(storageInterface.namespaceFilePrefix(namespace) + Optional.ofNullable(path)
+        return URI.create(StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(path)
             .map(URI::getPath)
             .orElse("")
         );
@@ -77,7 +79,13 @@ public class NamespaceFilesService {
         URI uri = uri(namespace, path);
 
         List<URI> result = new ArrayList<>();
-        List<FileAttributes> list = storageInterface.list(tenantId, uri);
+        List<FileAttributes> list;
+        try {
+            list = storageInterface.list(tenantId, uri);
+        } catch (FileNotFoundException e) {
+            // prevent crashing upon trying to inject namespace files while the root namespace files folder doesn't exist
+            return result;
+        }
 
         for (var file: list) {
             URI current = URI.create((path != null ? path.getPath() : "") +  "/" + file.getFileName());

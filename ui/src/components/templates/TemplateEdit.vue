@@ -17,9 +17,9 @@
         </template>
     </top-nav-bar>
     <templates-deprecated />
-    <div class="mt-3">
+    <section class="container">
         <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
-    </div>
+    </section>
 </template>
 
 <script setup>

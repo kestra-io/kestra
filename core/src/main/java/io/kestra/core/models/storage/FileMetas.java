@@ -3,7 +3,7 @@ package io.kestra.core.models.storage;
 import lombok.Builder;
 import lombok.Value;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Value
 @Builder

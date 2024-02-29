@@ -11,13 +11,13 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
-import io.reactivex.Flowable;
 import jakarta.inject.Singleton;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
+import reactor.core.publisher.Flux;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -29,17 +29,17 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Execution> find(Pageable pageable, String query, String tenantId, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId) {
+    public ArrayListTotal<Execution> find(Pageable pageable, String query, String tenantId, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Flowable<Execution> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId) {
+    public Flux<Execution> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         return null;
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId) {
+    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         throw new UnsupportedOperationException();
     }
 
@@ -78,7 +78,23 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
+    public Flux<Execution> findAllByTriggerExecutionId(String tenantId, String triggerExecutionId) {
+        return Flux.fromStream(
+            executions.values()
+                .stream()
+                .filter(e -> (tenantId == null && e.getTenantId() == null) || (tenantId != null && tenantId.equals(e.getTenantId())))
+                .filter(execution -> Objects.nonNull(execution.getTrigger()))
+                .filter(execution -> execution.getTrigger().getVariables().get("executionId").equals(triggerExecutionId))
+        );
+    }
+
+    @Override
     public Execution save(Execution execution) {
+        return executions.put(execution.getId(), execution);
+    }
+
+    @Override
+    public Execution update(Execution execution) {
         return executions.put(execution.getId(), execution);
     }
 
@@ -132,5 +148,18 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     @Override
     public Integer maxTaskRunSetting() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
+        boolean isTaskRun
+    ) {
+        return Collections.emptyList();
     }
 }

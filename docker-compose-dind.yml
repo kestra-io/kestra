@@ -1,0 +1,82 @@
+volumes:
+  postgres-data:
+    driver: local
+  kestra-data:
+    driver: local
+  dind-socket:
+    driver: local
+  tmp-data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  dind:
+    image: docker:dind-rootless
+    privileged: true
+    user: "1000"
+    environment:
+      DOCKER_HOST: unix://dind/docker.sock
+    command:
+      - --log-level=fatal
+      - --group=1000
+    volumes:
+      - dind-socket:/dind
+      - tmp-data:/tmp/kestra-wd
+
+  kestra:
+    image: kestra/kestra:latest-full
+    pull_policy: always
+    # Note that this is meant for development only. Refer to the documentation for production deployments of Kestra which runs without a root user.
+    user: "root"
+    command: server standalone --worker-thread=128
+    volumes:
+      - kestra-data:/app/storage
+      - dind-socket:/dind
+      - tmp-data:/tmp/kestra-wd
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: k3str4
+        kestra:
+          server:
+            basic-auth:
+              enabled: false
+              username: "admin@kestra.io" # it must be a valid email address
+              password: kestra
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: "/app/storage"
+          queue:
+            type: postgres
+          tasks:
+            tmp-dir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8080/
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_started
+      dind:
+        condition: service_started

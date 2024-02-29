@@ -8,7 +8,7 @@ import lombok.experimental.SuperBuilder;
 import net.jodah.failsafe.RetryPolicy;
 
 import java.time.Duration;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @Getter

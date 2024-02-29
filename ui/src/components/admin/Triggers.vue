@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3" v-if="ready">
+    <section class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -23,9 +23,8 @@
                     </el-form-item>
                 </template>
                 <template #table>
-
                     <el-table
-                        :data="triggers"
+                        :data="triggersMerged"
                         ref="table"
                         :default-sort="{prop: 'flowId', order: 'ascending'}"
                         stripe
@@ -33,10 +32,17 @@
                         fixed
                         @sort-change="onSort"
                     >
-                        <el-table-column prop="triggerId" sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('id')" />
-                        <el-table-column prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('flow')">
+                        <el-table-column
+                            prop="triggerId"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('id')"
+                        />
+                        <el-table-column
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('flow')"
+                        >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
@@ -50,8 +56,12 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']"
-                                         :label="$t('namespace')">
+                        <el-table-column
+                            prop="namespace"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('namespace')"
+                        >
                             <template #default="scope">
                                 {{ $filters.invisibleSpace(scope.row.namespace) }}
                             </template>
@@ -63,36 +73,60 @@
                                     v-if="scope.row.executionId"
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
                                 >
-                                    {{ scope.row.executionId }}
+                                    <id :value="scope.row.executionId" :shrink="true" />
                                 </router-link>
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="executionCurrentState" :label="$t('state')" />
+                        <el-table-column :label="$t('state')">
+                            <template #default="scope">
+                                <status v-if="scope.row.executionCurrentState" :status="scope.row.executionCurrentState" size="small" />
+                            </template>
+                        </el-table-column>
                         <el-table-column :label="$t('date')">
                             <template #default="scope">
-                                {{ scope.row.date ? $filters.date(scope.row.date, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('updated date')">
                             <template #default="scope">
-                                {{ scope.row.updatedDate ? $filters.date(scope.row.updatedDate, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.updatedDate" />
+                            </template>
+                        </el-table-column>
+                        <el-table-column :label="$t('next execution date')">
+                            <template #default="scope">
+                                <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('evaluation lock date')">
                             <template #default="scope">
-                                {{ scope.row.evaluateRunningDate ? $filters.date(scope.row.evaluateRunningDate, "iso") : "" }}
+                                <date-ago :inverted="true" :date="scope.row.nextExecutionDatevaluateRunningDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="user.hasAnyAction(permission.FLOW, action.UPDATE)" column-key="action" class-name="row-action">
+                        <el-table-column v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)" column-key="action" class-name="row-action">
                             <template #default="scope">
-                                <el-button text v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                <el-button size="small" v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
-                                        placement="left" @click="triggerToUnlock = scope.row">
+                                        placement="left"
+                                        @click="triggerToUnlock = scope.row"
+                                    >
                                         <lock-off />
                                     </kicon>
                                 </el-button>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column column-key="disable" class-name="row-action">
+                            <template #default="scope">
+                                <el-switch
+                                    size="small"
+                                    :active-text="$t('enabled')"
+                                    :model-value="!scope.row.disabled"
+                                    @change="setDisabled(scope.row, $event)"
+                                    class="switch-text"
+                                    :active-action-icon="Check"
+                                />
                             </template>
                         </el-table-column>
                     </el-table>
@@ -111,7 +145,7 @@
                 </template>
             </el-dialog>
         </div>
-    </div>
+    </section>
 </template>
 <script setup>
     import LockOff from "vue-material-design-icons/LockOff.vue";
@@ -119,6 +153,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import Check from "vue-material-design-icons/Check.vue";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -129,6 +164,9 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Id from "../Id.vue";
+    import Status from "../Status.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -138,7 +176,10 @@
             MarkdownTooltip,
             DataTable,
             SearchField,
-            NamespaceSelect
+            NamespaceSelect,
+            DateAgo,
+            Status,
+            Id,
         },
         data() {
             return {
@@ -158,7 +199,9 @@
                 }).then(triggersData => {
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
-                    callback();
+                    if (callback) {
+                        callback();
+                    }
                 });
             },
             async unlock() {
@@ -182,6 +225,21 @@
                 }
 
                 this.triggerToUnlock = undefined;
+            },
+            setDisabled(trigger, value) {
+                if (trigger.codeDisabled) {
+                    this.$message({
+                        message: this.$t("triggerflow disabled"),
+                        type: "error",
+                        showClose: true,
+                        duration: 1500
+                    });
+                    return;
+                }
+                this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
+                    .then(_ => {
+                        this.loadData();
+                    })
             }
         },
         computed: {
@@ -190,6 +248,11 @@
                 return {
                     title: this.$t("triggers")
                 }
+            },
+            triggersMerged() {
+                return this.triggers.map(triggers => {
+                    return {...triggers.abstractTrigger, ...triggers.triggerContext, codeDisabled: triggers.abstractTrigger.disabled}
+                })
             }
         }
     };

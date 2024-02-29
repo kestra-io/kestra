@@ -29,9 +29,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -56,7 +56,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "namespace: io.kestra.tests",
                 "",
                 "inputs:",
-                "  - name: string",
+                "  - id: string",
                 "    type: STRING",
                 "    required: true",
                 "",

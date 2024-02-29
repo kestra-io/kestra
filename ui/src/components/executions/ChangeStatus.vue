@@ -140,15 +140,15 @@
             },
             states() {
                 return (this.taskRun.state.current === "PAUSED" ?
-                        [
-                            State.FAILED,
-                            State.RUNNING,
-                        ] :
-                        [
-                            State.FAILED,
-                            State.SUCCESS,
-                            State.WARNING,
-                        ]
+                    [
+                        State.FAILED,
+                        State.RUNNING,
+                    ] :
+                    [
+                        State.FAILED,
+                        State.SUCCESS,
+                        State.WARNING,
+                    ]
                 )
                     .filter(value => value !== this.taskRun.state.current)
                     .map(value => {

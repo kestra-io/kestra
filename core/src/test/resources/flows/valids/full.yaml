@@ -19,7 +19,7 @@ tasks:
 
 - id: t2
   type: io.kestra.core.tasks.debugs.Return
-  format: second {{ execution.id }}
+  format: second {{ labels.key1 }}
 
 - id: t3
   type: io.kestra.core.tasks.log.Log

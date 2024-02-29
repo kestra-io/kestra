@@ -1,21 +1,22 @@
 <template>
-    <div class="tabs-nav">
-        <el-tabs class="nav-tabs-flow-root router-link" v-model="activeName">
-            <el-tab-pane
-                v-for="tab in tabs"
-                :key="tab.name"
-                :label="tab.title"
-                :name="tab.name || 'default'"
-                :disabled="tab.disabled"
-            >
-                <template #label>
-                    <component :is="embedActiveTab ? 'a' : 'router-link'" @click.native="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
-                        {{ tab.title }}
-                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                    </component>
-                </template>
-            </el-tab-pane>
-        </el-tabs>
+    <el-tabs class="router-link" :class="{top: top}" v-model="activeName">
+        <el-tab-pane
+            v-for="tab in tabs"
+            :key="tab.name"
+            :label="tab.title"
+            :name="tab.name || 'default'"
+            :disabled="tab.disabled"
+        >
+            <template #label>
+                <component :is="embedActiveTab ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
+                    {{ tab.title }}
+                    <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                </component>
+            </template>
+        </el-tab-pane>
+    </el-tabs>
+
+    <section :class="containerClass">
         <component
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"
@@ -23,7 +24,7 @@
             :is="activeTab.component"
             embed
         />
-    </div>
+    </section>
 </template>
 
 <script>
@@ -36,6 +37,10 @@
             routeName: {
                 type: String,
                 default: ""
+            },
+            top: {
+                type: Boolean,
+                default: true
             },
             /**
              * The active embedded tab. If this component is not embedded, keep it undefined.
@@ -73,7 +78,7 @@
         },
         methods: {
             embeddedTabChange(tab) {
-                this.$emit('changed', tab);
+                this.$emit("changed", tab);
             },
             setActiveName() {
                 this.activeName = this.activeTab.name || "default";
@@ -94,6 +99,13 @@
             },
         },
         computed: {
+            containerClass() {
+                if (this.activeTab.containerClass) {
+                    return {[this.activeTab.containerClass] : true};
+                }
+
+                return {"container" : true}
+            },
             activeTab() {
                 return this.tabs
                     .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];

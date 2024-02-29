@@ -13,16 +13,24 @@ import jakarta.inject.Singleton;
 @Singleton
 @Introspected
 public class WorkerGroupValidator  implements ConstraintValidator<WorkerGroupValidation, WorkerGroup> {
+    // We previously use a different validator for EE,
+    // but it is no longer possible due to https://github.com/micronaut-projects/micronaut-validation/issues/258.
+    // So we check that the EE package exists.
+    private static final Package EE_PACKAGE = ClassLoader.getSystemClassLoader().getDefinedPackage("io.kestra.ee.validation");
+
     @Override
     public boolean isValid(
         @Nullable WorkerGroup value,
         @NonNull AnnotationValue<WorkerGroupValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
-        if (value == null) {
+        if (value == null|| value.getKey() == null) {
             return true;
         }
 
-        context.messageTemplate("Worker Group is an Enterprise Edition functionality");
-        return false;
+        if (EE_PACKAGE == null) {
+            context.messageTemplate("Worker Group is an Enterprise Edition functionality");
+            return false;
+        }
+        return true;
     }
 }

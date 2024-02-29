@@ -89,7 +89,8 @@
         emits: ["update:modelValue"],
         props: {
             variables: {
-                type: Object,
+                type: Array,
+                default: () => []
             }
         },
         created() {

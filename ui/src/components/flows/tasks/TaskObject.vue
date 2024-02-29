@@ -46,13 +46,11 @@
 </template>
 
 <script>
-    import {toRaw} from "vue";
     import Task from "./Task";
     import Information from "vue-material-design-icons/InformationOutline.vue";
     import Help from "vue-material-design-icons/HelpBox.vue";
     import Kicon from "../../Kicon.vue";
     import Editor from "../../inputs/Editor.vue";
-    import YamlUtils from "../../../utils/yamlUtils";
     import Markdown from "../../layout/Markdown.vue";
 
     export default {
@@ -151,9 +149,6 @@
     .el-form-item.is-required:not(.is-no-asterisk).asterisk-left {
          > :deep(.el-form-item__label) {
              display: flex;
-             &::before {
-
-             }
 
         }
     }

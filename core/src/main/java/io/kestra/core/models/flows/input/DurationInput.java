@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.Set;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 @SuperBuilder
 @Getter
@@ -29,7 +29,7 @@ public class DurationInput extends Input<Duration> {
                     "Invalid input",
                     this,
                     DurationInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -40,7 +40,7 @@ public class DurationInput extends Input<Duration> {
                     "Invalid input",
                     this,
                     DurationInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

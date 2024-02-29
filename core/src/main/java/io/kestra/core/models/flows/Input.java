@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
@@ -10,11 +11,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 @SuperBuilder
 @Getter
@@ -31,15 +32,17 @@ import javax.validation.constraints.Pattern;
     @JsonSubTypes.Type(value = FloatInput.class, name = "FLOAT"),
     @JsonSubTypes.Type(value = IntInput.class, name = "INT"),
     @JsonSubTypes.Type(value = JsonInput.class, name = "JSON"),
+    @JsonSubTypes.Type(value = SecretInput.class, name = "SECRET"),
     @JsonSubTypes.Type(value = StringInput.class, name = "STRING"),
+    @JsonSubTypes.Type(value = EnumInput.class, name = "ENUM"),
     @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
     @JsonSubTypes.Type(value = URIInput.class, name = "URI")
 })
-public abstract class Input<T> {
+public abstract class Input<T> implements Data {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][.a-zA-Z0-9_-]*")
-    String name;
+    String id;
 
     @NotNull
     @Valid
@@ -54,29 +57,12 @@ public abstract class Input<T> {
 
     public abstract void validate(T input) throws ConstraintViolationException;
 
-    @Introspected
-    public enum Type {
-        STRING(StringInput.class.getName()),
-        INT(IntInput.class.getName()),
-        FLOAT(FloatInput.class.getName()),
-        BOOLEAN(BooleanInput.class.getName()),
-        DATETIME(DateTimeInput.class.getName()),
-        DATE(DateInput.class.getName()),
-        TIME(TimeInput.class.getName()),
-        DURATION(DurationInput.class.getName()),
-        FILE(FileInput.class.getName()),
-        JSON(JsonInput.class.getName()),
-        URI(URIInput.class.getName());
-
-        private final String clsName;
-
-        Type(String clsName) {
-            this.clsName = clsName;
-        }
-
-        @SuppressWarnings("unchecked")
-        public Class<? extends Input<?>> cls() throws ClassNotFoundException {
-            return (Class<? extends Input<?>>) Class.forName(this.clsName);
+    @JsonSetter
+    @Deprecated
+    public void setName(String name) {
+        if (this.id == null) {
+            this.id = name;
         }
     }
+
 }

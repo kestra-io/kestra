@@ -8,7 +8,7 @@ import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;

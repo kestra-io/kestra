@@ -16,6 +16,7 @@
                         :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
                         :shown-attempts-uid="shownAttemptsUid"
                         :logs="logs"
+                        @update-logs="loadLogs($event)"
                     />
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
@@ -46,7 +47,7 @@
                                     v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <task-run-details
-                                    v-if="!taskRunId && isSubflow(currentTaskRun) && currentTaskRun.outputs?.executionId"
+                                    v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
                                     ref="subflows-logs"
                                     :level="level"
                                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
@@ -115,7 +116,8 @@
             // allows to pass directly a raw execution (since it is already fetched by parent component)
             targetExecution: {
                 type: Object,
-                required: false
+                required: false,
+                default: undefined
             },
             // allows to fetch the execution at startup
             targetExecutionId: {
@@ -155,7 +157,8 @@
                 executionSSE: undefined,
                 logsSSE: undefined,
                 flow: undefined,
-                logsBuffer: []
+                logsBuffer: [],
+                shownSubflowsIds: [],
             };
         },
         watch: {
@@ -274,14 +277,14 @@
             },
             autoExpandTaskrunStates() {
                 switch (localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT) {
-                    case logDisplayTypes.ERROR:
-                        return [State.FAILED, State.RUNNING, State.PAUSED]
-                    case logDisplayTypes.ALL:
-                        return State.arrayAllStates().map(s => s.name)
-                    case logDisplayTypes.HIDDEN:
-                        return []
-                    default:
-                        return State.arrayAllStates().map(s => s.name)
+                case logDisplayTypes.ERROR:
+                    return [State.FAILED, State.RUNNING, State.PAUSED]
+                case logDisplayTypes.ALL:
+                    return State.arrayAllStates().map(s => s.name)
+                case logDisplayTypes.HIDDEN:
+                    return []
+                default:
+                    return State.arrayAllStates().map(s => s.name)
                 }
             }
         },
@@ -310,7 +313,7 @@
             },
             shouldDisplayProgressBar(taskRun) {
                 return this.showProgressBar &&
-                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem"
+                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
             },
             shouldDisplayLogs(taskRun) {
                 return (this.taskRunId ||
@@ -359,6 +362,18 @@
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
             },
+
+            shouldDisplaySubflow(taskRunIndex, taskRun) {
+                const subflowExecutionId = taskRun.outputs.executionId;
+                const index = this.shownSubflowsIds.findIndex(item => item.subflowExecutionId === subflowExecutionId)
+                if (index === -1) {
+                    this.shownSubflowsIds.push({subflowExecutionId: subflowExecutionId, taskRunIndex: taskRunIndex});
+                    return true;
+                } else {
+                    return this.shownSubflowsIds[index].taskRunIndex === taskRunIndex;
+                }
+            },
+
             expandAll() {
                 if (!this.followedExecution) {
                     setTimeout(() => this.expandAll(), 50);
@@ -400,9 +415,6 @@
                         }
                     });
                 }
-            },
-            downloadName(currentTaskRunId) {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
             },
             uniqueTaskRunDisplayFilter(currentTaskRun) {
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);

@@ -108,7 +108,7 @@
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flowError"]),
+            ...mapGetters("flow", ["flowValidation"]),
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
@@ -117,8 +117,6 @@
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
-                    !this.fullHeight ? "" : "full-height",
-                    !this.original ? "" : "diff",
                     "theme-" + this.themeComputed,
                     this.themeComputed === "dark" ? "custom-dark-vs-theme" : ""
                 ]
@@ -396,14 +394,7 @@
 
         .editor-container {
             display: flex;
-
-            &.full-height {
-                height: calc(100vh - 249px);
-            }
-
-            &.diff {
-                height: calc(100vh - 305px);
-            }
+            height: 100%;
 
             &.single-line {
                 min-height: var(--el-component-size);

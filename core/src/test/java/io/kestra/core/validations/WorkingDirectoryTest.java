@@ -47,7 +47,7 @@ public class WorkingDirectoryTest {
             .build();
 
         assertThat(modelValidator.isValid(workingDirectory).isPresent(), is(true));
-        assertThat(modelValidator.isValid(workingDirectory).get().getMessage(), containsString("The tasks property cannot be empty"));
+        assertThat(modelValidator.isValid(workingDirectory).get().getMessage(), containsString("The 'tasks' property cannot be empty"));
 
         // flowable task
         workingDirectory = WorkingDirectory.builder()

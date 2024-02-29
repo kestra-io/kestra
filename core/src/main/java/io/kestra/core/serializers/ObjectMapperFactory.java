@@ -32,7 +32,7 @@ import jakarta.inject.Singleton;
 @SuppressWarnings({"rawtypes", "unchecked"})
 @Factory
 @BootstrapContextCompatible
-@Replaces(io.micronaut.jackson.ObjectMapperFactory.class)
+@Replaces(factory = io.micronaut.jackson.ObjectMapperFactory.class)
 public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactory {
     /**
      * Name for Micronaut module.
@@ -91,7 +91,7 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
                     module.addSerializer(aClass, serializer);
                 }
             } else {
-                Optional<Class> targetType = GenericTypeUtils.resolveSuperGenericTypeArgument(type);
+                Optional<Class<?>> targetType = GenericTypeUtils.resolveSuperGenericTypeArgument(type);
                 if (targetType.isPresent()) {
                     module.addSerializer(targetType.get(), serializer);
                 } else {
@@ -109,7 +109,7 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
                     module.addDeserializer(aClass, deserializer);
                 }
             } else {
-                Optional<Class> targetType = GenericTypeUtils.resolveSuperGenericTypeArgument(type);
+                Optional<Class<?>> targetType = GenericTypeUtils.resolveSuperGenericTypeArgument(type);
                 targetType.ifPresent(aClass -> module.addDeserializer(aClass, deserializer));
             }
         }

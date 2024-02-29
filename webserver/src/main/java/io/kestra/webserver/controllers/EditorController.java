@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -33,7 +33,7 @@ public class EditorController {
     private MarketplaceRequestMapper marketplaceRequestMapper;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/marketplace/{type}{/path:/.*}", produces = MediaType.APPLICATION_JSON)
+    @Get(uri = "/marketplace/{type}{/path:/.*}")
     @Operation(tags = {"Marketplace"}, summary = "Marketplace extensions operations")
     public HttpResponse<String> marketplaceGet(
         @Parameter(description = "Type of request") @PathVariable MarketplaceRequestType type,
@@ -44,7 +44,7 @@ public class EditorController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/marketplace/{type}{/path:/.*}", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
+    @Post(uri = "/marketplace/{type}{/path:/.*}")
     @Operation(tags = {"Marketplace"}, summary = "Marketplace extensions operations")
     public HttpResponse<String> marketplacePost(
         @Parameter(description = "Type of request") @PathVariable MarketplaceRequestType type,

@@ -21,7 +21,7 @@ public class WorkerInstanceController {
     private WorkerInstanceRepositoryInterface workerInstanceRepositoryInterface;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(produces = MediaType.TEXT_JSON)
+    @Get
     @Operation(tags = {"Workers"}, summary = "Get all workers")
     public List<WorkerInstance> findAll() throws HttpStatusException {
         return workerInstanceRepositoryInterface.findAll();

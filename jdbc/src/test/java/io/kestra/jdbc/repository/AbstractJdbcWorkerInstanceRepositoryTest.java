@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.runners.ServerInstance;
 import io.kestra.core.runners.WorkerInstance;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -138,6 +139,7 @@ public abstract class AbstractJdbcWorkerInstanceRepositoryTest {
             .port(0)
             .status(alive ? WorkerInstance.Status.UP : WorkerInstance.Status.DEAD)
             .heartbeatDate(alive ?  Instant.now() : Instant.now().minusSeconds(3600))
+            .server(new ServerInstance(UUID.randomUUID())) // simulate worker is running on different server
             .build();
     }
 

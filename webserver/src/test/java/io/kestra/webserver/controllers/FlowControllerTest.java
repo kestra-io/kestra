@@ -5,7 +5,7 @@ import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
@@ -30,7 +30,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class FlowControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
-    RxHttpClient client;
+    ReactorHttpClient client;
 
     @Inject
     AbstractJdbcFlowRepository jdbcFlowRepository;
@@ -173,8 +173,8 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         // f3 & f4 must be updated
         updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
         assertThat(updated.size(), is(4));
-        assertThat(updated.get(2).getInputs().get(0).getName(), is("3-3"));
-        assertThat(updated.get(3).getInputs().get(0).getName(), is("4"));
+        assertThat(updated.get(2).getInputs().get(0).getId(), is("3-3"));
+        assertThat(updated.get(3).getInputs().get(0).getId(), is("4"));
 
         // f1 & f2 must be deleted
         assertThrows(HttpClientResponseException.class, () -> {
@@ -211,7 +211,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
         // flow is not updated
         retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f4"), String.class));
-        assertThat(retrieve.getInputs().get(0).getName(), is("4"));
+        assertThat(retrieve.getInputs().get(0).getId(), is("4"));
 
         // send 2 same id
         e = assertThrows(
@@ -268,11 +268,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
         assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         Flow get = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), String.class));
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("a"));
+        assertThat(get.getInputs().get(0).getId(), is("a"));
     }
 
     @Test
@@ -323,7 +323,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         flow = generateFlow(flowId, "io.kestra.unittest", "b");
 
@@ -333,7 +333,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("b"));
+        assertThat(get.getInputs().get(0).getId(), is("b"));
 
         Flow finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
@@ -427,7 +427,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(4));
+        assertThat(namespaces.size(), is(5));
     }
 
     @Test
@@ -438,11 +438,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getId(), is(assertFlow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         FlowWithSource get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/" + assertFlow.getId() + "?source=true"), FlowWithSource.class);
         assertThat(get.getId(), is(assertFlow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("a"));
+        assertThat(get.getInputs().get(0).getId(), is("a"));
         assertThat(get.getSource(), containsString(" Comment i added"));
     }
 
@@ -470,7 +470,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getId(), is(assertFlow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getInputs().get(0).getId(), is("a"));
 
         flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
 
@@ -480,7 +480,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(get.getId(), is(assertFlow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("b"));
+        assertThat(get.getInputs().get(0).getId(), is("b"));
 
         String finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
@@ -703,13 +703,23 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/validateMultipleValidFlows.yaml");
         String flow = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
 
+        String firstFlowSource = flow.split("(?m)^---")[0];
+        Flow firstFlow = parseFlow(firstFlowSource);
+        jdbcFlowRepository.create(firstFlow, firstFlowSource, firstFlow);
+
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
         List<ValidateConstraintViolation> body = response.body();
         assertThat(body.size(), is(2));
+        // We don't send any revision while the flow already exists so it's outdated
+        assertThat(body.get(0).isOutdated(), is(true));
         assertThat(body.get(0).getDeprecationPaths(), hasSize(3));
         assertThat(body.get(0).getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
+        assertThat(body.get(0).getWarnings().size(), is(1));
+        assertThat(body.get(0).getWarnings().get(0), containsString("The system namespace is reserved for background workflows"));
+        assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), empty());
+        assertThat(body.get(1).getWarnings(), empty());
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", is(nullValue()))
         ));
@@ -733,7 +743,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         return Flow.builder()
             .id(friendlyId)
             .namespace(namespace)
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name(inputName).build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id(inputName).build()))
             .tasks(Collections.singletonList(generateTask("test", "test")))
             .build();
     }
@@ -772,7 +782,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             "# Comment i added\n" +
             "namespace: %s\n" +
             "inputs:\n" +
-            "  - name: %s\n" +
+            "  - id: %s\n" +
             "    type: STRING\n" +
             "tasks:\n" +
             "  - id: test\n" +
@@ -787,7 +797,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             "# Comment i added\n" +
             "namespace: %s\n" +
             "inputs:\n" +
-            "  - name: %s\n" +
+            "  - id: %s\n" +
             "    type: STRING\n" +
             "tasks:\n" +
             "  - id: test\n" +

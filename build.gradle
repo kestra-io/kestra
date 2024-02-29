@@ -12,7 +12,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.50.0"
+    id "com.github.ben-manes.versions" version "0.51.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '8.0.0' apply false
@@ -71,12 +71,11 @@ allprojects {
     //
     configurations.all {
         resolutionStrategy {
-            force("org.jooq:jooq:3.17.14")
-            force("org.slf4j:slf4j-api:1.7.36")
+            force("org.slf4j:slf4j-api:$slf4jVersion")
 
             // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.23.3")
-            force("com.google.protobuf:protobuf-java-util:3.23.3")
+            force("com.google.protobuf:protobuf-java:3.25.2")
+            force("com.google.protobuf:protobuf-java-util:3.25.2")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.14")
@@ -96,6 +95,7 @@ allprojects {
             force("com.fasterxml.jackson.core:jackson-annotations:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
+            force("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:" + jacksonVersion)
         }
     }
 
@@ -106,39 +106,41 @@ allprojects {
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
 
         // micronaut
-        annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        annotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         annotationProcessor "io.micronaut:micronaut-inject-java"
-        annotationProcessor "io.micronaut:micronaut-validation"
-        implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        annotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+
+        implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         implementation "io.micronaut:micronaut-inject"
-        implementation "io.micronaut:micronaut-validation"
+        implementation "io.micronaut.validation:micronaut-validation"
         implementation "io.micronaut:micronaut-runtime"
-        implementation "javax.annotation:javax.annotation-api"
+        implementation "io.micronaut:micronaut-retry"
+        implementation "io.micronaut:micronaut-jackson-databind"
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
         implementation "io.micrometer:micrometer-core"
         implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
-        api "io.micronaut:micronaut-http-client"
-        api "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
+        implementation "io.micronaut:micronaut-http-client"
+        implementation "io.micronaut.reactor:micronaut-reactor-http-client"
 
         // logs
         implementation "org.slf4j:slf4j-api"
         implementation "ch.qos.logback:logback-classic"
-        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.19.0'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
+        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.23.0'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
 
         // jackson
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: jacksonVersion
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        implementation 'com.github.jknack:handlebars:4.3.1'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20230409'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20240207'
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
@@ -163,15 +165,17 @@ subprojects {
         testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
 
         // micronaut
-        testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-        testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testAnnotationProcessor "io.micronaut.validation:micronaut-validation-processor"
 
-        testImplementation "org.junit.jupiter:junit-jupiter-api"
+        testImplementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         testImplementation "io.micronaut.test:micronaut-test-junit5"
+
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
         testImplementation "org.junit.jupiter:junit-jupiter-params"
         testImplementation "org.junit-pioneer:junit-pioneer:2.2.0"
+        testImplementation 'org.mockito:mockito-junit-jupiter'
 
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -189,6 +193,7 @@ subprojects {
         systemProperty 'user.country', 'US'
 
         environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
+        environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
         environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
         environment 'SECRET_NON_B64_SECRET', "some secret value"
         environment 'KESTRA_TEST1', "true"

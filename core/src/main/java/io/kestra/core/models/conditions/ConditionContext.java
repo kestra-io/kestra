@@ -10,7 +10,7 @@ import io.micronaut.core.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Builder
 @Getter

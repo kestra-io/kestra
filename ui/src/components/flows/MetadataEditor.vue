@@ -112,7 +112,6 @@
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
-    import TaskRoot from "./tasks/TaskRoot.vue";
     import TaskBasic from "./tasks/TaskBasic.vue";
 </script>
 <script>
@@ -243,7 +242,7 @@
                     namespace: this.newMetadata.namespace,
                     description: this.newMetadata.description,
                     labels: this.arrayToObject(this.newMetadata.labels),
-                    inputs: this.newMetadata.inputs.filter(e => e.name && e.type),
+                    inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
                     concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
                     taskDefaults: taskDefaults,

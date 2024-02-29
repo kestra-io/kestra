@@ -133,18 +133,27 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
         assertThat(executions.getTotal(), is(8L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value"), null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value"), null, null);
         assertThat(executions.getTotal(), is(1L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value2"), null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value2"), null, null);
         assertThat(executions.getTotal(), is(0L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, "second", null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(13L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, NAMESPACE, "second", null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(13L));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, "io.kestra", null, null, null, null, null, null, null);
+        assertThat(executions.getTotal(), is(28L));
     }
 
     @Test
@@ -154,12 +163,22 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(executionTriggerId);
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, executionTriggerId);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, executionTriggerId, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
         assertThat(executions.get(0).getTrigger().getVariables().get("executionId"), is(executionTriggerId));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.CHILD);
+        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.size(), is(10));
+        assertThat(executions.get(0).getTrigger().getVariables().get("executionId"), is(executionTriggerId));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.MAIN);
+        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.size(), is(10));
+        assertThat(executions.get(0).getTrigger(), is(nullValue()));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(56L));
     }
 
@@ -167,11 +186,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findWithSort() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
         assertThat(executions.getTotal(), is(8L));
     }
 
@@ -179,11 +198,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findTaskRun() {
         inject();
 
-        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, null, null, null);
         assertThat(taskRuns.getTotal(), is(71L));
         assertThat(taskRuns.size(), is(10));
 
-        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, Map.of("key", "value"), null);
+        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, Map.of("key", "value"), null, null);
         assertThat(taskRuns.getTotal(), is(1L));
         assertThat(taskRuns.size(), is(1));
     }
@@ -495,5 +514,20 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
+    }
+
+    @Test
+    protected void update() {
+        Execution execution = ExecutionFixture.EXECUTION_1;
+        executionRepository.save(ExecutionFixture.EXECUTION_1);
+
+        Label label = new Label("key", "value");
+        Execution updated = execution.toBuilder().labels(List.of(label)).build();
+        executionRepository.update(updated);
+
+        Optional<Execution> validation = executionRepository.findById(null, updated.getId());
+        assertThat(validation.isPresent(), is(true));
+        assertThat(validation.get().getLabels().size(), is(1));
+        assertThat(validation.get().getLabels().get(0), is(label));
     }
 }

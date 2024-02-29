@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +35,12 @@ public class WorkerInstance {
 
     @Builder.Default
     private Instant heartbeatDate = Instant.now();
+
+    /**
+     * The Kestra server owning the worker.
+     */
+    @Builder.Default
+    private ServerInstance server = ServerInstance.getInstance();
 
     public enum Status {
         UP, DEAD

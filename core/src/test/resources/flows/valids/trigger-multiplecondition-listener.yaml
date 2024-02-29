@@ -1,8 +1,8 @@
 id: trigger-multiplecondition-listener
-namespace: io.kestra.tests
+namespace: io.kestra.tests.trigger
 #
 #inputs:
-#  - name: from-parent
+#  - id: from-parent
 #    type: STRING
 
 tasks:
@@ -27,9 +27,9 @@ triggers:
               - SUCCESS
           flow-a:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-            namespace: io.kestra.tests
+            namespace: io.kestra.tests.trigger
             flowId: trigger-multiplecondition-flow-a
           flow-b:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-            namespace: io.kestra.tests
+            namespace: io.kestra.tests.trigger
             flowId: trigger-multiplecondition-flow-b

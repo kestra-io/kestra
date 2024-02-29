@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,7 +23,7 @@ public class PluginUsage {
 
     public static List<PluginUsage> of(ApplicationContext applicationContext) {
         if (!(applicationContext instanceof KestraApplicationContext)) {
-            throw new RuntimeException("Invalid ApplicationContext");
+            return Collections.emptyList();
         }
 
         KestraApplicationContext context = (KestraApplicationContext) applicationContext;

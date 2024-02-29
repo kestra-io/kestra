@@ -38,12 +38,12 @@
 
                 <el-table-column prop="value" sortable :label="$t('value')">
                     <template #default="scope">
-                    <span v-if="scope.row.type === 'timer'">
-                        {{ $filters.humanizeDuration(scope.row.value / 1000) }}
-                    </span>
+                        <span v-if="scope.row.type === 'timer'">
+                            {{ $filters.humanizeDuration(scope.row.value / 1000) }}
+                        </span>
                         <span v-else>
-                        {{ $filters.humanizeNumber(scope.row.value) }}
-                    </span>
+                            {{ $filters.humanizeNumber(scope.row.value) }}
+                        </span>
                     </template>
                 </el-table-column>
 

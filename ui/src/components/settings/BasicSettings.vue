@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3">
+    <section class="container">
         <el-form class="ks-horizontal max-size">
             <el-form-item :label="$t('Language')">
                 <el-select :model-value="lang" @update:model-value="onLang">
@@ -82,7 +82,7 @@
                 <el-checkbox :label="$t('Fold auto')" :model-value="autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
             </el-form-item>
 
-            <el-form-item :label="$t('Default namespace')">
+            <el-form-item :label="$t('Default namespace')" v-if="allowDefaultNamespace">
                 <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
             </el-form-item>
 
@@ -137,8 +137,8 @@
                 </el-select>
             </el-form-item>
         </el-form>
-        <slot name="form-items"/>
-    </div>
+        <slot name="form-items" />
+    </section>
 </template>
 
 <script setup>
@@ -166,6 +166,12 @@
             LogLevelSelector,
             TopNavBar
         },
+        props: {
+            allowDefaultNamespace: {
+                type: Boolean,
+                default: true
+            }
+        },
         data() {
             return {
                 defaultNamespace: undefined,
@@ -176,8 +182,8 @@
                 dateFormat: undefined,
                 timezone: undefined,
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
-                  const timezoneMoment = this.$moment.tz(zone);
-                  return {
+                    const timezoneMoment = this.$moment.tz(zone);
+                    return {
                         zone,
                         offset: timezoneMoment.utcOffset(),
                         formattedOffset: timezoneMoment.format("Z")

@@ -20,7 +20,7 @@
                     {{ $t("to") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
-                    <clock/>
+                    <clock />
                     <strong>{{ $t("duration") }}:</strong>
                     {{ $filters.humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
@@ -35,12 +35,12 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <duration :histories="selectedAttempt(currentTaskRun).state.histories"/>
+                <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
             </small>
         </div>
 
         <div class="task-status">
-            <status size="small" :status="selectedAttempt(currentTaskRun).state.current"/>
+            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
         <el-select
@@ -59,7 +59,7 @@
 
         <el-dropdown trigger="click">
             <el-button type="default" class="more-dropdown-button">
-                <DotsHorizontal title=""/>
+                <DotsHorizontal title="" />
             </el-button>
             <template #dropdown>
                 <el-dropdown-menu>
@@ -70,7 +70,7 @@
                         :execution-id="currentTaskRun.outputs.executionId"
                     />
 
-                    <metrics :task-run="currentTaskRun" :execution="followedExecution"/>
+                    <metrics :task-run="currentTaskRun" :execution="followedExecution" />
 
                     <outputs
                         :outputs="currentTaskRun.outputs"
@@ -112,6 +112,12 @@
                     >
                         {{ $t("download logs") }}
                     </el-dropdown-item>
+                    <el-dropdown-item
+                        :icon="Delete"
+                        @click="deleteLogs(currentTaskRun.id)"
+                    >
+                        {{ $t("delete logs") }}
+                    </el-dropdown-item>
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
@@ -126,7 +132,7 @@
             <ChevronUp
                 v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
             />
-            <ChevronDown v-else/>
+            <ChevronDown v-else />
         </el-button>
     </div>
 </template>
@@ -150,6 +156,8 @@
     import _groupBy from "lodash/groupBy";
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Duration from "../layout/Duration.vue";
+    import Utils from "../../utils/utils";
+    import Delete from "vue-material-design-icons/Delete.vue";
 
     export default {
         components: {
@@ -206,6 +214,9 @@
             }
         },
         computed: {
+            Delete() {
+                return Delete
+            },
             Download() {
                 return Download
             },
@@ -220,8 +231,8 @@
                 return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]));
             },
             logsWithIndexByAttemptUid() {
-                const indexedLogs = this.logs
-                    .filter(logLine => logLine.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
+                const indexedLogs = this?.logs
+                    .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
@@ -237,6 +248,9 @@
             },
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
+            },
+            downloadName(currentTaskRunId) {
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
             },
             selectedAttempt(taskRun) {
                 return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0];
@@ -255,12 +269,16 @@
                     executionId: this.followedExecution.id,
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
-                    const url = window.URL.createObjectURL(new Blob([response]));
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.setAttribute("download", this.downloadName(currentTaskRunId));
-                    document.body.appendChild(link);
-                    link.click();
+                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
+                });
+            },
+            deleteLogs(currentTaskRunId) {
+                const params = this.params
+                this.$store.dispatch("execution/deleteLogs", {
+                    executionId: this.followedExecution.id,
+                    params: {...params, taskRunId: currentTaskRunId}
+                }).then((_) => {
+                    this.forwardEvent("update-logs", this.followedExecution.id)
                 });
             },
             forwardEvent(type, event) {
@@ -273,7 +291,7 @@
                 return this.shouldDisplayProgressBar(taskRun) || this.shouldDisplayLogs(taskRun.id)
             },
             shouldDisplayProgressBar(taskRun) {
-                return this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem"
+                return this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
             },
             shouldDisplayLogs(taskRunId) {
                 return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]

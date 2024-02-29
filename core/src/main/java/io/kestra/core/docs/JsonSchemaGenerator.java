@@ -12,8 +12,8 @@ import com.github.victools.jsonschema.generator.impl.DefinitionKey;
 import com.github.victools.jsonschema.generator.naming.DefaultSchemaDefinitionNamingStrategy;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.jackson.JacksonOption;
-import com.github.victools.jsonschema.module.javax.validation.JavaxValidationModule;
-import com.github.victools.jsonschema.module.javax.validation.JavaxValidationOption;
+import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationModule;
+import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
@@ -177,10 +177,10 @@ public class JsonSchemaGenerator {
     protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7) {
         builder
 
-            .with(new JavaxValidationModule(
-                JavaxValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
-                JavaxValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
-                JavaxValidationOption.INCLUDE_PATTERN_EXPRESSIONS
+            .with(new JakartaValidationModule(
+                JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
+                JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
+                JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
             ))
             .with(new Swagger2Module())
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)

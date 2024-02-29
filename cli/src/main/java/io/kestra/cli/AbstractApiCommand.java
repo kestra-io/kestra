@@ -1,6 +1,7 @@
 package io.kestra.cli;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.DefaultHttpClientConfiguration;
@@ -29,6 +30,9 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--tenant"}, description = "Tenant identifier (EE only, when multi-tenancy is enabled)")
     protected String tenantId;
 
+    @CommandLine.Option(names = {"--api-token"}, description = "API Token (EE only).")
+    protected String apiToken;
+
     @Inject
     @Named("remote-api")
     @Nullable
@@ -49,6 +53,10 @@ public abstract class AbstractApiCommand extends AbstractCommand {
             String password = String.join(":", split.subList(1, split.size()));
 
             request.basicAuth(user, password);
+        }
+
+        if (this.apiToken != null) {
+            request.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken);
         }
 
         return request;

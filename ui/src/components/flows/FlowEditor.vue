@@ -6,10 +6,10 @@
         :flow-graph="flowGraph"
         :flow="flow"
         :is-read-only="isReadOnly"
-        :flow-error="flowError"
-        :flow-deprecations="flowDeprecations"
+        :flow-validation="flowValidation"
         :expanded-subflows="expandedSubflows"
         @expand-subflow="$emit('expand-subflow', $event)"
+        :next-revision="flow.revision + 1"
     />
 </template>
 <script>
@@ -20,6 +20,9 @@
         components: {
             EditorView,
         },
+        emits: [
+            "expand-subflow"
+        ],
         props: {
             isReadOnly: {
                 type: Boolean,
@@ -27,16 +30,15 @@
             },
             expandedSubflows: {
                 type: Array,
-                default: []
+                default: () => []
             }
         },
         computed: {
             ...mapState("flow", ["flow", "flowGraph"]),
-            ...mapGetters("flow", ["flowError", "flowDeprecations"]),
+            ...mapGetters("flow", ["flowValidation"]),
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowError", undefined);
-            this.$store.commit("flow/setFlowDeprecations", undefined);
+            this.$store.commit("flow/setFlowValidation", undefined);
         },
     };
 </script>

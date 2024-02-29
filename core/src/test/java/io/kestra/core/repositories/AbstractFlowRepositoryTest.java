@@ -8,7 +8,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -39,7 +39,7 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -120,7 +120,7 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("a").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
             .build();
         // create with repository
         FlowWithSource flow = flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
@@ -140,7 +140,7 @@ public abstract class AbstractFlowRepositoryTest {
                     .message("Hello World")
                     .build()
             ))
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
             .build();
 
         // revision is incremented
@@ -226,7 +226,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace(null, "io.kestra.tests");
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 3));
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 14));
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests2");
         assertThat((long) save.size(), is(1L));
@@ -305,7 +305,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("a").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
@@ -316,7 +316,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow update = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest2")
-            .inputs(ImmutableList.of(StringInput.builder().type(Input.Type.STRING).name("b").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
         ;
@@ -395,7 +395,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findDistinctNamespace() {
         List<String> distinctNamespace = flowRepository.findDistinctNamespace(null);
-        assertThat((long) distinctNamespace.size(), is(4L));
+        assertThat((long) distinctNamespace.size(), is(5L));
     }
 
     @Test
@@ -432,6 +432,42 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(((FlowWithException) found.get()).getException(), containsString("Templates are disabled"));
     }
 
+    @Test
+    protected void lastRevision() {
+        String namespace = "io.kestra.unittest";
+        String flowId = IdUtils.create();
+        String tenantId = "tenant";
+
+        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), nullValue());
+
+        // create with builder
+        Flow first = Flow.builder()
+            .tenantId(tenantId)
+            .id(flowId)
+            .namespace(namespace)
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
+            .build();
+        // create with repository
+        flowRepository.create(first, first.generateSource(), taskDefaultService.injectDefaults(first));
+        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(1));
+
+        // submit new one with change
+
+        Flow flowRev2 = first.toBuilder()
+            .tasks(Collections.singletonList(
+                Log.builder()
+                    .id(IdUtils.create())
+                    .type(Log.class.getName())
+                    .message("Hello World")
+                    .build()
+            ))
+            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
+            .build();
+
+        flowRepository.update(flowRev2, first, flowRev2.generateSource(), taskDefaultService.injectDefaults(flowRev2));
+        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(2));
+    }
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {

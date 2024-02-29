@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -234,19 +234,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     public void preExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
         if (cache != null) {
-            // first, check if we need to delete the file
-            if (cache.ttl != null) {
-                var maybeLastModifiedTime = runContext.getTaskCacheFileLastModifiedTime(taskRun.getNamespace(), taskRun.getFlowId(), this.getId(), taskRun.getValue());
-                if (maybeLastModifiedTime.isPresent()) {
-                    if (Instant.now().isAfter(Instant.ofEpochMilli(maybeLastModifiedTime.get()).plus(cache.ttl))) {
-                        runContext.logger().debug("Cache is expired, deleting it");
-                        runContext.deleteTaskCacheFile(taskRun.getNamespace(), taskRun.getFlowId(), this.getId(), taskRun.getValue());
-                    }
-                }
-            }
-
-            // then download it and extract its content
-            var maybeCacheFile = runContext.getTaskCacheFile(taskRun.getNamespace(), taskRun.getFlowId(), this.getId(), taskRun.getValue());
+            // May download cached file if it exists and is not expired, and extract its content
+            var maybeCacheFile = runContext.storage().getCacheFile(getId(), taskRun.getValue(), cache.ttl);
             if (maybeCacheFile.isPresent()) {
                 runContext.logger().debug("Cache exist, downloading it");
                 // download the cache if exist and unzip all entries
@@ -331,7 +320,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                         archive.finish();
                         File archiveFile = File.createTempFile("archive", ".zip");
                         Files.write(archiveFile.toPath(), bos.toByteArray());
-                        URI uri = runContext.putTaskCacheFile(archiveFile, taskRun.getNamespace(), taskRun.getFlowId(), this.getId(), taskRun.getValue());
+                        URI uri = runContext.storage().putCacheFile(archiveFile, getId(), taskRun.getValue());
                         runContext.logger().debug("Caching in {}", uri);
                     }
                 } else {

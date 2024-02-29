@@ -12,7 +12,7 @@ import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     public PostgresRepository(Class<T> cls, ApplicationContext applicationContext) {

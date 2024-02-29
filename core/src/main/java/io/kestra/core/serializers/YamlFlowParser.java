@@ -3,18 +3,15 @@ package io.kestra.core.serializers;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.serializers.helpers.HandleBarDeserializer;
 import jakarta.inject.Singleton;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,35 +22,24 @@ import java.util.Set;
 
 @Singleton
 public class YamlFlowParser {
-    public static final String CONTEXT_FLOW_DIRECTORY = "flowDirectory";
-
-    private static final ObjectMapper DEFAULT_MAPPER_OPTIONS = JacksonMapper.ofYaml()
+    private static final ObjectMapper MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
-    private static final ObjectMapper FLOW_FROM_FILE_MAPPER = DEFAULT_MAPPER_OPTIONS.copy()
-        .registerModule(new SimpleModule("HandleBarDeserializer")
-            .addDeserializer(String.class, new HandleBarDeserializer(true))
-        );
-
-    private static final ObjectMapper FLOW_FROM_STRING_MAPPER = DEFAULT_MAPPER_OPTIONS.copy()
-        .registerModule(new SimpleModule("HandleBarDeserializer")
-            .addDeserializer(String.class, new HandleBarDeserializer(false))
-        );
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
     }
 
     public <T> T parse(String input, Class<T> cls) {
-        return readFlow(FLOW_FROM_STRING_MAPPER, input, cls, type(cls));
+        return readFlow(input, cls, type(cls));
     }
 
 
     public <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
-        ObjectMapper currentMapper = FLOW_FROM_STRING_MAPPER;
+        ObjectMapper currentMapper = MAPPER;
 
         if (!strict) {
-            currentMapper = FLOW_FROM_STRING_MAPPER.copy()
+            currentMapper = MAPPER.copy()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         }
 
@@ -75,15 +61,7 @@ public class YamlFlowParser {
     public <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
-            return readFlow(
-                FLOW_FROM_FILE_MAPPER.copy()
-                    .setInjectableValues(new InjectableValues.Std()
-                        .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
-                    ),
-                input,
-                cls,
-                type(cls)
-            );
+            return readFlow(input, cls, type(cls));
 
         } catch (IOException e) {
             throw new ConstraintViolationException(
@@ -101,9 +79,9 @@ public class YamlFlowParser {
         }
     }
 
-    private <T> T readFlow(ObjectMapper mapper, String input, Class<T> objectClass, String resource) {
+    private <T> T readFlow(String input, Class<T> objectClass, String resource) {
         try {
-            return mapper.readValue(input, objectClass);
+            return MAPPER.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
             jsonProcessingExceptionHandler(input, resource, e);
         }

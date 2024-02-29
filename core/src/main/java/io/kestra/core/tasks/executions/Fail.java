@@ -35,7 +35,7 @@ import lombok.experimental.SuperBuilder;
                 "namespace: io.kestra.tests\n" +
                 "\n" +
                 "inputs:\n" +
-                "  - name: param\n" +
+                "  - id: param\n" +
                 "    type: STRING\n" +
                 "    required: true\n" +
                 "\n" +

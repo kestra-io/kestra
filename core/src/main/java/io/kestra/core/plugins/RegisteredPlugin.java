@@ -1,6 +1,5 @@
 package io.kestra.core.plugins;
 
-import com.github.jknack.handlebars.internal.lang3.ObjectUtils;
 import com.google.common.base.Charsets;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
@@ -10,6 +9,7 @@ import io.kestra.core.storages.StorageInterface;
 import lombok.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3" v-if="ready">
+    <section class="container" v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
                 <el-form-item>
@@ -32,6 +32,29 @@
                         :model-value="$route.query.labels"
                         @update:model-value="onDataTableValue('labels', $event)"
                     />
+                </el-form-item>
+                <el-form-item>
+                    <el-input
+                        :placeholder="$t('trigger execution id')"
+                        clearable
+                        :model-value="$route.query.triggerExecutionId"
+                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-select
+                        :placeholder="$t('trigger filter.title')"
+                        :model-value="$route.query.childFilter"
+                        :persistent="false"
+                        @update:model-value="onDataTableValue('childFilter', $event === 'ALL' ? undefined : $event)"
+                    >
+                        <el-option
+                            v-for="(col, val) in $tm('trigger filter.options')"
+                            :key="val"
+                            :label="col"
+                            :value="val"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item>
                     <refresh-button class="float-right" @refresh="load" />
@@ -132,7 +155,7 @@
                 </el-table>
             </template>
         </data-table>
-    </div>
+    </section>
 </template>
 <script setup>
     import Utils from "../../utils/utils";
@@ -181,7 +204,7 @@
         data() {
             return {
                 dailyReady: false,
-                isDefaultNamespaceAllow: true,
+                isDefaultNamespaceAllow: true
             };
         },
         computed: {
@@ -196,7 +219,7 @@
                 return stateGlobalChartTypes;
             },
             endDate() {
-                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment(this.endDate).toISOString(true);
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment(Date.now()).toISOString(true);
             },
             startDate() {
                 return  this.$route.query.startDate ?  this.$route.query.startDate : this.$moment(this.endDate)

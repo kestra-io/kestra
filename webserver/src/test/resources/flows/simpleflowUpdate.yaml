@@ -2,7 +2,7 @@ id: test-flow
 # Comment changed
 namespace: io.kestra.unittest
 inputs:
-  - name: b
+  - id: b
     type: STRING
 tasks:
   - id: test

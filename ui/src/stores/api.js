@@ -1,6 +1,6 @@
 import axios from "axios";
-import posthog from 'posthog-js'
-import cloneDeep from 'lodash/cloneDeep'
+import posthog from "posthog-js"
+import cloneDeep from "lodash/cloneDeep"
 
 let counter = 0;
 const API_URL = "https://api.kestra.io";
@@ -16,6 +16,7 @@ export default {
     actions: {
         loadFeeds({commit}, options) {
             return axios.get(API_URL + "/v1/feeds", {
+                withCredentials: true,
                 params: {
                     iid: options.iid,
                     uid: options.uid,
@@ -58,7 +59,7 @@ export default {
 
             dispatch("posthogEvents", mergeData)
 
-            return axios.post(API_URL + "/v1/reports/events", mergeData);
+            return axios.post(API_URL + "/v1/reports/events", mergeData, {withCredentials: true});
         },
         posthogEvents(_, data) {
             const type = data.type;
@@ -74,7 +75,7 @@ export default {
             }
 
             if (type === "PAGE") {
-                posthog.capture('$pageview', finalData)
+                posthog.capture("$pageview", finalData)
             } else {
                 posthog.capture(data.type.toLowerCase(), finalData)
             }

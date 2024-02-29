@@ -50,6 +50,7 @@
     export default {
         mixins: [Task],
         components: {TaskEditor},
+        emits: ["update:modelValue"],
         data() {
             return {
                 isOpen: false,

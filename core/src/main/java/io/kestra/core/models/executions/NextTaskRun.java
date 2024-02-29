@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import io.kestra.core.models.tasks.Task;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Value
 @AllArgsConstructor

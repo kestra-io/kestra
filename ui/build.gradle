@@ -1,3 +1,5 @@
+import org.siouan.frontendgradleplugin.infrastructure.gradle.RunNpm
+
 plugins {
     id 'org.siouan.frontend-jdk11'
 }
@@ -26,3 +28,13 @@ tasks.named('assembleFrontend') {
     inputs.files('vite.config.js')
     outputs.dir('../webserver/src/main/resources/ui')
 }
+
+final linterTask = tasks.register('lintFrontend', RunNpm) {
+    dependsOn tasks.named('installFrontend')
+    group 'Frontend'
+    description 'Lints the frontend source code.'
+
+    script = 'run test:lint'
+}
+
+check.dependsOn linterTask

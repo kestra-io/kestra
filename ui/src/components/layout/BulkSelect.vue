@@ -12,8 +12,9 @@
                 :type="selectAll ? 'primary' : 'default'"
                 @click="toggleAll"
                 v-if="selections.length < total"
-                v-html="$t('selection.all', {count: total})"
-            />
+            >
+                <span v-html="$t('selection.all', {count: total})" />
+            </el-button>
             <slot />
         </el-button-group>
     </div>

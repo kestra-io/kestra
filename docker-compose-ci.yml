@@ -2,7 +2,7 @@ services:
   mysql:
     image: mysql
     environment:
-      MYSQL_DATABASE: kestra
+      MYSQL_DATABASE: kestra_unit
       MYSQL_USER: kestra
       MYSQL_PASSWORD: k3str4
       MYSQL_ROOT_PASSWORD: "p4ssw0rd"
@@ -15,7 +15,7 @@ services:
   postgres:
     image: postgres
     environment:
-      POSTGRES_DB: kestra
+      POSTGRES_DB: kestra_unit
       POSTGRES_USER: kestra
       POSTGRES_PASSWORD: k3str4
     ports:

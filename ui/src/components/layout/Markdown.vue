@@ -92,6 +92,7 @@
             padding: 8px 16px;
             color: var(--el-color-warning);
             border-radius: var(--el-border-radius-base);
+            margin-bottom: var(--spacer);
 
             p:last-child {
                 margin-bottom: 0;

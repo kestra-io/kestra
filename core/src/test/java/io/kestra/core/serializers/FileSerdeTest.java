@@ -1,11 +1,11 @@
 package io.kestra.core.serializers;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.*;
 import java.time.*;
@@ -49,10 +49,10 @@ class FileSerdeTest {
 
         BufferedReader inputStream = new BufferedReader(new FileReader(tempFile));
 
-        Map<String, Object> result = Flowable
-            .create(FileSerde.reader(inputStream), BackpressureStrategy.BUFFER)
+        Map<String, Object> result = Flux
+            .create(FileSerde.reader(inputStream), FluxSink.OverflowStrategy.BUFFER)
             .map(o -> (Map<String, Object>) o)
-            .blockingFirst();
+            .blockFirst();
 
         if (value instanceof Map) {
             assertThat(((Map) object.get("key")).entrySet(), everyItem(is(in(((Map) result.get("key")).entrySet()))));

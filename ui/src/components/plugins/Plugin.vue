@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <div class="mt-3">
+    <section class="container">
         <el-row :gutter="15">
             <el-col :span="18" class="markdown" v-loading="isLoading">
                 <markdown v-if="plugin && $route.params.cls" :source="plugin.markdown" :permalink="true" />
@@ -14,7 +14,7 @@
                 <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins" />
             </el-col>
         </el-row>
-    </div>
+    </section>
 </template>
 
 <script>
@@ -57,7 +57,7 @@
             this.loadPlugin()
         },
         watch: {
-            $route(newValue, oldValue) {
+            $route(newValue, _oldValue) {
                 if (newValue.name.startsWith("plugins/")) {
                     this.onRouterChange();
                 }

@@ -14,7 +14,6 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -61,7 +60,6 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         }
     )
     @NonNull
-    @NotBlank
     @PluginProperty(dynamic = true)
     private Object message;
 

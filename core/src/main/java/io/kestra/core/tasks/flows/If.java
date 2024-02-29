@@ -26,8 +26,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,7 +51,7 @@ import java.util.stream.Stream;
                 "namespace: io.kestra.tests",
                 "",
                 "inputs:",
-                "  - name: string",
+                "  - id: string",
                 "    type: STRING",
                 "    required: true",
                 "",

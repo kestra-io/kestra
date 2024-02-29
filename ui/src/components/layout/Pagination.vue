@@ -1,11 +1,11 @@
 <template>
-    <div class="d-flex pagination">
+    <div class="d-flex pagination" :class="{'top': top}">
         <div class="flex-grow-1 d-sm-none d-md-inline-block page-size">
             <el-select
+                v-if="!top"
                 size="small"
                 :model-value="internalSize"
                 @update:model-value="pageSizeChange"
-                :persistent="false"
             >
                 <el-option
                     v-for="item in pageOptions"
@@ -15,7 +15,7 @@
                 />
             </el-select>
         </div>
-        <div>
+        <div v-if="isPaginationDisplayed">
             <el-pagination
                 v-model:current-page="internalPage"
                 :page-size="internalSize"
@@ -44,7 +44,8 @@
             total: {type: Number, default: 0},
             max: {type: Number, default: undefined},
             size: {type: Number, required: true, default: 25},
-            page: {type: Number, required: true}
+            page: {type: Number, required: true},
+            top: {type: Boolean, required: false, default: false}
         },
         emits: ["page-changed"],
         data() {
@@ -81,6 +82,15 @@
                 });
             },
         },
+        computed: {
+            isPaginationDisplayed() {
+                if (this.internalPage === 1 && this.total < this.internalSize) {
+                    return false;
+                }
+
+                return true;
+            },
+        },
         watch: {
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
@@ -96,8 +106,13 @@
     .pagination {
         margin-top: var(--spacer);
 
+        &.top {
+            margin-bottom: var(--spacer);
+            margin-top: 0;
+        }
+
         .el-select {
-            width: 100px;
+            width: 105px;
         }
 
         .page-size {

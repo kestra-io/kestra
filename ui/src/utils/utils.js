@@ -212,7 +212,7 @@ export default class Utils {
         document.body.appendChild(node).value = text;
         node.select()
 
-        document.execCommand('copy');
+        document.execCommand("copy");
 
         document.body.removeChild(node);
     }

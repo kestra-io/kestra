@@ -4,9 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,10 +19,6 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.event.Level;
 
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
@@ -45,7 +46,7 @@ abstract public class AbstractTrigger {
     @Schema(
         title = "List of conditions in order to limit the flow trigger."
     )
-    private List<Condition> conditions;
+    protected List<Condition> conditions;
 
     @NotNull
     @Builder.Default
@@ -54,5 +55,20 @@ abstract public class AbstractTrigger {
     @Valid
     private WorkerGroup workerGroup;
 
-    private Level minLogLevel;
+    private Level logLevel;
+
+    @PluginProperty
+    @Schema(
+        title = "List of execution states after which a trigger should be stopped (a.k.a. disabled)."
+    )
+    private List<State.Type> stopAfter;
+
+    /**
+     * For backward compatibility: we rename minLogLevel to logLevel.
+     * @deprecated use {@link #logLevel} instead
+     */
+    @Deprecated
+    public void setMinLogLevel(Level minLogLevel) {
+        this.logLevel = minLogLevel;
+    }
 }

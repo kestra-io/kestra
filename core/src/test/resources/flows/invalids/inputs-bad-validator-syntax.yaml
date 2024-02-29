@@ -1,7 +1,7 @@
 id: empty
 namespace: io.kestra.tests
 inputs:
-  - name: badValidatorSyntax
+  - id: badValidatorSyntax
     type: STRING
     validator: \
 tasks:

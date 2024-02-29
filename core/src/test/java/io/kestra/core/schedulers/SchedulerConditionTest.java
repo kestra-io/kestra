@@ -10,7 +10,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
-import org.junitpioneer.jupiter.RetryingTest;
+import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
@@ -39,7 +40,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .inputs(Map.of(
                 "testInputs", "test-inputs"
             ))
-            .scheduleConditions(List.of(
+            .conditions(List.of(
                 DayWeekInMonthCondition.builder()
                     .type(DayWeekInMonthCondition.class.getName())
                     .date("{{ trigger.date }}")
@@ -52,7 +53,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         return createFlow(Collections.singletonList(schedule));
     }
 
-    @RetryingTest(10)
+    @Test
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
@@ -60,7 +61,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
         Flow flow = createScheduleFlow();
 
-        triggerState.save(Trigger.builder()
+        triggerState.create(Trigger.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
@@ -93,7 +94,6 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
-            worker.run();
             scheduler.run();
             queueCount.await(15, TimeUnit.SECONDS);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually

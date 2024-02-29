@@ -6,8 +6,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.micronaut.data.model.Pageable;
 
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,6 +53,8 @@ public interface FlowRepositoryInterface {
     }
 
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id);
+
+    Integer lastRevision(String tenantId, String namespace, String id);
 
     List<Flow> findAll(String tenantId);
 

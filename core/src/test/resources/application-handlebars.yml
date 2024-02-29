@@ -1,5 +1,0 @@
-
-
-kestra:
-  variables:
-    disable-handlebars: false

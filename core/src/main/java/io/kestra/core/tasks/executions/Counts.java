@@ -20,8 +20,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -104,7 +104,7 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
     @NotNull
     @Schema(
         title = "The expression to look at against each flow.",
-        description = "The expression is such that handlebars expression must return `true` in order to keep the current line.\n" +
+        description = "The expression is such that expression must return `true` in order to keep the current line.\n" +
             "Some examples: \n" +
             "- ```yaml {{ eq count 0 }} ```: no execution found\n" +
             "- ```yaml {{ gte count 5 }} ```: more than 5 executions\n"

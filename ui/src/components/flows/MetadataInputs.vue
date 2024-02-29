@@ -47,7 +47,7 @@
                     <div class="flex-fill flex-grow-1 w-100 me-2">
                         <el-input
                             disabled
-                            :model-value="input.name"
+                            :model-value="input.id"
                         />
                     </div>
                     <div class="flex-shrink-1">
@@ -79,7 +79,8 @@
         emits: ["update:modelValue"],
         props: {
             inputs: {
-                type: Object,
+                type: Array,
+                default: () => []
             }
         },
         computed: {
@@ -122,11 +123,11 @@
                     .then(_ => this.loading = false);
             },
             update() {
-                if (this.newInputs.map(e => e.name).length !== new Set(this.newInputs.map(e => e.name)).size) {
+                if (this.newInputs.map(e => e.id).length !== new Set(this.newInputs.map(e => e.id)).size) {
                     this.$store.dispatch("core/showMessage", {
                         variant: "error",
                         title: this.$t("error"),
-                        message: this.$t("duplicate input name"),
+                        message: this.$t("duplicate input id"),
                     });
                 } else {
                     this.isEditOpen = false;
@@ -144,7 +145,7 @@
             },
             onChangeType(value) {
                 this.loading = true;
-                this.selectedInput = {type: value, name: this.newInputs[this.selectedIndex].name};
+                this.selectedInput = {type: value, id: this.newInputs[this.selectedIndex].id};
                 this.newInputs[this.selectedIndex] = this.selectedInput;
                 this.loadSchema(value)
             }

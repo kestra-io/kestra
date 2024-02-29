@@ -2,7 +2,7 @@ id: for-each-item-failed
 namespace: io.kestra.tests
 
 inputs:
-  - name: file
+  - id: file
     type: FILE
 
 tasks:

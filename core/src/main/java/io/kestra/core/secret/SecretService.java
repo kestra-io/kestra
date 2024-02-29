@@ -3,10 +3,8 @@ package io.kestra.core.secret;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
@@ -25,7 +23,8 @@ public class SecretService {
             .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
             .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {
                 try {
-                    consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(entry.getValue()))));
+                    String value = entry.getValue().replaceAll("\\R", "");
+                    consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(value))));
                 } catch (Exception e) {
                     log.error("Could not decode secret '{}', make sure it is Base64-encoded: {}", entry.getKey(), e.getMessage());
                 }

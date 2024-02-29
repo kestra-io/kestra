@@ -16,7 +16,9 @@ public abstract class JdbcFlowRepositoryService {
     public static Table<Record> lastRevision(AbstractJdbcRepository<Flow> jdbcRepository, boolean asterisk) {
         List<SelectFieldOrAsterisk> fields = new ArrayList<>();
         if (asterisk) {
-            fields.add(DSL.asterisk());
+            // There is an issue in jOOQ with MySQL due to some limitations on MySQL.
+            // So we need to qualify the asterisk see https://github.com/jOOQ/jOOQ/issues/15975.
+            fields.add(jdbcRepository.getTable().asterisk());
         } else {
             fields.add(field("key", String.class));
             fields.add(field("revision", Integer.class));

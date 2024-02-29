@@ -12,8 +12,8 @@ import lombok.Value;
 
 import java.time.Instant;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 @Value
 @Builder(toBuilder = true)

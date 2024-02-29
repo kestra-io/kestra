@@ -6,11 +6,8 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
@@ -20,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;

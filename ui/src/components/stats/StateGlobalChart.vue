@@ -8,7 +8,7 @@
                     :big="big"
                     :global="true"
                     :namespace="namespace"
-                    :flowId="flowId"
+                    :flow-id="flowId"
                 />
             </template>
             <template v-else>

@@ -21,10 +21,12 @@ import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
 import org.apache.commons.lang3.NotImplementedException;
 
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -103,6 +105,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .map(flow -> FlowWithSource.of(flow, flow.generateSource()))
             .sorted(Comparator.comparingInt(Flow::getRevision))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public Integer lastRevision(String tenantId, String namespace, String id) {
+        List<FlowWithSource> flowRevisions = findRevisions(tenantId, namespace, id);
+        return flowRevisions.isEmpty() ? null : flowRevisions.get(flowRevisions.size() - 1).getRevision();
     }
 
     @Override

@@ -6,8 +6,8 @@ import jakarta.inject.Singleton;
 
 import java.util.Optional;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 @Singleton
 public class ModelValidator {

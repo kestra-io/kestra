@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <div class="mt-3">
+    <section class="container">
         <nav>
             <collapse>
                 <el-form-item>
@@ -26,7 +26,7 @@
                 </template>
             </el-table-column>
         </el-table>
-    </div>
+    </section>
 </template>
 <script>
     import RouteContext from "../../mixins/routeContext";

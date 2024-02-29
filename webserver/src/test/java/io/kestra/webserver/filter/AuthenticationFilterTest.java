@@ -1,39 +1,30 @@
 package io.kestra.webserver.filter;
 
-import io.kestra.core.models.Setting;
-import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
+import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
-import io.micronaut.test.annotation.MockBean;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import javax.validation.ConstraintViolationException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@MicronautTest(transactional = false)
 @Property(name = "kestra.server.basic-auth.enabled", value = "true")
-class AuthenticationFilterTest extends JdbcH2ControllerTest {
+class AuthenticationFilterTest {
     @Inject
     @Client("/")
-    private RxHttpClient client;
+    private ReactorHttpClient client;
 
-    @Value("${kestra.server.basic-auth.username}")
-    private String username;
-
-    @Value("${kestra.server.basic-auth.password}")
-    private String password;
+    @Inject
+    private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
 
     @Test
     void testUnauthorized() {
@@ -60,7 +51,10 @@ class AuthenticationFilterTest extends JdbcH2ControllerTest {
     @Test
     void testAuthenticated() {
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth(username, password));
+            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth(
+                basicAuthConfiguration.getUsername(),
+                basicAuthConfiguration.getPassword()
+            ));
 
         assertThat(response.getStatus(), is(HttpStatus.OK));
     }

@@ -1,5 +1,5 @@
 id: trigger-multiplecondition-flow-c
-namespace: io.kestra.tests
+namespace: io.kestra.tests.trigger
 
 tasks:
   - id: fail

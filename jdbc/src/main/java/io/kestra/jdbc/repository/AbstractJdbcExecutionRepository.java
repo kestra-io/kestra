@@ -22,24 +22,40 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
-import org.jooq.*;
+import org.jooq.Record1;
+import org.jooq.Record2;
+import org.jooq.Result;
+import org.jooq.Results;
+import org.jooq.SQLDialect;
+import org.jooq.Select;
+import org.jooq.SelectConditionStep;
+import org.jooq.SelectForUpdateOfStep;
+import org.jooq.SelectHavingStep;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -79,6 +95,30 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return false;
     }
 
+    /** {@inheritDoc} **/
+    @Override
+    public Flux<Execution> findAllByTriggerExecutionId(String tenantId,
+                                                       String triggerExecutionId) {
+        return Flux.create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration -> {
+                    SelectConditionStep<Record1<Object>> select = DSL
+                        .using(configuration)
+                        .select(field("value"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(tenantId))
+                        .and(field("trigger_execution_id").eq(triggerExecutionId));
+
+                    select.fetch()
+                        .map(this.jdbcRepository::map)
+                        .forEach(emitter::next);
+                    emitter.complete();
+                }),
+            FluxSink.OverflowStrategy.BUFFER
+        );
+    }
+
     @Override
     public Optional<Execution> findById(String tenantId, String id) {
         return jdbcRepository
@@ -113,7 +153,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -130,7 +171,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     endDate,
                     state,
                     labels,
-                    triggerExecutionId
+                    triggerExecutionId,
+                    childFilter
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -138,7 +180,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public Flowable<Execution> find(
+    public Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
         @Nullable String namespace,
@@ -147,9 +189,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     ) {
-        return Flowable.create(
+        return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
                 .transaction(configuration -> {
@@ -165,16 +208,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         endDate,
                         state,
                         labels,
-                        triggerExecutionId
+                        triggerExecutionId,
+                        childFilter
                     );
 
                     select.fetch()
                         .map(this.jdbcRepository::map)
-                        .forEach(emitter::onNext);
+                        .forEach(emitter::next);
 
-                    emitter.onComplete();
+                    emitter.complete();
                 }),
-            BackpressureStrategy.BUFFER
+            FluxSink.OverflowStrategy.BUFFER
         );
     }
 
@@ -188,7 +232,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     ) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -198,7 +243,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
 
-        select = filteringQuery(select, namespace, flowId, null, query, labels, triggerExecutionId);
+        select = filteringQuery(select, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
 
         if (startDate != null) {
             select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -244,7 +289,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     ) {
         throw new UnsupportedOperationException();
     }
@@ -252,6 +298,43 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public Integer maxTaskRunSetting() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy,
+        boolean isTaskRun
+    ) {
+        if (isTaskRun) {
+            throw new UnsupportedOperationException();
+        }
+
+        Results results = dailyStatisticsQueryForAllTenants(
+            List.of(
+                field("state_current", String.class)
+            ),
+            query,
+            namespace,
+            flowId,
+            null,
+            startDate,
+            endDate,
+            groupBy
+        );
+
+        return dailyStatisticsQueryMapRecord(
+            results.resultsOrRows()
+                .get(0)
+                .result(),
+            startDate,
+            endDate,
+            groupBy
+        );
     }
 
     @Override
@@ -321,10 +404,57 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .collect(Collectors.toList()), startDate, endDate);
     }
 
+    private Results dailyStatisticsQueryForAllTenants(
+        List<Field<?>> fields,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        List<FlowFilter> flows,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy
+    ) {
+        return dailyStatisticsQuery(
+            this.defaultFilter(),
+            fields,
+            query,
+            namespace,
+            flowId,
+            flows,
+            startDate,
+            endDate,
+            groupBy
+        );
+    }
+
     private Results dailyStatisticsQuery(
         List<Field<?>> fields,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        List<FlowFilter> flows,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy
+    ) {
+        return dailyStatisticsQuery(
+            this.defaultFilter(tenantId),
+            fields,
+            query,
+            namespace,
+            flowId,
+            flows,
+            startDate,
+            endDate,
+            groupBy
+        );
+    }
+
+    private Results dailyStatisticsQuery(
+        Condition defaultFilter,
+        List<Field<?>> fields,
+        @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -353,11 +483,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 SelectConditionStep<?> select = context
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
+                    .where(defaultFilter)
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                select = filteringQuery(select, namespace, flowId, flows, query, null, null);
+                select = filteringQuery(select, namespace, flowId, flows, query, null, null, null);
 
                 List<Field<?>> groupFields = new ArrayList<>(fields);
 
@@ -377,13 +507,19 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<FlowFilter> flows,
         @Nullable String query,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId
+        @Nullable String triggerExecutionId,
+        @Nullable ChildFilter childFilter
     ) {
-        if (flowId != null && namespace != null) {
-            select = select.and(field("namespace").eq(namespace));
-            select = select.and(field("flow_id").eq(flowId));
-        } else if (namespace != null) {
-            select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+        if (namespace != null) {
+            if (flowId != null) {
+                select = select.and(field("namespace").eq(namespace));
+            } else {
+                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+            }
+        }
+
+        if (flowId != null) {
+            select = select.and(DSL.or(field("flow_id").eq(flowId)));
         }
 
         if (query != null || labels != null) {
@@ -392,6 +528,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (triggerExecutionId != null) {
             select = select.and(field("trigger_execution_id").eq(triggerExecutionId));
+        }
+
+        if (childFilter != null) {
+            if (childFilter.equals(ChildFilter.CHILD)) {
+                select = select.and(field("trigger_execution_id").isNotNull());
+            } else if (childFilter.equals(ChildFilter.MAIN)) {
+                select = select.and(field("trigger_execution_id").isNull());
+            }
         }
 
         if (flows != null) {
@@ -453,12 +597,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         e.getKey(),
                         Map.of(
                             "*",
-                                dailyStatisticsQueryMapRecord(
-                                    e.getValue(),
-                                    startDate,
-                                    endDate,
-                                    null
-                                )
+                            dailyStatisticsQueryMapRecord(
+                                e.getValue(),
+                                startDate,
+                                endDate,
+                                null
+                            )
                         )
                     );
                 } else {
@@ -493,7 +637,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             return fillDate(results, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww", groupByType.val());
         } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
             return fillDate(results, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD", groupByType.val());
-        }  else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
+        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
             return fillDate(results, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH", groupByType.val());
         } else {
             return fillDate(results, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm", groupByType.val());
@@ -538,7 +682,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return filledResult;
     }
 
-    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics>  result, String groupByType) {
+    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics> result, String groupByType) {
         long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value).sum();
         long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
 
@@ -683,14 +827,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 Table<Record2<Object, Integer>> cte = subquery.asTable("cte");
 
-               SelectConditionStep<? extends Record1<?>> mainQuery = context
+                SelectConditionStep<? extends Record1<?>> mainQuery = context
                     .select(cte.field("value"))
                     .from(cte)
                     .where(field("row_num").eq(1));
                 return mainQuery.fetch().map(this.jdbcRepository::map);
             });
     }
-
 
 
     @Override
@@ -707,6 +850,21 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         this.jdbcRepository.persist(execution, dslContext, fields);
 
         return execution;
+    }
+
+    @Override
+    public Execution update(Execution execution) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSL.using(configuration)
+                    .update(this.jdbcRepository.getTable())
+                    .set(this.jdbcRepository.persistFields((execution)))
+                    .where(field("key").eq(execution.getId()))
+                    .execute();
+
+                return execution;
+            });
     }
 
     @SneakyThrows

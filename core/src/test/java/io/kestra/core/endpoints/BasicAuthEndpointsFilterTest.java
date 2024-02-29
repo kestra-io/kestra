@@ -8,8 +8,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 class BasicAuthEndpointsFilterTest {
-    void test(boolean password, BiConsumer<RxHttpClient, MutableHttpRequest<String>> consumer) {
+    void test(boolean password, BiConsumer<ReactorHttpClient, MutableHttpRequest<String>> consumer) {
         MapPropertySource mapPropertySource = new MapPropertySource(
             "unittest",
             password ?
@@ -41,7 +41,7 @@ class BasicAuthEndpointsFilterTest {
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
 
-            RxHttpClient client = ctx.getBean(RxHttpClient.class);
+            ReactorHttpClient client = ctx.getBean(ReactorHttpClient.class);
 
             consumer.accept(client, HttpRequest.GET("http://localhost:" + embeddedServer.getPort() +"/health"));
         }

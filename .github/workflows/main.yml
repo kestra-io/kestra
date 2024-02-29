@@ -56,7 +56,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -66,7 +66,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -74,7 +74,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
@@ -82,7 +82,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: SonarCloud cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -96,7 +96,7 @@ jobs:
           java-version: 17
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
 
       # Gradle check
       - name: Build with Gradle
@@ -124,7 +124,7 @@ jobs:
         run: ./gradlew sonar --info
 
       # Codecov
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -156,6 +156,13 @@ jobs:
           prerelease: false
           files: |
             build/executable/*
+
+      - name: Flow to add BC
+        if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        run: |
+          curl --location "http://18.153.185.126:8080/api/v1/executions/webhook/product/release_notes/${{secrets.KESTRA_WEBHOOK_KEY}}" \
+          --header 'Content-Type: application/json'
 
   docker:
     name: Publish docker
@@ -239,6 +246,7 @@ jobs:
               io.kestra.plugin:plugin-servicenow:LATEST
               io.kestra.plugin:plugin-singer:LATEST
               io.kestra.plugin:plugin-soda:LATEST
+              io.kestra.plugin:plugin-solace:LATEST
               io.kestra.plugin:plugin-spark:LATEST
               io.kestra.plugin:plugin-sqlmesh:LATEST
               io.kestra.plugin:plugin-surrealdb:LATEST
@@ -324,7 +332,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -334,7 +342,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -342,7 +350,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
@@ -419,4 +427,4 @@ jobs:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           name: GitHub Actions
           icon_emoji: ':github-actions:'
-          channel: 'C02DQ1A7JLR'
+          channel: 'C02DQ1A7JLR' # _int_git channel

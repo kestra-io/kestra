@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import io.micronaut.core.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -42,7 +42,7 @@ import javax.validation.constraints.NotNull;
             "namespace: io.kestra.tests\n" +
             "\n" +
             "inputs:\n" +
-            "  - name: from-parent\n" +
+            "  - id: from-parent\n" +
             "    type: STRING\n" +
             "\n" +
             "tasks:\n" +

@@ -2,10 +2,10 @@ id: duplicate-inputs
 namespace: io.kestra.tests
 
 inputs:
-  - name: first_input
+  - id: first_input
     required: true
     type: STRING
-  - name: first_input
+  - id: first_input
     required: true
     type: STRING
 tasks:

@@ -81,7 +81,7 @@ class FlowWithSourceTest {
                 new Label("key", "value")
             ))
             .inputs(List.of(
-                StringInput.builder().name("strInput").build()
+                StringInput.builder().id("strInput").build()
             ))
             .variables(Map.of(
                 "varKey", "varValue"

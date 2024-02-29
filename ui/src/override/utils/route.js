@@ -6,7 +6,7 @@ if (root.endsWith("/")) {
 
 export const baseUrl = root;
 
-export const basePath = () => `/api/v1`
+export const basePath = () => "/api/v1"
 
 export const apiUrl = () => `${baseUrl}${basePath()}`
 

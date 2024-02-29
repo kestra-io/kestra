@@ -5,8 +5,8 @@ import lombok.Value;
 import io.kestra.core.models.flows.State;
 
 import java.util.List;
-import java.util.Optional;
-import javax.validation.constraints.NotNull;
+
+import jakarta.validation.constraints.NotNull;
 
 @Value
 @Builder

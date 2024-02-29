@@ -16,7 +16,7 @@
     } from "@kestra-io/ui-libs"
 
     // Utils
-    import {YamlUtils, VueFlowUtils} from "@kestra-io/ui-libs";
+    import {YamlUtils} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../utils/constants";
     import Markdown from "../layout/Markdown.vue";
 
@@ -25,7 +25,6 @@
     const vueflowId = ref(Math.random().toString());
     // Vue flow methods to interact with Graph
     const {
-        id,
         fitView
     } = useVueFlow({id: vueflowId.value});
 
@@ -86,7 +85,6 @@
 
     // Components variables
     const isHorizontal = ref(isHorizontalDefault());
-    const elements = ref([])
     const vueFlow = ref(null);
     const timer = ref(null);
     const icons = ref(store.getters["plugin/getIcons"]);
@@ -197,19 +195,19 @@
         const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
         if (task === undefined || (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)) {
             switch (taskEditData.value.action) {
-                case("create_task"):
-                    emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]))
-                    return;
-                case("edit_task"):
-                    emit("on-edit", YamlUtils.replaceTaskInDocument(
-                        source,
-                        taskEditData.value.oldTaskId,
-                        event
-                    ))
-                    return;
-                case("add_flowable_error"):
-                    emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId))
-                    return;
+            case("create_task"):
+                emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]))
+                return;
+            case("edit_task"):
+                emit("on-edit", YamlUtils.replaceTaskInDocument(
+                    source,
+                    taskEditData.value.oldTaskId,
+                    event
+                ))
+                return;
+            case("add_flowable_error"):
+                emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId))
+                return;
             }
         } else {
             store.dispatch("core/showMessage", {
@@ -236,11 +234,6 @@
         fitView();
     };
 
-    // Graph generation functions
-    const generateDagreGraph = () => {
-        return VueFlowUtils.generateDagreGraph(props.flowGraph, hiddenNodes.value, isHorizontal.value, clusterCollapseToNode.value, edgeReplacer.value, collapsed.value, clusterToNode.value);
-    }
-
     const openFlow = (data) => {
         if (data.link.executionId) {
             window.open(router.resolve({
@@ -251,12 +244,12 @@
                     tab: "topology",
                     id: data.link.executionId,
                 },
-            }).href,'_blank');
+            }).href, "_blank");
         } else {
             window.open(router.resolve({
                 name: "flows/update",
                 params: {"namespace": data.link.namespace, "id": data.link.id, tab: "overview"},
-            }).href,'_blank');
+            }).href, "_blank");
         }
     }
 
@@ -300,7 +293,7 @@
 
 <template>
     <div ref="vueFlow" class="vueflow">
-        <slot name="top-bar"/>
+        <slot name="top-bar" />
         <Topology
             :id="vueflowId"
             :is-horizontal="isHorizontal"
@@ -308,7 +301,7 @@
             :is-allowed-edit="isAllowedEdit"
             :source="source"
             :toggle-orientation-button="['topology'].includes(viewType)"
-            :flowGraph="props.flowGraph"
+            :flow-graph="props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
             :expanded-subflows="props.expandedSubflows"
@@ -341,7 +334,7 @@
             :emit-only="true"
             @update:task="confirmEdit($event)"
             @close="closeEdit()"
-            :flowSource="source"
+            :flow-source="source"
             ref="taskEditDomElement"
         />
 
@@ -360,10 +353,10 @@
             <div v-if="isShowLogsOpen">
                 <collapse>
                     <el-form-item>
-                        <search-field :router="false" @search="onSearch" class="me-2"/>
+                        <search-field :router="false" @search="onSearch" class="me-2" />
                     </el-form-item>
                     <el-form-item>
-                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange"/>
+                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
                     </el-form-item>
                 </collapse>
                 <task-run-details
@@ -378,7 +371,7 @@
                 />
             </div>
             <div v-if="isShowDescriptionOpen">
-                <markdown class="markdown-tooltip" :source="selectedTask.description"/>
+                <markdown class="markdown-tooltip" :source="selectedTask.description" />
             </div>
         </el-drawer>
     </div>

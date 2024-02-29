@@ -37,7 +37,7 @@ public class PurgeExecution extends Task implements RunnableTask<PurgeExecution.
     @Override
     public PurgeExecution.Output run(RunContext runContext) throws Exception {
         return Output.builder()
-            .uris(runContext.purgeStorageExecution())
+            .uris(runContext.storage().deleteExecutionFiles())
             .build();
     }
 

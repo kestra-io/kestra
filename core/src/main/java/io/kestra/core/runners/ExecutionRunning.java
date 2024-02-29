@@ -1,11 +1,12 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.IdUtils;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
-
-import javax.validation.constraints.NotNull;
+import lombok.With;
 
 @Value
 @AllArgsConstructor
@@ -19,10 +20,15 @@ public class ExecutionRunning {
     @NotNull
     String flowId;
 
-    @NotNull
-    String executionId;
+    @With
+    Execution execution;
+
+    @With
+    ConcurrencyState concurrencyState;
 
     public String uid() {
-        return IdUtils.fromParts(this.tenantId, this.namespace, this.flowId, executionId);
+        return IdUtils.fromParts(this.tenantId, this.namespace, this.flowId, this.execution.getId());
     }
+
+    public enum ConcurrencyState { CREATED, RUNNING, QUEUED }
 }

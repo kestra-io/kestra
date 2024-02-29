@@ -9,7 +9,7 @@ import io.micronaut.retry.intercept.OverrideRetryInterceptor;
 
 import java.lang.annotation.*;
 
-import javax.validation.constraints.Digits;
+import jakarta.validation.constraints.Digits;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

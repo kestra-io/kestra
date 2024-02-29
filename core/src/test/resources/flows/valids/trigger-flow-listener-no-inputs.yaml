@@ -1,5 +1,5 @@
 id: trigger-flow-listener-no-inputs
-namespace: io.kestra.tests
+namespace: io.kestra.tests.trigger
 revision: 1
 
 tasks:
@@ -15,7 +15,7 @@ triggers:
         in:
           - SUCCESS
       - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-        namespace: io.kestra.tests
+        namespace: io.kestra.tests.trigger
         flowId: trigger-flow
   - id: listen-flow-failed
     type: io.kestra.core.models.triggers.types.Flow
@@ -24,5 +24,5 @@ triggers:
         in:
           - FAILED
       - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-        namespace: io.kestra.tests
+        namespace: io.kestra.tests.trigger
         flowId: other-flow

@@ -331,7 +331,7 @@ public class MemoryExecutor implements ExecutorInterface {
         ExecutionState queued;
         queued = EXECUTIONS.compute(execution.getId(), (s, executionState) -> {
             if (executionState == null) {
-                return new ExecutionState(execution);
+                return new ExecutionState(runContextFactory, execution);
             } else {
                 return executionState.from(execution);
             }
@@ -536,17 +536,20 @@ public class MemoryExecutor implements ExecutorInterface {
 
 
     private static class ExecutionState {
+
+        private RunContextFactory runContextFactory;
         private final Execution execution;
         private Map<String, TaskRun> taskRuns = new ConcurrentHashMap<>();
         private Map<String, State.Type> workerTaskDeduplication = new ConcurrentHashMap<>();
         private Map<String, String> childDeduplication = new ConcurrentHashMap<>();
 
-        public ExecutionState(Execution execution) {
+        public ExecutionState(RunContextFactory runContextFactory, Execution execution) {
             this.execution = execution;
+            this.runContextFactory = runContextFactory;
         }
 
         public ExecutionState(ExecutionState executionState, Execution execution) {
-            this.execution = execution;
+            this(executionState.runContextFactory, execution);
             this.taskRuns = executionState.taskRuns;
             this.workerTaskDeduplication = executionState.workerTaskDeduplication;
             this.childDeduplication = executionState.childDeduplication;
@@ -614,8 +617,20 @@ public class MemoryExecutor implements ExecutorInterface {
             // iterative tasks
             Task task = flow.findTaskByTaskId(subflowExecutionResult.getParentTaskRun().getTaskId());
             TaskRun taskRun;
-            if (task instanceof ForEachItem forEachItem) {
-                taskRun = ExecutableUtils.manageIterations(subflowExecutionResult.getParentTaskRun(), this.execution, forEachItem.getTransmitFailed(), forEachItem.isAllowFailure());
+            if (task instanceof ForEachItem.ForEachItemExecutable forEachItem) {
+                RunContext runContext = runContextFactory.of(
+                    flow,
+                    task,
+                    execution,
+                    subflowExecutionResult.getParentTaskRun()
+                );
+                taskRun = ExecutableUtils.manageIterations(
+                    runContext.storage(),
+                    subflowExecutionResult.getParentTaskRun(),
+                    this.execution,
+                    forEachItem.getTransmitFailed(),
+                    forEachItem.isAllowFailure()
+                );
             } else {
                 taskRun = subflowExecutionResult.getParentTaskRun();
             }
@@ -631,9 +646,6 @@ public class MemoryExecutor implements ExecutorInterface {
 
     @Override
     public void close() throws IOException {
-        executionQueue.close();
-        workerTaskQueue.close();
-        workerTaskResultQueue.close();
-        logQueue.close();
+        schedulerDelay.shutdown();
     }
 }

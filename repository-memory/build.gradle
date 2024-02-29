@@ -3,5 +3,4 @@ dependencies {
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':runner-memory')
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.4.0'
 }

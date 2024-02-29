@@ -11,14 +11,30 @@ import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.*;
+import io.kestra.core.runners.ExecutableUtils;
+import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.SubflowExecution;
+import io.kestra.core.runners.SubflowExecutionResult;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.*;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -45,6 +61,9 @@ import java.util.*;
     }
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
+
+    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "outputs.enabled";
+
     @NotEmpty
     @Schema(
         title = "The namespace of the subflow to be executed."
@@ -101,11 +120,16 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
     @PluginProperty
     private final Boolean inheritLabels = false;
 
+    /**
+     * @deprecated Output value should now be defined part of the Flow definition.
+     */
     @Schema(
         title = "Outputs from the subflow executions.",
-        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution."
+        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution." +
+            "This property is deprecated since v0.15.0, please use the `outputs` property on the Subflow definition for defining the output values available and exposed to this task execution."
     )
     @PluginProperty(dynamic = true)
+    @Deprecated(since = "0.15.0")
     private Map<String, Object> outputs;
 
     @Override
@@ -125,7 +149,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
         }
 
         if (this.labels != null) {
-            for (Map.Entry<String, String> entry: this.labels.entrySet()) {
+            for (Map.Entry<String, String> entry : this.labels.entrySet()) {
                 labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
             }
         }
@@ -154,14 +178,35 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
             return Optional.empty();
         }
 
-        Output.OutputBuilder builder = Output.builder()
+        boolean isOutputsAllowed = runContext
+            .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
+            .orElse(true);
+
+        final Output.OutputBuilder builder = Output.builder()
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
-        if (this.getOutputs() != null) {
+
+        final Map<String, Object> subflowOutputs = Optional
+            .ofNullable(flow.getOutputs())
+            .map(outputs -> outputs
+                .stream()
+                .collect(Collectors.toMap(
+                    io.kestra.core.models.flows.Output::getId,
+                    io.kestra.core.models.flows.Output::getValue)
+                )
+            )
+            .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
+
+        if (subflowOutputs != null) {
             try {
-                builder.outputs(runContext.render(this.getOutputs()));
+                Map<String, Object> outputs = runContext.render(subflowOutputs);
+                RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class); // this is hacking
+                if (flow.getOutputs() != null && runnerUtils != null) {
+                    outputs = runnerUtils.typedOutputs(flow, execution, outputs);
+                }
+                builder.outputs(outputs);
             } catch (Exception e) {
-                runContext.logger().warn("Failed to extract outputs with the error: '" + e.getMessage() + "'", e);
+                runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
                 taskRun = taskRun
                     .withState(state)

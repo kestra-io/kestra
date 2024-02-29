@@ -8,7 +8,7 @@ import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +90,11 @@ public class MemoryLogRepository implements LogRepositoryInterface {
 
     @Override
     public Integer purge(Execution execution) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
         throw new UnsupportedOperationException();
     }
 }

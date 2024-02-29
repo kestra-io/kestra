@@ -108,7 +108,11 @@ public class PluginScanner {
             try {
                 beanType = definition.getBeanType();
             } catch (Throwable e) {
-                log.warn("Unable to load class '{}' on plugin '{}'", definition.getName(), externalPlugin.getLocation().toString());
+                log.warn(
+                    "Unable to load class '{}' on plugin '{}'",
+                    definition.getName(), externalPlugin  != null ? externalPlugin.getLocation().toString() : (manifest != null ? manifest.getMainAttributes().getValue("X-Kestra-Title") : ""),
+                    e
+                );
                 continue;
             }
 

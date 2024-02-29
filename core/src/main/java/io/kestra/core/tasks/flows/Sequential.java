@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -23,8 +24,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -73,12 +74,12 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     private List<Task> tasks;
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+    public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
 
         GraphUtils.sequential(
             subGraph,
-            this.tasks,
+            this.getTasks(),
             this.errors,
             taskRun,
             execution
@@ -91,15 +92,15 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     public List<Task> allChildTasks() {
         return Stream
             .concat(
-                this.tasks != null ? this.tasks.stream() : Stream.empty(),
-                this.errors != null ? this.errors.stream() : Stream.empty()
+                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
+                this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
             )
             .collect(Collectors.toList());
     }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
+        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
     }
 
     @Override
@@ -107,7 +108,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun
         );
     }

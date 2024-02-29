@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -10,8 +11,14 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.ExecutableTask;
+import io.kestra.core.models.tasks.ExecutionUpdatableTask;
+import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.LogService;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
@@ -19,11 +26,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,16 +43,22 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class ExecutorService {
     @Inject
-    protected ApplicationContext applicationContext;
+    private ApplicationContext applicationContext;
 
     @Inject
-    protected RunContextFactory runContextFactory;
+    private RunContextFactory runContextFactory;
 
     @Inject
-    protected MetricRegistry metricRegistry;
+    private MetricRegistry metricRegistry;
 
     @Inject
-    protected ConditionService conditionService;
+    private ConditionService conditionService;
+
+    @Inject
+    private LogService logService;
+
+    @Inject
+    private RunnerUtils runnerUtils;
 
     protected FlowExecutorInterface flowExecutorInterface;
 
@@ -57,38 +72,49 @@ public class ExecutorService {
     }
 
     public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
+        // if above the limit, handle concurrency limit based on its behavior
         if (count >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
                     var newExecution = execution.withState(State.Type.QUEUED);
 
-                    ExecutionQueued executionQueued = ExecutionQueued.builder()
+                    ExecutionRunning executionRunning = ExecutionRunning.builder()
                         .tenantId(flow.getTenantId())
                         .namespace(flow.getNamespace())
                         .flowId(flow.getId())
-                        .date(Instant.now())
                         .execution(newExecution)
+                        .concurrencyState(ExecutionRunning.ConcurrencyState.QUEUED)
                         .build();
 
                     // when max concurrency is reached, we throttle the execution and stop processing
-                    flow.logger().info(
-                        "[namespace: {}] [flow: {}] [execution: {}] Flow is queued due to concurrency limit exceeded, {} running(s)",
-                        newExecution.getNamespace(),
-                        newExecution.getFlowId(),
-                        newExecution.getId(),
+                    logService.logExecution(
+                        newExecution,
+                        flow.logger(),
+                        Level.INFO,
+                        "Flow is queued due to concurrency limit exceeded, {} running(s)",
                         count
                     );
                     // return the execution queued
                     yield executor
-                        .withExecutionQueued(executionQueued)
+                        .withExecutionRunning(executionRunning)
                         .withExecution(newExecution, "checkConcurrencyLimit");
                 }
-                case CANCEL -> executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
-                case FAIL -> executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
+                case CANCEL ->
+                    executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
+                case FAIL ->
+                    executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
             };
         }
 
-        return executor;
+        // if under the limit, update the executor with a RUNNING ExecutionRunning to track them
+        var executionRunning = new ExecutionRunning(
+            flow.getTenantId(),
+            flow.getNamespace(),
+            flow.getId(),
+            executor.getExecution(),
+            ExecutionRunning.ConcurrencyState.RUNNING
+        );
+        return executor.withExecutionRunning(executionRunning);
     }
 
     public Executor process(Executor executor) {
@@ -135,11 +161,11 @@ public class ExecutorService {
 
     public Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
-            log.trace(
-                "[namespace: {}] [flow: {}] [execution: {}] Found {} next(s) {}",
-                execution.getNamespace(),
-                execution.getFlowId(),
-                execution.getId(),
+            logService.logExecution(
+                execution,
+                flow.logger(),
+                Level.TRACE,
+                "Found {} next(s) {}",
                 nexts.size(),
                 nexts
             );
@@ -163,11 +189,11 @@ public class ExecutorService {
                 .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
                 .increment();
 
-            flow.logger().info(
-                "[namespace: {}] [flow: {}] [execution: {}] Flow started",
-                execution.getNamespace(),
-                execution.getFlowId(),
-                execution.getId()
+            logService.logExecution(
+                execution,
+                flow.logger(),
+                Level.INFO,
+                "Flow started"
             );
 
             newExecution = newExecution.withState(State.Type.RUNNING);
@@ -322,22 +348,46 @@ public class ExecutorService {
     }
 
     private Executor onEnd(Executor executor) {
+        final Flow flow = executor.getFlow();
+
+        Logger logger = flow.logger();
+
         Execution newExecution = executor.getExecution()
-            .withState(executor.getExecution().guessFinalState(executor.getFlow()));
+            .withState(executor.getExecution().guessFinalState(flow));
 
-        Logger logger = executor.getFlow().logger();
+        if (flow.getOutputs() != null) {
+            try {
+                Map<String, Object> outputs = flow.getOutputs()
+                    .stream()
+                    .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
+                RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                outputs = runContext.render(outputs);
+                outputs = runnerUtils.typedOutputs(flow, executor.getExecution(), outputs);
+                newExecution = newExecution.withOutputs(outputs);
+            } catch (Exception e) {
+                logService.logExecution(
+                    executor.getExecution(),
+                    logger,
+                    Level.ERROR,
+                    "Failed to render output values",
+                    e
+                );
+                newExecution = newExecution
+                    .withState(State.Type.FAILED);
+            }
+        }
 
-        logger.info(
-            "[namespace: {}] [flow: {}] [execution: {}] Flow completed with state {} in {}",
-            newExecution.getNamespace(),
-            newExecution.getFlowId(),
-            newExecution.getId(),
+        logService.logExecution(
+            newExecution,
+            flow.logger(),
+            Level.INFO,
+            "Flow completed with state {} in {}",
             newExecution.getState().getCurrent(),
             newExecution.getState().humanDuration()
         );
 
         if (logger.isTraceEnabled()) {
-            logger.debug(newExecution.toString(true));
+            logger.trace(newExecution.toString(true));
         }
 
         metricRegistry
@@ -470,8 +520,8 @@ public class ExecutorService {
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(t -> childWorkerTaskTypeToWorkerTask(
-                    Optional.of(State.Type.KILLED),
-                    t
+                Optional.of(State.Type.KILLED),
+                t
             ))
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -531,11 +581,11 @@ public class ExecutorService {
             .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
             .increment();
 
-        executor.getFlow().logger().info(
-            "[namespace: {}] [flow: {}] [execution: {}] Flow restarted",
-            executor.getExecution().getNamespace(),
-            executor.getExecution().getFlowId(),
-            executor.getExecution().getId()
+        logService.logExecution(
+            executor.getExecution(),
+            executor.getFlow().logger(),
+            Level.INFO,
+            "Flow restarted"
         );
 
         return executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handleRestart");
@@ -617,8 +667,7 @@ public class ExecutorService {
                                 .withTaskRun(executableTaskRun.withState(State.Type.SUCCESS)),
                             "handleExecutableTaskRunning.noExecution"
                         );
-                    }
-                    else {
+                    } else {
                         executions.addAll(subflowExecutions);
                         if (!executableTask.waitForExecution()) {
                             // send immediately all workerTaskResult to ends the executable task
@@ -629,12 +678,11 @@ public class ExecutorService {
                                     executor.getFlow(),
                                     subflowExecution.getExecution()
                                 );
-                                subflowExecutionResult.ifPresent(result -> subflowExecutionResults.add(result));
+                                subflowExecutionResult.ifPresent(subflowExecutionResults::add);
                             }
                         }
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     WorkerTaskResult failed = WorkerTaskResult.builder()
                         .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
                             .withAttempts(Collections.singletonList(
@@ -683,9 +731,9 @@ public class ExecutorService {
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
                             .taskRun(workerTask.getTaskRun().withAttempts(
-                                Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build())
-                            )
-                                .withState(State.Type.SUCCESS)
+                                        Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build())
+                                    )
+                                    .withState(State.Type.SUCCESS)
                             )
                             .build()
                     );
@@ -757,8 +805,7 @@ public class ExecutorService {
                 workerTask.getClass().getSimpleName(),
                 workerTask.getTaskRun().toStringState()
             );
-        }
-        else if (value instanceof WorkerTrigger workerTrigger){
+        } else if (value instanceof WorkerTrigger workerTrigger) {
             log.debug(
                 "{} {} : {}",
                 in ? "<< IN " : ">> OUT",

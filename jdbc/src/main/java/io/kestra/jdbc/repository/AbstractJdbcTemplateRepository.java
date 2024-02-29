@@ -17,8 +17,8 @@ import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
 
 @Singleton
 public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcRepository implements TemplateRepositoryInterface {

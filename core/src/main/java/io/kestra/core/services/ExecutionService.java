@@ -4,6 +4,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
@@ -17,6 +18,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.GraphUtils;
@@ -30,6 +32,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
@@ -253,9 +257,10 @@ public class ExecutionService {
                 endDate,
                 state,
                 null,
+                null,
                 null
             )
-            .map(execution -> {
+            .map(throwFunction(execution -> {
                 PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();
 
                 if (purgeExecution) {
@@ -271,12 +276,12 @@ public class ExecutionService {
                 }
 
                 if (purgeStorage) {
-                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), URI.create("kestra://" + storageInterface.executionPrefix(
-                        execution))).size());
+                    URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
+                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), uri).size());
                 }
 
                 return (PurgeResult) builder.build();
-            })
+            }))
             .reduce((a, b) -> a
                 .toBuilder()
                 .executionsCount(a.getExecutionsCount() + b.getExecutionsCount())
@@ -284,7 +289,7 @@ public class ExecutionService {
                 .storagesCount(a.getStoragesCount() + b.getStoragesCount())
                 .build()
             )
-            .blockingGet();
+            .block();
 
         if (purgeResult != null) {
             return purgeResult;
@@ -313,11 +318,40 @@ public class ExecutionService {
         var unpausedExecution = execution
             .withTaskRun(runningTaskRun)
             .withState(newState);
-
-        this.executionQueue.emit(unpausedExecution);
         this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
-
         return unpausedExecution;
+    }
+
+    /**
+     * Lookup for all executions triggered by given execution id, and returns all the relevant
+     * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
+     *
+     * @param tenantId      of the parent execution.
+     * @param executionId   of the parent execution.
+     * @return  a {@link Flux} of zero or more {@link ExecutionKilled}.
+     */
+    public Flux<ExecutionKilled> killSubflowExecutions(final String tenantId, final String executionId) {
+        // Lookup for all executions triggered by the current execution being killed.
+        Flux<Execution> executions = executionRepository.findAllByTriggerExecutionId(
+            tenantId,
+            executionId
+        );
+
+        // For each child execution not already KILLED, send
+        // subsequent kill events (that will be re-handled by the Executor).
+
+        return executions
+            .filter(childExecution -> {
+                State state = childExecution.getState();
+                return state.getCurrent() != State.Type.KILLING && state.getCurrent() != State.Type.KILLED;
+            })
+            .map(childExecution -> ExecutionKilled
+                .builder()
+                .executionId(childExecution.getId())
+                .isOnKillCascade(true)
+                .state(ExecutionKilled.State.REQUESTED) // Event will be reentrant in the Executor.
+                .build()
+            );
     }
 
     /**

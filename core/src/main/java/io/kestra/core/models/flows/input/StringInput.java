@@ -10,7 +10,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 import java.util.regex.Pattern;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 @SuperBuilder
 @Getter
@@ -30,7 +30,7 @@ public class StringInput extends Input<String> {
                     "Invalid input",
                     this,
                     StringInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

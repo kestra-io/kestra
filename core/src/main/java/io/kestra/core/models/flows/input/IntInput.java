@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 @SuperBuilder
 @Getter
@@ -28,7 +28,7 @@ public class IntInput extends Input<Integer> {
                     "Invalid input",
                     this,
                     IntInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }
@@ -39,7 +39,7 @@ public class IntInput extends Input<Integer> {
                     "Invalid input",
                     this,
                     IntInput.class,
-                    getName(),
+                    getId(),
                     input
                 )));
         }

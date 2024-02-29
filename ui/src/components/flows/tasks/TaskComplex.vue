@@ -56,6 +56,7 @@
                 if (this.definitions[ref]) {
                     return this.definitions[ref];
                 }
+                return undefined;
             }
         },
     };

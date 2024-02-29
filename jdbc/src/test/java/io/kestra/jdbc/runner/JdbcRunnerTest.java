@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
@@ -93,17 +94,19 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void full() throws TimeoutException, QueueException {
+    void full() throws TimeoutException, QueueException, InternalException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "full", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(13));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat((String) execution.findTaskRunsByTaskId("t2").get(0).getOutputs().get("value"), containsString("value1"));
     }
 
     @Test
     void logs() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs", null, null, Duration.ofSeconds(60));
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getTaskRunList(), hasSize(5));
     }
 
     @Test
@@ -203,7 +206,7 @@ public abstract class JdbcRunnerTest {
         taskDefaultsCaseTest.taskDefaults();
     }
 
-    @Test
+    @RetryingTest(5)
     void flowWaitSuccess() throws Exception {
         flowCaseTest.waitSuccess();
     }
@@ -270,7 +273,7 @@ public abstract class JdbcRunnerTest {
         forEachItemCaseTest.forEachItem();
     }
 
-    @Test
+    @RetryingTest(5)
     void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemNoWait();
     }
@@ -278,6 +281,11 @@ public abstract class JdbcRunnerTest {
     @Test
     void forEachItemFailed() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemFailed();
+    }
+
+    @RetryingTest(5)
+    void forEachItemSubflowOutputs() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+        forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
     @Test

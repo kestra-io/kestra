@@ -69,7 +69,6 @@
     <div v-loading="isLoading">
         <el-card>
             <el-tooltip
-                popper-class="tooltip-stats"
                 placement="bottom"
                 :persistent="false"
                 :hide-after="0"

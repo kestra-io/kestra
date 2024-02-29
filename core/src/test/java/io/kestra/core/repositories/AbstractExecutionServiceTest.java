@@ -60,7 +60,8 @@ public abstract class AbstractExecutionServiceTest {
             .revision(1)
             .build();
 
-        Execution execution = Execution.builder()
+        Execution execution = Execution
+            .builder()
             .id(IdUtils.create())
             .state(state)
             .flowId(flow.getId())
@@ -70,14 +71,24 @@ public abstract class AbstractExecutionServiceTest {
 
         Return task = Return.builder().id(IdUtils.create()).type(Return.class.getName()).build();
 
+        TaskRun taskRun = TaskRun
+            .builder()
+            .namespace(flow.getNamespace())
+            .id(IdUtils.create())
+            .executionId(execution.getId())
+            .flowId(flow.getId())
+            .taskId(task.getId())
+            .state(state)
+            .build();
+
         RunContext runContext = runContextFactory.of(
             flow,
             task,
             execution,
-            TaskRun.builder().id(IdUtils.create()).taskId(task.getId()).state(state).build()
+            taskRun
         );
 
-        execution.withInputs(Map.of("test", runContext.putTempFile(tempFile)));
+        execution.withInputs(Map.of("test", runContext.storage().putFile(tempFile)));
 
         executionRepository.save(execution);
 

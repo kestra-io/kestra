@@ -1,42 +1,41 @@
 <template>
-    <el-button-group size="small">
+    <el-button-group>
         <el-tooltip :content="$t('source')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType(editorViewTypes.SOURCE)" @click="switchView(editorViewTypes.SOURCE)" :icon="FileDocumentEdit" />
+            <el-button :type="buttonType(editorViewTypes.SOURCE)" @click="switchView(editorViewTypes.SOURCE)" :icon="FileDocumentEditOutline" />
         </el-tooltip>
         <el-tooltip :content="$t('source and doc')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType(editorViewTypes.SOURCE_DOC)" @click="switchView(editorViewTypes.SOURCE_DOC)" :icon="BookOpenPageVariantOutline" />
+            <el-button :type="buttonType(editorViewTypes.SOURCE_DOC)" @click="switchView(editorViewTypes.SOURCE_DOC)" :icon="BookOpenOutline" />
         </el-tooltip>
         <el-tooltip :content="$t('source and topology')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType(editorViewTypes.SOURCE_TOPOLOGY)" @click="switchView(editorViewTypes.SOURCE_TOPOLOGY)" :icon="FileChart" />
+            <el-button :type="buttonType(editorViewTypes.SOURCE_TOPOLOGY)" @click="switchView(editorViewTypes.SOURCE_TOPOLOGY)" :icon="FileTableOutline" />
         </el-tooltip>
         <el-tooltip :content="$t('topology')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType(editorViewTypes.TOPOLOGY)" @click="switchView(editorViewTypes.TOPOLOGY)" :icon="Graph" />
+            <el-button :type="buttonType(editorViewTypes.TOPOLOGY)" @click="switchView(editorViewTypes.TOPOLOGY)" :icon="FileTreeOutline" />
         </el-tooltip>
         <el-tooltip :content="$t('source and blueprints')" transition="" :hide-after="0" :persistent="false">
-            <el-button :type="buttonType(editorViewTypes.SOURCE_BLUEPRINTS)" @click="switchView(editorViewTypes.SOURCE_BLUEPRINTS)" :icon="ImageSearch" />
+            <el-button :type="buttonType(editorViewTypes.SOURCE_BLUEPRINTS)" @click="switchView(editorViewTypes.SOURCE_BLUEPRINTS)" :icon="BallotOutline" />
         </el-tooltip>
     </el-button-group>
 </template>
 
 <script setup>
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
-    import Graph from "vue-material-design-icons/Graph.vue";
-    import ImageSearch from "vue-material-design-icons/ImageSearch.vue";
-    import FileChart from "vue-material-design-icons/FileChart.vue";
-    import BookOpenPageVariantOutline from "vue-material-design-icons/BookOpenPageVariantOutline.vue";
+    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
+    import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
+    import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
+    import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
     import {editorViewTypes} from "../../utils/constants";
 </script>
 
 <script>
-    import ValidationError from "../flows/ValidationError.vue";
-
     export default {
-        components: {ValidationError},
         props: {
             type: {
-                type: String
+                type: String,
+                required: true
             }
         },
+        emits: ["switch-view"],
         methods: {
             switchView(view) {
                 this.$emit("switch-view", view)
@@ -50,8 +49,18 @@
 
 <style scoped lang="scss">
     :deep(.el-button) {
-        &.el-button--default {
-            background: var(--card-bg);
+        border: 0;
+        background: none;
+        opacity: 0.5;
+        padding-left: calc(var(--spacer) / 2);
+        padding-right: calc(var(--spacer) / 2);
+
+        &.el-button--primary {
+            opacity: 1;
         }
+    }
+
+    button.el-button--primary {
+        color: var(--bs-primary);
     }
 </style>

@@ -13,7 +13,11 @@ public interface PollingTriggerInterface {
     Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception;
 
     default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
-        return ZonedDateTime.now();
+        return ZonedDateTime.now().plus(this.getInterval());
+    }
+
+    default ZonedDateTime nextEvaluationDate() {
+        return ZonedDateTime.now().plus(this.getInterval());
     }
 
     @Schema(

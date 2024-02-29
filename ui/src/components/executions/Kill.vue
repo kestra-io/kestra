@@ -1,19 +1,33 @@
 <template>
-    <component
-        :is="component"
-        :icon="StopCircleOutline"
-        @click="kill"
-        v-if="enabled"
-        class="me-1"
-    >
-        {{ $t('kill') }}
-    </component>
+    <el-dropdown v-if="enabled">
+        <el-button type="default" @click="kill(true)">
+            {{ $t("kill") }}
+            <DotsVertical title="" />
+        </el-button>
+        <template #dropdown>
+            <el-dropdown-menu class="m-dropdown-menu">
+                <el-dropdown-item
+                    :icon="StopCircleOutline"
+                    size="large"
+                    @click="kill(true)"
+                >
+                    {{ $t('kill parents and subflow') }}
+                </el-dropdown-item>
+                <el-dropdown-item
+                    :icon="StopCircleOutline"
+                    size="large"
+                    @click="kill(false)"
+                >
+                    {{ $t('kill only parents') }}
+                </el-dropdown-item>
+            </el-dropdown-menu>
+        </template>
+    </el-dropdown>
 </template>
-
 <script setup>
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
-
 <script>
 
     import {mapState} from "vuex";
@@ -33,12 +47,13 @@
             },
         },
         methods: {
-            kill() {
+            kill(isOnKillCascade) {
                 this.$toast()
                     .confirm(this.$t("killed confirm", {id: this.execution.id}), () => {
                         return this.$store
                             .dispatch("execution/kill", {
                                 id: this.execution.id,
+                                isOnKillCascade: isOnKillCascade
                             })
                             .then(() => {
                                 this.$toast().success(this.$t("killed done"));

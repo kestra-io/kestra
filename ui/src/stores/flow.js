@@ -20,8 +20,7 @@ export default {
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,
-        flowError: undefined,
-        flowDeprecations: undefined,
+        flowValidation: undefined,
         taskError: undefined,
         metrics: [],
         aggregatedMetrics: undefined,
@@ -99,7 +98,7 @@ export default {
                     }
                 })
         },
-        saveFlow({commit, dispatch}, options) {
+        saveFlow({commit, _dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
@@ -154,7 +153,7 @@ export default {
                 return response.data;
             })
         },
-        loadGraphFromSource({commit}, options) {
+        loadGraphFromSource({commit, state}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow
@@ -169,8 +168,12 @@ export default {
                     commit("setFlowGraph", response.data)
 
                     let flow = YamlUtils.parse(options.flow);
+                    flow.id = state.flow?.id ?? flow.id;
+                    flow.namespace = state.flow?.namespace ?? flow.namespace;
                     flow.source = options.flow;
-                    commit("setFlow", flow)
+                    // prevent losing revision when loading graph from source
+                    flow.revision = state.flow?.revision;
+                    commit("setFlow", flow);
                     commit("setFlowGraphParam", {
                         namespace: flow.namespace ? flow.namespace : "default",
                         id: flow.id ? flow.id : "default",
@@ -190,7 +193,7 @@ export default {
                     return Promise.reject(error);
                 })
         },
-        getGraphFromSourceResponse({commit}, options) {
+        getGraphFromSourceResponse({_commit}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow
@@ -215,7 +218,7 @@ export default {
                 });
         },
         exportFlowByQuery(_, options) {
-            return this.$http.get(`${apiUrl(this)}/flows/export/by-query`, {params: options})
+            return this.$http.get(`${apiUrl(this)}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "flows.zip");
                 });
@@ -244,9 +247,8 @@ export default {
         validateFlow({commit}, options) {
             return axios.post(`${apiUrl(this)}/flows/validate`, options.flow, textYamlHeader)
                 .then(response => {
-                    commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
-                    commit("setFlowDeprecations", response.data[0] ? response.data[0].deprecationPaths : undefined)
-                    return response.data
+                    commit("setFlowValidation", response.data[0])
+                    return response.data[0]
                 })
         },
         validateTask({commit}, options) {
@@ -363,11 +365,8 @@ export default {
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph
         },
-        setFlowError(state, flowError) {
-            state.flowError = flowError
-        },
-        setFlowDeprecations(state, flowDeprecations) {
-            state.flowDeprecations = flowDeprecations
+        setFlowValidation(state, flowValidation) {
+            state.flowValidation = flowValidation
         },
         setTaskError(state, taskError) {
             state.taskError = taskError
@@ -388,14 +387,9 @@ export default {
                 return state.flow;
             }
         },
-        flowError(state) {
-            if (state.flowError) {
-                return state.flowError;
-            }
-        },
-        flowDeprecations(state) {
-            if (state.flowDeprecations) {
-                return state.flowDeprecations;
+        flowValidation(state) {
+            if (state.flowValidation) {
+                return state.flowValidation;
             }
         },
         taskError(state) {

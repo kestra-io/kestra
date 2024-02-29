@@ -11,22 +11,19 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -50,7 +47,7 @@ public class LogController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
+    @Get(uri = "logs/search")
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
@@ -69,7 +66,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
+    @Get(uri = "logs/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
     public List<LogEntry> findByExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -119,20 +116,20 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
-    public Flowable<Event<LogEntry>> follow(
+    public Flux<Event<LogEntry>> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
         List<String> levels = LogEntry.findLevelsByMin(minLevel);
 
-        return Flowable
+        return Flux
             .<Event<LogEntry>>create(emitter -> {
                 // fetch repository first
                 logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel, null)
                     .stream()
                     .filter(logEntry -> levels.contains(logEntry.getLevel().name()))
-                    .forEach(logEntry -> emitter.onNext(Event.of(logEntry).id("progress")));
+                    .forEach(logEntry -> emitter.next(Event.of(logEntry).id("progress")));
 
                 // consume in realtime
                 Runnable receive = this.logQueue.receive(either -> {
@@ -143,13 +140,13 @@ public class LogController {
                     LogEntry current = either.getLeft();
                     if (current.getExecutionId() != null && current.getExecutionId().equals(executionId)) {
                         if (levels.contains(current.getLevel().name())) {
-                            emitter.onNext(Event.of(current).id("progress"));
+                            emitter.next(Event.of(current).id("progress"));
                         }
                     }
                 });
 
                 cancel.set(receive);
-            }, BackpressureStrategy.BUFFER)
+            }, FluxSink.OverflowStrategy.BUFFER)
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();
@@ -160,5 +157,18 @@ public class LogController {
                     cancel.get().run();
                 }
             });
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "logs/{executionId}")
+    @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
+    public void delete(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
+        @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
+    ) {
+        logRepository.deleteByQuery(tenantService.resolveTenant(), executionId, taskId, taskRunId, minLevel, attempt);
     }
 }

@@ -17,7 +17,7 @@ import picocli.CommandLine;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",

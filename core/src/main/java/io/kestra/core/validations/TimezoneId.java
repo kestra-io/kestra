@@ -1,8 +1,8 @@
 package io.kestra.core.validations;
 
 import io.kestra.core.validations.validator.TimezoneIdValidator;
+import jakarta.validation.Constraint;
 
-import javax.validation.Constraint;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

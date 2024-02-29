@@ -1,0 +1,102 @@
+{%- import "macro.peb" -%}
+---
+title: {{ shortName }}
+editLink: false
+{% if docDescription -%}
+description: {{ docDescription | json }}
+{% endif -%}
+
+{% if icon -%}
+icon: {{ icon }}
+{% endif -%}
+
+---
+
+
+<h1>
+    {% if icon %}<img width="25" src="data:image/svg+xml;base64,{{ icon }}" alt="{{ shortName }}" />{% endif%} {{ shortName }}
+</h1>
+
+{% if deprecated %}
+::alert{type="warning"}
+🔒 Deprecated
+::
+{%- endif %}
+
+```yaml
+type: "{{ cls }}"
+```
+
+{% if docDescription -%}
+> {{ docDescription }}
+{%- endif %}
+
+{{ docBody }}
+
+{% if docExamples != null %}
+## Examples
+    {%- for example in docExamples %}
+        {%- if example.title %}
+> {{ example.title }}
+        {%- endif %}
+```{{- example.lang | default("yaml") }}
+{{ example.task }}
+```
+    {% endfor -%}
+{%- endif %}
+
+
+{% if inputs != null -%}
+## Properties
+    {%- for entry in inputs %}
+### `{{ entry.key }}`
+{{ fieldType(entry.value) }}
+* **Dynamic:** {{ entry.value['$dynamic'] == true ? "✔️" : (entry.value['$dynamic'] == false ? "❌" : "❓") }}
+* **Required:** {{ entry.value['$required'] == true ? "✔️" : (entry.value['$required'] == false ? "❌" : "❓") }}
+{{ fieldDetail(entry.value) }}
+    {%- endfor -%}
+{% endif %}
+
+
+{% if outputs != null -%}
+## Outputs
+    {%- for entry in outputs %}
+### `{{ entry.key }}`
+{{ fieldType(entry.value) }}
+* **Dynamic:** {{ entry.value['$dynamic'] == true ? "✔️" : (entry.value['$dynamic'] == false ? "❌" : "❓") }}
+* **Required:** {{ entry.value['$required'] == true ? "✔️" : (entry.value['$required'] == false ? "❌" : "❓") }}
+{{ fieldDetail(entry.value) }}
+    {%- endfor -%}
+{% endif %}
+
+
+{% if defs != null -%}
+## Definitions
+    {%- for entry in defs %}
+### `{{ entry.key }}`
+{% if entry.value.properties != null -%}
+#### Properties
+    {%- for entryProps in entry.value.properties %}
+##### `{{ entryProps.key }}`
+{{ fieldType(entryProps.value) }}
+* **Dynamic:** {{ entryProps.value['$dynamic'] == true ? "✔️" : (entryProps.value['$dynamic'] == false ? "❌" : "❓") }}
+* **Required:** {{ entryProps.value['$required'] == true ? "✔️" : (entryProps.value['$required'] == false ? "❌" : "❓") }}
+{{ fieldDetail(entryProps.value) }}
+    {%- endfor -%}
+{% endif %}
+
+    {%- endfor -%}
+{% endif %}
+
+
+{% if docMetrics != null -%}
+## Metrics
+    {%- for entry in docMetrics %}
+### `{{ entry.name }}`
+* **Type:** =={{ entry.type }}== {% if entry.unit %} ({{ entry.unit }}) {% endif %}
+{%- if data.description %}
+{{ data.description }}
+{%- endif %}
+
+    {%- endfor -%}
+{% endif %}

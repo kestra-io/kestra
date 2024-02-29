@@ -1,0 +1,34 @@
+---
+title: {{ title | replace({'-': ' '}) | capitalize }}
+{% if description %}description: {{ description | json }}{% endif %}
+editLink: false
+{% if icon != null %}icon: {{ icon }}{% endif %}
+---
+# {% if icon -%}<img width="25" src="data:image/svg+xml;base64,{{ icon }}" /> {% endif %}{{ title | replace({"-": " "}) | capitalize }}
+
+{{ description }}
+
+{{ longDescription }}
+
+
+{% for entry in classPlugins %}
+## {% if entry.key.icon -%}<img width="25" src="data:image/svg+xml;base64,{{entry.key.icon}}" /> {% endif %}{{ (entry.key.title and entry.key.title != "" ? entry.key.title : entry.key.name) | capitalize }}
+
+{{ entry.key.description }}
+
+{% for cls in entry.value %}
+### {{ cls.key | capitalize  }}
+
+{%- for class in cls.value %}
+* [{{ class.simpleName }}](./{{ class.type }}/{% if class.subgroup.name != null %}{% if class.subgroup.subgroupIsGroup == false %}{{ class.subgroup.name }}/{% endif %}{% endif %}{{ class.name }}.md)
+{% endfor %}
+
+{% endfor %}
+{% endfor %}
+
+{%- if guides != null %}
+## Guides
+    {%- for guide in guides %}
+* [{{ guide | capitalize  }}](./guides/{{ guide }}.md)
+    {% endfor %}
+{% endif %}

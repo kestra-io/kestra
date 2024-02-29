@@ -16,7 +16,7 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +29,14 @@ import java.time.ZoneId;
 @Singleton
 @Slf4j
 public class CollectorService {
-    private static final String UUID = IdUtils.create();
+    protected static final String UUID = IdUtils.create();
 
     @Inject
     @Client
-    protected RxHttpClient client;
+    protected ReactorHttpClient client;
 
     @Inject
-    private ApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -45,10 +45,10 @@ public class CollectorService {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    private InstanceService instanceService;
+    protected InstanceService instanceService;
 
     @Inject
-    private VersionProvider versionProvider;
+    protected VersionProvider versionProvider;
 
     @Nullable
     @Value("${kestra.server-type}")
@@ -56,7 +56,7 @@ public class CollectorService {
 
     @Nullable
     @Value("${kestra.url:}")
-    private String kestraUrl;
+    protected String kestraUrl;
 
     @Value("${kestra.anonymous-usage-report.uri}")
     protected URI url;
@@ -86,8 +86,7 @@ public class CollectorService {
     }
 
     public Usage metrics() {
-        Usage.UsageBuilder<?, ?> builder = defaultUsage()
-            .toBuilder()
+        Usage.UsageBuilder<?, ?> builder = defaultUsage().toBuilder()
             .uuid(IdUtils.create());
 
         if (serverType == ServerType.EXECUTOR || serverType == ServerType.STANDALONE) {

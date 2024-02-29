@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -34,10 +35,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.*;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -98,7 +99,6 @@ public class Flow implements DeletedInterface, TenantInterface {
     @Valid
     List<AbstractTrigger> triggers;
 
-
     @Valid
     List<TaskDefault> taskDefaults;
 
@@ -112,6 +112,14 @@ public class Flow implements DeletedInterface, TenantInterface {
 
     @Valid
     Concurrency concurrency;
+
+    @Schema(
+        title = "Output values available and exposes to other flows.",
+        description = "Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages."
+    )
+    @PluginProperty(dynamic = true)
+    @Valid
+    List<Output> outputs;
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);

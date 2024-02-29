@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -62,7 +62,7 @@ abstract public class PluginUtilsService {
                         tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
                     }
 
-                    result.put(s, "{{workingDir}}/" + tempFile.getName());
+                    result.put(s, additionalVars.get("workingDir") + "/" + tempFile.getName());
                 }));
 
             if (!isDir) {

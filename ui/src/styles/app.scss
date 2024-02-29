@@ -29,6 +29,10 @@ html, body, #app, #app-container {
 html {
     transition: padding-left 0.3s ease;
 
+    code[class*="language-"], pre[class*="language-"]  {
+        white-space: pre-wrap !important;
+    }
+
     &.menu-collapsed {
         #{--offset-from-menu}: var(--spacer);
         padding-left: var(--menu-collapsed-width);

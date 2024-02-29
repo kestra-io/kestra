@@ -204,7 +204,7 @@
         data() {
             return {
                 dailyReady: false,
-                isDefaultNamespaceAllow: true,
+                isDefaultNamespaceAllow: true
             };
         },
         computed: {
@@ -219,7 +219,7 @@
                 return stateGlobalChartTypes;
             },
             endDate() {
-                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment(this.endDate).toISOString(true);
+                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment(Date.now()).toISOString(true);
             },
             startDate() {
                 return  this.$route.query.startDate ?  this.$route.query.startDate : this.$moment(this.endDate)

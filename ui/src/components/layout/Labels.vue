@@ -4,7 +4,7 @@
         <el-tag
             v-for="(value, key) in labelMap"
             :key="key"
-            :type="checked(key, value) ? 'info' : ''"
+            :type="checked(key, value) ? 'info' : 'default'"
             class="me-1 labels"
             size="small"
             disable-transitions

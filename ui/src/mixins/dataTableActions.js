@@ -4,8 +4,7 @@ import _isEqual from "lodash/isEqual";
 
 export default {
     created() {
-        this.internalPageSize = this.pageSize ?? this.$route.query.size ?? 25;
-        this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1;
+        this.refreshPaging();
 
         // @TODO: ugly hack from restoreUrl
         if (this.loadInit) {
@@ -38,6 +37,7 @@ export default {
     watch: {
         $route(newValue, oldValue) {
             if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
+                this.refreshPaging();
                 this.load(this.onDataLoaded);
             }
         }
@@ -124,5 +124,9 @@ export default {
                 this.$refs.dataTable.isLoading = false;
             }
         },
+        refreshPaging() {
+            this.internalPageSize = this.pageSize ?? this.$route.query.size ?? 25;
+            this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1;
+        }
     }
 }

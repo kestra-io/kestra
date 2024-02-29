@@ -44,6 +44,7 @@
 
                 return `id: myflow
 namespace: myteam
+description: Save and Execute the flow
 
 labels:
   env: dev

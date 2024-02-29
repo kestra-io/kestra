@@ -111,8 +111,7 @@
                 document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
             }
             ,
-            displayApp(fullPage = false) {
-                this.fullPage = fullPage;
+            displayApp() {
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
                 Utils.switchTheme();
 

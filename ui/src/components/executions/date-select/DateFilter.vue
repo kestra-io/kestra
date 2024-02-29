@@ -45,6 +45,9 @@
 
             this.selectedFilterType = (this.$route.query.startDate || this.$route.query.endDate) ? this.filterType.ABSOLUTE : this.filterType.RELATIVE;
         },
+        mounted() {
+            this.$emit("update:isRelative", this.selectedFilterType === this.filterType.RELATIVE);
+        },
         data() {
             return {
                 selectedFilterType: undefined

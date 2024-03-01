@@ -27,7 +27,7 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'flows/create'}">
+                    <router-link :to="{name: 'flows/create'}" v-if="canCreate">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
                         </el-button>
@@ -289,6 +289,9 @@
             },
             canCheck() {
                 return this.canRead || this.canDelete || this.canUpdate;
+            },
+            canCreate() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.CREATE, this.$route.query.namespace);
             },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ, this.$route.query.namespace);

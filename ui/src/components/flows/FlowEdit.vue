@@ -9,7 +9,7 @@
                 </li>
 
                 <li>
-                    <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
+                    <router-link v-if="flow && canCreate" :to="{name: 'flows/create', query: {copy: true}}">
                         <el-button :icon="icon.ContentCopy" size="large">
                             {{ $t('copy') }}
                         </el-button>

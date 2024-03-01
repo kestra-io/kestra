@@ -5,7 +5,7 @@ import pluginRewriteAll from "vite-plugin-rewrite-all";
 import {visualizer} from "rollup-plugin-visualizer";
 import copy from "rollup-plugin-copy"
 import downloadVsix from "./download-vsix-rollup-plugin"
-import eslintPlugin from 'vite-plugin-eslint';
+import eslintPlugin from "vite-plugin-eslint";
 
 export default defineConfig({
     base: "",

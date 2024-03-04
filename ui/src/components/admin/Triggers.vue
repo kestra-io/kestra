@@ -120,6 +120,7 @@
                         <el-table-column column-key="disable" class-name="row-action">
                             <template #default="scope">
                                 <el-switch
+                                    v-if="!scope.row.missingSource"
                                     size="small"
                                     :active-text="$t('enabled')"
                                     :model-value="!scope.row.disabled"
@@ -127,6 +128,9 @@
                                     class="switch-text"
                                     :active-action-icon="Check"
                                 />
+                                <el-tooltip v-else :content="'flow source not found'">
+                                    <AlertCircle class="trigger-issue-icon" />
+                                </el-tooltip>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -154,6 +158,7 @@
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
     import Check from "vue-material-design-icons/Check.vue";
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -251,9 +256,21 @@
             },
             triggersMerged() {
                 return this.triggers.map(triggers => {
-                    return {...triggers.abstractTrigger, ...triggers.triggerContext, codeDisabled: triggers.abstractTrigger.disabled}
+                    return {
+                        ...triggers?.abstractTrigger,
+                        ...triggers.triggerContext,
+                        codeDisabled: triggers?.abstractTrigger?.disabled,
+                        // if we have no abstract trigger, it means that flow or trigger definition hasn't been found
+                        missingSource: !triggers.abstractTrigger
+                    }
                 })
             }
         }
     };
 </script>
+<style>
+    .trigger-issue-icon{
+        color: var(--bs-warning);
+        font-size: 1.4em;
+    }
+</style>

@@ -12,8 +12,8 @@ fi
 # Check java version
 JAVA_FULLVERSION=$(java -fullversion 2>&1)
 case "$JAVA_FULLVERSION" in
-    [a-z]*\ full\ version\ \"\(1|9|10\)\..*\")
-        echo "[ERROR] Kestra require at least Java 11." 1>&2
+    [a-z]*\ full\ version\ \"\(1|9|10|11|12|13|14|15|16|17|18|19|20\)\..*\")
+        echo "[ERROR] Kestra require at least Java 21." 1>&2
         exit 1
         ;;
 esac
@@ -24,5 +24,5 @@ esac
 JAVA_ADD_OPENS="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED"
 
 # Exec
-exec java ${JAVA_OPTS} ${JAVA_ADD_OPENS} -jar "$0" "$@"
+exec java ${JAVA_OPTS} ${JAVA_ADD_OPENS} -Djava.security.manager=allow -jar "$0" "$@"
 exit 127

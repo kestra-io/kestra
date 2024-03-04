@@ -35,7 +35,7 @@
                         title: this.$t("get started"),
                         content: this.$t("get started content"),
                         imgClass: "started",
-                        link: "https://kestra.io/docs/getting-started/"
+                        link: "https://kestra.io/docs/getting-started/?utm_source=app&utm_content=welcome"
                     },
                     {
                         title: this.$t("watch demo"),
@@ -48,7 +48,7 @@
                         title: this.$t("need help?"),
                         content: this.$t("need help? content"),
                         imgClass: "help",
-                        link: "https://kestra.io/slack"
+                        link: "https://kestra.io/slack?utm_source=app&utm_content=welcome"
                     }
                 ]
             }

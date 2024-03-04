@@ -27,14 +27,14 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <a
-                                href="https://kestra.io/slack"
+                                href="https://kestra.io/slack?utm_source=app&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
                                 <HelpBox class="align-middle" /> {{ $t("live help") }}
                             </a>
                             <a
-                                href="https://kestra.io/docs"
+                                href="https://kestra.io/docs?utm_source=app&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
@@ -54,11 +54,18 @@
                                 <Github class="align-middle" /> {{ $t("documentation.github") }}
                             </a>
                             <a
-                                href="https://kestra.io/slack"
+                                href="https://kestra.io/slack?utm_source=app&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
                                 <Slack class="align-middle" /> {{ $t("join community") }}
+                            </a>
+                            <a
+                                href="https://kestra.io/contact-us?utm_source=app&utm_content=top-nav-bar"
+                                target="_blank"
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
+                                <EmailHeartOutline class="align-middle" /> {{ $t("reach us") }}
                             </a>
                             <a
                                 v-if="version"
@@ -86,6 +93,7 @@
     import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
     import Github from "vue-material-design-icons/Github.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
+    import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
     import GlobalSearch from "./GlobalSearch.vue"
 
     export default {
@@ -97,6 +105,7 @@
             GoogleCirclesExtended,
             Github,
             Slack,
+            EmailHeartOutline,
             GlobalSearch
         },
         props: {

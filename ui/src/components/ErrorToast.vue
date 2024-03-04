@@ -70,7 +70,7 @@
 
                 const children = [
                     h("a", {
-                        href: "https://kestra.io/slack",
+                        href: "https://kestra.io/slack?utm_source=app&utm_content=error",
                         class: "position-absolute slack-on-error el-button el-button--small is-text is-has-bg",
                         target: "_blank"
                     }, [h(Slack), h("span", {innerText: this.$t("slack support")})]),

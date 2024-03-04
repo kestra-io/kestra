@@ -167,7 +167,7 @@
     }
 
     const editorDomElement = ref(null);
-    const editorWidthStorageKey = "editor-width";
+    const editorWidthStorageKey = "editor-size";
     const editorWidth = ref(localStorage.getItem(editorWidthStorageKey));
     const validationDomElement = ref(null);
     const isLoading = ref(false);

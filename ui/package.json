@@ -41,7 +41,7 @@
     "moment-timezone": "^0.5.45",
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
-    "posthog-js": "^1.109.0",
+    "posthog-js": "^1.110.0",
     "prismjs": "^1.29.0",
     "throttle-debounce": "^5.0.0",
     "vite-plugin-eslint": "^1.8.1",

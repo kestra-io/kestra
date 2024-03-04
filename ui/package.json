@@ -57,7 +57,7 @@
     "vue3-popper": "^1.5.0",
     "vue3-tour": "git@github.com:kestra-io/vue3-tour.git",
     "vuex": "^4.1.0",
-    "xss": "^1.0.14",
+    "xss": "^1.0.15",
     "yaml": "^2.4.0"
   },
   "devDependencies": {

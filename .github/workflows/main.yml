@@ -93,7 +93,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v2
@@ -364,7 +364,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
 
       # Publish
       - name: Publish package to Sonatype

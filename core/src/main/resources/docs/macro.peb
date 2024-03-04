@@ -10,7 +10,7 @@
 {% macro fieldType(data) -%}
 {%- if data['$deprecated'] != null %}
 ::alert{type="warning"}
-🔒 Deprecated
+⚠ Deprecated
 ::
 {% endif %}
 

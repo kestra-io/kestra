@@ -19,7 +19,7 @@ icon: {{ icon }}
 
 {% if deprecated %}
 ::alert{type="warning"}
-🔒 Deprecated
+⚠ Deprecated
 ::
 {%- endif %}
 

@@ -5,7 +5,9 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -16,10 +18,12 @@ import java.net.URI;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@MicronautTest(rebuildContext = true)
+@Property(name="kestra.server-type", value="WORKER")
 class ReadFileFunctionTest {
     @Inject
     VariableRenderer variableRenderer;
@@ -130,5 +134,12 @@ class ReadFileFunctionTest {
 
         exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", triggerVariables));
         assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
+    }
+
+    @Test
+    @Property(name="kestra.server-type", value="EXECUTOR")
+    void readFailOnNonWorkerNodes() {
+        IllegalVariableEvaluationException exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
+        assertThat(exception.getMessage(), containsString("The 'read' function can only be used in the Worker as it access the internal storage."));
     }
 }

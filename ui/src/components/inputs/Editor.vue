@@ -77,6 +77,7 @@
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},
+            customHeight: {type: Number, default: 7},
             theme: {type: String, default: undefined},
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
@@ -298,7 +299,7 @@
 
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange(e => {
-                        this.$refs.container.style.height = (e.contentHeight + 7) + "px";
+                        this.$refs.container.style.height = (e.contentHeight + this.customHeight) + "px";
                     });
                 }
 

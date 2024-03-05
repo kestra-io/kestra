@@ -23,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "A templated task is a special kind of task for which all task properties are defined inside the spec property, including it's real type!"
+    title = "This task's `spec` property allows you to fully template all task properties using Kestra's Pebble templating. This way, all task properties and their values can be dynamically rendered based on your custom inputs, variables, and outputs from other tasks!"
 )
 @Plugin(
     examples = {

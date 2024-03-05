@@ -48,7 +48,7 @@
 
         <div v-if="execution.trigger" class="mt-4">
             <h5>{{ $t("trigger") }}</h5>
-            <vars :execution="execution" :data="execution.trigger" />
+            <vars :execution="execution" :data="triggerVariables" />
         </div>
 
         <div v-if="execution.inputs" class="mt-4">
@@ -183,6 +183,14 @@
                     })
                 })
                 return inputs;
+            },
+            // This is used to display correctly trigger variables
+            triggerVariables() {
+                let trigger = this.execution.trigger
+                trigger["trigger"] = this.execution.trigger.variables
+                delete trigger["variables"]
+
+                return trigger
             }
         },
     };

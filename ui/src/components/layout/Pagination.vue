@@ -39,6 +39,8 @@
     </div>
 </template>
 <script>
+    import {storageKeys} from "../../utils/constants";
+
     export default {
         props: {
             total: {type: Number, default: 0},
@@ -61,14 +63,22 @@
         },
         methods: {
             initState() {
+                let internalSize = parseInt(localStorage.getItem(storageKeys.PAGINATION_SIZE) || this.$route.query.size || this.size)
+                let internalPage = parseInt(this.$route.query.page || this.page)
+                this.$emit("page-changed", {
+                    page: internalPage,
+                    size: internalSize,
+                });
+
                 return {
-                    internalSize: parseInt(this.$route.query.size || this.size),
-                    internalPage: parseInt(this.$route.query.page || this.page)
+                    internalSize: internalSize,
+                    internalPage: internalPage
                 }
             },
-            pageSizeChange(value) {
+            pageSizeChange: function (value) {
                 this.internalPage = 1;
                 this.internalSize = value;
+                localStorage.setItem(storageKeys.PAGINATION_SIZE, value);
                 this.$emit("page-changed", {
                     page: 1,
                     size: this.internalSize,

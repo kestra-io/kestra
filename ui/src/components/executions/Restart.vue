@@ -48,7 +48,7 @@
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
 
-        <el-form>
+        <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
             <p class="text-muted">
                 {{ $t("restart change revision") }}
             </p>

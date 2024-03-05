@@ -30,7 +30,8 @@ export const storageKeys = {
     SELECTED_TENANT: "selectedTenant",
     EXECUTE_FLOW_BEHAVIOUR: "executeFlowBehaviour",
     DEFAULT_NAMESPACE: "defaultNamespace",
-    LATEST_NAMESPACE: "latestNamespace"
+    LATEST_NAMESPACE: "latestNamespace",
+    PAGINATION_SIZE: "paginationSize",
 }
 
 export const executeFlowBehaviours = {

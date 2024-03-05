@@ -174,6 +174,7 @@
     const isLoading = ref(false);
     const haveChange = ref(props.isDirty)
     const flowYaml = ref("")
+    const flowYamlOrigin = ref("")
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)
     const newError = ref(null)
@@ -236,7 +237,7 @@
 
     const initYamlSource = async () => {
         flowYaml.value = props.flow.source;
-
+        flowYamlOrigin.value = props.flow.source;
         if (flowHaveTasks()) {
             if ([editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
                 await fetchGraph();
@@ -760,7 +761,7 @@
             :is-read-only="props.isReadOnly"
             :can-delete="canDelete()"
             :is-allowed-edit="isAllowedEdit()"
-            :have-change="haveChange"
+            :have-change="flowYaml !== flowYamlOrigin"
             :flow-have-tasks="flowHaveTasks()"
             :errors="flowErrors"
             :warnings="flowWarnings"

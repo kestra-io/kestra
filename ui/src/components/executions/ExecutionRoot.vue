@@ -84,6 +84,7 @@
         },
         methods: {
             follow() {
+                this.$store.dispatch("execution/loadExecution", this.$route.params)
                 const self = this;
                 this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;

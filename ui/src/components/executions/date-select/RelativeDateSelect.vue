@@ -41,6 +41,10 @@
                         label: "datepicker.last24hours"
                     },
                     {
+                        value: "P2D",
+                        label: "datepicker.last48hours"
+                    },
+                    {
                         value: "P7D",
                         label: "datepicker.last7days"
                     },

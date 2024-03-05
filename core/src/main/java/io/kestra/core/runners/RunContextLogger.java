@@ -126,7 +126,9 @@ public class RunContextLogger {
     }
 
     public void usedSecret(String secret) {
-        this.useSecrets.add(secret);
+        if (secret != null) {
+            this.useSecrets.add(secret);
+        }
     }
 
     public org.slf4j.Logger logger() {

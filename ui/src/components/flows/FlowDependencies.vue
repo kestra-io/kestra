@@ -151,7 +151,6 @@
             params: {
                 "namespace": data.namespace,
                 "id": data.flowId,
-                tab: "dependencies",
                 tenant: route.params.tenant
             },
         });

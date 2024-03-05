@@ -129,7 +129,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Echo"));
-        assertThat(render, containsString("\uD83D\uDD12 Deprecated"));
+        assertThat(render, containsString("⚠ Deprecated"));
     }
 
     @Test

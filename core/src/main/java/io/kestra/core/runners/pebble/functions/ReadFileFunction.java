@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -25,6 +26,9 @@ public class ReadFileFunction implements Function {
     @Inject
     private StorageInterface storageInterface;
 
+    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
+    private String serverType;
+
     @Override
     public List<String> getArgumentNames() {
         return List.of("path");
@@ -32,6 +36,10 @@ public class ReadFileFunction implements Function {
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
+        if (!calledOnWorker()) {
+            throw new PebbleException(null, "The 'read' function can only be used in the Worker as it access the internal storage.", lineNumber, self.getName());
+        }
+
         if (!args.containsKey("path")) {
             throw new PebbleException(null, ERROR_MESSAGE, lineNumber, self.getName());
         }
@@ -43,6 +51,17 @@ public class ReadFileFunction implements Function {
         catch (IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
+    }
+
+    private boolean calledOnWorker() {
+        if ("WORKER".equals(serverType)) {
+            return true;
+        }
+        if ("STANDALONE".equals(serverType)) {
+            // check that it's called inside a worker thread
+            return Thread.currentThread().getClass().getName().equals("io.kestra.core.runners.Worker$WorkerThread");
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")

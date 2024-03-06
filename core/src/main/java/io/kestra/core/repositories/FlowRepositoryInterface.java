@@ -38,15 +38,6 @@ public interface FlowRepositoryInterface {
         }
     }
 
-    default Optional<Flow> findOptionalByExecution(Execution execution) {
-        return this.findById(
-            execution.getTenantId(),
-            execution.getNamespace(),
-            execution.getFlowId(),
-            Optional.of(execution.getFlowRevision())
-        );
-    }
-
     default Optional<Flow> findById(String tenantId, String namespace, String id) {
         return this.findById(tenantId, namespace, id, Optional.empty(), false);
     }

@@ -1096,7 +1096,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Executions"}, summary = "Follow an execution")
-    public Flux<?> follow(
+    public Flux<Event<Execution>> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
@@ -1108,13 +1108,14 @@ public class ExecutionController {
                     () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
                     Duration.ofMillis(500)
                 );
-                Optional<Flow> maybeFlow = flowRepository.findOptionalByExecution(execution);
-                if (maybeFlow.isEmpty()) {
+
+                Flow flow;
+                try {
+                    flow = flowRepository.findByExecution(execution);
+                } catch (IllegalStateException e)  {
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the flow for the execution " + executionId));
                     return;
                 }
-
-                Flow flow = maybeFlow.get();
 
                 if (this.isStopFollow(flow, execution)) {
                     emitter.next(Event.of(execution).id("end"));

@@ -214,7 +214,7 @@
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
-            this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
+            this.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.envName = store.getters["layout/envName"] || this.configs?.environment?.name;

@@ -23,6 +23,7 @@
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
     import {apiUrl} from "override/utils/route";
     import EditorButtons from "./EditorButtons.vue";
+    import Drawer from "../Drawer.vue";
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
@@ -826,13 +827,10 @@
             />
         </div>
 
-        <el-drawer
+        <drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
             title="Add a global error handler"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <el-form label-position="top">
                 <task-editor
@@ -846,14 +844,11 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </el-drawer>
-        <el-drawer
+        </drawer>
+        <drawer
             v-if="isNewTriggerOpen"
             v-model="isNewTriggerOpen"
             title="Add a trigger"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <el-form label-position="top">
                 <task-editor
@@ -867,13 +862,10 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </el-drawer>
-        <el-drawer
+        </drawer>
+        <drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <template #header>
                 <code>flow metadata</code>
@@ -897,7 +889,7 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </el-drawer>
+        </drawer>
     </div>
     <el-dialog v-if="confirmOutdatedSaveDialog" v-model="confirmOutdatedSaveDialog" destroy-on-close :append-to-body="true">
         <template #header>

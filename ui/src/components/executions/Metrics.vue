@@ -6,17 +6,13 @@
         {{ $t('metrics') }}
     </el-dropdown-item>
 
-    <el-drawer
+    <drawer
         v-if="isOpen"
         v-model="isOpen"
         :title="$t('metrics')"
-        destroy-on-close
-        :append-to-body="true"
-        size=""
-        direction="ltr"
     >
         <metrics-table ref="table" :task-run-id="taskRun.id" :execution="execution" />
-    </el-drawer>
+    </drawer>
 </template>
 
 <script setup>
@@ -26,10 +22,12 @@
 
 <script>
     import MetricsTable from "./MetricsTable.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
         components: {
-            MetricsTable
+            MetricsTable,
+            Drawer
         },
         data() {
             return {

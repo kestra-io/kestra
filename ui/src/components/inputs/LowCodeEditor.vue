@@ -9,6 +9,7 @@
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Collapse from "../layout/Collapse.vue";
+    import Drawer from "../Drawer.vue";
 
     // Topology
     import {
@@ -340,12 +341,9 @@
 
         <!--    Drawer to task informations (logs, description, ..)   -->
         <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
-        <el-drawer
+        <drawer
             v-if="isDrawerOpen && selectedTask"
             v-model="isDrawerOpen"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <template #header>
                 <code>{{ selectedTask.id }}</code>
@@ -373,7 +371,7 @@
             <div v-if="isShowDescriptionOpen">
                 <markdown class="markdown-tooltip" :source="selectedTask.description" />
             </div>
-        </el-drawer>
+        </drawer>
     </div>
 </template>
 

@@ -2,16 +2,12 @@
     <el-button size="small" type="primary" :icon="EyeOutline" @click="getFilePreview">
         Preview
     </el-button>
-    <el-drawer
+    <drawer
         v-if="selectedPreview === value && filePreview"
         v-model="isPreviewOpen"
-        destroy-on-close
-        lock-scroll
-        size=""
-        :append-to-body="true"
     >
         <template #header>
-            <h3>{{ $t("preview") }}</h3>
+            {{ $t("preview") }}
         </template>
         <template #default>
             <el-alert v-if="filePreview.truncated" show-icon type="warning" :closable="false" class="mb-2">
@@ -58,7 +54,7 @@
                 </el-form-item>
             </el-form>
         </template>
-    </el-drawer>
+    </drawer>
 </template>
 
 <script setup>
@@ -70,9 +66,10 @@
     import ListPreview from "../ListPreview.vue";
     import {mapGetters, mapState} from "vuex";
     import Markdown from "../layout/Markdown.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
-        components: {Markdown, ListPreview, Editor},
+        components: {Markdown, ListPreview, Editor, Drawer},
         props: {
             value: {
                 type: String,

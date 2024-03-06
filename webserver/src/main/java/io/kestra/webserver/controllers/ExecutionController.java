@@ -58,6 +58,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -1003,7 +1004,7 @@ public class ExecutionController {
             );
         }
 
-        for(Execution execution : executions) {
+        for (Execution execution : executions) {
             Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
             this.executionQueue.emit(resumeExecution);
         }
@@ -1107,7 +1108,14 @@ public class ExecutionController {
                     () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
                     Duration.ofMillis(500)
                 );
-                Flow flow = flowRepository.findByExecution(execution);
+
+                Flow flow;
+                try {
+                    flow = flowRepository.findByExecution(execution);
+                } catch (IllegalStateException e)  {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the flow for the execution " + executionId));
+                    return;
+                }
 
                 if (this.isStopFollow(flow, execution)) {
                     emitter.next(Event.of(execution).id("end"));
@@ -1273,7 +1281,8 @@ public class ExecutionController {
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
-    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {}
+    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/labels/by-query")

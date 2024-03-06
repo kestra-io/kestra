@@ -15,13 +15,14 @@
             <Environment />
         </template>
 
-        <template #footer>
-            <span class="version">{{ configs.version }}</span>
-        </template>
+        <template #footer />
 
         <template #toggle-icon>
-            <chevron-right v-if="collapsed" />
-            <chevron-left v-else />
+            <el-button>
+                <chevron-double-right v-if="collapsed" />
+                <chevron-double-left v-else />
+            </el-button>
+            <span class="version">{{ configs.version }}</span>
         </template>
     </sidebar-menu>
 </template>
@@ -29,28 +30,28 @@
 <script>
     import {SidebarMenu} from "vue-sidebar-menu";
     import Environment from "../../components/layout/Environment.vue";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronDoubleLeft from "vue-material-design-icons/ChevronDoubleLeft.vue";
+    import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-    import NotebookOutline from "vue-material-design-icons/NotebookOutline.vue";
-    import Ballot from "vue-material-design-icons/Ballot.vue";
+    import ChartTimeline from "vue-material-design-icons/ChartTimeline.vue";
+    import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
     import FolderEditOutline from "vue-material-design-icons/FolderEditOutline.vue";
-    import AccountSupervisorOutline from "vue-material-design-icons/AccountSupervisorOutline.vue";
+    import ShieldAccountVariantOutline from "vue-material-design-icons/ShieldAccountVariantOutline.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
-    import AccountHardHatOutline from "vue-material-design-icons/AccountHardHatOutline.vue";
     import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
+    import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
     import {shallowRef} from "vue";
 
     export default {
         components: {
-            ChevronLeft,
-            ChevronRight,
+            ChevronDoubleLeft,
+            ChevronDoubleRight,
             SidebarMenu,
             Environment
         },
@@ -146,7 +147,7 @@
                         routes: this.routeStartWith("taskruns"),
                         title: this.$t("taskruns"),
                         icon: {
-                            element: shallowRef(TimelineTextOutline),
+                            element: shallowRef(ChartTimeline),
                             class: "menu-icon"
                         },
                         hidden: !this.configs.isTaskRunEnabled
@@ -156,7 +157,7 @@
                         routes: this.routeStartWith("logs"),
                         title: this.$t("logs"),
                         icon: {
-                            element: shallowRef(NotebookOutline),
+                            element: shallowRef(TimelineTextOutline),
                             class: "menu-icon"
                         },
                     },
@@ -165,7 +166,7 @@
                         routes: this.routeStartWith("blueprints"),
                         title: this.$t("blueprints.title"),
                         icon: {
-                            element: shallowRef(Ballot),
+                            element: shallowRef(BallotOutline),
                             class: "menu-icon"
                         },
                     },
@@ -173,7 +174,7 @@
                         title: this.$t("administration"),
                         routes: this.routeStartWith("admin"),
                         icon: {
-                            element: shallowRef(AccountSupervisorOutline),
+                            element: shallowRef(ShieldAccountVariantOutline),
                             class: "menu-icon"
                         },
                         child: [
@@ -191,7 +192,7 @@
                                 routes: this.routeStartWith("admin/workers"),
                                 title: this.$t("workers"),
                                 icon: {
-                                    element: shallowRef(AccountHardHatOutline),
+                                    element: shallowRef(ServerOutline),
                                     class: "menu-icon"
                                 },
                             },
@@ -302,13 +303,14 @@
         span.version {
             transition: 0.2s all;
             white-space: nowrap;
-            font-size: var(--el-font-size-extra-small);
+            font-size: var(--font-size-xs);
             text-align: center;
             display: block;
-            color: var(--bs-gray-400);
+            color: var(--bs-gray-600);
+            width: auto;
 
             html.dark & {
-                color: var(--bs-gray-600);
+                color: var(--bs-gray-800);
             }
         }
 
@@ -353,11 +355,21 @@
         }
 
         .vsm--toggle-btn {
-            padding-top: 4px;
+            padding-top: 16px;
+            padding-bottom: 16px;
+            font-size: 20px;
             background: transparent;
             color: var(--bs-secondary);
-            height: 30px;
             border-top: 1px solid var(--bs-border-color);
+
+            .el-button {
+                padding: 8px;
+                margin-right: 15px;
+                transition: margin-right 0.2s ease;
+                html.dark & {
+                    background: var(--bs-gray-500);
+                }
+            }
         }
 
 
@@ -410,8 +422,13 @@
                 padding: 0 5px;
             }
 
+            .el-button {
+                margin-right: 0;
+            }
+
             span.version {
                 opacity: 0;
+                width: 0;
             }
         }
     }

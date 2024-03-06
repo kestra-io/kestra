@@ -58,6 +58,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -1003,7 +1004,7 @@ public class ExecutionController {
             );
         }
 
-        for(Execution execution : executions) {
+        for (Execution execution : executions) {
             Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
             this.executionQueue.emit(resumeExecution);
         }
@@ -1095,7 +1096,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Executions"}, summary = "Follow an execution")
-    public Flux<Event<Execution>> follow(
+    public Flux<?> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
@@ -1107,7 +1108,13 @@ public class ExecutionController {
                     () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
                     Duration.ofMillis(500)
                 );
-                Flow flow = flowRepository.findByExecution(execution);
+                Optional<Flow> maybeFlow = flowRepository.findOptionalByExecution(execution);
+                if (maybeFlow.isEmpty()) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the flow for the execution " + executionId));
+                    return;
+                }
+
+                Flow flow = maybeFlow.get();
 
                 if (this.isStopFollow(flow, execution)) {
                     emitter.next(Event.of(execution).id("end"));
@@ -1273,7 +1280,8 @@ public class ExecutionController {
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
-    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {}
+    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/labels/by-query")

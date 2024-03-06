@@ -74,13 +74,13 @@
             :show-doc="false"
         />
 
-        <el-drawer v-if="isModalOpen" v-model="isModalOpen" destroy-on-close :append-to-body="true" size="">
+        <drawer v-if="isModalOpen" v-model="isModalOpen">
             <template #header>
                 <h5>{{ $t("revision") + `: ` + revision }}</h5>
             </template>
 
             <editor v-model="revisionYaml" lang="yaml" />
-        </el-drawer>
+        </drawer>
     </div>
     <div v-else>
         <el-alert class="mb-0" show-icon :closable="false">
@@ -99,10 +99,11 @@
     import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../../components/inputs/Editor.vue";
     import Crud from "override/components/auth/Crud.vue";
+    import Drawer from "../Drawer.vue";
     import {saveFlowTemplate} from "../../utils/flowTemplate";
 
     export default {
-        components: {Editor, Crud},
+        components: {Editor, Crud, Drawer},
         created() {
             this.load();
         },

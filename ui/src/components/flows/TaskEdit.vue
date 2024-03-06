@@ -6,13 +6,9 @@
         ref="taskEdit"
     >
         <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
-        <el-drawer
+        <drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
-            destroy-on-close
-            lock-scroll
-            size=""
-            :append-to-body="true"
         >
             <template #header>
                 <code>{{ taskId || task?.id || $t("add task") }}</code>
@@ -81,7 +77,7 @@
                     </div>
                 </el-tab-pane>
             </el-tabs>
-        </el-drawer>
+        </drawer>
     </component>
 </template>
 
@@ -94,6 +90,7 @@
     import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
+    import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
     import {mapGetters, mapState} from "vuex";
     import Utils from "../../utils/utils";
@@ -102,7 +99,7 @@
     import {SECTIONS} from "../../utils/constants";
 
     export default {
-        components: {Editor, TaskEditor, Markdown, ValidationError},
+        components: {Editor, TaskEditor, Drawer, Markdown, ValidationError},
         emits: ["update:task", "close"],
         props: {
             component: {

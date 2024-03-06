@@ -707,6 +707,10 @@ form.ks-horizontal {
         }
     }
 
+    &.full-screen {
+        width: 99% !important;
+    }
+
     .el-drawer__header {
         padding: var(--spacer);
         margin-bottom: 0;

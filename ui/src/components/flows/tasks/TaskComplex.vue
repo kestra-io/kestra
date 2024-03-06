@@ -8,13 +8,9 @@
         </template>
     </el-input>
 
-
-    <el-drawer
+    <drawer
         v-if="isOpen"
         v-model="isOpen"
-        destroy-on-close
-        size=""
-        :append-to-body="true"
     >
         <template #header>
             <code>{{ root }}</code>
@@ -33,7 +29,7 @@
                 {{ $t('save') }}
             </el-button>
         </template>
-    </el-drawer>
+    </drawer>
 </template>
 
 <script setup>
@@ -43,8 +39,11 @@
 
 <script>
     import Task from "./Task"
+    import Drawer from "../../Drawer.vue"
+
     export default {
         mixins: [Task],
+        components: {Drawer},
         data() {
             return {
                 isOpen: false,

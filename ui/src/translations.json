@@ -599,7 +599,9 @@
     "Set labels": "Set labels",
     "Set labels to execution": "Add or update the labels of the execution <code>{id}</code>",
     "Set labels done": "Successfully set the labels of the execution",
-    "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code>  executions(s)?"
+    "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code>  executions(s)?",
+    "dependencies loaded": "Dependencies loaded",
+    "loaded x dependencies": "{count} dependencies loaded"
   },
   "fr": {
     "id": "Identifiant",
@@ -1188,7 +1190,9 @@
     "Set labels": "Ajouter des labels",
     "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
-    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?"
+    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
+    "dependencies loaded": "Dépendances chargées",
+    "loaded x dependencies": "{count} dépendances chargées"
   }
 }
 

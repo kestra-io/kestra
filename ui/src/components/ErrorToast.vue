@@ -99,7 +99,7 @@
                     title: this.title || "Error",
                     message: h("div",  children),
                     position: "bottom-right",
-                    type: "error",
+                    type: this.message.variant,
                     duration: 0,
                     dangerouslyUseHTMLString: true,
                     customClass: "error-notification" + (children.length > 1 ? " large" : "")

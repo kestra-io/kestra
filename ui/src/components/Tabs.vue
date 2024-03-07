@@ -1,7 +1,7 @@
 <template>
     <el-tabs class="router-link" :class="{top: top}" v-model="activeName">
         <el-tab-pane
-            v-for="tab in tabs"
+            v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"

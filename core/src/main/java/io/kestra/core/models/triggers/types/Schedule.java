@@ -254,12 +254,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             // is after the end, then we calculate again the nextDate
             // based on now()
             if (backfill != null && nextDate != null && nextDate.isAfter(backfill.getEnd())) {
-                nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
             }
         }
         // no previous present & no backfill or recover missed schedules, just provide now
         else {
-            nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
         }
 
         // if max delay reached, we calculate a new date except if we are doing a backfill
@@ -280,7 +280,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     public ZonedDateTime nextEvaluationDate() {
         // it didn't take into account the schedule condition, but as they are taken into account inside eval() it's OK.
         ExecutionTime executionTime = this.executionTime();
-        return computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(ZonedDateTime.now());
+        return computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
     }
 
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
@@ -301,7 +301,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, ZonedDateTime.now()).orElse(ZonedDateTime.now());
+        return computePreviousEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
     }
 
     @Override

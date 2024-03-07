@@ -39,10 +39,9 @@ public class RenderFunction implements Function {
             recursiveArg = true;
         }
 
-        if (!(recursiveArg instanceof Boolean)) {
+        if (!(recursiveArg instanceof Boolean recursive)) {
             throw new PebbleException(null, "The 'render' function expects an optional argument 'recursive' with type boolean.", lineNumber, self.getName());
         }
-        Boolean recursive = (Boolean) recursiveArg;
 
         EvaluationContextImpl evaluationContext = (EvaluationContextImpl) context;
         Map<String, Object> variables = evaluationContext.getScopeChain().getGlobalScopes().stream()

@@ -28,10 +28,9 @@ public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    private PebbleEngine pebbleEngine;
+    private final PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
@@ -102,17 +101,10 @@ public class VariableRenderer {
             Writer writer = new JsonWriter(new StringWriter());
             compiledTemplate.evaluate(writer, variables);
             result = writer.toString();
-        } catch (IOException | PebbleException e) {
-            String alternativeRender = this.alternativeRender(e, inline, variables);
-            if (alternativeRender == null) {
-                if (e instanceof PebbleException) {
-                    throw properPebbleException((PebbleException) e);
-                }
-
-                throw new IllegalVariableEvaluationException(e);
-            } else {
-                result = alternativeRender;
-            }
+        } catch (IOException e) {
+            throw new IllegalVariableEvaluationException(e);
+        } catch (PebbleException e) {
+            throw properPebbleException(e);
         }
 
         // post-process raw tags
@@ -121,10 +113,6 @@ public class VariableRenderer {
         }
 
         return result;
-    }
-
-    protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return null;
     }
 
     public String renderRecursively(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -180,7 +168,8 @@ public class VariableRenderer {
             return Optional.of(this.render(string, variables, recursive));
         }
 
-        return Optional.empty();
+        // Return the given object if it cannot be rendered.
+        return Optional.ofNullable(object);
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {

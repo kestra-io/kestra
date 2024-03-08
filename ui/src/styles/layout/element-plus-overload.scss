@@ -163,13 +163,16 @@
 
 .el-select__popper {
     .el-select-dropdown__item {
-        &.selected {
-            background: var(--el-fill-color-dark);
+        border-radius: var(--bs-border-radius);
+        margin: 0 0.6rem 1px;
 
-            html.dark & {
-                color: var(--el-text-color-primary);
-                background-color: var(--el-fill-color-light);
-            }
+        &.is-selected {
+            background-color: var(--bs-gray-200);
+            color: var(--el-text-color-regular);
+        }
+
+        &.is-hovering {
+            background-color: var(--bs-gray-300);
         }
     }
 }
@@ -831,6 +834,10 @@ form.ks-horizontal {
 .el-avatar {
     --el-avatar-bg-color: var(--bs-gray-400);
     --el-avatar-text-color: var(--bs-black);
+
+    &.el-avatar--small {
+        font-size: 65%;
+    }
 
     html.dark & {
         --el-avatar-text-color: var(--bs-white);

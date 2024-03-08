@@ -16,7 +16,7 @@
 
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
-            <div class="text-end">
+            <div class="d-flex w-100 justify-content-end">
                 <a class="el-button el-button--primary mt-3 " :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
             </div>
 

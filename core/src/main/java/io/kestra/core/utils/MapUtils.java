@@ -124,4 +124,12 @@ public class MapUtils {
             // https://bugs.openjdk.org/browse/JDK-8148463
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
     }
+
+    /**
+     * Utility method that returns an empty HasMap if the <code>map</code> parameter is null,
+     * the <code>map</code> parameter otherwise.
+     */
+    public static <K, V> Map<K, V> emptyOnNull(Map<K, V> map) {
+        return map == null ? new HashMap<>() : map;
+    }
 }

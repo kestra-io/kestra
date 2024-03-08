@@ -239,7 +239,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
-            RunContext runContext = workerTask.getRunContext().forWorkerDirectory(applicationContext, workerTask);
+            RunContext runContext = workerTask.getRunContext().forWorkingDirectory(applicationContext, workerTask);
 
             try {
                 // preExecuteTasks

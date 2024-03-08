@@ -25,6 +25,7 @@ public class Plugin {
     private List<String> controllers;
     private List<String> storages;
     private List<String> secrets;
+    private List<String> scriptRunners;
     private List<String> guides;
     private List<PluginSubGroup.PluginCategory> categories;
 
@@ -62,6 +63,7 @@ public class Plugin {
         plugin.controllers = className(filter(registeredPlugin.getControllers()).toArray(Class[]::new));
         plugin.storages = className(filter(registeredPlugin.getStorages()).toArray(Class[]::new));
         plugin.secrets = className(filter(registeredPlugin.getSecrets()).toArray(Class[]::new));
+        plugin.scriptRunners = className(filter(registeredPlugin.getScriptRunner()).toArray(Class[]::new));
 
         return plugin;
     }

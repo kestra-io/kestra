@@ -21,6 +21,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.script.ScriptRunner;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -314,7 +315,6 @@ public class JsonSchemaGenerator {
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
                     TypeContext typeContext = context.getTypeContext();
-
                     if (declaredType.getErasedType() == Task.class) {
                         return getRegisteredPlugins()
                             .stream()
@@ -338,6 +338,12 @@ public class JsonSchemaGenerator {
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                             .filter(ScheduleCondition.class::isAssignableFrom)
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == ScriptRunner.class) {
+                        return getRegisteredPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getScriptRunner().stream())
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     }

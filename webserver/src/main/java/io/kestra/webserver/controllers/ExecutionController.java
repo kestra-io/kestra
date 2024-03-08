@@ -27,11 +27,11 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.GraphService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
-import io.kestra.core.utils.GraphUtils;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -114,6 +114,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private GraphService graphService;
 
     @Inject
     private RunnerUtils runnerUtils;
@@ -217,7 +220,7 @@ public class ExecutionController {
                 );
 
                 return flow
-                    .map(throwFunction(value -> GraphUtils.flowGraph(value, execution)))
+                    .map(throwFunction(value -> graphService.flowGraph(value, null,  execution)))
                     .orElse(null);
             }))
             .orElse(null);

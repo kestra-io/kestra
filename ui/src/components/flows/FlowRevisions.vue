@@ -9,7 +9,7 @@
             />
         </el-select>
         <el-row :gutter="15">
-            <el-col :span="12">
+            <el-col :span="12" v-if="revisionLeft !== undefined">
                 <div class="revision-select mb-3">
                     <el-select v-model="revisionLeft">
                         <el-option
@@ -36,7 +36,7 @@
 
                 <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeft)}" />
             </el-col>
-            <el-col :span="12">
+            <el-col :span="12" v-if="revisionRight !== undefined">
                 <div class="revision-select mb-3">
                     <el-select v-model="revisionRight">
                         <el-option
@@ -219,8 +219,8 @@
         },
         data() {
             return {
-                revisionLeft: 0,
-                revisionRight: 0,
+                revisionLeft: undefined,
+                revisionRight: undefined,
                 revision: undefined,
                 revisionId: undefined,
                 revisionYaml: undefined,

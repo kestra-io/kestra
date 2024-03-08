@@ -106,14 +106,6 @@
                         },
                     },
                     {
-                        href: {name: "editor"},
-                        title: this.$t("editor"),
-                        icon: {
-                            element: shallowRef(FolderEditOutline),
-                            class: "menu-icon",
-                        },
-                    },
-                    {
                         href: {name: "flows/list"},
                         routes: this.routeStartWith("flows"),
                         title: this.$t("flows"),
@@ -122,6 +114,14 @@
                             class: "menu-icon",
                         },
                         exact: false,
+                    },
+                    {
+                        href: {name: "editor"},
+                        title: this.$t("editor"),
+                        icon: {
+                            element: shallowRef(FolderEditOutline),
+                            class: "menu-icon",
+                        },
                     },
                     {
                         href: {name: "templates/list"},

@@ -71,9 +71,9 @@
                                 v-if="version"
                                 :href="version.url"
                                 target="_blank"
-                                class="el-dropdown-menu__item"
+                                class="d-flex gap-2 el-dropdown-menu__item"
                             >
-                                New version available!
+                                <Update class="align-middle text-danger" /> <span class="text-danger">{{ $t("new version", {"version": version.latest}) }}</span>
                             </a>
                         </el-dropdown-menu>
                     </template>
@@ -94,6 +94,7 @@
     import Github from "vue-material-design-icons/Github.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
+    import Update from "vue-material-design-icons/Update.vue";
     import GlobalSearch from "./GlobalSearch.vue"
 
     export default {
@@ -106,6 +107,7 @@
             Github,
             Slack,
             EmailHeartOutline,
+            Update,
             GlobalSearch
         },
         props: {

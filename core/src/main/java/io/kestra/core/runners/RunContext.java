@@ -15,6 +15,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.script.ScriptRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -42,10 +43,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -80,6 +79,7 @@ public class RunContext {
         this.initBean(applicationContext);
         this.initLogger(execution);
         this.initContext(flow, null, execution, null);
+        this.pluginConfiguration = Collections.emptyMap();
     }
 
     /**
@@ -141,6 +141,7 @@ public class RunContext {
             },
             storageInterface
         );
+        this.pluginConfiguration = Collections.emptyMap();
     }
 
     private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
@@ -534,7 +535,7 @@ public class RunContext {
         return forScheduler(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
     }
 
-    public RunContext forWorkerDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
+    public RunContext forWorkingDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
         forWorker(applicationContext, workerTask);
 
         Map<String, Object> clone = new HashMap<>(this.variables);
@@ -542,6 +543,12 @@ public class RunContext {
         clone.put("workerTaskrun", clone.get("taskrun"));
 
         this.variables = ImmutableMap.copyOf(clone);
+
+        return this;
+    }
+
+    public RunContext forScriptRunner(ScriptRunner scriptRunner) {
+        this.initPluginConfiguration(applicationContext, scriptRunner.getType());
 
         return this;
     }

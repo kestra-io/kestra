@@ -92,4 +92,15 @@ class MapUtilsTest {
         Assertions.assertEquals("v2", results.get("k3"));
         Assertions.assertNull(results.get("k4"));
     }
+
+    @Test
+    void emptyOnNull() {
+        var map = MapUtils.emptyOnNull(null);
+        assertThat(map, notNullValue());
+        assertThat(map, anEmptyMap());
+
+        map = MapUtils.emptyOnNull(Map.of("key", "value"));
+        assertThat(map, notNullValue());
+        assertThat(map.size(), is(1));
+    }
 }

@@ -1,6 +1,8 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
+import io.kestra.core.models.script.ScriptRunner;
+import io.kestra.core.models.script.types.ProcessScriptRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.types.Schedule;
@@ -102,6 +104,23 @@ class ClassPluginDocumentationTest {
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type"), is("object"));
             assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(1));
+        }));
+    }
+
+    @Test
+    void scriptRunner() throws URISyntaxException {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+            RegisteredPlugin scan = pluginScanner.scan();
+
+            ClassPluginDocumentation<? extends ScriptRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, ProcessScriptRunner.class, null);
+
+            assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
+            assertThat(doc.getCls(), is("io.kestra.core.models.script.types.ProcessScriptRunner"));
+            assertThat(doc.getPropertiesSchema().get("title"), is("A script runner that runs script as a process on the Kestra host"));
+            assertThat(doc.getDefs(), anEmptyMap());
         }));
     }
 }

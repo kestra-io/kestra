@@ -10,15 +10,6 @@
                         <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
                             <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
                         </el-tooltip>
-                        <el-tooltip
-                            v-if="schemaType === 'flow' && creating"
-                            :content="$t('Reset guided tour')"
-                            :persistent="false"
-                            transition=""
-                            :hide-after="0"
-                        >
-                            <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
-                        </el-tooltip>
                     </el-button-group>
                     <slot name="extends-navbar" />
                 </div>
@@ -89,7 +80,7 @@
         components: {
             MonacoEditor,
         },
-        emits: ["save", "execute", "focusout", "tab", "update:modelValue", "cursor", "restartGuidedTour"],
+        emits: ["save", "execute", "focusout", "tab", "update:modelValue", "cursor"],
         editor: undefined,
         data() {
             return {
@@ -356,21 +347,6 @@
                 this.editor.layout()
                 this.editor.focus()
             },
-            restartGuidedTour() {
-                localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {
-                    tourStarted: false,
-                    flowSource: undefined,
-                    saveFlow: false,
-                    executeFlow: false,
-                    validateInputs: false,
-                    monacoRange: undefined,
-                    monacoDisableRange: undefined
-                }
-                );
-                this.$tours["guidedTour"].start();
-                this.$emit("restartGuidedTour", true);
-            }
         },
     };
 </script>

@@ -34,6 +34,13 @@
                                 <HelpBox class="align-middle" /> {{ $t("live help") }}
                             </a>
                             <a
+                                @click="restartGuidedTour"
+                                class="d-flex gap-2 el-dropdown-menu__item"
+                            >
+                                <ProgressQuestion class="align-middle" /> {{ $t('Reset guided tour') }}
+                            </a>
+
+                            <a
                                 href="https://kestra.io/docs?utm_source=app&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
@@ -71,9 +78,9 @@
                                 v-if="version"
                                 :href="version.url"
                                 target="_blank"
-                                class="el-dropdown-menu__item"
+                                class="d-flex gap-2 el-dropdown-menu__item"
                             >
-                                New version available!
+                                <Update class="align-middle text-danger" /> <span class="text-danger">{{ $t("new version", {"version": version.latest}) }}</span>
                             </a>
                         </el-dropdown-menu>
                     </template>
@@ -94,6 +101,8 @@
     import Github from "vue-material-design-icons/Github.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
+    import Update from "vue-material-design-icons/Update.vue";
+    import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue"
 
     export default {
@@ -106,6 +115,8 @@
             Github,
             Slack,
             EmailHeartOutline,
+            Update,
+            ProgressQuestion,
             GlobalSearch
         },
         props: {
@@ -122,6 +133,25 @@
             ...mapState("api", ["version"]),
             displayNavBar() {
                 return this.$route?.name !== "welcome";
+            }
+        },
+        methods: {
+            restartGuidedTour() {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted: false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined
+                });
+
+                this.$router
+                    .push({name: "flows/create"}).then(() => {
+                        this.$tours["guidedTour"].start();
+                    })
             }
         }
     };

@@ -1,75 +1,71 @@
 <template>
-    <div v-loading="!blueprint">
-        <template v-if="blueprint">
-            <top-nav-bar v-if="!embed" :title="blueprint.title" :breadcrumb="breadcrumb">
-                <template #additional-right>
-                    <ul v-if="userCanCreateFlow">
-                        <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
-                            <el-button type="primary" v-if="!embed">
-                                {{ $t('use') }}
-                            </el-button>
-                        </router-link>
-                    </ul>
-                </template>
-            </top-nav-bar>
-            <div v-else class="header-wrapper">
-                <div class="header d-flex">
-                    <button class="back-button align-self-center">
-                        <el-icon size="medium" @click="goBack">
-                            <ArrowLeft />
-                        </el-icon>
-                    </button>
-                    <h2 class="blueprint-title align-self-center">
-                        {{ blueprint.title }}
-                    </h2>
-                </div>
-            </div>
-
-            <section :class="{'container': !embed}" class="blueprint-container">
-                <el-card>
-                    <div class="embedded-topology" v-if="flowGraph">
-                        <low-code-editor
-                            v-if="flowGraph"
-                            :flow-id="parsedFlow.id"
-                            :namespace="parsedFlow.namespace"
-                            :flow-graph="flowGraph"
-                            :source="blueprint.flow"
-                            :view-type="embed ? 'source-blueprints' : 'blueprints'"
-                            is-read-only
-                        />
-                    </div>
-                </el-card>
-                <el-row :gutter="30">
-                    <el-col :md="24" :lg="embed ? 24 : 18">
-                        <h4>{{ $t("source") }}</h4>
-                        <el-card>
-                            <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
-                                <template #nav>
-                                    <div class="position-absolute copy-wrapper">
-                                        <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
-                                            <el-button text round :icon="icon.ContentCopy" @click="Utils.copy(blueprint.flow)" />
-                                        </el-tooltip>
-                                    </div>
-                                </template>
-                            </editor>
-                        </el-card>
-                        <template v-if="blueprint.description">
-                            <h4>About this blueprint</h4>
-                            <markdown :source="blueprint.description" />
-                        </template>
-                    </el-col>
-                    <el-col :md="24" :lg="embed ? 24 : 6">
-                        <h4>Plugins</h4>
-                        <div class="plugins-container">
-                            <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
-                                <task-icon :cls="task" :icons="icons" />
-                            </div>
-                        </div>
-                    </el-col>
-                </el-row>
-            </section>
+    <top-nav-bar v-if="!embed" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
+        <template #additional-right>
+            <ul v-if="userCanCreateFlow">
+                <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
+                    <el-button type="primary" v-if="!embed">
+                        {{ $t('use') }}
+                    </el-button>
+                </router-link>
+            </ul>
         </template>
+    </top-nav-bar>
+    <div v-else class="header-wrapper">
+        <div class="header d-flex">
+            <button class="back-button align-self-center">
+                <el-icon size="medium" @click="goBack">
+                    <ArrowLeft />
+                </el-icon>
+            </button>
+            <h2 class="blueprint-title align-self-center">
+                {{ blueprint.title }}
+            </h2>
+        </div>
     </div>
+
+    <section :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
+        <el-card>
+            <div class="embedded-topology" v-if="flowGraph">
+                <low-code-editor
+                    v-if="flowGraph"
+                    :flow-id="parsedFlow.id"
+                    :namespace="parsedFlow.namespace"
+                    :flow-graph="flowGraph"
+                    :source="blueprint.flow"
+                    :view-type="embed ? 'source-blueprints' : 'blueprints'"
+                    is-read-only
+                />
+            </div>
+        </el-card>
+        <el-row :gutter="30">
+            <el-col :md="24" :lg="embed ? 24 : 18">
+                <h4>{{ $t("source") }}</h4>
+                <el-card>
+                    <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
+                        <template #nav>
+                            <div class="position-absolute copy-wrapper">
+                                <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                                    <el-button text round :icon="icon.ContentCopy" @click="Utils.copy(blueprint.flow)" />
+                                </el-tooltip>
+                            </div>
+                        </template>
+                    </editor>
+                </el-card>
+                <template v-if="blueprint.description">
+                    <h4>About this blueprint</h4>
+                    <markdown :source="blueprint.description" />
+                </template>
+            </el-col>
+            <el-col :md="24" :lg="embed ? 24 : 6">
+                <h4>Plugins</h4>
+                <div class="plugins-container">
+                    <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
+                        <task-icon :cls="task" :icons="icons" />
+                    </div>
+                </div>
+            </el-col>
+        </el-row>
+    </section>
 </template>
 <script setup>
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";

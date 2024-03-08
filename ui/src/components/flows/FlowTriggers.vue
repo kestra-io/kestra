@@ -82,6 +82,7 @@
         <el-table-column column-key="disable" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-switch
+                    disabled
                     size="small"
                     :active-text="$t('enabled')"
                     :model-value="!scope.row.disabled"

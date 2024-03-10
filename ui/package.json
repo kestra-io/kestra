@@ -61,6 +61,7 @@
     "yaml": "^2.4.0"
   },
   "devDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.12.1",
     "@rushstack/eslint-patch": "^1.7.2",
     "@typescript-eslint/parser": "^7.1.0",
     "@vitejs/plugin-vue": "^5.0.4",

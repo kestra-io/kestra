@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex" v-if="!configs.isBasicAuthEnabled">
-        <el-text>Your data is not secure. Don't loose it. <b>Enable our free security features or try our paid offering.</b></el-text>
+        <el-text>Your data is not protected. Don't loose it. <b>Enable our free security features or try our paid offering.</b></el-text>
         <el-button class="ms-auto" @click="promptForCredentials">
             <b>Activate Basic Authentication</b>
         </el-button>

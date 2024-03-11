@@ -439,6 +439,72 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void restartFromLastFailedWithPause() throws TimeoutException {
+        final String flowId = "restart_pause_last_failed";
+
+        // Run execution until it ends
+        Execution firstExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, null);
+
+        assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
+
+        // Update task's command to make second execution successful
+        Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
+        assertThat(flow.isPresent(), is(true));
+
+        // Restart execution and wait until it finishes
+        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(firstExecution.getId()) &&
+                execution.getTaskRunList().size() == 5 &&
+                execution.getState().isTerminated(),
+            () -> {
+                Execution restartedExec = client.toBlocking().retrieve(
+                    HttpRequest
+                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
+                    Execution.class
+                );
+
+                assertThat(restartedExec, notNullValue());
+                assertThat(restartedExec.getId(), is(firstExecution.getId()));
+                assertThat(restartedExec.getParentId(), nullValue());
+                assertThat(restartedExec.getTaskRunList().size(), is(4));
+                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RESTARTED));
+
+                IntStream
+                    .range(0, 2)
+                    .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
+                        assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
+                        assertThat(taskRun.getAttempts().size(), is(1));
+
+                        assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RUNNING));
+                        assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.RESTARTED));
+                        assertThat(restartedExec.getTaskRunList().get(2).getAttempts(), nullValue());
+                        assertThat(restartedExec.getTaskRunList().get(3).getAttempts().size(), is(1));
+                    });
+            },
+            Duration.ofSeconds(15)
+        );
+
+        assertThat(finishedRestartedExecution, notNullValue());
+        assertThat(finishedRestartedExecution.getId(), is(firstExecution.getId()));
+        assertThat(finishedRestartedExecution.getParentId(), nullValue());
+        assertThat(finishedRestartedExecution.getTaskRunList().size(), is(5));
+
+        assertThat(finishedRestartedExecution.getTaskRunList().get(0).getAttempts().size(), is(1));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size(), is(1));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts(), nullValue());
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count(), is(1L));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size(), is(2));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts().size(), is(1));
+
+        finishedRestartedExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent(), is(State.Type.SUCCESS)));
+    }
+
+    @Test
     void downloadFile() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList(), hasSize(6));

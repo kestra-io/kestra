@@ -45,6 +45,7 @@ public abstract class StorageService {
 
             return splited
                 .stream()
+                .filter(path -> path.toFile().length() > 0)
                 .map(throwFunction(path -> runContext.putTempFile(path.toFile())))
                 .collect(Collectors.toList());
         }

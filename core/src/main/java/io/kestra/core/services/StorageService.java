@@ -107,7 +107,7 @@ public abstract class StorageService {
 
         writers.forEach(throwConsumer(RandomAccessFile::close));
 
-        return files;
+        return files.stream().filter(p -> p.toFile().length() > 0).toList();
     }
 
 }

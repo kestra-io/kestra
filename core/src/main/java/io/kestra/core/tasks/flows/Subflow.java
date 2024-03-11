@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
         )
     }
 )
-public class Subflow extends Task implements ExecutableTask<Subflow.Output> {
+public class Subflow extends Task implements ExecutableTask<Subflow.Output>, ChildFlowInterface {
 
     static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "outputs.enabled";
 

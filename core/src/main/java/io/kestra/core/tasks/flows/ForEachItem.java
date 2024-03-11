@@ -173,7 +173,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
-public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
+public class ForEachItem extends Task implements FlowableTask<VoidOutput>, ChildFlowInterface {
     @NotEmpty
     @PluginProperty(dynamic = true)
     @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI. This can be either the output from a previous task, formatted as `{{ outputs.task_id.uri }}`, or a FILE type input parameter, like `{{ inputs.myfile }}`. This task is optimized for files where each line represents a single item. Suitable file types include Amazon ION-type files (commonly produced by Query tasks), newline-separated JSON files, or CSV files formatted with one row per line and without a header. For files in other formats such as Excel, CSV, Avro, Parquet, XML, or JSON, it's recommended to first convert them to the ION format. This can be done using the conversion tasks available in the `io.kestra.plugin.serdes` module, which will transform files from their original format to ION.")

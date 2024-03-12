@@ -299,8 +299,9 @@ public class RunContext {
                 builder.put("outputs", outputs);
             }
 
+            Map<String, Object> inputs = new HashMap<>();
             if (execution.getInputs() != null) {
-                Map<String, Object> inputs = new HashMap<>(execution.getInputs());
+                inputs.putAll(execution.getInputs());
                 if (flow != null && flow.getInputs() != null) {
                     // if some inputs are of type secret, we decode them
                     for (Input<?> input : flow.getInputs()) {
@@ -314,6 +315,14 @@ public class RunContext {
                         }
                     }
                 }
+            }
+            if (flow != null && flow.getInputs() != null) {
+                // we add default inputs value from the flow if not already set, this will be useful for triggers
+                flow.getInputs().stream()
+                    .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
+                    .forEach(input -> inputs.put(input.getId(), input.getDefaults()));
+            }
+            if (!inputs.isEmpty()) {
                 builder.put("inputs", inputs);
             }
 

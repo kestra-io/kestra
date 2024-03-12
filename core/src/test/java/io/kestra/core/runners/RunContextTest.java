@@ -1,17 +1,23 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tasks.test.PollingTrigger;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
@@ -244,5 +250,15 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").get(0);
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
         assertThat(returnTask.getOutputs().get("value"), is("Hello World"));
+    }
+
+    @Test
+    void withDefaultInput() throws IllegalVariableEvaluationException {
+        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults("test").build())).build();
+        Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).build();
+
+        RunContext runContext = runContextFactory.of(flow, execution);
+
+        assertThat(runContext.render("{{inputs.test}}"), is("test"));
     }
 }

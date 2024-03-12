@@ -25,9 +25,9 @@
             </ul>
         </template>
     </top-nav-bar>
-    <template v-if="ready">
-        <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
-    </template>
+    <div class="full-space" v-loading="!ready">
+        <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" v-if="ready" />
+    </div>
 </template>
 
 <script setup>
@@ -84,7 +84,6 @@
         },
         methods: {
             follow() {
-                this.$store.dispatch("execution/loadExecution", this.$route.params)
                 const self = this;
                 this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;
@@ -115,6 +114,16 @@
                             }
 
                             this.$store.commit("execution/setExecution", execution);
+                        }
+                        // sse.onerror doesnt return the details of the error
+                        // but as our emitter can only throw an error on 404
+                        // we can safely assume that the error
+                        this.sse.onerror = () => {
+                            this.$store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: this.$t("error"),
+                                message: this.$t("errors.404.flow or execution"),
+                            });
                         }
                     });
             },
@@ -269,3 +278,8 @@
         }
     };
 </script>
+<style>
+    .full-space {
+        flex: 1 1 auto;
+    }
+</style>

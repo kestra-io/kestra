@@ -294,7 +294,8 @@
     "errors": {
       "404": {
         "title": "Page not found",
-        "content": "The requested URL was not found on this server. <span class=\"text-muted\">That’s all we know.</span>"
+        "content": "The requested URL was not found on this server. <span class=\"text-muted\">That’s all we know.</span>",
+        "flow or execution": "The flow or execution you are looking for does not exist."
       }
     },
     "copy logs": "Copy logs",
@@ -895,7 +896,8 @@
     "errors": {
       "404": {
         "title": "Page introuvable",
-        "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>"
+        "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>",
+        "flow or execution": "Le flow ou l'exécution demandé est introuvable."
       }
     },
     "copy logs": "Copier les logs",

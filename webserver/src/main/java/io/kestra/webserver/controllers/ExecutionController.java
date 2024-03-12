@@ -95,6 +95,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -1107,10 +1108,17 @@ public class ExecutionController {
         return Flux
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
-                Execution execution = Await.until(
-                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                    Duration.ofMillis(500)
-                );
+                Execution execution = null;
+                try {
+                    execution = Await.until(
+                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                        Duration.ofMillis(500),
+                        Duration.ofSeconds(10)
+                    );
+                } catch (TimeoutException e) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the execution " + executionId));
+                    return;
+                }
 
                 Flow flow;
                 try {

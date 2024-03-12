@@ -38,7 +38,7 @@ public class QueueService {
         } else if (object.getClass() == SubflowExecution.class) {
             return ((SubflowExecution<?>) object).getExecution().getId();
         } else if (object.getClass() == SubflowExecutionResult.class) {
-            return ((SubflowExecutionResult) object).getParentTaskRun().getId();
+            return ((SubflowExecutionResult) object).getExecutionId();
         } else if (object.getClass() == ExecutionDelay.class) {
             return ((ExecutionDelay) object).uid();
         } else if (object.getClass() == ExecutorState.class) {

@@ -72,6 +72,10 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(find.size(), is(4));
         assertThat(find.get(0).getNamespace(), is(namespace));
 
+        find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, searchedTrigger.getFlowId());
+        assertThat(find.size(), is(1));
+        assertThat(find.get(0).getFlowId(), is(searchedTrigger.getFlowId()));
+
         find = triggerRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc(triggerRepository.sortMapping().apply("triggerId")))), null, null, namespacePrefix);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getTriggerId(), is(trigger.getTriggerId()));

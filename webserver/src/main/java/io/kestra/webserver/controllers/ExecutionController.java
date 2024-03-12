@@ -27,11 +27,11 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.GraphService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
-import io.kestra.core.utils.GraphUtils;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -95,6 +95,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -114,6 +115,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private GraphService graphService;
 
     @Inject
     private RunnerUtils runnerUtils;
@@ -217,7 +221,7 @@ public class ExecutionController {
                 );
 
                 return flow
-                    .map(throwFunction(value -> GraphUtils.flowGraph(value, execution)))
+                    .map(throwFunction(value -> graphService.flowGraph(value, null,  execution)))
                     .orElse(null);
             }))
             .orElse(null);
@@ -1104,10 +1108,17 @@ public class ExecutionController {
         return Flux
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
-                Execution execution = Await.until(
-                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                    Duration.ofMillis(500)
-                );
+                Execution execution = null;
+                try {
+                    execution = Await.until(
+                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                        Duration.ofMillis(500),
+                        Duration.ofSeconds(10)
+                    );
+                } catch (TimeoutException e) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the execution " + executionId));
+                    return;
+                }
 
                 Flow flow;
                 try {

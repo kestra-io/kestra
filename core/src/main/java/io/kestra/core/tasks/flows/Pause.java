@@ -123,7 +123,7 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
 
     private boolean needPause(TaskRun parentTaskRun) {
         return parentTaskRun.getState().getCurrent() == State.Type.RUNNING &&
-            parentTaskRun.getState().getHistories().get(parentTaskRun.getState().getHistories().size() - 2).getState() != State.Type.PAUSED;
+            parentTaskRun.getState().getHistories().stream().noneMatch(history -> history.getState() == State.Type.PAUSED);
     }
 
     @Override

@@ -3,7 +3,7 @@
     <section :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
-                <template #navbar v-if="embed === false">
+                <template #navbar>
                     <el-form-item>
                         <search-field />
                     </el-form-item>

@@ -39,9 +39,8 @@ import java.util.Optional;
         "If you want to execute a group of sequential tasks for each value in parallel, you can wrap the list of `tasks` " +
         "with the [Sequential task](https://kestra.io/plugins/core/tasks/flows/io.kestra.core.tasks.flows.sequential).\n" +
         "If your list of values is large, you can limit the number of concurrent tasks using the `concurrent` property.\n\n" +
-        "We highly recommend triggering a subflow for each value instead of specifying many tasks wrapped in a `Sequential` task. " +
-        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practice) " +
-        "and the [following Blueprint](https://demo.kestra.io/ui/blueprints/community/128) for more details."
+        "We highly recommend triggering a subflow for each value (e.g. using the [ForEachItem](https://kestra.io/plugins/core/tasks/flows/io.kestra.core.tasks.flows.foreachitem) task) instead of specifying many tasks wrapped in a `Sequential` task. " +
+        "This allows better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) for more details."
 )
 @Plugin(
     examples = {

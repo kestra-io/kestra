@@ -37,11 +37,17 @@ micronaut:
           - /ui/.+
           - /health
           - /prometheus
+    http-version: HTTP_1_1
   caches:
     default:
       maximum-weight: 10485760
 
   http:
+    client:
+      read-idle-timeout: 60s
+      connect-timeout: 30s
+      read-timeout: 60s
+      http-version: HTTP_1_1
     services:
       api:
         url: https://api.kestra.io

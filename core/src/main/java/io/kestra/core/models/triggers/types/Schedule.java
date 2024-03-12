@@ -194,7 +194,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @Schema(
         title = "(Deprecated) Backfill",
-        description = "Backfill property is deprecated and will be removed in the future. Instead, you can now go to the Triggers tab and start a highly customizable backfill process directly from the UI. This will allow you to backfill missed scheduled executions by providing a specific date range and custom labels. Read more about it in the [documentation](https://kestra.io/docs/workflow-components/triggers/backfill)."
+        description = "This property is deprecated and will be removed in the future. Instead, you can now go to the Triggers tab and start a highly customizable backfill process directly from the UI. This will allow you to backfill missed scheduled executions by providing a specific date range and custom labels. Read more about it in the [Backfill](https://kestra.io/docs/concepts/backfill) documentation."
     )
     @PluginProperty
     @Deprecated

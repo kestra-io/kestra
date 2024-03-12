@@ -104,7 +104,7 @@
                     return {[this.activeTab.containerClass] : true};
                 }
 
-                return {"container" : true}
+                return {"container" : true, "mt-4": true};
             },
             activeTab() {
                 return this.tabs

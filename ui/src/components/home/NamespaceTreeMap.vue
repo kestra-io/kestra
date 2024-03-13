@@ -9,7 +9,7 @@
             <template #content>
                 <span v-html="tooltipContent" />
             </template>
-            <TreeMapChart ref="chartRef" :chart-data="chartData" :options="options" />
+            <TreeMapChart ref="chartRef" :data="chartData" :options="options" />
         </el-tooltip>
     </div>
 </template>
@@ -118,10 +118,9 @@
                         key: "count",
                         groups: ["namespace", "state"],
                         backgroundColor(ctx) {
-                            const item = ctx.dataset.data[ctx.dataIndex];
-                            const color = item ? backgroundFromState(item.g.toUpperCase()) : undefined;
+                            const state = ctx.raw._data.state;
 
-                            return color !== undefined ? color : (darkTheme ? "#303e67" : "#eaf0f9");
+                            return state ? backgroundFromState(state.toUpperCase()) : (darkTheme ? "#202435" : "#E7E7F3");
                         },
                         spacing: 1,
                         borderWidth: 1,

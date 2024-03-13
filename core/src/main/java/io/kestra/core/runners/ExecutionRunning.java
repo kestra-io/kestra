@@ -27,7 +27,7 @@ public class ExecutionRunning {
     ConcurrencyState concurrencyState;
 
     public String uid() {
-        return IdUtils.fromParts(this.tenantId, this.namespace, this.flowId, this.execution.getId());
+        return IdUtils.fromPartsAndSeparator('|', this.tenantId, this.namespace, this.flowId, this.execution.getId());
     }
 
     public enum ConcurrencyState { CREATED, RUNNING, QUEUED }

@@ -9,10 +9,10 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@SuppressWarnings({"deprecation", "UnstableApiUsage"})
+@SuppressWarnings({"deprecation"})
 abstract public class IdUtils {
     private static final HashFunction HASH_FUNCTION = Hashing.md5();
-    private static final String ID_SEPARATOR = "_";
+    private static final char ID_SEPARATOR = '_';
 
     public static String create() {
         return FriendlyId.createFriendlyId();
@@ -27,8 +27,12 @@ abstract public class IdUtils {
     }
 
     public static String fromParts(String... parts) {
+        return fromPartsAndSeparator(ID_SEPARATOR, parts);
+    }
+
+    public static String fromPartsAndSeparator(char separator, String... parts) {
         return Arrays.stream(parts)
             .filter(part -> part != null)
-            .collect(Collectors.joining(ID_SEPARATOR));
+            .collect(Collectors.joining(String.valueOf(separator)));
     }
 }

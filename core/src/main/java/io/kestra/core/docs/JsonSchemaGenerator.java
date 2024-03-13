@@ -59,6 +59,11 @@ public class JsonSchemaGenerator {
         SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
+            objectNode.findParents("anyOf").forEach(jsonNode -> {
+                if (jsonNode instanceof ObjectNode oNode) {
+                    oNode.set("oneOf", oNode.remove("anyOf"));
+                }
+            });
 
             Map<String, Object> map = JacksonMapper.toMap(objectNode);
 

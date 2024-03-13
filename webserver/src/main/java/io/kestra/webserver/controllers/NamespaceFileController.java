@@ -178,7 +178,13 @@ public class NamespaceFileController {
                 }
             }
         } else {
-            try(BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream())) {
+            try(BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
+                // Done to bypass the wrong available() output of the CompletedFileUpload InputStream
+                @Override
+                public synchronized int available() {
+                    return (int) fileContent.getSize();
+                }
+            }) {
                 putNamespaceFile(tenantId, namespace, path, inputStream);
             }
         }

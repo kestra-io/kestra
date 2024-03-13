@@ -333,6 +333,7 @@ public class RunContext {
             if (execution.getLabels() != null) {
                 builder.put("labels", execution.getLabels()
                     .stream()
+                    .filter(label -> label.value() != null)
                     .map(label -> new AbstractMap.SimpleEntry<>(
                         label.key(),
                         label.value()

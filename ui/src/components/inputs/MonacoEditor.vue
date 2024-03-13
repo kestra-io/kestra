@@ -13,7 +13,7 @@
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-    import {setDiagnosticsOptions} from "monaco-yaml";
+    import {configureMonacoYaml} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas"
     import Utils from "../../utils/utils";
 
@@ -125,7 +125,7 @@
                 _this.initMonaco(monaco);
             });
 
-            setDiagnosticsOptions({
+            configureMonacoYaml(this.monaco, {
                 enableSchemaRequest: true,
                 hover: true,
                 completion: true,
@@ -148,6 +148,9 @@
                         value: this.value,
                         theme: this.theme,
                         language: this.language,
+                        suggest: {
+                            showClasses: false
+                        }
                     },
                     ...this.options
                 };

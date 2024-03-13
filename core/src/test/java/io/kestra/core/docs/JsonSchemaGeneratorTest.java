@@ -78,6 +78,14 @@ class JsonSchemaGeneratorTest {
             assertThat((List<String>) flow.get("required"), not(contains("deleted")));
             assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
+            Map<String, Object> items = map(
+                properties(flow)
+                .get("tasks")
+                .get("items")
+            );
+            assertThat(items.containsKey("anyOf"), is(false));
+            assertThat(items.containsKey("oneOf"), is(true));
+
             var bash = definitions.get("io.kestra.core.tasks.log.Log-1");
             assertThat((List<String>) bash.get("required"), not(contains("level")));
             assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
@@ -194,6 +202,10 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     private Map<String, Map<String, Object>> properties(Map<String, Object> generate) {
         return (Map<String, Map<String, Object>>) generate.get("properties");
+    }
+
+    private Map<String, Object> map(Object object) {
+        return (Map<String, Object>) object;
     }
 
     @SuperBuilder

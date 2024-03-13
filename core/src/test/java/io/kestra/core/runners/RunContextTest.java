@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -256,6 +257,16 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void withDefaultInput() throws IllegalVariableEvaluationException {
         Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults("test").build())).build();
         Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).build();
+
+        RunContext runContext = runContextFactory.of(flow, execution);
+
+        assertThat(runContext.render("{{inputs.test}}"), is("test"));
+    }
+
+    @Test
+    void withNullLabel() throws IllegalVariableEvaluationException {
+        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults("test").build())).build();
+        Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).labels(List.of(new Label("key", null))).build();
 
         RunContext runContext = runContextFactory.of(flow, execution);
 

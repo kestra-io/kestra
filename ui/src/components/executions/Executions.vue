@@ -139,6 +139,9 @@
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t('restart') }}
                             </el-button>
+                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
+                                {{ $t('replay') }}
+                            </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t('kill') }}
                             </el-button>
@@ -342,6 +345,7 @@
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
@@ -554,6 +558,9 @@
             canCheck() {
                 return this.canDelete || this.canUpdate;
             },
+            canCreate() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+            },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
@@ -641,25 +648,25 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-            resumeExecutions() {
+            genericConfirmAction(toast, queryAction, byIdAction, success) {
                 this.$toast().confirm(
-                    this.$t("bulk resume", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/queryResumeExecution", this.loadQuery({
+                                .dispatch(queryAction, this.loadQuery({
                                     sort: this.$route.query.sort || "state.startDate:desc",
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                }))
+                                }, false))
                                 .then(r => {
-                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
+                                    this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkResumeExecution", {executionsId: this.selection})
+                                .dispatch(byIdAction, {executionsId: this.selection})
                                 .then(r => {
-                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
+                                    this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                                     this.loadData();
                                 }).catch(e => this.$toast().error(e.invalids.map(exec => {
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
@@ -669,93 +676,46 @@
                     () => {
                     }
                 )
+            },
+            resumeExecutions() {
+                this.genericConfirmAction(
+                    "bulk resume",
+                    "execution/queryResumeExecution",
+                    "execution/bulkResumeExecution",
+                    "executions resumed"
+                );
             },
             restartExecutions() {
-                this.$toast().confirm(
-                    this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryRestartExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                }))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkRestartExecution", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                this.genericConfirmAction(
+                    "bulk restart",
+                    "execution/queryRestartExecution",
+                    "execution/bulkRestartExecution",
+                    "executions restarted"
+                );
+            },
+            replayExecutions() {
+                this.genericConfirmAction(
+                    "bulk replay",
+                    "execution/queryReplayExecution",
+                    "execution/bulkReplayExecution",
+                    "executions replayed"
+                );
             },
             deleteExecutions() {
-                this.$toast().confirm(
-                    this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryDeleteExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                this.genericConfirmAction(
+                    "bulk delete",
+                    "execution/queryDeleteExecution",
+                    "execution/bulkDeleteExecution",
+                    "executions deleted"
+                );
             },
             killExecutions() {
-                this.$toast().confirm(
-                    this.$t("bulk kill", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryKill", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkKill", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                this.genericConfirmAction(
+                    "bulk kill",
+                    "execution/queryKill",
+                    "execution/bulkKill",
+                    "executions killed"
+                );
             },
             setLabels() {
                 this.$toast().confirm(

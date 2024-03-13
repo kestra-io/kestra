@@ -805,6 +805,61 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
     }
 
+    @Test
+    void replayByIds() throws TimeoutException {
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+
+        assertThat(execution1.getState().isTerminated(), is(true));
+        assertThat(execution2.getState().isTerminated(), is(true));
+
+        PagedResults<?> executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+        );
+        assertThat(executions.getTotal(), is(2L));
+
+        // replay executions
+        BulkResponse replayResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/executions/replay/by-ids",
+                List.of(execution1.getId(), execution2.getId())
+            ),
+            BulkResponse.class
+        );
+        assertThat(replayResponse.getCount(), is(2));
+
+        executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+        );
+        assertThat(executions.getTotal(), is(4L));
+    }
+
+    @Test
+    void replayByQuery() throws TimeoutException {
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+
+        assertThat(execution1.getState().isTerminated(), is(true));
+        assertThat(execution2.getState().isTerminated(), is(true));
+
+        PagedResults<?> executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+        );
+        assertThat(executions.getTotal(), is(2L));
+
+        // replay executions
+        BulkResponse resumeResponse = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/replay/by-query?namespace=io.kestra.tests", null),
+            BulkResponse.class
+        );
+        assertThat(resumeResponse.getCount(), is(2));
+
+        executions = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+        );
+        assertThat(executions.getTotal(), is(4L));
+    }
+
     @RetryingTest(5)
     void killPaused() throws TimeoutException, InterruptedException {
         // Run execution until it is paused

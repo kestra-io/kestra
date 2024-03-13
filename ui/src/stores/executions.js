@@ -59,6 +59,19 @@ export default {
                 {params: options}
             )
         },
+        bulkReplayExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/replay/by-ids`,
+                options.executionsId
+            )
+        },
+        queryReplayExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/replay/by-query`,
+                {},
+                {params: options}
+            )
+        },
         replayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/replay`,

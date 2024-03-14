@@ -66,7 +66,7 @@ public class Extension extends AbstractExtension {
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("json", new JsonFilter());
-        filters.put("yaml", new JsonFilter());
+        filters.put("yaml", new YamlFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());
         filters.put("urldecode", new UrlDecoderFilter());

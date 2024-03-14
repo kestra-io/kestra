@@ -23,7 +23,6 @@ class YamlFilterTest {
 
     @Test
     void map() throws IllegalVariableEvaluationException {
-
         ZonedDateTime date = ZonedDateTime.parse("2013-09-08T16:19:00+02").withZoneSameLocal(ZoneId.systemDefault());
 
         ImmutableMap<String, Object> vars = ImmutableMap.of(

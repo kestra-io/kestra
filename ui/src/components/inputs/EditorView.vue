@@ -632,6 +632,7 @@
                 return;
             }
             saveWithoutRevisionGuard();
+            flowYamlOrigin.value = flowYaml.value;
         })
     };
 

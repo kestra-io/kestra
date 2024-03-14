@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.YAMLException;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class YamlFunction implements Function {
-    final static ObjectMapper MAPPER = new ObjectMapper();
+    final static ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
     private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {};
 
     public List<String> getArgumentNames() {

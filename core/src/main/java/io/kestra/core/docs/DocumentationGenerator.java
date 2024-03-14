@@ -53,7 +53,6 @@ public class DocumentationGenerator {
                 public Map<String, Filter> getFilters() {
                     Map<String, Filter> filters = new HashMap<>();
                     filters.put("json", new JsonFilter());
-                    filters.put("yaml", new YamlFilter());
                     return filters;
                 }
             })

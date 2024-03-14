@@ -9,7 +9,7 @@
             <el-text size="small">
                 {{ namespaces }}
             </el-text>
-            <router-link :to="{name: 'flows/list'}">
+            <router-link :to="{name: namespaceRoute}">
                 <el-button class="wh-15" :icon="TextSearchVariant" link />
             </router-link>
         </el-row>
@@ -154,6 +154,15 @@
             },
             flows() {
                 return this.usages.flows?.count ?? 0;
+            },
+            namespaceRoute() {
+                try {
+                    this.$router.resolve({name: "namespaces/list"})
+                    return "namespaces/list";
+
+                } catch (error) {
+                    return "flows/list"
+                }
             },
             tasks() {
                 return this.aggregateValues(this.usages.flows?.taskTypeCount);

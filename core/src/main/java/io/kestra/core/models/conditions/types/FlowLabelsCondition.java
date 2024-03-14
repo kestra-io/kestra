@@ -28,7 +28,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition that check labels of an execution."
+    title = "Condition that check labels of a flow."
 )
 @Plugin(
     examples = {
@@ -36,20 +36,20 @@ import java.util.Map;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.core.models.conditions.types.ExecutionLabelsCondition",
+                "    - type: io.kestra.core.models.conditions.types.FlowLabelsCondition",
                 "      labels:",
                 "         owner: john.doe"
             }
         )
     }
 )
-public class ExecutionLabelsCondition extends Condition {
+public class FlowLabelsCondition extends Condition {
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @NotNull
     @Schema(
-        description = "List of labels to match in the execution.",
+        description = "List of labels to match in the flow.",
         implementation = Object.class, anyOf = {List.class, Map.class}
     )
     @PluginProperty
@@ -58,7 +58,7 @@ public class ExecutionLabelsCondition extends Condition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         for (Label label : this.labels) {
-            if (conditionContext.getExecution().getLabels() == null || !conditionContext.getExecution().getLabels().contains(label)) {
+            if (conditionContext.getFlow().getLabels() == null || !conditionContext.getFlow().getLabels().contains(label)) {
                 return false;
             }
         }

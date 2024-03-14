@@ -22,15 +22,6 @@ import java.util.Map;
 @Singleton
 @Introspected
 public class TaskDefaultValidator implements ConstraintValidator<TaskDefaultValidation, TaskDefault> {
-    @Inject
-    private ModelValidator modelValidator;
-
-    @Inject
-    private TaskDefaultService taskDefaultService;
-
-    @Inject
-    private YamlFlowParser yamlFlowParser;
-
     @Override
     public boolean isValid(@Nullable TaskDefault value, @NonNull AnnotationValue<TaskDefaultValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
         if (value == null) {

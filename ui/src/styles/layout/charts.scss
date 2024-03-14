@@ -1,14 +1,10 @@
 .executions-charts {
     position: relative;
-    > div {
-        height: 100px;
-    }
+    height: 100px;
 
     &.mini {
-        > div {
-            height: 50px;
-            width: 250px
-        }
+        height: 50px;
+        width: 250px
     }
 }
 

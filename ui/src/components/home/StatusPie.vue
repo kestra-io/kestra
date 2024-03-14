@@ -83,13 +83,11 @@
 @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 .status-pie {
-    div {
-        height: 100px;
+    height: 100px;
 
-        @media (min-width: map-get($grid-breakpoints, "md")) {
-            & {
-                height: 200px;
-            }
+    @media (min-width: map-get($grid-breakpoints, "md")) {
+        & {
+            height: 200px;
         }
     }
 }

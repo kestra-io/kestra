@@ -107,10 +107,6 @@
 
         &.big {
             height: 200px;
-
-            .executions-charts > div {
-                height: 200px;
-            }
         }
     }
 </style>

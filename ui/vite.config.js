@@ -33,11 +33,6 @@ export default defineConfig({
         }),
         downloadVsix({
             targets: [
-                // increase build by 80mb
-                // {
-                //     vsixUrl: "https://github.com/kestra-io/vscode-kestra/releases/download/v0.1.7/ms-python.vscode-pylance-2023.11.12.vsix",
-                //     outputDir: "public/vscode/extensions/pylance"
-                // },
                 {
                     vsixUrl: "https://github.com/kestra-io/vscode-kestra/releases/download/v0.1.7/vscode-yaml-1.14.1.vsix",
                     outputDir: "public/vscode/extensions/yaml"

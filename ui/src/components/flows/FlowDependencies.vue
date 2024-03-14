@@ -47,8 +47,6 @@
                 if (!initialLoad.value) {
                     let newNodes = new Set(response.data.nodes.map(n => n.uid))
                     let oldNodes = new Set(getNodes.value.map(n => n.id))
-                    console.log(response.data.nodes)
-                    console.log(getNodes.value)
                     store.dispatch("core/showMessage", {
                         variant: "success",
                         title: t("dependencies loaded"),

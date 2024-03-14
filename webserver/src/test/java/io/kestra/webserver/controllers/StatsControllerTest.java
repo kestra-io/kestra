@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
+import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.type.Argument;
@@ -38,15 +39,29 @@ class StatsControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void dailyGroupByFlowStatistics() {
+    void logsDailyStatistics() {
         var dailyStatistics = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/executions/daily/group-by-flow", new StatsController.ByFlowStatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), null))
+                .POST("/api/v1/stats/logs/daily", new StatsController.LogStatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now()))
                 .contentType(MediaType.APPLICATION_JSON),
-            Map.class);
+            Argument.listOf(LogStatistics.class)
+        );
 
         assertThat(dailyStatistics, notNullValue());
     }
+
+    @Test
+    void logDailyExecutions() {
+        var dailyStatistics = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/stats/executions/latest/group-by-flow", new StatsController.LastExecutionsRequest(List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.test").id("logs").build())))
+                .contentType(MediaType.APPLICATION_JSON),
+            Argument.listOf(Execution.class)
+        );
+
+        assertThat(dailyStatistics, notNullValue());
+    }
+
 
     @Test
     void lastExecutions() {

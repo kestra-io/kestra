@@ -2,6 +2,8 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.statistics.LogStatistics;
+import io.kestra.core.utils.DateUtils;
 import io.micronaut.data.model.Pageable;
 import org.slf4j.event.Level;
 
@@ -37,6 +39,16 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         @Nullable ZonedDateTime endDate
     );
 
+    List<LogStatistics> statistics(
+        @Nullable String query,
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable Level minLevel,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable DateUtils.GroupType groupBy
+    );
 
     LogEntry save(LogEntry log);
 

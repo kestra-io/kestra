@@ -46,29 +46,27 @@ class YamlFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars.second.string | yaml }}", vars);
-        assertThat(render, is("\"string\""));
+        assertThat(render, is("string\n"));
 
         render = variableRenderer.render("{{ vars.second.int | yaml }}", vars);
-        assertThat(render, is("1"));
+        assertThat(render, is("1\n"));
 
         render = variableRenderer.render("{{ vars.second.float | yaml }}", vars);
-        assertThat(render, is("1.123"));
+        assertThat(render, is("1.123\n"));
 
         render = variableRenderer.render("{{ vars.second.list | yaml }}", vars);
-        assertThat(render, is("[\"string\",1,1.123]"));
+        assertThat(render, is(" - string\n - 1\n - 1.123\n"));
 
         render = variableRenderer.render("{{ vars.second.bool | yaml }}", vars);
-        assertThat(render, is("true"));
+        assertThat(render, is("true\n"));
 
         render = variableRenderer.render("{{ vars.second.date | yaml }}", vars);
-        assertThat(render, is("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\""));
+        assertThat(render, is( date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\n"));
 
         render = variableRenderer.render("{{ vars.second.map | yaml }}", vars);
-        assertThat(render, containsString("\"int\":1"));
-        assertThat(render, containsString("\"int\":1"));
-        assertThat(render, containsString("\"float\":1.123"));
-        assertThat(render, containsString("\"string\":\"string\""));
-        assertThat(render, startsWith("{"));
-        assertThat(render, endsWith("}"));
+        assertThat(render, containsString("int: 1\n"));
+        assertThat(render, containsString("int: 1\n"));
+        assertThat(render, containsString("float: 1.123\n"));
+        assertThat(render, containsString("string: string\n"));
     }
 }

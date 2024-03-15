@@ -41,3 +41,8 @@ tasks:
       - id: default
         type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{ inputs.def }} > {{taskrun.startDate}}"
+
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "0 * * * *"

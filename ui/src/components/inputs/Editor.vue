@@ -303,7 +303,7 @@
                     });
                 }
 
-                if (this.editor.onDidContentSizeChange instanceof Function) {
+                if (!this.original) {
                     this.editor.onDidContentSizeChange(_ => {
                         if (this.guidedProperties.monacoRange) {
                             editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
@@ -332,9 +332,7 @@
                             this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
                         }
                     });
-                }
 
-                if (this.editor.onDidChangeCursorPosition instanceof Function) {
                     this.editor.onDidChangeCursorPosition(() => {
                         let position = this.editor.getPosition();
                         let model = this.editor.getModel();

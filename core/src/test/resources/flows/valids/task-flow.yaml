@@ -22,3 +22,8 @@ tasks:
       launchTaskLabel: launchFoo
     outputs:
       extracted: "{{ outputs.default.value ?? outputs['error-t1'].value }}"
+
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "0 * * * *"

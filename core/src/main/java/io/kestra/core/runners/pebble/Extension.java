@@ -77,6 +77,7 @@ public class Extension extends AbstractExtension {
         filters.put("flatten",new FlattenFilter());
         filters.put("indent",new IndentFilter());
         filters.put("nindent",new NindentFilter());
+        filters.put("yaml",new YamlFilter());
         return filters;
     }
 
@@ -103,6 +104,7 @@ public class Extension extends AbstractExtension {
         }
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
+        functions.put("yaml", new YamlFunction());
 
         return functions;
     }

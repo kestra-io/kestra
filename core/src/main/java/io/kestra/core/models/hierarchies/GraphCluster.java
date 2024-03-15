@@ -69,7 +69,7 @@ public class GraphCluster extends AbstractGraph {
 
     public void addNode(AbstractGraph node, boolean withClusterUidPrefix) {
         if (withClusterUidPrefix) {
-            node.updateUidWithChildren(prefixedUid(node.uid));
+            node.updateUidWithChildren(prefixedUid(node.getUid()));
         }
         this.getGraph().addNode(node);
     }

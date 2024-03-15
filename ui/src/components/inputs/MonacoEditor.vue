@@ -225,6 +225,7 @@
 <style scoped lang="scss">
     .monaco-editor {
         height: 100%;
+        outline: none;
     }
 
 </style>

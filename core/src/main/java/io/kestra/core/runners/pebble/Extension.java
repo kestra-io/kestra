@@ -76,6 +76,8 @@ public class Extension extends AbstractExtension {
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
         filters.put("flatten",new FlattenFilter());
+        filters.put("indent",new IndentFilter());
+        filters.put("nindent",new NindentFilter());
         return filters;
     }
 

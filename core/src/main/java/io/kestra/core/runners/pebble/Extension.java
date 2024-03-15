@@ -75,6 +75,7 @@ public class Extension extends AbstractExtension {
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
         filters.put("flatten",new FlattenFilter());
+        filters.put("yaml",new YamlFilter());
         return filters;
     }
 
@@ -101,6 +102,7 @@ public class Extension extends AbstractExtension {
         }
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
+        functions.put("yaml", new YamlFunction());
 
         return functions;
     }

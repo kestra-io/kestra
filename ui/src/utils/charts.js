@@ -74,8 +74,9 @@ export function chartClick(moment, router, route, event) {
     const query = {};
 
     if (event.date) {
-        query.startDate = moment(event.date).toISOString(true);
-        query.endDate = moment(event.date).add(1, "d").toISOString(true);
+        const formattedDate = moment(event.date, "DD/MM/YYYY");
+        query.startDate = formattedDate.toISOString(true);
+        query.endDate = formattedDate.add(1, "d").toISOString(true);
     }
 
     if (event.startDate) {
@@ -121,9 +122,8 @@ export function chartClick(moment, router, route, event) {
         router.push({
             name: "executions/list",
             params: {
-            tab: "executions",
-            tenant: route.params.tenant
-        },
+                tenant: route.params.tenant
+            },
             query: query
         });
     }

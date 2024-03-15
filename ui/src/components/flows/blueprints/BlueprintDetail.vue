@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
+    <top-nav-bar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
         <template #additional-right>
             <ul v-if="userCanCreateFlow">
                 <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
@@ -10,7 +10,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div v-else class="header-wrapper">
+    <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
                 <el-icon size="medium" @click="goBack">
@@ -23,8 +23,8 @@
         </div>
     </div>
 
-    <section :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
-        <el-card>
+    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
+        <el-card v-if="blueprint">
             <div class="embedded-topology" v-if="flowGraph">
                 <low-code-editor
                     v-if="flowGraph"
@@ -37,7 +37,7 @@
                 />
             </div>
         </el-card>
-        <el-row :gutter="30">
+        <el-row :gutter="30" v-if="blueprint">
             <el-col :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <el-card>

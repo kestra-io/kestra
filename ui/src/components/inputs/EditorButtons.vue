@@ -54,7 +54,7 @@
             </template>
         </el-dropdown>
     </div>
-    <div v-bind="$attrs">
+    <div>
         <el-button
             :icon="ContentSave"
             @click="forwardEvent('save', $event)"
@@ -80,6 +80,14 @@
     import {defineComponent} from "vue";
 
     export default defineComponent({
+        emits: [
+            "delete-flow",
+            "copy",
+            "open-new-error",
+            "open-new-trigger",
+            "open-edit-metadata",
+            "save"
+        ],
         props: {
             isCreating: {
                 type: Boolean,

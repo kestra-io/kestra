@@ -38,11 +38,6 @@
             "update:filterValue"
         ],
         created() {
-            this.filterType = {
-                RELATIVE: "REL",
-                ABSOLUTE: "ABS"
-            };
-
             this.selectedFilterType = (this.$route.query.startDate || this.$route.query.endDate) ? this.filterType.ABSOLUTE : this.filterType.RELATIVE;
         },
         mounted() {
@@ -50,7 +45,11 @@
         },
         data() {
             return {
-                selectedFilterType: undefined
+                selectedFilterType: undefined,
+                filterType: {
+                    RELATIVE: "REL",
+                    ABSOLUTE: "ABS"
+                }
             }
         },
         computed: {

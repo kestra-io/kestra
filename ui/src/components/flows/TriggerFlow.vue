@@ -31,7 +31,7 @@
             },
             namespace: {
                 type: String,
-                required: true
+                default: undefined
             },
             disabled: {
                 type: Boolean,

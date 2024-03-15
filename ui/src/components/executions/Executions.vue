@@ -123,7 +123,7 @@
                     stripe
                     table-layout="auto"
                     fixed
-                    @row-dblclick="onRowDoubleClick"
+                    @row-dblclick="row => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
@@ -184,7 +184,7 @@
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(scope.row)" />
+                                <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(executionParams(scope.row))" />
                             </template>
                         </el-table-column>
 
@@ -568,6 +568,13 @@
             }
         },
         methods: {
+            executionParams(row) {
+                return {
+                    namespace: row.namespace,
+                    flowId: row.flowId,
+                    id: row.id
+                }
+            },
             onDisplayColumnsChange(event) {
                 localStorage.setItem(this.storageKey, event);
                 this.displayColumns = event;

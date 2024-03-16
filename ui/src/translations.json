@@ -100,6 +100,13 @@
     "add flow": "Add flow",
     "from": "From",
     "to": "To",
+    "search filters": {
+      "saved": "Saved filters",
+      "manage": "Manage search filters",
+      "manage desc": "Manage saved search filters",
+      "save filter": "Save filter",
+      "filter name": "Filter name"
+    },
     "steps": "Steps",
     "state": "State",
     "search term in message": "Search term in message",

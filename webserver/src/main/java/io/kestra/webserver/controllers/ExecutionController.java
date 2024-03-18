@@ -247,7 +247,7 @@ public class ExecutionController {
 
         Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
-        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
 
         try {
             return EvalResult.builder()

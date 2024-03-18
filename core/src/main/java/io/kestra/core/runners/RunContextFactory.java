@@ -23,7 +23,11 @@ public class RunContextFactory {
     }
 
     public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun) {
-        return new RunContext(applicationContext, flow, task, execution, taskRun);
+        return this.of(flow, task, execution, taskRun, true);
+    }
+
+    public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
+        return new RunContext(applicationContext, flow, task, execution, taskRun, decryptVariables);
     }
 
     public RunContext of(Flow flow, AbstractTrigger trigger) {

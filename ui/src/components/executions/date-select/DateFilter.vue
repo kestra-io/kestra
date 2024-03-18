@@ -65,7 +65,11 @@
         },
         methods: {
             onSelectedFilterType() {
-                this.$emit("update:isRelative", this.selectedFilterType === this.filterType.RELATIVE);
+                const relativeFilterSelected = this.selectedFilterType === this.filterType.RELATIVE;
+
+                this.$emit("update:isRelative", relativeFilterSelected);
+
+                this.tryOverrideAbsFilter(relativeFilterSelected);
             },
             onAbsFilterChange(event) {
                 const filter = {
@@ -85,6 +89,12 @@
             },
             updateFilter(filter) {
                 this.$emit("update:filterValue", filter);
+            },
+            tryOverrideAbsFilter(relativeFilterSelected) {
+                if (relativeFilterSelected && (this.$route.query.startDate || this.$route.query.endDate)) {
+                    const forcedDefaultRelativeFilter = {timeRange: undefined};
+                    this.onRelFilterChange(forcedDefaultRelativeFilter);
+                }
             }
         }
     }

@@ -198,7 +198,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     )
     @PluginProperty
     @Deprecated
-    private ScheduleBackfill backfill;
+    private Map<String, Object> backfill;
 
     @Schema(
         title = "What to do in case of missed schedules",
@@ -589,14 +589,6 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         @Schema(title = "The date of the previous schedule.")
         @NotNull
         private ZonedDateTime previous;
-    }
-
-    @Deprecated
-    public static class ScheduleBackfill {
-        @Schema(
-            title = "The first start date."
-        )
-        ZonedDateTime start;
     }
 
     public enum RecoverMissedSchedules {

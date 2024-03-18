@@ -26,6 +26,10 @@ public abstract class AbstractClassDocumentation<T> {
     protected Map<String, Object> defs = new TreeMap<>();
     protected Map<String, Object> inputs = new TreeMap<>();
     protected Map<String, Object> propertiesSchema;
+    private final List<String> defsExclusions = List.of(
+        "io.kestra.core.models.conditions.Condition",
+        "io.kestra.core.models.conditions.ScheduleCondition"
+    );
 
     @SuppressWarnings("unchecked")
     protected AbstractClassDocumentation(JsonSchemaGenerator jsonSchemaGenerator, Class<? extends T> cls, Class<T> baseCls) {
@@ -36,6 +40,7 @@ public abstract class AbstractClassDocumentation<T> {
 
         if (this.propertiesSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
+            defsExclusions.forEach(this.defs::remove);
             this.propertiesSchema.remove("$defs");
         }
 

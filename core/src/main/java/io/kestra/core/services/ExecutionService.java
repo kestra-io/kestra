@@ -77,12 +77,11 @@ public class ExecutionService {
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(taskRunId)) {
-                    TaskRunAttempt newAttempt = TaskRunAttempt.builder()
-                        .state(new State(State.Type.CREATED))
-                        .build();
+//                    TaskRunAttempt newAttempt = TaskRunAttempt.builder()
+//                        .state(new State(State.Type.CREATED))
+//                        .build();
                     return taskRun
-                        .withState(State.Type.CREATED)
-                        .withAttempts(Stream.concat(taskRun.getAttempts().stream(), Stream.of(newAttempt)).collect(Collectors.toList()));
+                        .withState(State.Type.CREATED);
                 }
 
                 return taskRun;

@@ -837,9 +837,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
-                    }
-
-                    else if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
+                    } else if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
                         Execution newAttempt = executionService.retry(
                             pair.getKey(),
                             executionDelay.getTaskRunId()
@@ -867,7 +865,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return taskRuns
             .stream()
             .anyMatch(taskRun -> {
-                String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
+                String deduplicationKey = taskRun.getParentTaskRunId() + "-" +
+                    taskRun.getTaskId() + "-" +
+                    taskRun.getValue() + "-" +
+                    (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0);
 
                 if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
                     log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
@@ -880,7 +881,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     }
 
     private boolean deduplicateWorkerTask(Execution execution, ExecutorState executorState, TaskRun taskRun) {
-        String deduplicationKey = taskRun.getId();
+        String deduplicationKey = taskRun.getId() +
+            (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0);
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
@@ -895,7 +897,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private boolean deduplicateSubflowExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
         // There can be multiple executions for the same task, so we need to deduplicated with the worker task execution iteration
         String deduplicationKey = taskRun.getId() + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
-       State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
+        State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
             log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
@@ -918,7 +920,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public void close() throws IOException {
         setState(ServiceState.TERMINATING);
@@ -932,19 +936,25 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public String getId() {
         return id;
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public ServiceType getType() {
         return ServiceType.EXECUTOR;
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public ServiceState getState() {
         return state.get();

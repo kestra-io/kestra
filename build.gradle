@@ -143,7 +143,7 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20240207'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
+        api group: 'com.google.guava', name: 'guava', version: '33.1.0-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.15.1'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"

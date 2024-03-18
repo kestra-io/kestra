@@ -201,7 +201,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     tasks:
                       - id: subflow_per_batch
                         type: io.kestra.core.tasks.flows.ForEachItem
-                        items: "{{ trigger.uris[parent.taskrun.value] }}" 
+                        items: "{{ trigger.uris[parent.taskrun.value] }}"
                         batch:
                           rows: 1
                         flowId: process_batch
@@ -354,6 +354,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter
     @NoArgsConstructor
     public static class ForEachItemSplit extends Task implements RunnableTask<ForEachItemSplit.Output> {
+        static final String SUFFIX = "_split";
+
         private String items;
         private Batch batch;
 
@@ -361,7 +363,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             this.items = items;
             this.batch = batch;
 
-            this.id = parentId + "_split";
+            this.id = parentId + SUFFIX;
             this.type = ForEachItemSplit.class.getName();
         }
 
@@ -393,6 +395,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter
     @NoArgsConstructor
     public static class ForEachItemExecutable extends Task implements ExecutableTask<Output> {
+        static final String SUFFIX = "_item";
+
         private Map<String, Object> inputs;
         private Boolean inheritLabels;
         private Map<String, String> labels;
@@ -408,7 +412,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             this.transmitFailed = transmitFailed;
             this.subflowId = subflowId;
 
-            this.id = parentId + "_executable";
+            this.id = parentId + SUFFIX;
             this.type = ForEachItemExecutable.class.getName();
         }
 
@@ -421,7 +425,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             TaskRun currentTaskRun
         ) throws InternalException {
             // get the list of splits from the outputs of the split task
-            String taskId = this.id.replace("_executable", "_split");
+            String taskId = this.id.substring(0, this.id.lastIndexOf('_')) + ForEachItemSplit.SUFFIX;
             var taskOutput = extractOutput(runContext, taskId);
             URI splitsURI = URI.create((String) taskOutput.get("splits"));
 
@@ -544,16 +548,17 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter
     @NoArgsConstructor
     public static class ForEachItemMergeOutputs extends Task implements RunnableTask<ForEachItemMergeOutputs.Output> {
+        static final String SUFFIX = "_merge";
 
         private ForEachItemMergeOutputs(String parentId) {
-            this.id = parentId + "_merge";
+            this.id = parentId + SUFFIX;
             this.type = ForEachItemMergeOutputs.class.getName();
         }
 
         @Override
         public ForEachItemMergeOutputs.Output run(RunContext runContext) throws Exception {
             // get the list of splits from the outputs of the split task
-            String taskId = this.id.replace("_merge", "_executable");
+            String taskId = this.id.substring(0, this.id.lastIndexOf('_')) + ForEachItemExecutable.SUFFIX;
             var taskOutput = extractOutput(runContext, taskId);
             Integer iterations = (Integer) taskOutput.get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES);
             String subflowOutputsBaseUri = (String) taskOutput.get(ExecutableUtils.TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI);

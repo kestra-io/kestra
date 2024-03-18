@@ -94,6 +94,9 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
+                    <filters :storage-key="filterStorageKey" />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button
                         :can-auto-refresh="canAutoRefresh"
                         class="float-right"
@@ -369,6 +372,7 @@
     import LabelFilter from "../labels/LabelFilter.vue";
     import DateFilter from "./date-select/DateFilter.vue";
     import RefreshButton from "../layout/RefreshButton.vue"
+    import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
@@ -396,6 +400,7 @@
             LabelFilter,
             DateFilter,
             RefreshButton,
+            Filters,
             StatusFilterButtons,
             StateGlobalChart,
             TriggerAvatar,
@@ -572,6 +577,9 @@
             },
             isDisplayedTop() {
                 return this.embed === false || this.filter
+            },
+            filterStorageKey(){
+                return storageKeys.EXECUTIONS_FILTERS
             }
         },
         methods: {

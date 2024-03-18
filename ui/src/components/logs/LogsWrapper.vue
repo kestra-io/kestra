@@ -29,6 +29,11 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <el-form-item>
+                            <filters :storage-key="storageKeys.LOGS_FILTERS" />
+                        </el-form-item>
+                    </el-form-item>
+                    <el-form-item>
                         <refresh-button class="float-right" @refresh="refresh" />
                     </el-form-item>
                 </template>
@@ -92,10 +97,14 @@
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
     import LogChart from "../stats/LogChart.vue";
+    import Filters from "../saved-filters/Filters.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
-        components: {DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
+        components: {
+            Filters,
+            DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
         props: {
             logLevel: {
                 type: String,
@@ -113,6 +122,9 @@
             };
         },
         computed: {
+            storageKeys() {
+                return storageKeys
+            },
             ...mapState("log", ["logs", "total", "level"]),
             ...mapState("stat", ["logDaily"]),
             routeInfo() {

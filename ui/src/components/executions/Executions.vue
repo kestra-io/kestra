@@ -32,7 +32,7 @@
                     <namespace-select
                         data-type="flow"
                         v-if="$route.name !== 'flows/update'"
-                        :value="namespace"
+                        :value="$route.query.namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />
                 </el-form-item>

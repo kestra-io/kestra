@@ -10,6 +10,7 @@ import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -64,6 +65,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
         title = "The file to be split."
     )
     @PluginProperty(dynamic = true)
+    @NotNull
     private String from;
 
     private String bytes;

@@ -7,6 +7,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.Charsets;
@@ -43,6 +44,7 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         title = "The file to be split."
     )
     @PluginProperty(dynamic = true)
+    @NotNull
     private String from;
 
     @Schema(

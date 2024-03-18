@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.runner.memory.MemoryRunner;
 import io.micronaut.context.ApplicationContext;
@@ -74,6 +75,7 @@ public class FlowTestCommand extends AbstractCommand {
         MemoryRunner runner = applicationContext.getBean(MemoryRunner.class);
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+        FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
         RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
 
         Map<String, Object> inputs = new HashMap<>();
@@ -97,7 +99,7 @@ public class FlowTestCommand extends AbstractCommand {
 
             runnerUtils.runOne(
                 all.get(0),
-                (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs),
+                (flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputs),
                 Duration.ofHours(1)
             );
 

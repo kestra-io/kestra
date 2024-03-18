@@ -70,15 +70,6 @@ public final class ServiceRegistry {
     }
 
     /**
-     * Checks whether this registry is empty.
-     *
-     * @return {@code} true if no service is registered.
-     */
-    public boolean isEmpty() {
-        return services.isEmpty();
-    }
-
-    /**
      * Waits for a given service to be in a given state if registered.
      *
      * @param type            The service type
@@ -99,5 +90,14 @@ public final class ServiceRegistry {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Checks whether this registry is empty.
+     *
+     * @return {@code} true if no service is registered.
+     */
+    public boolean isEmpty() {
+        return services.isEmpty();
     }
 }

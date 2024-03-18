@@ -20,6 +20,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -32,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -90,6 +92,44 @@ public class Execution implements DeletedInterface, TenantInterface {
     @NotNull
     @Builder.Default
     boolean deleted = false;
+
+    /**
+     * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and inputs.
+     *
+     * @param flow   The Flow.
+     * @param inputs The Flow's inputs.
+     * @param labels The Flow labels.
+     * @return a new {@link Execution}.
+     */
+    public static Execution newExecution(final Flow flow,
+                                         final BiFunction<Flow, Execution, Map<String, Object>> inputs,
+                                         final List<Label> labels) {
+        Execution execution = builder()
+            .id(IdUtils.create())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .state(new State())
+            .build();
+
+        if (inputs != null) {
+            execution = execution.withInputs(inputs.apply(flow, execution));
+        }
+
+        List<Label> executionLabels = new ArrayList<>();
+        if (flow.getLabels() != null) {
+            executionLabels.addAll(flow.getLabels());
+        }
+        if (labels != null) {
+            executionLabels.addAll(labels);
+        }
+        if (!executionLabels.isEmpty()) {
+            execution = execution.withLabels(executionLabels);
+        }
+
+        return execution;
+    }
 
     public static class ExecutionBuilder {
         void prebuild() {

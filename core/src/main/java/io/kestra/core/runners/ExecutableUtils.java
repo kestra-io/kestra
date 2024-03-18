@@ -16,17 +16,11 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.storages.Storage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.IntStream;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public final class ExecutableUtils {
@@ -99,11 +93,11 @@ public final class ExecutableUtils {
             "flowRevision", currentFlow.getRevision()
         );
 
-        RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-        Execution execution = runnerUtils
+        FlowInputOutput flowInputOutput = runContext.getApplicationContext().getBean(FlowInputOutput.class);
+        Execution execution = Execution
             .newExecution(
                 flow,
-                (f, e) -> runnerUtils.typedInputs(f, e, inputs),
+                (f, e) -> flowInputOutput.typedInputs(f, e, inputs),
                 labels)
             .withTrigger(ExecutionTrigger.builder()
                 .id(currentTask.getId())

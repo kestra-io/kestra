@@ -37,7 +37,6 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     @Inject
     protected TemplateRepositoryInterface templateRepository;
 
-
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     protected QueueInterface<LogEntry> logQueue;
@@ -47,7 +46,10 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         .namespace("io.kestra.tests")
         .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
-    public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
+    public static void withTemplate(RunnerUtils runnerUtils,
+                                    TemplateRepositoryInterface templateRepository,
+                                    LocalFlowRepositoryLoader repositoryLoader,
+                                    QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
         templateRepository.create(TEMPLATE_1);
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
             "flows/templates/with-template.yaml")));

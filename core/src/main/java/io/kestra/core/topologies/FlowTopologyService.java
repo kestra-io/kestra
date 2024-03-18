@@ -13,7 +13,6 @@ import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -36,14 +35,10 @@ public class FlowTopologyService {
     protected ConditionService conditionService;
 
     @Inject
-    protected RunnerUtils runnerUtils;
-
-    @Inject
     private FlowRepositoryInterface flowRepository;
 
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
-
 
     public FlowTopologyGraph graph(Stream<FlowTopology> flows, Function<FlowNode, FlowNode> anonymize) {
         Graph<FlowNode, FlowRelation> graph = new Graph<>();
@@ -177,16 +172,16 @@ public class FlowTopologyService {
         List<AbstractTrigger> triggers = ListUtils.emptyOnNull(child.getTriggers());
 
         // simulated execution
-        Execution execution = runnerUtils.newExecution(parent, (f, e) -> null, null);
+        Execution execution = Execution.newExecution(parent, (f, e) -> null, null);
 
         // keep only flow trigger
         List<io.kestra.core.models.triggers.types.Flow> flowTriggers = triggers
             .stream()
             .filter(t -> t instanceof io.kestra.core.models.triggers.types.Flow)
             .map(t -> (io.kestra.core.models.triggers.types.Flow) t)
-            .collect(Collectors.toList());
+            .toList();
 
-        if (flowTriggers.size() == 0) {
+        if (flowTriggers.isEmpty()) {
             return false;
         }
 
@@ -207,7 +202,7 @@ public class FlowTopologyService {
                 .values()
                 .stream()
                 .filter(c -> !isFilterCondition(c))
-                .collect(Collectors.toList());
+                .toList();
 
 
             return (multipleConditions

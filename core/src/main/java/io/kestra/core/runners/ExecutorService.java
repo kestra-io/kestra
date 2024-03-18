@@ -43,7 +43,7 @@ public class ExecutorService {
     private LogService logService;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private FlowInputOutput flowInputOutput;
 
     protected FlowExecutorInterface flowExecutorInterface;
 
@@ -347,7 +347,7 @@ public class ExecutorService {
                     .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
                 RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                 outputs = runContext.render(outputs);
-                outputs = runnerUtils.typedOutputs(flow, executor.getExecution(), outputs);
+                outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
             } catch (Exception e) {
                 logService.logExecution(

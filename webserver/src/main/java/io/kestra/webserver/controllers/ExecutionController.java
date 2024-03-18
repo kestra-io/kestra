@@ -22,9 +22,9 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.GraphService;
@@ -120,7 +120,7 @@ public class ExecutionController {
     private GraphService graphService;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private FlowInputOutput flowInputOutput;
 
     @Inject
     private StorageInterface storageInterface;
@@ -549,9 +549,9 @@ public class ExecutionController {
         }
 
         Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
-        Execution current = runnerUtils.newExecution(
+        Execution current = Execution.newExecution(
             found,
-            throwBiFunction((flow, execution) -> runnerUtils.typedInputs(flow, execution, inputMap, files)),
+            throwBiFunction((flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputMap, files)),
             parseLabels(labels)
         );
 

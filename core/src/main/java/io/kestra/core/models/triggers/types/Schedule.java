@@ -17,8 +17,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.CronExpression;
@@ -411,8 +411,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         // add inputs and inject defaults
         if (!inputs.isEmpty()) {
-            RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-            execution = execution.withInputs(runnerUtils.typedInputs(conditionContext.getFlow(), execution, inputs));
+            FlowInputOutput flowInputOutput = runContext.getApplicationContext().getBean(FlowInputOutput.class);
+            execution = execution.withInputs(flowInputOutput.typedInputs(conditionContext.getFlow(), execution, inputs));
         }
 
         return Optional.of(execution);

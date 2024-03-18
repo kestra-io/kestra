@@ -1,6 +1,5 @@
 import axios from "axios";
 import NProgress from "nprogress"
-import {baseUrl} from "override/utils/route";
 
 // nprogress
 let requestsTotal = 0
@@ -136,7 +135,6 @@ export default (callback, store, router) => {
             return Promise.reject(errorResponse);
         })
 
-    instance.defaults.baseURL = baseUrl;
 
     instance.defaults.paramsSerializer = {
         indexes: null

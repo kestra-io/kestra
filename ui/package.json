@@ -73,7 +73,7 @@
     "prettier": "^3.2.5",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.12.0",
-    "sass": "^1.71.1",
+    "sass": "^1.72.0",
     "typescript": "^5.4.2",
     "vite": "^5.1.6",
     "vite-plugin-rewrite-all": "1.0.1",

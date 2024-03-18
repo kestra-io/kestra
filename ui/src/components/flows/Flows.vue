@@ -60,6 +60,9 @@
                             @update:model-value="onDataTableValue('labels', $event)"
                         />
                     </el-form-item>
+                    <el-form-item>
+                        <filters :storage-key="storageKeys.FLOWS_FILTERS" />
+                    </el-form-item>
                 </template>
 
                 <template #top>
@@ -213,6 +216,7 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
+    import Filters from "../saved-filters/Filters.vue";
 </script>
 
 <script>
@@ -239,6 +243,7 @@
     import Labels from "../layout/Labels.vue"
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],

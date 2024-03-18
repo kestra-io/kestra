@@ -94,7 +94,7 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <filters />
+                    <filters :storage-key="filterStorageKey" />
                 </el-form-item>
                 <el-form-item>
                     <refresh-button
@@ -570,6 +570,9 @@
             },
             isDisplayedTop() {
                 return this.embed === false || this.filter
+            },
+            filterStorageKey(){
+                return storageKeys.EXECUTIONS_FILTERS
             }
         },
         methods: {

@@ -20,9 +20,7 @@
             class="me-1"
             disable-transitions
         >
-            <router-link :to="searchLink">
-                {{ label }}
-            </router-link>
+            <span>{{ label }}</span>
         </el-tag>
     </el-tooltip>
 </template>
@@ -45,15 +43,6 @@
                 required: true
             }
         },
-        computed: {
-            searchLink() {
-                return {
-                    name: this.$route.name,
-                    params: this.$route.params,
-                    query: this.query
-                };
-            }
-        },
         methods: {
             showConfirmDialog() {
                 this.$toast().confirm(
@@ -64,6 +53,7 @@
                 );
             },
             onClick() {
+                this.$router.push({query: this.query})
                 this.$emit("clicked");
             },
             onDelete() {
@@ -84,6 +74,7 @@
     .el-tag {
         & a, span, :deep(.el-icon) {
             color: var(--bs-white);
+            cursor: pointer;
         }
 
         &.el-tag--info {

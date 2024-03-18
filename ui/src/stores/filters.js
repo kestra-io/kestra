@@ -1,20 +1,18 @@
 export default {
     namespaced: true,
     state: {
-        savedFilters: undefined
+        lastFilters: undefined
     },
     mutations: {
         setSavedFilters(state, value) {
-            state.filters = (value);
-            localStorage.setItem("savedFilters", JSON.stringify(state.filters));
+            localStorage.setItem(value.storageKey, JSON.stringify(value.filters));
         }
     },
     getters: {
-        savedFilters(state) {
-            if (!state.savedFilters) {
-                state.savedFilters = JSON.parse(localStorage.getItem("savedFilters")) ?? {};
+        savedFilters() {
+            return (storageKey) => {
+                return JSON.parse(localStorage.getItem(storageKey)) ?? {}
             }
-            return state.savedFilters;
         }
     }
 }

@@ -32,7 +32,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -43,7 +42,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.Rethrow.*;
+import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @Singleton
 @Slf4j
@@ -70,6 +70,27 @@ public class ExecutionService {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
+
+    public Execution retry(Execution execution, String taskRunId) {
+        List<TaskRun> newTaskRuns = execution
+            .getTaskRunList()
+            .stream()
+            .map(taskRun -> {
+                if (taskRun.getId().equals(taskRunId)) {
+                    TaskRunAttempt newAttempt = TaskRunAttempt.builder()
+                        .state(new State(State.Type.CREATED))
+                        .build();
+                    return taskRun
+                        .withState(State.Type.CREATED)
+                        .withAttempts(Stream.concat(taskRun.getAttempts().stream(), Stream.of(newAttempt)).collect(Collectors.toList()));
+                }
+
+                return taskRun;
+            })
+            .toList();
+
+        return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+    }
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
         if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {

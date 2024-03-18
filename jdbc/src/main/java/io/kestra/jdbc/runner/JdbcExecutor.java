@@ -838,6 +838,15 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
                     }
+
+                    else if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
+                        Execution newAttempt = executionService.retry(
+                            pair.getKey(),
+                            executionDelay.getTaskRunId()
+                        );
+
+                        executor = executor.withExecution(newAttempt, "failedRetry");
+                    }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);
                 }

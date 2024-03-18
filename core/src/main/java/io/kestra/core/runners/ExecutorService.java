@@ -450,6 +450,7 @@ public class ExecutorService {
         }
 
         List<WorkerTaskResult> list = new ArrayList<>();
+        List<ExecutionDelay> executionDelays = new ArrayList<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             if (taskRun.getState().isRunning()) {
@@ -461,7 +462,24 @@ public class ExecutorService {
 
                 workerTaskResult.ifPresent(list::add);
             }
+
+            if (!executor.getExecution().getState().isPaused() && taskRun.getState().isFailed() && executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
+                if (taskRun.getAttempts().size() < executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry().getMaxAttempt()) {
+                    executionDelays.add(
+                        ExecutionDelay.builder()
+                            .taskRunId(taskRun.getId())
+                            .executionId(executor.getExecution().getId())
+                            .date(taskRun.lastAttempt().getState().maxDate().plus(executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry().toPolicy().getDelay()))
+                            .state(State.Type.RUNNING)
+                            .build()
+                    );
+                    executor.withExecution(executor.getExecution().withState(State.Type.PAUSED), "handleRetryTask");
+
+                }
+            }
         }
+
+        executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskResult");
 
         if (list.isEmpty()) {
             return executor;

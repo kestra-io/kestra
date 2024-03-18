@@ -83,6 +83,13 @@ public class RunContext {
     }
 
     /**
+     * Equivalent to {@link #RunContext(ApplicationContext, Flow, Task, Execution, TaskRun, boolean)} with decryptVariables set to true
+     */
+    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
+        this(applicationContext, flow, task, execution, taskRun, true);
+    }
+
+    /**
      * Normal usage
      *
      * @param applicationContext the current {@link ApplicationContext}
@@ -90,11 +97,12 @@ public class RunContext {
      * @param task the current {@link io.kestra.core.models.tasks.Task}
      * @param execution the current {@link Execution}
      * @param taskRun the current {@link TaskRun}
+     * @param decryptVariables whether or not to decrypt secret variables
      */
-    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
+    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
         this.initBean(applicationContext);
         this.initLogger(taskRun, task);
-        this.initContext(flow, task, execution, taskRun);
+        this.initContext(flow, task, execution, taskRun, decryptVariables);
         this.initPluginConfiguration(applicationContext, task.getType());
     }
 
@@ -156,7 +164,11 @@ public class RunContext {
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
-        this.variables = this.variables(flow, task, execution, taskRun, null);
+        this.initContext(flow, task, execution, taskRun, true);
+    }
+
+    private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
+        this.variables = this.variables(flow, task, execution, taskRun, null, decryptVariables);
 
         if (taskRun != null && this.storageInterface != null) {
             this.storage = new InternalStorage(
@@ -234,6 +246,10 @@ public class RunContext {
     }
 
     protected Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun, AbstractTrigger trigger) {
+        return this.variables(flow, task, execution, taskRun, trigger, true);
+    }
+
+    protected Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun, AbstractTrigger trigger, boolean decryptVariables) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("envs", runContextCache.getEnvVars())
             .put("globals", runContextCache.getGlobalVars());
@@ -295,14 +311,16 @@ public class RunContext {
 
             if (execution.getTaskRunList() != null) {
                 Map<String, Object> outputs = new HashMap<>(execution.outputs());
-                decryptOutputs(outputs);
+                if (decryptVariables) {
+                    decryptOutputs(outputs);
+                }
                 builder.put("outputs", outputs);
             }
 
             Map<String, Object> inputs = new HashMap<>();
             if (execution.getInputs() != null) {
                 inputs.putAll(execution.getInputs());
-                if (flow != null && flow.getInputs() != null) {
+                if (decryptVariables && flow != null && flow.getInputs() != null) {
                     // if some inputs are of type secret, we decode them
                     for (Input<?> input : flow.getInputs()) {
                         if (input instanceof SecretInput && inputs.containsKey(input.getId())) {

@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -14,6 +15,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
@@ -254,6 +256,26 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getResult(), is(nullValue()));
         assertThat(result.getError(), containsString("Missing variable: 'missing' on '{{ missing }}' at line 1"));
         assertThat(result.getStackTrace(), containsString("Missing variable: 'missing' on '{{ missing }}' at line 1"));
+    }
+
+    @Test
+    void evalKeepEncryptedValues() throws TimeoutException, JsonProcessingException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
+
+        ExecutionController.EvalResult result = this.eval(execution, "{{outputs.hello.value}}", 0);
+        Map<String, Object> resultMap = null;
+        try {
+            resultMap = JacksonMapper.toMap(result.getResult());
+        } catch (JsonProcessingException e) {
+            throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
+        }
+        assertThat(resultMap.get("type"), is("io.kestra.datatype:aes_encrypted"));
+        assertThat(resultMap.get("value"), notNullValue());
+
+        execution = runnerUtils.runOne(null, "io.kestra.tests", "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+
+        result = this.eval(execution, "{{inputs.secret}}", 0);
+        assertThat(result.getResult(), not(inputs.get("secret")));
     }
 
     @Test

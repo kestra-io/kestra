@@ -3,6 +3,6 @@ kestra:
     type: memory
   repository:
     type: memory
-  worker:
+  server:
     liveness:
       enabled: false

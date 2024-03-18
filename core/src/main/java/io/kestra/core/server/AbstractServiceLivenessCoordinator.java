@@ -51,7 +51,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         // Multiple Executors can be running in parallel. We add a jitter to
         // help distributing the load more evenly among the ServiceLivenessCoordinator.
         // This is also used to prevent all ServiceLivenessCoordinator from attempting to query the repository simultaneously.
-        RandomGenerator r = RandomGenerator.getDefault();
+        Random r = new Random(); //SONAR
         int jitter = r.nextInt(DEFAULT_SCHEDULE_JITTER_MAX_MS);
         return serverConfig.liveness().interval().plus(Duration.ofMillis(jitter));
     }

@@ -6,7 +6,7 @@
                     <li>
                         <template v-if="isAllowedEdit">
                             <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
-                                {{ $t('edit flow') }}
+                                {{ $t("edit flow") }}
                             </el-button>
                         </template>
                     </li>
@@ -23,7 +23,14 @@
         </template>
     </top-nav-bar>
     <section :class="{'container': topbar}" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
+        <data-table
+            @page-changed="onPageChanged"
+            ref="dataTable"
+            :total="total"
+            :size="pageSize"
+            :page="pageNumber"
+            :embed="embed"
+        >
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
                     <search-field />
@@ -140,25 +147,34 @@
                             @unselect="toggleAllUnselected"
                         >
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
-                                {{ $t('restart') }}
+                                {{ $t("restart") }}
                             </el-button>
                             <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
-                                {{ $t('replay') }}
+                                {{ $t("replay") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
-                                {{ $t('kill') }}
+                                {{ $t("kill") }}
                             </el-button>
                             <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
-                                {{ $t('delete') }}
+                                {{ $t("delete") }}
                             </el-button>
-                            <el-button v-if="canUpdate" :icon="LabelMultiple" @click="isOpenLabelsModal = !isOpenLabelsModal">
-                                {{ $t('Set labels') }}
+                            <el-button
+                                v-if="canUpdate"
+                                :icon="LabelMultiple"
+                                @click="isOpenLabelsModal = !isOpenLabelsModal"
+                            >
+                                {{ $t("Set labels") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                {{ $t('resume') }}
+                                {{ $t("resume") }}
                             </el-button>
                         </bulk-select>
-                        <el-dialog v-if="isOpenLabelsModal" v-model="isOpenLabelsModal" destroy-on-close :append-to-body="true">
+                        <el-dialog
+                            v-if="isOpenLabelsModal"
+                            v-model="isOpenLabelsModal"
+                            destroy-on-close
+                            :append-to-body="true"
+                        >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
                             </template>
@@ -190,7 +206,11 @@
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(executionParams(scope.row))" />
+                                <id
+                                    :value="scope.row.id"
+                                    :shrink="true"
+                                    @click="onRowDoubleClick(executionParams(scope.row))"
+                                />
                             </template>
                         </el-table-column>
 
@@ -226,7 +246,9 @@
                             :label="$t('duration')"
                         >
                             <template #default="scope">
-                                <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
+                                <span v-if="isRunning(scope.row)">{{
+                                    $filters.humanizeDuration(durationFrom(scope.row))
+                                }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>
@@ -248,7 +270,9 @@
                             :label="$t('flow')"
                         >
                             <template #default="scope">
-                                <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                <router-link
+                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
+                                >
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
                             </template>
@@ -303,7 +327,7 @@
                             <template #default="scope">
                                 <el-tooltip>
                                     <template #content>
-                                        <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, '\t') }}</pre>
+                                        <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, "\t") }}</pre>
                                     </template>
                                     <Import v-if="scope.row.inputs" class="fs-5" />
                                 </el-tooltip>
@@ -323,14 +347,18 @@
                             <template #default="scope">
                                 <code>
                                     {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
-                                    {{ scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : '' }}
+                                    {{
+                                        scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : ""
+                                    }}
                                 </code>
                             </template>
                         </el-table-column>
 
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
-                                <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                <router-link
+                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}"
+                                >
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
                                     </kicon>
@@ -578,7 +606,7 @@
             isDisplayedTop() {
                 return this.embed === false || this.filter
             },
-            filterStorageKey(){
+            filterStorageKey() {
                 return storageKeys.EXECUTIONS_FILTERS
             }
         },
@@ -731,7 +759,7 @@
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/querySetLabels",  {
+                                .dispatch("execution/querySetLabels", {
                                     params: this.loadQuery({
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
@@ -744,7 +772,10 @@
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkSetLabels", {executionsId: this.selection, executionLabels: this.executionLabels})
+                                .dispatch("execution/bulkSetLabels", {
+                                    executionsId: this.selection,
+                                    executionLabels: this.executionLabels
+                                })
                                 .then(r => {
                                     this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
                                     this.loadData();

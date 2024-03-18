@@ -5,10 +5,12 @@ import App from "./App.vue"
 import initApp from "./utils/init"
 import configureAxios from "./utils/axios"
 import routes from "./routes/routes";
-import translations from "./translations.json";
+import fr from "./translations/fr.json";
+import en from "./translations/en.json";
 import stores from "./stores/store";
 
 const app = createApp(App)
+const translations = {...fr,...en}
 const {store, router} = initApp(app, routes, stores, translations);
 
 // axios

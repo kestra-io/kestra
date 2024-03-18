@@ -410,7 +410,7 @@ jobs:
 
       # Update
       - name: Update internal
-        uses: benc-uk/workflow-dispatch@v123
+        uses: benc-uk/workflow-dispatch@v1.2.3
         if: github.ref == 'refs/heads/develop'
         with:
           workflow: oss-build.yml

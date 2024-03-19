@@ -71,7 +71,11 @@ public class ExecutionService {
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
-    public Execution retry(Execution execution, String taskRunId) {
+    /**
+    * Retry set the given taskRun in created state
+    * and return the execution in running state
+    **/
+     public Execution retry(Execution execution, String taskRunId) {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()

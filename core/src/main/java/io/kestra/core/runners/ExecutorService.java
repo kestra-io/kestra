@@ -1,22 +1,12 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.NextTaskRun;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.ExecutableTask;
-import io.kestra.core.models.tasks.ExecutionUpdatableTask;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.tasks.flows.Pause;
@@ -28,13 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -463,17 +448,21 @@ public class ExecutorService {
                 workerTaskResult.ifPresent(list::add);
             }
 
-            if (!executor.getExecution().getState().isPaused() && taskRun.getState().isFailed() && executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
-                if (taskRun.getAttempts().size() < executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry().getMaxAttempt()) {
+            /**
+             * Check if the task is failed and if it has a retry policy
+             */
+            if (!executor.getExecution().getState().isRetrying() && taskRun.getState().isFailed() && executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
+                Instant nextRetryDate = taskRun.nextRetryDate(executor.getFlow().findTaskByTaskId(taskRun.getTaskId()));
+                if (nextRetryDate != null) {
                     executionDelays.add(
                         ExecutionDelay.builder()
                             .taskRunId(taskRun.getId())
                             .executionId(executor.getExecution().getId())
-                            .date(taskRun.lastAttempt().getState().maxDate().plus(executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry().toPolicy().getDelay()))
+                            .date(nextRetryDate)
                             .state(State.Type.RUNNING)
                             .build()
                     );
-                    executor.withExecution(executor.getExecution().withState(State.Type.PAUSED), "handleRetryTask");
+                    executor.withExecution(executor.getExecution().withState(State.Type.RETRYING), "handleRetryTask");
 
                 }
             }

@@ -400,57 +400,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 
-//        // creating the retry can fail
-//        RetryPolicy<WorkerTask> workerTaskRetryPolicy;
-//        try {
-//            workerTaskRetryPolicy = AbstractRetry.retryPolicy(workerTask.getTask().getRetry());
-//        } catch(IllegalStateException e) {
-//            WorkerTask finalWorkerTask = workerTask.fail();
-//            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask);
-//            RunContext runContext = workerTask
-//                .getRunContext()
-//                .forWorker(this.applicationContext, workerTask);
-//
-//            runContext.logger().error("Exception while trying to build the retry policy", e);
-//            this.workerTaskResultQueue.emit(workerTaskResult);
-//            return workerTaskResult;
-//        }
-
         // run
         WorkerTask finalWorkerTask = this.runAttempt(current.get());
-//            Failsafe
-//            .with(workerTaskRetryPolicy
-//                .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
-//                        result.getTaskRun().lastAttempt().getState().getCurrent() == State.Type.FAILED &&
-//                        !killedExecution.contains(result.getTaskRun().getExecutionId())
-//                )
-//                .onRetry(e -> {
-//                    WorkerTask lastResult = e.getLastResult();
-//
-//                    if (cleanUp) {
-//                        lastResult.getRunContext().cleanup();
-//                    }
-//
-//                    lastResult = this.cleanUpTransient(lastResult);
-//
-//                    current.set(lastResult);
-//
-//                    metricRegistry
-//                        .counter(
-//                            MetricRegistry.METRIC_WORKER_RETRYED_COUNT,
-//                            metricRegistry.tags(
-//                                current.get(),
-//                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount())
-//                            )
-//                        )
-//                        .increment();
-//
-//                    this.workerTaskResultQueue.emit(
-//                        new WorkerTaskResult(lastResult)
-//                    );
-//                })
-//            )
-//            .get(() -> this.runAttempt(current.get()));
 
         // save dynamic WorkerResults since cleanUpTransient will remove them
         List<WorkerTaskResult> dynamicWorkerResults = finalWorkerTask.getRunContext().dynamicWorkerResults();

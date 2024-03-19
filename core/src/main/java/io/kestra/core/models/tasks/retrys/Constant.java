@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.retrys;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 import net.jodah.failsafe.RetryPolicy;
 
 import java.time.Duration;
-import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 
 @SuperBuilder
 @Getter
@@ -28,5 +29,10 @@ public class Constant extends AbstractRetry {
 
         return policy
             .withDelay(interval);
+    }
+
+    @Override
+    public Instant getNextDate(Integer attemptCount, Instant lastAttempt) {
+        return lastAttempt.plus(interval);
     }
 }

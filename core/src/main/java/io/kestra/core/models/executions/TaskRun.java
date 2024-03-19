@@ -1,23 +1,20 @@
 package io.kestra.core.models.executions;
 
 import io.kestra.core.models.TenantInterface;
-import io.swagger.v3.oas.annotations.Hidden;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.utils.IdUtils;
+import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 @ToString
 @EqualsAndHashCode
@@ -219,5 +216,19 @@ public class TaskRun implements TenantInterface {
             ", value=" + this.getValue() +
             ", state=" + this.getState().getCurrent().toString() +
             ")";
+    }
+
+    /**
+     *
+     * @param task Contains the retry configuration
+     * @return The next retry date, null if maxAttempt is reached
+     */
+    public Instant nextRetryDate(Task task) {
+        if (this.attempts == null || this.attempts.isEmpty() || this.getAttempts().size() >= task.getRetry().getMaxAttempt()) {
+            return null;
+        }
+        Instant base = this.lastAttempt().getState().maxDate();
+
+        return task.getRetry().getNextDate(this.attempts.size(), base);
     }
 }

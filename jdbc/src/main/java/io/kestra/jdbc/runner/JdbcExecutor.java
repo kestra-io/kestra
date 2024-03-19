@@ -818,7 +818,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return taskDefaultService.injectDefaults(flow, execution);
     }
 
-    private void executionDelaySend() {
+    /** ExecutionDelay is currently two type of execution :
+     * <br/>
+     * - Paused flow that will be restart after an interval/timeout
+     * <br/>
+     * - Failed flow that will be retried after an interval
+    **/
+     private void executionDelaySend() {
         if (isShutdown) {
             return;
         }
@@ -828,6 +834,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Executor executor = new Executor(pair.getLeft(), null);
 
                 try {
+                    // Handle paused tasks
                     if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent() == State.Type.PAUSED) {
 
                         Execution markAsExecution = executionService.markAs(
@@ -837,6 +844,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
+                    // Handle failed tasks
                     } else if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
                         Execution newAttempt = executionService.retry(
                             pair.getKey(),
@@ -865,6 +873,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return taskRuns
             .stream()
             .anyMatch(taskRun -> {
+                // As retry is now handled outside the worker,
+                // we now add the attempt size to the deduplication key
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" +
                     taskRun.getTaskId() + "-" +
                     taskRun.getValue() + "-" +
@@ -920,9 +930,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
     }
 
-    /**
-     * {@inheritDoc}
-     **/
+    /** {@inheritDoc} **/
     @Override
     public void close() throws IOException {
         setState(ServiceState.TERMINATING);
@@ -936,25 +944,19 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
     }
 
-    /**
-     * {@inheritDoc}
-     **/
+    /** {@inheritDoc} **/
     @Override
     public String getId() {
         return id;
     }
 
-    /**
-     * {@inheritDoc}
-     **/
+    /** {@inheritDoc} **/
     @Override
     public ServiceType getType() {
         return ServiceType.EXECUTOR;
     }
 
-    /**
-     * {@inheritDoc}
-     **/
+    /** {@inheritDoc} **/
     @Override
     public ServiceState getState() {
         return state.get();

@@ -141,6 +141,11 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isRetrying() {
+        return this.current.isRetrying();
+    }
+
+    @JsonIgnore
     public boolean isRestartable() {
         return this.current.isFailed() || this.isPaused();
     }
@@ -158,7 +163,8 @@ public class State {
         FAILED,
         KILLED,
         CANCELLED,
-        QUEUED;
+        QUEUED,
+        RETRYING;
 
         public boolean isTerminated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this ==  Type.CANCELLED;
@@ -178,6 +184,10 @@ public class State {
 
         public boolean isPaused() {
             return this == Type.PAUSED;
+        }
+
+        public boolean isRetrying() {
+            return this == Type.RETRYING;
         }
     }
 

@@ -593,7 +593,7 @@ public class RunContext {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private String decrypt(String encrypted) throws GeneralSecurityException {
+    public String decrypt(String encrypted) throws GeneralSecurityException {
         if (secretKey.isPresent()) {
             return EncryptionService.decrypt(secretKey.get(), encrypted);
         } else {

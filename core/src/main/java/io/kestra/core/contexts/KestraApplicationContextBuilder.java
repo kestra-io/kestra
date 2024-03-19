@@ -22,11 +22,6 @@ public class KestraApplicationContextBuilder extends DefaultApplicationContextBu
 
     @Override
     public ApplicationContext build() {
-        ApplicationContext defaultApplicationContext = super.build();
-
-        DefaultApplicationContext applicationContext = new KestraApplicationContext(this, this.pluginRegistry);
-        applicationContext.setEnvironment(defaultApplicationContext.getEnvironment());
-
-        return applicationContext;
+        return new KestraApplicationContext(super.build(), this, this.pluginRegistry);
     }
 }

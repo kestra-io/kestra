@@ -63,7 +63,7 @@ class WorkerTest {
 
     @Test
     void success() throws TimeoutException {
-        Worker worker = new Worker(applicationContext, 8, null);
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -82,13 +82,13 @@ class WorkerTest {
 
     @Test
     void workerGroup() {
-        Worker worker = new Worker(applicationContext, 8, "toto");
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, "toto");
         assertThat(worker.getWorkerGroup(), nullValue());
     }
 
     @Test
     void failOnWorkerTaskWithFlowable() throws TimeoutException, JsonProcessingException {
-        Worker worker = new Worker(applicationContext, 8, null);
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -142,7 +142,7 @@ class WorkerTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
-        Worker worker = new Worker(applicationContext, 8, null);
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();

@@ -1,14 +1,14 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.queues.QueueException;
+import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.JdbcConfiguration;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,17 +26,17 @@ import java.time.ZonedDateTime;
 public class JdbcCleaner {
     private final JooqDSLContextWrapper dslContextWrapper;
     private final Configuration configuration;
-
     protected final Table<Record> queueTable;
 
     @Inject
-    public JdbcCleaner(ApplicationContext applicationContext) {
-        JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
+    public JdbcCleaner(@Named("queues") JdbcTableConfig jdbcTableConfig,
+                       JooqDSLContextWrapper dslContextWrapper,
+                       Configuration configuration
+    ) {
+        this.dslContextWrapper = dslContextWrapper;
+        this.configuration = configuration;
 
-        this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
-        this.configuration = applicationContext.getBean(Configuration.class);
-
-        this.queueTable = DSL.table(jdbcConfiguration.tableConfig("queues").getTable());
+        this.queueTable = DSL.table(jdbcTableConfig.table());
     }
 
     public void deleteQueue() throws QueueException {

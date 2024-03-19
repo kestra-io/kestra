@@ -10,7 +10,7 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcConfiguration;
+import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
@@ -20,11 +20,14 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.JSONB;
 import org.jooq.Record;
-import org.jooq.*;
+import org.jooq.Result;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -52,8 +55,6 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final JooqDSLContextWrapper dslContextWrapper;
 
-    protected final DataSource dataSource;
-
     protected final Configuration configuration;
 
     protected final Table<Record> table;
@@ -69,12 +70,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
         this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
-        this.dataSource = applicationContext.getBean(DataSource.class);
         this.configuration = applicationContext.getBean(Configuration.class);
 
-        JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
+        JdbcTableConfigs jdbcTableConfigs = applicationContext.getBean(JdbcTableConfigs.class);
 
-        this.table = DSL.table(jdbcConfiguration.tableConfig("queues").getTable());
+        this.table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
     }

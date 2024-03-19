@@ -35,10 +35,14 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.Hashing;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
@@ -80,19 +84,38 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
-    private final ApplicationContext applicationContext;
-    private final WorkerJobQueueInterface workerJobQueue;
-    private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
-    private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
-    private final QueueInterface<ExecutionKilled> executionKilledQueue;
-    private final QueueInterface<MetricEntry> metricEntryQueue;
-    private final MetricRegistry metricRegistry;
-    private final ServerConfig serverConfig;
+    @Inject
+    private ApplicationContext applicationContext;
+
+    @Inject
+    private WorkerJobQueueInterface workerJobQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
+    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
+    private QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    private QueueInterface<ExecutionKilled> executionKilledQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.METRIC_QUEUE)
+    private QueueInterface<MetricEntry> metricEntryQueue;
+
+    @Inject
+    private MetricRegistry metricRegistry;
+
+    @Inject
+    private ServerConfig serverConfig;
+
+    @Inject
+    private LogService logService;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
-
-    // package private to allow its usage within tests
-    final ExecutorService executors;
 
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
@@ -110,52 +133,34 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Getter
     private final String workerGroup;
 
-    private final LogService logService;
-
     private final String id;
+
+    // package private to allow its usage within tests
+    final ExecutorService executorService;
+
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Creates a new {@link Worker} instance.
+     *
+     * @param workerId    The worker service ID.
+     * @param numThreads  The worker num threads.
+     * @param workerGroupKey The worker group (EE).
+     */
     @Inject
-    public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey) {
-        // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils
-        this(applicationContext, thread, workerGroupKey, UUID.randomUUID().toString());
-    }
-
-    @VisibleForTesting
-    public Worker(ApplicationContext applicationContext, int thread, String workerGroupKey, String id) {
-        this.id = id;
-        this.applicationContext = applicationContext;
-        this.workerJobQueue = applicationContext.getBean(WorkerJobQueueInterface.class);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-
-        this.workerTaskResultQueue = (QueueInterface<WorkerTaskResult>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-        );
-        this.workerTriggerResultQueue = (QueueInterface<WorkerTriggerResult>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
-        );
-        this.executionKilledQueue = (QueueInterface<ExecutionKilled>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.KILL_NAMED)
-        );
-        this.metricEntryQueue = (QueueInterface<MetricEntry>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.METRIC_QUEUE)
-        );
-        this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
-
-        ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
-        this.executors = executorsUtils.maxCachedThreadPool(thread, "worker");
-
-        WorkerGroupService workerGroupService = applicationContext.getBean(WorkerGroupService.class);
+    public Worker(@Parameter String workerId,
+                  @Parameter Integer numThreads,
+                  @Nullable @Parameter String workerGroupKey,
+                  ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+                  WorkerGroupService workerGroupService,
+                  ExecutorsUtils executorsUtils
+    ) {
+        this.id = workerId;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
-
-        this.logService = applicationContext.getBean(LogService.class);
-
-        this.serverConfig = applicationContext.getBean(ServerConfig.class);
+        this.eventPublisher = eventPublisher;
+        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
         setState(ServiceState.CREATED);
     }
 
@@ -184,7 +189,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             this.workerGroup,
             Worker.class,
             either -> {
-                executors.execute(() -> {
+                executorService.execute(() -> {
                     if (either.isRight()) {
                         log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
                         handleDeserializationError(either.getRight());
@@ -628,13 +633,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
             ));
     }
 
+    /** {@inheritDoc} **/
+    @PreDestroy
     @Override
     public void close() throws Exception {
-        closeWorker(serverConfig.terminationGracePeriod());
+        if (shutdown.compareAndSet(false, true)) {
+            closeWorker(serverConfig.terminationGracePeriod());
+        }
     }
 
     @VisibleForTesting
-    public void closeWorker(Duration timeout) throws Exception {
+    public void closeWorker(final Duration timeout) {
         log.info("Terminating.");
         setState(ServiceState.TERMINATING);
         workerJobQueue.pause();
@@ -644,7 +653,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             terminatedGracefully = waitForTasksCompletion(timeout);
         } else {
             log.info("Terminating now and skip waiting for tasks completions.");
-            this.executors.shutdownNow();
+            this.executorService.shutdownNow();
             closeWorkerTaskResultQueue();
             terminatedGracefully = false;
         }
@@ -658,8 +667,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         new Thread(
             () -> {
                 try {
-                    this.executors.shutdown();
-                    this.executors.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                    this.executorService.shutdown();
+                    this.executorService.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     log.error("Fail to shutdown the worker", e);
                 }
@@ -670,8 +679,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         final AtomicBoolean cleanShutdown = new AtomicBoolean(false);
         Await.until(
             () -> {
-                if (this.executors.isTerminated() || this.workerThreadReferences.isEmpty()) {
-                    log.info("No more worker threads busy, shutting down!");
+                if (this.executorService.isTerminated() || this.workerThreadReferences.isEmpty()) {
+                    log.info("All working threads are terminated.");
 
                     // we ensure that last produce message are send
                     closeWorkerTaskResultQueue();
@@ -680,10 +689,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 }
 
                 log.warn(
-                    "Worker still has {} thread(s) running, waiting all threads to terminate before shutdown!",
+                    "Waiting for all worker threads to terminate (remaining: {}).",
                     this.workerThreadReferences.size()
                 );
-
                 return false;
             },
             Duration.ofSeconds(1)
@@ -700,8 +708,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     @VisibleForTesting
-    public void shutdown() throws IOException {
-        this.executors.shutdownNow();
+    public void shutdown() {
+        this.executorService.shutdownNow();
     }
 
     public List<WorkerTask> getWorkerThreadTasks() {

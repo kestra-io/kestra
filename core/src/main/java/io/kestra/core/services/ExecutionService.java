@@ -77,9 +77,6 @@ public class ExecutionService {
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(taskRunId)) {
-//                    TaskRunAttempt newAttempt = TaskRunAttempt.builder()
-//                        .state(new State(State.Type.CREATED))
-//                        .build();
                     return taskRun
                         .withState(State.Type.CREATED);
                 }

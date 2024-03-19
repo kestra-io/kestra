@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
@@ -29,15 +30,9 @@ public class WebServerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
-
         log.info("Webserver started");
-
-        this.shutdownHook(() -> {
-            this.applicationContext.close();
-        });
-
+        this.shutdownHook(() -> KestraContext.getContext().shutdown());
         Await.until(() -> !this.applicationContext.isRunning());
-
         return 0;
     }
 }

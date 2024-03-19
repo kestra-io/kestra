@@ -103,7 +103,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         // create first worker
-        Worker worker = new Worker(applicationContext, 1, null, IdUtils.create());
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         worker.run();
 
         runner.setSchedulerEnabled(false);
@@ -127,7 +127,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = new Worker(applicationContext, 1, null, IdUtils.create());
+        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         newWorker.run();
         resubmitLatch.await(30, TimeUnit.SECONDS);
         newWorker.shutdown();
@@ -138,8 +138,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void taskResubmitSkipExecution() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
 
-        Worker worker = new Worker(applicationContext, 8, null);
-        applicationContext.registerSingleton(worker);
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
         runner.setSchedulerEnabled(false);
         runner.setWorkerEnabled(false);
@@ -165,8 +164,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         runningLatch.await(2, TimeUnit.SECONDS);
         worker.shutdown();
 
-        Worker newWorker = new Worker(applicationContext, 8, null);
-        applicationContext.registerSingleton(newWorker);
+        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         newWorker.run();
 
         // wait a little to be sure there is no resubmit
@@ -180,8 +178,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        Worker worker = new Worker(applicationContext, 1, null);
-        applicationContext.registerSingleton(worker);
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         worker.run();
         runner.setSchedulerEnabled(false);
         runner.setWorkerEnabled(false);
@@ -202,7 +199,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         );
         worker.shutdown();
 
-        Worker newWorker = new Worker(applicationContext, 1, null);
+        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         applicationContext.registerSingleton(newWorker);
         newWorker.run();
 

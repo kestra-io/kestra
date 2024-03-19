@@ -8,14 +8,14 @@ import java.util.List;
 
 @ConfigurationProperties("kestra.jdbc")
 @Getter
-public class JdbcConfiguration {
+public class JdbcTableConfigs {
     @Inject
     private List<JdbcTableConfig> tableConfigs;
 
     public JdbcTableConfig tableConfig(String name) {
         return this.tableConfigs
             .stream()
-            .filter(tableConfig -> tableConfig.getName().equals(name))
+            .filter(tableConfig -> tableConfig.name().equals(name))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Unable to find table config for name '" + name + "'"));
     }
@@ -23,7 +23,7 @@ public class JdbcConfiguration {
     public JdbcTableConfig tableConfig(Class<?> cls) {
         return this.tableConfigs
             .stream()
-            .filter(tableConfig -> tableConfig.getCls() == cls)
+            .filter(tableConfig -> tableConfig.cls() == cls)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Unable to find table config for class '" + cls.getName() + "'"));
     }

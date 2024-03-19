@@ -45,6 +45,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -80,6 +81,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private volatile Map<String, FlowWithPollingTriggerNextDate> schedulableNextDate = new ConcurrentHashMap<>();
 
     private final String id = IdUtils.create();
+
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
     private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
@@ -685,12 +689,17 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger), workerTrigger);
     }
 
+    /** {@inheritDoc} **/
     @Override
     @PreDestroy
     public void close() {
-        setState(ServiceState.TERMINATING);
-        this.scheduleExecutor.shutdown();
-        setState(ServiceState.TERMINATED_GRACEFULLY);
+        if (shutdown.compareAndSet(false, true)) {
+            log.info("Terminating.");
+            setState(ServiceState.TERMINATING);
+            this.scheduleExecutor.shutdown();
+            setState(ServiceState.TERMINATED_GRACEFULLY);
+            log.info("Scheduler closed ({}).", state.get().name().toLowerCase());
+        }
     }
 
     @SuperBuilder(toBuilder = true)

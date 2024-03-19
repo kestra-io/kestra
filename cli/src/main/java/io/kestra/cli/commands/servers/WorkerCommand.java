@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.util.Map;
+import java.util.UUID;
 
 @CommandLine.Command(
     name = "worker",
@@ -17,6 +19,7 @@ import java.util.Map;
 )
 @Slf4j
 public class WorkerCommand extends AbstractServerCommand {
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -36,12 +39,14 @@ public class WorkerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
-
+        this.shutdownHook(() -> KestraContext.getContext().shutdown());
         if (this.workerGroupKey != null && !this.workerGroupKey.matches("[a-zA-Z0-9_-]+")) {
             throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
         }
 
-        Worker worker = new Worker(applicationContext, this.thread, this.workerGroupKey);
+        // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils
+        String workerID = UUID.randomUUID().toString();
+        Worker worker = applicationContext.createBean(Worker.class, workerID, this.thread, this.workerGroupKey);
         applicationContext.registerSingleton(worker);
 
         worker.run();
@@ -52,8 +57,6 @@ public class WorkerCommand extends AbstractServerCommand {
         else {
             log.info("Worker started with {} thread(s)", this.thread);
         }
-
-        this.shutdownHook(worker::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

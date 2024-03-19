@@ -1,10 +1,9 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -18,8 +17,8 @@ import java.util.stream.Collectors;
 @PostgresRepositoryEnabled
 public class PostgresLogRepository extends AbstractJdbcLogRepository {
     @Inject
-    public PostgresLogRepository(ApplicationContext applicationContext) {
-        super(new PostgresRepository<>(LogEntry.class, applicationContext));
+    public PostgresLogRepository(@Named("logs") PostgresRepository<LogEntry> repository) {
+        super(repository);
     }
 
     @Override

@@ -7,6 +7,8 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,6 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Utility class for retrieving common information about a Kestra Server at runtime.
  */
 public abstract class KestraContext {
+
+    private static final Logger log = LoggerFactory.getLogger(KestraContext.class);
 
     private static final AtomicReference<KestraContext> INSTANCE = new AtomicReference<>();
 
@@ -56,9 +60,9 @@ public abstract class KestraContext {
     public abstract String getVersion();
 
     /**
-     * Stops Kestra.
+     * Shutdowns the Kestra application.
      */
-    public void exit(int status) {
+    public void shutdown() {
         // noop
     }
 
@@ -97,9 +101,10 @@ public abstract class KestraContext {
 
         /** {@inheritDoc} **/
         @Override
-        public void exit(int status) {
+        public void shutdown() {
+            log.info("Kestra server - Shutdown initiated");
             applicationContext.close();
-            Runtime.getRuntime().exit(status);
+            log.info("Kestra server - Shutdown completed");
         }
 
         /** {@inheritDoc} **/

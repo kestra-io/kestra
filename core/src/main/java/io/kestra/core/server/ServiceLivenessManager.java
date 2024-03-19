@@ -338,7 +338,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 if (state.equals(Service.ServiceState.NOT_RUNNING) || state.equals(Service.ServiceState.EMPTY)) {
                     service.skipGracefulTermination(true);
                 }
-                KestraContext.getContext().exit(1);
+                KestraContext.getContext().shutdown();
                 return Optional.empty();
             }
 

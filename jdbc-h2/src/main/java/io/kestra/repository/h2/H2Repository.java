@@ -1,12 +1,23 @@
 package io.kestra.repository.h2;
 
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
 import lombok.SneakyThrows;
-import org.jooq.*;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.LikeEscapeStep;
 import org.jooq.Record;
+import org.jooq.RecordMapper;
+import org.jooq.Result;
+import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
 import java.util.Arrays;
@@ -16,11 +27,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 
+@H2RepositoryEnabled
+@EachBean(JdbcTableConfig.class)
 public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
-    public H2Repository(Class<T> cls, ApplicationContext applicationContext) {
-        super(cls, applicationContext);
+
+    @Inject
+    public H2Repository(@Parameter JdbcTableConfig jdbcTableConfig,
+                        QueueService queueService,
+                        JooqDSLContextWrapper dslContextWrapper) {
+        super(jdbcTableConfig, queueService, dslContextWrapper);
     }
 
+    @Override
     @SneakyThrows
     public void persist(T entity, DSLContext context, @Nullable Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;

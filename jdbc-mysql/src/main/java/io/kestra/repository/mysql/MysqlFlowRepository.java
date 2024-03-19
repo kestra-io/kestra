@@ -4,18 +4,19 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jooq.*;
-import org.jooq.impl.DSL;
+import org.jooq.Condition;
 
-import java.util.*;
+import java.util.Map;
 
 @Singleton
 @MysqlRepositoryEnabled
 public class MysqlFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
-    public MysqlFlowRepository(ApplicationContext applicationContext) {
-        super(new MysqlRepository<>(Flow.class, applicationContext), applicationContext);
+    public MysqlFlowRepository(@Named("flows") MysqlRepository<Flow> repository,
+                               ApplicationContext applicationContext) {
+        super(repository, applicationContext);
     }
 
     @Override

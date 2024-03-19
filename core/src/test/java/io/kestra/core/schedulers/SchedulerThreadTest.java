@@ -9,6 +9,7 @@ import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
+import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -84,7 +85,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
                 flowListenersServiceSpy,
                 triggerState
             );
-            Worker worker = new TestMethodScopedWorker(applicationContext, 8, null);
+            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {
             // start the worker as it execute polling triggers
             worker.run();

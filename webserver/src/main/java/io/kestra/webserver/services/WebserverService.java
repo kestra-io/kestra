@@ -66,10 +66,6 @@ public final class WebserverService implements Service {
     @EventListener
     public void onServeShutdown(ServerShutdownEvent event) {
         setState(ServiceState.TERMINATING);
-    }
-
-    @PreDestroy
-    public void preDestroy() {
         setState(ServiceState.TERMINATED_GRACEFULLY);
     }
 }

@@ -2,8 +2,8 @@ package io.kestra.repository.h2;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
@@ -13,8 +13,8 @@ import java.util.List;
 @H2RepositoryEnabled
 public class H2LogRepository extends AbstractJdbcLogRepository {
     @Inject
-    public H2LogRepository(ApplicationContext applicationContext) {
-        super(new H2Repository<>(LogEntry.class, applicationContext));
+    public H2LogRepository(@Named("logs") H2Repository<LogEntry> repository) {
+        super(repository);
     }
 
     @Override

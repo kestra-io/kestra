@@ -1,22 +1,39 @@
 package io.kestra.repository.postgres;
 
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.JdbcMapper;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
 import lombok.SneakyThrows;
-import org.jooq.*;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.JSONB;
 import org.jooq.Record;
+import org.jooq.RecordMapper;
+import org.jooq.Result;
+import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.Map;
 import jakarta.annotation.Nullable;
 
+@PostgresRepositoryEnabled
+@EachBean(JdbcTableConfig.class)
 public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
-    public PostgresRepository(Class<T> cls, ApplicationContext applicationContext) {
-        super(cls, applicationContext);
+
+    @Inject
+    public PostgresRepository(@Parameter JdbcTableConfig jdbcTableConfig,
+                              QueueService queueService,
+                              JooqDSLContextWrapper dslContextWrapper) {
+        super(jdbcTableConfig, queueService, dslContextWrapper);
     }
 
     @Override

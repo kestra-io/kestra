@@ -5,6 +5,7 @@ import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
@@ -14,8 +15,10 @@ import java.util.Map;
 @H2RepositoryEnabled
 public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
-    public H2ExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
-        super(new H2Repository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);
+    public H2ExecutionRepository(@Named("executions") H2Repository<Execution> repository,
+                                 ApplicationContext applicationContext,
+                                 AbstractJdbcExecutorStateStorage executorStateStorage) {
+        super(repository, applicationContext, executorStateStorage);
     }
 
     @Override

@@ -163,7 +163,6 @@ abstract public class AbstractCommand implements Callable<Integer> {
         Runtime.getRuntime().addShutdownHook(new Thread(
             () -> {
                 log.warn("Receiving shutdown ! Try to graceful exit");
-
                 try {
                     run.run();
                 } catch (Exception e) {

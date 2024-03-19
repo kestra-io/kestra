@@ -2,16 +2,13 @@ package io.kestra.jdbc;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
-import lombok.Getter;
+import io.micronaut.core.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @EachProperty("kestra.jdbc.tables")
-@Getter
-public class JdbcTableConfig {
-    String name;
-    Class<?> cls;
-    String table;
-
-    public JdbcTableConfig(@Parameter String name) {
-        this.name = name;
-    }
+public record JdbcTableConfig(
+    @Parameter String name,
+    @Nullable Class<?> cls,
+    @NotNull String table
+) {
 }

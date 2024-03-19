@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
@@ -51,8 +52,8 @@ public class StandAloneCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         this.skipExecutionService.setSkipExecutions(skipExecutions);
-
         super.call();
+        this.shutdownHook(() -> KestraContext.getContext().shutdown());
 
         if (flowPath != null) {
             try {
@@ -72,8 +73,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         }
 
         standAloneRunner.run();
-
-        this.shutdownHook(standAloneRunner::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

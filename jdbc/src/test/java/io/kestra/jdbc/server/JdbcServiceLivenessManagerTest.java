@@ -88,13 +88,13 @@ class JdbcServiceLivenessManagerTest {
         Mockito.when(repository.mayTransitionServiceTo(any(ServiceInstance.class), any(Service.ServiceState.class))).thenThrow(new RuntimeException());
 
         serviceLivenessManager.run(now.plus(Duration.ofSeconds(2))); // FAIL
-        Mockito.verify(context, Mockito.never()).exit(Mockito.eq(1));
+        Mockito.verify(context, Mockito.never()).shutdown();
 
         serviceLivenessManager.run(now.plus(Duration.ofSeconds(4))); // FAIL
-        Mockito.verify(context, Mockito.never()).exit(Mockito.eq(1));
+        Mockito.verify(context, Mockito.never()).shutdown();
 
         // Then
         serviceLivenessManager.run(now.plus(Duration.ofSeconds(6))); // TIMEOUT
-        Mockito.verify(context, Mockito.times(1)).exit(Mockito.eq(1));
+        Mockito.verify(context, Mockito.times(1)).shutdown();
     }
 }

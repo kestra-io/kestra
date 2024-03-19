@@ -104,15 +104,14 @@ health:
 
 # Kill Kestra running process
 kill:
-	docker compose -f ./docker-compose-ci.yml down;
-
 	PID=$$(ps aux | grep java | grep 'kestra' | grep -v 'grep' | awk '{print $$2}'); \
 	if [ ! -z "$$PID" ]; then \
 		echo "Killing Kestra process (pid=$$PID)."; \
-		kill -9 $$PID; \
+		kill $$PID; \
 	else \
 		echo "No Kestra process to kill."; \
 	fi
+	docker compose -f ./docker-compose-ci.yml down;
 
 # Default configuration for using Kestra with Postgres as backend.
 define KESTRA_POSTGRES_CONFIGURATION =

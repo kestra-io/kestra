@@ -33,4 +33,25 @@ class FlowValidateCommandTest {
             assertThat(out.toString(), containsString("✓ - io.kestra.cli / include"));
         }
     }
+
+    @Test
+    void warning() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--local",
+                "src/test/resources/warning/flow-with-warning.yaml"
+            };
+            Integer call = PicocliRunner.call(FlowValidateCommand.class, ctx, args);
+
+            assertThat(call, is(0));
+            assertThat(out.toString(), containsString("tasks[0] is deprecated"));
+            assertThat(out.toString(), containsString("The system namespace is reserved for background workflows"));
+        }
+    }
 }

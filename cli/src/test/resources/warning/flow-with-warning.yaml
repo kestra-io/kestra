@@ -1,0 +1,7 @@
+id: warning
+namespace: system
+
+tasks:
+  - id: deprecated
+    type: io.kestra.core.tasks.debugs.Echo
+    format: Hello World

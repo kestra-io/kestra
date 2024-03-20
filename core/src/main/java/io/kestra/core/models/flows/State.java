@@ -183,7 +183,7 @@ public class State {
         }
 
         public boolean isPaused() {
-            return this == Type.PAUSED;
+            return this == Type.PAUSED || this == Type.RETRYING;
         }
 
         public boolean isRetrying() {

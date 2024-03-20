@@ -562,7 +562,7 @@ public class ExecutorService {
     }
 
     private Executor handleEnd(Executor executor) {
-        if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().isPaused()) {
+        if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().isPaused() || executor.getExecution().getState().isRetrying()) {
             return executor;
         }
 

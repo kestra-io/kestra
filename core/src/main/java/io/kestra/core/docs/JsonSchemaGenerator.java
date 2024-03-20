@@ -252,6 +252,11 @@ public class JsonSchemaGenerator {
             if (schema != null && schema.deprecated()) {
                 memberAttributes.put("$deprecated", true);
             }
+
+            Deprecated deprecated = member.getAnnotationConsideringFieldAndGetter(Deprecated.class);
+            if (deprecated != null) {
+                memberAttributes.put("$deprecated", true);
+            }
         });
 
         // Add Plugin annotation special docs

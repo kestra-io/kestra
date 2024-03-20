@@ -1,6 +1,6 @@
 {% macro type(data) %}
     {%- if data['$ref'] -%}
-    [=={{- data['$ref'] | slice(8) -}}==](#{{- data['$ref'] | slice(8) | lower -}})
+    [=={{- data['$ref'] | slice(8) | substringAfterLast('.') -}}==](#{{- data['$ref'] | slice(8) | lower -}})
     {%- else -%}
     =={{- data.type -}}==
     {%- endif -%}
@@ -87,17 +87,16 @@
 * **Possible Values:**
     {%- for current in data.enum %}
   * `{{current}}`
-    {%- endfor -%}
-{%- endif -%}
+    {%- endfor %}
+{% endif -%}
 
 {%- if data.title %}
-> {{ data.title }}
-{%- endif -%}
+**{{ data.title }}**
+{% endif -%}
 
 {%- if data.description %}
-{{ data.description }}
-{%- endif -%}
-
+> {{ data.description }}
+{%- endif %}
 {% endmacro %}
 
 

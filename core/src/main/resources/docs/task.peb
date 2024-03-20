@@ -28,10 +28,12 @@ type: "{{ cls }}"
 ```
 
 {% if docDescription -%}
-> {{ docDescription }}
+<span style="font-size:1.5em;">{{ docDescription }}</span>
 {%- endif %}
 
-{{ docBody }}
+{% if docBody -%}
+  {{ docBody }}
+{%- endif %}
 
 {% if docExamples != null %}
 ## Examples

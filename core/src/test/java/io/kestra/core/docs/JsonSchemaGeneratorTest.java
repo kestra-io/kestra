@@ -96,6 +96,10 @@ class JsonSchemaGeneratorTest {
 
             var bashType = definitions.get("io.kestra.core.tasks.log.Log-2");
             assertThat(bashType, is(notNullValue()));
+
+            var properties = (Map<String, Map<String, Object>>) flow.get("properties");
+            var listeners = properties.get("listeners");
+            assertThat(listeners.get("$deprecated"), is(true));
         });
     }
 

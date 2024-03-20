@@ -613,6 +613,12 @@
     "Set labels done": "Successfully set the labels of the execution",
     "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code>  executions(s)?",
     "dependencies loaded": "Dependencies loaded",
-    "loaded x dependencies": "{count} dependencies loaded"
+    "loaded x dependencies": "{count} dependencies loaded",
+    "security_advice": {
+      "title": "Your data is not protected!",
+      "content": "Enable basic authentication to protect your instance.",
+      "switch_text": "Don't show again",
+      "enable": "Enable authentication"
+    }
   }
 }

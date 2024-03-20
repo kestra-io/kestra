@@ -1,5 +1,5 @@
 <script setup>
-    import {computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch} from "vue";
+    import {computed, getCurrentInstance, h, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex"
 
     // Icons
@@ -24,6 +24,7 @@
     import {apiUrl} from "override/utils/route";
     import EditorButtons from "./EditorButtons.vue";
     import Drawer from "../Drawer.vue";
+    import {ElMessageBox} from "element-plus";
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
@@ -566,28 +567,48 @@
                 title: t("invalid flow"),
                 message: t("invalid yaml"),
             })
+
             return;
         }
-
+        const overrideFlow = ref(false);
         if (flowErrors.value) {
-            saveAsDraft(flowErrors.value);
-            return;
+            if (props.flowValidation.outdated && props.isCreating) {
+                overrideFlow.value = await ElMessageBox({
+                    title: t("override.title"),
+                    message: () => {
+                        return h("div", null, [
+                            h("p", null, t("override.details")),
+
+                        ])
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: t("ok"),
+                    cancelButtonText: t("cancel"),
+                    center: false,
+                    showClose: false,
+                }).then(() => {
+                    overrideFlow.value = true;
+                    console.log("pop")
+                    return true;
+                }).catch(() => {
+                    return false
+                })
+
+            }
+
+            if (!overrideFlow.value) {
+                saveAsDraft(flowErrors.value);
+
+                return;
+            }
         }
 
-        if (props.isCreating) {
+
+        if (props.isCreating && !overrideFlow.value) {
             await store.dispatch("flow/createFlow", {flow: flowYaml.value})
                 .then((response) => {
                     toast.saved(response.id);
                     store.dispatch("core/isUnsaved", false);
-                    router.push({
-                        name: "flows/update",
-                        params: {
-                            id: flowParsed.value.id,
-                            namespace: flowParsed.value.namespace,
-                            tab: "editor",
-                            tenant: routeParams.tenant
-                        }
-                    });
                 })
         } else {
             await store.dispatch("flow/saveFlow", {flow: flowYaml.value})
@@ -595,6 +616,18 @@
                     toast.saved(response.id);
                     store.dispatch("core/isUnsaved", false);
                 })
+        }
+
+        if (props.isCreating || overrideFlow.value) {
+            router.push({
+                name: "flows/update",
+                params: {
+                    id: flowParsed.value.id,
+                    namespace: flowParsed.value.namespace,
+                    tab: "editor",
+                    tenant: routeParams.tenant
+                }
+            });
         }
 
         haveChange.value = false;

@@ -31,8 +31,12 @@
       "create": {
         "title": "Flow already exists",
         "description": "A Flow with the same id / namespace already exists.",
-        "details": "Check the Flows menu for more details about the existing flow."
+        "details": "Saving to override and force the creation of a new revision."
       }
+    },
+    "override": {
+      "title": "You are going to override the current flow",
+      "details": "Previous flow will be recoverable through the revisions tab."
     },
     "is deprecated": "is deprecated",
     "success": "Success",

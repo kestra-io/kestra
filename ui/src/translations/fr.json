@@ -30,8 +30,12 @@
       },
       "create": {
         "description": "Un Flow avec le même id / namespace existe déjà.",
-        "details": "Regardez le menu Flows pour plus de détails sur le Flow existant."
+        "details": "Sauvegarder pour l'écraser et forcer la création d'une révision."
       }
+    },
+    "override": {
+      "title": "Vous allez écraser le flow actuel",
+      "details": "Vous pourrez toujours le restaurer via les révisions."
     },
     "is deprecated": "est déprécié(e)",
     "success": "Succès",

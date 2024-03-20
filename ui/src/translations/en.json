@@ -109,7 +109,8 @@
       "manage": "Manage search filters",
       "manage desc": "Manage saved search filters",
       "save filter": "Save filter",
-      "filter name": "Filter name"
+      "filter name": "Filter name",
+      "filters": "Filters"
     },
     "steps": "Steps",
     "state": "State",

@@ -1,12 +1,12 @@
 <template>
     <!-- No filter yet -->
     <el-button v-if="!hasSavedFilters" :icon="ContentSave" @click="toggleDrawer()">
-        Filters
+        {{ $t("search filters.filters") }}
     </el-button>
     <!-- Existing filters -->
-    <el-dropdown v-else button type="default">
+    <el-dropdown v-else button type="default" popper-class="disabled-means-selected">
         <el-button class="dropdown-button" :icon="ContentSave" @click="toggleDrawer()">
-            Filters
+            {{ $t("search filters.filters") }}
         </el-button>
         <template #dropdown>
             <el-dropdown-menu>
@@ -166,7 +166,15 @@
         }
     }
 </script>
-<style>
+
+<style lang="scss">
     .dropdown-button {
-        width: 100%}
+        width: 100%;
+    }
+
+    .disabled-means-selected {
+        li.is-disabled {
+            color: var(--bs-primary);
+        }
+    }
 </style>

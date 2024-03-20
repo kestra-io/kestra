@@ -101,14 +101,14 @@ class PluginDocCommandTest {
                 * **Dynamic:** ✔️
                 * **Required:** ❌
 
-                > Example interface
+                **Example interface**
                 """));
             assertThat(taskDoc, containsString("""
                 ### `from`
                 * **Type:**
                   * ==string==
                   * ==array==
-                  * [==io.kestra.core.models.annotations.Example==](#io.kestra.core.models.annotations.example)
+                  * [==Example==](#io.kestra.core.models.annotations.example)
                 * **Dynamic:** ✔️
                 * **Required:** ✔️
                 """));

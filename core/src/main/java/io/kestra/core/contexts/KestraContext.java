@@ -1,6 +1,7 @@
 package io.kestra.core.contexts;
 
 import io.kestra.core.models.ServerType;
+import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
@@ -45,15 +46,20 @@ public abstract class KestraContext {
      *
      * @return The {@link ServerType}.
      */
-    public ServerType getServerType() {
-        throw new UnsupportedOperationException();
-    }
+    public abstract ServerType getServerType();
+
+    /**
+     * Returns the Kestra Version.
+     *
+     * @return the string version.
+     */
+    public abstract String getVersion();
 
     /**
      * Stops Kestra.
      */
     public void exit(int status) {
-        throw new UnsupportedOperationException();
+        // noop
     }
 
     /**
@@ -65,6 +71,7 @@ public abstract class KestraContext {
 
         private final ApplicationContext applicationContext;
         private final Environment environment;
+        private final String version;
 
         /**
          * Creates a new {@link KestraContext} instance.
@@ -72,8 +79,10 @@ public abstract class KestraContext {
          * @param applicationContext     The {@link ApplicationContext}.
          * @param environment The {@link Environment}.
          */
-        public Initializer(ApplicationContext applicationContext, Environment environment) {
+        public Initializer(ApplicationContext applicationContext,
+                           Environment environment) {
             this.applicationContext = applicationContext;
+            this.version = Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null);
             this.environment = environment;
             KestraContext.setContext(this);
         }
@@ -91,6 +100,12 @@ public abstract class KestraContext {
         public void exit(int status) {
             applicationContext.close();
             Runtime.getRuntime().exit(status);
+        }
+
+        /** {@inheritDoc} **/
+        @Override
+        public String getVersion() {
+            return version;
         }
 
         @PreDestroy

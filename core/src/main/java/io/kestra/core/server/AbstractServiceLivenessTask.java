@@ -60,7 +60,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
             }
             onSchedule(now);
         } catch (Exception e) {
-            log.error("Unexpected error while executing '{}'. Error: {}", now, e.getMessage());
+            log.error("Unexpected error while executing '{}'. Error: {}", name, e.getMessage(), e);
         } finally {
             lastScheduledExecution = now;
         }

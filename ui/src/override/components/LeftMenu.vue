@@ -45,7 +45,6 @@
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
     import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
-    import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
     import {shallowRef} from "vue";
 
     export default {
@@ -186,15 +185,6 @@
                                     element: shallowRef(TimerCogOutline),
                                     class: "menu-icon"
                                 }
-                            },
-                            {
-                                href: {name: "admin/cluster/services"},
-                                routes: this.routeStartWith("admin/cluster/services"),
-                                title: this.$t("cluster"),
-                                icon: {
-                                    element: shallowRef(ServerOutline),
-                                    class: "menu-icon"
-                                },
                             },
                             {
                                 href: {name: "admin/stats"},

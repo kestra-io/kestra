@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 class ServiceInstanceTest {
 
@@ -33,7 +34,8 @@ class ServiceInstanceTest {
             now.minus(Duration.ofSeconds(5)),
             null,
             CONFIG,
-            null
+            null,
+            Set.of()
         );
 
         // When - Then
@@ -53,7 +55,8 @@ class ServiceInstanceTest {
             now.minus(Duration.ofSeconds(20)),
             null,
             CONFIG,
-            null
+            null,
+            Set.of()
         );
 
         // When - Then
@@ -73,14 +76,16 @@ class ServiceInstanceTest {
             now,
             List.of(),
             CONFIG,
-            null
+            null,
+            Set.of()
         );
 
         // When
-        ServiceInstance result = instance.updateState(Service.ServiceState.DISCONNECTED, now, "Disconnected");
+        ServiceInstance result = instance.state(Service.ServiceState.DISCONNECTED, now, "Disconnected");
 
         // Then
         Assertions.assertNotEquals(instance, result);
-        Assertions.assertEquals(result.events(), List.of(new ServiceInstance.TimestampedEvent(now, "Disconnected")));
+        Assertions.assertEquals(List.of(
+            new ServiceInstance.TimestampedEvent(now, "Disconnected", "service.state.updated")), result.events());
     }
 }

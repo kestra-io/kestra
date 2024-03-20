@@ -1,27 +1,34 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
-import org.jooq.DeleteResultStep;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
+import org.jooq.SelectJoinStep;
 import org.jooq.Table;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
+import org.jooq.impl.DSL;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.using;
 
@@ -201,6 +208,24 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * {@inheritDoc}
      **/
     @Override
+    public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
+                                                final Set<Service.ServiceState> states) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = using(configuration);
+                SelectConditionStep<Record1<Object>> select = context.select(VALUE).from(table()).where("1=1");
+                if (states != null && !states.isEmpty()) {
+                    select = select.and(STATE.in(states.stream().map(Enum::name).collect(Collectors.toList())));
+                }
+                return this.jdbcRepository.fetchPage(context, select, pageable);
+            });
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
     public ServiceStateTransition.Response mayTransitionServiceTo(final ServiceInstance instance,
                                                                   final Service.ServiceState newState,
                                                                   final String reason) {
@@ -221,7 +246,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                                                                final String reason) {
         ImmutablePair<ServiceInstance, ServiceInstance> result = mayUpdateStatusById(
             configuration,
-            instance.id(),
+            instance,
             newState,
             reason
         );
@@ -232,17 +257,17 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * Attempt to transit the status of a given service to given new status.
      * This method may not update the service if the transition is not valid.
      *
-     * @param id       the service's uid.
+     * @param instance the new service instance.
      * @param newState the new state of the service.
      * @return an {@link Optional} of {@link ImmutablePair} holding the old (left), and new {@link ServiceInstance} or {@code null} if transition failed (right).
      * Otherwise, an {@link Optional#empty()} if the no service can be found.
      */
     private ImmutablePair<ServiceInstance, ServiceInstance> mayUpdateStatusById(final Configuration configuration,
-                                                                                final String id,
+                                                                                final ServiceInstance instance,
                                                                                 final Service.ServiceState newState,
                                                                                 final String reason) {
         // Find the ServiceInstance to be updated
-        Optional<ServiceInstance> optional = findById(id, configuration, true);
+        Optional<ServiceInstance> optional = findById(instance.id(), configuration, true);
 
         // Check whether service was found.
         if (optional.isEmpty()) {
@@ -250,12 +275,15 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
         }
 
         // Check whether the status transition is valid before saving.
-        ServiceInstance serviceInstance = optional.get();
-        if (serviceInstance.state().isValidTransition(newState)) {
-            ServiceInstance updated = serviceInstance.updateState(newState, Instant.now(), reason);
-            return new ImmutablePair<>(serviceInstance, save(updated));
+        final ServiceInstance before = optional.get();
+        if (before.state().isValidTransition(newState)) {
+            ServiceInstance updated = before
+                .state(newState, Instant.now(), reason)
+                .server(instance.server())
+                .metrics(instance.metrics());
+            return new ImmutablePair<>(before, save(updated));
         }
-        return new ImmutablePair<>(serviceInstance, null);
+        return new ImmutablePair<>(before, null);
     }
 
     private Table<Record> table() {

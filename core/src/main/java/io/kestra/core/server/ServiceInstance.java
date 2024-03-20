@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Runtime information about a Kestra's service (e.g., WORKER, EXECUTOR, etc.).
@@ -35,8 +36,12 @@ public record ServiceInstance(
     List<TimestampedEvent> events,
     ServerConfig config,
     Map<String, Object> props,
+    Set<Metric> metrics,
     long seqId
 ) {
+
+    // TimestampedEvent type for state updated.
+    private static final String SERVICE_STATE_UPDATED_EVENT_TYPE = "service.state.updated";
 
     public ServiceInstance(
         String id,
@@ -47,9 +52,10 @@ public record ServiceInstance(
         Instant updatedAt,
         List<TimestampedEvent> events,
         ServerConfig config,
-        Map<String, Object> props
+        Map<String, Object> props,
+        Set<Metric> metrics
     ) {
-        this(id, type, state, server, createdAt, updatedAt, events, config, props, 0L);
+        this(id, type, state, server, createdAt, updatedAt, events, config, props, metrics, 0L);
     }
 
     /**
@@ -73,15 +79,59 @@ public record ServiceInstance(
     }
 
     /**
+     * Updates the server for this instance.
+     *
+     * @param server The new server.
+     * @return a new {@link ServiceInstance}.
+     */
+    public ServiceInstance server(final ServerInstance server) {
+        return new ServiceInstance(
+            id,
+            type,
+            state,
+            server,
+            createdAt,
+            updatedAt,
+            events,
+            config,
+            props,
+            metrics,
+            seqId
+        );
+    }
+
+    /**
+     * Updates the metrics for this instance.
+     *
+     * @param metrics The new metrics.
+     * @return a new {@link ServiceInstance}.
+     */
+    public ServiceInstance metrics(final Set<Metric> metrics) {
+        return new ServiceInstance(
+            id,
+            type,
+            state,
+            server,
+            createdAt,
+            updatedAt,
+            events,
+            config,
+            props,
+            metrics,
+            seqId
+        );
+    }
+
+    /**
      * Updates this service instance with the given state and instant.
      *
      * @param newState  The new state.
      * @param updatedAt The update instant
      * @return a new {@link ServiceInstance}.
      */
-    public ServiceInstance updateState(final ServiceState newState,
-                                       final Instant updatedAt) {
-        return updateState(newState, updatedAt, null);
+    public ServiceInstance state(final ServiceState newState,
+                                 final Instant updatedAt) {
+        return state(newState, updatedAt, null);
     }
 
     /**
@@ -92,16 +142,20 @@ public record ServiceInstance(
      * @param reason    The human-readable reason of the update.
      * @return a new {@link ServiceInstance}.
      */
-    public ServiceInstance updateState(final ServiceState newState,
-                                       final Instant updatedAt,
-                                       final String reason) {
+    public ServiceInstance state(final ServiceState newState,
+                                 final Instant updatedAt,
+                                 String reason) {
+
+        // add a default reason if a state changed is detected.
+        if (reason == null && !state.equals(newState)) {
+            reason =  String.format("Service transitioned to the '%s' state.", newState);
+        }
 
         List<TimestampedEvent> events = this.events;
         if (reason != null) {
             events = new ArrayList<>(events);
-            events.add(new TimestampedEvent(updatedAt, reason));
+            events.add(new TimestampedEvent(updatedAt, reason, SERVICE_STATE_UPDATED_EVENT_TYPE));
         }
-
         long nextSeqId = seqId + 1;
         return new ServiceInstance(
             id,
@@ -113,6 +167,7 @@ public record ServiceInstance(
             events,
             config,
             props,
+            metrics,
             nextSeqId
         );
     }
@@ -144,7 +199,8 @@ public record ServiceInstance(
      *
      * @param ts    The instant of this event.
      * @param value The value of this event.
+     * @param type  The type of this event.
      */
-    public record TimestampedEvent(Instant ts, String value) {
+    public record TimestampedEvent(Instant ts, String value, String type) {
     }
 }

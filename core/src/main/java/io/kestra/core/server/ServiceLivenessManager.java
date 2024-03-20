@@ -24,22 +24,26 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
     private static final Logger log = LoggerFactory.getLogger(ServiceLivenessManager.class);
 
     private static final String TASK_NAME = "service-liveness-manager-task";
-    private final ServiceInstanceFactory serviceInstanceFactory;
+    private final LocalServiceStateFactory localServiceStateFactory;
     private final ServiceInstanceRepositoryInterface serviceRepository;
     private final ReentrantLock stateLock = new ReentrantLock();
     protected final OnStateTransitionFailureCallback onStateTransitionFailureCallback;
+
+    private final ServerInstanceFactory serverInstanceFactory;
     private final ServiceRegistry serviceRegistry;
 
     private Instant lastSucceedStateUpdated;
 
     public ServiceLivenessManager(final ServerConfig configuration,
                                   final ServiceRegistry serviceRegistry,
-                                  final ServiceInstanceFactory serviceInstanceFactory,
+                                  final LocalServiceStateFactory localServiceStateFactory,
+                                  final ServerInstanceFactory serverInstanceFactory,
                                   final ServiceInstanceRepositoryInterface repository,
                                   final OnStateTransitionFailureCallback onStateTransitionFailureCallback) {
         super(TASK_NAME, configuration);
         this.serviceRegistry = serviceRegistry;
-        this.serviceInstanceFactory = serviceInstanceFactory;
+        this.localServiceStateFactory = localServiceStateFactory;
+        this.serverInstanceFactory = serverInstanceFactory;
         this.serviceRepository = repository;
         this.onStateTransitionFailureCallback = onStateTransitionFailureCallback;
     }
@@ -60,7 +64,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         // Check whether the state for this service is updatable.
         // A service (e.g., Worker) is not updatable when its state has already been transitioned to
         // a completed state (e.g., NOT_RUNNING) by an external service (e.g. Executor).
-        ServiceRegistry.LocalServiceState holder = serviceRegistry.get(event.getService().getType());
+        LocalServiceState holder = serviceRegistry.get(event.getService().getType());
         if (holder != null && !holder.isStateUpdatable().get()) {
             ServiceInstance instance = holder.instance();
             log.debug(
@@ -90,11 +94,12 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
      */
     private void onCreateState(final ServiceStateChangeEvent event) {
         Service service = event.getService();
-        ServiceInstance instance = serviceRepository.save(serviceInstanceFactory.newServiceInstance(
+        LocalServiceState localServiceState = localServiceStateFactory.newLocalServiceState(
             service,
             event.properties()
-        ));
-        this.serviceRegistry.register(new ServiceRegistry.LocalServiceState(service, instance));
+        );
+        ServiceInstance instance = serviceRepository.save(localServiceState.instance());
+        this.serviceRegistry.register(localServiceState.with(instance));
         log.info("[Service id={}, type='{}', hostname='{}'] Connected.",
             instance.id(),
             instance.type(),
@@ -166,7 +171,6 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         return lastSucceedStateUpdated;
     }
 
-
     /**
      * Updates the state of the local worker instance.
      *
@@ -179,7 +183,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                                                          final OnStateTransitionFailureCallback onStateChangeError) {
 
         // Pre-check the state transition validation with the known local state.
-        ServiceInstance localInstance = localService(service).instance();
+        ServiceInstance localInstance = localServiceState(service).instance();
         if (!localInstance.state().isValidTransition(newState)) {
             log.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
                 localInstance.id(),
@@ -198,7 +202,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         // Optional callback to be executed at the end.
         Runnable returnCallback = null;
         try {
-            localInstance = localService(service).instance();
+            LocalServiceState localState = localServiceState(service);
+
+            // Get an updated view of the local instance.
+            localInstance = localState.instance()
+                .metrics(localState.service().getMetrics())
+                .server(serverInstanceFactory.newServerInstance());
+
             ServiceStateTransition.Response response = serviceRepository.mayTransitionServiceTo(localInstance, newState);
 
             ServiceInstance remoteInstance = response.instance();
@@ -207,14 +217,14 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
             if (response.is(Result.ABORTED)) {
                 // Force state transition due to inconsistent state; remote state does not exist (yet).
-                remoteInstance = serviceRepository.save(localInstance.updateState(newState, now));
+                remoteInstance = serviceRepository.save(localInstance.state(newState, now));
                 isStateTransitionSucceed = true;
             }
 
             if (response.is(Result.FAILED)) {
                 if (remoteInstance.seqId() < localInstance.seqId()) {
                     // Force state transition due to inconsistent state; remote state is not up-to-date.
-                    remoteInstance = serviceRepository.save(localInstance.updateState(newState, now));
+                    remoteInstance = serviceRepository.save(localInstance.state(newState, now));
                     isStateTransitionSucceed = true;
                 } else {
                     mayDisableStateUpdate(service, remoteInstance);
@@ -225,7 +235,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                         Optional<ServiceInstance> result = onStateChangeError.execute(now, service, instance, isLivenessEnabled());
                         if (result.isPresent()) {
                             // Optionally recover from state-transition failure
-                            this.serviceRegistry.register(localService(service).with(serviceRepository.save(result.get())));
+                            this.serviceRegistry.register(localServiceState(service).with(serviceRepository.save(result.get())));
                             this.lastSucceedStateUpdated = now;
                         }
                     };
@@ -236,7 +246,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 this.lastSucceedStateUpdated = now;
             }
             // Update the local instance
-            this.serviceRegistry.register(localService(service).with(remoteInstance));
+            this.serviceRegistry.register(localServiceState(service).with(remoteInstance));
         } catch (Exception e) {
             log.error("[Service id={}, type='{}', hostname='{}'] Failed to update state. Error: {}",
                 localInstance.id(),
@@ -252,7 +262,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 returnCallback.run();
             }
         }
-        return localService(service).instance();
+        return localServiceState(service).instance();
     }
 
     private void mayDisableStateUpdate(final Service service, final ServiceInstance instance) {
@@ -267,14 +277,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 actualState
             );
             // Mark the service has not updatable to prevent any unnecessary state transition issues.
-            localService(service).isStateUpdatable().set(false);
+            localServiceState(service).isStateUpdatable().set(false);
         }
     }
 
-    private ServiceRegistry.LocalServiceState localService(final Service service) {
+    private LocalServiceState localServiceState(final Service service) {
         return serviceRegistry.get(service.getType());
     }
-
 
     /**
      * Callback to be invoked when a state transition failed.
@@ -312,7 +321,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             if (instance.server().type().equals(ServerInstance.Type.STANDALONE) ||
                 instance.is(Service.ServiceType.WEBSERVER)) {
                 // Force the RUNNING state.
-                return Optional.of(instance.updateState(Service.ServiceState.RUNNING, now, null));
+                return Optional.of(instance.state(Service.ServiceState.RUNNING, now, null));
             }
 
             if (isLivenessEnabled || instance.is(Service.ServiceState.ERROR)) {
@@ -346,11 +355,11 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
     @VisibleForTesting
     public List<ServiceInstance> allServiceInstances() {
-        return serviceRegistry.all().stream().map(ServiceRegistry.LocalServiceState::instance).toList();
+        return serviceRegistry.all().stream().map(LocalServiceState::instance).toList();
     }
 
     @VisibleForTesting
     public void updateServiceInstance(final Service service, final ServiceInstance instance) {
-        this.serviceRegistry.register(new ServiceRegistry.LocalServiceState(service, instance));
+        this.serviceRegistry.register(new LocalServiceState(service, instance));
     }
 }

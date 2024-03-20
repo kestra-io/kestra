@@ -135,7 +135,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     }
 
     @Test
-    @Disabled
     void taskResubmitSkipExecution() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
 

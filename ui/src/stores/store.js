@@ -14,8 +14,6 @@ import stat from "./stat"
 import template from "./template"
 import taskrun from "./taskruns"
 import trigger from "./trigger";
-import service from "./service";
-
 export default {
     modules: {
         api,
@@ -33,7 +31,6 @@ export default {
         graph,
         plugin,
         taskrun,
-        trigger,
-        service
+        trigger
     }
 }

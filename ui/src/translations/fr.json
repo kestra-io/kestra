@@ -599,6 +599,12 @@
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
     "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
     "dependencies loaded": "Dépendances chargées",
-    "loaded x dependencies": "{count} dépendances chargées"
+    "loaded x dependencies": "{count} dépendances chargées",
+    "security_advice": {
+      "title": "Vos données ne sont pas protégées !",
+      "content": "Activer l'authentication basique pour protéger votre instance.",
+      "switch_text": "Ne plus montrer",
+      "enable": "Activer l'authentification"
+    }
   }
 }

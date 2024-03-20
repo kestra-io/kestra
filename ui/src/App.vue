@@ -80,23 +80,23 @@
                     && isSecurityAdviceEnable) {
                     const checked = ref(false);
                     ElMessageBox({
-                        title: "Your data is not protected",
+                        title: this.$t("security_advice.title"),
                         message: () => {
                             return h("div", null, [
-                                h("p", null, "Enable basic authentication to protect your instance."),
+                                h("p", null, this.$t("security_advice.content")),
                                 h(ElSwitch, {
                                     modelValue: checked.value,
                                     "onUpdate:modelValue": (val) => {
                                         checked.value = val
                                         localStorage.setItem("security.advice.show", `${!val}`)
                                     },
-                                    activeText: "Don't show again"
+                                    activeText: this.$t("security_advice.switch_text")
                                 }),
                             ])
                         },
                         showCancelButton: true,
-                        confirmButtonText: "Enable authentication",
-                        cancelButtonText: "Dismiss",
+                        confirmButtonText: this.$t("security_advice.enable"),
+                        cancelButtonText: this.$t("cancel"),
                         center: false,
                         showClose: false,
                     }).then(() => {

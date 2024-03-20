@@ -4,9 +4,10 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.ServerInstanceFactory;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceInstanceFactory;
+import io.kestra.core.server.LocalServiceStateFactory;
 import io.kestra.core.server.ServiceLivenessManager;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceStateChangeEvent;
@@ -28,12 +29,14 @@ public final class JdbcServiceLivenessManager extends ServiceLivenessManager {
     @Inject
     public JdbcServiceLivenessManager(final ServerConfig configuration,
                                       final ServiceRegistry registry,
-                                      final ServiceInstanceFactory serviceInstanceFactory,
+                                      final LocalServiceStateFactory localServiceStateFactory,
+                                      final ServerInstanceFactory serverInstanceFactory,
                                       final ServiceInstanceRepositoryInterface repository) {
         super(
             configuration,
             registry,
-            serviceInstanceFactory,
+            localServiceStateFactory,
+            serverInstanceFactory,
             repository,
             new DefaultStateTransitionFailureCallback()
         );

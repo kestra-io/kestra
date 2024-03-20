@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.utils.IdUtils;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Runtime information about a Kestra server (i.e. JVM).
@@ -19,8 +20,8 @@ public record ServerInstance(
     Type type,
     String version,
     String hostname,
-    Map<String, Object> props
-
+    Map<String, Object> props,
+    Set<Metric> metrics
 ) {
     /// Static JVM Instance UUID
     public static final String INSTANCE_ID = IdUtils.create();
@@ -31,8 +32,9 @@ public record ServerInstance(
     public ServerInstance(final Type type,
                           final String version,
                           final String hostname,
-                          final Map<String, Object> props) {
-        this(INSTANCE_ID, type, version, hostname, props);
+                          final Map<String, Object> props,
+                          final Set<Metric> metrics) {
+        this(INSTANCE_ID, type, version, hostname, props, metrics);
     }
 
     public enum Type {

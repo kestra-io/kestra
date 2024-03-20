@@ -31,12 +31,33 @@ public interface Service {
     ServiceState getState();
 
     /**
+     * Gets the metrics attached to this service.
+     *
+     * @return the set of metrics.
+     */
+    default Set<Metric> getMetrics() {
+        return Set.of();
+    }
+
+    /**
      * Specify whether to skip graceful termination on shutdown.
      *
      * @param skipGracefulTermination {@code true} to skip graceful termination on shutdown.
      */
     default void skipGracefulTermination(final boolean skipGracefulTermination) {
         // noop
+    }
+
+    /**
+     * Returns this service for the expected type.
+     * If a service acts as a decorator that method must return the original service instance.
+     *
+     * @return  the expected service type.
+     * @param <T> the service type.
+     */
+    @SuppressWarnings("unchecked")
+    default <T extends Service> T unwrap() {
+        return (T) this;
     }
 
     /**

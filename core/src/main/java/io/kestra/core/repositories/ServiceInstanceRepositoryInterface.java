@@ -3,11 +3,13 @@ package io.kestra.core.repositories;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
+import io.micronaut.data.model.Pageable;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Repository service for storing service instance.
@@ -25,11 +27,19 @@ public interface ServiceInstanceRepositoryInterface {
     Optional<ServiceInstance> findById(String id);
 
     /**
-     * Finds all service instance.
+     * Finds all service instances.
      *
      * @return a list of {@link ServiceInstance}.
      */
     List<ServiceInstance> findAll();
+
+    /**
+     * Find service instances.
+     *
+     * @param pageable The {@link Pageable}.
+     * @return a list of {@link ServiceInstance}.
+     */
+    ArrayListTotal<ServiceInstance> find(Pageable pageable, Set<Service.ServiceState> states);
 
     /**
      * Deletes the given service instance.
@@ -108,7 +118,10 @@ public interface ServiceInstanceRepositoryInterface {
                 beforeAndAfter = null;
                 // VALID service transition
             } else if (optional.get().state().isValidTransition(newState)) {
-                ServiceInstance updated = optional.get().updateState(newState, Instant.now(), reason);
+                ServiceInstance updated = optional.get()
+                    .state(newState, Instant.now(), reason)
+                    .server(instance.server())
+                    .metrics(instance.metrics());
                 beforeAndAfter = new ImmutablePair<>(optional.get(), save(updated));
                 // INVALID service transition
             } else {

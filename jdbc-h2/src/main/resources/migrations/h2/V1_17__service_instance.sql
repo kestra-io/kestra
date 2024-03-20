@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS service_instance
 (
     "key"          VARCHAR(250)  NOT NULL PRIMARY KEY,
-    "value"        VARCHAR(1000) NOT NULL,
+    "value"        CLOB NOT NULL,
     "service_id"   VARCHAR(36) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.id')),
     "service_type" VARCHAR(36) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.type')),
     "state"        VARCHAR(36) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.state')),

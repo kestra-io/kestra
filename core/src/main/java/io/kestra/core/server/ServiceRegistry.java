@@ -6,7 +6,6 @@ import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Service for registering local service states.
@@ -24,7 +23,7 @@ public final class ServiceRegistry {
      * @param service The {@link LocalServiceState}.
      */
     public void register(final LocalServiceState service) {
-        services.put(service.service.getType(), service);
+        services.put(service.service().getType(), service);
     }
 
     public boolean containsService(final Service.ServiceType type) {
@@ -66,27 +65,6 @@ public final class ServiceRegistry {
      */
     public boolean isEmpty() {
         return services.isEmpty();
-    }
-
-    /**
-     * Immutable class holding the local state of a service.
-     *
-     * @param service          The service bean.
-     * @param instance         The service instance.
-     * @param isStateUpdatable Flag indicating whether the service's state is updatable or not.
-     */
-    public record LocalServiceState(Service service,
-                                    ServiceInstance instance,
-                                    AtomicBoolean isStateUpdatable) {
-
-        public LocalServiceState(Service service,
-                                 ServiceInstance instance) {
-            this(service, instance, new AtomicBoolean(true));
-        }
-
-        public LocalServiceState with(final ServiceInstance instance) {
-            return new LocalServiceState(service, instance, isStateUpdatable);
-        }
     }
 
 }

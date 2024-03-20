@@ -80,7 +80,7 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 @Introspected
 public class Worker implements Service, Runnable, AutoCloseable {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final String SERVICE_PROS_WORKER_GROUP = "workerGroup";
+    private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
     private final ApplicationContext applicationContext;
     private final WorkerJobQueueInterface workerJobQueue;
@@ -208,7 +208,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private void setState(final ServiceState state) {
         this.state.set(state);
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SERVICE_PROS_WORKER_GROUP, workerGroup);
+        properties.put(SERVICE_PROPS_WORKER_GROUP, workerGroup);
         eventPublisher.publishEvent(new ServiceStateChangeEvent(this, properties));
     }
 
@@ -839,5 +839,4 @@ public class Worker implements Service, Runnable, AutoCloseable {
     public ServiceState getState() {
         return state.get();
     }
-
 }

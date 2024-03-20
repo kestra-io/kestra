@@ -1,5 +1,6 @@
 package io.kestra.core.server;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
@@ -20,6 +21,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.ABORTED;
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
@@ -44,6 +46,7 @@ public class ServiceLivenessManagerTest {
 
     @BeforeEach
     void beforeEach() {
+        KestraContext kestraContext = Mockito.mock(KestraContext.class);
         ServerConfig config = new ServerConfig(Duration.ZERO,
             new ServerConfig.Liveness(
                 true,
@@ -54,10 +57,12 @@ public class ServiceLivenessManagerTest {
             )
         );
 
+        KestraContext context = Mockito.mock(KestraContext.class);
         this.serviceLivenessManager = new ServiceLivenessManager(
             config,
             new ServiceRegistry(),
-            new ServiceInstanceFactory(config, null, null),
+            new LocalServiceStateFactory(config,  new ServerInstanceFactory(context, null)),
+            new ServerInstanceFactory(kestraContext, null),
             repository,
             onStateTransitionFailureCallback
         );
@@ -191,13 +196,16 @@ public class ServiceLivenessManagerTest {
             new ServerInstance(
                 ServerInstance.Type.SERVER,
                 "N/A",
-                Network.localHostname(), Map.of()
+                Network.localHostname(),
+                Map.of(),
+                Set.of()
             ),
             Instant.now().truncatedTo(ChronoUnit.MILLIS),
             Instant.now().truncatedTo(ChronoUnit.MILLIS),
             List.of(),
             config,
-            Map.of()
+            Map.of(),
+            Set.of()
         );
     }
 }

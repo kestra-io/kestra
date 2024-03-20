@@ -40,7 +40,7 @@ public class JdbcWorkerJobQueueService {
 
         this.queueStop = workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
 
-            Worker worker = (Worker) serviceRegistry.waitForServiceAndGet(Service.ServiceType.WORKER);
+            Worker worker = serviceRegistry.waitForServiceAndGet(Service.ServiceType.WORKER).unwrap();
 
             final WorkerInstance workerInstance = WorkerInstance
                 .builder()

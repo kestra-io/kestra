@@ -1,5 +1,6 @@
 package io.kestra.webserver.services;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.utils.IdUtils;

@@ -1,8 +1,10 @@
 package io.kestra.repository.memory;
 
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -27,6 +30,14 @@ public class MemoryServiceInstanceRepository implements ServiceInstanceRepositor
     @Override
     public List<ServiceInstance> findAll() {
         return new ArrayList<>(data.values());
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
+                                                final Set<Service.ServiceState> states) {
+        List<ServiceInstance> instances = findAll();
+        return new ArrayListTotal<>(instances, instances.size());
     }
 
     /** {@inheritDoc} **/

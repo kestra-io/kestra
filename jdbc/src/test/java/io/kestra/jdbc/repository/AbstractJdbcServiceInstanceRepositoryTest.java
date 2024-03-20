@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEED;
@@ -127,7 +128,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         // Given
         final Instant now = Instant.now();
         ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.RunningServiceInstance
-            .updateState(Service.ServiceState.RUNNING, now.minus(Duration.ofSeconds(30)).truncatedTo(ChronoUnit.MILLIS));
+            .state(Service.ServiceState.RUNNING, now.minus(Duration.ofSeconds(30)).truncatedTo(ChronoUnit.MILLIS));
 
         repository.save(instance);
 
@@ -144,7 +145,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         // Given
         final Instant now = Instant.now();
         ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.RunningServiceInstance
-            .updateState(Service.ServiceState.RUNNING, now.minus(Duration.ofSeconds(5)).truncatedTo(ChronoUnit.MILLIS));
+            .state(Service.ServiceState.RUNNING, now.minus(Duration.ofSeconds(5)).truncatedTo(ChronoUnit.MILLIS));
 
         repository.save(instance);
 
@@ -260,13 +261,16 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
                 new ServerInstance(
                     ServerInstance.Type.STANDALONE,
                     "N/A",
-                    Network.localHostname(), Map.of()
+                    Network.localHostname(),
+                    Map.of(),
+                    Set.of()
                 ),
                 Instant.now().truncatedTo(ChronoUnit.MILLIS),
                 Instant.now().truncatedTo(ChronoUnit.MILLIS),
                 List.of(),
                 config,
-                Map.of()
+                Map.of(),
+                Set.of()
             );
         }
     }

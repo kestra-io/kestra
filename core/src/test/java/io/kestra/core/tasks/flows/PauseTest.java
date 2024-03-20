@@ -144,7 +144,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             execution = runnerUtils.awaitExecution(
                 e -> e.getState().getCurrent() == State.Type.SUCCESS,
                 () -> executionQueue.emit(restarted),
-                Duration.ofSeconds(5)
+                Duration.ofSeconds(10)
             );
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

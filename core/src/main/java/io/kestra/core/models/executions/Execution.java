@@ -23,21 +23,15 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -248,16 +242,28 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @return the flow we need to follow
      */
     public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, @Nullable List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
-        resolvedTasks = removeDisabled(resolvedTasks);
-        resolvedErrors = removeDisabled(resolvedErrors);
+        final List<ResolvedTask> finalResolvedTasks = removeDisabled(resolvedTasks);
+        final List<ResolvedTask> finalResolvedErrors = removeDisabled(resolvedErrors);
 
-        List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
+        List<TaskRun> errorsFlow = this.findTaskRunByTasks(finalResolvedErrors, parentTaskRun);
+        // Filter taskRun that will be retry
+        errorsFlow = errorsFlow
+            .stream()
+            .filter(taskRun -> {
+                ResolvedTask resolvedTask = finalResolvedTasks.stream().filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst().orElse(null);
+                if (resolvedTask == null) {
+                    log.warn("Can't find task for taskRun '{}'", taskRun.getId());
+                    return false;
+                }
+                return taskRun.nextRetryDate(resolvedTask.getTask()) == null;
+            })
+            .toList();
 
-        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks, parentTaskRun)) {
-            return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
+        if (!errorsFlow.isEmpty() || this.hasFailed(finalResolvedTasks, parentTaskRun)) {
+            return finalResolvedErrors == null ? new ArrayList<>() : finalResolvedErrors;
         }
 
-        return resolvedTasks;
+        return finalResolvedTasks;
     }
 
     public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
@@ -396,7 +402,14 @@ public class Execution implements DeletedInterface, TenantInterface {
     public boolean hasFailed(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
-            .anyMatch(taskRun -> taskRun.getState().isFailed());
+            .anyMatch(taskRun -> {
+                ResolvedTask resolvedTask = resolvedTasks.stream().filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst().orElse(null);
+                if (resolvedTask == null) {
+                    log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'", taskRun.getId(), parentTaskRun.getId());
+                    return false;
+                }
+                return taskRun.nextRetryDate(resolvedTask.getTask()) == null && taskRun.getState().isFailed();
+            });
     }
 
     public boolean hasCreated() {

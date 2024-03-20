@@ -3,11 +3,7 @@ package io.kestra.runner.memory;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -30,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -136,7 +131,10 @@ public class MemoryExecutor implements ExecutorInterface {
             return;
         }
 
-        if (message.getTaskRunList() == null || message.getTaskRunList().isEmpty() || message.getState().isCreated()) {
+        if (message.getTaskRunList() == null ||
+            message.getTaskRunList().isEmpty()||
+            message.getState().isCreated() ||
+            message.getState().getHistories().get(message.getState().getHistories().size()-2).getState().equals(State.Type.RETRYING)) {
             this.handleExecution(saveExecution(message));
         }
     }
@@ -235,6 +233,14 @@ public class MemoryExecutor implements ExecutorInterface {
                                         );
                                         EXECUTIONS.put(workerTaskResultDelay.getExecutionId(), executionState.from(markAsExecution));
                                         executionQueue.emit(markAsExecution);
+                                    } else if (executionState.execution.findTaskRunByTaskRunId(workerTaskResultDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
+                                        Execution newAttempt = executionService.retry(
+                                            executionState.execution,
+                                            workerTaskResultDelay.getTaskRunId()
+                                        );
+
+                                        EXECUTIONS.put(workerTaskResultDelay.getExecutionId(), executionState.from(newAttempt));
+                                        executionQueue.emit(newAttempt);
                                     }
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
@@ -470,7 +476,7 @@ public class MemoryExecutor implements ExecutorInterface {
     private boolean deduplicateWorkerTask(Execution execution, TaskRun taskRun) {
         ExecutionState executionState = EXECUTIONS.get(execution.getId());
 
-        String deduplicationKey = taskRun.getExecutionId() + "-" + taskRun.getId();
+        String deduplicationKey = taskRun.getExecutionId() + "-" + taskRun.getId() + "-" + taskRun.attemptNumber();
         State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
@@ -488,7 +494,7 @@ public class MemoryExecutor implements ExecutorInterface {
         return taskRuns
             .stream()
             .anyMatch(taskRun -> {
-                String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
+                String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue() + taskRun.attemptNumber();
 
                 if (executionState.childDeduplication.containsKey(deduplicationKey)) {
                     log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);

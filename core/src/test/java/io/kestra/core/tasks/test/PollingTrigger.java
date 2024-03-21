@@ -1,19 +1,18 @@
 package io.kestra.core.tasks.test;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.RunContext;
+import io.kestra.core.models.triggers.TriggerService;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -28,7 +27,7 @@ public class PollingTrigger extends AbstractTrigger implements PollingTriggerInt
     private Long duration = 1000L;
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
+    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws IllegalVariableEvaluationException {
         // Try catch to avoid flaky test
         try {
             Thread.sleep(duration);
@@ -36,19 +35,8 @@ public class PollingTrigger extends AbstractTrigger implements PollingTriggerInt
             Thread.currentThread().interrupt();
         }
 
-        RunContext runContext = conditionContext.getRunContext();
-        ExecutionTrigger executionTrigger = ExecutionTrigger.of(
-            this,
-            Collections.emptyMap()
-        );
-        Execution execution = Execution.builder()
-            .id(runContext.getTriggerExecutionId())
-            .namespace(context.getNamespace())
-            .flowId(context.getFlowId())
-            .flowRevision(context.getFlowRevision())
-            .state(new State())
-            .trigger(executionTrigger)
-            .build();
+        Execution execution = TriggerService.generateExecution(this, conditionContext, context, Collections.emptyMap());
+
         return Optional.of(execution);
     }
 

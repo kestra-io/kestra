@@ -349,7 +349,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
-                List<Label> labels = getLabels(conditionContext, backfill);
+                List<Label> labels = generateLabels(conditionContext, backfill);
                 Execution execution = Execution.builder()
                     .id(runContext.getTriggerExecutionId())
                     .tenantId(triggerContext.getTenantId())
@@ -390,7 +390,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         } else {
             variables = scheduleDates.toMap();
         }
-        List<Label> labels = getLabels(conditionContext, backfill);
+        List<Label> labels = generateLabels(conditionContext, backfill);
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
@@ -425,11 +425,21 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .orElse(RecoverMissedSchedules.ALL);
     }
 
-    private List<Label> getLabels(ConditionContext conditionContext, Backfill backfill) {
-        List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
+    private List<Label> generateLabels(ConditionContext conditionContext, Backfill backfill) {
+        List<Label> labels = new ArrayList<>();
+
+        if (conditionContext.getFlow().getLabels() != null) {
+            labels.addAll(conditionContext.getFlow().getLabels());
+        }
+
         if (backfill != null && backfill.getLabels() != null) {
             labels.addAll(backfill.getLabels());
         }
+
+        if (this.getLabels() != null) {
+            labels.addAll(this.getLabels());
+        }
+
         return labels;
     }
 

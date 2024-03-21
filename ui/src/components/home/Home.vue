@@ -90,6 +90,8 @@
                     <home-summary-failed
                         v-if="dailyReady"
                         :filters="defaultFilters"
+                        :flow-id="flowId"
+                        :namespace="namespace"
                         class="mb-4"
                     />
                 </el-col>

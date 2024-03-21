@@ -247,6 +247,9 @@ public class JsonSchemaGenerator {
             PluginProperty pluginPropertyAnnotation = member.getAnnotationConsideringFieldAndGetter(PluginProperty.class);
             if (pluginPropertyAnnotation != null) {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
+                if (pluginPropertyAnnotation.beta()) {
+                    memberAttributes.put("$beta", true);
+                }
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
@@ -291,6 +294,10 @@ public class JsonSchemaGenerator {
 
                     if (!metrics.isEmpty()) {
                         collectedTypeAttributes.set("$metrics", context.getGeneratorConfig().createArrayNode().addAll(metrics));
+                    }
+
+                    if (pluginAnnotation.beta()) {
+                        collectedTypeAttributes.put("$beta", true);
                     }
                 }
 
@@ -537,6 +544,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$deprecated")) {
             objectNode.set("$deprecated", mainClassDef.get("$deprecated"));
+        }
+        if (mainClassDef.has("$beta")) {
+            objectNode.set("$beta", mainClassDef.get("$beta"));
         }
     }
 

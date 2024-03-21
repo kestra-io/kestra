@@ -1,6 +1,6 @@
 package io.kestra.core.models.script.types;
 
-import com.google.common.annotations.Beta;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.script.*;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
@@ -26,7 +26,8 @@ import java.util.Map;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Beta // all script runners are beta for now, but this one is stable as it was the one used before
+// all script runners are beta for now, but this one is stable as it was the one used before
+@Plugin(beta = true, examples = {})
 @Schema(
     title = "A script runner that runs script as a process on the Kestra host",
     description = "When the Kestra Worker that runs this process is terminated, the process will be terminated and the task fail."

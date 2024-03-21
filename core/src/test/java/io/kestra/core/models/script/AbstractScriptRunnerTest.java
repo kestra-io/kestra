@@ -10,7 +10,6 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -33,6 +32,7 @@ public abstract class AbstractScriptRunnerTest {
         var runContext = runContext(this.runContextFactory);
         var commands = Mockito.mock(ScriptCommands.class);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
+        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override
             public void accept(String s, Boolean aBoolean) {
@@ -50,6 +50,7 @@ public abstract class AbstractScriptRunnerTest {
         var runContext = runContext(this.runContextFactory);
         var commands = Mockito.mock(ScriptCommands.class);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1")));
+        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override
             public void accept(String s, Boolean aBoolean) {
@@ -72,6 +73,7 @@ public abstract class AbstractScriptRunnerTest {
         ));
         var commands = Mockito.mock(ScriptCommands.class);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cp {{workingDir}}/data.txt {{workingDir}}/out.txt")));
+        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override
             public void accept(String s, Boolean aBoolean) {
@@ -113,4 +115,8 @@ public abstract class AbstractScriptRunnerTest {
     }
 
     protected abstract ScriptRunner scriptRunner();
+
+    protected String defaultImage() {
+        return "ubuntu";
+    }
 }

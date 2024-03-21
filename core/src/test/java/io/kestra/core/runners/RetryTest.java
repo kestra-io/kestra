@@ -44,4 +44,22 @@ public class RetryTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
+
+    @Test
+    void retryRandom() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-random");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void retryExpo() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-expo");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
 }

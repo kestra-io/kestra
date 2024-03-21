@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import net.jodah.failsafe.RetryPolicy;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -37,8 +38,8 @@ public class Random extends AbstractRetry {
 
     @Override
     public Instant getNextDate(Integer attemptCount, Instant lastAttempt) {
-        java.util.Random random = new java.util.Random();
-        long randomMillis = minInterval.toMillis() + ((long) (random.nextDouble() * (maxInterval.toMillis() - minInterval.toMillis())));
+        SecureRandom random = new SecureRandom();
+        long randomMillis = random.nextLong(minInterval.toMillis(), maxInterval.toMillis());;
         return lastAttempt.plusMillis(randomMillis);
     }
 }

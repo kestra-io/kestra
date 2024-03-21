@@ -1,0 +1,12 @@
+id: retry-expo
+namespace: io.kestra.tests
+
+tasks:
+  - id: failed
+    type: io.kestra.core.tasks.executions.Fail
+    retry:
+      type: exponential
+      maxAttempt: 3
+      maxDuration: PT15S
+      interval: PT0.25s
+      maxInterval: PT5S

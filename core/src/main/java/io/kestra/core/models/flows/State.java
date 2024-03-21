@@ -108,6 +108,14 @@ public class State {
         return this.histories.get(this.histories.size() - 1).getDate();
     }
 
+    public Instant minDate() {
+        if (this.histories.size() == 0) {
+            return Instant.now();
+        }
+
+        return this.histories.get(0).getDate();
+    }
+
     @JsonIgnore
     public boolean isTerminated() {
         return this.current.isTerminated();

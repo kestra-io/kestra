@@ -37,6 +37,8 @@ public class Random extends AbstractRetry {
 
     @Override
     public Instant getNextDate(Integer attemptCount, Instant lastAttempt) {
-        return lastAttempt.plus(Duration.ofMillis((long) (Math.random() * (maxInterval.toMillis() - minInterval.toMillis()) + minInterval.toMillis())));
+        java.util.Random random = new java.util.Random();
+        long randomMillis = minInterval.toMillis() + ((long) (random.nextDouble() * (maxInterval.toMillis() - minInterval.toMillis())));
+        return lastAttempt.plusMillis(randomMillis);
     }
 }

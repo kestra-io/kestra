@@ -430,7 +430,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             state = WARNING;
         }
 
-        if (workerTask.getTask().isAllowFailure() && state.isFailed()) {
+        if (workerTask.getTask().isAllowFailure() && finalWorkerTask.getTaskRun().nextRetryDate(workerTask.getTask()) == null && state.isFailed()) {
             state = WARNING;
         }
 

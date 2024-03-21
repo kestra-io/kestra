@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
 import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -203,6 +204,15 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
     }
 
+    @Test
+    void betaTask() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
+        assertThat(generate, is(not(nullValue())));
+        assertThat(generate.get("$beta"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Map<String, Object>> properties(Map<String, Object> generate) {
         return (Map<String, Map<String, Object>>) generate.get("properties");
@@ -260,5 +270,19 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @Builder.Default
         private String stringWithDefault = "default";
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin(
+        beta = true,
+        examples = {}
+    )
+    private static class BetaTask extends Task {
+        @PluginProperty(beta = true)
+        private String beta;
     }
 }

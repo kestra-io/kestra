@@ -172,5 +172,6 @@ class DocumentationGeneratorTest {
 
         assertThat(render, containsString("title: ProcessScriptRunner"));
         assertThat(render, containsString("A script runner that runs script as a process on the Kestra host"));
+        assertThat(render, containsString("\uD83D\uDEC8 This plugin is currently in beta"));
     }
 }

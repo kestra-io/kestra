@@ -14,6 +14,12 @@
 ::
 {% endif %}
 
+{%- if data['$beta'] != null %}
+::alert{type="info"}
+🛈 This property is currently in beta. While it is considered safe for use, please be aware that its API could change in ways that are not compatible with earlier versions in future releases, or it might become unsupported.
+::
+{%- endif %}
+
 {%- if data.type != null -%}
 * **Type:** {{ type(data) -}}
 {%- elseif data['$ref'] -%}

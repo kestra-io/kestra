@@ -1,7 +1,6 @@
 package io.kestra.core.models.script;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.google.common.annotations.Beta;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.NotBlank;
@@ -20,7 +19,6 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Introspected
-@Beta
 public abstract class ScriptRunner {
     @NotBlank
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")

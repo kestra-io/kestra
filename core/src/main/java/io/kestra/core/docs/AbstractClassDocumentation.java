@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractClassDocumentation<T> {
     protected Boolean deprecated;
+    protected Boolean beta;
     protected String cls;
     protected String shortName;
     protected String docDescription;
@@ -65,6 +66,7 @@ public abstract class AbstractClassDocumentation<T> {
         this.docDescription = this.propertiesSchema.containsKey("title") ? (String) this.propertiesSchema.get("title") : null;
         this.docBody = this.propertiesSchema.containsKey("description") ? (String) this.propertiesSchema.get("description") : null;
         this.deprecated = this.propertiesSchema.containsKey("$deprecated");
+        this.beta = this.propertiesSchema.containsKey("$beta");
 
         if (this.propertiesSchema.containsKey("$examples")) {
             List<Map<String, Object>> examples = (List<Map<String, Object>>) this.propertiesSchema.get("$examples");

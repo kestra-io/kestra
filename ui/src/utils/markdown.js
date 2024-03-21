@@ -19,6 +19,7 @@ export default class Markdown {
             })
             // if more alert types are used inside the task documentation, they need to be configured here also
             .use(container, "warning")
+            .use(container, "info")
 
         md.set({
             html: true,

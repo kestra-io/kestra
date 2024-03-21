@@ -8,6 +8,8 @@ import java.util.Map;
  * Interface for the commands passed to a Script runner.
  */
 public interface ScriptCommands {
+    String getContainerImage();
+
     AbstractLogConsumer getLogConsumer();
 
     List<String> getCommands();

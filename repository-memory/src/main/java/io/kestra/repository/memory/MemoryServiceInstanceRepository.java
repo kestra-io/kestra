@@ -35,7 +35,8 @@ public class MemoryServiceInstanceRepository implements ServiceInstanceRepositor
     /** {@inheritDoc} **/
     @Override
     public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
-                                                final Set<Service.ServiceState> states) {
+                                                final Set<Service.ServiceState> states,
+                                                final Set<Service.ServiceType> types) {
         List<ServiceInstance> instances = findAll();
         return new ArrayListTotal<>(instances, instances.size());
     }

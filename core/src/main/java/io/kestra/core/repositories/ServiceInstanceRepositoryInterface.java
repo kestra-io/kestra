@@ -39,7 +39,9 @@ public interface ServiceInstanceRepositoryInterface {
      * @param pageable The {@link Pageable}.
      * @return a list of {@link ServiceInstance}.
      */
-    ArrayListTotal<ServiceInstance> find(Pageable pageable, Set<Service.ServiceState> states);
+    ArrayListTotal<ServiceInstance> find(Pageable pageable,
+                                         Set<Service.ServiceState> states,
+                                         Set<Service.ServiceType> types);
 
     /**
      * Deletes the given service instance.
@@ -130,4 +132,6 @@ public interface ServiceInstanceRepositoryInterface {
             return ServiceStateTransition.logTransitionAndGetResponse(instance, newState, beforeAndAfter);
         }
     }
+
+
 }

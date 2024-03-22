@@ -93,7 +93,7 @@ public class LocalFlowRepositoryLoader {
                     }
                 }
             } catch (ConstraintViolationException e) {
-                log.debug("Unable to create flow {}", file, e);
+                log.warn("Unable to create flow {}", file, e);
             }
         }
     }

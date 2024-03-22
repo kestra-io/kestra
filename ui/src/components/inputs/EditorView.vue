@@ -202,11 +202,7 @@
     })
 
     const leftEditorWidth = computed(() => {
-        return (editorWidth.value > 50 ? (editorWidth.value - 50) * 2 : 0) + "%";
-    })
-
-    const rightEditorWidth = computed(() => {
-        return (editorWidth.value < 50 ? (50 - editorWidth.value) * 2 : 0) + "%";
+        return editorWidth.value + "%";
     })
 
     const autoRestorelocalStorageKey = computed(() => {
@@ -812,7 +808,7 @@
             ref="editorDomElement"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? {'flex-basis': leftEditorWidth} : {}"
+            :style="combinedEditor ? {'flex-basis': leftEditorWidth, 'flex-grow': 0} : {}"
             @save="save"
             @execute="execute"
             v-model="flowYaml"
@@ -826,7 +822,7 @@
             :navbar="false"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <div :style="combinedEditor ? {'flex-basis': rightEditorWidth} : viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
+        <div :style="viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
             <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
             <div
                 class="topology-display"

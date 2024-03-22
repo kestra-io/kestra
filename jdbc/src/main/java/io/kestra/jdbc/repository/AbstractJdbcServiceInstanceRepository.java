@@ -1,6 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Service;
@@ -11,18 +10,15 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
-import org.jooq.SelectJoinStep;
 import org.jooq.Table;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
-import org.jooq.impl.DSL;
 
 import java.time.Instant;
 import java.util.List;
@@ -38,6 +34,7 @@ import static org.jooq.impl.DSL.using;
 public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbcRepository implements ServiceInstanceRepositoryInterface {
 
     private static final Field<Object> STATE = field("state");
+    private static final Field<Object> TYPE = field("type");
     private static final Field<Object> VALUE = field("value");
     private static final Field<Instant> UPDATED_AT = field("updated_at", Instant.class);
     private static final Field<Instant> CREATED_AT = field("created_at", Instant.class);
@@ -209,7 +206,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      **/
     @Override
     public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
-                                                final Set<Service.ServiceState> states) {
+                                                final Set<Service.ServiceState> states,
+                                                final Set<Service.ServiceType> types) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -217,6 +215,9 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 SelectConditionStep<Record1<Object>> select = context.select(VALUE).from(table()).where("1=1");
                 if (states != null && !states.isEmpty()) {
                     select = select.and(STATE.in(states.stream().map(Enum::name).collect(Collectors.toList())));
+                }
+                if (types != null && !types.isEmpty()) {
+                    select = select.and(TYPE.in(types.stream().map(Enum::name).collect(Collectors.toList())));
                 }
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });

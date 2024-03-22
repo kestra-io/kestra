@@ -10,9 +10,12 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -38,8 +41,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -357,11 +362,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
                     try {
+                        RunContext runContext = this.initRunContextForTrigger(workerTrigger);
+
                         if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                            RunContext runContext = this.initRunContextForTrigger(workerTrigger);
-
                             WorkerTriggerThread workerThread = new WorkerTriggerThread(workerTrigger, pollingTrigger);
-
                             io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
                             if (!state.equals(FAILED)) {
@@ -369,7 +373,21 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             } else {
                                 this.handleTriggerError(workerTrigger, workerThread.getException());
                             }
+                        } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
+                            WorkerTriggerRealtimeThread workerThread = new WorkerTriggerRealtimeThread(
+                                workerTrigger,
+                                streamingTrigger,
+                                throwable -> this.handleTriggerError(workerTrigger, throwable),
+                                execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
+                            );
+                            io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
+
+                            if (!state.equals(FAILED)) {
+                                this.handleTriggerError(workerTrigger, workerThread.getException());
+                            }
                         }
+                    } catch (Exception e) {
+                        this.handleTriggerError(workerTrigger, e);
                     } finally {
                         workerTrigger.getConditionContext().getRunContext().cleanup();
                     }
@@ -522,7 +540,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             workerTrigger.getTriggerContext(),
             logger,
             Level.WARN,
-            "[date: {}] Evaluate Failed with error '{}'",
+            "[date: {}] Worker Evaluate Failed with error '{}'",
             workerTrigger.getTriggerContext().getDate(),
             e != null ? e.getMessage() : "null",
             e

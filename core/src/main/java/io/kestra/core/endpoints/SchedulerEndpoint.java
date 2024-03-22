@@ -24,7 +24,7 @@ public class SchedulerEndpoint {
 
     @Read
     public SchedulerEndpointResult running() {
-        Map<String, AbstractScheduler.FlowWithPollingTriggerNextDate> schedulableNextDate = scheduler.getSchedulableNextDate();
+        Map<String, AbstractScheduler.FlowWithWorkerTriggerNextDate> schedulableNextDate = scheduler.getSchedulableNextDate();
 
         List<SchedulerEndpointSchedule> result = scheduler.schedulerTriggers()
             .stream()

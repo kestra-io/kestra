@@ -1,0 +1,13 @@
+id: trigger-toggle
+namespace: io.kestra.tests
+
+tasks:
+    - id: disable
+      type: io.kestra.core.tasks.trigger.Toggle
+      trigger: schedule
+      enabled: true
+
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "* * * * *"

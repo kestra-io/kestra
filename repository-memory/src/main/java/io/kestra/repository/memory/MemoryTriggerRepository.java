@@ -21,7 +21,9 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
 
     @Override
     public Optional<Trigger> findLast(TriggerContext trigger) {
-        throw new UnsupportedOperationException();
+        return triggers.stream()
+            .filter(t -> t.uid().equals(trigger.uid()))
+            .findFirst();
     }
 
     @Override

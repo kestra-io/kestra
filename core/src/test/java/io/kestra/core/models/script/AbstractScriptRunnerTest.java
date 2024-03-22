@@ -101,7 +101,7 @@ public abstract class AbstractScriptRunnerTest {
                 return "Task";
             }
         };
-        TaskRun taskRun = TaskRun.builder().id("taskrun").taskId("task").flowId("flow").namespace("namespace").executionId("execution")
+        TaskRun taskRun = TaskRun.builder().id(IdUtils.create()).taskId("task").flowId("flow").namespace("namespace").executionId("execution")
             .state(new State().withState(State.Type.RUNNING))
             .build();
         Flow flow = Flow.builder().id("flow").namespace("namespace").revision(1)

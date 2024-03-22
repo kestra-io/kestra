@@ -32,7 +32,7 @@ public class Constant extends AbstractRetry {
     }
 
     @Override
-    public Instant getNextDate(Integer attemptCount, Instant lastAttempt) {
+    public Instant nextRetryDate(Integer attemptCount, Instant lastAttempt) {
         return lastAttempt.plus(interval);
     }
 }

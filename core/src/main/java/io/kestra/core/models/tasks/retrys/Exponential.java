@@ -43,7 +43,7 @@ public class Exponential extends AbstractRetry {
     }
 
     @Override
-    public Instant getNextDate(Integer attemptCount, Instant lastAttempt) {
+    public Instant nextRetryDate(Integer attemptCount, Instant lastAttempt) {
         Duration computedInterval = interval.multipliedBy(
             (long) (this.delayFactor == null ? 2 : this.delayFactor.intValue()) * (attemptCount - 1)
         );

@@ -255,7 +255,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                     log.warn("Can't find task for taskRun '{}'", taskRun.getId());
                     return false;
                 }
-                return taskRun.nextRetryDate(resolvedTask.getTask()) == null;
+                return !taskRun.shouldBeRetried(resolvedTask.getTask());
             })
             .toList();
 
@@ -408,7 +408,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                     log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'", taskRun.getId(), parentTaskRun.getId());
                     return false;
                 }
-                return taskRun.nextRetryDate(resolvedTask.getTask()) == null && taskRun.getState().isFailed();
+                return !taskRun.shouldBeRetried(resolvedTask.getTask()) && taskRun.getState().isFailed();
             });
     }
 

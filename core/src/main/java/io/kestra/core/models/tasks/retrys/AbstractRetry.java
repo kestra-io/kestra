@@ -34,7 +34,7 @@ public abstract class AbstractRetry {
     @Builder.Default
     private Boolean warningOnRetry = false;
 
-    public abstract Instant getNextDate(Integer attemptCount, Instant lastAttempt);
+    public abstract Instant nextRetryDate(Integer attemptCount, Instant lastAttempt);
 
     public <T> RetryPolicy<T> toPolicy() {
         RetryPolicy<T> policy = new RetryPolicy<>();

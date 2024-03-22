@@ -9,7 +9,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -31,23 +34,39 @@ class ScriptServiceTest {
         if (!path.toFile().exists()) {
             Files.createFile(path);
         }
-        command = ScriptService.replaceInternalStorage(runContext, "my command with a file: kestra://some/file.txt");
-        assertThat(command, startsWith("my command with a file: /tmp/"));
-        path.toFile().delete();
+
+        String internalStorageUri = "kestra://some/file.txt";
+        AtomicReference<String> localFile = new AtomicReference<>();
+        try {
+            command = ScriptService.replaceInternalStorage(runContext, "my command with a file: " + internalStorageUri, (ignored, file) -> localFile.set(file));
+            assertThat(command, is("my command with a file: " + localFile.get()));
+            assertThat(Path.of(localFile.get()).toFile().exists(), is(true));
+        } finally {
+            Path.of(localFile.get()).toFile().delete();
+            path.toFile().delete();
+        }
     }
 
     @Test
     void uploadInputFiles() throws IOException {
         var runContext = runContextFactory.of();
+
         Path path = Path.of("/tmp/unittest/file.txt");
         if (!path.toFile().exists()) {
             Files.createFile(path);
         }
 
-        var commands  = ScriptService.uploadInputFiles(runContext, List.of("my command with a file: kestra://some/file.txt"));
-        assertThat(commands, not(empty()));
-        assertThat(commands.get(0), startsWith("my command with a file: /tmp/"));
-        path.toFile().delete();
+        Map<String, String> localFileByInternalStorage = new HashMap<>();
+        String internalStorageUri = "kestra://some/file.txt";
+        try {
+            var commands = ScriptService.uploadInputFiles(runContext, List.of("my command with a file: " + internalStorageUri), localFileByInternalStorage::put);
+            assertThat(commands, not(empty()));
+            assertThat(commands.get(0), is("my command with a file: " + localFileByInternalStorage.get(internalStorageUri)));
+            assertThat(Path.of(localFileByInternalStorage.get(internalStorageUri)).toFile().exists(), is(true));
+        } finally {
+            localFileByInternalStorage.forEach((k, v) -> Path.of(v).toFile().delete());
+            path.toFile().delete();
+        }
     }
 
     @Test

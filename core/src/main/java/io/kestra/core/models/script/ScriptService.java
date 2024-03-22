@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,19 +33,33 @@ public final class ScriptService {
     }
 
     public static String replaceInternalStorage(RunContext runContext, @Nullable String command) throws IOException {
+        return ScriptService.replaceInternalStorage(runContext, command, (s, s2) -> {});
+    }
+
+    public static String replaceInternalStorage(RunContext runContext, @Nullable String command, BiConsumer<String, String> internalStorageToLocalFileConsumer) throws IOException {
         if (command == null) {
             return "";
         }
 
         return INTERNAL_STORAGE_PATTERN
             .matcher(command)
-            .replaceAll(throwFunction(matchResult -> saveOnLocalStorage(runContext, matchResult.group())));
+            .replaceAll(throwFunction(matchResult -> {
+                String localFile = saveOnLocalStorage(runContext, matchResult.group());
+
+                internalStorageToLocalFileConsumer.accept(matchResult.group(), localFile);
+
+                return localFile;
+            }));
     }
 
     public static List<String> uploadInputFiles(RunContext runContext, List<String> commands) throws IOException {
+        return ScriptService.uploadInputFiles(runContext, commands, (s, s2) -> {});
+    }
+
+    public static List<String> uploadInputFiles(RunContext runContext, List<String> commands, BiConsumer<String, String> internalStorageToLocalFileConsumer) throws IOException {
         return commands
             .stream()
-            .map(throwFunction(s -> replaceInternalStorage(runContext, s)))
+            .map(throwFunction(s -> replaceInternalStorage(runContext, s, internalStorageToLocalFileConsumer)))
             .collect(Collectors.toList());
 
     }

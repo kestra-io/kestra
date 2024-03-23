@@ -285,68 +285,99 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
+
+    private RunContext initRunContextForTrigger(WorkerTrigger workerTrigger) {
+        return workerTrigger.getConditionContext()
+            .getRunContext()
+            .forWorker(this.applicationContext, workerTrigger);
+    }
+
+    private void publishTriggerExecution(WorkerTrigger workerTrigger, Optional<Execution> evaluate) {
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
+
+        if (log.isDebugEnabled()) {
+            logService.logTrigger(
+                workerTrigger.getTriggerContext(),
+                log,
+                Level.DEBUG,
+                "[type: {}] {}",
+                workerTrigger.getTrigger().getType(),
+                evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+            );
+        }
+
+        var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
+        if (flowLabels != null) {
+            evaluate = evaluate.map( execution -> {
+                    List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
+                    executionLabels.addAll(flowLabels);
+                    return execution.withLabels(executionLabels);
+                }
+            );
+        }
+
+        this.workerTriggerResultQueue.emit(
+            WorkerTriggerResult.builder()
+                .execution(evaluate)
+                .triggerContext(workerTrigger.getTriggerContext())
+                .trigger(workerTrigger.getTrigger())
+                .build()
+        );
+    }
+
+    private void handleTriggerError(WorkerTrigger workerTrigger, Throwable e) {
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
+
+        logError(workerTrigger, e);
+        this.workerTriggerResultQueue.emit(
+            WorkerTriggerResult.builder()
+                .success(false)
+                .triggerContext(workerTrigger.getTriggerContext())
+                .trigger(workerTrigger.getTrigger())
+                .build()
+        );
+    }
+
     private void handleTrigger(WorkerTrigger workerTrigger) {
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
+
         this.metricRegistry
-            .timer(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup))
+            .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup))
             .record(() -> {
                     this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                        .gauge(MetricRegistry.METRIC_WORKER_EVALUATE_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup)));
+                        .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
                     try {
-                        PollingTriggerInterface pollingTrigger = (PollingTriggerInterface) workerTrigger.getTrigger();
-                        RunContext runContext = workerTrigger.getConditionContext()
-                            .getRunContext()
-                            .forWorker(this.applicationContext, workerTrigger);
-                        Optional<Execution> evaluate = pollingTrigger.evaluate(
-                            workerTrigger.getConditionContext().withRunContext(runContext),
-                            workerTrigger.getTriggerContext()
-                        );
+                        if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
+                            RunContext runContext = this.initRunContextForTrigger(workerTrigger);
 
-                        if (log.isDebugEnabled()) {
-                            logService.logTrigger(
-                                workerTrigger.getTriggerContext(),
-                                log,
-                                Level.DEBUG,
-                                "[type: {}] {}",
-                                workerTrigger.getTrigger().getType(),
-                                evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                            Optional<Execution> evaluate = pollingTrigger.evaluate(
+                                workerTrigger.getConditionContext().withRunContext(runContext),
+                                workerTrigger.getTriggerContext()
                             );
+
+                            this.publishTriggerExecution(workerTrigger, evaluate);
                         }
-
-                        var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
-                        if (flowLabels != null) {
-                            evaluate = evaluate.map( execution -> {
-                                    List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                                    executionLabels.addAll(flowLabels);
-                                    return execution.withLabels(executionLabels);
-                                }
-                            );
-                        }
-
-                        workerTrigger.getConditionContext().getRunContext().cleanup();
-
-                        this.workerTriggerResultQueue.emit(
-                            WorkerTriggerResult.builder()
-                                .execution(evaluate)
-                                .triggerContext(workerTrigger.getTriggerContext())
-                                .trigger(workerTrigger.getTrigger())
-                                .build()
-                        );
                     } catch (Exception e) {
-                        logError(workerTrigger, e);
-                        this.workerTriggerResultQueue.emit(
-                            WorkerTriggerResult.builder()
-                                .success(false)
-                                .triggerContext(workerTrigger.getTriggerContext())
-                                .trigger(workerTrigger.getTrigger())
-                                .build()
-                        );
+                        this.handleTriggerError(workerTrigger, e);
+                    } finally {
+                        workerTrigger.getConditionContext().getRunContext().cleanup();
                     }
 
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
                 }
             );
+
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ENDED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
     }
 
     private static ZonedDateTime now() {

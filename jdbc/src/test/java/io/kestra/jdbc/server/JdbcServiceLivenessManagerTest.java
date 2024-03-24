@@ -3,7 +3,6 @@ package io.kestra.jdbc.server;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServerInstanceFactory;
 import io.kestra.core.server.Service;
@@ -11,6 +10,7 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.LocalServiceStateFactory;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.WorkerTaskRestartStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,9 @@ class JdbcServiceLivenessManagerTest {
         Mockito.when(context.getServerType()).thenReturn(ServerType.WORKER);
         Mockito.when(context.getVersion()).thenReturn("");
         KestraContext.setContext(context);
-        ServerConfig config = new ServerConfig(Duration.ZERO,
+        ServerConfig config = new ServerConfig(
+            Duration.ZERO,
+            WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
             new ServerConfig.Liveness(
                 true,
                 Duration.ZERO,

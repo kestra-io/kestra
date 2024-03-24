@@ -47,7 +47,9 @@ public class ServiceLivenessManagerTest {
     @BeforeEach
     void beforeEach() {
         KestraContext kestraContext = Mockito.mock(KestraContext.class);
-        ServerConfig config = new ServerConfig(Duration.ZERO,
+        ServerConfig config = new ServerConfig(
+            Duration.ZERO,
+            WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
             new ServerConfig.Liveness(
                 true,
                 Duration.ZERO,
@@ -180,7 +182,9 @@ public class ServiceLivenessManagerTest {
     }
 
     public static ServiceInstance serviceInstanceFor(final Service service) {
-        ServerConfig config = new ServerConfig(Duration.ZERO,
+        ServerConfig config = new ServerConfig(
+            Duration.ZERO,
+            WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
             new ServerConfig.Liveness(
                 true,
                 Duration.ZERO,

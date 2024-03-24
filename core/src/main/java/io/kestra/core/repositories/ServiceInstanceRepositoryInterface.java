@@ -59,20 +59,6 @@ public interface ServiceInstanceRepositoryInterface {
     ServiceInstance save(ServiceInstance service);
 
     /**
-     * Finds all running service instances which have not sent a state update for more than their associated timeout,
-     * and thus should be considered in failure.
-     *
-     * @param now the time instant to be used for querying.
-     * @return the list of {@link ServiceInstance}.
-     */
-    default List<ServiceInstance> findAllTimeoutRunningInstances(final Instant now) {
-        return findAllInstancesInStates(List.of(Service.ServiceState.CREATED, Service.ServiceState.RUNNING))
-            .stream()
-            .filter(instance -> instance.isSessionTimeoutElapsed(now))
-            .toList();
-    }
-
-    /**
      * Finds all service instances which are in the given state.
      *
      * @return the list of {@link ServiceInstance}.
@@ -84,7 +70,7 @@ public interface ServiceInstanceRepositoryInterface {
      *
      * @return the list of {@link ServiceInstance}.
      */
-    List<ServiceInstance> findAllInstancesInStates(final List<Service.ServiceState> states);
+    List<ServiceInstance> findAllInstancesInStates(final Set<Service.ServiceState> states);
 
     /**
      * Attempt to transition the state of a given service to given new state.

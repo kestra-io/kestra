@@ -5,6 +5,7 @@ import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -124,39 +125,6 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     }
 
     @Test
-    protected void shouldFindTimeoutRunningInstancesGivenTimeoutInstance() {
-        // Given
-        final Instant now = Instant.now();
-        ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.RunningServiceInstance
-            .state(Service.ServiceState.RUNNING, now.minus(Duration.ofSeconds(30)).truncatedTo(ChronoUnit.MILLIS));
-
-        repository.save(instance);
-
-        // When
-        List<ServiceInstance> results = repository.findAllTimeoutRunningInstances(now);
-
-        // Then
-        assertEquals(1, results.size());
-        assertThat(results, Matchers.containsInAnyOrder(instance));
-    }
-
-    @Test
-    protected void shouldNotFindTimeoutRunningInstanceGivenHealthyInstance() {
-        // Given
-        final Instant now = Instant.now();
-        ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.RunningServiceInstance
-            .state(Service.ServiceState.RUNNING, now.minus(Duration.ofSeconds(5)).truncatedTo(ChronoUnit.MILLIS));
-
-        repository.save(instance);
-
-        // When
-        List<ServiceInstance> results = repository.findAllTimeoutRunningInstances(now);
-
-        // Then
-        assertTrue(results.isEmpty());
-    }
-
-    @Test
     void shouldReturnEmptyForTransitionWorkerStateGivenInvalidWorker() {
         // Given
         ServiceInstance instance = Fixtures.RunningServiceInstance;
@@ -245,7 +213,9 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
             serviceInstanceFor(Service.ServiceState.EMPTY);
 
         public static ServiceInstance serviceInstanceFor(final Service.ServiceState state) {
-            ServerConfig config = new ServerConfig(Duration.ZERO,
+            ServerConfig config = new ServerConfig(
+                Duration.ZERO,
+                WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
                 new ServerConfig.Liveness(
                     true,
                     Duration.ZERO,

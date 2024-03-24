@@ -56,7 +56,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
             long timeout = serverConfig.liveness().timeout().toMillis();
             if (elapsed > timeout) {
                 // useful for debugging unexpected heartbeat timeout
-                log.warn("Thread starvation or clock leap detected (elapsed since previous schedule {}", elapsed);
+                log.warn("Thread starvation or clock leap detected (elapsed since previous schedule {}ms", elapsed);
             }
             onSchedule(now);
         } catch (Exception e) {
@@ -89,18 +89,17 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
     public void start() {
         if (!isLivenessEnabled()) {
             log.warn(
-                "Server liveness is currently disabled (`kestra.server.liveness.enabled=false`) " +
-                    "If you are running in production environment, please ensure this property is configured to `true`. "
+                "Server liveness is currently disabled (kestra.server.liveness.enabled=false) " +
+                "If you are running in production environment, please ensure this property is configured to 'true'. "
             );
         }
         if (scheduledExecutorService == null && !isStopped.get()) {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, name));
             Duration scheduleInterval = getScheduleInterval();
             log.debug("Scheduling '{}' at fixed rate {}.", name, scheduleInterval);
-            Duration initialDelay = serverConfig.liveness().initialDelay();
             scheduledExecutorService.scheduleAtFixedRate(
                 this,
-                initialDelay.toSeconds(),
+                0,
                 scheduleInterval.toSeconds(),
                 TimeUnit.SECONDS
             );

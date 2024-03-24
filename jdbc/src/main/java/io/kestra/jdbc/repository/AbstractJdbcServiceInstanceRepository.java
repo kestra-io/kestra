@@ -89,15 +89,22 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * {@inheritDoc}
      **/
     @Override
-    public List<ServiceInstance> findAllInstancesInStates(final List<Service.ServiceState> states) {
+    public List<ServiceInstance> findAllInstancesInStates(final Set<Service.ServiceState> states) {
         return this.jdbcRepository.getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> query = using(configuration)
-                    .select(VALUE)
-                    .from(table())
-                    .where(STATE.in(states.stream().map(Enum::name).toList()));
-                return this.jdbcRepository.fetch(query);
-            });
+            .transactionResult(configuration -> findAllInstancesInStates(configuration, states, false));
+    }
+
+    public List<ServiceInstance> findAllInstancesInStates(final Configuration configuration,
+                                                          final Set<Service.ServiceState> states,
+                                                          final boolean isForUpdate) {
+        SelectConditionStep<Record1<Object>> query = using(configuration)
+            .select(VALUE)
+            .from(table())
+            .where(STATE.in(states.stream().map(Enum::name).toList()));
+
+        return isForUpdate ?
+            this.jdbcRepository.fetch(query.forUpdate()) :
+            this.jdbcRepository.fetch(query);
     }
 
     /**
@@ -234,7 +241,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     }
 
     /**
-     * Attempt to transit the status of a given service to given new status.
+     * Attempt to transition the state of a given service to given new state.
      * This method may not update the service if the transition is not valid.
      *
      * @param instance the service instance.
@@ -255,7 +262,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     }
 
     /**
-     * Attempt to transit the status of a given service to given new status.
+     * Attempt to transition the state of a given service to given new state.
      * This method may not update the service if the transition is not valid.
      *
      * @param instance the new service instance.

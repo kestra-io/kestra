@@ -68,7 +68,7 @@ public class MemoryServiceInstanceRepository implements ServiceInstanceRepositor
 
     /** {@inheritDoc} **/
     @Override
-    public List<ServiceInstance> findAllInstancesInStates(List<Service.ServiceState> states) {
+    public List<ServiceInstance> findAllInstancesInStates(Set<Service.ServiceState> states) {
         List<ServiceInstance> instancesInStates = new ArrayList<>();
         for (ServiceInstance instance : data.values()) {
             if (states.contains(instance.state())) {

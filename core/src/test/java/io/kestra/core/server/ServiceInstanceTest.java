@@ -11,7 +11,9 @@ import java.util.Set;
 
 class ServiceInstanceTest {
 
-    public static final ServerConfig CONFIG = new ServerConfig(Duration.ZERO,
+    public static final ServerConfig CONFIG = new ServerConfig(
+        Duration.ZERO,
+        WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
         new ServerConfig.Liveness(
             true,
             Duration.ZERO,

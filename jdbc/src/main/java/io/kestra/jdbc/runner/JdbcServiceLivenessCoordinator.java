@@ -6,6 +6,7 @@ import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.Service.ServiceState;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
@@ -13,14 +14,19 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import static io.kestra.core.server.Service.ServiceState.*;
+import static io.kestra.core.server.Service.ServiceState.DISCONNECTED;
+import static io.kestra.core.server.Service.ServiceState.NOT_RUNNING;
+import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
+import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
+import static io.kestra.core.server.Service.ServiceState.TERMINATING;
+import static io.kestra.core.server.Service.ServiceState.allRunningStates;
 
 /**
  * Responsible for coordinating the state of all service instances.
@@ -58,11 +64,33 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
         if (executor.get() == null) return; // only True during startup
 
         // Transition all RUNNING but non-responding services to DISCONNECTED.
-        transitionAllNonRespondingService(now);
+        serviceInstanceRepository.transaction(configuration -> {
+            List<ServiceInstance> instances = serviceInstanceRepository.findAllInstancesInStates(configuration, allRunningStates(), true);
+            List<ServiceInstance> nonRespondingServices = filterAllNonRespondingServices(instances, now);
+
+            nonRespondingServices.forEach(instance -> serviceInstanceRepository.mayTransitServiceTo(
+                configuration,
+                instance,
+                Service.ServiceState.DISCONNECTED,
+                DEFAULT_REASON_FOR_DISCONNECTED
+            ));
+
+            // Eventually restart workers tasks
+            List<String> workerIdsHavingTasksToRestart = nonRespondingServices.stream()
+                .filter(instance -> instance.is(Service.ServiceType.WORKER))
+                .filter(instance -> instance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY))
+                .map(ServiceInstance::id)
+                .toList();
+
+            if (!workerIdsHavingTasksToRestart.isEmpty()) {
+                log.info("Trigger task restart for non-responding workers after timeout: {}.", workerIdsHavingTasksToRestart);
+                executor.get().reEmitWorkerJobsForWorkers(configuration, workerIdsHavingTasksToRestart);
+            }
+        });
 
         // Finds all workers which are not in a RUNNING state.
         serviceInstanceRepository.transaction(configuration -> {
-            List<ServiceInstance> nonRunningWorkers = serviceInstanceRepository
+            final List<ServiceInstance> nonRunningWorkers = serviceInstanceRepository
                 .findAllNonRunningInstances(configuration, true)
                 .stream()
                 .filter(instance -> instance.is(Service.ServiceType.WORKER))
@@ -75,14 +103,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
             uncleanShutdownWorkers.addAll(nonRunningWorkers.stream()
                 .filter(nonRunning -> nonRunning.state().isDisconnectedOrTerminating())
                 .filter(disconnectedOrTerminating -> disconnectedOrTerminating.isTerminationGracePeriodElapsed(now))
-                .peek(instance -> {
-                    log.warn("Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
-                        instance.id(),
-                        instance.type(),
-                        instance.server().hostname(),
-                        now.toEpochMilli() - instance.updatedAt().toEpochMilli()
-                    );
-                })
+                .peek(instance -> mayLogNonRespondingAfterTerminationGracePeriod(instance, now))
                 .toList()
             );
             // ...all workers that have transitioned to TERMINATED_FORCED.
@@ -93,8 +114,14 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
             // Re-emit all WorkerJobs for unclean workers
             if (!uncleanShutdownWorkers.isEmpty()) {
-                List<String> ids = uncleanShutdownWorkers.stream().map(ServiceInstance::id).toList();
-                executor.get().reEmitWorkerJobsForWorkers(configuration, ids);
+                List<String> ids = uncleanShutdownWorkers.stream()
+                    .filter(instance -> instance.config().workerTaskRestartStrategy().isRestartable())
+                    .map(ServiceInstance::id)
+                    .toList();
+                if (!ids.isEmpty()) {
+                    log.info("Trigger task restart for non-responding workers after termination grace period: {}.", ids);
+                    executor.get().reEmitWorkerJobsForWorkers(configuration, ids);
+                }
             }
 
             // Transit all GRACEFUL AND UNCLEAN SHUTDOWN workers to NOT_RUNNING.
@@ -104,18 +131,18 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                 instance -> serviceInstanceRepository.mayTransitServiceTo(configuration,
                     instance,
                     ServiceState.NOT_RUNNING,
-                    "The worker was detected as non-responsive after termination grace period. Service was transitioned to the 'NOT_RUNNING' state."
+                    DEFAULT_REASON_FOR_NOT_RUNNING
                 )
             );
         });
 
         // Transition all TERMINATED services to NOT_RUNNING.
         serviceInstanceRepository
-            .findAllInstancesInStates(List.of(DISCONNECTED, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED)).stream()
+            .findAllInstancesInStates(Set.of(DISCONNECTED, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED)).stream()
             .filter(instance -> !instance.is(Service.ServiceType.WORKER)) // WORKERS are handle above.
-            .filter(instance ->instance.isTerminationGracePeriodElapsed(now))
-            .forEach(instance -> safelyTransitionServiceTo(instance, NOT_RUNNING, null));
-
+            .filter(instance -> instance.isTerminationGracePeriodElapsed(now))
+            .peek(instance -> mayLogNonRespondingAfterTerminationGracePeriod(instance, now))
+            .forEach(instance -> safelyTransitionServiceTo(instance, NOT_RUNNING, DEFAULT_REASON_FOR_NOT_RUNNING));
 
         // Soft delete all services which are NOT_RUNNING anymore.
         serviceInstanceRepository.findAllInstancesInState(ServiceState.NOT_RUNNING)
@@ -123,6 +150,20 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
         mayDetectAndLogNewConnectedServices();
     }
+
+    private static void mayLogNonRespondingAfterTerminationGracePeriod(final ServiceInstance instance,
+                                                                       final Instant now) {
+
+        if (instance.state().isDisconnectedOrTerminating()) {
+            log.warn("Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
+                instance.id(),
+                instance.type(),
+                instance.server().hostname(),
+                now.toEpochMilli() - instance.updatedAt().toEpochMilli()
+            );
+        }
+    }
+
 
     synchronized void setExecutor(final JdbcExecutor executor) {
         this.executor.set(executor);

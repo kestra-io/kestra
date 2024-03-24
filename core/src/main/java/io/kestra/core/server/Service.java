@@ -2,6 +2,7 @@ package io.kestra.core.server;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -134,8 +135,7 @@ public interface Service {
         }
 
         public boolean isRunning() {
-            return equals(CREATED)
-                || equals(RUNNING);
+            return allRunningStates().contains(this);
         }
 
         public boolean isDisconnectedOrTerminating() {
@@ -148,6 +148,10 @@ public interface Service {
                 || equals(TERMINATED_FORCED)
                 || equals(NOT_RUNNING)
                 || equals(EMPTY);
+        }
+
+        public static Set<ServiceState> allRunningStates() {
+            return Set.of(CREATED, RUNNING);
         }
     }
 }

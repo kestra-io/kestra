@@ -9,7 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
-import java.util.random.RandomGenerator;
+import java.util.Set;
 
 import static io.kestra.core.server.Service.ServiceState.CREATED;
 import static io.kestra.core.server.Service.ServiceState.RUNNING;
@@ -22,6 +22,14 @@ import static io.kestra.core.server.Service.ServiceState.RUNNING;
 public abstract class AbstractServiceLivenessCoordinator extends AbstractServiceLivenessTask {
 
     private final static int DEFAULT_SCHEDULE_JITTER_MAX_MS = 500;
+
+    protected static String DEFAULT_REASON_FOR_DISCONNECTED =
+        "The service was detected as non-responsive after the session timeout. " +
+        "Service transitioned to the 'DISCONNECTED' state.";
+
+    protected static String DEFAULT_REASON_FOR_NOT_RUNNING =
+        "The service was detected as non-responsive or terminated after termination grace period. " +
+        "Service transitioned to the 'NOT_RUNNING' state.";
 
     private static final String TASK_NAME = "service-liveness-coordinator-task";
 
@@ -56,21 +64,11 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         return serverConfig.liveness().interval().plus(Duration.ofMillis(jitter));
     }
 
-    /**
-     * Transitions to the DISCONNECTED state all non-local services for which liveness
-     * is enabled and are detected as non-responsive .
-     *
-     * @param now   the instant.
-     */
-    protected void transitionAllNonRespondingService(final Instant now) {
-
-        // Detect and handle non-responding services.
-        List<ServiceInstance> nonRespondingServices = serviceInstanceRepository
-            // gets all non-responding services.
-            .findAllTimeoutRunningInstances(now)
-            .stream()
-            // keep only services with liveness enabled.
+    protected List<ServiceInstance> filterAllNonRespondingServices(final List<ServiceInstance> instances,
+                                                                   final Instant now) {
+        return instances.stream()
             .filter(instance -> instance.config().liveness().enabled())
+            .filter(instance -> instance.isSessionTimeoutElapsed(now))
             // exclude any service running on the same server as the executor, to prevent the latter from shutting down.
             .filter(instance -> !instance.server().id().equals(serverId))
             // only keep services eligible for liveness probe
@@ -87,18 +85,12 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
             ))
             .toList();
 
-        // Attempt to transit all non-responding services to DISCONNECTED.
-        nonRespondingServices.forEach(instance -> this.safelyTransitionServiceTo(
-            instance,
-            Service.ServiceState.DISCONNECTED,
-            "The service was detected as non-responsive after the session timeout. Service was transitioned to the 'DISCONNECTED' state."
-        ));
     }
 
     protected void mayDetectAndLogNewConnectedServices() {
         if (log.isInfoEnabled()) {
             // Log the newly-connected services (useful for troubleshooting).
-            serviceInstanceRepository.findAllInstancesInStates(List.of(CREATED, RUNNING))
+            serviceInstanceRepository.findAllInstancesInStates(Set.of(CREATED, RUNNING))
                 .stream()
                 .filter(instance -> instance.createdAt().isAfter(lastScheduledExecution()))
                 .forEach(instance -> {

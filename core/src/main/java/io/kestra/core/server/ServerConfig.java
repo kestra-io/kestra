@@ -1,10 +1,12 @@
 package io.kestra.core.server;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * Server configuration.
@@ -18,9 +20,21 @@ public record ServerConfig(
     @Bindable(defaultValue = "5m")
     Duration terminationGracePeriod,
 
+    @Bindable(defaultValue = "AFTER_TERMINATION_GRACE_PERIOD")
+    @Nullable
+    WorkerTaskRestartStrategy workerTaskRestartStrategy,
+
     Liveness liveness
 
 ) {
+
+    /** {@inheritDoc} **/
+    public WorkerTaskRestartStrategy workerTaskRestartStrategy() {
+        return Optional
+            .ofNullable(workerTaskRestartStrategy)
+            .orElse(WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD);
+    }
+
     /**
      * Configuration for Liveness and Heartbeat mechanism between Kestra Services, and Executor.
      *
@@ -39,7 +53,7 @@ public record ServerConfig(
         @NotNull @Bindable(defaultValue = "5s")
         Duration interval,
         @NotNull @Bindable(defaultValue = "45s") Duration timeout,
-        @NotNull @Bindable(defaultValue = "30s") Duration initialDelay,
+        @NotNull @Bindable(defaultValue = "45s") Duration initialDelay,
         @NotNull @Bindable(defaultValue = "3s") Duration heartbeatInterval
     ) {
     }

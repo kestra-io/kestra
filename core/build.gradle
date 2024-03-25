@@ -22,7 +22,7 @@ dependencies {
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
     implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.26.0'
     implementation group: 'de.focus-shift', name: 'jollyday-jaxb', version: '0.26.0'
-    implementation 'nl.basjes.gitignore:gitignore-reader:1.4.0'
+    implementation 'nl.basjes.gitignore:gitignore-reader:1.5.1'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'

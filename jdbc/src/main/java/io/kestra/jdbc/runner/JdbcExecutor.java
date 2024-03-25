@@ -21,7 +21,6 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.DefaultFlowExecutor;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.runners.ExecutionRunning;
@@ -205,8 +204,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         flowListeners.listen(flows -> this.allFlows = flows);
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
-
-        applicationContext.registerSingleton(new DefaultFlowExecutor(flowListeners, this.flowRepository));
 
         this.executionQueue.receive(Executor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(Executor.class, this::workerTaskResultQueue);

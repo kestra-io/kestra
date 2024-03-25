@@ -65,4 +65,8 @@ public abstract class Input<T> implements Data {
         }
     }
 
+    @Deprecated
+    public String getName() {
+        return this.getId();
+    }
 }

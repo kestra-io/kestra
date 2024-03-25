@@ -10,6 +10,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -62,5 +64,10 @@ class RecursivePebbleVariableRendererTest {
             () -> variableRenderer.render("{{ render(first) }}", vars)
         );
         assertThat(illegalVariableEvaluationException.getMessage(), containsString("Function or Macro [render] does not exist"));
+    }
+
+    @Test
+    void renderFunctionKeepRaw() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{% raw %}{{first}}{% endraw %}", Collections.emptyMap()), is("{{first}}"));
     }
 }

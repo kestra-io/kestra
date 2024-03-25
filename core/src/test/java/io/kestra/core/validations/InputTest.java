@@ -25,4 +25,24 @@ class InputTest {
 
         assertThat(modelValidator.isValid(validInput).isEmpty(), is(true));
     }
+
+    @Test
+    void inputNameDeprecation() {
+        String id = "test";
+        StringInput validInput = StringInput.builder()
+            .id(id)
+            .type(Type.STRING)
+            .build();
+
+        assertThat(validInput.getName(), is(id));
+
+        String newName = "newName";
+        validInput = StringInput.builder()
+            .type(Type.STRING)
+            .build();
+
+        validInput.setName(newName);
+
+        assertThat(validInput.getId(), is(newName));
+    }
 }

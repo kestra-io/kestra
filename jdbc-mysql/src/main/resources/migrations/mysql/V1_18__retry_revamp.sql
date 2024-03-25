@@ -10,5 +10,6 @@ ALTER TABLE executions MODIFY COLUMN `state_current` ENUM (
     'KILLED',
     'CANCELLED',
     'QUEUED',
-    'RETRYING'
+    'RETRYING',
+    'RETRIED'
 ) GENERATED ALWAYS AS (value ->> '$.state.current') STORED NOT NULL;

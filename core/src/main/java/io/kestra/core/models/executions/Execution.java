@@ -5,6 +5,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
@@ -91,6 +92,19 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @Builder.Default
+    @With
+    @JsonInclude
+    Integer attemptNumber = 1;
+
+    @JsonSetter
+    public Integer getAttemptNumber() {
+        if (attemptNumber == null) {
+            return 1;
+        }
+        return attemptNumber;
+    }
+
     public static class ExecutionBuilder {
         void prebuild() {
             this.originalId = this.id;
@@ -125,7 +139,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.parentId,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.attemptNumber
         );
     }
 
@@ -157,7 +172,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.parentId,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.attemptNumber
         );
     }
 
@@ -177,7 +193,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             childExecutionId != null ? this.getId() : null,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.attemptNumber
         );
     }
 

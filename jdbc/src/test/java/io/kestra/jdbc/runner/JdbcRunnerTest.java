@@ -9,11 +9,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.*;
-import io.kestra.core.tasks.flows.EachSequentialTest;
-import io.kestra.core.tasks.flows.FlowCaseTest;
-import io.kestra.core.tasks.flows.ForEachItemCaseTest;
-import io.kestra.core.tasks.flows.PauseTest;
-import io.kestra.core.tasks.flows.WorkingDirectoryTest;
+import io.kestra.core.tasks.flows.*;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -82,6 +78,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
+
+    @Inject
+    private RetryCaseTest retryCaseTest;
 
     @BeforeAll
     void init() throws IOException, URISyntaxException {
@@ -320,5 +319,45 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void retryNewExecutionTaskDuration() throws TimeoutException {
+        retryCaseTest.retryNewExecutionTaskDuration();
+    }
+
+    @Test
+    void retryNewExecutionTaskAttempts() throws TimeoutException {
+        retryCaseTest.retryNewExecutionTaskAttempts();
+    }
+
+    @Test
+    void retryNewExecutionFlowDuration() throws TimeoutException {
+        retryCaseTest.retryNewExecutionFlowDuration();
+    }
+
+    @Test
+    void retryNewExecutionFlowAttempts() throws TimeoutException {
+        retryCaseTest.retryNewExecutionFlowAttempts();
+    }
+
+    @Test
+    void retryFailedTaskDuration() throws TimeoutException {
+        retryCaseTest.retryFailedTaskDuration();
+    }
+
+    @Test
+    void retryFailedTaskAttempts() throws TimeoutException {
+        retryCaseTest.retryFailedTaskAttempts();
+    }
+
+    @Test
+    void retryFailedFlowDuration() throws TimeoutException {
+        retryCaseTest.retryFailedFlowDuration();
+    }
+
+    @Test
+    void retryFailedFlowAttempts() throws TimeoutException {
+        retryCaseTest.retryFailedFlowAttempts();
     }
 }

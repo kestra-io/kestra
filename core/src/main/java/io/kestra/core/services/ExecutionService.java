@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -37,6 +38,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -76,7 +78,7 @@ public class ExecutionService {
     * Retry set the given taskRun in created state
     * and return the execution in running state
     **/
-     public Execution retry(Execution execution, String taskRunId) {
+     public Execution retryTask(Execution execution, String taskRunId) {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
@@ -139,6 +141,8 @@ public class ExecutionService {
                 newTaskRuns,
                 execution.withState(State.Type.RESTARTED).getState()
             );
+
+        newExecution = newExecution.withAttemptNumber(execution.getAttemptNumber() + 1);
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
@@ -216,6 +220,8 @@ public class ExecutionService {
             newTaskRuns,
             taskRunId == null ? new State() : execution.withState(State.Type.RESTARTED).getState()
         );
+
+        newExecution = newExecution.withAttemptNumber(execution.getAttemptNumber() + 1);
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
@@ -541,5 +547,29 @@ public class ExecutionService {
             .stream()
             .flatMap(throwFunction(taskRun -> this.getAncestors(execution, taskRun).stream()))
             .collect(Collectors.toSet());
+    }
+
+    /**
+     * This method is used to retrieve previous existing execution
+     * @param retry The retry define in the flow of the failed execution
+     * @param execution The failed execution
+     * @return The next retry date, null if maxAttempt || maxDuration is reached
+     */
+    public Instant nextRetryDate(AbstractRetry retry, Execution execution) {
+        if (retry.getMaxAttempt() != null && execution.getAttemptNumber() >= retry.getMaxAttempt()) {
+
+            return null;
+        }
+
+        Instant base = execution.getState().maxDate();
+        Instant originalCreatedDate = execution.getOriginalCreatedDate();
+        Instant nextDate = retry.nextRetryDate(execution.getAttemptNumber(), base);
+
+        if (retry.getMaxDuration() != null && nextDate.isAfter(originalCreatedDate.plus(retry.getMaxDuration()))) {
+
+            return null;
+        }
+
+        return nextDate;
     }
 }

@@ -10,5 +10,6 @@ ALTER TABLE executions ALTER COLUMN "state_current" ENUM (
     'KILLED',
     'CANCELLED',
     'QUEUED',
-    'RETRYING'
+    'RETRYING',
+    'RETRIED'
 ) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.state.current'));

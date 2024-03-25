@@ -7,7 +7,9 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
@@ -46,6 +48,9 @@ public class ExecutorService {
     private FlowInputOutput flowInputOutput;
 
     protected FlowExecutorInterface flowExecutorInterface;
+
+    @Inject
+    private ExecutionService executionService;
 
     protected FlowExecutorInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
@@ -429,7 +434,7 @@ public class ExecutorService {
         return executor.withTaskRun(result, "handleChildNext");
     }
 
-    private Executor handleChildWorkerTaskResult(Executor executor) throws InternalException {
+    private Executor handleChildWorkerTaskResult(Executor executor) throws Exception {
         if (executor.getExecution().getTaskRunList() == null) {
             return executor;
         }
@@ -448,22 +453,55 @@ public class ExecutorService {
                 workerTaskResult.ifPresent(list::add);
             }
 
-            /**
+            /*
              * Check if the task is failed and if it has a retry policy
              */
-            if (!executor.getExecution().getState().isRetrying() && taskRun.getState().isFailed() && executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
-                Instant nextRetryDate = taskRun.nextRetryDate(executor.getFlow().findTaskByTaskId(taskRun.getTaskId()));
-                if (nextRetryDate != null) {
-                    executionDelays.add(
-                        ExecutionDelay.builder()
-                            .taskRunId(taskRun.getId())
-                            .executionId(executor.getExecution().getId())
-                            .date(nextRetryDate)
-                            .state(State.Type.RUNNING)
-                            .build()
-                    );
-                    executor.withExecution(executor.getExecution().withState(State.Type.RETRYING), "handleRetryTask");
+            if (!executor.getExecution().getState().isRetrying() &&
+                taskRun.getState().isFailed() &&
+                (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null || executor.getFlow().getRetry() != null)
+            ) {
+                Instant nextRetryDate;
+                AbstractRetry retry;
+                ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
+                    .taskRunId(taskRun.getId())
+                    .executionId(executor.getExecution().getId());
+                // Case task has a retry
+                if (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
+                    retry = executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry();
+                    AbstractRetry.Behavior behavior = retry.getBehavior();
+                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                        taskRun.nextRetryDate(retry, executor.getExecution()) :
+                        taskRun.nextRetryDate(retry);
+                    executionDelayBuilder
+                        .date(nextRetryDate)
+                        .state(State.Type.RUNNING)
+                        .delayType(behavior.equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                            ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
+                            ExecutionDelay.DelayType.RESTART_FAILED_TASK);
+                }
+                // Case flow has a retry
+                else {
+                    retry = executor.getFlow().getRetry();
+                    AbstractRetry.Behavior behavior = retry.getBehavior();
+                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                        executionService.nextRetryDate(retry, executor.getExecution()) :
+                        taskRun.nextRetryDate(retry);
 
+                    executionDelayBuilder
+                        .date(nextRetryDate)
+                        .state(State.Type.RUNNING)
+                        .delayType(retry.getBehavior().equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                            ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
+                            ExecutionDelay.DelayType.RESTART_FAILED_TASK);
+                }
+                if (nextRetryDate != null) {
+                    executionDelays.add(executionDelayBuilder.build());
+                    executor.withExecution(executor.getExecution()
+                        .withState(retry.getBehavior().equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                            State.Type.RETRIED :
+                            State.Type.RETRYING
+                            ),
+                        "handleRetryTask");
                 }
             }
         }
@@ -499,6 +537,7 @@ public class ExecutorService {
                             .executionId(executor.getExecution().getId())
                             .date(workerTaskResult.getTaskRun().getState().maxDate().plus(pauseTask.getDelay() != null ? pauseTask.getDelay() : pauseTask.getTimeout()))
                             .state(pauseTask.getDelay() != null ? State.Type.RUNNING : State.Type.FAILED)
+                            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                             .build();
                     }
                 }
@@ -536,7 +575,6 @@ public class ExecutorService {
 
         return executor.withWorkerTaskResults(workerTaskResults, "handleChildWorkerCreatedKilling");
     }
-
 
     private Executor handleListeners(Executor executor) {
         if (!executor.getExecution().getState().isTerminated()) {
@@ -578,7 +616,6 @@ public class ExecutorService {
         return this.onEnd(executor);
     }
 
-
     private Executor handleRestart(Executor executor) {
         if (executor.getExecution().getState().getCurrent() != State.Type.RESTARTED) {
             return executor;
@@ -607,7 +644,6 @@ public class ExecutorService {
 
         return executor.withExecution(newExecution, "handleKilling");
     }
-
 
     private Executor handleWorkerTask(Executor executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {

@@ -306,6 +306,7 @@ public class RunContext {
             if (execution.getOriginalId() != null) {
                 executionMap.put("originalId", execution.getOriginalId());
             }
+            
 
             builder
                 .put("execution", executionMap.build());

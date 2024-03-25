@@ -1,0 +1,12 @@
+id: retry-failed-flow-duration
+namespace: io.kestra.tests
+retry:
+  behavior: RETRY_FAILED
+  type: constant
+  maxDuration: PT15S
+  interval: PT5S
+
+tasks:
+  - id: fail
+    type: io.kestra.core.tasks.executions.Fail
+    

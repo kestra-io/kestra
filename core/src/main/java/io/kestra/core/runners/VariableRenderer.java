@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 
 @Singleton
 public class VariableRenderer {
-    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
+    private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
     private final PebbleEngine pebbleEngine;
@@ -80,20 +80,18 @@ public class VariableRenderer {
             return inline;
         }
 
-        return recursive
+        String render = recursive
             ? renderRecursively(inline, variables)
             : renderOnce(inline, variables);
+
+        return RAW_PATTERN.matcher(render).replaceAll("$2");
     }
 
     public String renderOnce(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         // pre-process raw tags
         Matcher rawMatcher = RAW_PATTERN.matcher(inline);
         Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
-        String result = rawMatcher.replaceAll(matchResult -> {
-            var uuid = UUID.randomUUID().toString();
-            replacers.put(uuid, matchResult.group(1));
-            return uuid;
-        });
+        String result = replaceRawTags(rawMatcher, replacers);
 
         try {
             PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate(result);
@@ -108,11 +106,24 @@ public class VariableRenderer {
         }
 
         // post-process raw tags
+        result = putBackRawTags(replacers, result);
+
+        return result;
+    }
+
+    private static String putBackRawTags(Map<String, String> replacers, String result) {
         for (var entry : replacers.entrySet()) {
             result = result.replace(entry.getKey(), entry.getValue());
         }
-
         return result;
+    }
+
+    private static String replaceRawTags(Matcher rawMatcher, Map<String, String> replacers) {
+        return rawMatcher.replaceAll(matchResult -> {
+            var uuid = UUID.randomUUID().toString();
+            replacers.put(uuid, matchResult.group(1));
+            return uuid;
+        });
     }
 
     public String renderRecursively(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {

@@ -605,6 +605,9 @@
       "content": "Activer l'authentication basique pour protéger votre instance.",
       "switch_text": "Ne plus montrer",
       "enable": "Activer l'authentification"
-    }
+    },
+    "true": "Vrai",
+    "false": "Faux",
+    "undefined": "Non défini"
   }
 }

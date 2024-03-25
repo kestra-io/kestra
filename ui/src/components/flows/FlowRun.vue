@@ -56,9 +56,9 @@
                     v-if="input.type === 'BOOLEAN'"
                     v-model="inputs[input.id]"
                 >
-                    <el-radio-button value="true" />
-                    <el-radio-button value="false" />
-                    <el-radio-button value="undefined" />
+                    <el-radio-button :label="$t('true')" value="true" />
+                    <el-radio-button :label="$t('false')" value="false" />
+                    <el-radio-button :label="$t('undefined')" value="undefined" />
                 </el-radio-group>
                 <el-date-picker
                     v-if="input.type === 'DATETIME'"

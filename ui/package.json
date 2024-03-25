@@ -22,7 +22,7 @@
     "buffer": "^6.0.3",
     "chart.js": "^4.4.2",
     "chartjs-chart-treemap": "^2.3.0",
-    "core-js": "^3.36.0",
+    "core-js": "^3.36.1",
     "dagre": "^0.8.5",
     "element-plus": "^2.6.1",
     "humanize-duration": "^3.31.0",

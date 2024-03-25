@@ -619,6 +619,9 @@
       "content": "Enable basic authentication to protect your instance.",
       "switch_text": "Don't show again",
       "enable": "Enable authentication"
-    }
+    },
+    "true": "True",
+    "false": "False",
+    "undefined": "Undefined"
   }
 }

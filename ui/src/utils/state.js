@@ -8,6 +8,7 @@ import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue
 import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
 import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue";
 import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue";
+import Refresh from "vue-material-design-icons/Refresh.vue";
 import Cancel from "vue-material-design-icons/Cancel.vue";
 import {cssVariable} from "./global"
 
@@ -100,6 +101,14 @@ const STATE = Object.freeze({
         isRunning: false,
         isKillable: false,
         isFailed: false,
+    },
+    RETRYING: {
+        name: "RETRYING",
+        colorClass: "gray",
+        icon: Refresh,
+        isRunning: false,
+        isKillable: true,
+        isFailed: false
     }
 });
 
@@ -146,6 +155,10 @@ export default class State {
 
     static get QUEUED() {
         return STATE.QUEUED.name;
+    }
+
+    static get RETRYING() {
+        return STATE.RETRYING.name;
     }
 
     static isRunning(state) {

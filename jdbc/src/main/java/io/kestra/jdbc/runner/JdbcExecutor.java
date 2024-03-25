@@ -818,7 +818,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return taskDefaultService.injectDefaults(flow, execution);
     }
 
-    private void executionDelaySend() {
+    /** ExecutionDelay is currently two type of execution :
+     * <br/>
+     * - Paused flow that will be restart after an interval/timeout
+     * <br/>
+     * - Failed flow that will be retried after an interval
+    **/
+     private void executionDelaySend() {
         if (isShutdown) {
             return;
         }
@@ -828,6 +834,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Executor executor = new Executor(pair.getLeft(), null);
 
                 try {
+                    // Handle paused tasks
                     if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent() == State.Type.PAUSED) {
 
                         Execution markAsExecution = executionService.markAs(
@@ -837,6 +844,14 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
+                    // Handle failed tasks
+                    } else if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
+                        Execution newAttempt = executionService.retry(
+                            pair.getKey(),
+                            executionDelay.getTaskRunId()
+                        );
+
+                        executor = executor.withExecution(newAttempt, "failedRetry");
                     }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);
@@ -858,7 +873,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         return taskRuns
             .stream()
             .anyMatch(taskRun -> {
-                String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
+                // As retry is now handled outside the worker,
+                // we now add the attempt size to the deduplication key
+                String deduplicationKey = taskRun.getParentTaskRunId() + "-" +
+                    taskRun.getTaskId() + "-" +
+                    taskRun.getValue() + "-" +
+                    (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0);
 
                 if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
                     log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
@@ -871,7 +891,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     }
 
     private boolean deduplicateWorkerTask(Execution execution, ExecutorState executorState, TaskRun taskRun) {
-        String deduplicationKey = taskRun.getId();
+        String deduplicationKey = taskRun.getId() +
+            (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0);
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
@@ -886,7 +907,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private boolean deduplicateSubflowExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
         // There can be multiple executions for the same task, so we need to deduplicated with the worker task execution iteration
         String deduplicationKey = taskRun.getId() + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
-       State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
+        State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
             log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());

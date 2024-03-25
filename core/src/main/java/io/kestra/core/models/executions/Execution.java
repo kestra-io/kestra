@@ -23,21 +23,15 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -253,8 +247,16 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
-        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks, parentTaskRun)) {
+        // Check if flow has failed task
+        if (!errorsFlow.isEmpty() || this.hasFailed(resolvedTasks, parentTaskRun)) {
+            // Check if among the failed task, they will be retried
+            if (!this.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
+
+                return new ArrayList<>();
+            }
+
             return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
+
         }
 
         return resolvedTasks;
@@ -397,6 +399,19 @@ public class Execution implements DeletedInterface, TenantInterface {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    public boolean hasFailedNoRetry(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
+            .stream()
+            .anyMatch(taskRun -> {
+                ResolvedTask resolvedTask = resolvedTasks.stream().filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst().orElse(null);
+                if (resolvedTask == null) {
+                    log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'", taskRun.getId(), parentTaskRun.getId());
+                    return false;
+                }
+                return !taskRun.shouldBeRetried(resolvedTask.getTask()) && taskRun.getState().isFailed();
+            });
     }
 
     public boolean hasCreated() {

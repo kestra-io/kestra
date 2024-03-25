@@ -8,8 +8,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,11 +46,30 @@ public class RetryTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void retryInvalid() throws TimeoutException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-invalid");
+    void retryRandom() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-random");
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), nullValue());
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void retryExpo() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-expo");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void retryFail() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-and-fail");
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
     }
 }

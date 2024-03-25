@@ -242,28 +242,24 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @return the flow we need to follow
      */
     public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, @Nullable List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
-        final List<ResolvedTask> finalResolvedTasks = removeDisabled(resolvedTasks);
-        final List<ResolvedTask> finalResolvedErrors = removeDisabled(resolvedErrors);
+        resolvedTasks = removeDisabled(resolvedTasks);
+        resolvedErrors = removeDisabled(resolvedErrors);
 
-        List<TaskRun> errorsFlow = this.findTaskRunByTasks(finalResolvedErrors, parentTaskRun);
-        // Filter taskRun that will be retry
-        errorsFlow = errorsFlow
-            .stream()
-            .filter(taskRun -> {
-                ResolvedTask resolvedTask = finalResolvedTasks.stream().filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst().orElse(null);
-                if (resolvedTask == null) {
-                    log.warn("Can't find task for taskRun '{}'", taskRun.getId());
-                    return false;
-                }
-                return !taskRun.shouldBeRetried(resolvedTask.getTask());
-            })
-            .toList();
+        List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
-        if (!errorsFlow.isEmpty() || this.hasFailed(finalResolvedTasks, parentTaskRun)) {
-            return finalResolvedErrors == null ? new ArrayList<>() : finalResolvedErrors;
+        // Check if flow has failed task
+        if (!errorsFlow.isEmpty() || this.hasFailed(resolvedTasks, parentTaskRun)) {
+            // Check if among the failed task, they will be retried
+            if (!this.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
+
+                return new ArrayList<>();
+            }
+
+            return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
+
         }
 
-        return finalResolvedTasks;
+        return resolvedTasks;
     }
 
     public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
@@ -400,6 +396,12 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public boolean hasFailed(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    public boolean hasFailedNoRetry(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> {

@@ -4,10 +4,20 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <el-button-group>
-                        <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
+                        <el-tooltip
+                            :content="$t('Fold content lines')"
+                            :persistent="false"
+                            transition=""
+                            :hide-after="0"
+                        >
                             <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
                         </el-tooltip>
-                        <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
+                        <el-tooltip
+                            :content="$t('Unfold content lines')"
+                            :persistent="false"
+                            transition=""
+                            :hide-after="0"
+                        >
                             <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
                         </el-tooltip>
                     </el-button-group>
@@ -178,7 +188,7 @@
                 return {
                     ...{
                         tabSize: 2,
-                        fontFamily:  localStorage.getItem("editorFontFamily") ? localStorage.getItem("editorFontFamily") : "'Source Code Pro', monospace",
+                        fontFamily: localStorage.getItem("editorFontFamily") ? localStorage.getItem("editorFontFamily") : "'Source Code Pro', monospace",
                         fontSize: localStorage.getItem("editorFontSize") ? parseInt(localStorage.getItem("editorFontSize")) : 12,
                         showFoldingControls: "always",
                         scrollBeyondLastLine: false,
@@ -320,7 +330,7 @@
                             ]) : decorations;
                             this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
                         } else {
-                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                            this.highlightPebble();
                         }
                     });
 
@@ -331,6 +341,7 @@
                         this.lastTimeout = setTimeout(() => {
                             this.$emit("cursor", {position: position, model: model})
                         }, 100);
+                        this.highlightPebble();
                     });
                 }
             },
@@ -349,6 +360,30 @@
                 this.editor.layout()
                 this.editor.focus()
             },
+            highlightPebble() {
+                // Highlight code that match pebble content
+                let model = this.editor.getModel();
+                let decorations = [];
+                let text = model.getValue();
+                let regex = new RegExp("\\{\\{(.+?)}}", "g");
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    let startPos = model.getPositionAt(match.index);
+                    let endPos = model.getPositionAt(match.index + match[0].length);
+                    decorations.push({
+                        range: {
+                            startLineNumber: startPos.lineNumber,
+                            startColumn: startPos.column,
+                            endLineNumber: endPos.lineNumber,
+                            endColumn: endPos.column
+                        },
+                        options: {
+                            inlineClassName: "highlight-pebble"
+                        }
+                    });
+                }
+                this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations);
+            }
         },
     };
 </script>
@@ -460,6 +495,14 @@
 
         html.dark & {
             background-color: rgba(255, 255, 255, 0.2);
+        }
+    }
+
+    .highlight-pebble {
+        color: #977100 !important;
+
+        html.dark & {
+            color: #ffca16 !important;
         }
     }
 

@@ -149,7 +149,8 @@
                         theme: this.theme,
                         language: this.language,
                         suggest: {
-                            showClasses: false
+                            showClasses: false,
+                            shareSuggestSelections: false
                         }
                     },
                     ...this.options

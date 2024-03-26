@@ -112,3 +112,9 @@ tasks:
 - id: secret
   type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.secret}}"
+- id: json
+  type: io.kestra.core.tasks.debugs.Return
+  format: "{{inputs.json}}"
+- id: jsonOutput
+  type: io.kestra.core.tasks.debugs.Return
+  format: "{{outputs.json.value}}"

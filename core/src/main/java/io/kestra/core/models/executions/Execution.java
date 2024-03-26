@@ -699,21 +699,21 @@ public class Execution implements DeletedInterface, TenantInterface {
     public List<Map<String, Object>> parents(TaskRun taskRun) {
         List<Map<String, Object>> result = new ArrayList<>();
 
-        List<TaskRun> childs = findChilds(taskRun);
-        Collections.reverse(childs);
+        List<TaskRun> children = findChilds(taskRun);
+        Collections.reverse(children);
 
-        for (TaskRun childTaskRun : childs) {
+        for (TaskRun childTaskRun : children) {
             HashMap<String, Object> current = new HashMap<>();
 
             if (childTaskRun.getValue() != null) {
                 current.put("taskrun", Map.of("value", childTaskRun.getValue()));
             }
 
-            if (childTaskRun.getOutputs() != null) {
+            if (childTaskRun.getOutputs() != null && !childTaskRun.getOutputs().isEmpty()) {
                 current.put("outputs", childTaskRun.getOutputs());
             }
 
-            if (current.size() > 0) {
+            if (!current.isEmpty()) {
                 result.add(current);
             }
         }

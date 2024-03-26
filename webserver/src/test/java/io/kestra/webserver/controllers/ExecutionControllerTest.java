@@ -98,6 +98,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("instant", "2019-10-06T18:27:49Z")
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
         .put("secret", "secret")
+        .put("json", "{}")
         .build();
 
     @Test
@@ -137,6 +138,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
             .addPart("secret", "secret")
+            .addPart("json", "{}")
             .build();
     }
 
@@ -170,7 +172,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Execution result = triggerInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(result.getTaskRunList().size(), is(6));
+        assertThat(result.getTaskRunList().size(), is(8));
     }
 
     @Test
@@ -529,7 +531,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void downloadFile() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList(), hasSize(6));
+        assertThat(execution.getTaskRunList(), hasSize(8));
 
         String path = (String) execution.getInputs().get("file");
 
@@ -564,7 +566,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void filePreview() throws TimeoutException {
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList(), hasSize(6));
+        assertThat(defaultExecution.getTaskRunList(), hasSize(8));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -584,10 +586,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("instant", "2019-10-06T18:27:49Z")
             .put("file", Objects.requireNonNull(ExecutionControllerTest.class.getClassLoader().getResource("data/iso88591.txt")).getPath())
             .put("secret", "secret")
+            .put("json", "{}")
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList(), hasSize(6));
+        assertThat(latin1Execution.getTaskRunList(), hasSize(8));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

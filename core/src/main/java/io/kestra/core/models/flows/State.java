@@ -84,6 +84,7 @@ public class State {
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) // otherwise empty optional will be included as null
     public Optional<Instant> getEndDate() {
         if (!this.isTerminated() && !this.isPaused()) {
             return Optional.empty();

@@ -136,8 +136,11 @@ public class PluginController {
                 .concat(
                     plugin.getTasks().stream(),
                     Stream.concat(
-                        plugin.getTriggers().stream(),
-                        plugin.getConditions().stream()
+                        Stream.concat(
+                            plugin.getTriggers().stream(),
+                            plugin.getConditions().stream()
+                        ),
+                        plugin.getScriptRunner().stream()
                     )
                 )
                 .map(e -> new AbstractMap.SimpleEntry<>(

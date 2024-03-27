@@ -36,6 +36,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -75,7 +76,7 @@ public class ExecutionService {
     * Retry set the given taskRun in created state
     * and return the execution in running state
     **/
-     public Execution retry(Execution execution, String taskRunId) {
+     public Execution retryTask(Execution execution, String taskRunId) {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
@@ -138,6 +139,8 @@ public class ExecutionService {
                 newTaskRuns,
                 execution.withState(State.Type.RESTARTED).getState()
             );
+
+        newExecution = newExecution.withAttemptNumber(execution.getAttemptNumber() + 1);
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
@@ -215,6 +218,8 @@ public class ExecutionService {
             newTaskRuns,
             taskRunId == null ? new State() : execution.withState(State.Type.RESTARTED).getState()
         );
+
+        newExecution = newExecution.withAttemptNumber(execution.getAttemptNumber() + 1);
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
@@ -505,5 +510,29 @@ public class ExecutionService {
             .stream()
             .flatMap(throwFunction(taskRun -> this.getAncestors(execution, taskRun).stream()))
             .collect(Collectors.toSet());
+    }
+
+    /**
+     * This method is used to retrieve previous existing execution
+     * @param flow The flow of the failed execution
+     * @param execution The failed execution
+     * @return The next retry date, null if maxAttempt || maxDuration is reached
+     */
+    public Instant nextRetryDate(Flow flow, Execution execution) {
+        Execution originalExecution = executionRepository.findById(execution.getTenantId(), execution.getParentId()).orElse(null);
+
+        if (execution.getAttemptNumber() > flow.getRetry().getMaxAttempt()) {
+
+            return null;
+        }
+        Instant base = execution.getState().maxDate();
+        Instant nextDate = flow.getRetry().nextRetryDate(execution.getAttemptNumber(), base);
+
+        if (flow.getRetry().getMaxDuration() != null &&  originalExecution != null && nextDate.isAfter(originalExecution.getState().minDate().plus(flow.getRetry().getMaxDuration()))) {
+
+            return null;
+        }
+
+        return nextDate;
     }
 }

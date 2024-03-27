@@ -109,6 +109,14 @@ const STATE = Object.freeze({
         isRunning: false,
         isKillable: true,
         isFailed: false
+    },
+    RETRIED: {
+        name: "RETRIED",
+        colorClass: "gray",
+        icon: Refresh,
+        isRunning: false,
+        isKillable: false,
+        isFailed: false
     }
 });
 
@@ -159,6 +167,10 @@ export default class State {
 
     static get RETRYING() {
         return STATE.RETRYING.name;
+    }
+
+    static get RETRIED() {
+        return STATE.RETRIED.name;
     }
 
     static isRunning(state) {

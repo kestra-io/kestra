@@ -172,7 +172,8 @@ public class State {
         KILLED,
         CANCELLED,
         QUEUED,
-        RETRYING;
+        RETRYING,
+        RETRIED;
 
         public boolean isTerminated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this ==  Type.CANCELLED;
@@ -195,8 +196,9 @@ public class State {
         }
 
         public boolean isRetrying() {
-            return this == Type.RETRYING;
+            return this == Type.RETRYING || this == Type.RETRIED;
         }
+
     }
 
     @Value

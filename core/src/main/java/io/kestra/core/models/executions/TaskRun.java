@@ -4,6 +4,7 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotNull;
@@ -221,16 +222,19 @@ public class TaskRun implements TenantInterface {
     /**
      *
      * @param task Contains the retry configuration
-     * @return The next retry date, null if maxAttempt is reached
+     * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
-    public Instant nextRetryDate(Task task) {
-        if (this.attempts == null || this.attempts.isEmpty() || task.getRetry() == null || this.getAttempts().size() >= task.getRetry().getMaxAttempt()) {
+    public Instant nextRetryDate(Task task, Integer attemptNumber) {
+        if (attemptNumber == null) {
+            attemptNumber = this.attemptNumber();
+        }
+        if (attemptNumber == 0 || task.getRetry() == null || attemptNumber >= task.getRetry().getMaxAttempt()) {
 
             return null;
         }
         Instant base = this.lastAttempt().getState().maxDate();
 
-        Instant nextDate = task.getRetry().nextRetryDate(this.attempts.size(), base);
+        Instant nextDate = task.getRetry().nextRetryDate(attemptNumber, base);
         if (task.getRetry().getMaxDuration() != null && nextDate.isAfter(this.lastAttempt().getState().minDate().plus(task.getRetry().getMaxDuration()))) {
 
             return null;
@@ -239,8 +243,29 @@ public class TaskRun implements TenantInterface {
         return nextDate;
     }
 
+    /**
+     * This method is used when the Retry definition comes from the flow
+     * @param retry The retry configuration
+     * @return The next retry date, null if maxAttempt || maxDuration is reached
+     */
+    public Instant nextRetryDate(AbstractRetry retry) {
+        if (this.attempts == null || this.attempts.isEmpty() || retry == null || this.getAttempts().size() >= retry.getMaxAttempt()) {
+
+            return null;
+        }
+        Instant base = this.lastAttempt().getState().maxDate();
+
+        Instant nextDate = retry.nextRetryDate(this.attempts.size(), base);
+        if (retry.getMaxDuration() != null && nextDate.isAfter(this.lastAttempt().getState().minDate().plus(retry.getMaxDuration()))) {
+
+            return null;
+        }
+
+        return nextDate;
+    }
+
     public boolean shouldBeRetried(Task task) {
-        return this.nextRetryDate(task) != null;
+        return this.nextRetryDate(task, null) != null;
     }
 
 

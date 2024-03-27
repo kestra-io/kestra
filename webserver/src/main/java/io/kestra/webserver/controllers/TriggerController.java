@@ -86,7 +86,12 @@ public class TriggerController {
                     .triggerContext(tc)
                     .build()
                 );
-                
+
+                return;
+            }
+
+            if (flow.get().getTriggers() == null) {
+                // a trigger was removed from the flow but still in the trigger table
                 return;
             }
 

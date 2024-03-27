@@ -27,6 +27,7 @@ import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -693,9 +694,20 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     @Override
     @PreDestroy
     public void close() {
+        close(null);
+    }
+
+    protected void close(final @Nullable Runnable onClose) {
         if (shutdown.compareAndSet(false, true)) {
             log.info("Terminating.");
             setState(ServiceState.TERMINATING);
+            try {
+                if (onClose != null) {
+                    onClose.run();
+                }
+            } catch (Exception e) {
+                log.error("Unexpected error while terminating scheduler.", e);
+            }
             this.scheduleExecutor.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
             log.info("Scheduler closed ({}).", state.get().name().toLowerCase());
@@ -771,7 +783,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private void setState(final ServiceState state) {
+    protected void setState(final ServiceState state) {
         this.state.set(state);
         eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
     }

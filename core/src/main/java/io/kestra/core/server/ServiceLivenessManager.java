@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.ServiceStateTransition.Result;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -346,8 +347,8 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             log.warn("[Service id={}, type={}, hostname='{}'] Received unexpected state [{}] transition error [bug].",
                 instance.id(),
                 instance.type(),
-                instance.state(),
-                instance.server().hostname()
+                instance.server().hostname(),
+                instance.state()
             );
             return Optional.empty();
         }
@@ -361,5 +362,25 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
     @VisibleForTesting
     public void updateServiceInstance(final Service service, final ServiceInstance instance) {
         this.serviceRegistry.register(new LocalServiceState(service, instance));
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    @PreDestroy
+    public void close() {
+        // Ensures that all service are closed before the ServiceLivenessManager.
+        List<Service> services = serviceRegistry.all().stream().map(LocalServiceState::service).toList();
+        for (Service service : services) {
+            try {
+                service.unwrap().close();
+            } catch (Exception e) {
+                log.error("[Service id={}, type={}] Unexpected error on close",
+                    service.getId(),
+                    service.getType(),
+                    e
+                );
+            }
+        }
+        super.close();
     }
 }

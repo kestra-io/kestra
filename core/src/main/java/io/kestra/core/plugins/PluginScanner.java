@@ -183,7 +183,7 @@ public class PluginScanner {
             .controllers(controllers)
             .storages(storages)
             .secrets(secrets)
-            .scriptRunner(scriptRunners)
+            .scriptRunners(scriptRunners)
             .guides(guides)
             .build();
     }

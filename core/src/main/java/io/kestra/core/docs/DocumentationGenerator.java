@@ -70,7 +70,7 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
-        result.addAll(this.generate(registeredPlugin, registeredPlugin.getScriptRunner(), ScriptRunner.class, "scriptRunner"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getScriptRunners(), ScriptRunner.class, "script-runners"));
 
         result.addAll(guides(registeredPlugin));
 
@@ -153,7 +153,7 @@ public class DocumentationGenerator {
             )
             .collect(Collectors.groupingBy(
                 ClassPlugin::getSubgroup,
-                Collectors.groupingBy(ClassPlugin::getType)
+                Collectors.groupingBy(classPlugin -> Slugify.toStartCase(classPlugin.getType()))
             ));
     }
 

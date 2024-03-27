@@ -63,7 +63,7 @@ public class Plugin {
         plugin.controllers = className(filter(registeredPlugin.getControllers()).toArray(Class[]::new));
         plugin.storages = className(filter(registeredPlugin.getStorages()).toArray(Class[]::new));
         plugin.secrets = className(filter(registeredPlugin.getSecrets()).toArray(Class[]::new));
-        plugin.scriptRunners = className(filter(registeredPlugin.getScriptRunner()).toArray(Class[]::new));
+        plugin.scriptRunners = className(filter(registeredPlugin.getScriptRunners()).toArray(Class[]::new));
 
         return plugin;
     }

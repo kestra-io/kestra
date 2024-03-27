@@ -350,7 +350,7 @@ public class JsonSchemaGenerator {
                     } else if (declaredType.getErasedType() == ScriptRunner.class) {
                         return getRegisteredPlugins()
                             .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getScriptRunner().stream())
+                            .flatMap(registeredPlugin -> registeredPlugin.getScriptRunners().stream())
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     }

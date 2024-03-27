@@ -1,8 +1,12 @@
 package io.kestra.core.models.script;
 
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Slugify;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import java.io.FileOutputStream;
@@ -111,5 +115,78 @@ public final class ScriptService {
         );
 
         return commandsArgs;
+    }
+
+    /**
+     * Generate a map of labels ready to be used on container or cloud resource with normalization of values.
+     * See {@link #labels(RunContext, String, boolean, boolean)}
+     */
+    public static Map<String, String> labels(RunContext runContext, String prefix) {
+        return labels(runContext, prefix, true, false);
+    }
+
+    /**
+     * Generate a map of labels ready to be used on container or cloud resource.
+     * If a prefix is set, label names will be generated as 'prefix/name'.
+     * If normalizeValue is true, label values will normalize it based on the DNS Subdomain Names (RFC 1123) with a limit of 63 characters as used by Kubernetes.
+     */
+    public static Map<String, String> labels(RunContext runContext, String prefix, boolean normalizeValue, boolean lowerCase) {
+        Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
+        Map<String, String> task = (Map<String, String>) runContext.getVariables().get("task");
+        Map<String, String> execution = (Map<String, String>) runContext.getVariables().get("execution");
+        Map<String, String> taskrun = (Map<String, String>) runContext.getVariables().get("taskrun");
+
+        return ImmutableMap.of(
+            withPrefix("namespace", prefix), normalizeValue(flow.get("namespace"), normalizeValue, lowerCase),
+            withPrefix("flow-id", prefix), normalizeValue(flow.get("id"), normalizeValue, lowerCase),
+            withPrefix("task-id", prefix), normalizeValue(task.get("id"), normalizeValue, lowerCase),
+            withPrefix("execution-id", prefix), normalizeValue(execution.get("id"), normalizeValue, lowerCase),
+            withPrefix("taskrun-id", prefix), normalizeValue(taskrun.get("id"), normalizeValue, lowerCase),
+            withPrefix("taskrun-attempt", prefix), normalizeValue(String.valueOf(taskrun.get("attemptsCount")), normalizeValue, lowerCase)
+        );
+    }
+
+    private static String withPrefix(String name, String prefix) {
+        return prefix == null ? name : prefix + "/" + name;
+    }
+
+    private static String normalizeValue(String value, boolean normalizeValue, boolean lowerCase) {
+        if (!normalizeValue) {
+            return value;
+        }
+
+        if (value.length() > 63) {
+            value = value.substring(0, 63);
+        }
+
+        value = StringUtils.stripEnd(value, "-");
+        value = StringUtils.stripEnd(value, ".");
+        value = StringUtils.stripEnd(value, "_");
+
+        return lowerCase ? value.toLowerCase() : value;
+    }
+
+    /**
+     * Create a job name like {namespace}-{flowId}-{taskId}-{random} with random being 5 alphanumerical characters.
+     * The Job name will be normalized based on the DNS Subdomain Names (RFC 1123) with a limit of 63 characters as used by Kubernetes
+     */
+    public static String jobName(RunContext runContext) {
+        Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
+        Map<String, String> task = (Map<String, String>) runContext.getVariables().get("task");
+
+        String name = Slugify.of(String.join(
+            "-",
+            flow.get("namespace"),
+            flow.get("id"),
+            task.get("id")
+        ));
+        String normalized = normalizeValue(name, true, true);
+        if (normalized.length() > 58) {
+            normalized = normalized.substring(0, 57);
+        }
+
+        // we add a suffix of 5 chars, this should be enough as it's the standard k8s way
+        String suffix = RandomStringUtils.randomAlphanumeric(5).toLowerCase();
+        return normalized + "-" + suffix;
     }
 }

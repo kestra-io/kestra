@@ -453,7 +453,7 @@ public class ExecutionService {
         return Stream
             .concat(
                 execution
-                    .findChilds(taskRun)
+                    .findParents(taskRun)
                     .stream(),
                 Stream.of(taskRun)
             )

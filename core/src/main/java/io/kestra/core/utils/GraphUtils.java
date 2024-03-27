@@ -283,7 +283,7 @@ public class GraphUtils {
                 );
 
                 if (execution != null && currentTaskRun != null) {
-                    parentValues = execution.findChildsValues(currentTaskRun, true);
+                    parentValues = execution.findParentsValues(currentTaskRun, true);
                 }
 
 
@@ -386,7 +386,7 @@ public class GraphUtils {
                     );
 
                     if (execution != null && currentTaskRun != null) {
-                        parentValues = execution.findChildsValues(currentTaskRun, true);
+                        parentValues = execution.findParentsValues(currentTaskRun, true);
                     }
 
                     // detect kids

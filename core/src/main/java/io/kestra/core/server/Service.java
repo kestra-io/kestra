@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * Interface for Kestra's Service
  */
-public interface Service {
+public interface Service extends AutoCloseable {
 
     /**
      * Gets the unique identifier for this service.
@@ -59,6 +59,13 @@ public interface Service {
     @SuppressWarnings("unchecked")
     default <T extends Service> T unwrap() {
         return (T) this;
+    }
+
+    /**
+     * Closes this service.
+     */
+    @Override
+    default void close() {
     }
 
     /**

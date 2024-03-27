@@ -636,7 +636,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     /** {@inheritDoc} **/
     @PreDestroy
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (shutdown.compareAndSet(false, true)) {
             closeWorker(serverConfig.terminationGracePeriod());
         }

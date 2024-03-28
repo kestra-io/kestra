@@ -70,9 +70,10 @@ public final class JdbcServiceLivenessManager extends ServiceLivenessManager {
             );
             // Force the WORKER to transition to DISCONNECTED.
             ServiceInstance updated = updateServiceInstanceState(now, service, Service.ServiceState.DISCONNECTED, OnStateTransitionFailureCallback.NOOP);
-
-            // Trigger state transition failure callback.
-            onStateTransitionFailureCallback.execute(now, service, updated, true);
+            if (updated != null) {
+                // Trigger state transition failure callback.
+                onStateTransitionFailureCallback.execute(now, service, updated, true);
+            }
             return false;
         }
 

@@ -39,7 +39,6 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -70,9 +69,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.kestra.core.models.flows.State.Type.*;
+import static io.kestra.core.models.flows.State.Type.CREATED;
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.KILLED;
+import static io.kestra.core.models.flows.State.Type.RUNNING;
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
 import static io.kestra.core.models.flows.State.Type.WARNING;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -145,8 +145,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
     /**
      * Creates a new {@link Worker} instance.
      *
-     * @param workerId    The worker service ID.
-     * @param numThreads  The worker num threads.
+     * @param workerId       The worker service ID.
+     * @param numThreads     The worker num threads.
      * @param workerGroupKey The worker group (EE).
      */
     @Inject
@@ -164,11 +164,28 @@ public class Worker implements Service, Runnable, AutoCloseable {
         setState(ServiceState.CREATED);
     }
 
+    @VisibleForTesting
+    @Deprecated(forRemoval = true)
+    public Worker(ApplicationContext context,
+                  Integer numThreads,
+                  String workerGroupKey
+    ) {
+        this(
+            UUID.randomUUID().toString(),
+            numThreads,
+            workerGroupKey,
+            context.getBean(ApplicationEventPublisher.class),
+            context.getBean(WorkerGroupService.class),
+            context.getBean(ExecutorsUtils.class)
+        );
+        context.inject(this);
+    }
+
     @Override
     public void run() {
         setState(ServiceState.RUNNING);
         this.executionKilledQueue.receive(executionKilled -> {
-            if(executionKilled == null || !executionKilled.isLeft()) {
+            if (executionKilled == null || !executionKilled.isLeft()) {
                 return;
             }
             ExecutionKilled.State state = executionKilled.getLeft().getState();
@@ -199,8 +216,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     WorkerJob workerTask = either.getLeft();
                     if (workerTask instanceof WorkerTask task) {
                         handleTask(task);
-                    }
-                    else if (workerTask instanceof WorkerTrigger trigger) {
+                    } else if (workerTask instanceof WorkerTrigger trigger) {
                         handleTrigger(trigger);
                     }
                 });
@@ -230,8 +246,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).success(false).execution(Optional.empty()).build();
                     this.workerTriggerResultQueue.emit(workerTriggerResult);
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 // ignore the message if we cannot do anything about it
                 log.error("Unexpected exception when trying to handle a deserialization error", e);
             }
@@ -282,8 +297,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             } finally {
                 runContext.cleanup();
             }
-        }
-        else {
+        } else {
             throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
         }
     }
@@ -313,7 +327,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
         if (flowLabels != null) {
-            evaluate = evaluate.map( execution -> {
+            evaluate = evaluate.map(execution -> {
                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
                     executionLabels.addAll(flowLabels);
                     return execution.withLabels(executionLabels);
@@ -579,7 +593,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             state = workerThread.getTaskState();
         } catch (InterruptedException e) {
             logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
-            state  = workerTask.getTask().isAllowFailure() ? WARNING : FAILED;
+            state = workerTask.getTask().isAllowFailure() ? WARNING : FAILED;
         } finally {
             synchronized (this) {
                 workerThreadReferences.remove(workerThread);
@@ -633,7 +647,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
             ));
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @PreDestroy
     @Override
     public void close() {

@@ -22,6 +22,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -185,6 +186,12 @@ class WorkerTest {
         // child process is stopped and we never received 3 logs
         Thread.sleep(1000);
         assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
+    }
+
+    @Test
+    void shouldCreateInstanceGivenApplicationContext() {
+        Assertions.assertDoesNotThrow(() -> new Worker(applicationContext, 8, null));
+
     }
 
     private WorkerTask workerTask(long sleepDuration) {

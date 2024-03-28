@@ -89,8 +89,8 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
     public void start() {
         if (!isLivenessEnabled()) {
             log.warn(
-                "Server liveness is currently disabled (kestra.server.liveness.enabled=false) " +
-                "If you are running in production environment, please ensure this property is configured to 'true'. "
+                "Server liveness is disabled (kestra.server.liveness.enabled=false) " +
+                "If you are running in production environment, please ensure this property is configured to 'true'."
             );
         }
         if (scheduledExecutorService == null && !isStopped.get()) {

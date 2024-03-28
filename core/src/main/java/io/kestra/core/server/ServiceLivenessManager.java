@@ -141,13 +141,15 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
                 // Execute state update for current service (i.e., heartbeat).
                 ServiceInstance instance = updateServiceInstanceState(now, service, null, onStateTransitionFailureCallback);
-                log.trace("[Service id={}, type={}, hostname='{}'] Completed scheduled state update: '{}' ({}ms).",
-                    instance.id(),
-                    instance.type(),
-                    instance.server().hostname(),
-                    instance.state(),
-                    System.currentTimeMillis() - start
-                );
+                if (log.isTraceEnabled() && instance != null) {
+                    log.trace("[Service id={}, type={}, hostname='{}'] Completed scheduled state update: '{}' ({}ms).",
+                        instance.id(),
+                        instance.type(),
+                        instance.server().hostname(),
+                        instance.state(),
+                        System.currentTimeMillis() - start
+                    );
+                }
             });
     }
 
@@ -176,15 +178,22 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
      *
      * @param newState           the new state, or {@code null} to update using current state.
      * @param onStateChangeError the callback to invoke if the state cannot be changed.
+     * @return the updated {@link ServiceInstance}, or {@code null} if state exist for the service.
      */
     protected ServiceInstance updateServiceInstanceState(final Instant now,
                                                          final Service service,
                                                          @Nullable Service.ServiceState newState,
                                                          final OnStateTransitionFailureCallback onStateChangeError) {
+
+        LocalServiceState localServiceState = localServiceState(service);
+        if (localServiceState == null) {
+            return null; // service has been unregistered.
+        }
+
         // If a new state is passed, then pre-check that transition
         // is valid with the known local service state.
         if (newState != null) {
-            ServiceInstance localInstance = localServiceState(service).instance();
+            ServiceInstance localInstance = localServiceState.instance();
             if (!localInstance.state().isValidTransition(newState)) {
                 log.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
                     localInstance.id(),
@@ -204,15 +213,19 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         // Optional callback to be executed at the end.
         Runnable returnCallback = null;
         try {
-            LocalServiceState localState = localServiceState(service);
+            localServiceState = localServiceState(service);
+
+            if (localServiceState == null) {
+                return null; // service has been unregistered.
+            }
 
             if (newState == null) {
-                newState = localState.instance().state(); // use current state.
+                newState = localServiceState.instance().state(); // use current state.
             }
 
             // Get an updated view of the local instance.
-            ServiceInstance localInstance = localState.instance()
-                .metrics(localState.service().getMetrics())
+            final ServiceInstance localInstance = localServiceState.instance()
+                .metrics(localServiceState.service().getMetrics())
                 .server(serverInstanceFactory.newServerInstance());
 
             ServiceStateTransition.Response response = serviceRepository.mayTransitionServiceTo(localInstance, newState);
@@ -251,7 +264,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 this.lastSucceedStateUpdated = now;
             }
             // Update the local instance
-            this.serviceRegistry.register(localServiceState(service).with(remoteInstance));
+            this.serviceRegistry.register(localServiceState.with(remoteInstance));
         } catch (Exception e) {
             final ServiceInstance localInstance = localServiceState(service).instance();
             log.error("[Service id={}, type='{}', hostname='{}'] Failed to update state to {}. Error: {}",
@@ -277,7 +290,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         if (actualState.hasCompletedTermination()) {
             log.error(
                 "[Service id={}, type={}, hostname={}] Termination already completed ({}). " +
-                 "This error may occur if the service has already been evicted by Kestra due to a prior error.",
+                    "This error may occur if the service has already been evicted by Kestra due to a prior error.",
                 instance.id(),
                 instance.type(),
                 instance.server().hostname(),
@@ -305,7 +318,6 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
          *
          * @param service  the service.
          * @param instance the service instance.
-         *
          * @return an optional {@link ServiceInstance} that be used to force a state transition.
          */
         Optional<ServiceInstance> execute(Instant now,
@@ -370,7 +382,9 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         this.serviceRegistry.register(new LocalServiceState(service, instance));
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     @PreDestroy
     public void close() {
@@ -380,8 +394,6 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             final Service service = state.service();
             try {
                 service.unwrap().close();
-                // Unregister to immediately disable heartbeat for that service.
-                serviceRegistry.unregister(state);
             } catch (Exception e) {
                 log.error("[Service id={}, type={}] Unexpected error on close",
                     service.getId(),

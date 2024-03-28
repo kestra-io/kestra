@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @MicronautTest
 class InputTest {
@@ -34,7 +35,8 @@ class InputTest {
             .type(Type.STRING)
             .build();
 
-        assertThat(validInput.getName(), is(id));
+        assertThat(validInput.getId(), is(id));
+        assertThat(validInput.getName(), nullValue());
 
         String newName = "newName";
         validInput = StringInput.builder()
@@ -44,5 +46,6 @@ class InputTest {
         validInput.setName(newName);
 
         assertThat(validInput.getId(), is(newName));
+        assertThat(validInput.getName(), is(newName));
     }
 }

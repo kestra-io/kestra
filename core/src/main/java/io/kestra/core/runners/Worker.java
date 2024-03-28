@@ -10,15 +10,12 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -48,21 +45,16 @@ import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.Timeout;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -71,10 +63,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.models.flows.State.Type.*;
-import static io.kestra.core.models.flows.State.Type.FAILED;
-import static io.kestra.core.models.flows.State.Type.KILLED;
-import static io.kestra.core.models.flows.State.Type.SUCCESS;
-import static io.kestra.core.models.flows.State.Type.WARNING;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 
@@ -367,6 +355,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             );
 
                             this.publishTriggerExecution(workerTrigger, evaluate);
+                        } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
+                            RunContext runContext = this.initRunContextForTrigger(workerTrigger);
+
+                            Publisher<Execution> evaluate = streamingTrigger.evaluate(
+                                workerTrigger.getConditionContext().withRunContext(runContext),
+                                workerTrigger.getTriggerContext()
+                            );
+
+                            Flux.from(evaluate)
+                                .doOnError(throwable -> this.handleTriggerError(workerTrigger, throwable))
+                                .doOnNext(execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution)))
+                                .blockLast();
                         }
                     } catch (Exception e) {
                         this.handleTriggerError(workerTrigger, e);

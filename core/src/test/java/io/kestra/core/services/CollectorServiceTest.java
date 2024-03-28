@@ -45,6 +45,9 @@ class CollectorServiceTest {
             assertThat(metrics.getHost().getOs().getFamily(), notNullValue());
             assertThat(metrics.getConfigurations().getRepositoryType(), is("memory"));
             assertThat(metrics.getConfigurations().getQueueType(), is("memory"));
+            assertThat(metrics.getExecutions(), notNullValue());
+            assertThat(metrics.getExecutions().getDailyExecutionsCount().size(), is(0));
+            assertThat(metrics.getExecutions().getDailyTaskRunsCount().size(), is(0));
             assertThat(metrics.getInstanceUuid(), is(TestSettingRepository.instanceUuid));
         }
     }

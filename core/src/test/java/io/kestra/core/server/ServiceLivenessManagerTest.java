@@ -154,6 +154,10 @@ public class ServiceLivenessManagerTest {
             .when(repository.mayTransitionServiceTo(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
             .thenReturn(new ServiceStateTransition.Response(ABORTED));
 
+        Mockito
+            .when(repository.save(Mockito.any(ServiceInstance.class)))
+            .thenReturn(serviceInstanceFor(running));
+
         // When
         serviceLivenessManager.onSchedule(Instant.now());
 

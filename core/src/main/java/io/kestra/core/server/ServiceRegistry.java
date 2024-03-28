@@ -20,12 +20,21 @@ public final class ServiceRegistry {
     private final ConcurrentHashMap<Service.ServiceType, LocalServiceState> services = new ConcurrentHashMap<>();
 
     /**
-     * Registers or update a {@link LocalServiceState}.
+     * Registers or update the given {@link LocalServiceState}.
      *
-     * @param service The {@link LocalServiceState}.
+     * @param service The {@link LocalServiceState} to be registered.
      */
     public void register(final LocalServiceState service) {
         services.put(service.service().getType(), service);
+    }
+
+    /**
+     * Unregisters the given {@link LocalServiceState}.
+     *
+     * @param service The {@link LocalServiceState} to be un-registered.
+     */
+    public void unregister(final LocalServiceState service) {
+        services.remove(service.service().getType());
     }
 
     public boolean containsService(final Service.ServiceType type) {

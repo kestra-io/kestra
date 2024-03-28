@@ -61,6 +61,29 @@ public final class ServiceRegistry {
     }
 
     /**
+     * Waits for a given service to be in a given state if registered.
+     *
+     * @param type            The service type
+     * @param state           The expected state.
+     * @param maxWaitDuration The max wait duration.
+     * @return {@code true} if the service is in the expected state. Otherwise {@code false}.
+     */
+    public boolean waitForServiceInState(final Service.ServiceType type,
+                                         final Service.ServiceState state,
+                                         final Duration maxWaitDuration) {
+        if (!containsService(type)) return false;
+        try {
+            Await.until(() -> {
+                LocalServiceState service = get(type);
+                return service != null && service.instance().is(state);
+            }, Duration.ofMillis(100), maxWaitDuration);
+        } catch (TimeoutException e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Checks whether this registry is empty.
      *
      * @return {@code} true if no service is registered.

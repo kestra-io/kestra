@@ -23,7 +23,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id 'signing'
     id 'ru.vyarus.pom' version '2.2.2' apply false
-    id 'ru.vyarus.github-info' version '1.5.0' apply false
+    id 'ru.vyarus.github-info' version '2.0.0' apply false
 }
 
 idea {

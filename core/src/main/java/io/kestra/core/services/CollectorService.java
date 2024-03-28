@@ -86,21 +86,25 @@ public class CollectorService {
     }
 
     public Usage metrics() {
-        Usage.UsageBuilder<?, ?> builder = defaultUsage().toBuilder()
+        return metrics(true);
+    }
+
+    private Usage metrics(boolean details) {
+        Usage.UsageBuilder<?, ?> builder = defaultUsage()
+            .toBuilder()
             .uuid(IdUtils.create());
 
-        if (serverType == ServerType.EXECUTOR || serverType == ServerType.STANDALONE) {
-            builder
-                .flows(FlowUsage.of(flowRepository))
-                .executions(ExecutionUsage.of(executionRepository));
+        if (details) {
+            builder = builder
+            .flows(FlowUsage.of(flowRepository))
+            .executions(ExecutionUsage.of(executionRepository));
         }
-
         return builder.build();
     }
 
     public void report() {
         try {
-            Usage metrics = this.metrics();
+            Usage metrics = this.metrics(serverType == ServerType.EXECUTOR || serverType == ServerType.STANDALONE);
             MutableHttpRequest<Usage> post = this.request(metrics);
 
             if (log.isTraceEnabled()) {

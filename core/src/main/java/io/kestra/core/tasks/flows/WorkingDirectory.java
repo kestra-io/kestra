@@ -309,11 +309,16 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                          ZipOutputStream archive = new ZipOutputStream(bos)) {
 
-                        for (var file : matchesList) {
-                            var relativeFileName = file.toFile().getPath().substring(runContext.tempDir().toString().length() + 1);
+                        for (var path : matchesList) {
+                            File file = path.toFile();
+                            if (file.isDirectory() || !file.canRead()) {
+                                continue;
+                            }
+
+                            var relativeFileName = file.getPath().substring(runContext.tempDir().toString().length() + 1);
                             var zipEntry = new ZipEntry(relativeFileName);
                             archive.putNextEntry(zipEntry);
-                            archive.write(Files.readAllBytes(file));
+                            archive.write(Files.readAllBytes(path));
                             archive.closeEntry();
                         }
 

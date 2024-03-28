@@ -1,0 +1,6 @@
+id: mock
+namespace: io.kestra.tests
+tasks:
+  - id: t1
+    type: io.kestra.core.tasks.debugs.Echo
+    format: first {{task.id}}

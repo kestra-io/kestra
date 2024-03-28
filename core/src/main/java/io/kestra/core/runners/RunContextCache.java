@@ -8,11 +8,15 @@ import lombok.Getter;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Singleton
 public class RunContextCache {
+    // List of env variables that should be redacted from the execution run context variables to avoid information disclosure.
+    private static final List<String> REDACTED_ENV_VAR = List.of("KESTRA_PLUGINS_PATH", "KESTRA_CONFIGURATION_PATH", "KESTRA_CONFIGURATION");
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -40,7 +44,7 @@ public class RunContextCache {
         return result
             .entrySet()
             .stream()
-            .filter(e -> e.getKey().startsWith(envPrefix))
+            .filter(e -> !REDACTED_ENV_VAR.contains(e.getKey()) && e.getKey().startsWith(envPrefix))
             .map(e -> new AbstractMap.SimpleEntry<>(
                 e.getKey().substring(envPrefix.length()).toLowerCase(),
                 e.getValue()

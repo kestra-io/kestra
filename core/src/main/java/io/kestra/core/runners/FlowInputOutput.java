@@ -15,15 +15,16 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
@@ -61,82 +62,69 @@ public class FlowInputOutput {
     /**
      * Utility method for retrieving types inputs for a flow.
      *
-     * @param flow      The Flow
+     * @param flow      The Flow.
      * @param execution The Execution.
-     * @param in        The Flow's inputs.
+     * @param inputs        The Flow's inputs.
      * @return The Map of typed inputs.
      */
-    public Map<String, Object> typedInputs(
-        final Flow flow,
-        final Execution execution,
-        final Map<String, Object> in,
-        final Publisher<StreamingFileUpload> files
-    ) throws IOException {
-        return this.typedInputs(
-            flow.getInputs(),
-            execution,
-            in,
-            files
-        );
-    }
-
-    /**
-     * Utility method for retrieving types inputs.
-     *
-     * @param inputs    The Inputs.
-     * @param execution The Execution.
-     * @param in        The Flow's inputs.
-     * @return The Map of typed inputs.
-     */
-    public Map<String, Object> typedInputs(
-        final List<Input<?>> inputs,
-        final Execution execution,
-        final Map<String, Object> in,
-        final Publisher<StreamingFileUpload> files
-    ) throws IOException {
-        if (files == null) {
-            return this.typedInputs(inputs, execution, in);
-        }
-
-        Map<String, String> uploads = Flux.from(files)
-            .subscribeOn(Schedulers.boundedElastic())
-            .map(throwFunction(file -> {
-                File tempFile = File.createTempFile(file.getFilename() + "_", ".upl");
-                Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
-                Boolean bool = Mono.from(uploadPublisher).block();
-
-                if (Boolean.FALSE.equals(bool)) {
-                    throw new RuntimeException("Can't upload");
-                }
-
-                URI from = storageInterface.from(execution, file.getFilename(), tempFile);
-                //noinspection ResultOfMethodCallIgnored
-                tempFile.delete();
-
-                return new AbstractMap.SimpleEntry<>(
-                    file.getFilename(),
-                    from.toString()
-                );
-            }))
-            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
-            .block();
-
-        Map<String, Object> merged = new HashMap<>();
-        if (in != null) {
-            merged.putAll(in);
-        }
-
-        merged.putAll(uploads);
-
-        return this.typedInputs(inputs, execution, merged);
+    public Map<String, Object> typedInputs(final Flow flow,
+                                           final Execution execution,
+                                           final Publisher<CompletedPart> inputs) throws IOException {
+        return this.typedInputs(flow.getInputs(), execution, inputs);
     }
 
     /**
      * Utility method for retrieving types inputs for a flow.
      *
-     * @param flow      The inputs Flow?
+     * @param inputs      The inputs
      * @param execution The Execution.
-     * @param in        The Flow's inputs.
+     * @param in        The Execution's inputs.
+     * @return The Map of typed inputs.
+     */
+    public Map<String, Object> typedInputs(final List<Input<?>> inputs,
+                                           final Execution execution,
+                                           final Publisher<CompletedPart> in) throws IOException {
+        Map<String, Object> uploads = Flux.from(in)
+            .subscribeOn(Schedulers.boundedElastic())
+            .map(throwFunction(input -> {
+                if (input instanceof CompletedFileUpload fileUpload) {
+                    File tempFile = File.createTempFile(fileUpload.getFilename() + "_", ".upl");
+                    try (var inputStream = fileUpload.getInputStream();
+                         var outputStream = new FileOutputStream(tempFile)) {
+                        long transferredBytes = inputStream.transferTo(outputStream);
+                        if (transferredBytes == 0) {
+                            throw new RuntimeException("Can't upload file: " + fileUpload.getFilename());
+                        }
+                    }
+                    URI from = storageInterface.from(execution, fileUpload.getFilename(), tempFile);
+                    if (!tempFile.delete()) {
+                        tempFile.deleteOnExit();
+                    }
+
+                    return new AbstractMap.SimpleEntry<>(
+                        fileUpload.getFilename(),
+                        (Object) from.toString()
+                    );
+
+                } else {
+                    return new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        (Object) new String(input.getBytes())
+                    );
+                }
+            }))
+            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
+            .block();
+
+        return this.typedInputs(inputs, execution, uploads);
+    }
+
+    /**
+     * Utility method for retrieving types inputs for a flow.
+     *
+     * @param flow      The Flow.
+     * @param execution The Execution.
+     * @param in        The Execution's inputs.
      * @return The Map of typed inputs.
      */
     public Map<String, Object> typedInputs(
@@ -156,7 +144,7 @@ public class FlowInputOutput {
      *
      * @param inputs    The inputs.
      * @param execution The Execution.
-     * @param in        The Flow's inputs.
+     * @param in        The Execution's inputs.
      * @return The Map of typed inputs.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})

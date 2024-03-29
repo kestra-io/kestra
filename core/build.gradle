@@ -21,6 +21,9 @@ dependencies {
     // serializers
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: jacksonVersion
 
+    // micronaut
+    implementation "io.micronaut:micronaut-http-server-netty"
+
     // utils
     implementation 'com.github.oshi:oshi-core:6.6.0'
     implementation 'io.pebbletemplates:pebble:3.2.2'

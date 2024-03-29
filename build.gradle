@@ -114,6 +114,9 @@ allprojects {
 
             // issue with the Docker lib having a too old version for the k8s extension
             force("org.apache.commons:commons-compress:1.26.1")
+
+            // the new version brings a bugfix for large file upload
+            force("io.micronaut:micronaut-http-server-netty:4.4.9")
         }
     }
 

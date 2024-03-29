@@ -85,7 +85,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
         Flow flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
         Map<String, Object> renderedInputs = inputs != null ? runContext.render(inputs) : null;
-        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs, null);
+        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs);
         executionQueue.emit(resumed);
 
         return null;

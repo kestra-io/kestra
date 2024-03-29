@@ -25,6 +25,7 @@ import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -264,10 +265,10 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
-        return this.markAs(execution, flow, taskRunId, newState, null, null);
+        return this.markAs(execution, flow, taskRunId, newState, null);
     }
 
-    private Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs, @Nullable Publisher<StreamingFileUpload> onResumeFiles) throws Exception {
+    private Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -284,14 +285,7 @@ public class ExecutionService {
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
                 if (task instanceof Pause pauseTask && pauseTask.getOnResume() != null) {
-                    Map<String, Object> pauseOutputs = flowInputOutput.typedInputs(
-                        pauseTask.getOnResume(),
-                        execution,
-                        onResumeInputs,
-                        onResumeFiles
-                    );
-
-                    newTaskRun = newTaskRun.withOutputs(pauseTask.generateOutputs(pauseOutputs));
+                    newTaskRun = newTaskRun.withOutputs(pauseTask.generateOutputs(onResumeInputs));
                 }
 
                 if (task instanceof Pause pauseTask && pauseTask.getTasks() == null && newState == State.Type.RUNNING) {
@@ -402,7 +396,7 @@ public class ExecutionService {
      * @throws Exception if the state of the execution cannot be updated
      */
     public Execution resume(Execution execution, Flow flow, State.Type newState) throws Exception {
-        return this.resume(execution, flow, newState, null, null);
+        return this.resume(execution, flow, newState, (Map<String, Object>) null);
     }
 
     /**
@@ -410,19 +404,47 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
-     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behaviour
+     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behavior
      * @param flow      the flow of the execution
      * @param inputs    the onResume inputs
-     * @param files     the onResume files
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(final Execution execution, Flow flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable Publisher<StreamingFileUpload> files) throws Exception {
+    public Execution resume(final Execution execution, Flow flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs) throws Exception {
         var runningTaskRun = execution
             .findFirstByState(State.Type.PAUSED)
             .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
 
-        var unpausedExecution = this.markAs(execution, flow, runningTaskRun.getId(), newState, inputs, files);
+        var task = flow.findTaskByTaskId(runningTaskRun.getTaskId());
+        Map<String, Object> pauseOutputs = Collections.emptyMap();
+        if (task instanceof Pause pauseTask) {
+            pauseOutputs = flowInputOutput.typedInputs(
+                pauseTask.getOnResume(),
+                execution,
+                inputs
+            );
+        }
+
+        return resume(execution, flow, newState, pauseOutputs);
+    }
+
+    /**
+     * Resume a paused execution to a new state.
+     * The execution must be paused or this call will be a no-op.
+     *
+     * @param execution the execution to resume
+     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behavior
+     * @param flow      the flow of the execution
+     * @param inputs    the onResume inputs
+     * @return the execution in the new state.
+     * @throws Exception if the state of the execution cannot be updated
+     */
+    public Execution resume(final Execution execution, Flow flow, State.Type newState, @Nullable Map<String, Object> inputs) throws Exception {
+        var runningTaskRun = execution
+            .findFirstByState(State.Type.PAUSED)
+            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
+
+        var unpausedExecution = this.markAs(execution, flow, runningTaskRun.getId(), newState, inputs);
 
         this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
         return unpausedExecution;

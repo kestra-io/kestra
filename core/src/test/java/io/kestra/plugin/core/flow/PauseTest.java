@@ -10,19 +10,27 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.runners.TestStreamingFileUpload;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.netty.MicronautHttpData;
+import io.micronaut.http.server.netty.multipart.NettyCompletedAttribute;
+import io.micronaut.http.server.netty.multipart.NettyCompletedFileUpload;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.multipart.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -195,12 +203,17 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
 
+            CompletedPart part1 = new NettyCompletedAttribute(new MemoryAttribute("asked", "restarted"));
+            byte[] data = executionId.getBytes();
+            HttpDataFactory httpDataFactory = new MicronautHttpData.Factory(new HttpServerConfiguration.MultipartConfiguration(), null);
+            FileUpload fileUpload = httpDataFactory.createFileUpload(null, "files", "data", MediaType.TEXT_PLAIN, null, Charset.defaultCharset(), data.length);
+            fileUpload.addContent(Unpooled.copiedBuffer(data), true);
+            CompletedPart part2 = new NettyCompletedFileUpload(fileUpload);
             Execution restarted = executionService.resume(
                 execution,
                 flow,
                 State.Type.RUNNING,
-                Map.of("asked", "restarted"),
-                Flux.just(new TestStreamingFileUpload("data", executionId.getBytes(), MediaType.TEXT_PLAIN_TYPE))
+                Flux.just(part1, part2)
             );
 
             execution = runnerUtils.awaitExecution(
@@ -228,7 +241,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             MissingRequiredArgument e = assertThrows(
                 MissingRequiredArgument.class,
-                () -> executionService.resume(execution, flow, State.Type.RUNNING)
+                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty())
             );
 
             assertThat(e.getMessage(), containsString("required input value 'asked'"));

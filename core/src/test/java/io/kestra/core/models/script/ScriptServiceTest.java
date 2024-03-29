@@ -105,7 +105,7 @@ class ScriptServiceTest {
     void labels() {
         var runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
 
-        var labels = ScriptService.labels(runContext, "kestra.io");
+        var labels = ScriptService.labels(runContext, "kestra.io/");
         assertThat(labels.size(), is(6));
         assertThat(labels.get("kestra.io/namespace"), is("very.very.very.very.very.very.very.very.very.very.very.very.lon"));
         assertThat(labels.get("kestra.io/flow-id"), is("flowId"));

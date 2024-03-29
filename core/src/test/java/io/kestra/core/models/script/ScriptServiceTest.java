@@ -72,6 +72,9 @@ class ScriptServiceTest {
             assertThat(commands, not(empty()));
             assertThat(commands.get(0), is("my command with a file: " + localFileByInternalStorage.get(internalStorageUri)));
             assertThat(Path.of(localFileByInternalStorage.get(internalStorageUri)).toFile().exists(), is(true));
+
+            commands = ScriptService.uploadInputFiles(runContext, List.of("my command with a file: " + internalStorageUri), localFileByInternalStorage::put, true);
+            assertThat(commands.get(0), is("my command with a file: " + localFileByInternalStorage.get(internalStorageUri).substring(1)));
         } finally {
             localFileByInternalStorage.forEach((k, v) -> Path.of(v).toFile().delete());
             path.toFile().delete();

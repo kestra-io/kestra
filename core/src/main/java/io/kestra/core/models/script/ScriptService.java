@@ -69,9 +69,13 @@ public final class ScriptService {
     }
 
     public static List<String> uploadInputFiles(RunContext runContext, List<String> commands, BiConsumer<String, String> internalStorageToLocalFileConsumer) throws IOException {
+        return uploadInputFiles(runContext, commands, internalStorageToLocalFileConsumer, false);
+    }
+
+    public static List<String> uploadInputFiles(RunContext runContext, List<String> commands, BiConsumer<String, String> internalStorageToLocalFileConsumer, boolean replaceWithRelativePath) throws IOException {
         return commands
             .stream()
-            .map(throwFunction(s -> replaceInternalStorage(runContext, s, internalStorageToLocalFileConsumer)))
+            .map(throwFunction(s -> replaceInternalStorage(runContext, s, internalStorageToLocalFileConsumer, replaceWithRelativePath)))
             .collect(Collectors.toList());
 
     }

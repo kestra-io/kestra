@@ -147,7 +147,7 @@ public final class ScriptService {
     }
 
     private static String withPrefix(String name, String prefix) {
-        return prefix == null ? name : prefix + "/" + name;
+        return prefix == null ? name : prefix + name;
     }
 
     private static String normalizeValue(String value, boolean normalizeValue, boolean lowerCase) {

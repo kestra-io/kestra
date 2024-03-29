@@ -21,17 +21,18 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Value;
-import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.server.netty.multipart.NettyCompletedAttribute;
+import io.micronaut.http.server.netty.multipart.NettyCompletedFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
@@ -76,41 +77,40 @@ public class RunnerUtils {
     @Value("${kestra.encryption.secret-key}")
     private Optional<String> secretKey;
 
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) throws IOException {
-        if (files == null) {
-            return this.typedInputs(flow, execution, in);
-        }
-
-        Map<String, String> uploads = Flux.from(files)
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Publisher<CompletedPart> inputs) throws IOException {
+        Map<String, Object> uploads = Flux.from(inputs)
             .subscribeOn(Schedulers.boundedElastic())
-            .map(throwFunction(file -> {
-                File tempFile = File.createTempFile(file.getFilename() + "_", ".upl");
-                Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
-                Boolean bool = Mono.from(uploadPublisher).block();
+            .map(throwFunction(input -> {
+                if (input instanceof CompletedFileUpload fileUpload) {
+                    File tempFile = File.createTempFile(fileUpload.getFilename() + "_", ".upl");
+                    try (var inputStream = fileUpload.getInputStream();
+                        var outputStream = new FileOutputStream(tempFile)) {
+                        long transferredBytes = inputStream.transferTo(outputStream);
+                        // FIXME it didn't work for files more than 1GB due to https://github.com/micronaut-projects/micronaut-core/issues/10666
+                        if (transferredBytes == 0) {
+                            throw new RuntimeException("Can't upload file: " + fileUpload.getFilename());
+                        }
+                    }
+                    URI from = storageInterface.from(execution, fileUpload.getFilename(), tempFile);
+                    //noinspection ResultOfMethodCallIgnored
+                    tempFile.delete();
 
-                if (!bool) {
-                    throw new RuntimeException("Can't upload");
+                    return new AbstractMap.SimpleEntry<>(
+                        fileUpload.getFilename(),
+                        (Object) from.toString()
+                    );
+
+                } else {
+                    return new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        (Object) new String(input.getBytes())
+                    );
                 }
-
-                URI from = storageInterface.from(execution, file.getFilename(), tempFile);
-                //noinspection ResultOfMethodCallIgnored
-                tempFile.delete();
-
-                return new AbstractMap.SimpleEntry<>(
-                    file.getFilename(),
-                    from.toString()
-                );
             }))
             .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
             .block();
 
-        Map<String, Object> merged = new HashMap<>();
-        if (in != null) {
-            merged.putAll(in);
-        }
-        merged.putAll(uploads);
-
-        return this.typedInputs(flow, execution, merged);
+        return this.typedInputs(flow, execution, uploads);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

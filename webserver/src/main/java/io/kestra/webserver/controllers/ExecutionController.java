@@ -60,6 +60,7 @@ import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
@@ -511,14 +512,13 @@ public class ExecutionController {
     @Deprecated
     public Execution trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs") HttpRequest<?> inputs,
+        @Parameter(description = "The flow id") @Nullable @PathVariable String id,
+        @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
-        return this.create(namespace, id, inputs, labels, files, wait, revision);
+        return this.create(namespace, id, inputs, labels, wait, revision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -528,9 +528,8 @@ public class ExecutionController {
     public Execution create(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs") HttpRequest<?> inputs, // FIXME we had to inject the HttpRequest here due to https://github.com/micronaut-projects/micronaut-core/issues/9694
+        @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
@@ -548,10 +547,9 @@ public class ExecutionController {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
         Execution current = runnerUtils.newExecution(
             found,
-            throwBiFunction((flow, execution) -> runnerUtils.typedInputs(flow, execution, inputMap, files)),
+            throwBiFunction((flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs)),
             parseLabels(labels)
         );
 

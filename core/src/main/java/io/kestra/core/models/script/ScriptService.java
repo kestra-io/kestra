@@ -167,15 +167,26 @@ public final class ScriptService {
             return value;
         }
 
-        if (value.length() > 63) {
-            value = value.substring(0, 63);
+        return lowerCase ? normalize(value).toLowerCase() : normalize(value);
+    }
+
+    /**
+     * Normalize a String based on the DNS Subdomain Names (RFC 1123) with a limit of 63 characters as used by Kubernetes.
+     */
+    public static String normalize(String string) {
+        if (string == null) {
+            return null;
         }
 
-        value = StringUtils.stripEnd(value, "-");
-        value = StringUtils.stripEnd(value, ".");
-        value = StringUtils.stripEnd(value, "_");
+        if (string.length() > 63) {
+            string = string.substring(0, 63);
+        }
 
-        return lowerCase ? value.toLowerCase() : value;
+        string = StringUtils.stripEnd(string, "-");
+        string = StringUtils.stripEnd(string, ".");
+        string = StringUtils.stripEnd(string, "_");
+
+        return string;
     }
 
     /**

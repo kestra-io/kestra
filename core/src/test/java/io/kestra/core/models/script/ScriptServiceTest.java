@@ -140,6 +140,13 @@ class ScriptServiceTest {
         assertThat(jobName.length(), is(63));
     }
 
+    @Test
+    void normalize() {
+        assertThat(ScriptService.normalize(null), nullValue());
+        assertThat(ScriptService.normalize("a-normal-string"), is("a-normal-string"));
+        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"), is("very.very.very.very.very.very.very.very.very.very.very.very.lon"));
+    }
+
     private RunContext runContext(RunContextFactory runContextFactory, String namespace) {
         // create a fake flow and execution
         Task task = new Task() {

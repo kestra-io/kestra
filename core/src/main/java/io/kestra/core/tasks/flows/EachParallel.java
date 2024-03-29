@@ -81,6 +81,7 @@ import java.util.Optional;
         ),
         @Example(
             title = "Handling each value in parallel but only 1 child task for each value at the same time.",
+            full = true,
             code = {
                 "id: each-parallel",
                 "namespace: io.kestra.tests",

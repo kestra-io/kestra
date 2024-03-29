@@ -35,10 +35,9 @@
                 <el-form-item>
                     <search-field />
                 </el-form-item>
-                <el-form-item>
+                <el-form-item v-if="$route.name !== 'flows/update'">
                     <namespace-select
                         data-type="flow"
-                        v-if="$route.name !== 'flows/update'"
                         :value="$route.query.namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />

@@ -47,6 +47,9 @@ class ScriptServiceTest {
             command = ScriptService.replaceInternalStorage(runContext, "my command with a file: " + internalStorageUri, (ignored, file) -> localFile.set(file));
             assertThat(command, is("my command with a file: " + localFile.get()));
             assertThat(Path.of(localFile.get()).toFile().exists(), is(true));
+
+            command = ScriptService.replaceInternalStorage(runContext, "my command with a file: " + internalStorageUri, (ignored, file) -> localFile.set(file), true);
+            assertThat(command, is("my command with a file: " + localFile.get().substring(1)));
         } finally {
             Path.of(localFile.get()).toFile().delete();
             path.toFile().delete();

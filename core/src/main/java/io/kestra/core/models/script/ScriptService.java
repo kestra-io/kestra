@@ -41,6 +41,10 @@ public final class ScriptService {
     }
 
     public static String replaceInternalStorage(RunContext runContext, @Nullable String command, BiConsumer<String, String> internalStorageToLocalFileConsumer) throws IOException {
+        return ScriptService.replaceInternalStorage(runContext, command, internalStorageToLocalFileConsumer, false);
+    }
+
+    public static String replaceInternalStorage(RunContext runContext, @Nullable String command, BiConsumer<String, String> internalStorageToLocalFileConsumer, boolean replaceWithRelativePath) throws IOException {
         if (command == null) {
             return "";
         }
@@ -52,7 +56,11 @@ public final class ScriptService {
 
                 internalStorageToLocalFileConsumer.accept(matchResult.group(), localFile);
 
-                return localFile;
+                if (!replaceWithRelativePath) {
+                    return localFile;
+                }
+
+                return localFile.startsWith("/") ? localFile.substring(1) : localFile;
             }));
     }
 

@@ -145,7 +145,7 @@ allprojects {
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.15.1'
+        api group: 'commons-io', name: 'commons-io', version: '2.16.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"
     }

@@ -137,7 +137,7 @@ export default {
             })
         },
         bulkDeleteExecution({_commit}, options) {
-            return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId})
+            return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId, params: {includeNonTerminated: options.includeNonTerminated}})
         },
         queryDeleteExecution({_commit}, options) {
             return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})

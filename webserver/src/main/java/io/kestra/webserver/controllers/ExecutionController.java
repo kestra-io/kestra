@@ -303,14 +303,15 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Deleted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> deleteByIds(
-        @Parameter(description = "The execution id") @Body List<String> executionsId
+        @Parameter(description = "The execution id") @Body List<String> executionsId,
+        @Parameter(description = "Specificies whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") boolean includeNonTerminated
     ) {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent()) {
+            if (execution.isPresent() && (execution.get().getState().isTerminated() || includeNonTerminated)) {
                 executions.add(execution.get());
             } else {
                 invalids.add(ManualConstraintViolation.of(
@@ -354,7 +355,8 @@ public class ExecutionController {
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "Specificies whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") boolean includeNonTerminated
     ) {
         Integer count = executionRepository
             .find(
@@ -369,16 +371,17 @@ public class ExecutionController {
                 triggerExecutionId,
                 childFilter
             )
+            .filter(it -> it.getState().isTerminated() || includeNonTerminated)
             .map(e -> {
                 executionRepository.delete(e);
                 return 1;
             })
             .reduce(Integer::sum)
-            .block();
+            .blockOptional()
+            .orElse(0);
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Get

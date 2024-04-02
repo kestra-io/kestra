@@ -416,6 +416,8 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
+    import {ElMessageBox, ElSwitch, ElFormItem, ElAlert} from "element-plus";
+    import {h, ref} from "vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -546,6 +548,7 @@
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
+                actionOptions: {},
             };
         },
         created() {
@@ -687,31 +690,37 @@
             genericConfirmAction(toast, queryAction, byIdAction, success) {
                 this.$toast().confirm(
                     this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(queryAction, this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t(success, {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch(byIdAction, {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t(success, {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                    () => this.genericConfirmCallback(queryAction, byIdAction, success),
+                    () => {}
+                );
+            },
+            genericConfirmCallback(queryAction, byIdAction, success) {
+                if (this.queryBulkAction) {
+                    const query = this.loadQuery({
+                        sort: this.$route.query.sort || "state.startDate:desc",
+                        state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                    }, false);
+                    const options = {...query, ...this.actionOptions};
+                    return this.$store
+                        .dispatch(queryAction, options)
+                        .then(r => {
+                            this.$toast().success(this.$t(success, {executionCount: r.data.count}));
+                            this.loadData();
+                        })
+                } else {
+                    const selection = {executionsId: this.selection};
+                    const options = {...selection, ...this.actionOptions};
+                    return this.$store
+                        .dispatch(byIdAction, options)
+                        .then(r => {
+                            this.$toast().success(this.$t(success, {executionCount: r.data.count}));
+                            this.loadData();
+                        }).catch(e => {
+                            this.$toast().error(e?.invalids.map(exec => {
+                                return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                            }), this.$t(e.message))
+                        })
+                }
             },
             resumeExecutions() {
                 this.genericConfirmAction(
@@ -738,12 +747,43 @@
                 );
             },
             deleteExecutions() {
-                this.genericConfirmAction(
-                    "bulk delete",
-                    "execution/queryDeleteExecution",
-                    "execution/bulkDeleteExecution",
-                    "executions deleted"
-                );
+
+                const includeNonTerminated = ref(false);
+                const message = () => h("div", null, [
+                    h(
+                        "p",
+                        {innerHTML: this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length})}
+                    ),
+                    h(ElFormItem, {
+                        class: "mt-3",
+                        label: this.$t("execution-include-non-terminated")
+                    }, [
+                        h(ElSwitch, {
+                            modelValue: includeNonTerminated.value,
+                            "onUpdate:modelValue": (val) => {
+                                includeNonTerminated.value = val
+                            },
+                        }),
+                    ]),
+                    h(ElAlert, {
+                        title: this.$t("execution-warn-deleting-still-running"),
+                        type: "warning",
+                        showIcon: true,
+                        closable: false
+                    })
+                ]);
+                ElMessageBox.confirm(message, this.$t("confirmation"), {
+                    type: "confirm",
+                    inputType: "checkbox",
+                    inputValue: "false",
+                }).then(() => {
+                    this.actionOptions.includeNonTerminated = includeNonTerminated.value;
+                    this.genericConfirmCallback(
+                        "execution/queryDeleteExecution",
+                        "execution/bulkDeleteExecution",
+                        "executions deleted"
+                    )
+                });
             },
             killExecutions() {
                 this.genericConfirmAction(

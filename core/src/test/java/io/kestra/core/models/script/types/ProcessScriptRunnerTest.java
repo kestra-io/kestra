@@ -4,7 +4,6 @@ import io.kestra.core.models.script.AbstractScriptRunnerTest;
 import io.kestra.core.models.script.ScriptRunner;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 
-@MicronautTest
 class ProcessScriptRunnerTest extends AbstractScriptRunnerTest {
 
     @Override

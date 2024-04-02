@@ -272,4 +272,21 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         assertThat(runContext.render("{{inputs.test}}"), is("test"));
     }
+
+    @Test
+    void renderMap() throws IllegalVariableEvaluationException {
+        RunContext runContext = runContextFactory.of(Map.of(
+            "key", "default",
+            "value", "default"
+        ));
+
+        Map<String, String> rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"));
+        assertThat(rendered.get("default"), is("default"));
+
+        rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"), Map.of(
+            "key", "key",
+            "value", "value"
+        ));
+        assertThat(rendered.get("key"), is("value"));
+    }
 }

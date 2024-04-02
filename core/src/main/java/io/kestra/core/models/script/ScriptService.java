@@ -33,6 +33,16 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public final class ScriptService {
     private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[-a-zA-Z0-9%._\\+~#=/]*)");
 
+    // These are the three common additional variables script runners must provide for variable rendering
+    public static final String VAR_WORKING_DIR = "workingDir";
+    public static final String VAR_OUTPUT_DIR = "outputDir";
+    public static final String VAR_BUCKET_PAT = "bucketPath";
+
+    // These are the three common environment variables script runners must add to the process/container that runs the script
+    public static final String ENV_WORKING_DIR = "WORKING_DIR";
+    public static final String ENV_OUTPUT_DIR = "OUTPUT_DIR";
+    public static final String ENV_BUCKET_PAT = "BUCKET_PATH";
+
     private ScriptService() {
     }
 

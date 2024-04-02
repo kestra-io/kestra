@@ -3,12 +3,14 @@ package io.kestra.core.runners;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
+import jakarta.inject.Singleton;
 import lombok.Setter;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+@Singleton
 public class DefaultFlowExecutor implements FlowExecutorInterface {
     private final FlowRepositoryInterface flowRepositoryInterface;
     @Setter

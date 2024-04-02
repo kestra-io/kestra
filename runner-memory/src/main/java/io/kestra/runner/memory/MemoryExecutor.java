@@ -111,8 +111,6 @@ public class MemoryExecutor implements ExecutorInterface {
         flowListeners.run();
         flowListeners.listen(flows -> this.allFlows = flows);
 
-        applicationContext.registerSingleton(new DefaultFlowExecutor(flowListeners, this.flowRepository));
-
         this.executionQueue.receive(MemoryExecutor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
         this.killQueue.receive(MemoryExecutor.class, this::killQueue);

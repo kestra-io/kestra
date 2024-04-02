@@ -31,5 +31,5 @@ public abstract class ScriptRunner {
      * For remote script runner (like Kubernetes or in a cloud provider), <code>filesToUpload</code> must be used to upload input and namespace files to the runner,
      * and <code>filesToDownload</code> must be used to download output files from the runner.
      */
-    public abstract RunnerResult run(RunContext runContext, ScriptCommands commands, List<String> filesToUpload, List<String> filesToDownload) throws Exception;
+    public abstract RunnerResult run(RunContext runContext, ScriptCommands scriptCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception;
 }

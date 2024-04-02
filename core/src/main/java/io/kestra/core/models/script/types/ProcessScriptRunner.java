@@ -35,28 +35,31 @@ import java.util.Map;
 public class ProcessScriptRunner extends ScriptRunner {
 
     @Override
-    public RunnerResult run(RunContext runContext, ScriptCommands commands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {
+    public RunnerResult run(RunContext runContext, ScriptCommands scriptCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {
         Logger logger = runContext.logger();
-        Path workingDirectory = commands.getWorkingDirectory();
-        AbstractLogConsumer defaultLogConsumer = commands.getLogConsumer();
+        AbstractLogConsumer defaultLogConsumer = scriptCommands.getLogConsumer();
+
+        Map<String, Object> additionalVars = scriptCommands.getAdditionalVars();
+        additionalVars.put(ScriptService.VAR_WORKING_DIR, scriptCommands.getWorkingDirectory().toString());
+        additionalVars.put(ScriptService.VAR_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString());
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
-        if (commands.getEnv() != null && !commands.getEnv().isEmpty()) {
-            Map<String, String> environment = processBuilder.environment();
-            environment.putAll(commands.getEnv());
+        Map<String, String> environment = processBuilder.environment();
+        if (scriptCommands.getEnv() != null && !scriptCommands.getEnv().isEmpty()) {
+            environment.putAll(runContext.renderMap(scriptCommands.getEnv(), additionalVars));
         }
+        environment.put(ScriptService.ENV_WORKING_DIR, scriptCommands.getWorkingDirectory().toString());
+        environment.put(ScriptService.ENV_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString());
 
-        if (workingDirectory != null) {
-            processBuilder.directory(workingDirectory.toFile());
-        }
+        processBuilder.directory(scriptCommands.getWorkingDirectory().toFile());
 
-        List<String> command = ScriptService.uploadInputFiles(runContext, runContext.render(commands.getCommands(), commands.getAdditionalVars()));
+        List<String> command = ScriptService.uploadInputFiles(runContext, runContext.render(scriptCommands.getCommands(), additionalVars));
         processBuilder.command(command);
 
         Process process = processBuilder.start();
         long pid = process.pid();
-        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", commands.getCommands()));
+        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", scriptCommands.getCommands()));
 
         LogThread stdOut = new LogThread(process.getInputStream(), defaultLogConsumer, false);
         LogThread stdErr = new LogThread(process.getErrorStream(), defaultLogConsumer, true);

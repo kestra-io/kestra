@@ -30,14 +30,8 @@ public abstract class AbstractScriptRunnerTest {
     @Test
     protected void run() throws Exception {
         var runContext = runContext(this.runContextFactory);
-        var commands = Mockito.mock(ScriptCommands.class);
+        var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
-        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
-        Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
-            @Override
-            public void accept(String s, Boolean aBoolean) {
-            }
-        });
 
         var scriptRunner = scriptRunner();
         var result = scriptRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList());
@@ -48,14 +42,8 @@ public abstract class AbstractScriptRunnerTest {
     @Test
     protected void fail() {
         var runContext = runContext(this.runContextFactory);
-        var commands = Mockito.mock(ScriptCommands.class);
+        var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1")));
-        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
-        Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
-            @Override
-            public void accept(String s, Boolean aBoolean) {
-            }
-        });
 
         var scriptRunner = scriptRunner();
         assertThrows(ScriptException.class, () -> scriptRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList()));
@@ -64,23 +52,10 @@ public abstract class AbstractScriptRunnerTest {
     @Test
     protected void inputAndOutputFiles() throws Exception {
         var runContext = runContext(this.runContextFactory);
-        var workingDirectory = runContext.tempDir();
-        var outputDirectory = workingDirectory.resolve(IdUtils.create());
-        outputDirectory.toFile().mkdirs();
-        Map<String, Object> additionalVars = new HashMap<>(Map.of(
-            "workingDir", workingDirectory.toAbsolutePath().toString(),
-            "outputDir", outputDirectory.toString()
-        ));
-        var commands = Mockito.mock(ScriptCommands.class);
+        var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cp {{workingDir}}/data.txt {{workingDir}}/out.txt")));
-        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
-        Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
-            @Override
-            public void accept(String s, Boolean aBoolean) {
-            }
-        });
-        Mockito.when(commands.getAdditionalVars()).thenReturn(additionalVars);
-        workingDirectory.resolve("data.txt").toFile().createNewFile();
+
+        commands.getWorkingDirectory().resolve("data.txt").toFile().createNewFile();
 
         var scriptRunner = scriptRunner();
         var result = scriptRunner.run(runContext, commands, List.of("data.txt"), List.of("out.txt"));
@@ -118,5 +93,24 @@ public abstract class AbstractScriptRunnerTest {
 
     protected String defaultImage() {
         return "ubuntu";
+    }
+
+    protected ScriptCommands initScriptCommands(RunContext runContext) {
+        var commands = Mockito.mock(ScriptCommands.class);
+        Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
+        Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
+            @Override
+            public void accept(String s, Boolean aBoolean) {
+            }
+        });
+
+        var workingDirectory = runContext.tempDir();
+        Mockito.when(commands.getWorkingDirectory()).thenReturn(workingDirectory);
+
+        var outputDirectory = workingDirectory.resolve(IdUtils.create());
+        outputDirectory.toFile().mkdirs();
+        Mockito.when(commands.getOutputDirectory()).thenReturn(outputDirectory);
+
+        return commands;
     }
 }

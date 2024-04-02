@@ -594,8 +594,21 @@ public class RunContext {
             .entrySet()
             .stream()
             .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), variables),
-                this.render(entry.getValue(), variables)
+                this.render(entry.getKey(), this.variables),
+                this.render(entry.getValue(), this.variables)
+            )))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        Map<String, Object> allVariables = mergeWithNullableValues(this.variables, variables);
+        return inline
+            .entrySet()
+            .stream()
+            .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
+                this.render(entry.getKey(), allVariables),
+                this.render(entry.getValue(), allVariables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

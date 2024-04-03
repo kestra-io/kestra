@@ -1,24 +1,14 @@
-## Introduction
+Kestra allows you to automate complex workflows using a simple declarative interface.
 
-Welcome to Kestra!
+## Flow properties
 
-Kestra is a universal orchestration platform that allows you to automate complex workflows using a simple declarative interface.
+Flows define `tasks`, the execution order of tasks, as well as flow `inputs`, `variables`, `labels`, `triggers`, and more.
 
-This guide lists the core properties that you can use to define your flows.
+Flows are defined in YAML to keep the code portable and language-agnostic.
 
-# Flow properties
+A flow **must** have an identifier (`id`), a `namespace`, and a list of `tasks`. All other properties are optional, incl. a `description`, `labels`, `inputs`, `outputs`, `variables`, `triggers`, and `taskDefaults`.
 
-This section describes the properties that you can use in your flows.
-
-> Flows define tasks, the execution order of tasks, as well as flow inputs, variables, labels, and triggers.
-
-Flows are defined in a declarative YAML syntax to keep the orchestration code portable and language-agnostic.
-
-A flow **must** have an identifier (id), a namespace, and a list of tasks. Those are the only required properties. All other properties are optional.
-
-The **optional properties** include a description, labels, inputs, variables, triggers, and task defaults.
-
-The table below describes each of these properties in detail.
+The table below describes all these properties in detail.
 
 | Field                   | Description                                                                                                                                                                                                                                                                                                                                                                                                                               |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -39,6 +29,27 @@ The table below describes each of these properties in detail.
 | `taskDefaults.[].values.xxx`| The task property that you want to be set as default.                                                                                                                                                                                                                                                                                                                                                                                     |
 | `disabled`              | Set it to `true` to temporarily disable any new executions of the flow. This is useful when you want to stop a flow from running (even manually) without deleting it. Once you set this property to true, nobody will be able to trigger any execution of that flow, whether from the UI or via an API call, until the flow is reenabled by setting this property back to `false` (default behavior) or by simply deleting this property. |
 
+## Task documentation
+
+Each flow consist of **tasks**.
+
+To inspect the properties of a **specific task**, click anywhere in that task code. The task documentation will load in this view.
+
+Note that you need an active Internet connection to view that documentation, as it's served via API.
+
+## Task properties
+
+All tasks have the following core properties:
+
+* `id` - a unique identifier for the task
+* `type` - a full Java class name that represents the type of task
+* `description` - your custom [documentation](https://kestra.io/docs/workflow-components/descriptions) of what the task does
+* `retry` - how often should the task be retried in case of a failure, and the [type of retry strategy](https://kestra.io/docs/workflow-components/retries)
+* `timeout` - the [maximum time allowed](https://kestra.io/docs/workflow-components/timeout) for the task to complete
+* `disabled` - a boolean flag indicating whether the task is [disabled or not](https://kestra.io/docs/workflow-components/disabled); if set to `true`, the task will be skipped during the execution
+* `workerGroup` - the [group of workers](https://kestra.io/docs/enterprise/worker-group) that are eligible to execute the task; you can specify a `workerGroup.key`
+* `allowFailure` - a boolean flag allowing to continue the execution even if this task fails
+* `logLevel` - the level of log detail to be stored.
 
 ---
 
@@ -59,7 +70,7 @@ labels:
   country: US
 
 inputs:
-  - name: user
+  - id: user
     type: STRING
     required: false
     defaults: Rick Astley
@@ -67,15 +78,15 @@ inputs:
 
 variables:
   first: 1
-  second: "{{vars.first}} > 2"
+  second: "{{ vars.first }} < 2"
 
 tasks:
   - id: hello
     type: io.kestra.core.tasks.log.Log
     description: this is a *task* documentation
     message: |
-      The variables we used are {{vars.first}} and {{vars.second}}.
-      The input is {{inputs.user}} and the task was started at {{taskrun.startDate}} from flow {{flow.id}}.
+      The variables we used are {{ vars.first }} and {{ render(vars.second) }}.
+      The input is {{ inputs.user }} and the task was started at {{ taskrun.startDate }} from flow {{ flow.id }}.
 
 taskDefaults:
   - type: io.kestra.core.tasks.log.Log

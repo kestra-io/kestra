@@ -20,6 +20,7 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
@@ -343,6 +344,41 @@ public class ExecutionService {
         return unpausedExecution;
     }
 
+    /**
+     * Resume a paused execution to a new state.
+     * Providing the flow, we can check if the PauseTask has subtasks,
+     * if not, we can directly set the task to success.
+     * The execution must be paused or this call will be a no-op.
+     *
+     * @param execution the execution to resume
+     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behaviour
+     * @param flow      the flow of the execution
+     * @return the execution in the new state.
+     * @throws InternalException if the state of the execution cannot be updated
+     */
+    public Execution resume(Execution execution, State.Type newState, Flow flow) throws InternalException {
+        var runningTaskRun = execution
+            .findFirstByState(State.Type.PAUSED)
+            .map(taskRun -> {
+                    try {
+                        Task task = flow.findTaskByTaskId(taskRun.getTaskId());
+                        if (task instanceof Pause pauseTask && pauseTask.getTasks() == null && newState == State.Type.RUNNING) {
+                            return taskRun.withState(State.Type.SUCCESS);
+                        }
+                        return taskRun.withState(newState);
+                    } catch (InternalException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            )
+            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
+
+        var unpausedExecution = execution
+            .withTaskRun(runningTaskRun)
+            .withState(newState);
+        this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
+        return unpausedExecution;
+    }
     /**
      * Lookup for all executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.

@@ -270,12 +270,12 @@
                     return true
                 }
                 if (this.flow.inputs) {
-                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null)
+                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
                     if (requiredInputs.length > 0) {
                         if (!this.backfill.inputs) {
                             return true
                         }
-                        const fillInputs = Object.keys(this.backfill.inputs)
+                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i])
                         if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                             return true
                         }

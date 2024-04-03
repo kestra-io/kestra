@@ -1,5 +1,6 @@
 package io.kestra.core.models.script;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +32,10 @@ class ScriptServiceTest {
     @Test
     void replaceInternalStorage() throws IOException {
         var runContext = runContextFactory.of();
-        var command  = ScriptService.replaceInternalStorage(runContext, null);
+        var command  = ScriptService.replaceInternalStorage(runContext, null, (ignored, file) -> {}, false);
         assertThat(command, is(""));
 
-        command = ScriptService.replaceInternalStorage(runContext, "my command");
+        command = ScriptService.replaceInternalStorage(runContext, "my command", (ignored, file) -> {}, false);
         assertThat(command, is("my command"));
 
         Path path = Path.of("/tmp/unittest/file.txt");
@@ -44,12 +46,12 @@ class ScriptServiceTest {
         String internalStorageUri = "kestra://some/file.txt";
         AtomicReference<String> localFile = new AtomicReference<>();
         try {
-            command = ScriptService.replaceInternalStorage(runContext, "my command with a file: " + internalStorageUri, (ignored, file) -> localFile.set(file));
-            assertThat(command, is("my command with a file: " + localFile.get()));
+            command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, (ignored, file) -> localFile.set(file), false);
+            assertThat(command, is("my command with an internal storage file: " + localFile.get()));
             assertThat(Path.of(localFile.get()).toFile().exists(), is(true));
 
-            command = ScriptService.replaceInternalStorage(runContext, "my command with a file: " + internalStorageUri, (ignored, file) -> localFile.set(file), true);
-            assertThat(command, is("my command with a file: " + localFile.get().substring(1)));
+            command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, (ignored, file) -> localFile.set(file), true);
+            assertThat(command, is("my command with an internal storage file: " + localFile.get().substring(1)));
         } finally {
             Path.of(localFile.get()).toFile().delete();
             path.toFile().delete();
@@ -68,13 +70,26 @@ class ScriptServiceTest {
         Map<String, String> localFileByInternalStorage = new HashMap<>();
         String internalStorageUri = "kestra://some/file.txt";
         try {
-            var commands = ScriptService.uploadInputFiles(runContext, List.of("my command with a file: " + internalStorageUri), localFileByInternalStorage::put);
+            String wdir = "/my/wd";
+            var commands = ScriptService.replaceInternalStorage(
+                runContext,
+                Map.of("workingDir", wdir),
+                List.of(
+                    "my command with an internal storage file: " + internalStorageUri,
+                    "my command with some additional var usage: {{ workingDir }}"
+                ),
+                localFileByInternalStorage::put,
+                false
+            );
             assertThat(commands, not(empty()));
-            assertThat(commands.get(0), is("my command with a file: " + localFileByInternalStorage.get(internalStorageUri)));
+            assertThat(commands.get(0), is("my command with an internal storage file: " + localFileByInternalStorage.get(internalStorageUri)));
             assertThat(Path.of(localFileByInternalStorage.get(internalStorageUri)).toFile().exists(), is(true));
+            assertThat(commands.get(1), is("my command with some additional var usage: " + wdir));
 
-            commands = ScriptService.uploadInputFiles(runContext, List.of("my command with a file: " + internalStorageUri), localFileByInternalStorage::put, true);
-            assertThat(commands.get(0), is("my command with a file: " + localFileByInternalStorage.get(internalStorageUri).substring(1)));
+            commands = ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), List.of("my command with an internal storage file: " + internalStorageUri), localFileByInternalStorage::put, true);
+            assertThat(commands.get(0), is("my command with an internal storage file: " + localFileByInternalStorage.get(internalStorageUri).substring(1)));
+        } catch (IllegalVariableEvaluationException e) {
+            throw new RuntimeException(e);
         } finally {
             localFileByInternalStorage.forEach((k, v) -> Path.of(v).toFile().delete());
             path.toFile().delete();

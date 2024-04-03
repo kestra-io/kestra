@@ -82,15 +82,19 @@ abstract public class PluginUtilsService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
+        return PluginUtilsService.transformInputFiles(runContext, Collections.emptyMap(), inputFiles);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
             return (Map<String, String>) inputFiles;
         } else if (inputFiles instanceof String) {
             final TypeReference<Map<String, String>> reference = new TypeReference<>() {};
 
             return JacksonMapper.ofJson(false).readValue(
-                runContext.render((String) inputFiles),
+                runContext.render((String) inputFiles, additionalVars),
                 reference
             );
         } else {

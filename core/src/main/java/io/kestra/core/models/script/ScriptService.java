@@ -1,6 +1,7 @@
 package io.kestra.core.models.script;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Slugify;
@@ -15,10 +16,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,15 +44,12 @@ public final class ScriptService {
     private ScriptService() {
     }
 
-    public static String replaceInternalStorage(RunContext runContext, @Nullable String command) throws IOException {
-        return ScriptService.replaceInternalStorage(runContext, command, (s, s2) -> {});
-    }
-
-    public static String replaceInternalStorage(RunContext runContext, @Nullable String command, BiConsumer<String, String> internalStorageToLocalFileConsumer) throws IOException {
-        return ScriptService.replaceInternalStorage(runContext, command, internalStorageToLocalFileConsumer, false);
-    }
-
-    public static String replaceInternalStorage(RunContext runContext, @Nullable String command, BiConsumer<String, String> internalStorageToLocalFileConsumer, boolean replaceWithRelativePath) throws IOException {
+    public static String replaceInternalStorage(
+        RunContext runContext,
+        @Nullable String command,
+        BiConsumer<String, String> internalStorageToLocalFileConsumer,
+        boolean replaceWithRelativePath
+    ) throws IOException {
         if (command == null) {
             return "";
         }
@@ -74,20 +69,36 @@ public final class ScriptService {
             }));
     }
 
-    public static List<String> uploadInputFiles(RunContext runContext, List<String> commands) throws IOException {
-        return ScriptService.uploadInputFiles(runContext, commands, (s, s2) -> {});
+    public static String replaceInternalStorage(
+        RunContext runContext,
+        Map<String, Object> additionalVars,
+        String command,
+        BiConsumer<String, String> internalStorageToLocalFileConsumer,
+        boolean replaceWithRelativePath
+    ) throws IOException, IllegalVariableEvaluationException {
+        return ScriptService.replaceInternalStorage(runContext, additionalVars, List.of(command), internalStorageToLocalFileConsumer, replaceWithRelativePath).get(0);
     }
 
-    public static List<String> uploadInputFiles(RunContext runContext, List<String> commands, BiConsumer<String, String> internalStorageToLocalFileConsumer) throws IOException {
-        return uploadInputFiles(runContext, commands, internalStorageToLocalFileConsumer, false);
-    }
-
-    public static List<String> uploadInputFiles(RunContext runContext, List<String> commands, BiConsumer<String, String> internalStorageToLocalFileConsumer, boolean replaceWithRelativePath) throws IOException {
+    public static List<String> replaceInternalStorage(
+        RunContext runContext,
+        Map<String, Object> additionalVars,
+        List<String> commands,
+        BiConsumer<String, String> internalStorageToLocalFileConsumer,
+        boolean replaceWithRelativePath
+    ) throws IOException, IllegalVariableEvaluationException {
         return commands
             .stream()
-            .map(throwFunction(s -> replaceInternalStorage(runContext, s, internalStorageToLocalFileConsumer, replaceWithRelativePath)))
+            .map(throwFunction(c -> runContext.render(c, additionalVars)))
+            .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, internalStorageToLocalFileConsumer, replaceWithRelativePath)))
             .collect(Collectors.toList());
 
+    }
+
+    public static List<String> replaceInternalStorage(
+        RunContext runContext,
+        List<String> commands
+    ) throws IOException, IllegalVariableEvaluationException {
+        return ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), commands, (ignored, file) -> {}, false);
     }
 
     private static String saveOnLocalStorage(RunContext runContext, String uri) throws IOException {

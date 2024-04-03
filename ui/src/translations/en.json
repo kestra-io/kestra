@@ -606,7 +606,7 @@
       },
       "export": "Export as a ZIP file"
     },
-    "continue backfill":"Continue the backfill",
+    "continue backfill": "Continue the backfill",
     "delete backfill": "Delete the backfill",
     "pause backfill": "Pause the backfill",
     "backfill executions": "Backfill executions",
@@ -634,6 +634,7 @@
     "false": "False",
     "undefined": "Undefined",
     "execution-include-non-terminated": "Include non-terminated executions?",
-    "execution-warn-deleting-still-running": "Executions still running will not be stopped and must be killed before being deleting."
+    "execution-warn-deleting-still-running": "Executions still running will not be stopped and must be killed before being deleting.",
+    "originalCreatedDate": "Original creation date"
   }
 }

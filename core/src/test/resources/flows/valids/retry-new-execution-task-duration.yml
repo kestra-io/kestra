@@ -1,0 +1,12 @@
+id: retry-new-execution-task-duration
+namespace: io.kestra.tests
+
+tasks:
+  - id: fail
+    type: io.kestra.core.tasks.executions.Fail
+    retry:
+      behavior: CREATE_NEW_EXECUTION
+      type: constant
+      maxDuration: PT15S
+      interval: PT5S
+

@@ -34,6 +34,9 @@ public abstract class AbstractRetry {
     @Builder.Default
     private Boolean warningOnRetry = false;
 
+    @Builder.Default
+    private Behavior behavior = Behavior.RETRY_FAILED_TASK;
+
     public abstract Instant nextRetryDate(Integer attemptCount, Instant lastAttempt);
 
     public <T> RetryPolicy<T> toPolicy() {
@@ -57,5 +60,10 @@ public abstract class AbstractRetry {
 
         return new RetryPolicy<T>()
             .withMaxAttempts(1);
+    }
+
+    public enum Behavior {
+        RETRY_FAILED_TASK,
+        CREATE_NEW_EXECUTION
     }
 }

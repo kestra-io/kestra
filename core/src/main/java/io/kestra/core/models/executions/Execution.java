@@ -93,6 +93,9 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @With
+    ExecutionMetadata metadata;
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and inputs.
      *
@@ -134,6 +137,9 @@ public class Execution implements DeletedInterface, TenantInterface {
     public static class ExecutionBuilder {
         void prebuild() {
             this.originalId = this.id;
+            this.metadata = ExecutionMetadata.builder()
+                .originalCreatedDate(Instant.now())
+                .build();
         }
     }
 
@@ -165,7 +171,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.parentId,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.metadata
         );
     }
 
@@ -197,7 +204,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.parentId,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.metadata
         );
     }
 
@@ -217,7 +225,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             childExecutionId != null ? this.getId() : null,
             this.originalId,
             this.trigger,
-            this.deleted
+            this.deleted,
+            this.metadata
         );
     }
 
@@ -449,7 +458,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                     log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'", taskRun.getId(), parentTaskRun.getId());
                     return false;
                 }
-                return !taskRun.shouldBeRetried(resolvedTask.getTask()) && taskRun.getState().isFailed();
+                return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry()) && taskRun.getState().isFailed();
             });
     }
 

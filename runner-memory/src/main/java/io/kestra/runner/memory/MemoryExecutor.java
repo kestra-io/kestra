@@ -232,7 +232,7 @@ public class MemoryExecutor implements ExecutorInterface {
                                         EXECUTIONS.put(workerTaskResultDelay.getExecutionId(), executionState.from(markAsExecution));
                                         executionQueue.emit(markAsExecution);
                                     } else if (executionState.execution.findTaskRunByTaskRunId(workerTaskResultDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
-                                        Execution newAttempt = executionService.retry(
+                                        Execution newAttempt = executionService.retryTask(
                                             executionState.execution,
                                             workerTaskResultDelay.getTaskRunId()
                                         );

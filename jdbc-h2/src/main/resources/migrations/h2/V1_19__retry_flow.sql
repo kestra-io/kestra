@@ -1,4 +1,4 @@
-ALTER TABLE executions MODIFY COLUMN `state_current` ENUM (
+ALTER TABLE executions ALTER COLUMN "state_current" ENUM (
     'CREATED',
     'RUNNING',
     'PAUSED',
@@ -10,5 +10,6 @@ ALTER TABLE executions MODIFY COLUMN `state_current` ENUM (
     'KILLED',
     'CANCELLED',
     'QUEUED',
-    'RETRYING'
-    ) GENERATED ALWAYS AS (value ->> '$.state.current') STORED NOT NULL;
+    'RETRYING',
+    'RETRIED'
+) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.state.current'));

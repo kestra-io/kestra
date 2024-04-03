@@ -158,6 +158,11 @@ public class State {
         return this.current.isFailed() || this.isPaused();
     }
 
+    @JsonIgnore
+    public boolean isResumable() {
+        return this.current.isPaused() || this.current.isRetrying();
+    }
+
 
     @Introspected
     public enum Type {
@@ -172,10 +177,11 @@ public class State {
         KILLED,
         CANCELLED,
         QUEUED,
-        RETRYING;
+        RETRYING,
+        RETRIED;
 
         public boolean isTerminated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this ==  Type.CANCELLED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED;
         }
 
         public boolean isCreated() {
@@ -195,8 +201,9 @@ public class State {
         }
 
         public boolean isRetrying() {
-            return this == Type.RETRYING;
+            return this == Type.RETRYING || this == Type.RETRIED;
         }
+
     }
 
     @Value

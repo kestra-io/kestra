@@ -22,23 +22,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.ExecutableUtils;
-import io.kestra.core.runners.ExecutionQueued;
-import io.kestra.core.runners.ExecutionRunning;
-import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorInterface;
-import io.kestra.core.runners.ExecutorService;
-import io.kestra.core.runners.ExecutorState;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.SubflowExecution;
-import io.kestra.core.runners.SubflowExecutionResult;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTaskRunning;
-import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.runners.WorkerTriggerRunning;
+import io.kestra.core.runners.*;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.AbstractFlowTriggerService;
@@ -855,7 +839,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 try {
                     // Handle paused tasks
-                    if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent() == State.Type.PAUSED) {
+                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
 
                         Execution markAsExecution = executionService.markAs(
                             pair.getKey(),
@@ -864,14 +848,19 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
-                        // Handle failed tasks
-                    } else if (executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
-                        Execution newAttempt = executionService.retry(
+                    }
+                    // Handle failed tasks
+                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
+                        Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
                             executionDelay.getTaskRunId()
                         );
-
-                        executor = executor.withExecution(newAttempt, "failedRetry");
+                        executor = executor.withExecution(newAttempt, "retryFailedTask");
+                    }
+                    // Handle failed flow
+                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
+                        Execution newExecution = executionService.replay(executor.getExecution(), null, null);
+                        executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);

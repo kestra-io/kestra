@@ -610,6 +610,7 @@
     "false": "Faux",
     "undefined": "Non défini",
     "execution-include-non-terminated": "Inclure les exécutions non terminées ?",
-    "execution-warn-deleting-still-running": "Les exécutions en cours ne seront pas arrêtées et doivent être stoppées avant d'être supprimées."
+    "execution-warn-deleting-still-running": "Les exécutions en cours ne seront pas arrêtées et doivent être stoppées avant d'être supprimées.",
+    "originalCreatedDate": "Date de création originale"
   }
 }

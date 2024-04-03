@@ -14,9 +14,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,12 +23,17 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public abstract class FilesService {
      public static Map<String, String> inputFiles(RunContext runContext, Object inputs) throws Exception {
+         return FilesService.inputFiles(runContext, Collections.emptyMap(), inputs);
+     }
+
+     public static Map<String, String> inputFiles(RunContext runContext, Map<String, Object> additionalVars, Object inputs) throws Exception {
          Logger logger = runContext.logger();
 
-         Map<String, String> inputFiles = inputs == null ? Map.of() : PluginUtilsService.transformInputFiles(
+         Map<String, String> inputFiles = new HashMap<>(inputs == null ? Map.of() : PluginUtilsService.transformInputFiles(
              runContext,
+             additionalVars,
              inputs
-         );
+         ));
 
          inputFiles
              .forEach(throwBiConsumer((fileName, input) -> {
@@ -41,7 +44,7 @@ public abstract class FilesService {
                      file.getParentFile().mkdirs();
                  }
 
-                 var fileContent = runContext.render(input);
+                 var fileContent = runContext.render(input, additionalVars);
                  if (fileContent.startsWith("kestra://")) {
                      try (var is = runContext.uriToInputStream(URI.create(fileContent));
                           var out = new FileOutputStream(file)) {

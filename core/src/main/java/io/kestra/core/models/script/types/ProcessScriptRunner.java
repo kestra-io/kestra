@@ -16,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -39,23 +38,13 @@ public class ProcessScriptRunner extends ScriptRunner {
         Logger logger = runContext.logger();
         AbstractLogConsumer defaultLogConsumer = scriptCommands.getLogConsumer();
 
-        Map<String, Object> additionalVars = scriptCommands.getAdditionalVars();
-        additionalVars.put(ScriptService.VAR_WORKING_DIR, scriptCommands.getWorkingDirectory().toString());
-        additionalVars.put(ScriptService.VAR_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString());
-
         ProcessBuilder processBuilder = new ProcessBuilder();
 
         Map<String, String> environment = processBuilder.environment();
-        if (scriptCommands.getEnv() != null && !scriptCommands.getEnv().isEmpty()) {
-            environment.putAll(runContext.renderMap(scriptCommands.getEnv(), additionalVars));
-        }
-        environment.put(ScriptService.ENV_WORKING_DIR, scriptCommands.getWorkingDirectory().toString());
-        environment.put(ScriptService.ENV_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString());
+        environment.putAll(this.env(scriptCommands));
 
         processBuilder.directory(scriptCommands.getWorkingDirectory().toFile());
-
-        List<String> command = ScriptService.uploadInputFiles(runContext, runContext.render(scriptCommands.getCommands(), additionalVars));
-        processBuilder.command(command);
+        processBuilder.command(scriptCommands.getCommands());
 
         Process process = processBuilder.start();
         long pid = process.pid();
@@ -89,6 +78,14 @@ public class ProcessScriptRunner extends ScriptRunner {
             stdOut.join();
             stdErr.join();
         }
+    }
+
+    @Override
+    protected Map<String, Object> runnerAdditionalVars(ScriptCommands scriptCommands) {
+        return Map.of(
+            ScriptService.VAR_WORKING_DIR, scriptCommands.getWorkingDirectory().toString(),
+            ScriptService.VAR_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString()
+        );
     }
 
     private void killDescendantsOf(ProcessHandle process, Logger logger) {

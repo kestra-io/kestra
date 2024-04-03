@@ -3,8 +3,6 @@ package io.kestra.core.models.script;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.io.Serial;
-
 @Getter
 @Builder
 public class ScriptException extends Exception {
@@ -13,7 +11,11 @@ public class ScriptException extends Exception {
     private final int stdErrSize;
 
     public ScriptException(int exitCode, int stdOutSize, int stdErrSize) {
-        super("Command failed with code " + exitCode);
+        this("Command failed with code " + exitCode, exitCode, stdOutSize, stdErrSize);
+    }
+
+    public ScriptException(String message, int exitCode, int stdOutSize, int stdErrSize) {
+        super(message);
         this.exitCode = exitCode;
         this.stdOutSize = stdOutSize;
         this.stdErrSize = stdErrSize;

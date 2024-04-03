@@ -469,13 +469,13 @@ public class ExecutorService {
                 if (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
                     retry = executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry();
                     AbstractRetry.Behavior behavior = retry.getBehavior();
-                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                         taskRun.nextRetryDate(retry, executor.getExecution()) :
                         taskRun.nextRetryDate(retry);
                     executionDelayBuilder
                         .date(nextRetryDate)
                         .state(State.Type.RUNNING)
-                        .delayType(behavior.equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                        .delayType(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                             ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
                             ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                 }
@@ -483,21 +483,21 @@ public class ExecutorService {
                 else {
                     retry = executor.getFlow().getRetry();
                     AbstractRetry.Behavior behavior = retry.getBehavior();
-                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                         executionService.nextRetryDate(retry, executor.getExecution()) :
                         taskRun.nextRetryDate(retry);
 
                     executionDelayBuilder
                         .date(nextRetryDate)
                         .state(State.Type.RUNNING)
-                        .delayType(retry.getBehavior().equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                        .delayType(retry.getBehavior().equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                             ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
                             ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                 }
                 if (nextRetryDate != null) {
                     executionDelays.add(executionDelayBuilder.build());
                     executor.withExecution(executor.getExecution()
-                        .withState(retry.getBehavior().equals(AbstractRetry.Behavior.NEW_EXECUTION) ?
+                        .withState(retry.getBehavior().equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                             State.Type.RETRIED :
                             State.Type.RETRYING
                             ),

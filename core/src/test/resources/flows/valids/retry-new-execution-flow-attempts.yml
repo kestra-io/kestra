@@ -1,7 +1,7 @@
 id: retry-new-execution-flow-attempts
 namespace: io.kestra.tests
 retry:
-  behavior: NEW_EXECUTION
+  behavior: CREATE_NEW_EXECUTION
   type: constant
   maxAttempt: 3
   interval: PT2S

@@ -5,7 +5,7 @@ tasks:
   - id: fail
     type: io.kestra.core.tasks.executions.Fail
     retry:
-      behavior: RETRY_FAILED
+      behavior: RETRY_FAILED_TASK
       type: constant
       maxAttempt: 4
       interval: PT2S

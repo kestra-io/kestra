@@ -1,7 +1,7 @@
 id: retry-failed-flow-attempts
 namespace: io.kestra.tests
 retry:
-  behavior: RETRY_FAILED
+  behavior: RETRY_FAILED_TASK
   type: constant
   maxAttempt: 4
   interval: PT2S

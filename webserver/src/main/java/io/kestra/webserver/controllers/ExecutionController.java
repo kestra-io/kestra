@@ -960,7 +960,9 @@ public class ExecutionController {
             throw new IllegalStateException("Execution is not paused, can't resume it");
         }
 
-        Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
+        var flow = flowRepository.findByExecution(execution);
+
+        Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING, flow);
         this.executionQueue.emit(resumeExecution);
         return HttpResponse.noContent();
     }
@@ -975,6 +977,7 @@ public class ExecutionController {
     ) throws InternalException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        Map<String, Flow> flows = new HashMap<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
@@ -1009,7 +1012,9 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
-            Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING);
+            var flow = flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) != null ? flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) : flowRepository.findByExecution(execution);
+            flows.put(execution.getFlowId() + "_" + execution.getFlowRevision(), flow);
+            Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING, flow);
             this.executionQueue.emit(resumeExecution);
         }
 

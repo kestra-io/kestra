@@ -227,13 +227,13 @@ public class TaskRun implements TenantInterface {
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
     public Instant nextRetryDate(AbstractRetry retry, Execution execution) {
-        if (retry.getMaxAttempt() != null && execution.getAttemptNumber() >= retry.getMaxAttempt()) {
+        if (retry.getMaxAttempt() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempt()) {
 
             return null;
         }
         Instant base = this.lastAttempt().getState().maxDate();
-        Instant nextDate = retry.nextRetryDate(execution.getAttemptNumber(), base);
-        if (retry.getMaxDuration() != null && nextDate.isAfter(execution.getOriginalCreatedDate().plus(retry.getMaxDuration()))) {
+        Instant nextDate = retry.nextRetryDate(execution.getMetadata().getAttemptNumber(), base);
+        if (retry.getMaxDuration() != null && nextDate.isAfter(execution.getMetadata().getOriginalCreatedDate().plus(retry.getMaxDuration()))) {
 
             return null;
         }

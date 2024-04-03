@@ -5,7 +5,6 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
@@ -94,19 +93,8 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
-    @Builder.Default
     @With
-    Integer attemptNumber = 1;
-
-    Instant originalCreatedDate;
-
-    @JsonSetter
-    public Integer getAttemptNumber() {
-        if (attemptNumber == null) {
-            return 1;
-        }
-        return attemptNumber;
-    }
+    ExecutionMetadata metadata;
 
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and inputs.
@@ -149,7 +137,9 @@ public class Execution implements DeletedInterface, TenantInterface {
     public static class ExecutionBuilder {
         void prebuild() {
             this.originalId = this.id;
-            this.originalCreatedDate = Instant.now();
+            this.metadata = ExecutionMetadata.builder()
+                .originalCreatedDate(Instant.now())
+                .build();
         }
     }
 
@@ -182,8 +172,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.originalId,
             this.trigger,
             this.deleted,
-            this.attemptNumber,
-            this.originalCreatedDate
+            this.metadata
         );
     }
 
@@ -216,8 +205,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.originalId,
             this.trigger,
             this.deleted,
-            this.attemptNumber,
-            this.originalCreatedDate
+            this.metadata
         );
     }
 
@@ -238,8 +226,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.originalId,
             this.trigger,
             this.deleted,
-            this.attemptNumber,
-            this.originalCreatedDate
+            this.metadata
         );
     }
 

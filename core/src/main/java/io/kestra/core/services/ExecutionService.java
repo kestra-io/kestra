@@ -142,7 +142,7 @@ public class ExecutionService {
                 execution.withState(State.Type.RESTARTED).getState()
             );
 
-        newExecution = newExecution.withAttemptNumber(execution.getAttemptNumber() + 1);
+        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt());
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
@@ -221,7 +221,7 @@ public class ExecutionService {
             taskRunId == null ? new State() : execution.withState(State.Type.RESTARTED).getState()
         );
 
-        newExecution = newExecution.withAttemptNumber(execution.getAttemptNumber() + 1);
+        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt());
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
@@ -556,14 +556,14 @@ public class ExecutionService {
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
     public Instant nextRetryDate(AbstractRetry retry, Execution execution) {
-        if (retry.getMaxAttempt() != null && execution.getAttemptNumber() >= retry.getMaxAttempt()) {
+        if (retry.getMaxAttempt() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempt()) {
 
             return null;
         }
 
         Instant base = execution.getState().maxDate();
-        Instant originalCreatedDate = execution.getOriginalCreatedDate();
-        Instant nextDate = retry.nextRetryDate(execution.getAttemptNumber(), base);
+        Instant originalCreatedDate = execution.getMetadata().getOriginalCreatedDate();
+        Instant nextDate = retry.nextRetryDate(execution.getMetadata().getAttemptNumber(), base);
 
         if (retry.getMaxDuration() != null && nextDate.isAfter(originalCreatedDate.plus(retry.getMaxDuration()))) {
 

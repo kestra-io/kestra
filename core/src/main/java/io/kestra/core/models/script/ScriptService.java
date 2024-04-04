@@ -76,6 +76,10 @@ public final class ScriptService {
         BiConsumer<String, String> internalStorageToLocalFileConsumer,
         boolean replaceWithRelativePath
     ) throws IOException, IllegalVariableEvaluationException {
+        if (command == null) {
+            return null;
+        }
+
         return ScriptService.replaceInternalStorage(runContext, additionalVars, List.of(command), internalStorageToLocalFileConsumer, replaceWithRelativePath).get(0);
     }
 

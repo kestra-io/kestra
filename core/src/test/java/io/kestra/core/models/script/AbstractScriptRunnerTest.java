@@ -56,7 +56,7 @@ public abstract class AbstractScriptRunnerTest {
 
     @Test
     protected void inputAndOutputFiles() throws Exception {
-        RunContext runContext = runContextFactory.of(Map.of("internalStorageFile", "kestra://some/internalStorage.txt"));
+        RunContext runContext = runContext(this.runContextFactory, Map.of("internalStorageFile", "kestra://some/internalStorage.txt"));
 
         var commands = initScriptCommands(runContext);
 
@@ -123,6 +123,10 @@ public abstract class AbstractScriptRunnerTest {
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {
+        return this.runContext(runContextFactory, null);
+    }
+
+    protected RunContext runContext(RunContextFactory runContextFactory, Map<String, Object> additionalVars) {
         // create a fake flow and execution
         Task task = new Task() {
             @Override
@@ -145,7 +149,17 @@ public abstract class AbstractScriptRunnerTest {
             .taskRunList(List.of(taskRun))
             .state(new State().withState(State.Type.RUNNING))
             .build();
-        return runContextFactory.of(flow, task, execution, taskRun);
+
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+
+        if (additionalVars == null) {
+            return runContext;
+        }
+
+        Map<String, Object> mergedVars = new HashMap<>(runContext.getVariables());
+        mergedVars.putAll(additionalVars);
+
+        return runContextFactory.of(mergedVars);
     }
 
     protected abstract ScriptRunner scriptRunner();

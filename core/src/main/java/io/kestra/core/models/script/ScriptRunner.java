@@ -28,11 +28,11 @@ public abstract class ScriptRunner {
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)
-    protected transient Map<String, Object> additionalVars;
+    private transient Map<String, Object> additionalVars;
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)
-    protected transient Map<String, String> env;
+    private transient Map<String, String> env;
 
     /**
      * This method will be called by the script plugin to run a script on a script runner.

@@ -20,7 +20,8 @@ public class ScriptRunnerTest {
         ScriptRunner scriptRunner = new ScriptRunnerAdditional(true);
         ScriptCommands scriptCommands = new ScriptCommandsAdditional();
 
-        assertThat(scriptRunner.additionalVars(scriptCommands), is(Map.of(
+        RunContext runContext = new RunContext();
+        assertThat(scriptRunner.additionalVars(runContext, scriptCommands), is(Map.of(
             ScriptService.VAR_BUCKET_PATH, ScriptRunnerAdditional.RUNNER_BUCKET_PATH,
             ScriptService.VAR_WORKING_DIR, ScriptRunnerAdditional.RUNNER_WORKING_DIR,
             ScriptService.VAR_OUTPUT_DIR, ScriptRunnerAdditional.RUNNER_OUTPUT_DIR,
@@ -29,7 +30,7 @@ public class ScriptRunnerTest {
             ADDITIONAL_VAR_KEY, ScriptRunnerAdditional.ADDITIONAL_VAR_VALUE
         )));
 
-        assertThat(scriptRunner.env(scriptCommands), is(Map.of(
+        assertThat(scriptRunner.env(runContext, scriptCommands), is(Map.of(
             ScriptService.ENV_BUCKET_PATH, ScriptRunnerAdditional.OVERRIDEN_ENV_BUCKET_PATH,
             ScriptService.ENV_WORKING_DIR, ScriptRunnerAdditional.OVERRIDEN_ENV_WORKING_DIR,
             ScriptService.ENV_OUTPUT_DIR, ScriptRunnerAdditional.OVERRIDEN_ENV_OUTPUT_DIR,
@@ -39,7 +40,7 @@ public class ScriptRunnerTest {
         )));
 
         scriptRunner = new ScriptRunnerAdditional(false);
-        assertThat(scriptRunner.env(scriptCommands), is(Map.of(
+        assertThat(scriptRunner.env(runContext, scriptCommands), is(Map.of(
             ScriptService.ENV_BUCKET_PATH, ScriptRunnerAdditional.RUNNER_BUCKET_PATH,
             ScriptService.ENV_WORKING_DIR, ScriptRunnerAdditional.RUNNER_WORKING_DIR,
             ScriptService.ENV_OUTPUT_DIR, ScriptRunnerAdditional.RUNNER_OUTPUT_DIR,
@@ -76,7 +77,7 @@ public class ScriptRunnerTest {
         }
 
         @Override
-        protected Map<String, Object> runnerAdditionalVars(ScriptCommands scriptCommands) {
+        protected Map<String, Object> runnerAdditionalVars(RunContext runContext, ScriptCommands scriptCommands) {
             return Map.of(
                 ScriptService.VAR_BUCKET_PATH, RUNNER_BUCKET_PATH,
                 ScriptService.VAR_WORKING_DIR, RUNNER_WORKING_DIR,
@@ -87,7 +88,7 @@ public class ScriptRunnerTest {
         }
 
         @Override
-        protected Map<String, String> runnerEnv(ScriptCommands scriptCommands) {
+        protected Map<String, String> runnerEnv(RunContext runContext, ScriptCommands scriptCommands) {
             Map<String, String> env = new HashMap<>(Map.of(
                 RUNNER_ADDITIONAL_ENV_KEY, RUNNER_ADDITIONAL_ENV_VALUE,
                 ADDITIONAL_ENV_KEY, ADDITIONAL_ENV_VALUE

@@ -86,7 +86,7 @@ public abstract class AbstractScriptRunnerTest {
         String wdir = this.needsToSpecifyWorkingDirectory() ? "{{ workingDir }}/" : "";
         List<String> renderedCommands = ScriptService.replaceInternalStorage(
             runContext,
-            scriptRunner.additionalVars(commands),
+            scriptRunner.additionalVars(runContext, commands),
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), null, List.of(
                 "cat " + wdir + "{{internalStorageFile}} && echo",
                 "cat " + wdir + "hello.txt && echo",

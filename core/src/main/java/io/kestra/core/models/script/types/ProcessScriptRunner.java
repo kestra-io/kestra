@@ -41,7 +41,7 @@ public class ProcessScriptRunner extends ScriptRunner {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
         Map<String, String> environment = processBuilder.environment();
-        environment.putAll(this.env(scriptCommands));
+        environment.putAll(this.env(runContext, scriptCommands));
 
         processBuilder.directory(scriptCommands.getWorkingDirectory().toFile());
         processBuilder.command(scriptCommands.getCommands());
@@ -81,7 +81,7 @@ public class ProcessScriptRunner extends ScriptRunner {
     }
 
     @Override
-    protected Map<String, Object> runnerAdditionalVars(ScriptCommands scriptCommands) {
+    protected Map<String, Object> runnerAdditionalVars(RunContext runContext, ScriptCommands scriptCommands) {
         return Map.of(
             ScriptService.VAR_WORKING_DIR, scriptCommands.getWorkingDirectory().toString(),
             ScriptService.VAR_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString()

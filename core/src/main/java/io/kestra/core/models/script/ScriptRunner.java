@@ -11,10 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Base class for all script runners.
@@ -48,15 +45,29 @@ public abstract class ScriptRunner {
 
     public Map<String, Object> additionalVars(ScriptCommands scriptCommands) {
         if (this.additionalVars == null) {
-            this.additionalVars = scriptCommands.getAdditionalVars();
+            this.additionalVars = new HashMap<>();
+
+            if (scriptCommands.getAdditionalVars() != null) {
+                this.additionalVars.putAll(scriptCommands.getAdditionalVars());
+            }
+
+            this.additionalVars.putAll(this.runnerAdditionalVars(scriptCommands));
         }
 
         return this.additionalVars;
     }
 
+    protected Map<String, Object> runnerAdditionalVars(ScriptCommands scriptCommands) {
+        return new HashMap<>();
+    }
+
     public Map<String, String> env(ScriptCommands scriptCommands) {
         if (this.env == null) {
-            this.env = Optional.ofNullable(scriptCommands.getEnv()).map(HashMap::new).orElse(new HashMap<>());
+            this.env = new HashMap<>();
+
+            if (scriptCommands.getEnv() != null) {
+                this.env.putAll(scriptCommands.getEnv());
+            }
 
             Map<String, Object> additionalVars = this.additionalVars(scriptCommands);
 
@@ -69,8 +80,14 @@ public abstract class ScriptRunner {
             if (additionalVars.containsKey(ScriptService.VAR_BUCKET_PATH)) {
                 this.env.put(ScriptService.ENV_BUCKET_PATH, additionalVars.get(ScriptService.VAR_BUCKET_PATH).toString());
             }
+
+            this.env.putAll(this.runnerEnv(scriptCommands));
         }
 
         return this.env;
+    }
+
+    protected Map<String, String> runnerEnv(ScriptCommands scriptCommands) {
+        return new HashMap<>();
     }
 }

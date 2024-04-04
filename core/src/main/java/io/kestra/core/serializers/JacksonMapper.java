@@ -1,6 +1,16 @@
 
 package io.kestra.core.serializers;
 
+import static com.amazon.ion.impl.lite._Private_LiteDomTrampoline.newLiteSystem;
+
+import com.amazon.ion.IonSystem;
+import com.amazon.ion.impl._Private_IonBinaryWriterBuilder;
+import com.amazon.ion.impl._Private_Utils;
+import com.amazon.ion.system.IonBinaryWriterBuilder;
+import com.amazon.ion.system.IonReaderBuilder;
+import com.amazon.ion.system.IonSystemBuilder;
+import com.amazon.ion.system.IonTextWriterBuilder;
+import com.amazon.ion.system.SimpleCatalog;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,7 +34,10 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.TimeZone;
 
-abstract public class JacksonMapper {
+public final class JacksonMapper {
+
+    private JacksonMapper() {}
+
     private static final ObjectMapper MAPPER = JacksonMapper.configure(
         new ObjectMapper()
     );
@@ -97,12 +110,7 @@ abstract public class JacksonMapper {
         }
     }
 
-    private static final ObjectMapper ION_MAPPER = JacksonMapper
-        .configure(
-            new IonObjectMapper(new IonFactory())
-        )
-        .registerModule(new IonModule())
-        .setSerializationInclusion(JsonInclude.Include.ALWAYS);
+    private static final ObjectMapper ION_MAPPER = createIonObjectMapper();
 
     public static ObjectMapper ofIon() {
         return ION_MAPPER;
@@ -123,5 +131,33 @@ abstract public class JacksonMapper {
             .registerModule(new ParameterNamesModule())
             .registerModules(new GuavaModule())
             .setTimeZone(TimeZone.getDefault());
+    }
+
+    private static ObjectMapper createIonObjectMapper() {
+        return configure(new IonObjectMapper(new IonFactory(createIonSystem())))
+            .setSerializationInclusion(JsonInclude.Include.ALWAYS)
+            .registerModule(new IonModule());
+    }
+
+    /**
+     * @see IonSystemBuilder#build()
+     */
+    // TODO simplify after https://github.com/amazon-ion/ion-java/pull/781
+    private static IonSystem createIonSystem() {
+        final var catalog = new SimpleCatalog();
+
+        final var textWriterBuilder = IonTextWriterBuilder.standard()
+            .withCatalog(catalog)
+            .withCharsetAscii()
+            .withWriteTopLevelValuesOnNewLines(true); // write line separators on new lines instead of spaces
+
+        final var binaryWriterBuilder = IonBinaryWriterBuilder.standard()
+            .withCatalog(catalog)
+            .withInitialSymbolTable(_Private_Utils.systemSymtab(1));
+
+        final var readerBuilder = IonReaderBuilder.standard()
+            .withCatalog(catalog);
+
+        return newLiteSystem(textWriterBuilder, (_Private_IonBinaryWriterBuilder) binaryWriterBuilder, readerBuilder);
     }
 }

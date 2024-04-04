@@ -10,6 +10,7 @@
     >
         <component
             :is="component"
+            v-bind="$attrs"
             :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
             @click="isOpen = !isOpen"
             v-if="component !== 'el-dropdown-item'"
@@ -21,6 +22,7 @@
         <span v-else-if="component === 'el-dropdown-item'">
             <component
                 :is="component"
+                v-bind="$attrs"
                 :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
                 @click="isOpen = !isOpen"
                 :disabled="!enabled"

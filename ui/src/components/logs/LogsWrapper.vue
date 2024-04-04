@@ -29,9 +29,7 @@
                         />
                     </el-form-item>
                     <el-form-item>
-                        <el-form-item>
-                            <filters :storage-key="storageKeys.LOGS_FILTERS" />
-                        </el-form-item>
+                        <filters :storage-key="storageKeys.LOGS_FILTERS" />
                     </el-form-item>
                     <el-form-item>
                         <refresh-button class="float-right" @refresh="refresh" />

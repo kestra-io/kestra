@@ -1,5 +1,6 @@
 package io.kestra.core.models.script;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ public class ScriptRunnerTest {
     public static final String ADDITIONAL_ENV_KEY = "ADDITIONAL_ENV_KEY";
 
     @Test
-    void additionalVarsAndEnv() {
+    void additionalVarsAndEnv() throws IllegalVariableEvaluationException {
         ScriptRunner scriptRunner = new ScriptRunnerAdditional(true);
         ScriptCommands scriptCommands = new ScriptCommandsAdditional();
 

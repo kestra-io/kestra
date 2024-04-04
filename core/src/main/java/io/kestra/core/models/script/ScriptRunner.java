@@ -2,6 +2,7 @@ package io.kestra.core.models.script;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.NotBlank;
@@ -43,7 +44,7 @@ public abstract class ScriptRunner {
      */
     public abstract RunnerResult run(RunContext runContext, ScriptCommands scriptCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception;
 
-    public Map<String, Object> additionalVars(RunContext runContext, ScriptCommands scriptCommands) {
+    public Map<String, Object> additionalVars(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         if (this.additionalVars == null) {
             this.additionalVars = new HashMap<>();
 
@@ -57,11 +58,11 @@ public abstract class ScriptRunner {
         return this.additionalVars;
     }
 
-    protected Map<String, Object> runnerAdditionalVars(RunContext runContext, ScriptCommands scriptCommands) {
+    protected Map<String, Object> runnerAdditionalVars(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         return new HashMap<>();
     }
 
-    public Map<String, String> env(RunContext runContext, ScriptCommands scriptCommands) {
+    public Map<String, String> env(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         if (this.env == null) {
             this.env = new HashMap<>();
 
@@ -87,7 +88,7 @@ public abstract class ScriptRunner {
         return this.env;
     }
 
-    protected Map<String, String> runnerEnv(RunContext runContext, ScriptCommands scriptCommands) {
+    protected Map<String, String> runnerEnv(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         return new HashMap<>();
     }
 }

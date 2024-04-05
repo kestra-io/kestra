@@ -29,7 +29,7 @@ public final class FileSerde {
     private static final TypeReference<Object> DEFAULT_TYPE_REFERENCE = new TypeReference<>(){};
 
     /** The size of the buffer used for reading and writing data from streams. */
-    private static final int BUFFER_SIZE = 65535;
+    private static final int BUFFER_SIZE = 32 * 1024;
 
     private FileSerde() {}
 

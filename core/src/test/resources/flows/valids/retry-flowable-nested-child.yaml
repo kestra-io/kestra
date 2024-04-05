@@ -1,0 +1,16 @@
+id: retry-flowable-nested-child
+namespace: io.kestra.tests
+
+tasks:
+  - id: flowable
+    type: io.kestra.core.tasks.flows.Sequential
+    tasks:
+      - id: flowable2
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: child
+            type: io.kestra.core.tasks.executions.Fail
+            retry:
+              type: constant
+              interval: PT2S
+              maxAttempt: 3

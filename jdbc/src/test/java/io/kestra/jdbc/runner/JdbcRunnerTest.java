@@ -360,4 +360,24 @@ public abstract class JdbcRunnerTest {
     void retryFailedFlowAttempts() throws TimeoutException {
         retryCaseTest.retryFailedFlowAttempts();
     }
+
+    @Test
+    void retryFlowable() throws TimeoutException {
+        retryCaseTest.retryFlowable();
+    }
+
+    @Test
+    void retryFlowableChild() throws TimeoutException {
+        retryCaseTest.retryFlowableChild();
+    }
+
+    @Test
+    void retryFlowableNestedChild() throws TimeoutException {
+        retryCaseTest.retryFlowableNestedChild();
+    }
+
+    @Test
+    void retryFlowableParallel() throws TimeoutException {
+        retryCaseTest.retryFlowableParallel();
+    }
 }

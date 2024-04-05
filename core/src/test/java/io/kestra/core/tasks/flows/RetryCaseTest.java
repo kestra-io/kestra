@@ -19,8 +19,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 @Singleton
@@ -188,6 +187,62 @@ public class RetryCaseTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().get(0).attemptNumber(), is(4));
+    }
+
+    public void retryFlowable() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "retry-flowable",
+            null,
+            null
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
+    }
+
+
+    public void retryFlowableChild() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "retry-flowable-child",
+            null,
+            null
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
+    }
+
+
+    public void retryFlowableNestedChild() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "retry-flowable-nested-child",
+            null,
+            null
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(2).attemptNumber(), is(3));
+    }
+
+
+    public void retryFlowableParallel() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "retry-flowable-parallel",
+            null,
+            null
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(1).attemptNumber(), greaterThanOrEqualTo(2));
+        assertThat(execution.getTaskRunList().get(2).attemptNumber(), greaterThanOrEqualTo(2));
     }
 
 }

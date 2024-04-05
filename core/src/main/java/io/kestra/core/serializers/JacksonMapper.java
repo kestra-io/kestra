@@ -8,7 +8,6 @@ import com.amazon.ion.impl._Private_IonBinaryWriterBuilder;
 import com.amazon.ion.impl._Private_Utils;
 import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.amazon.ion.system.IonSystemBuilder;
 import com.amazon.ion.system.IonTextWriterBuilder;
 import com.amazon.ion.system.SimpleCatalog;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -139,11 +138,20 @@ public final class JacksonMapper {
             .registerModule(new IonModule());
     }
 
-    /**
-     * @see IonSystemBuilder#build()
-     */
-    // TODO simplify after https://github.com/amazon-ion/ion-java/pull/781
     private static IonSystem createIonSystem() {
+        // This code is inspired by the IonSystemBuilder#build() method and the usage of "withWriteTopLevelValuesOnNewLines(true)".
+        //
+        // After the integration of the relevant pull request (https://github.com/amazon-ion/ion-java/pull/781),
+        // it is expected that this code should be replaced with a more simplified version.
+        //
+        // The simplified code would look like below:
+        //
+        // return IonSystemBuilder.standard()
+        //    .withIonTextWriterBuilder(IonTextWriterBuilder.standard().withWriteTopLevelValuesOnNewLines(true))
+        //    .build();
+        //
+        // TODO: Simplify this code once the pull request is integrated.
+
         final var catalog = new SimpleCatalog();
 
         final var textWriterBuilder = IonTextWriterBuilder.standard()

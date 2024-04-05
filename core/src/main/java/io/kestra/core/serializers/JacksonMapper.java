@@ -35,8 +35,10 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public final class JacksonMapper {
+    public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
 
     private static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
+
     private JacksonMapper() {}
 
     private static final ObjectMapper MAPPER = JacksonMapper.configure(
@@ -72,17 +74,15 @@ public final class JacksonMapper {
         return YAML_MAPPER;
     }
 
-    private static final TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
-
     public static Map<String, Object> toMap(Object object, ZoneId zoneId) {
         return MAPPER
             .copy()
             .setTimeZone(TimeZone.getTimeZone(zoneId.getId()))
-            .convertValue(object, TYPE_REFERENCE);
+            .convertValue(object, MAP_TYPE_REFERENCE);
     }
 
     public static Map<String, Object> toMap(Object object) {
-        return MAPPER.convertValue(object, TYPE_REFERENCE);
+        return MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
     }
 
     public static <T> T toMap(Object map, Class<T> cls) {
@@ -90,7 +90,7 @@ public final class JacksonMapper {
     }
 
     public static Map<String, Object> toMap(String json) throws JsonProcessingException {
-        return MAPPER.readValue(json, TYPE_REFERENCE);
+        return MAPPER.readValue(json, MAP_TYPE_REFERENCE);
     }
 
     public static List<Object> toList(String json) throws JsonProcessingException {

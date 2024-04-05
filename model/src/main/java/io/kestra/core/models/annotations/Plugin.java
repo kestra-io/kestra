@@ -27,4 +27,12 @@ public @interface Plugin {
      * @return {@code true} if the plugin is internal. Otherwise {@link false}.
      */
     boolean internal() default false;
+
+    /**
+     * Specifies optional plugin aliases.
+     * <p>
+     * Aliases are alternate name for the plugin that will resolve to the class annotated.
+     * For the moment, aliases are considered as deprecated plugins replaced by the class annotated.
+     */
+    String[] aliases() default {};
 }

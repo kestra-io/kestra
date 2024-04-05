@@ -19,11 +19,11 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
     private Map<String, Object> outputsSchema;
 
     @SuppressWarnings("unchecked")
-    private ClassPluginDocumentation(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
+    private ClassPluginDocumentation(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls, String alias) {
         super(jsonSchemaGenerator, cls, baseCls);
 
         // plugins metadata
-        this.cls = cls.getName();
+        this.cls = alias == null ? cls.getName() : alias;
         this.group = plugin.group();
         this.pluginTitle = plugin.title();
         this.icon = plugin.icon(cls);
@@ -60,10 +60,18 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
                 ))
                 .collect(Collectors.toList());
         }
+
+        if (alias != null) {
+            this.deprecated = true;
+        }
     }
 
     public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
-        return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, cls, baseCls);
+        return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, cls, baseCls, null);
+    }
+
+    public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls, String alias) {
+        return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, cls, baseCls, alias);
     }
 
     @AllArgsConstructor

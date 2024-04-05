@@ -1,0 +1,10 @@
+id: alias-task
+namespace: io.kestra.tests
+
+tasks:
+  - id: origin
+    type: io.kestra.core.runners.test.TaskWithAlias
+    message: I'm the original task
+  - id: alias
+    type: io.kestra.core.runners.test.task.Alias
+    message: I'm an alias

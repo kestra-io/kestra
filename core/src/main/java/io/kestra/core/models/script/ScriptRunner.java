@@ -49,10 +49,10 @@ public abstract class ScriptRunner {
             this.additionalVars = new HashMap<>();
 
             if (scriptCommands.getAdditionalVars() != null) {
-                this.additionalVars.putAll(scriptCommands.getAdditionalVars());
+                this.additionalVars.putAll(runContext.render(scriptCommands.getAdditionalVars()));
             }
 
-            this.additionalVars.putAll(this.runnerAdditionalVars(runContext, scriptCommands));
+            this.additionalVars.putAll(runContext.render(this.runnerAdditionalVars(runContext, scriptCommands)));
         }
 
         return this.additionalVars;
@@ -67,7 +67,7 @@ public abstract class ScriptRunner {
             this.env = new HashMap<>();
 
             if (scriptCommands.getEnv() != null) {
-                this.env.putAll(scriptCommands.getEnv());
+                this.env.putAll(runContext.renderMap(scriptCommands.getEnv()));
             }
 
             Map<String, Object> additionalVars = this.additionalVars(runContext, scriptCommands);
@@ -82,7 +82,7 @@ public abstract class ScriptRunner {
                 this.env.put(ScriptService.ENV_BUCKET_PATH, additionalVars.get(ScriptService.VAR_BUCKET_PATH).toString());
             }
 
-            this.env.putAll(this.runnerEnv(runContext, scriptCommands));
+            this.env.putAll(runContext.renderMap(this.runnerEnv(runContext, scriptCommands)));
         }
 
         return this.env;

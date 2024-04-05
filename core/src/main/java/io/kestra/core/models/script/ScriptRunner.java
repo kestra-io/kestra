@@ -2,6 +2,7 @@ package io.kestra.core.models.script;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.NotBlank;
@@ -28,11 +29,11 @@ public abstract class ScriptRunner {
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)
-    protected transient Map<String, Object> additionalVars;
+    private transient Map<String, Object> additionalVars;
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)
-    protected transient Map<String, String> env;
+    private transient Map<String, String> env;
 
     /**
      * This method will be called by the script plugin to run a script on a script runner.
@@ -43,33 +44,33 @@ public abstract class ScriptRunner {
      */
     public abstract RunnerResult run(RunContext runContext, ScriptCommands scriptCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception;
 
-    public Map<String, Object> additionalVars(ScriptCommands scriptCommands) {
+    public Map<String, Object> additionalVars(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         if (this.additionalVars == null) {
             this.additionalVars = new HashMap<>();
 
             if (scriptCommands.getAdditionalVars() != null) {
-                this.additionalVars.putAll(scriptCommands.getAdditionalVars());
+                this.additionalVars.putAll(runContext.render(scriptCommands.getAdditionalVars()));
             }
 
-            this.additionalVars.putAll(this.runnerAdditionalVars(scriptCommands));
+            this.additionalVars.putAll(runContext.render(this.runnerAdditionalVars(runContext, scriptCommands)));
         }
 
         return this.additionalVars;
     }
 
-    protected Map<String, Object> runnerAdditionalVars(ScriptCommands scriptCommands) {
+    protected Map<String, Object> runnerAdditionalVars(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         return new HashMap<>();
     }
 
-    public Map<String, String> env(ScriptCommands scriptCommands) {
+    public Map<String, String> env(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         if (this.env == null) {
             this.env = new HashMap<>();
 
             if (scriptCommands.getEnv() != null) {
-                this.env.putAll(scriptCommands.getEnv());
+                this.env.putAll(runContext.renderMap(scriptCommands.getEnv()));
             }
 
-            Map<String, Object> additionalVars = this.additionalVars(scriptCommands);
+            Map<String, Object> additionalVars = this.additionalVars(runContext, scriptCommands);
 
             if (additionalVars.containsKey(ScriptService.VAR_WORKING_DIR)) {
                 this.env.put(ScriptService.ENV_WORKING_DIR, additionalVars.get(ScriptService.VAR_WORKING_DIR).toString());
@@ -81,13 +82,13 @@ public abstract class ScriptRunner {
                 this.env.put(ScriptService.ENV_BUCKET_PATH, additionalVars.get(ScriptService.VAR_BUCKET_PATH).toString());
             }
 
-            this.env.putAll(this.runnerEnv(scriptCommands));
+            this.env.putAll(runContext.renderMap(this.runnerEnv(runContext, scriptCommands)));
         }
 
         return this.env;
     }
 
-    protected Map<String, String> runnerEnv(ScriptCommands scriptCommands) {
+    protected Map<String, String> runnerEnv(RunContext runContext, ScriptCommands scriptCommands) throws IllegalVariableEvaluationException {
         return new HashMap<>();
     }
 }

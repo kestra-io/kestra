@@ -45,13 +45,17 @@ public abstract class FilesService {
                  }
 
                  var fileContent = runContext.render(input, additionalVars);
-                 if (fileContent.startsWith("kestra://")) {
-                     try (var is = runContext.uriToInputStream(URI.create(fileContent));
-                          var out = new FileOutputStream(file)) {
-                         IOUtils.copyLarge(is, out);
-                     }
+                 if (fileContent == null) {
+                    file.createNewFile();
                  } else {
-                     Files.write(file.toPath(), fileContent.getBytes());
+                     if (fileContent.startsWith("kestra://")) {
+                         try (var is = runContext.uriToInputStream(URI.create(fileContent));
+                              var out = new FileOutputStream(file)) {
+                             IOUtils.copyLarge(is, out);
+                         }
+                     } else {
+                         Files.write(file.toPath(), fileContent.getBytes());
+                     }
                  }
              }));
 

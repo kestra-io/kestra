@@ -112,6 +112,11 @@ public final class DefaultPluginRegistry implements PluginRegistry {
             Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) clazz;
             pluginClassByIdentifier.put(ClassTypeIdentifier.create(clazz), pluginClass);
         });
+        plugin.getAliases().forEach((alias, clazz) -> {
+            @SuppressWarnings("unchecked")
+            Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) clazz;
+            pluginClassByIdentifier.put(ClassTypeIdentifier.create(alias), pluginClass);
+        });
     }
 
     private boolean containsPluginBundle(PluginBundleIdentifier identifier) {

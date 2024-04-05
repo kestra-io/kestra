@@ -120,6 +120,34 @@ class FlowServiceTest {
     }
 
     @Test
+    void aliases() {
+        List<String> warnings = flowService.aliasesPaths("""
+            id: hello-alias
+            namespace: myteam
+
+            tasks:
+              - id: log-alias
+                type: io.kestra.core.runners.test.task.Alias
+                message: Hello, Alias
+              - id: log-task
+                type: io.kestra.core.runners.test.TaskWithAlias
+                message: Hello, Task
+              - id: each
+                type: io.kestra.core.tasks.flows.EachSequential
+                value:\s
+                  - 1
+                  - 2
+                  - 3
+                tasks:
+                  - id: log-alias-each
+                    type: io.kestra.core.runners.test.task.Alias
+                    message: Hello, {{taskrun.value}}""");
+
+        assertThat(warnings.size(), is(2));
+        assertThat(warnings.get(0), is("io.kestra.core.runners.test.task.Alias"));
+    }
+
+    @Test
     void propertyRenamingDeprecation() {
         Flow flow = Flow.builder()
             .id("flowId")

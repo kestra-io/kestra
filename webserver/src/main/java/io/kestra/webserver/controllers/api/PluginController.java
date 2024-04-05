@@ -212,10 +212,12 @@ public class PluginController {
             .findClass(className)
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
 
-        Class baseCls = registeredPlugin
-            .baseClass(className);
-
-        return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
+        Class baseCls = registeredPlugin.baseClass(className);
+        if(registeredPlugin.getAliases().containsKey(className)) {
+            return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls, className);
+        } else {
+            return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
+        }
     }
 
     private String alertReplacement(@NonNull String original) {

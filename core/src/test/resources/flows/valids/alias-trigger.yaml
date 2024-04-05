@@ -1,0 +1,11 @@
+id: alias-trigger
+namespace: io.kestra.tests
+
+triggers:
+  - id: alias
+    type: io.kestra.core.runners.test.trigger.Alias
+
+tasks:
+  - id: log
+    type: io.kestra.core.tasks.log.Log
+    message: Hello World

@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
@@ -56,6 +57,9 @@ public class FlowService {
     @Inject
     ApplicationContext applicationContext;
 
+    @Inject
+    PluginRegistry pluginRegistry;
+
     @Value("${kestra.system-flows.namespace:system}")
     private String systemFlowNamespace;
 
@@ -96,6 +100,42 @@ public class FlowService {
             return List.of("The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.");
         }
         return Collections.emptyList();
+    }
+
+    public List<String> aliasesPaths(String flowSource) {
+        try {
+            List<String> aliases = pluginRegistry.plugins().stream().flatMap(plugin -> plugin.getAliases().keySet().stream()).toList();
+            Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
+            return aliasesPaths(aliases, stringObjectMap);
+        } catch (JsonProcessingException e) {
+            // silent failure (we don't compromise the app / response for warnings)
+            return Collections.emptyList();
+        }
+    }
+
+    private List<String> aliasesPaths(List<String> aliases, Map<String, Object> stringObjectMap) {
+        List<String> warnings = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : stringObjectMap.entrySet()) {
+            if (entry.getValue() instanceof String value && aliases.contains(value)) {
+                warnings.add(value);
+            }
+
+            if (entry.getValue() instanceof Map<?, ?> value) {
+                warnings.addAll(aliasesPaths(aliases, (Map<String, Object>) value));
+            }
+
+            if (entry.getValue() instanceof List<?> value) {
+                List<String> listAliases = value.stream().flatMap(item -> {
+                    if (item instanceof Map<?, ?> map) {
+                        return aliasesPaths(aliases, (Map<String, Object>) map).stream();
+                    }
+                    return Stream.empty();
+                }).toList();
+                warnings.addAll(listAliases);
+            }
+        }
+
+        return warnings;
     }
 
     private Stream<String> deprecationTraversal(String prefix, Object object) {

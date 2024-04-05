@@ -18,12 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -102,6 +97,7 @@ public class PluginScanner {
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner>> taskRunners = new ArrayList<>();
         List<String> guides = new ArrayList<>();
+        Map<String, Class<?>> aliases = new HashMap<>();
 
         if (manifest == null) {
             manifest = getManifest(classLoader);
@@ -138,6 +134,13 @@ public class PluginScanner {
                 log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
                 taskRunners.add(runner.getClass());
             }
+
+            if (plugin.getClass().isAnnotationPresent(io.kestra.core.models.annotations.Plugin.class)) {
+                String[] pluginAliases = plugin.getClass().getAnnotation(io.kestra.core.models.annotations.Plugin.class).aliases();
+                for (String alias:  pluginAliases) {
+                    aliases.put(alias, plugin.getClass());
+                }
+            }
         });
 
         var guidesDirectory = classLoader.getResource("doc/guides");
@@ -169,6 +172,7 @@ public class PluginScanner {
             .secrets(secrets)
             .taskRunners(taskRunners)
             .guides(guides)
+            .aliases(aliases)
             .build();
     }
 

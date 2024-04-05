@@ -32,6 +32,55 @@ public class RetryCaseTest {
     @Inject
     protected RunnerUtils runnerUtils;
 
+    public void retrySuccess() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-success");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+    }
+
+    public void retrySuccessAtFirstAttempt() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-success-first-attempt");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+    }
+
+    public void retryFailed() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-failed");
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    public void retryRandom() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-random");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    public void retryExpo() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-expo");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    public void retryFail() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-and-fail");
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
+    }
+
     public void retryNewExecutionTaskDuration() throws TimeoutException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<List<State.Type>> stateHistory = new AtomicReference<>(new ArrayList<>());

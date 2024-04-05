@@ -1,5 +1,6 @@
 package io.kestra.core.serializers;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -8,6 +9,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -80,4 +83,96 @@ class FileSerdeTest {
 
         assertThat(list.size(), is(2));
     }
+
+    @Test
+    void readAll_fromEmptySource() throws IOException {
+        final Path inputTempFilePath = createTempFile();
+
+        final List<Object> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath)).collectList().block();
+        assertThat(outputValues, empty());
+    }
+
+    @Test
+    void readAll_fromSingleValuedSource() throws IOException {
+        final Path inputTempFilePath = createTempFile();
+
+        final List<String> inputLines = List.of("{id:1,value:\"value1\"}");
+        Files.write(inputTempFilePath, inputLines);
+
+        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
+        assertThat(outputValues, hasSize(1));
+        assertThat(outputValues.get(0), equalTo(new SimpleEntry(1, "value1")));
+    }
+
+    @Test
+    void readAll_fromMultiValuedSource() throws IOException {
+        final Path inputTempFilePath = createTempFile();
+
+        final List<String> inputLines = List.of("{id:1,value:\"value1\"}", "{id:2,value:\"value2\"}", "{id:3,value:\"value3\"}");
+        Files.write(inputTempFilePath, inputLines);
+
+        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
+        assertThat(outputValues, hasSize(3));
+        assertThat(outputValues.get(0), equalTo(new SimpleEntry(1, "value1")));
+        assertThat(outputValues.get(1), equalTo(new SimpleEntry(2, "value2")));
+        assertThat(outputValues.get(2), equalTo(new SimpleEntry(3, "value3")));
+    }
+
+    @Test
+    void writeAll_fromEmptySource() throws IOException {
+        final Path outputTempFilePath = createTempFile();
+
+        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.empty()).block();
+        assertThat(outputCount, is(0L));
+    }
+
+    @Test
+    void writeAll_fromSingleValuedSource() throws IOException {
+        final Path outputTempFilePath = createTempFile();
+
+        final List<SimpleEntry> inputValues = List.of(new SimpleEntry(1, "value1"));
+        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+        assertThat(outputCount, is(1L));
+
+        final List<String> outputLines = Files.readAllLines(outputTempFilePath);
+        assertThat(outputLines, hasSize(1));
+        assertThat(outputLines.get(0), equalTo("{id:1,value:\"value1\"}"));
+    }
+
+    @Test
+    void writeAll_fromMultiValuedSource() throws IOException {
+        final Path outputTempFilePath = createTempFile();
+
+        final List<SimpleEntry> inputValues = List.of(new SimpleEntry(1, "value1"), new SimpleEntry(2, "value2"), new SimpleEntry(3, "value3"));
+        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+        assertThat(outputCount, is(3L));
+
+        final List<String> outputLines = Files.readAllLines(outputTempFilePath);
+        assertThat(outputLines, hasSize(3));
+        assertThat(outputLines.get(0), equalTo("{id:1,value:\"value1\"}"));
+        assertThat(outputLines.get(1), equalTo("{id:2,value:\"value2\"}"));
+        assertThat(outputLines.get(2), equalTo("{id:3,value:\"value3\"}"));
+    }
+
+    @Test
+    void writeAll_fromReadAll() throws IOException {
+        final Path inputTempFilePath = createTempFile();
+        final Path outputTempFilePath = createTempFile();
+
+        final List<String> inputLines = List.of("{id:1,value:\"value1\"}", "{id:2,value:\"value2\"}", "{id:3,value:\"value3\"}");
+        Files.write(inputTempFilePath, inputLines);
+
+        final Flux<Object> inputFlux = FileSerde.readAll(Files.newInputStream(inputTempFilePath));
+        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), inputFlux).block();
+        assertThat(outputCount, is(3L));
+
+        final List<String> outputLines = Files.readAllLines(outputTempFilePath);
+        assertThat(outputLines, equalTo(inputLines));
+    }
+
+    private static Path createTempFile() throws IOException {
+        return Files.createTempFile(FileSerdeTest.class.getSimpleName().toLowerCase() + "_", ".ion");
+    }
+
+    private record SimpleEntry(long id, String value) {}
 }

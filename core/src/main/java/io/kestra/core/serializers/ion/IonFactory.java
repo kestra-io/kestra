@@ -1,6 +1,7 @@
 package io.kestra.core.serializers.ion;
 
 import com.amazon.ion.IonReader;
+import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonSystemBuilder;
 import com.fasterxml.jackson.core.JsonParser;
@@ -12,6 +13,10 @@ import java.io.Reader;
 
 public class IonFactory extends com.fasterxml.jackson.dataformat.ion.IonFactory {
     private static final long serialVersionUID = 1L;
+
+    public IonFactory(IonSystem system) {
+        super(null, system);
+    }
 
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {

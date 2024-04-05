@@ -2,7 +2,7 @@ package io.kestra.core.plugins;
 
 import com.google.common.base.Charsets;
 import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.script.ScriptRunner;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
@@ -36,11 +36,11 @@ public class RegisteredPlugin {
     private final List<Class<?>> controllers;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
-    private final List<Class<? extends ScriptRunner>> scriptRunners;
+    private final List<Class<? extends TaskRunner>> taskRunners;
     private final List<String> guides;
 
     public boolean isValid() {
-        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !controllers.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !scriptRunners.isEmpty();
+        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !controllers.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !taskRunners.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -79,8 +79,8 @@ public class RegisteredPlugin {
             return SecretPluginInterface.class;
         }
 
-        if (this.getScriptRunners().stream().anyMatch(r -> r.getName().equals(cls))) {
-            return ScriptRunner.class;
+        if (this.getTaskRunners().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return TaskRunner.class;
         }
 
         throw new IllegalArgumentException("Unable to find base class from '" + cls + "'");
@@ -105,7 +105,7 @@ public class RegisteredPlugin {
         result.put("controllers", Arrays.asList(this.getControllers().toArray(Class[]::new)));
         result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
-        result.put("script-runners", Arrays.asList(this.getScriptRunners().toArray(Class[]::new)));
+        result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
 
         return result;
     }
@@ -247,9 +247,9 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
-        if (!this.getScriptRunners().isEmpty()) {
-            b.append("[Script Runners: ");
-            b.append(this.getScriptRunners().stream().map(Class::getName).collect(Collectors.joining(", ")));
+        if (!this.getTaskRunners().isEmpty()) {
+            b.append("[Task Runners: ");
+            b.append(this.getTaskRunners().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

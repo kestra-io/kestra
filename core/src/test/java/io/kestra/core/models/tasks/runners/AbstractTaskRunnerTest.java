@@ -1,10 +1,11 @@
-package io.kestra.core.models.script;
+package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -28,7 +29,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
-public abstract class AbstractScriptRunnerTest {
+public abstract class AbstractTaskRunnerTest {
     @Inject private RunContextFactory runContextFactory;
     @Inject private StorageInterface storage;
 
@@ -38,8 +39,8 @@ public abstract class AbstractScriptRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
 
-        var scriptRunner = scriptRunner();
-        var result = scriptRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList());
+        var taskRunner = taskRunner();
+        var result = taskRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList());
         assertThat(result, notNullValue());
         assertThat(result.getExitCode(), is(0));
     }
@@ -50,8 +51,8 @@ public abstract class AbstractScriptRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1")));
 
-        var scriptRunner = scriptRunner();
-        assertThrows(ScriptException.class, () -> scriptRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList()));
+        var taskRunner = taskRunner();
+        assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList()));
     }
 
     @Test
@@ -70,7 +71,7 @@ public abstract class AbstractScriptRunnerTest {
         // This is purely to showcase that no logs is sent as STDERR for now as CloudWatch doesn't seem to send such information.
         Map<String, Boolean> logsWithIsStdErr = new HashMap<>();
 
-        ScriptRunner scriptRunner = scriptRunner();
+        TaskRunner taskRunner = taskRunner();
 
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override
@@ -86,7 +87,7 @@ public abstract class AbstractScriptRunnerTest {
         String wdir = this.needsToSpecifyWorkingDirectory() ? "{{ workingDir }}/" : "";
         List<String> renderedCommands = ScriptService.replaceInternalStorage(
             runContext,
-            scriptRunner.additionalVars(runContext, commands),
+            taskRunner.additionalVars(runContext, commands),
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), null, List.of(
                 "cat " + wdir + "{{internalStorageFile}} && echo",
                 "cat " + wdir + "hello.txt && echo",
@@ -97,12 +98,12 @@ public abstract class AbstractScriptRunnerTest {
                 "echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'"
             )),
             (ignored, file) -> filesToUpload.add(file),
-            scriptRunner instanceof RemoteRunnerInterface
+            taskRunner instanceof RemoteRunnerInterface
         );
         Mockito.when(commands.getCommands()).thenReturn(renderedCommands);
 
         List<String> filesToDownload = List.of("output.txt");
-        RunnerResult run = scriptRunner.run(runContext, commands, filesToUpload, filesToDownload);
+        RunnerResult run = taskRunner.run(runContext, commands, filesToUpload, filesToDownload);
 
         Map<String, URI> outputFiles = ScriptService.uploadOutputFiles(runContext, commands.getOutputDirectory());
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
@@ -162,14 +163,14 @@ public abstract class AbstractScriptRunnerTest {
         return runContextFactory.of(mergedVars);
     }
 
-    protected abstract ScriptRunner scriptRunner();
+    protected abstract TaskRunner taskRunner();
 
     protected String defaultImage() {
         return "ubuntu";
     }
 
-    protected ScriptCommands initScriptCommands(RunContext runContext) {
-        var commands = Mockito.mock(ScriptCommands.class);
+    protected TaskCommands initScriptCommands(RunContext runContext) {
+        var commands = Mockito.mock(TaskCommands.class);
         Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override

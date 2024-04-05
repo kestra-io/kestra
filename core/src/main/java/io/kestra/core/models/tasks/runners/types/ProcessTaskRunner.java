@@ -1,7 +1,7 @@
-package io.kestra.core.models.script.types;
+package io.kestra.core.models.tasks.runners.types;
 
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.script.*;
+import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,30 +25,30 @@ import java.util.Map;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-// all script runners are beta for now, but this one is stable as it was the one used before
+// all task runners are beta for now, but this one is stable as it was the one used before
 @Plugin(beta = true, examples = {})
 @Schema(
-    title = "A script runner that runs script as a process on the Kestra host",
+    title = "A task runner that runs task as a process on the Kestra host",
     description = "When the Kestra Worker that runs this process is terminated, the process will be terminated and the task fail."
 )
-public class ProcessScriptRunner extends ScriptRunner {
+public class ProcessTaskRunner extends TaskRunner {
 
     @Override
-    public RunnerResult run(RunContext runContext, ScriptCommands scriptCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {
+    public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {
         Logger logger = runContext.logger();
-        AbstractLogConsumer defaultLogConsumer = scriptCommands.getLogConsumer();
+        AbstractLogConsumer defaultLogConsumer = taskCommands.getLogConsumer();
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
         Map<String, String> environment = processBuilder.environment();
-        environment.putAll(this.env(runContext, scriptCommands));
+        environment.putAll(this.env(runContext, taskCommands));
 
-        processBuilder.directory(scriptCommands.getWorkingDirectory().toFile());
-        processBuilder.command(scriptCommands.getCommands());
+        processBuilder.directory(taskCommands.getWorkingDirectory().toFile());
+        processBuilder.command(taskCommands.getCommands());
 
         Process process = processBuilder.start();
         long pid = process.pid();
-        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", scriptCommands.getCommands()));
+        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", taskCommands.getCommands()));
 
         LogThread stdOut = new LogThread(process.getInputStream(), defaultLogConsumer, false);
         LogThread stdErr = new LogThread(process.getErrorStream(), defaultLogConsumer, true);
@@ -63,7 +63,7 @@ public class ProcessScriptRunner extends ScriptRunner {
             stdErr.join();
 
             if (exitCode != 0) {
-                throw new ScriptException(exitCode, defaultLogConsumer.getStdOutCount(), defaultLogConsumer.getStdErrCount());
+                throw new TaskException(exitCode, defaultLogConsumer.getStdOutCount(), defaultLogConsumer.getStdErrCount());
             } else {
                 logger.debug("Command succeed with code {}", exitCode);
             }
@@ -81,10 +81,10 @@ public class ProcessScriptRunner extends ScriptRunner {
     }
 
     @Override
-    protected Map<String, Object> runnerAdditionalVars(RunContext runContext, ScriptCommands scriptCommands) {
+    protected Map<String, Object> runnerAdditionalVars(RunContext runContext, TaskCommands taskCommands) {
         return Map.of(
-            ScriptService.VAR_WORKING_DIR, scriptCommands.getWorkingDirectory().toString(),
-            ScriptService.VAR_OUTPUT_DIR, scriptCommands.getOutputDirectory().toString()
+            ScriptService.VAR_WORKING_DIR, taskCommands.getWorkingDirectory().toString(),
+            ScriptService.VAR_OUTPUT_DIR, taskCommands.getOutputDirectory().toString()
         );
     }
 

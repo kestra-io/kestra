@@ -15,7 +15,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
-import io.kestra.core.models.script.ScriptRunner;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -306,7 +306,7 @@ public class RunContext {
             if (execution.getOriginalId() != null) {
                 executionMap.put("originalId", execution.getOriginalId());
             }
-            
+
 
             builder
                 .put("execution", executionMap.build());
@@ -548,8 +548,8 @@ public class RunContext {
         return this;
     }
 
-    public RunContext forScriptRunner(ScriptRunner scriptRunner) {
-        this.initPluginConfiguration(applicationContext, scriptRunner.getType());
+    public RunContext forTaskRunner(TaskRunner taskRunner) {
+        this.initPluginConfiguration(applicationContext, taskRunner.getType());
 
         return this;
     }

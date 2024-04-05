@@ -140,7 +140,7 @@ public class PluginController {
                             plugin.getTriggers().stream(),
                             plugin.getConditions().stream()
                         ),
-                        plugin.getScriptRunners().stream()
+                        plugin.getTaskRunners().stream()
                     )
                 )
                 .map(e -> new AbstractMap.SimpleEntry<>(

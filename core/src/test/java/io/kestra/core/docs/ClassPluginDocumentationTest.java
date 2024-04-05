@@ -1,14 +1,13 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
-import io.kestra.core.models.script.ScriptRunner;
-import io.kestra.core.models.script.types.ProcessScriptRunner;
+import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.models.tasks.runners.types.ProcessTaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -108,18 +107,18 @@ class ClassPluginDocumentationTest {
     }
 
     @Test
-    void scriptRunner() throws URISyntaxException {
+    void taskRunner() throws URISyntaxException {
         Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             RegisteredPlugin scan = pluginScanner.scan();
 
-            ClassPluginDocumentation<? extends ScriptRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, ProcessScriptRunner.class, null);
+            ClassPluginDocumentation<? extends TaskRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, ProcessTaskRunner.class, null);
 
             assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
-            assertThat(doc.getCls(), is("io.kestra.core.models.script.types.ProcessScriptRunner"));
-            assertThat(doc.getPropertiesSchema().get("title"), is("A script runner that runs script as a process on the Kestra host"));
+            assertThat(doc.getCls(), is("io.kestra.core.models.tasks.runners.types.ProcessTaskRunner"));
+            assertThat(doc.getPropertiesSchema().get("title"), is("A task runner that runs task as a process on the Kestra host"));
             assertThat(doc.getDefs(), anEmptyMap());
         }));
     }

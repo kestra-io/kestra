@@ -1,4 +1,4 @@
-package io.kestra.core.models.script;
+package io.kestra.core.models.tasks.runners;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

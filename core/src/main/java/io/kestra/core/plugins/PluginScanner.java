@@ -1,7 +1,7 @@
 package io.kestra.core.plugins;
 
 import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.script.ScriptRunner;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
@@ -89,7 +89,7 @@ public class PluginScanner {
         List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
-        List<Class<? extends ScriptRunner>> scriptRunners = new ArrayList<>();
+        List<Class<? extends TaskRunner>> taskRunners = new ArrayList<>();
         List<Class<?>> controllers = new ArrayList<>();
         List<String> guides = new ArrayList<>();
 
@@ -146,8 +146,8 @@ public class PluginScanner {
                 secrets.add(beanType);
             }
 
-            if (ScriptRunner.class.isAssignableFrom(beanType)) {
-                scriptRunners.add(beanType);
+            if (TaskRunner.class.isAssignableFrom(beanType)) {
+                taskRunners.add(beanType);
             }
 
             if (beanType.isAnnotationPresent(Controller.class)) {
@@ -183,7 +183,7 @@ public class PluginScanner {
             .controllers(controllers)
             .storages(storages)
             .secrets(secrets)
-            .scriptRunners(scriptRunners)
+            .taskRunners(taskRunners)
             .guides(guides)
             .build();
     }

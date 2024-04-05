@@ -17,7 +17,7 @@ export default {
         list({commit}) {
             return this.$http.get(`${apiUrl(this)}/plugins`, {}).then(response => {
                 commit("setPlugins", response.data)
-                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages, plugin.scriptRunners)).flat())
+                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages, plugin.taskRunners)).flat())
                 return response.data;
             })
         },

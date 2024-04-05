@@ -1,13 +1,13 @@
-package io.kestra.core.models.script;
+package io.kestra.core.models.tasks.runners;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Interface for the commands passed to a Script runner.
+ * Interface for the commands passed to a TaskRunner.
  */
-public interface ScriptCommands {
+public interface TaskCommands {
     String getContainerImage();
 
     AbstractLogConsumer getLogConsumer();

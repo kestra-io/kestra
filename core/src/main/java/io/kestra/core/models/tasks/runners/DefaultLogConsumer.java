@@ -1,4 +1,4 @@
-package io.kestra.core.models.script;
+package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.PluginUtilsService;

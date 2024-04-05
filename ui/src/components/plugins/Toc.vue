@@ -74,7 +74,7 @@
             },
             group(plugin) {
                 return Object.keys(plugin)
-                    .filter(r => r === "tasks" || r === "triggers" || r === "conditions" || r === "scriptRunners")
+                    .filter(r => r === "tasks" || r === "triggers" || r === "conditions" || r === "taskRunners")
                     .flatMap(type => {
                         return (plugin[type] === undefined ? {} : plugin[type])
                             .map(task => {

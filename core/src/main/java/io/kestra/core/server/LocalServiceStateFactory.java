@@ -6,7 +6,6 @@ import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,14 +39,12 @@ public class LocalServiceStateFactory {
         final Instant now = Instant.now();
         final ServerInstance server = serverInstanceFactory.newServerInstance();
 
-        ServiceInstance instance = new ServiceInstance(
+        ServiceInstance instance = ServiceInstance.create(
             service.getId(),
             service.getType(),
-            service.getState(),
             server,
             now,
             now,
-            List.of(),
             serverConfig,
             Optional.ofNullable(properties).orElse(Map.of()),
             service.getMetrics()

@@ -43,6 +43,33 @@ public record ServiceInstance(
     // TimestampedEvent type for state updated.
     private static final String SERVICE_STATE_UPDATED_EVENT_TYPE = "service.state.updated";
 
+    /**
+     * Factory method for constructing an initial {@link ServiceInstance} with {@link ServiceState#CREATED} state.
+     *
+     * @return a new {@link ServiceInstance}.
+     */
+    public static ServiceInstance create(final String id,
+                                         final Service.ServiceType type,
+                                         final ServerInstance server,
+                                         final Instant createdAt,
+                                         final Instant updatedAt,
+                                         final ServerConfig config,
+                                         final Map<String, Object> props,
+                                         final Set<Metric> metrics) {
+        return new ServiceInstance(
+            id,
+            type,
+            ServiceState.CREATED,
+            server,
+            createdAt,
+            updatedAt,
+            List.of(new TimestampedEvent(updatedAt, "Service connected.", SERVICE_STATE_UPDATED_EVENT_TYPE, ServiceState.CREATED)),
+            config,
+            props,
+            metrics
+        );
+    }
+
     public ServiceInstance(
         String id,
         Service.ServiceType type,
@@ -148,13 +175,13 @@ public record ServiceInstance(
 
         // add a default reason if a state changed is detected.
         if (reason == null && !state.equals(newState)) {
-            reason =  String.format("Service transitioned to the '%s' state.", newState);
+            reason = String.format("Service transitioned to the '%s' state.", newState);
         }
 
         List<TimestampedEvent> events = this.events;
         if (reason != null) {
             events = new ArrayList<>(events);
-            events.add(new TimestampedEvent(updatedAt, reason, SERVICE_STATE_UPDATED_EVENT_TYPE));
+            events.add(new TimestampedEvent(updatedAt, reason, SERVICE_STATE_UPDATED_EVENT_TYPE, newState));
         }
         long nextSeqId = seqId + 1;
         return new ServiceInstance(
@@ -200,7 +227,8 @@ public record ServiceInstance(
      * @param ts    The instant of this event.
      * @param value The value of this event.
      * @param type  The type of this event.
+     * @param state The service state during this event.
      */
-    public record TimestampedEvent(Instant ts, String value, String type) {
+    public record TimestampedEvent(Instant ts, String value, String type, ServiceState state) {
     }
 }

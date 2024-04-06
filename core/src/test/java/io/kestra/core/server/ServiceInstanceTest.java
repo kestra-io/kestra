@@ -88,6 +88,6 @@ class ServiceInstanceTest {
         // Then
         Assertions.assertNotEquals(instance, result);
         Assertions.assertEquals(List.of(
-            new ServiceInstance.TimestampedEvent(now, "Disconnected", "service.state.updated")), result.events());
+            new ServiceInstance.TimestampedEvent(now, "Disconnected", "service.state.updated", Service.ServiceState.DISCONNECTED)), result.events());
     }
 }

@@ -528,7 +528,6 @@ public class ExecutorService {
             // make sure that the workerTaskResult of the parent task is not sent
             if (taskRun.getState().isRetrying() && taskRun.getParentTaskRunId() != null) {
                 list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
-
             }
         }
 

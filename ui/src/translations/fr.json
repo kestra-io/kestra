@@ -457,13 +457,7 @@
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
     "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
     "welcome button create": "Créer mon premier flow",
-    "get started": "Démarrer",
-    "get started content": "Prêt à faire le grand saut? Jetez un oeil à notre documentation pour un guide étape par étape.",
-    "watch demo": "Voir notre démo",
-    "watch demo content": "Obtenez un aperçu de la puissance de Kestra grâce à notre vidéo de démonstration.",
     "live help": "Aide en direct",
-    "need help?": "Besoin d'aide?",
-    "need help? content": "Besoin d'assistance pour une fonctionnalité ou un flow? Notre communauté d'ingénieurs data et de développeurs sont là pour aider.",
     "show task documentation": "Afficher la documentation des tâches",
     "hide task documentation": "Cacher la documentation des tâches",
     "show task documentation in editor": "Afficher la documentation dans l'éditeur",
@@ -611,6 +605,20 @@
     "undefined": "Non défini",
     "execution-include-non-terminated": "Inclure les exécutions non terminées ?",
     "execution-warn-deleting-still-running": "Les exécutions en cours ne seront pas arrêtées et doivent être stoppées avant d'être supprimées.",
-    "originalCreatedDate": "Date de création originale"
+    "originalCreatedDate": "Date de création originale",
+    "welcome": {
+      "started": {
+        "title": "Démarrez en 4 étapes faciles"
+      },
+      "product-tour": {
+        "title": "Faites un tour du produit"
+      },
+      "doc": {
+        "title": "Docs"
+      },
+      "need-help": {
+        "title": "Besoin d'aide ?"
+      }
+    }
   }
 }

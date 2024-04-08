@@ -474,13 +474,7 @@
     "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
     "welcome display require": "Run your <strong>first flow</strong> to get started",
     "welcome button create": "Create my first flow",
-    "get started": "Get started",
-    "get started content": "Check our documentation for a step-by-step walkthrough.",
-    "watch demo": "Take a product tour",
-    "watch demo content": "See the product tour video explaining key concepts.",
     "live help": "Live help",
-    "need help?": "Need help?",
-    "need help? content": "Need assistance with a specific feature or flow? Our developer community is here to help.",
     "show task documentation": "Show task documentation",
     "hide task documentation": "Hide task documentation",
     "show task documentation in editor": "Show task documentation in the editor",
@@ -635,6 +629,20 @@
     "undefined": "Undefined",
     "execution-include-non-terminated": "Include non-terminated executions?",
     "execution-warn-deleting-still-running": "Executions still running will not be stopped and must be killed before being deleting.",
-    "originalCreatedDate": "Original creation date"
+    "originalCreatedDate": "Original creation date",
+    "welcome": {
+      "started": {
+        "title": "Get started in 4 easy steps"
+      },
+      "product-tour": {
+        "title": "Take a product tour"
+      },
+      "doc": {
+        "title": "Docs"
+      },
+      "need-help": {
+        "title": "Need help?"
+      }
+    }
   }
 }

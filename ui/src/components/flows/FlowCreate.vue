@@ -30,6 +30,22 @@
             EditorView,
             TopNavBar
         },
+        created() {
+            console.log(this.$route.query)
+            if (this.$route.query.reset) {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted: false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined
+                });
+                this.$tours["guidedTour"].start();
+            }
+        },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);
         },

@@ -395,7 +395,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter
     @NoArgsConstructor
     public static class ForEachItemExecutable extends Task implements ExecutableTask<Output> {
-        static final String SUFFIX = "_item";
+        static final String SUFFIX = "_items";
 
         private Map<String, Object> inputs;
         private Boolean inheritLabels;

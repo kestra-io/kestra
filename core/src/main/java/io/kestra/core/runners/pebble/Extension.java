@@ -34,6 +34,10 @@ public class Extension extends AbstractExtension {
     @Nullable
     private RenderFunction renderFunction;
 
+    @Inject
+    @Nullable
+    private RenderOnceFunction renderOnceFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -102,6 +106,9 @@ public class Extension extends AbstractExtension {
         functions.put("read", readFileFunction);
         if (this.renderFunction != null) {
             functions.put("render", renderFunction);
+        }
+        if (this.renderOnceFunction != null) {
+            functions.put("renderOnce", renderOnceFunction);
         }
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());

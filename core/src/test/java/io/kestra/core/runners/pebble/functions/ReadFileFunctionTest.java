@@ -9,6 +9,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -138,6 +139,7 @@ class ReadFileFunctionTest {
 
     @Test
     @Property(name="kestra.server-type", value="EXECUTOR")
+    @Disabled("Moved on the next release")
     void readFailOnNonWorkerNodes() {
         IllegalVariableEvaluationException exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
         assertThat(exception.getMessage(), containsString("The 'read' function can only be used in the Worker as it access the internal storage."));

@@ -36,9 +36,11 @@ public class ReadFileFunction implements Function {
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-        if (!calledOnWorker()) {
-            throw new PebbleException(null, "The 'read' function can only be used in the Worker as it access the internal storage.", lineNumber, self.getName());
-        }
+        // TODO it will be enabled on the next release so the code is kept commented out
+        //  don't forget to also re-enabled the test
+//        if (!calledOnWorker()) {
+//            throw new PebbleException(null, "The 'read' function can only be used in the Worker as it access the internal storage.", lineNumber, self.getName());
+//        }
 
         if (!args.containsKey("path")) {
             throw new PebbleException(null, ERROR_MESSAGE, lineNumber, self.getName());

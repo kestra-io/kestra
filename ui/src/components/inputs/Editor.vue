@@ -515,10 +515,10 @@
         height: 100%;
 
         &.get-started {
-            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat center;
+            background: url("../../assets/onboarding/onboarding-doc-light.svg") no-repeat center;
 
             html.dark & {
-                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
+                background: url("../../assets/onboarding/onboarding-doc-dark.svg") no-repeat center;
             }
         }
     }

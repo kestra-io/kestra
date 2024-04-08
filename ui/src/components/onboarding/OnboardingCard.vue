@@ -13,7 +13,6 @@
 </template>
 
 <script>
-    import {ElMessageBox} from "element-plus"
     import imageStarted from "../../assets/onboarding/onboarding-started-dark.svg"
     import imageHelp from "../../assets/onboarding/onboarding-help-dark.svg"
     import imageDoc from "../../assets/onboarding/onboarding-docs-dark.svg"

@@ -470,7 +470,7 @@ public class ExecutorService {
              */
             if (!executor.getExecution().getState().isRetrying() &&
                 taskRun.getState().isFailed() &&
-                !(task instanceof FlowableTask<?>) &&
+                (task instanceof RunnableTask<?>) &&
                 (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null ||
                     executor.getFlow().getRetry() != null  ||
                     (parentTask != null && parentTask.getRetry() != null))

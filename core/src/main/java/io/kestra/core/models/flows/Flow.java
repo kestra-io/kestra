@@ -242,6 +242,15 @@ public class Flow implements DeletedInterface, TenantInterface {
         return allErrors;
     }
 
+    public Task findParentTasksByTaskId(String taskId) {
+        return allTasksWithChilds()
+            .stream()
+            .filter(Task::isFlowable)
+            .filter(task -> ((FlowableTask<?>) task).allChildTasks().stream().anyMatch(t -> t.getId().equals(taskId)))
+            .findFirst()
+            .orElse(null);
+    }
+
     public Task findTaskByTaskId(String taskId) throws InternalException {
         return allTasks()
             .flatMap(t -> t.findById(taskId).stream())

@@ -454,11 +454,15 @@ public class ExecutorService {
             }
 
             Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
-            TaskRun parentTaskRun = null;
+            String taskId = taskRun.getTaskId();
             Task parentTask = null;
             if (taskRun.getParentTaskRunId() != null) {
-                parentTaskRun = executor.getExecution().findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
-                parentTask = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
+                do {
+                    parentTask = executor.getFlow().findParentTasksByTaskId(taskId);
+                    if (parentTask != null) {
+                        taskId = parentTask.getId();
+                    }
+                } while(parentTask != null && parentTask.getRetry() == null);
             }
 
             /*

@@ -6,7 +6,7 @@
                     <el-row justify="space-around" class="p-5">
                         <el-col :xs="24" :sm="24" :md="24" :lg="12" :xl="12" justify="space-between">
                             <el-row class="mb-5" justify="center">
-                                <img class="img-fluid" :src="onboardingImage" alt="Kestra Logo">
+                                <img class="img-fluid" :src="logo" alt="Kestra Logo">
                             </el-row>
                             <el-row justify="center">
                                 <router-link :to="{name: 'flows/create'}">
@@ -43,6 +43,7 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import OnboardingBottom from "./OnboardingBottom.vue";
     import onboardingImage from "../../assets/onboarding/onboarding-dark.svg"
+    import onboardingImageLight from "../../assets/onboarding/onboarding-light.svg"
     import codeImage from "../../assets/onboarding/onboarding-code-dark.svg"
 
     export default {
@@ -58,7 +59,12 @@
             }
         },
         computed: {
-            ...mapGetters("core", ["guidedProperties"])
+            ...mapGetters("core", ["guidedProperties"]),
+            logo() {
+                // get theme
+                console.log((localStorage.getItem("theme") || "light") === "light")
+                return (localStorage.getItem("theme") || "light") === "light" ? onboardingImageLight : onboardingImage;
+            }
         }
     }
 </script>

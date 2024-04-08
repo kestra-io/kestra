@@ -82,7 +82,7 @@ allprojects {
 
             // ugly bug on crypto plugin
             force('org.bouncycastle:bcprov-jdk18on:1.77')
-            force('org.bouncycastle:bcpg-jdk18on:1.77')
+            force('org.bouncycastle:bcpg-jdk18on:1.78')
 
             // ugly bug for jackson
             force("com.fasterxml.jackson:jackson-bom:" + jacksonVersion)

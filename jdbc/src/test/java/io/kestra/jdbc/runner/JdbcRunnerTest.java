@@ -320,44 +320,4 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
-
-    @Test
-    void retryNewExecutionTaskDuration() throws TimeoutException {
-        retryCaseTest.retryNewExecutionTaskDuration();
-    }
-
-    @Test
-    void retryNewExecutionTaskAttempts() throws TimeoutException {
-        retryCaseTest.retryNewExecutionTaskAttempts();
-    }
-
-    @Test
-    void retryNewExecutionFlowDuration() throws TimeoutException {
-        retryCaseTest.retryNewExecutionFlowDuration();
-    }
-
-    @Test
-    void retryNewExecutionFlowAttempts() throws TimeoutException {
-        retryCaseTest.retryNewExecutionFlowAttempts();
-    }
-
-    @Test
-    void retryFailedTaskDuration() throws TimeoutException {
-        retryCaseTest.retryFailedTaskDuration();
-    }
-
-    @Test
-    void retryFailedTaskAttempts() throws TimeoutException {
-        retryCaseTest.retryFailedTaskAttempts();
-    }
-
-    @Test
-    void retryFailedFlowDuration() throws TimeoutException {
-        retryCaseTest.retryFailedFlowDuration();
-    }
-
-    @Test
-    void retryFailedFlowAttempts() throws TimeoutException {
-        retryCaseTest.retryFailedFlowAttempts();
-    }
 }

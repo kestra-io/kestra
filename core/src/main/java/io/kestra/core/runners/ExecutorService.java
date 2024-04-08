@@ -453,58 +453,84 @@ public class ExecutorService {
                 workerTaskResult.ifPresent(list::add);
             }
 
+            Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
+            TaskRun parentTaskRun = null;
+            Task parentTask = null;
+            if (taskRun.getParentTaskRunId() != null) {
+                parentTaskRun = executor.getExecution().findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
+                parentTask = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
+            }
+
             /*
              * Check if the task is failed and if it has a retry policy
              */
             if (!executor.getExecution().getState().isRetrying() &&
                 taskRun.getState().isFailed() &&
-                (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null || executor.getFlow().getRetry() != null)
+                !(task instanceof FlowableTask<?>) &&
+                (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null ||
+                    executor.getFlow().getRetry() != null  ||
+                    (parentTask != null && parentTask.getRetry() != null))
             ) {
                 Instant nextRetryDate;
                 AbstractRetry retry;
+                AbstractRetry.Behavior behavior;
                 ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
                     .taskRunId(taskRun.getId())
                     .executionId(executor.getExecution().getId());
                 // Case task has a retry
-                if (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null) {
-                    retry = executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry();
-                    AbstractRetry.Behavior behavior = retry.getBehavior();
+                if (task.getRetry() != null) {
+                    retry = task.getRetry();
+                    behavior = retry.getBehavior();
                     nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                         taskRun.nextRetryDate(retry, executor.getExecution()) :
                         taskRun.nextRetryDate(retry);
+                }
+                // Case parent task has a retry
+                else if (parentTask != null && parentTask.getRetry() != null) {
+                    retry = parentTask.getRetry();
+                    behavior = retry.getBehavior();
+                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
+                        taskRun.nextRetryDate(retry, executor.getExecution()) :
+                        taskRun.nextRetryDate(retry);
+                 }
+                // Case flow has a retry
+                else {
+                    retry = executor.getFlow().getRetry();
+                    behavior = retry.getBehavior();
+                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
+                        executionService.nextRetryDate(retry, executor.getExecution()) :
+                        taskRun.nextRetryDate(retry);
+                }
+                if (nextRetryDate != null) {
                     executionDelayBuilder
                         .date(nextRetryDate)
                         .state(State.Type.RUNNING)
                         .delayType(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                             ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
                             ExecutionDelay.DelayType.RESTART_FAILED_TASK);
-                }
-                // Case flow has a retry
-                else {
-                    retry = executor.getFlow().getRetry();
-                    AbstractRetry.Behavior behavior = retry.getBehavior();
-                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                        executionService.nextRetryDate(retry, executor.getExecution()) :
-                        taskRun.nextRetryDate(retry);
-
-                    executionDelayBuilder
-                        .date(nextRetryDate)
-                        .state(State.Type.RUNNING)
-                        .delayType(retry.getBehavior().equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                            ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
-                            ExecutionDelay.DelayType.RESTART_FAILED_TASK);
-                }
-                if (nextRetryDate != null) {
                     executionDelays.add(executionDelayBuilder.build());
                     executor.withExecution(executor.getExecution()
+                            .withTaskRun(taskRun.withState(State.Type.RETRYING))
                         .withState(retry.getBehavior().equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                             State.Type.RETRIED :
                             State.Type.RETRYING
                             ),
                         "handleRetryTask");
+                    // Prevent workerTaskResult of flowable to be sent
+                    // because one of its children is retrying
+                    if (taskRun.getParentTaskRunId() != null) {
+                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                    }
                 }
             }
+
+            // If the task is retrying
+            // make sure that the workerTaskResult of the parent task is not sent
+            if (taskRun.getState().isRetrying() && taskRun.getParentTaskRunId() != null) {
+                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+            }
         }
+
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskResult");
 

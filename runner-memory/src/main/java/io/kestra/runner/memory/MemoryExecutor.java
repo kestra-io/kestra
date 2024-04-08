@@ -223,7 +223,7 @@ public class MemoryExecutor implements ExecutorInterface {
                                 try {
                                     ExecutionState executionState = EXECUTIONS.get(workerTaskResultDelay.getExecutionId());
 
-                                    if (executionState.execution.findTaskRunByTaskRunId(workerTaskResultDelay.getTaskRunId()).getState().getCurrent() == State.Type.PAUSED) {
+                                    if (workerTaskResultDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
                                         Execution markAsExecution = executionService.markAs(
                                             executionState.execution,
                                             workerTaskResultDelay.getTaskRunId(),
@@ -231,7 +231,7 @@ public class MemoryExecutor implements ExecutorInterface {
                                         );
                                         EXECUTIONS.put(workerTaskResultDelay.getExecutionId(), executionState.from(markAsExecution));
                                         executionQueue.emit(markAsExecution);
-                                    } else if (executionState.execution.findTaskRunByTaskRunId(workerTaskResultDelay.getTaskRunId()).getState().getCurrent().equals(State.Type.FAILED)) {
+                                    } else if (workerTaskResultDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                                         Execution newAttempt = executionService.retryTask(
                                             executionState.execution,
                                             workerTaskResultDelay.getTaskRunId()

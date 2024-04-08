@@ -170,7 +170,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("title: ProcessTaskRunner"));
-        assertThat(render, containsString("A task runner that runs task as a process on the Kestra host"));
+        assertThat(render, containsString("Task runner that executes a task as a subprocess on the Kestra host."));
         assertThat(render, containsString("\uD83D\uDEC8 This plugin is currently in beta"));
     }
 }

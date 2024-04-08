@@ -118,7 +118,7 @@ class ClassPluginDocumentationTest {
 
             assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
             assertThat(doc.getCls(), is("io.kestra.core.models.tasks.runners.types.ProcessTaskRunner"));
-            assertThat(doc.getPropertiesSchema().get("title"), is("A task runner that runs task as a process on the Kestra host"));
+            assertThat(doc.getPropertiesSchema().get("title"), is("Task runner that executes a task as a subprocess on the Kestra host."));
             assertThat(doc.getDefs(), anEmptyMap());
         }));
     }

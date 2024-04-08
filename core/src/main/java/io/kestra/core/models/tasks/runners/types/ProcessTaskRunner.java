@@ -1,5 +1,6 @@
 package io.kestra.core.models.tasks.runners.types;
 
+import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
@@ -19,17 +20,65 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+
+
 @Introspected
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-// all task runners are beta for now, but this one is stable as it was the one used before
-@Plugin(beta = true, examples = {})
 @Schema(
-    title = "A task runner that runs task as a process on the Kestra host",
-    description = "When the Kestra Worker that runs this process is terminated, the process will be terminated and the task fail."
+    title = "Task runner that executes a task as a subprocess on the Kestra host.",
+    description = """
+        To access the task's working directory, use the `{{workingDir}}` Pebble expression or the `WORKING_DIR` environment variable. Input files and namespace files will be available in this directory.
+
+        To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
+
+        Note that when the Kestra Worker running this task is terminated, the process will be interrupted and re-created at worker restart."""
+)
+@Plugin(
+    examples = {
+        @Example(
+            title = "Execute a Shell command.",
+            code = """
+                id: new-shell
+                namespace: myteam
+
+                tasks:
+                  - id: shell
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    taskRunner:
+                      type: io.kestra.core.models.tasks.runners.types.ProcessTaskRunner
+                    commands:
+                    - echo "Hello World\"""",
+            full = true
+        ),
+        @Example(
+            title = "Pass input files to the task, execute a Shell command, then retrieve output files.",
+            code = """
+                id: new-shell-with-file
+                namespace: myteam
+
+                inputs:
+                  - id: file
+                    type: FILE
+
+                tasks:
+                  - id: shell
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    inputFiles:
+                      data.txt: "{{inputs.file}}"
+                    outputFiles:
+                      - out.txt
+                    taskRunner:
+                      type: io.kestra.core.models.tasks.runners.types.ProcessTaskRunner
+                    commands:
+                    - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
+            full = true
+        )
+    },
+    beta = true // all task runners are beta for now, but this one is stable as it was the one used before
 )
 public class ProcessTaskRunner extends TaskRunner {
 

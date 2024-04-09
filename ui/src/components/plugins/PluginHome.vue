@@ -1,5 +1,5 @@
 <template>
-    <el-row v-if="icons.length > 0" justify="center" align="middle" class="headband-row">
+    <el-row justify="center" align="middle" class="headband-row">
         <el-col justify="center">
             <p class="fw-lighter fs-5 text-center text-truncate">
                 {{ $t("pluginPage.title1") }}

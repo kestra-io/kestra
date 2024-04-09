@@ -5,7 +5,7 @@
             <el-col :span="4" v-if="pluginIsSelected">
                 <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins" />
             </el-col>
-            <el-col :span="(pluginIsSelected) ? 18 : 22" class="markdown" v-loading="isLoading">
+            <el-col :span="(pluginIsSelected) ? 18 : 24" class="markdown" v-loading="isLoading">
                 <markdown v-if="pluginIsSelected" :source="plugin.markdown" :permalink="true" />
                 <div v-else>
                     <plugin-home v-if="plugins" :plugins="plugins" />

@@ -1,5 +1,5 @@
 <template>
-    <el-card shadow="never" v-if="execution">
+    <el-card shadow="never" v-if="execution && flow">
         <table>
             <thead>
                 <tr>
@@ -11,17 +11,17 @@
                     </td>
                 </tr>
             </thead>
-            <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
+            <tbody v-for="serie in filteredSeries" :key="serie.id">
                 <tr>
                     <th>
                         <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0">
                             <template #content>
-                                <code>{{ currentTaskRun.name }}</code>
-                                <small v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</small>
+                                <code>{{ serie.name }}</code>
+                                <small v-if="serie.task && serie.task.value"><br>{{ serie.task.value }}</small>
                             </template>
                             <span>
-                                <code>{{ currentTaskRun.name }}</code>
-                                <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                                <code>{{ serie.name }}</code>
+                                <small v-if="serie.task && serie.task.value"> {{ serie.task.value }}</small>
                             </span>
                         </el-tooltip>
                     </th>
@@ -29,19 +29,19 @@
                         <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
                             <template #content>
                                 <span style="white-space: pre-wrap;">
-                                    {{ currentTaskRun.tooltip }}
+                                    {{ serie.tooltip }}
                                 </span>
                             </template>
                             <div
-                                :style="{left: currentTaskRun.start + '%', width: currentTaskRun.width + '%'}"
+                                :style="{left: serie.start + '%', width: serie.width + '%'}"
                                 class="task-progress"
-                                @click="onTaskSelect(currentTaskRun.task)"
+                                @click="onTaskSelect(serie.task)"
                             >
                                 <div class="progress">
                                     <div
                                         class="progress-bar"
-                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
+                                        :style="{left: serie.left + '%', width: (100-serie.left) + '%'}"
+                                        :class="'bg-' + serie.color + (serie.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                         role="progressbar"
                                     />
                                 </div>
@@ -49,16 +49,16 @@
                         </el-tooltip>
                     </td>
                 </tr>
-                <tr v-if="selectedTaskRun?.id === currentTaskRun.id">
+                <tr v-if="selectedTaskRuns.includes(serie.id)">
                     <td :colspan="dates.length + 1" class="p-0 pb-2">
                         <task-run-details
-                            :task-run-id="selectedTaskRun.id"
+                            :task-run-id="serie.id"
                             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                             level="TRACE"
                             @follow="forwardEvent('follow', $event)"
                             :target-execution="execution"
                             :target-flow="flow"
-                            :show-logs="taskType(currentTaskRun) !== 'io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable' && taskType(currentTaskRun) !== undefined"
+                            :show-logs="taskTypeByTaskRunId[serie.task.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                         />
                     </td>
                 </tr>
@@ -72,7 +72,7 @@
     import State from "../../utils/state";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
-    import {YamlUtils} from "@kestra-io/ui-libs";
+    import FlowUtils from "../../utils/flowUtils";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
@@ -86,7 +86,8 @@
                 dates: [],
                 duration: undefined,
                 usePartialSerie: true,
-                selectedTaskRun: undefined
+                selectedTaskRuns: [],
+                taskTypesToExclude: ["io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
             };
         },
         watch: {
@@ -98,10 +99,21 @@
                     this.compute()
                 }
             },
-            $route(oldValue, newValue) {
+            $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
                     this.compute()
                 }
+            },
+            forEachItemsTaskRunIds: {
+                handler(newValue, oldValue) {
+                    if (newValue.length > 0) {
+                        const newEntriesAmount = newValue.length - (oldValue?.length ?? 0);
+                        for (let i = newValue.length - newEntriesAmount; i < newValue.length; i++) {
+                            this.selectedTaskRuns.push(newValue[i].id);
+                        }
+                    }
+                },
+                immediate: true
             }
         },
         mounted() {
@@ -115,6 +127,21 @@
             },
             partialSeries() {
                 return (this.series || []).slice(0, this.usePartialSerie ? TASKRUN_THRESHOLD : this.taskRunsCount)
+            },
+            taskTypeByTaskRun() {
+                return this.partialSeries.map(serie => [serie.task, this.taskType(serie.task)]);
+            },
+            taskTypeByTaskRunId() {
+                return Object.fromEntries(this.taskTypeByTaskRun.map(([taskRun, taskType]) => [taskRun.id, taskType]));
+            },
+            forEachItemsTaskRunIds() {
+                return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
+            },
+            filteredSeries() {
+                return this.partialSeries
+                    .filter(serie =>
+                        !this.taskTypesToExclude.includes(this.taskTypeByTaskRunId[serie.task.id])
+                    );
             },
             start() {
                 return this.execution ? ts(this.execution.state.histories[0].date) : 0;
@@ -268,19 +295,19 @@
                 this.dates = dates;
             },
             onTaskSelect(taskRun) {
-                if(this.selectedTaskRun?.id === taskRun.id) {
-                    this.selectedTaskRun = undefined
+                if(this.selectedTaskRuns.includes(taskRun.id)) {
+                    this.selectedTaskRuns = this.selectedTaskRuns.filter(id => id !== taskRun.id);
                     return
                 }
 
-                this.selectedTaskRun = taskRun;
+                this.selectedTaskRuns.push(taskRun.id);
             },
             stopRealTime() {
                 this.realTime = false
             },
             taskType(taskRun) {
-                const task = YamlUtils.parse(YamlUtils.extractTask(this.flow.source, taskRun.task.taskId));
-                return task.type;
+                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                return task?.type;
             }
         },
         unmounted() {

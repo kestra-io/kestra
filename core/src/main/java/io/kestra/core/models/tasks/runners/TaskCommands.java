@@ -21,4 +21,10 @@ public interface TaskCommands {
     Path getOutputDirectory();
 
     Map<String, String> getEnv();
+
+    Boolean getEnableOutputDirectory();
+
+    default boolean outputDirectoryEnabled() {
+        return Boolean.TRUE.equals(this.getEnableOutputDirectory());
+    }
 }

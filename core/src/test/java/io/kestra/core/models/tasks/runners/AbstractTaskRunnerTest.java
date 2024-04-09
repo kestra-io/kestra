@@ -46,6 +46,18 @@ public abstract class AbstractTaskRunnerTest {
     }
 
     @Test
+    protected void outputDirDisabled() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+        var commands = initScriptCommands(runContext);
+        Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
+        Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
+
+        var taskRunner = taskRunner();
+        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR), is(false));
+        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR), is(false));
+    }
+
+    @Test
     protected void fail() {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
@@ -184,10 +196,9 @@ public abstract class AbstractTaskRunnerTest {
         var outputDirectory = workingDirectory.resolve(IdUtils.create());
         outputDirectory.toFile().mkdirs();
         Mockito.when(commands.getOutputDirectory()).thenReturn(outputDirectory);
-        Mockito.when(commands.getAdditionalVars()).thenReturn(new HashMap<>(Map.of(
-            "workingDir", workingDirectory.toAbsolutePath().toString(),
-            "outputDir", outputDirectory.toString()
-        )));
+        Mockito.when(commands.getAdditionalVars()).thenReturn(Collections.emptyMap());
+        Mockito.when(commands.getEnableOutputDirectory()).thenReturn(true);
+        Mockito.when(commands.outputDirectoryEnabled()).thenReturn(true);
 
         return commands;
     }

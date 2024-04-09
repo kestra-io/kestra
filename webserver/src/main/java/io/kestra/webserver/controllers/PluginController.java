@@ -155,6 +155,20 @@ public class PluginController {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
     }
 
+    @Get(uri = "icons/groups")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
+    public Map<String, PluginIcon> pluginGroupIcons() {
+        return pluginService
+            .allPlugins()
+            .stream()
+            .collect(Collectors.toMap(
+                RegisteredPlugin::group,
+                plugin -> new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false),
+                (a1, a2) -> a1
+            ));
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)

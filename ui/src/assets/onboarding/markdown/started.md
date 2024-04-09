@@ -1,4 +1,3 @@
-1. Select a cloud platform
-2. Select a use-case
-3. Choose and use a [blueprints](/blueprint)
-4. Take a product tour with this use-case 
+1. Create your first flow
+2. Save and Execute your flow
+3. Explore [blueprints](/blueprint) to learn more

@@ -36,6 +36,11 @@
         computed: {
             State() {
                 return State
+            },
+            updateThrottled() {
+                return throttle(function () {
+                    this.localSubflowStatus = this.subflowsStatus
+                }, 1000);
             }
         },
         data() {
@@ -89,10 +94,7 @@
                     name: "executions/list",
                     query: queries
                 };
-            },
-            updateThrottled: throttle(function () {
-                this.localSubflowStatus = this.subflowsStatus
-            }, 1000)
+            }
         }
     }
 </script>

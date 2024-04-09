@@ -1,5 +1,5 @@
 <template>
-    <div class="plugins-list sticky-top">
+    <div class="plugins-list">
         <el-input
             class="search p-2"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"

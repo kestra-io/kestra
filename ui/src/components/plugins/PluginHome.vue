@@ -1,5 +1,5 @@
 <template>
-    <el-row justify="center" align="middle" class="headband-row">
+    <el-row v-if="icons.length > 0" justify="center" align="middle" class="headband-row">
         <el-col justify="center">
             <p class="fw-lighter fs-5 text-center text-truncate">
                 {{ $t("pluginPage.title1") }}
@@ -17,7 +17,7 @@
             clearable
         />
     </el-row>
-    <div class="plugins-container">
+    <div class="plugins-container pb-2">
         <el-tooltip v-for="plugin in pluginsList" :key="plugin.title">
             <template #content>
                 <div class="tasks-tooltips">
@@ -68,9 +68,9 @@
                     </ul>
                 </div>
             </template>
-            <div class="plugin-card" @click="openGroup(plugin)">
+            <div v-if="isVisible(plugin)" class="plugin-card" @click="openGroup(plugin)">
                 <task-icon class="size" :only-icon="true" :cls="plugin.group" :icons="icons" />
-                <span>{{ plugin.title.capitalize() }}</span>
+                <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
             </div>
         </el-tooltip>
     </div>
@@ -109,18 +109,24 @@
                 }, 0)
             },
             pluginsList() {
-                return this.plugins.filter(plugin => {
-                    return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                        plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                }).sort((a, b) => {
-                    const nameA = a.group.toLowerCase(),
-                          nameB = b.group.toLowerCase();
+                return this.plugins
+                    .filter((plugin, index, self) => {
+                        return index === self.findIndex((t) => (
+                            t.title === plugin.title && t.group === plugin.group
+                        ));
+                    })
+                    .filter(plugin => {
+                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
+                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
+                    }).sort((a, b) => {
+                        const nameA = a.group.toLowerCase(),
+                              nameB = b.group.toLowerCase();
 
-                    return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-                })
+                        return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
+                    })
 
             }
         },
@@ -132,6 +138,9 @@
             },
             openPlugin(cls) {
                 this.$router.push({name: "plugins/view", params: {cls: cls}})
+            },
+            isVisible(plugin) {
+                return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
             }
 
         }

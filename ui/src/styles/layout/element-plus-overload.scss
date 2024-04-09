@@ -754,17 +754,19 @@ form.ks-horizontal {
     --el-collapse-content-font-size: var(--font-size-base);
     --el-collapse-border-color: var(--bs-border-color);
 
-    border-radius: var(--bs-border-radius-lg);
-    border: 1px solid var(--bs-border-color);
+    border: none;
 
     .el-collapse-item__header {
         padding: calc(var(--spacer) / 2);
-        border-bottom: 1px solid var(--bs-border-color);
-        background-color: var(--bs-gray-100-lighten-2);
+        border: none;
     }
 
     .el-collapse-item__content {
         padding: calc(var(--spacer) / 2);
+    }
+
+    .el-collapse-item__wrap {
+        border: none;
     }
 }
 

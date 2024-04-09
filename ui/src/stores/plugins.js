@@ -53,6 +53,13 @@ export default {
                 return icons;
             });
         },
+        groupIcons(_) {
+            return Promise.all([
+                this.$http.get(`${apiUrl(this)}/plugins/icons/groups`, {}),
+            ]).then(responses => {
+                return responses[0].data
+            });
+        },
         loadInputsType({commit}) {
             return this.$http.get(`${apiUrl(this)}/plugins/inputs`, {}).then(response => {
                 commit("setInputsType", response.data)

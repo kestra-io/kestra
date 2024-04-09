@@ -453,7 +453,7 @@ public class ExecutorService {
                 workerTaskResult.ifPresent(list::add);
             }
 
-            Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
+            Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
             String taskId = taskRun.getTaskId();
             Task parentTask = null;
             if (taskRun.getParentTaskRunId() != null) {
@@ -470,10 +470,8 @@ public class ExecutorService {
              */
             if (!executor.getExecution().getState().isRetrying() &&
                 taskRun.getState().isFailed() &&
-                (task instanceof RunnableTask<?>) &&
-                (executor.getFlow().findTaskByTaskId(taskRun.getTaskId()).getRetry() != null ||
-                    executor.getFlow().getRetry() != null  ||
-                    (parentTask != null && parentTask.getRetry() != null))
+                task instanceof RunnableTask<?> &&
+                (task.getRetry() != null || executor.getFlow().getRetry() != null || (parentTask != null && parentTask.getRetry() != null))
             ) {
                 Instant nextRetryDate;
                 AbstractRetry retry;
@@ -534,7 +532,6 @@ public class ExecutorService {
                 list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
             }
         }
-
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskResult");
 

@@ -175,5 +175,10 @@ public class TaskRunnerTest {
                 ADDITIONAL_ENV_KEY, ADDITIONAL_ENV_VALUE
             );
         }
+
+        @Override
+        public Boolean getEnableOutputDirectory() {
+            return true;
+        }
     }
 }

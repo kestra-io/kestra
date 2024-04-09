@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -131,10 +132,14 @@ public class ProcessTaskRunner extends TaskRunner {
 
     @Override
     protected Map<String, Object> runnerAdditionalVars(RunContext runContext, TaskCommands taskCommands) {
-        return Map.of(
-            ScriptService.VAR_WORKING_DIR, taskCommands.getWorkingDirectory().toString(),
-            ScriptService.VAR_OUTPUT_DIR, taskCommands.getOutputDirectory().toString()
-        );
+        Map<String, Object> vars = new HashMap<>();
+        vars.put(ScriptService.VAR_WORKING_DIR, taskCommands.getWorkingDirectory().toString());
+
+        if (taskCommands.outputDirectoryEnabled()) {
+            vars.put(ScriptService.VAR_OUTPUT_DIR, taskCommands.getOutputDirectory().toString());
+        }
+
+        return vars;
     }
 
     private void killDescendantsOf(ProcessHandle process, Logger logger) {

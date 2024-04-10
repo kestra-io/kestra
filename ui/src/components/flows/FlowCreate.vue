@@ -31,7 +31,6 @@
             TopNavBar
         },
         created() {
-            console.log(this.$route.query)
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.$store.commit("core/setGuidedProperties", {

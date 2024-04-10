@@ -29,12 +29,10 @@
             },
             flowId: {
                 type: String,
-                required: true,
                 default: undefined
             },
             namespace: {
                 type: String,
-                required: true,
                 default: undefined
             }
         },

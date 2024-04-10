@@ -125,7 +125,7 @@
                 _this.initMonaco(monaco);
             });
 
-            configureMonacoYaml(this.monaco, {
+            this.monacoYaml = configureMonacoYaml(this.monaco, {
                 enableSchemaRequest: true,
                 hover: true,
                 completion: true,
@@ -150,7 +150,6 @@
                         language: this.language,
                         suggest: {
                             showClasses: false,
-                            shareSuggestSelections: false
                         }
                     },
                     ...this.options
@@ -202,15 +201,8 @@
                 this.editor.focus();
             },
             destroy: function() {
-                if (this.editor) {
-                    if(this.diffEditor) {
-                        this.editor.getModel().original.dispose();
-                        this.editor.getModel().modified.dispose();
-                    } else {
-                        this.editor.getModel().dispose()
-                    }
-                    this.editor.dispose();
-                }
+                this.monacoYaml?.dispose();
+                this.editor?.dispose();
             },
             needReload: function(newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;

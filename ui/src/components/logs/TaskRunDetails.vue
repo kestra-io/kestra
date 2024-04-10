@@ -81,6 +81,7 @@
     import ForEachStatus from "../executions/ForEachStatus.vue";
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
+    import throttle from "lodash/throttle";
 
     export default {
         name: "TaskRunDetails",
@@ -159,6 +160,9 @@
                 flow: undefined,
                 logsBuffer: [],
                 shownSubflowsIds: [],
+                throttledExecutionUpdate: throttle(function (event) {
+                    this.followedExecution = JSON.parse(event.data)
+                }, 500)
             };
         },
         watch: {
@@ -171,7 +175,7 @@
             },
             execution: function () {
                 if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED) {
-                    this.closeSSE();
+                    this.closeExecutionSSE();
                 }
             },
             currentTaskRuns: {
@@ -217,10 +221,10 @@
                     }
 
                     if (![State.RUNNING, State.PAUSED].includes(this.followedExecution.state.current)) {
-                        this.executionSSE?.close();
+                        this.closeExecutionSSE()
                         // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
-                            this.logsSSE?.close();
+                            this.closeLogsSSE()
                         }, 2000);
 
                         if (!this.logsSSE) {
@@ -300,6 +304,18 @@
             }
         },
         methods: {
+            closeExecutionSSE() {
+                if (this.executionSSE) {
+                    this.executionSSE.close();
+                    this.executionSSE = undefined;
+                }
+            },
+            closeLogsSSE() {
+                if (this.logsSSE) {
+                    this.logsSSE.close();
+                    this.logsSSE = undefined;
+                }
+            },
             toggleExpandCollapseAll() {
                 this.shownAttemptsUid.length === 0 ? this.expandAll() : this.collapseAll();
             },
@@ -339,8 +355,15 @@
                     .dispatch("execution/followExecution", {id: executionId})
                     .then(sse => {
                         this.executionSSE = sse;
-                        this.executionSSE.onmessage = async (event) => {
-                            this.followedExecution = JSON.parse(event.data);
+                        this.executionSSE.onmessage = executionEvent => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            if (isEnd) {
+                                this.closeExecutionSSE();
+                            }
+                            this.throttledExecutionUpdate(executionEvent);
+                            if (isEnd) {
+                                this.throttledExecutionUpdate.flush();
+                            }
                         }
                     });
             },
@@ -475,8 +498,8 @@
             }
         },
         beforeUnmount() {
-            this.executionSSE?.close();
-            this.logsSSE?.close();
+            this.closeExecutionSSE();
+            this.closeLogsSSE()
         },
     };
 </script>

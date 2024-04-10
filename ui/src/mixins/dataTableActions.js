@@ -81,7 +81,6 @@ export default {
                 }
             }
 
-            delete query.page;
             this.internalPageNumber = 1
 
             this.$router.push({query: query})

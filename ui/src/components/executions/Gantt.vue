@@ -13,7 +13,7 @@
             </thead>
             <tbody v-for="serie in filteredSeries" :key="serie.id">
                 <tr>
-                    <th>
+                    <th dir="rtl">
                         <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0">
                             <template #content>
                                 <code>{{ serie.name }}</code>
@@ -345,12 +345,12 @@
             background-color: var(--bs-gray-200);
 
             th {
-                width: 150px;
                 background-color: var(--bs-gray-100-darken-5);
             }
         }
         th {
-            max-width: 150px;
+            min-width: 150px;
+            max-width: 200px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;

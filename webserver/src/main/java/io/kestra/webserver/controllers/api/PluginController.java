@@ -152,6 +152,7 @@ public class PluginController {
                     )
                 ))
             )
+            .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
     }
 
@@ -162,6 +163,7 @@ public class PluginController {
         return pluginService
             .allPlugins()
             .stream()
+            .filter(plugin -> plugin.group() != null)
             .collect(Collectors.toMap(
                 RegisteredPlugin::group,
                 plugin -> new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false),

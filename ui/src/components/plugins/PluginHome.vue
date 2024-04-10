@@ -1,11 +1,10 @@
 <template>
     <el-row justify="center" align="middle" class="headband-row">
         <el-col justify="center">
-            <p class="fw-lighter fs-5 text-center text-truncate">
-                {{ $t("pluginPage.title1") }}
-            </p>
-            <p class="fw-bold fs-5 text-center text-truncate">
-                {{ $t("pluginPage.title2") }}
+            <p class="fs-5 text-center text-truncate text-white">
+                <span class="fw-lighter">{{ $t("pluginPage.title1") }}</span>
+                <br>
+                <span class="fw-bold">{{ $t("pluginPage.title2") }}</span>
             </p>
         </el-col>
     </el-row>
@@ -207,8 +206,14 @@
         align-items: center;
         gap: 8px;
         border-radius: 4px;
-        border: 1px solid #404559;
-        background-color: var(--bs-tertiary);
+        border: 1px solid var(--bs-gray-300);
+        background-color: white;
+
+        html.dark & {
+            background-color: var(--bs-tertiary);
+            border-color: #404559;
+        }
+
         color: var(--text-color-primary);
         text-overflow: ellipsis;
         font-size: 12px;

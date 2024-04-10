@@ -9,6 +9,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -60,6 +61,7 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
         description = "All data of flows executed before this date will be purged."
     )
     @PluginProperty(dynamic = true)
+    @NotNull
     private String endDate;
 
     @Schema(

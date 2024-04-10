@@ -1,4 +1,4 @@
-package io.kestra.webserver.controllers;
+package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.Flow;

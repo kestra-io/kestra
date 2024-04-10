@@ -79,9 +79,6 @@ public abstract class JdbcRunnerTest {
     @Inject
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
 
-    @Inject
-    private RetryCaseTest retryCaseTest;
-
     @BeforeAll
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
@@ -319,5 +316,12 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void dynamicTask() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

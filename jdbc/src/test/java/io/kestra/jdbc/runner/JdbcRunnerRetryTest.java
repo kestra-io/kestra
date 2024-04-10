@@ -133,4 +133,9 @@ public abstract class JdbcRunnerRetryTest {
     void retryFlowableParallel() throws TimeoutException {
         retryCaseTest.retryFlowableParallel();
     }
+
+    @Test
+    void retryDynamicTask() throws TimeoutException {
+        retryCaseTest.retryDynamicTask();
+    }
 }

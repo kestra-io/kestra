@@ -251,7 +251,6 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
     }
 
-
     public void retryFlowableChild() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
             null,
@@ -264,7 +263,6 @@ public class RetryCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
     }
-
 
     public void retryFlowableNestedChild() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
@@ -279,19 +277,26 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(2).attemptNumber(), is(3));
     }
 
-
     public void retryFlowableParallel() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
-            "retry-flowable-parallel",
-            null,
-            null
+            "retry-flowable-parallel"
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().get(1).attemptNumber(), greaterThanOrEqualTo(2));
         assertThat(execution.getTaskRunList().get(2).attemptNumber(), greaterThanOrEqualTo(2));
+    }
+
+    public void retryDynamicTask() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "retry-dynamic-task"
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
 }

@@ -18,7 +18,8 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a flow namespace."
+    title = "Condition for a flow namespace.",
+    description = "Use `io.kestra.core.models.conditions.types.ExecutionNamespaceCondition` instead."
 )
 @Plugin(
     examples = {
@@ -34,6 +35,7 @@ import jakarta.validation.constraints.NotNull;
         )
     }
 )
+@Deprecated
 public class FlowNamespaceCondition extends Condition {
     @NotNull
     @Schema(

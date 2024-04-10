@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
@@ -40,23 +41,24 @@ import java.util.function.BiPredicate;
 public class ExecutionNamespaceCondition extends Condition {
     @NotNull
     @Schema(
-        description = "String against which to match the execution namespace depending on the provided comparison."
+        title = "String against which to match the execution namespace depending on the provided comparison."
     )
     @PluginProperty
     private String namespace;
 
     @Schema(
-        description = "Comparison to use when checking if namespace matches. If not provided, it will use `EQUALS` by default."
+        title = "Comparison to use when checking if namespace matches. If not provided, it will use `EQUALS` by default."
     )
     @PluginProperty
     private Comparison comparison;
 
-    @JsonSetter
-    public void setPrefix(boolean prefix) {
-        if (this.comparison == null) {
-            this.comparison = prefix ? Comparison.PREFIX : Comparison.EQUALS;
-        }
-    }
+    @Schema(
+        title = "Whether to look at the flow namespace by prefix. Shortcut for `comparison: PREFIX`.",
+        description = "Only used when `comparison` is not set"
+    )
+    @PluginProperty
+    @Builder.Default
+    private boolean prefix = false;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -64,7 +66,7 @@ public class ExecutionNamespaceCondition extends Condition {
             throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
-        return Optional.ofNullable(this.comparison).orElse(Comparison.EQUALS)
+        return Optional.ofNullable(this.comparison).orElse(prefix ? Comparison.PREFIX : Comparison.EQUALS)
             .test(conditionContext.getExecution().getNamespace(), this.namespace);
     }
 

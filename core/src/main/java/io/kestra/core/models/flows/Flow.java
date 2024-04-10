@@ -258,6 +258,13 @@ public class Flow implements DeletedInterface, TenantInterface {
             .orElseThrow(() -> new InternalException("Can't find task with id '" + taskId + "' on flow '" + this.id + "'"));
     }
 
+    public Task findTaskByTaskIdOrNull(String taskId) {
+        return allTasks()
+            .flatMap(t -> t.findById(taskId).stream())
+            .findFirst()
+            .orElse(null);
+    }
+
     public Flow updateTask(String taskId, Task newValue) throws InternalException {
         Task task = this.findTaskByTaskId(taskId);
         Map<String, Object> map = JacksonMapper.toMap(this);

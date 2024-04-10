@@ -58,6 +58,7 @@
     import State from "../../utils/state";
     import ExecutionMetric from "./ExecutionMetric.vue";
     import {apiUrl} from "override/utils/route"
+    import throttle from "lodash/throttle";
 
     export default {
         mixins: [RouteContext],
@@ -69,7 +70,31 @@
         data() {
             return {
                 sse: undefined,
-                previousExecutionId: undefined
+                previousExecutionId: undefined,
+                throttledExecutionUpdate: throttle(function (executionEvent) {
+                    let execution = JSON.parse(executionEvent.data);
+
+                    if (!this.flow ||
+                        execution.flowId !== this.flow.id ||
+                        execution.namespace !== this.flow.namespace ||
+                        execution.flowRevision !== this.flow.revision
+                    ) {
+                        this.$store.dispatch(
+                            "flow/loadFlow",
+                            {
+                                namespace: execution.namespace,
+                                id: execution.flowId,
+                                revision: execution.flowRevision
+                            }
+                        );
+                        this.$store.dispatch("flow/loadRevisions", {
+                            namespace: execution.namespace,
+                            id: execution.flowId
+                        })
+                    }
+
+                    this.$store.commit("execution/setExecution", execution);
+                }, 500)
             };
         },
         created() {
@@ -89,40 +114,21 @@
         },
         methods: {
             follow() {
-                const self = this;
                 this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;
                 this.$store
                     .dispatch("execution/followExecution", this.$route.params)
                     .then(sse => {
                         this.sse = sse;
-                        this.sse.onmessage = (event) => {
-                            if (event && event.lastEventId === "end") {
-                                self.closeSSE();
+                        this.sse.onmessage = (executionEvent) => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            if (isEnd) {
+                                this.closeSSE();
                             }
-
-                            let execution = JSON.parse(event.data);
-
-                            if (!this.flow ||
-                                execution.flowId !== this.flow.id ||
-                                execution.namespace !== this.flow.namespace ||
-                                execution.flowRevision !== this.flow.revision
-                            ) {
-                                this.$store.dispatch(
-                                    "flow/loadFlow",
-                                    {
-                                        namespace: execution.namespace,
-                                        id: execution.flowId,
-                                        revision: execution.flowRevision
-                                    }
-                                );
-                                this.$store.dispatch("flow/loadRevisions", {
-                                    namespace: execution.namespace,
-                                    id: execution.flowId
-                                })
+                            this.throttledExecutionUpdate(executionEvent);
+                            if (isEnd) {
+                                this.throttledExecutionUpdate.flush();
                             }
-
-                            this.$store.commit("execution/setExecution", execution);
                         }
                         // sse.onerror doesnt return the details of the error
                         // but as our emitter can only throw an error on 404

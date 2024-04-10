@@ -36,16 +36,14 @@
         computed: {
             State() {
                 return State
-            },
-            updateThrottled() {
-                return throttle(function () {
-                    this.localSubflowStatus = this.subflowsStatus
-                }, 1000);
             }
         },
         data() {
             return {
-                localSubflowStatus: {}
+                localSubflowStatus: {},
+                updateThrottled: throttle(function () {
+                    this.localSubflowStatus = this.subflowsStatus
+                }, 500)
             }
         },
         created() {

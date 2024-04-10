@@ -27,6 +27,7 @@
     import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants";
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
     import STATE from "../../utils/state";
+    import throttle from "lodash/throttle";
     export default {
         components: {
             LowCodeEditor
@@ -40,7 +41,16 @@
             return {
                 previousExecutionId: undefined,
                 expandedSubflows: [],
-                sseBySubflow: {}
+                sseBySubflow: {},
+                throttledExecutionUpdate: throttle(function (subflow, executionEvent) {
+                    const previousExecution = this.subflowsExecutions[subflow];
+                    this.$store.commit("execution/addSubflowExecution", {subflow, execution: JSON.parse(executionEvent.data)});
+
+                    // add subflow execution id to graph
+                    if(previousExecution === undefined) {
+                        this.loadGraph(true);
+                    }
+                }, 500)
             };
         },
         watch: {
@@ -208,17 +218,14 @@
                 this.$store.dispatch("execution/followExecution", {id: executionId})
                     .then(sse => {
                         this.sseBySubflow[subflow] = sse;
-                        sse.onmessage = (event) => {
-                            if (event && event.lastEventId === "end") {
-                                sse.close();
+                        sse.onmessage = (executionEvent) => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            if (isEnd) {
+                                this.closeExecutionSSE();
                             }
-
-                            const previousExecution = this.subflowsExecutions[subflow];
-                            this.$store.commit("execution/addSubflowExecution", {subflow, execution: JSON.parse(event.data)});
-
-                            // add subflow execution id to graph
-                            if(previousExecution === undefined) {
-                                this.loadGraph(true);
+                            this.throttledExecutionUpdate(subflow, executionEvent);
+                            if (isEnd) {
+                                this.throttledExecutionUpdate.flush();
                             }
                         };
                     });

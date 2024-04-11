@@ -118,7 +118,7 @@
                         key: "count",
                         groups: ["namespace", "state"],
                         backgroundColor(ctx) {
-                            const state = ctx.raw._data.state;
+                            const state = ctx.raw?._data?.state;
 
                             return state ? backgroundFromState(state.toUpperCase()) : (darkTheme ? "#202435" : "#E7E7F3");
                         },

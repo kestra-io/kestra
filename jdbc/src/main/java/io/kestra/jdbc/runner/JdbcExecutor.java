@@ -291,7 +291,7 @@ public class JdbcExecutor implements ExecutorInterface {
             workerJobRunningRepository.getWorkerJobWithWorkerDead(context, workersToDeleteUuids)
                 .forEach(workerJobRunning -> {
                     if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-                        if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun().getExecutionId())) {
+                        if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun())) {
                             // if the execution is skipped, we remove the workerTaskRunning and skip its resubmission
                             log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getId());
                             workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
@@ -345,7 +345,7 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         Execution message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getId())) {
+        if (skipExecutionService.skipExecution(message)) {
             log.warn("Skipping execution {}", message.getId());
             return;
         }
@@ -523,7 +523,7 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         WorkerTaskResult message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
+        if (skipExecutionService.skipExecution(message.getTaskRun())) {
             log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
             return;
         }
@@ -609,7 +609,7 @@ public class JdbcExecutor implements ExecutorInterface {
             log.warn("Skipping execution {}", message.getExecutionId());
             return;
         }
-        if (skipExecutionService.skipExecution(message.getParentTaskRun().getExecutionId())) {
+        if (skipExecutionService.skipExecution(message.getParentTaskRun())) {
             log.warn("Skipping execution {}", message.getParentTaskRun().getExecutionId());
             return;
         }

@@ -131,7 +131,7 @@ public class MemoryExecutor implements ExecutorInterface {
         }
 
         Execution message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getId())) {
+        if (skipExecutionService.skipExecution(message)) {
             log.warn("Skipping execution {}", message.getId());
             return;
         }
@@ -365,7 +365,7 @@ public class MemoryExecutor implements ExecutorInterface {
 
         WorkerTaskResult message = either.getLeft();
 
-        if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
+        if (skipExecutionService.skipExecution(message.getTaskRun())) {
             log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
             return;
         }
@@ -422,7 +422,7 @@ public class MemoryExecutor implements ExecutorInterface {
             log.warn("Skipping execution {}", message.getExecutionId());
             return;
         }
-        if (skipExecutionService.skipExecution(message.getParentTaskRun().getExecutionId())) {
+        if (skipExecutionService.skipExecution(message.getParentTaskRun())) {
             log.warn("Skipping execution {}", message.getParentTaskRun().getExecutionId());
             return;
         }

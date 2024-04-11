@@ -12,6 +12,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -35,6 +36,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/plugins/")
 public class PluginController {
+    private static final String CACHE_DIRECTIVE = "public, max-age=3600";
+
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -53,7 +56,7 @@ public class PluginController {
     ) {
         return HttpResponse.ok()
             .body(this.schemasCache(type))
-            .header("Cache-Control", "public, max-age=3600");
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @Cacheable("default")

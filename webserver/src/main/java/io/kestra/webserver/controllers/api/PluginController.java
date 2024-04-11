@@ -53,7 +53,7 @@ public class PluginController {
     ) {
         return HttpResponse.ok()
             .body(this.schemasCache(type))
-            .header("Cache-Control", "public, max-age=3600");
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @Cacheable("default")

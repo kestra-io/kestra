@@ -12,12 +12,10 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.*;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -35,6 +33,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/plugins/")
 public class PluginController {
+    private static final String CACHE_DIRECTIVE = "public, max-age=3600";
+
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -104,7 +104,7 @@ public class PluginController {
                     classInputDocumentation.getDefs()
                 )
             ))
-            .header("Cache-Control", "public, max-age=3600");
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @Cacheable("default")
@@ -128,8 +128,8 @@ public class PluginController {
     @Get(uri = "icons")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
-    public Map<String, PluginIcon> icons() {
-        return pluginService
+    public MutableHttpResponse<Map<String, PluginIcon>> icons() {
+        Map<String, PluginIcon> icons = pluginService
             .allPlugins()
             .stream()
             .flatMap(plugin -> Stream
@@ -154,13 +154,14 @@ public class PluginController {
             )
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
+        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @Get(uri = "icons/groups")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
-    public Map<String, PluginIcon> pluginGroupIcons() {
-        return pluginService
+    public MutableHttpResponse<Map<String, PluginIcon>> pluginGroupIcons() {
+        Map<String, PluginIcon> icons = pluginService
             .allPlugins()
             .stream()
             .filter(plugin -> plugin.group() != null)
@@ -169,6 +170,7 @@ public class PluginController {
                 plugin -> new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false),
                 (a1, a2) -> a1
             ));
+        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -196,7 +198,7 @@ public class PluginController {
                     classPluginDocumentation.getDefs()
                 )
             ))
-            .header("Cache-Control", "public, max-age=3600");
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

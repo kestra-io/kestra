@@ -1,25 +1,24 @@
 <template>
-    <el-col class="main-col mt-4">
-        <el-row :gutter="25" justify="center">
-            <el-col
-                v-for="card in cards"
-                :key="card.title"
-                :lg="8"
-                :md="24"
-                :offset="32"
-                class="mb-4"
-            >
-                <onboarding-card
-                    :title="card.title"
-                    :content="card.content"
-                    :img-class="card.imgClass"
-                    :link="card.link"
-                />
-            </el-col>
-        </el-row>
-    </el-col>
+    <el-row justify="space-between" :gutter="20">
+        <el-col
+            v-for="card in cards"
+            :key="card.title"
+            :xs="24"
+            :sm="12"
+            :md="8"
+            :lg="6"
+            :xl="6"
+            class="pb-4"
+        >
+            <onboarding-card
+                :title="card.title"
+                :content="card.content"
+                :category="card.category"
+                :link="card.link"
+            />
+        </el-col>
+    </el-row>
 </template>
-
 <script>
     import {mapGetters} from "vuex";
     import OnboardingCard from "./OnboardingCard.vue";
@@ -32,23 +31,21 @@
             return {
                 cards: [
                     {
-                        title: this.$t("get started"),
-                        content: this.$t("get started content"),
-                        imgClass: "started",
-                        link: "https://kestra.io/docs/getting-started/"
+                        title: this.$t("welcome.started.title"),
+                        category: "started",
                     },
                     {
-                        title: this.$t("watch demo"),
-                        content: this.$t("watch demo content"),
-                        imgClass: "demo",
-                        link: "<iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/yuV_rgnpXU8\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen></iframe>"
+                        title: this.$t("welcome.product-tour.title"),
+                        category: "product",
 
                     },
                     {
-                        title: this.$t("need help?"),
-                        content: this.$t("need help? content"),
-                        imgClass: "help",
-                        link: "https://kestra.io/slack"
+                        title: this.$t("welcome.doc.title"),
+                        category: "docs",
+                    },
+                    {
+                        title: this.$t("welcome.need-help.title"),
+                        category: "help",
                     }
                 ]
             }
@@ -58,4 +55,3 @@
         }
     }
 </script>
-

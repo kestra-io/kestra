@@ -9,11 +9,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.*;
-import io.kestra.core.tasks.flows.EachSequentialTest;
-import io.kestra.core.tasks.flows.FlowCaseTest;
-import io.kestra.core.tasks.flows.ForEachItemCaseTest;
-import io.kestra.core.tasks.flows.PauseTest;
-import io.kestra.core.tasks.flows.WorkingDirectoryTest;
+import io.kestra.core.tasks.flows.*;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -320,5 +316,12 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void dynamicTask() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

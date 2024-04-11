@@ -17,7 +17,7 @@ export default {
         list({commit}) {
             return this.$http.get(`${apiUrl(this)}/plugins`, {}).then(response => {
                 commit("setPlugins", response.data)
-                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages)).flat())
+                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages, plugin.taskRunners)).flat())
                 return response.data;
             })
         },
@@ -51,6 +51,13 @@ export default {
                 commit("setIcons", icons);
 
                 return icons;
+            });
+        },
+        groupIcons(_) {
+            return Promise.all([
+                this.$http.get(`${apiUrl(this)}/plugins/icons/groups`, {}),
+            ]).then(responses => {
+                return responses[0].data
             });
         },
         loadInputsType({commit}) {

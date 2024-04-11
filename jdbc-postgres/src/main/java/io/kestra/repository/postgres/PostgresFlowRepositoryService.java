@@ -3,7 +3,6 @@ package io.kestra.repository.postgres;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.Condition;
-import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;

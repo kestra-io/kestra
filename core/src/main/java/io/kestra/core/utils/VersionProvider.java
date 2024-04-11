@@ -2,35 +2,49 @@ package io.kestra.core.utils;
 
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertiesPropertySourceLoader;
+import io.micronaut.context.env.PropertySource;
 import io.micronaut.core.util.StringUtils;
 import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.Getter;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 @Singleton
 public class VersionProvider {
     @Getter
     private String version = "Snapshot";
 
+    @Getter
+    private String revision;
+
     @Inject
-    Environment environment;
+    private Environment environment;
 
     @PostConstruct
     public void start() {
-        this.version = Stream
+        final Optional<PropertySource> gitProperties = new PropertiesPropertySourceLoader()
+            .load("classpath:git", environment);
+
+        final Optional<PropertySource> buildProperties = new PropertiesPropertySourceLoader()
+            .load("classpath:gradle", environment);
+
+        this.revision = loadRevision(gitProperties);
+        this.version = loadVersion(buildProperties, gitProperties);
+    }
+
+    private String loadVersion(final Optional<PropertySource> buildProperties,
+                               final Optional<PropertySource> gitProperties) {
+        return Stream
             .concat(
-                new PropertiesPropertySourceLoader()
-                    .load("classpath:gradle", environment)
+                buildProperties
                     .stream()
-                    .flatMap(properties -> Stream.of(properties.get("version"))),
-                new PropertiesPropertySourceLoader()
-                    .load("classpath:git", environment)
+                    .flatMap(properties -> Stream.of(
+                        properties.get("version"))),
+                gitProperties
                     .stream()
                     .flatMap(properties -> Stream
                         .of(
@@ -46,9 +60,21 @@ public class VersionProvider {
             .orElse(this.version);
     }
 
+    private String loadRevision(final Optional<PropertySource> gitProperties) {
+        return gitProperties
+            .stream()
+            .flatMap(properties -> Stream
+                .of(
+                    properties.get("git.commit.id.abbrev"),
+                    properties.get("git.commit.id")
+                )
+            ).findFirst()
+            .map(Object::toString)
+            .orElse(null);
+    }
+
     private Optional<String> getVersion(Object object) {
         String candidate = Objects.toString(object, null);
-
         return StringUtils.isNotEmpty(candidate) ? Optional.of(candidate) : Optional.empty();
     }
 }

@@ -1,11 +1,8 @@
 <template>
     <div class="w-100">
-        <el-drawer
+        <drawer
             v-if="isEditOpen"
             v-model="isEditOpen"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <template #header>
                 <code>variables</code>
@@ -43,7 +40,7 @@
                     />
                 </el-form-item>
             </el-form>
-        </el-drawer>
+        </drawer>
         <div class="w-100">
             <div v-if="variables">
                 <div class="d-flex w-100" v-for="(value, index) in newVariables" :key="index">
@@ -83,9 +80,10 @@
 
 <script>
     import Editor from "../inputs/Editor.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
-        components: {Editor},
+        components: {Editor, Drawer},
         emits: ["update:modelValue"],
         props: {
             variables: {

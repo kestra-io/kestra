@@ -16,6 +16,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
@@ -27,6 +28,10 @@ import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
@@ -35,10 +40,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -120,6 +121,9 @@ public class Flow implements DeletedInterface, TenantInterface {
     @PluginProperty(dynamic = true)
     @Valid
     List<Output> outputs;
+
+    @Valid
+    protected AbstractRetry retry;
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
@@ -238,11 +242,27 @@ public class Flow implements DeletedInterface, TenantInterface {
         return allErrors;
     }
 
+    public Task findParentTasksByTaskId(String taskId) {
+        return allTasksWithChilds()
+            .stream()
+            .filter(Task::isFlowable)
+            .filter(task -> ((FlowableTask<?>) task).allChildTasks().stream().anyMatch(t -> t.getId().equals(taskId)))
+            .findFirst()
+            .orElse(null);
+    }
+
     public Task findTaskByTaskId(String taskId) throws InternalException {
         return allTasks()
             .flatMap(t -> t.findById(taskId).stream())
             .findFirst()
             .orElseThrow(() -> new InternalException("Can't find task with id '" + taskId + "' on flow '" + this.id + "'"));
+    }
+
+    public Task findTaskByTaskIdOrNull(String taskId) {
+        return allTasks()
+            .flatMap(t -> t.findById(taskId).stream())
+            .findFirst()
+            .orElse(null);
     }
 
     public Flow updateTask(String taskId, Task newValue) throws InternalException {

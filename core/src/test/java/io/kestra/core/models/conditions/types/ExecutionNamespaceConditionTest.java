@@ -79,6 +79,14 @@ class ExecutionNamespaceConditionTest {
 
         test = conditionService.isValid(build, flow, execution);
         assertThat(test, is(true));
+
+        build = ExecutionNamespaceCondition.builder()
+            .namespace(flow.getNamespace().substring(0, 3))
+            .prefix(true)
+            .build();
+
+        test = conditionService.isValid(build, flow, execution);
+        assertThat(test, is(true));
     }
 
     @Test

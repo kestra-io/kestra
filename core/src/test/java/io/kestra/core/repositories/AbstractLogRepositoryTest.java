@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -82,7 +83,7 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
-    void Pageable() {
+    void pageable() {
         String executionId = "123";
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
         builder.executionId(executionId);
@@ -136,5 +137,29 @@ public abstract class AbstractLogRepositoryTest {
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size(), is(0));
+    }
+
+    @Test
+    void statistics() throws InterruptedException {
+        for (int i = 0; i < 28; i++) {
+            logRepository.save(
+                logEntry(i < 5 ? Level.TRACE : (i < 8 ? Level.INFO : Level.ERROR))
+                    .flowId(i < 15 ? "first" : "second")
+                    .build()
+            );
+        }
+
+        // mysql need some time ...
+        Thread.sleep(500);
+
+        List<LogStatistics> list = logRepository.statistics(null, null, null, "first", null, null, null, null);
+        assertThat(list.size(), is(31));
+        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.TRACE) == 5).count(), is(1L));
+        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.INFO) == 3).count(), is(1L));
+        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.ERROR) == 7).count(), is(1L));
+
+        list = logRepository.statistics(null, null, null, "second", null, null, null, null);
+        assertThat(list.size(), is(31));
+        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.ERROR) == 13).count(), is(1L));
     }
 }

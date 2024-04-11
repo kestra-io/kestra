@@ -1,9 +1,9 @@
 <template>
     <top-nav-bar v-if="!embed" :title="routeInfo.title" />
-    <section :class="{'container': !embed}" class="log-panel">
+    <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
-                <template #navbar v-if="embed === false">
+                <template #navbar v-if="!embed">
                     <el-form-item>
                         <search-field />
                     </el-form-item>
@@ -29,8 +29,31 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <filters :storage-key="storageKeys.LOGS_FILTERS" />
+                    </el-form-item>
+                    <el-form-item>
                         <refresh-button class="float-right" @refresh="refresh" />
                     </el-form-item>
+                </template>
+
+                <template #top>
+                    <el-card shadow="never" class="mb-3" v-loading="!statsReady">
+                        <div class="state-global-charts">
+                            <template v-if="hasStatsData">
+                                <log-chart
+                                    v-if="statsReady"
+                                    :data="logDaily"
+                                    :namespace="namespace"
+                                    :flow-id="flowId"
+                                />
+                            </template>
+                            <template v-else>
+                                <el-alert type="info" :closable="false" class="m-0">
+                                    {{ $t('no result') }}
+                                </el-alert>
+                            </template>
+                        </div>
+                    </el-card>
                 </template>
 
                 <template #table>
@@ -71,10 +94,15 @@
     import DataTable from "../../components/layout/DataTable.vue";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
+    import LogChart from "../stats/LogChart.vue";
+    import Filters from "../saved-filters/Filters.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
-        components: {DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton, TopNavBar},
+        components: {
+            Filters,
+            DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
         props: {
             logLevel: {
                 type: String,
@@ -86,11 +114,17 @@
                 isDefaultNamespaceAllow: true,
                 task: undefined,
                 isLoading: false,
-                recomputeInterval: false
+                recomputeInterval: false,
+                statsReady: false,
+                statsData: []
             };
         },
         computed: {
+            storageKeys() {
+                return storageKeys
+            },
             ...mapState("log", ["logs", "total", "level"]),
+            ...mapState("stat", ["logDaily"]),
             routeInfo() {
                 return {
                     title: this.$t("logs"),
@@ -107,12 +141,26 @@
                 this.recomputeInterval;
                 return this.$route.query.endDate ? this.$route.query.endDate : undefined;
             },
+            namespace() {
+                return this.$route.params.namespace;
+            },
+            flowId() {
+                return this.$route.params.id;
+            },
             startDate() {
                 // used to be able to force refresh the base interval when auto-reloading
                 this.recomputeInterval;
                 return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
                     .add(-7, "days").toISOString(true);
-            }
+            },
+            countStats() {
+                return [...this.logDaily || []].reduce((a, b) => {
+                    return a + Object.values(b.counts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
+            hasStatsData() {
+                return this.countStats > 0;
+            },
         },
         methods: {
             refresh() {
@@ -123,8 +171,8 @@
                 let queryFilter = this.queryWithFilter();
 
                 if (this.isFlowEdit) {
-                    queryFilter["namespace"] = this.$route.params.namespace;
-                    queryFilter["flowId"] = this.$route.params.id;
+                    queryFilter["namespace"] = this.namespace;
+                    queryFilter["flowId"] = this.flowId;
                 }
 
                 if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
@@ -149,7 +197,20 @@
                         this.isLoading = false
                         this.saveRestoreUrl();
                     });
+
+                this.loadStats();
             },
+            loadStats() {
+                this.statsReady = false;
+                this.$store
+                    .dispatch("stat/logDaily", this.loadQuery({
+                        startDate: this.$moment(this.startDate).toISOString(true),
+                        endDate: this.$moment(this.endDate).toISOString(true)
+                    }, true))
+                    .then(() => {
+                        this.statsReady = true;
+                    });
+            }
         },
     };
 </script>

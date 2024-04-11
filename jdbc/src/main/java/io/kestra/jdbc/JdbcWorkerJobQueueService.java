@@ -3,11 +3,11 @@ package io.kestra.jdbc;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.WorkerInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
-import io.kestra.jdbc.runner.JdbcHeartbeat;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -20,9 +20,10 @@ import java.util.function.Consumer;
 @Slf4j
 public class JdbcWorkerJobQueueService {
     private final JdbcQueue<WorkerJob> workerTaskQueue;
-    private final JdbcHeartbeat jdbcHeartbeat;
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
-    private final WorkerInstanceRepositoryInterface workerInstanceRepository;
+
+    private final ServiceRegistry serviceRegistry;
+
     private Runnable queueStop;
 
     @SuppressWarnings("unchecked")
@@ -31,15 +32,21 @@ public class JdbcWorkerJobQueueService {
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED)
         );
-        this.jdbcHeartbeat = applicationContext.getBean(JdbcHeartbeat.class);
+        this.serviceRegistry = applicationContext.getBean(ServiceRegistry.class);
         this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningRepository.class);
-        this.workerInstanceRepository = applicationContext.getBean(WorkerInstanceRepositoryInterface.class);
     }
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
 
         this.queueStop = workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
-            WorkerInstance workerInstance = jdbcHeartbeat.get();
+
+            Worker worker = serviceRegistry.waitForServiceAndGet(Service.ServiceType.WORKER).unwrap();
+
+            final WorkerInstance workerInstance = WorkerInstance
+                .builder()
+                .workerUuid(worker.getId())
+                .workerGroup(worker.getWorkerGroup())
+                .build();
 
             eithers.forEach(either -> {
                 if (either.isRight()) {
@@ -88,14 +95,6 @@ public class JdbcWorkerJobQueueService {
             if (this.queueStop != null) {
                 this.queueStop.run();
                 this.queueStop = null;
-            }
-        }
-    }
-
-    public void cleanup() {
-        if (jdbcHeartbeat.get() != null) {
-            synchronized (this) {
-                workerInstanceRepository.delete(jdbcHeartbeat.get());
             }
         }
     }

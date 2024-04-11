@@ -50,7 +50,8 @@ public interface StorageSplitInterface {
     Integer getRows();
 
     @Schema(
-        title = "The separator used to split a file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
+        title = "The separator used to split a file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead.",
+        defaultValue = "\\n"
     )
     @PluginProperty
     String getSeparator();

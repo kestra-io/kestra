@@ -37,11 +37,17 @@ micronaut:
           - /ui/.+
           - /health
           - /prometheus
+    http-version: HTTP_1_1
   caches:
     default:
       maximum-weight: 10485760
 
   http:
+    client:
+      read-idle-timeout: 60s
+      connect-timeout: 30s
+      read-timeout: 60s
+      http-version: HTTP_1_1
     services:
       api:
         url: https://api.kestra.io
@@ -154,9 +160,9 @@ kestra:
       flowtopologies:
         table: "flow_topologies"
         cls: io.kestra.core.models.topologies.FlowTopology
-      workerinstance:
-        cls: io.kestra.core.runners.WorkerInstance
-        table: "worker_instance"
+      serviceinstance:
+        cls: io.kestra.core.server.ServiceInstance
+        table: "service_instance"
       workerjobrunning:
         cls: io.kestra.core.runners.WorkerJobRunning
         table: "worker_job_running"
@@ -208,13 +214,22 @@ kestra:
     preview:
       initial-rows: 100
       max-rows: 5000
-
+    # The expected time for this server to complete all its tasks before initiating a graceful shutdown.
+    terminationGracePeriod: 5m
+    workerTaskRestartStrategy: AFTER_TERMINATION_GRACE_PERIOD
+    # Configuration for Liveness and Heartbeat mechanism between servers.
+    liveness:
+      enabled: true
+      # The expected time between liveness probe.
+      interval: 5s
+      # The timeout used to detect service failures.
+      timeout: 45s
+      # The time to wait before executing a liveness probe.
+      initialDelay: 45s
+      # The expected time between service heartbeats.
+      heartbeatInterval: 3s
   anonymous-usage-report:
     enabled: true
     uri: https://api.kestra.io/v1/reports/usages
     initial-delay: 5m
     fixed-delay: 1h
-
-  heartbeat:
-    frequency: 10s
-    heartbeat-missed: 3

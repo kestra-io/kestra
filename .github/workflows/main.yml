@@ -51,7 +51,7 @@ jobs:
 
       # Services
       - name: Build the docker-compose stack
-        run: docker-compose -f docker-compose-ci.yml up -d
+        run: docker compose -f docker-compose-ci.yml up -d
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
 
       # Caches
@@ -202,7 +202,9 @@ jobs:
               io.kestra.plugin:plugin-git:LATEST
               io.kestra.plugin:plugin-googleworkspace:LATEST
               io.kestra.plugin:plugin-hightouch:LATEST
+              io.kestra.plugin:plugin-jdbc-as400:LATEST
               io.kestra.plugin:plugin-jdbc-clickhouse:LATEST
+              io.kestra.plugin:plugin-jdbc-db2:LATEST
               io.kestra.plugin:plugin-jdbc-duckdb:LATEST
               io.kestra.plugin:plugin-jdbc-druid:LATEST
               io.kestra.plugin:plugin-jdbc-mysql:LATEST
@@ -410,7 +412,7 @@ jobs:
 
       # Update
       - name: Update internal
-        uses: benc-uk/workflow-dispatch@v121
+        uses: benc-uk/workflow-dispatch@v1
         if: github.ref == 'refs/heads/develop'
         with:
           workflow: oss-build.yml

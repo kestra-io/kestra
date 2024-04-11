@@ -8,6 +8,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.*;
+import io.kestra.core.server.ServiceInstance;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -20,7 +21,7 @@ public class QueueService {
         } else if (object.getClass() == WorkerTaskRunning.class) {
             return ((WorkerTaskRunning) object).getTaskRun().getId();
         } else if (object.getClass() == WorkerInstance.class) {
-            return ((WorkerInstance) object).getWorkerUuid().toString();
+            return ((WorkerInstance) object).getWorkerUuid();
         } else if (object.getClass() == WorkerTaskResult.class) {
             return ((WorkerTaskResult) object).getTaskRun().getId();
         } else if (object.getClass() == LogEntry.class) {
@@ -38,7 +39,7 @@ public class QueueService {
         } else if (object.getClass() == SubflowExecution.class) {
             return ((SubflowExecution<?>) object).getExecution().getId();
         } else if (object.getClass() == SubflowExecutionResult.class) {
-            return ((SubflowExecutionResult) object).getParentTaskRun().getId();
+            return ((SubflowExecutionResult) object).getExecutionId();
         } else if (object.getClass() == ExecutionDelay.class) {
             return ((ExecutionDelay) object).uid();
         } else if (object.getClass() == ExecutorState.class) {
@@ -59,6 +60,8 @@ public class QueueService {
             return ((WorkerTriggerResult) object).getTriggerContext().uid();
         } else if (object.getClass() == ExecutionQueued.class) {
             return ((ExecutionQueued) object).uid();
+        } else if (object.getClass() == ServiceInstance.class) {
+            return ((ServiceInstance) object).id();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

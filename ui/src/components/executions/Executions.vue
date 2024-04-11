@@ -6,7 +6,7 @@
                     <li>
                         <template v-if="isAllowedEdit">
                             <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
-                                {{ $t('edit flow') }}
+                                {{ $t("edit flow") }}
                             </el-button>
                         </template>
                     </li>
@@ -23,16 +23,22 @@
         </template>
     </top-nav-bar>
     <section :class="{'container': topbar}" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
+        <data-table
+            @page-changed="onPageChanged"
+            ref="dataTable"
+            :total="total"
+            :size="pageSize"
+            :page="pageNumber"
+            :embed="embed"
+        >
             <template #navbar v-if="isDisplayedTop">
                 <el-form-item>
                     <search-field />
                 </el-form-item>
-                <el-form-item>
+                <el-form-item v-if="$route.name !== 'flows/update'">
                     <namespace-select
                         data-type="flow"
-                        v-if="$route.name !== 'flows/update'"
-                        :value="namespace"
+                        :value="$route.query.namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />
                 </el-form-item>
@@ -94,6 +100,9 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
+                    <filters :storage-key="filterStorageKey" />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button
                         :can-auto-refresh="canAutoRefresh"
                         class="float-right"
@@ -123,7 +132,7 @@
                     stripe
                     table-layout="auto"
                     fixed
-                    @row-dblclick="onRowDoubleClick"
+                    @row-dblclick="row => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
@@ -137,22 +146,34 @@
                             @unselect="toggleAllUnselected"
                         >
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
-                                {{ $t('restart') }}
+                                {{ $t("restart") }}
+                            </el-button>
+                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
+                                {{ $t("replay") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
-                                {{ $t('kill') }}
+                                {{ $t("kill") }}
                             </el-button>
                             <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
-                                {{ $t('delete') }}
+                                {{ $t("delete") }}
                             </el-button>
-                            <el-button v-if="canUpdate" :icon="LabelMultiple" @click="isOpenLabelsModal = !isOpenLabelsModal">
-                                {{ $t('Set labels') }}
+                            <el-button
+                                v-if="canUpdate"
+                                :icon="LabelMultiple"
+                                @click="isOpenLabelsModal = !isOpenLabelsModal"
+                            >
+                                {{ $t("Set labels") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                {{ $t('resume') }}
+                                {{ $t("resume") }}
                             </el-button>
                         </bulk-select>
-                        <el-dialog v-if="isOpenLabelsModal" v-model="isOpenLabelsModal" destroy-on-close :append-to-body="true">
+                        <el-dialog
+                            v-if="isOpenLabelsModal"
+                            v-model="isOpenLabelsModal"
+                            destroy-on-close
+                            :append-to-body="true"
+                        >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
                             </template>
@@ -184,7 +205,11 @@
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <id :value="scope.row.id" :shrink="true" @click="onRowDoubleClick(scope.row)" />
+                                <id
+                                    :value="scope.row.id"
+                                    :shrink="true"
+                                    @click="onRowDoubleClick(executionParams(scope.row))"
+                                />
                             </template>
                         </el-table-column>
 
@@ -220,7 +245,9 @@
                             :label="$t('duration')"
                         >
                             <template #default="scope">
-                                <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
+                                <span v-if="isRunning(scope.row)">{{
+                                    $filters.humanizeDuration(durationFrom(scope.row))
+                                }}</span>
                                 <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                             </template>
                         </el-table-column>
@@ -242,7 +269,9 @@
                             :label="$t('flow')"
                         >
                             <template #default="scope">
-                                <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                <router-link
+                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
+                                >
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
                             </template>
@@ -297,7 +326,7 @@
                             <template #default="scope">
                                 <el-tooltip>
                                     <template #content>
-                                        <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, '\t') }}</pre>
+                                        <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, "\t") }}</pre>
                                     </template>
                                     <Import v-if="scope.row.inputs" class="fs-5" />
                                 </el-tooltip>
@@ -317,14 +346,18 @@
                             <template #default="scope">
                                 <code>
                                     {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
-                                    {{ scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : '' }}
+                                    {{
+                                        scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : ""
+                                    }}
                                 </code>
                             </template>
                         </el-table-column>
 
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
-                                <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                <router-link
+                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}"
+                                >
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
                                     </kicon>
@@ -342,6 +375,7 @@
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
@@ -365,6 +399,7 @@
     import LabelFilter from "../labels/LabelFilter.vue";
     import DateFilter from "./date-select/DateFilter.vue";
     import RefreshButton from "../layout/RefreshButton.vue"
+    import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
@@ -380,6 +415,8 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
+    import {ElMessageBox, ElSwitch, ElFormItem, ElAlert} from "element-plus";
+    import {h, ref} from "vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -392,6 +429,7 @@
             LabelFilter,
             DateFilter,
             RefreshButton,
+            Filters,
             StatusFilterButtons,
             StateGlobalChart,
             TriggerAvatar,
@@ -509,6 +547,7 @@
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
+                actionOptions: {},
             };
         },
         created() {
@@ -554,6 +593,9 @@
             canCheck() {
                 return this.canDelete || this.canUpdate;
             },
+            canCreate() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+            },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
@@ -565,9 +607,19 @@
             },
             isDisplayedTop() {
                 return this.embed === false || this.filter
+            },
+            filterStorageKey() {
+                return storageKeys.EXECUTIONS_FILTERS
             }
         },
         methods: {
+            executionParams(row) {
+                return {
+                    namespace: row.namespace,
+                    flowId: row.flowId,
+                    id: row.id
+                }
+            },
             onDisplayColumnsChange(event) {
                 localStorage.setItem(this.storageKey, event);
                 this.displayColumns = event;
@@ -634,121 +686,111 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-            resumeExecutions() {
+            genericConfirmAction(toast, queryAction, byIdAction, success) {
                 this.$toast().confirm(
-                    this.$t("bulk resume", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryResumeExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                }))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkResumeExecution", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions resumed", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => this.genericConfirmCallback(queryAction, byIdAction, success),
+                    () => {}
+                );
+            },
+            genericConfirmCallback(queryAction, byIdAction, success) {
+                if (this.queryBulkAction) {
+                    const query = this.loadQuery({
+                        sort: this.$route.query.sort || "state.startDate:desc",
+                        state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                    }, false);
+                    const options = {...query, ...this.actionOptions};
+                    return this.$store
+                        .dispatch(queryAction, options)
+                        .then(r => {
+                            this.$toast().success(this.$t(success, {executionCount: r.data.count}));
+                            this.loadData();
+                        })
+                } else {
+                    const selection = {executionsId: this.selection};
+                    const options = {...selection, ...this.actionOptions};
+                    return this.$store
+                        .dispatch(byIdAction, options)
+                        .then(r => {
+                            this.$toast().success(this.$t(success, {executionCount: r.data.count}));
+                            this.loadData();
+                        }).catch(e => {
+                            this.$toast().error(e?.invalids.map(exec => {
+                                return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                            }), this.$t(e.message))
+                        })
+                }
+            },
+            resumeExecutions() {
+                this.genericConfirmAction(
+                    "bulk resume",
+                    "execution/queryResumeExecution",
+                    "execution/bulkResumeExecution",
+                    "executions resumed"
+                );
             },
             restartExecutions() {
-                this.$toast().confirm(
-                    this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryRestartExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                                }))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkRestartExecution", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                this.genericConfirmAction(
+                    "bulk restart",
+                    "execution/queryRestartExecution",
+                    "execution/bulkRestartExecution",
+                    "executions restarted"
+                );
+            },
+            replayExecutions() {
+                this.genericConfirmAction(
+                    "bulk replay",
+                    "execution/queryReplayExecution",
+                    "execution/bulkReplayExecution",
+                    "executions replayed"
+                );
             },
             deleteExecutions() {
-                this.$toast().confirm(
-                    this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryDeleteExecution", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkDeleteExecution", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+
+                const includeNonTerminated = ref(false);
+                const message = () => h("div", null, [
+                    h(
+                        "p",
+                        {innerHTML: this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length})}
+                    ),
+                    h(ElFormItem, {
+                        class: "mt-3",
+                        label: this.$t("execution-include-non-terminated")
+                    }, [
+                        h(ElSwitch, {
+                            modelValue: includeNonTerminated.value,
+                            "onUpdate:modelValue": (val) => {
+                                includeNonTerminated.value = val
+                            },
+                        }),
+                    ]),
+                    h(ElAlert, {
+                        title: this.$t("execution-warn-deleting-still-running"),
+                        type: "warning",
+                        showIcon: true,
+                        closable: false
+                    })
+                ]);
+                ElMessageBox.confirm(message, this.$t("confirmation"), {
+                    type: "confirm",
+                    inputType: "checkbox",
+                    inputValue: "false",
+                }).then(() => {
+                    this.actionOptions.includeNonTerminated = includeNonTerminated.value;
+                    this.genericConfirmCallback(
+                        "execution/queryDeleteExecution",
+                        "execution/bulkDeleteExecution",
+                        "executions deleted"
+                    )
+                });
             },
             killExecutions() {
-                this.$toast().confirm(
-                    this.$t("bulk kill", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
-                    () => {
-                        if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/queryKill", this.loadQuery({
-                                    sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
-                                    this.loadData();
-                                })
-                        } else {
-                            return this.$store
-                                .dispatch("execution/bulkKill", {executionsId: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
-                                    this.loadData();
-                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
-                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
-                                }), this.$t(e.message)))
-                        }
-                    },
-                    () => {
-                    }
-                )
+                this.genericConfirmAction(
+                    "bulk kill",
+                    "execution/queryKill",
+                    "execution/bulkKill",
+                    "executions killed"
+                );
             },
             setLabels() {
                 this.$toast().confirm(
@@ -756,7 +798,7 @@
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("execution/querySetLabels",  {
+                                .dispatch("execution/querySetLabels", {
                                     params: this.loadQuery({
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
@@ -769,7 +811,10 @@
                                 })
                         } else {
                             return this.$store
-                                .dispatch("execution/bulkSetLabels", {executionsId: this.selection, executionLabels: this.executionLabels})
+                                .dispatch("execution/bulkSetLabels", {
+                                    executionsId: this.selection,
+                                    executionLabels: this.executionLabels
+                                })
                                 .then(r => {
                                     this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
                                     this.loadData();

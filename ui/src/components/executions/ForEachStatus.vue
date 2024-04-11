@@ -40,7 +40,10 @@
         },
         data() {
             return {
-                localSubflowStatus: {}
+                localSubflowStatus: {},
+                updateThrottled: throttle(function () {
+                    this.localSubflowStatus = this.subflowsStatus
+                }, 500)
             }
         },
         created() {
@@ -89,10 +92,7 @@
                     name: "executions/list",
                     query: queries
                 };
-            },
-            updateThrottled: throttle(function () {
-                this.localSubflowStatus = this.subflowsStatus
-            }, 1000)
+            }
         }
     }
 </script>

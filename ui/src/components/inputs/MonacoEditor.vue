@@ -13,7 +13,7 @@
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-    import {setDiagnosticsOptions} from "monaco-yaml";
+    import {configureMonacoYaml} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas"
     import Utils from "../../utils/utils";
 
@@ -125,7 +125,7 @@
                 _this.initMonaco(monaco);
             });
 
-            setDiagnosticsOptions({
+            this.monacoYaml = configureMonacoYaml(this.monaco, {
                 enableSchemaRequest: true,
                 hover: true,
                 completion: true,
@@ -148,6 +148,9 @@
                         value: this.value,
                         theme: this.theme,
                         language: this.language,
+                        suggest: {
+                            showClasses: false,
+                        }
                     },
                     ...this.options
                 };
@@ -198,15 +201,8 @@
                 this.editor.focus();
             },
             destroy: function() {
-                if (this.editor) {
-                    if(this.diffEditor) {
-                        this.editor.getModel().original.dispose();
-                        this.editor.getModel().modified.dispose();
-                    } else {
-                        this.editor.getModel().dispose()
-                    }
-                    this.editor.dispose();
-                }
+                this.monacoYaml?.dispose();
+                this.editor?.dispose();
             },
             needReload: function(newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;
@@ -222,6 +218,7 @@
 <style scoped lang="scss">
     .monaco-editor {
         height: 100%;
+        outline: none;
     }
 
 </style>

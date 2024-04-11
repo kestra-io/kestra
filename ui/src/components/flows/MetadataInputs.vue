@@ -1,11 +1,8 @@
 <template>
     <div class="w-100 d-flex flex-column align-items-center">
-        <el-drawer
+        <drawer
             v-if="isEditOpen"
             v-model="isEditOpen"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <template #header>
                 <code>inputs</code>
@@ -40,7 +37,7 @@
                     :definitions="inputSchema.schema.definitions"
                 />
             </div>
-        </el-drawer>
+        </drawer>
         <div class="w-100">
             <div>
                 <div class="d-flex w-100" v-for="(input, index) in newInputs" :key="index">
@@ -74,8 +71,10 @@
 </script>
 <script>
     import {mapState} from "vuex";
+    import Drawer from "../Drawer.vue";
 
     export default {
+        components: {Drawer},
         emits: ["update:modelValue"],
         props: {
             inputs: {

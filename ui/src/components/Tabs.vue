@@ -1,7 +1,7 @@
 <template>
     <el-tabs class="router-link" :class="{top: top}" v-model="activeName">
         <el-tab-pane
-            v-for="tab in tabs"
+            v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
@@ -16,7 +16,7 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section :class="containerClass">
+    <section v-bind="$attrs" :class="containerClass">
         <component
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"
@@ -104,7 +104,7 @@
                     return {[this.activeTab.containerClass] : true};
                 }
 
-                return {"container" : true}
+                return {"container" : true, "mt-4": true};
             },
             activeTab() {
                 return this.tabs

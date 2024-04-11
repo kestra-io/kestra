@@ -66,7 +66,7 @@
         </collapse>
     </nav>
 
-    <div v-loading="isLoading">
+    <div v-bind="$attrs" v-loading="isLoading">
         <el-card>
             <el-tooltip
                 placement="bottom"
@@ -79,7 +79,7 @@
                 <template #content>
                     <span v-html="tooltipContent" />
                 </template>
-                <BarChart ref="chartRef" :chart-data="chartData" :options="options" v-if="aggregatedMetric" />
+                <Bar ref="chartRef" :data="chartData" :options="options" v-if="aggregatedMetric" />
             </el-tooltip>
             <span v-else>
                 <el-alert type="info" :closable="false">
@@ -91,7 +91,7 @@
 </template>
 
 <script>
-    import {BarChart} from "vue-chart-3";
+    import {Bar} from "vue-chartjs";
     import {mapState} from "vuex";
     import moment from "moment";
     import DateRange from "../layout/DateRange.vue";
@@ -103,7 +103,7 @@
         name: "FlowMetrics",
         components: {
             Collapse,
-            BarChart,
+            Bar,
             DateRange,
         },
         created() {

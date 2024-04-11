@@ -1,23 +1,20 @@
 package io.kestra.core.models.executions;
 
 import io.kestra.core.models.TenantInterface;
-import io.swagger.v3.oas.annotations.Hidden;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
+import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 @ToString
 @EqualsAndHashCode
@@ -220,4 +217,56 @@ public class TaskRun implements TenantInterface {
             ", state=" + this.getState().getCurrent().toString() +
             ")";
     }
+
+    /**
+     * This method is used when the retry is apply on a task
+     * but the retry type is NEW_EXECUTION
+     *
+     * @param retry Contains the retry configuration
+     * @param execution Contains the attempt number and original creation date
+     * @return The next retry date, null if maxAttempt || maxDuration is reached
+     */
+    public Instant nextRetryDate(AbstractRetry retry, Execution execution) {
+        if (retry.getMaxAttempt() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempt()) {
+
+            return null;
+        }
+        Instant base = this.lastAttempt().getState().maxDate();
+        Instant nextDate = retry.nextRetryDate(execution.getMetadata().getAttemptNumber(), base);
+        if (retry.getMaxDuration() != null && nextDate.isAfter(execution.getMetadata().getOriginalCreatedDate().plus(retry.getMaxDuration()))) {
+
+            return null;
+        }
+
+        return nextDate;
+    }
+
+    /**
+     * This method is used when the Retry definition comes from the flow
+     * @param retry The retry configuration
+     * @return The next retry date, null if maxAttempt || maxDuration is reached
+     */
+    public Instant nextRetryDate(AbstractRetry retry) {
+        if (this.attempts == null || this.attempts.isEmpty() || (retry.getMaxAttempt() != null && this.attemptNumber() >= retry.getMaxAttempt())) {
+
+            return null;
+        }
+        Instant base = this.lastAttempt().getState().maxDate();
+        Instant nextDate = retry.nextRetryDate(this.attempts.size(), base);
+        if (retry.getMaxDuration() != null && nextDate.isAfter(this.attempts.get(0).getState().minDate().plus(retry.getMaxDuration()))) {
+
+            return null;
+        }
+
+        return nextDate;
+    }
+
+    public boolean shouldBeRetried(AbstractRetry retry) {
+        if (retry == null) {
+            return false;
+        }
+        return this.nextRetryDate(retry) != null;
+    }
+
+
 }

@@ -15,13 +15,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 public class SecretFunctionTest extends AbstractMemoryRunnerTest {
@@ -51,11 +51,9 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void getUnknownSecret() {
-        IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
-            secretService.findSecret(null, null, "unknown_secret_key")
-        );
+    void getUnknownSecret() throws IllegalVariableEvaluationException, IOException {
+        String secret = secretService.findSecret(null, null, "unknown_secret_key");
 
-        assertThat(exception.getMessage(), containsString("Unable to find secret 'unknown_secret_key'"));
+        assertThat(secret, nullValue());
     }
 }

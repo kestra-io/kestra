@@ -30,6 +30,21 @@
             EditorView,
             TopNavBar
         },
+        created() {
+            if (this.$route.query.reset) {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted: false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined
+                });
+                this.$tours["guidedTour"].start();
+            }
+        },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);
         },
@@ -42,12 +57,36 @@
                     return this.flow.source;
                 }
 
-                return `id: hello-world
-namespace: company.team
+                return `id: myflow
+namespace: myteam
+description: Save and Execute the flow
+
+labels:
+  env: dev
+  project: myproject
+
+inputs:
+  - id: payload
+    type: JSON
+    defaults: |
+      [{"name": "kestra", "rating": "best in class"}]
+
 tasks:
-  - id: hello
+  - id: send_data
+    type: io.kestra.plugin.fs.http.Request
+    uri: https://reqres.in/api/products
+    method: POST
+    contentType: application/json
+    body: "{{ inputs.payload }}"
+
+  - id: print_status
     type: io.kestra.core.tasks.log.Log
-    message: Kestra team wishes you a great day! 👋`;
+    message: hello on {{ outputs.send_data.headers.date | first }}
+
+triggers:
+  - id: daily
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "0 9 * * *"`;
             },
             ...mapState("flow", ["flowGraph", "total"]),
             ...mapState("auth", ["user"]),

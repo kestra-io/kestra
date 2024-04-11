@@ -26,6 +26,10 @@ public class EncryptionService {
      * The IV is concatenated at the beginning of the string.
      */
     public static String encrypt(String key, String plainText) throws GeneralSecurityException {
+        if (plainText == null || plainText.isEmpty()) {
+            return plainText;
+        }
+
         byte[] keyBytes = Base64.getDecoder().decode(key);
         SecretKey secretKey = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
@@ -43,6 +47,10 @@ public class EncryptionService {
      * The IV is recovered from the beginning of the string.
      */
     public static String decrypt(String key, String cipherText) throws GeneralSecurityException {
+        if (cipherText == null || cipherText.isEmpty()) {
+            return cipherText;
+        }
+
         byte[] keyBytes = Base64.getDecoder().decode(key);
         SecretKey secretKey = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
         byte[] input = Base64.getDecoder().decode(cipherText);

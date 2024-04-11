@@ -1,5 +1,6 @@
 <template>
     <el-tooltip
+        v-if="isReplay || enabled"
         :persistent="false"
         transition=""
         :hide-after="0"
@@ -9,17 +10,19 @@
     >
         <component
             :is="component"
+            v-bind="$attrs"
             :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
             @click="isOpen = !isOpen"
-            v-if="component !== 'el-dropdown-item' && (isReplay || enabled)"
+            v-if="component !== 'el-dropdown-item'"
             :disabled="!enabled"
             :class="!isReplay ? 'restart me-1' : ''"
         >
             {{ $t(replayOrRestart) }}
         </component>
-        <span v-else-if="component === 'el-dropdown-item' && (isReplay || enabled)">
+        <span v-else-if="component === 'el-dropdown-item'">
             <component
                 :is="component"
+                v-bind="$attrs"
                 :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
                 @click="isOpen = !isOpen"
                 :disabled="!enabled"
@@ -48,7 +51,7 @@
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
 
-        <el-form>
+        <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
             <p class="text-muted">
                 {{ $t("restart change revision") }}
             </p>

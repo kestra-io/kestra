@@ -17,11 +17,11 @@ import {
     PointElement,
     Tooltip,
     Filler,
+    Legend,
     ArcElement,
     DoughnutController,
 } from "chart.js";
 import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
-import {MatrixController, MatrixElement} from "chartjs-chart-matrix";
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 
@@ -55,17 +55,15 @@ export default (app, routes, stores, translations) => {
         LineElement,
         LineController,
         PointElement,
-        Tooltip,
         Filler,
         ArcElement,
         DoughnutController,
         Tooltip,
+        Legend,
         CategoryScale,
         LinearScale,
         TreemapController,
-        TreemapElement,
-        MatrixController,
-        MatrixElement
+        TreemapElement
     );
 
     // store

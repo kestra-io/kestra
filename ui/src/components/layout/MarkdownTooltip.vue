@@ -7,28 +7,26 @@
             />
         </a>
 
-        <el-drawer
+        <drawer
             v-if="isOpen"
             v-model="isOpen"
             :title="title"
-            destroy-on-close
-            class="sm"
-            size=""
-            :append-to-body="true"
         >
             <markdown class="markdown-tooltip" :source="description" />
-        </el-drawer>
+        </drawer>
     </span>
 </template>
 
 <script>
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
     import Markdown from "./Markdown.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
         components: {
             HelpCircle,
-            Markdown
+            Markdown,
+            Drawer
         },
         data() {
             return {

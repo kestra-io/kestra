@@ -21,6 +21,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -59,6 +60,11 @@ public class JsonSchemaGenerator {
         SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
+            objectNode.findParents("anyOf").forEach(jsonNode -> {
+                if (jsonNode instanceof ObjectNode oNode) {
+                    oNode.set("oneOf", oNode.remove("anyOf"));
+                }
+            });
 
             Map<String, Object> map = JacksonMapper.toMap(objectNode);
 
@@ -241,10 +247,18 @@ public class JsonSchemaGenerator {
             PluginProperty pluginPropertyAnnotation = member.getAnnotationConsideringFieldAndGetter(PluginProperty.class);
             if (pluginPropertyAnnotation != null) {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
+                if (pluginPropertyAnnotation.beta()) {
+                    memberAttributes.put("$beta", true);
+                }
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
             if (schema != null && schema.deprecated()) {
+                memberAttributes.put("$deprecated", true);
+            }
+
+            Deprecated deprecated = member.getAnnotationConsideringFieldAndGetter(Deprecated.class);
+            if (deprecated != null) {
                 memberAttributes.put("$deprecated", true);
             }
         });
@@ -281,6 +295,10 @@ public class JsonSchemaGenerator {
                     if (!metrics.isEmpty()) {
                         collectedTypeAttributes.set("$metrics", context.getGeneratorConfig().createArrayNode().addAll(metrics));
                     }
+
+                    if (pluginAnnotation.beta()) {
+                        collectedTypeAttributes.put("$beta", true);
+                    }
                 }
 
                 // handle deprecated tasks
@@ -304,7 +322,6 @@ public class JsonSchemaGenerator {
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
                     TypeContext typeContext = context.getTypeContext();
-
                     if (declaredType.getErasedType() == Task.class) {
                         return getRegisteredPlugins()
                             .stream()
@@ -328,6 +345,12 @@ public class JsonSchemaGenerator {
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                             .filter(ScheduleCondition.class::isAssignableFrom)
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == TaskRunner.class) {
+                        return getRegisteredPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getTaskRunners().stream())
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     }
@@ -521,6 +544,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$deprecated")) {
             objectNode.set("$deprecated", mainClassDef.get("$deprecated"));
+        }
+        if (mainClassDef.has("$beta")) {
+            objectNode.set("$beta", mainClassDef.get("$beta"));
         }
     }
 

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractClassDocumentation<T> {
     protected Boolean deprecated;
+    protected Boolean beta;
     protected String cls;
     protected String shortName;
     protected String docDescription;
@@ -26,6 +27,10 @@ public abstract class AbstractClassDocumentation<T> {
     protected Map<String, Object> defs = new TreeMap<>();
     protected Map<String, Object> inputs = new TreeMap<>();
     protected Map<String, Object> propertiesSchema;
+    private final List<String> defsExclusions = List.of(
+        "io.kestra.core.models.conditions.Condition",
+        "io.kestra.core.models.conditions.ScheduleCondition"
+    );
 
     @SuppressWarnings("unchecked")
     protected AbstractClassDocumentation(JsonSchemaGenerator jsonSchemaGenerator, Class<? extends T> cls, Class<T> baseCls) {
@@ -36,6 +41,7 @@ public abstract class AbstractClassDocumentation<T> {
 
         if (this.propertiesSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
+            defsExclusions.forEach(this.defs::remove);
             this.propertiesSchema.remove("$defs");
         }
 
@@ -60,6 +66,7 @@ public abstract class AbstractClassDocumentation<T> {
         this.docDescription = this.propertiesSchema.containsKey("title") ? (String) this.propertiesSchema.get("title") : null;
         this.docBody = this.propertiesSchema.containsKey("description") ? (String) this.propertiesSchema.get("description") : null;
         this.deprecated = this.propertiesSchema.containsKey("$deprecated");
+        this.beta = this.propertiesSchema.containsKey("$beta");
 
         if (this.propertiesSchema.containsKey("$examples")) {
             List<Map<String, Object>> examples = (List<Map<String, Object>>) this.propertiesSchema.get("$examples");

@@ -8,7 +8,6 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -36,11 +35,6 @@ public class SecretService {
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws IOException, IllegalVariableEvaluationException {
-        return Optional
-            .ofNullable(decodedSecrets.get(key.toUpperCase()))
-            .orElseThrow(() -> new IllegalVariableEvaluationException("Unable to find secret '" + key + "'. " +
-                "You should add it in your environment variables as '" + SECRET_PREFIX + key.toUpperCase() +
-                "' with base64-encoded value."
-            ));
+        return decodedSecrets.get(key.toUpperCase());
     }
 }

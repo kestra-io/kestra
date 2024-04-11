@@ -4,7 +4,7 @@
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </el-button>
 
-    <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" class="sm" :title="$t('feeds.title')">
+    <drawer v-if="isOpen" v-model="isOpen" :title="$t('feeds.title')">
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mt-2">
                 <img class="float-end" :src="feed.image" alt="">
@@ -16,13 +16,13 @@
 
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
-            <div class="text-end">
+            <div class="d-flex w-100 justify-content-end">
                 <a class="el-button el-button--primary mt-3 " :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
             </div>
 
             <el-divider v-if="index !== feeds.length - 1" />
         </div>
-    </el-drawer>
+    </drawer>
 </template>
 
 <script>
@@ -32,6 +32,7 @@
     import CheckboxBlankCircle from "vue-material-design-icons/CheckboxBlankCircle.vue";
     import Markdown from "./Markdown.vue";
     import DateAgo from "./DateAgo.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
         components: {
@@ -39,7 +40,8 @@
             OpenInNew,
             CheckboxBlankCircle,
             Markdown,
-            DateAgo
+            DateAgo,
+            Drawer
         },
         data() {
             return {

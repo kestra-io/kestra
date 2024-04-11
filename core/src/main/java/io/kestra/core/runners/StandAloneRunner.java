@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -34,12 +35,13 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         this.running = true;
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-
         poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
 
         if (workerEnabled) {
-            Worker worker = new Worker(applicationContext, workerThread, null);
-            applicationContext.registerSingleton(worker);
+            // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils
+            String workerID = UUID.randomUUID().toString();
+            Worker worker = applicationContext.createBean(Worker.class, workerID, workerThread, null);
+            applicationContext.registerSingleton(worker); //
             poolExecutor.execute(worker);
             servers.add(worker);
         }
@@ -63,7 +65,6 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        this.servers.forEach(throwConsumer(AutoCloseable::close));
         this.poolExecutor.shutdown();
     }
 }

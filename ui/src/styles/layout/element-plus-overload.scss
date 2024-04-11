@@ -163,13 +163,16 @@
 
 .el-select__popper {
     .el-select-dropdown__item {
-        &.selected {
-            background: var(--el-fill-color-dark);
+        border-radius: var(--bs-border-radius);
+        margin: 0 0.6rem 1px;
 
-            html.dark & {
-                color: var(--el-text-color-primary);
-                background-color: var(--el-fill-color-light);
-            }
+        &.is-selected {
+            background-color: var(--bs-gray-200);
+            color: var(--el-text-color-regular);
+        }
+
+        &.is-hovering {
+            background-color: var(--bs-gray-300);
         }
     }
 }
@@ -707,6 +710,10 @@ form.ks-horizontal {
         }
     }
 
+    &.full-screen {
+        width: 99% !important;
+    }
+
     .el-drawer__header {
         padding: var(--spacer);
         margin-bottom: 0;
@@ -747,17 +754,19 @@ form.ks-horizontal {
     --el-collapse-content-font-size: var(--font-size-base);
     --el-collapse-border-color: var(--bs-border-color);
 
-    border-radius: var(--bs-border-radius-lg);
-    border: 1px solid var(--bs-border-color);
+    border: none;
 
     .el-collapse-item__header {
         padding: calc(var(--spacer) / 2);
-        border-bottom: 1px solid var(--bs-border-color);
-        background-color: var(--bs-gray-100-lighten-2);
+        border: none;
     }
 
     .el-collapse-item__content {
         padding: calc(var(--spacer) / 2);
+    }
+
+    .el-collapse-item__wrap {
+        border: none;
     }
 }
 
@@ -827,6 +836,10 @@ form.ks-horizontal {
 .el-avatar {
     --el-avatar-bg-color: var(--bs-gray-400);
     --el-avatar-text-color: var(--bs-black);
+
+    &.el-avatar--small {
+        font-size: 65%;
+    }
 
     html.dark & {
         --el-avatar-text-color: var(--bs-white);

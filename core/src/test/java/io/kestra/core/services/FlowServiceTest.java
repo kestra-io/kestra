@@ -1,5 +1,7 @@
 package io.kestra.core.services;
 
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.StringInput;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.Flow;
@@ -114,5 +116,30 @@ class FlowServiceTest {
 
         assertThat(warnings.size(), is(1));
         assertThat(warnings.get(0), containsString("The system namespace is reserved for background workflows"));
+    }
+
+    @Test
+    void propertyRenamingDeprecation() {
+        Flow flow = Flow.builder()
+            .id("flowId")
+            .namespace("io.kestra.unittest")
+            .inputs(List.of(
+                StringInput.builder()
+                    .id("inputWithId")
+                    .type(Type.STRING)
+                    .build(),
+                StringInput.builder()
+                    .name("inputWithName")
+                    .type(Type.STRING)
+                    .build()
+            ))
+            .tasks(Collections.singletonList(Return.builder()
+                .id("taskId")
+                .type(Return.class.getName())
+                .format("test")
+                .build()))
+            .build();
+
+        assertThat(flowService.deprecationPaths(flow), is(List.of("inputs[1].name")));
     }
 }

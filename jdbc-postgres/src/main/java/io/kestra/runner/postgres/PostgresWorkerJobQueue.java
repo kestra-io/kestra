@@ -29,11 +29,6 @@ public class PostgresWorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public void cleanup() {
-        jdbcworkerjobQueueService.cleanup();
-    }
-
-    @Override
     public void close() {
         jdbcworkerjobQueueService.close();
     }

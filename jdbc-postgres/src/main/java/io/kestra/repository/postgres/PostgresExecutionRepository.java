@@ -6,6 +6,7 @@ import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -19,8 +20,10 @@ import java.util.stream.Collectors;
 @PostgresRepositoryEnabled
 public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
-    public PostgresExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
-        super(new PostgresRepository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);
+    public PostgresExecutionRepository(@Named("executions") PostgresRepository<Execution> repository,
+                                       ApplicationContext applicationContext,
+                                       AbstractJdbcExecutorStateStorage executorStateStorage) {
+        super(repository, applicationContext, executorStateStorage);
     }
 
     @Override

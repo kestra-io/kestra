@@ -170,10 +170,61 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     transmitFailed: true
                     inputs:
                       json: '{{ json(read(taskrun.items)) }}'"""
+        ),
+        @Example(
+            title = """
+                This example shows how to use the combination of `EachSequential` and `ForEachItem` tasks to process files from an S3 bucket. The `EachSequential` iterates over files from the S3 trigger, and the `ForEachItem` task is used to split each file into batches. The `process_batch` subflow is then called with the `data` input parameter set to the URI of the batch to process.
+
+                ```yaml
+                id: process_batch
+                namespace: dev
+
+                inputs:
+                  - id: data
+                    type: FILE
+
+                tasks:
+                  - id: debug
+                    type: io.kestra.core.tasks.log.Log
+                    message: "{{ read(inputs.data) }}"
+                ```
+                """,
+            full = true,
+            code = """
+                id: process_files
+                namespace: dev
+
+                tasks:
+                  - id: loop_over_files
+                    type: io.kestra.core.tasks.flows.EachSequential
+                    value: "{{ trigger.objects | jq('.[].uri') }}"
+                    tasks:
+                      - id: subflow_per_batch
+                        type: io.kestra.core.tasks.flows.ForEachItem
+                        items: "{{ trigger.uris[parent.taskrun.value] }}"
+                        batch:
+                          rows: 1
+                        flowId: process_batch
+                        namespace: dev
+                        wait: true
+                        transmitFailed: true
+                        inputs:
+                          data: "{{ taskrun.items }}"
+
+                triggers:
+                  - id: s3
+                    type: io.kestra.plugin.aws.s3.Trigger
+                    interval: "PT1S"
+                    accessKeyId: "<access-key>"
+                    secretKeyId: "<secret-key>"
+                    region: "us-east-1"
+                    bucket: "my_bucket"
+                    prefix: "sub-dir"
+                    action: NONE"""
         )
     }
 )
-public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
+public class ForEachItem extends Task implements FlowableTask<VoidOutput>, ChildFlowInterface {
     @NotEmpty
     @PluginProperty(dynamic = true)
     @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI. This can be either the output from a previous task, formatted as `{{ outputs.task_id.uri }}`, or a FILE type input parameter, like `{{ inputs.myfile }}`. This task is optimized for files where each line represents a single item. Suitable file types include Amazon ION-type files (commonly produced by Query tasks), newline-separated JSON files, or CSV files formatted with one row per line and without a header. For files in other formats such as Excel, CSV, Avro, Parquet, XML, or JSON, it's recommended to first convert them to the ION format. This can be done using the conversion tasks available in the `io.kestra.plugin.serdes` module, which will transform files from their original format to ION.")
@@ -303,6 +354,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     @Getter
     @NoArgsConstructor
     public static class ForEachItemSplit extends Task implements RunnableTask<ForEachItemSplit.Output> {
+        static final String SUFFIX = "_split";
+
         private String items;
         private Batch batch;
 
@@ -310,7 +363,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
             this.items = items;
             this.batch = batch;
 
-            this.id = parentId + "_split";
+            this.id = parentId + SUFFIX;
             this.type = ForEachItemSplit.class.getName();
         }
 
@@ -342,6 +395,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     @Getter
     @NoArgsConstructor
     public static class ForEachItemExecutable extends Task implements ExecutableTask<Output> {
+        static final String SUFFIX = "_items";
+
         private Map<String, Object> inputs;
         private Boolean inheritLabels;
         private Map<String, String> labels;
@@ -357,7 +412,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
             this.transmitFailed = transmitFailed;
             this.subflowId = subflowId;
 
-            this.id = parentId + "_executable";
+            this.id = parentId + SUFFIX;
             this.type = ForEachItemExecutable.class.getName();
         }
 
@@ -370,7 +425,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
             TaskRun currentTaskRun
         ) throws InternalException {
             // get the list of splits from the outputs of the split task
-            String taskId = this.id.replace("_executable", "_split");
+            String taskId = this.id.substring(0, this.id.lastIndexOf('_')) + ForEachItemSplit.SUFFIX;
             var taskOutput = extractOutput(runContext, taskId);
             URI splitsURI = URI.create((String) taskOutput.get("splits"));
 
@@ -493,16 +548,17 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput> {
     @Getter
     @NoArgsConstructor
     public static class ForEachItemMergeOutputs extends Task implements RunnableTask<ForEachItemMergeOutputs.Output> {
+        static final String SUFFIX = "_merge";
 
         private ForEachItemMergeOutputs(String parentId) {
-            this.id = parentId + "_merge";
+            this.id = parentId + SUFFIX;
             this.type = ForEachItemMergeOutputs.class.getName();
         }
 
         @Override
         public ForEachItemMergeOutputs.Output run(RunContext runContext) throws Exception {
             // get the list of splits from the outputs of the split task
-            String taskId = this.id.replace("_merge", "_executable");
+            String taskId = this.id.substring(0, this.id.lastIndexOf('_')) + ForEachItemExecutable.SUFFIX;
             var taskOutput = extractOutput(runContext, taskId);
             Integer iterations = (Integer) taskOutput.get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES);
             String subflowOutputsBaseUri = (String) taskOutput.get(ExecutableUtils.TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI);

@@ -2,6 +2,7 @@ package io.kestra.core.plugins;
 
 import com.google.common.base.Charsets;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
@@ -35,10 +36,11 @@ public class RegisteredPlugin {
     private final List<Class<?>> controllers;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
+    private final List<Class<? extends TaskRunner>> taskRunners;
     private final List<String> guides;
 
     public boolean isValid() {
-        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !controllers.isEmpty() || !storages.isEmpty() || !secrets.isEmpty();
+        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !controllers.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !taskRunners.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -77,8 +79,8 @@ public class RegisteredPlugin {
             return SecretPluginInterface.class;
         }
 
-        if (this.getTasks().stream().anyMatch(r -> r.getName().equals(cls))) {
-            return Task.class;
+        if (this.getTaskRunners().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return TaskRunner.class;
         }
 
         throw new IllegalArgumentException("Unable to find base class from '" + cls + "'");
@@ -103,6 +105,7 @@ public class RegisteredPlugin {
         result.put("controllers", Arrays.asList(this.getControllers().toArray(Class[]::new)));
         result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
+        result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
 
         return result;
     }
@@ -241,6 +244,12 @@ public class RegisteredPlugin {
         if (!this.getSecrets().isEmpty()) {
             b.append("[Secrets: ");
             b.append(this.getSecrets().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getTaskRunners().isEmpty()) {
+            b.append("[Task Runners: ");
+            b.append(this.getTaskRunners().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

@@ -5,6 +5,7 @@ import pluginRewriteAll from "vite-plugin-rewrite-all";
 import {visualizer} from "rollup-plugin-visualizer";
 import copy from "rollup-plugin-copy"
 import downloadVsix from "./download-vsix-rollup-plugin"
+import eslintPlugin from "vite-plugin-eslint";
 
 export default defineConfig({
     base: "",
@@ -32,11 +33,6 @@ export default defineConfig({
         }),
         downloadVsix({
             targets: [
-                // increase build by 80mb
-                // {
-                //     vsixUrl: "https://github.com/kestra-io/vscode-kestra/releases/download/v0.1.7/ms-python.vscode-pylance-2023.11.12.vsix",
-                //     outputDir: "public/vscode/extensions/pylance"
-                // },
                 {
                     vsixUrl: "https://github.com/kestra-io/vscode-kestra/releases/download/v0.1.7/vscode-yaml-1.14.1.vsix",
                     outputDir: "public/vscode/extensions/yaml"
@@ -46,6 +42,10 @@ export default defineConfig({
         vue(),
         pluginRewriteAll(),
         visualizer(),
+        eslintPlugin({
+            failOnWarning: true,
+            failOnError: true
+        })
     ],
     assetsInclude: ["**/*.md"],
     css: {

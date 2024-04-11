@@ -25,13 +25,12 @@ import java.util.regex.Pattern;
 
 @Singleton
 public class VariableRenderer {
-    private static final Pattern RAW_PATTERN = Pattern.compile("\\{%[-]*\\s*raw\\s*[-]*%\\}(.*?)\\{%[-]*\\s*endraw\\s*[-]*%\\}");
+    private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    private PebbleEngine pebbleEngine;
+    private final PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
@@ -81,20 +80,18 @@ public class VariableRenderer {
             return inline;
         }
 
-        return recursive
+        String render = recursive
             ? renderRecursively(inline, variables)
             : renderOnce(inline, variables);
+
+        return RAW_PATTERN.matcher(render).replaceAll("$2");
     }
 
     public String renderOnce(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         // pre-process raw tags
         Matcher rawMatcher = RAW_PATTERN.matcher(inline);
         Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
-        String result = rawMatcher.replaceAll(matchResult -> {
-            var uuid = UUID.randomUUID().toString();
-            replacers.put(uuid, matchResult.group(1));
-            return uuid;
-        });
+        String result = replaceRawTags(rawMatcher, replacers);
 
         try {
             PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate(result);
@@ -102,29 +99,31 @@ public class VariableRenderer {
             Writer writer = new JsonWriter(new StringWriter());
             compiledTemplate.evaluate(writer, variables);
             result = writer.toString();
-        } catch (IOException | PebbleException e) {
-            String alternativeRender = this.alternativeRender(e, inline, variables);
-            if (alternativeRender == null) {
-                if (e instanceof PebbleException) {
-                    throw properPebbleException((PebbleException) e);
-                }
-
-                throw new IllegalVariableEvaluationException(e);
-            } else {
-                result = alternativeRender;
-            }
+        } catch (IOException e) {
+            throw new IllegalVariableEvaluationException(e);
+        } catch (PebbleException e) {
+            throw properPebbleException(e);
         }
 
         // post-process raw tags
-        for (var entry : replacers.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
+        result = putBackRawTags(replacers, result);
 
         return result;
     }
 
-    protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return null;
+    private static String putBackRawTags(Map<String, String> replacers, String result) {
+        for (var entry : replacers.entrySet()) {
+            result = result.replace(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
+    private static String replaceRawTags(Matcher rawMatcher, Map<String, String> replacers) {
+        return rawMatcher.replaceAll(matchResult -> {
+            var uuid = UUID.randomUUID().toString();
+            replacers.put(uuid, matchResult.group(1));
+            return uuid;
+        });
     }
 
     public String renderRecursively(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -180,7 +179,8 @@ public class VariableRenderer {
             return Optional.of(this.render(string, variables, recursive));
         }
 
-        return Optional.empty();
+        // Return the given object if it cannot be rendered.
+        return Optional.ofNullable(object);
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {

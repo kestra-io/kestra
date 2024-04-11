@@ -1,125 +1,103 @@
 <template>
-    <el-card @click="openLink">
-        <Export class="icon" />
+    <el-card>
+        <template #header>
+            <img :src="img" alt="">
+        </template>
         <div class="content row">
-            <div class="col-lg-4 col-xl-6">
-                <div class="img img-fluid" :class="imgClass" />
-            </div>
-            <div class="col-lg-8 col-xl-6">
-                <h3>{{ title }}</h3>
-                <p>{{ content }}</p>
-            </div>
+            <p class="fw-bold text-uppercase smaller-text">
+                {{ title }}
+            </p>
+            <markdown :source="mdContent" class="mt-4" />
         </div>
     </el-card>
 </template>
 
 <script>
-    import Export from "vue-material-design-icons/Export.vue";
-    import {ElMessageBox} from "element-plus"
+    import imageStarted from "../../assets/onboarding/onboarding-started-dark.svg"
+    import imageHelp from "../../assets/onboarding/onboarding-help-dark.svg"
+    import imageDoc from "../../assets/onboarding/onboarding-docs-dark.svg"
+    import imageProduct from "../../assets/onboarding/onboarding-product-dark.svg"
+    import Markdown from "../layout/Markdown.vue";
 
     export default {
         name: "OnboardingCard",
-        components: {
-            Export,
-        },
+        components: {Markdown},
         props: {
             title: {
                 type: String,
                 required: true
             },
-            content: {
+            category: {
                 type: String,
                 required: true
-            },
-            imgClass: {
-                type: String,
-                required: true
-            },
-            link: {
-                type: String,
-                required: true
+            }
+        },
+        created() {
+            this.loadMarkdown();
+        },
+        data() {
+            return {
+                markdownContent: "",
             }
         },
         methods: {
-            openLink() {
-                if (this.link.indexOf("<") >= 0) {
-                    ElMessageBox.alert(
-                        this.link,
-                        this.title,
-                        {
-                            customClass: "full-screen",
-                            confirmButtonText: this.$t("close"),
-                            dangerouslyUseHTMLString: true,
-                        }
-                    )
-                } else {
-                    window.open(this.link, "_blank");
-                }
+            loadMarkdown() {
+                import(`../../assets/onboarding/markdown/${this.category}${this.lang}.md?raw`)
+                    .then((module) => {
+                        this.markdownContent = module.default;
+                    })
             }
         },
         computed: {
-            imgSrc() {
-                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
-
-                return "../../assets/onboarding/onboarding-" + this.imgClass + "-" + (darkTheme ? "dark" : "light") + ".svg";
+            lang() {
+                const lang = localStorage.getItem("lang") || "en";
+                if (lang === "fr") {
+                    return "_fr"
+                }
+                return ""
             },
+            img() {
+                switch (this.category) {
+                case "started":
+                    return imageStarted;
+                case "help":
+                    return imageHelp;
+                case "docs":
+                    return imageDoc;
+                case "product":
+                    return imageProduct;
+                }
+                return imageStarted
+            },
+            mdContent() {
+                return this.markdownContent;
+            }
         }
     }
 </script>
 
 <style scoped lang="scss">
     .el-card {
-        padding: var(--spacer);
+
+        &:deep(.el-card__header) {
+            padding: 0;
+        }
+
         position: relative;
         height: 100%;
         cursor: pointer;
+    }
+
+    .smaller-text {
+        font-size: 0.86em;
     }
 
     p {
         margin-bottom: 0;
     }
 
-    .icon {
-        position: absolute;
-        top: calc(var(--spacer) / 2);
-        right: calc(var(--spacer) / 2);
-        font-size: var(--font-size-lg);
-    }
-
-    p, .icon {
-        color: var(--bs-gray-500);
-
-        html.dark & {
-            color: var(--bs-gray-700);
-        }
-    }
-
-
-    div.img {
-        max-width: 100%;
-
-        &.started {
-            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat center;
-
-            html.dark & {
-                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
-            }
-        }
-
-        &.demo {
-            background: url("../../assets/onboarding/onboarding-demo-light.svg") no-repeat center;
-
-            html.dark & {
-                background: url("../../assets/onboarding/onboarding-demo-dark.svg") no-repeat center;
-            }
-        }
-
-        &.help {
-            background: url("../../assets/onboarding/onboarding-help-light.svg") no-repeat center;
-
-            html.dark & {
-                background: url("../../assets/onboarding/onboarding-help-dark.svg") no-repeat center;
-            }
-        }
+    img {
+        width: 100%;
+        height: 100%;
     }
 </style>

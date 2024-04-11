@@ -16,6 +16,8 @@ import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Base64;
 import java.util.Collection;
@@ -31,34 +33,39 @@ public class AuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        if (!basicAuthService.isEnabled()) {
-            return chain.proceed(request);
-        }
+        return Mono.fromCallable(() -> basicAuthService.isEnabled())
+            .subscribeOn(Schedulers.boundedElastic())
+            .flux()
+            .switchMap(enabled -> {
+                if (!enabled) {
+                    return chain.proceed(request);
+                }
 
-        BasicAuthService.SaltedBasicAuthConfiguration basicAuthConfiguration = this.basicAuthService.configuration();
-        boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
-            .map(Collection::stream)
-            .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
-            .orElse(false);
+                BasicAuthService.SaltedBasicAuthConfiguration basicAuthConfiguration = this.basicAuthService.configuration();
+                boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
+                    .map(Collection::stream)
+                    .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
+                    .orElse(false);
 
-        if (isOpenUrl || isManagementEndpoint(request)) {
-            return Flux.from(chain.proceed(request));
-        }
+                if (isOpenUrl || isManagementEndpoint(request)) {
+                    return chain.proceed(request);
+                }
 
-        var basicAuth = request
-            .getHeaders()
-            .getAuthorization()
-            .filter(auth -> auth.toLowerCase().startsWith(PREFIX.toLowerCase()))
-            .map(cred -> BasicAuth.from(cred.substring(PREFIX.length() + 1)));
+                var basicAuth = request
+                    .getHeaders()
+                    .getAuthorization()
+                    .filter(auth -> auth.toLowerCase().startsWith(PREFIX.toLowerCase()))
+                    .map(cred -> BasicAuth.from(cred.substring(PREFIX.length() + 1)));
 
-        if (basicAuth.isEmpty() ||
-            !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
-            !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(), basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
-        ) {
-            return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
-        }
+                if (basicAuth.isEmpty() ||
+                    !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
+                    !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(), basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
+                ) {
+                    return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
+                }
 
-        return Flux.from(chain.proceed(request));
+                return chain.proceed(request);
+            });
     }
 
     @SuppressWarnings("rawtypes")

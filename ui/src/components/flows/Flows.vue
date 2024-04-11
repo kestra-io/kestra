@@ -27,7 +27,7 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'flows/create'}">
+                    <router-link :to="{name: 'flows/create'}" v-if="canCreate">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
                         </el-button>
@@ -59,6 +59,9 @@
                             :model-value="$route.query.labels"
                             @update:model-value="onDataTableValue('labels', $event)"
                         />
+                    </el-form-item>
+                    <el-form-item>
+                        <filters :storage-key="storageKeys.FLOWS_FILTERS" />
                     </el-form-item>
                 </template>
 
@@ -213,6 +216,7 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
+    import Filters from "../saved-filters/Filters.vue";
 </script>
 
 <script>
@@ -239,6 +243,7 @@
     import Labels from "../layout/Labels.vue"
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -289,6 +294,9 @@
             },
             canCheck() {
                 return this.canRead || this.canDelete || this.canUpdate;
+            },
+            canCreate() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.CREATE, this.$route.query.namespace);
             },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ, this.$route.query.namespace);

@@ -10,19 +10,19 @@
             <template #content>
                 <span v-html="tooltipContent" />
             </template>
-            <DoughnutChart ref="chartRef" :chart-data="chartData" :options="options" />
+            <Doughnut ref="chartRef" :data="chartData" :options="options" />
         </el-tooltip>
     </div>
 </template>
 
 <script>
     import {defineComponent, computed, ref} from "vue";
-    import {DoughnutChart} from "vue-chart-3"
+    import {Doughnut} from "vue-chartjs"
     import {tooltip, defaultConfig, backgroundFromState} from "../../utils/charts.js";
     import {cssVariable} from "../../utils/global";
 
     export default defineComponent({
-        components: {DoughnutChart},
+        components: {Doughnut},
         props: {
             data: {
                 type: Object,
@@ -83,13 +83,11 @@
 @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 .status-pie {
-    div {
-        height: 100px;
+    height: 100px;
 
-        @media (min-width: map-get($grid-breakpoints, "md")) {
-            & {
-                height: 200px;
-            }
+    @media (min-width: map-get($grid-breakpoints, "md")) {
+        & {
+            height: 200px;
         }
     }
 }

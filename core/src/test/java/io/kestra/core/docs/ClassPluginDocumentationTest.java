@@ -1,12 +1,13 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
+import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.models.tasks.runners.types.ProcessTaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -98,10 +99,27 @@ class ClassPluginDocumentationTest {
 
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, Schedule.class, null);
 
-            assertThat(doc.getDefs().size(), is(4));
+            assertThat(doc.getDefs().size(), is(2));
 
-            assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.conditions.ScheduleCondition")).get("type"), is("object"));
-            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.conditions.ScheduleCondition")).get("properties")).size(), is(0));
+            assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type"), is("object"));
+            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(1));
+        }));
+    }
+
+    @Test
+    void taskRunner() throws URISyntaxException {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+            RegisteredPlugin scan = pluginScanner.scan();
+
+            ClassPluginDocumentation<? extends TaskRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, ProcessTaskRunner.class, null);
+
+            assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
+            assertThat(doc.getCls(), is("io.kestra.core.models.tasks.runners.types.ProcessTaskRunner"));
+            assertThat(doc.getPropertiesSchema().get("title"), is("Task runner that executes a task as a subprocess on the Kestra host."));
+            assertThat(doc.getDefs(), anEmptyMap());
         }));
     }
 }

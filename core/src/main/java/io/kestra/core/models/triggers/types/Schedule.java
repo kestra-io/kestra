@@ -17,8 +17,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.CronExpression;
@@ -194,11 +194,11 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     @Schema(
         title = "(Deprecated) Backfill",
-        description = "Backfill property is deprecated and will be removed in the future. Instead, you can now go to the Triggers tab and start a highly customizable backfill process directly from the UI. This will allow you to backfill missed scheduled executions by providing a specific date range and custom labels. Read more about it in the [documentation](https://kestra.io/docs/workflow-components/triggers/backfill)."
+        description = "This property is deprecated and will be removed in the future. Instead, you can now go to the Triggers tab and start a highly customizable backfill process directly from the UI. This will allow you to backfill missed scheduled executions by providing a specific date range and custom labels. Read more about it in the [Backfill](https://kestra.io/docs/concepts/backfill) documentation."
     )
     @PluginProperty
     @Deprecated
-    private ScheduleBackfill backfill;
+    private Map<String, Object> backfill;
 
     @Schema(
         title = "What to do in case of missed schedules",
@@ -254,12 +254,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             // is after the end, then we calculate again the nextDate
             // based on now()
             if (backfill != null && nextDate != null && nextDate.isAfter(backfill.getEnd())) {
-                nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
             }
         }
         // no previous present & no backfill or recover missed schedules, just provide now
         else {
-            nextDate = computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
+            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
         }
 
         // if max delay reached, we calculate a new date except if we are doing a backfill
@@ -280,7 +280,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     public ZonedDateTime nextEvaluationDate() {
         // it didn't take into account the schedule condition, but as they are taken into account inside eval() it's OK.
         ExecutionTime executionTime = this.executionTime();
-        return computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(ZonedDateTime.now());
+        return computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
     }
 
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
@@ -301,7 +301,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, ZonedDateTime.now()).orElse(ZonedDateTime.now());
+        return computePreviousEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
     }
 
     @Override
@@ -349,7 +349,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
-                List<Label> labels = getLabels(conditionContext, backfill);
+                List<Label> labels = generateLabels(conditionContext, backfill);
                 Execution execution = Execution.builder()
                     .id(runContext.getTriggerExecutionId())
                     .tenantId(triggerContext.getTenantId())
@@ -390,7 +390,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         } else {
             variables = scheduleDates.toMap();
         }
-        List<Label> labels = getLabels(conditionContext, backfill);
+        List<Label> labels = generateLabels(conditionContext, backfill);
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
@@ -411,8 +411,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         // add inputs and inject defaults
         if (!inputs.isEmpty()) {
-            RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-            execution = execution.withInputs(runnerUtils.typedInputs(conditionContext.getFlow(), execution, inputs));
+            FlowInputOutput flowInputOutput = runContext.getApplicationContext().getBean(FlowInputOutput.class);
+            execution = execution.withInputs(flowInputOutput.typedInputs(conditionContext.getFlow(), execution, inputs));
         }
 
         return Optional.of(execution);
@@ -425,11 +425,21 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .orElse(RecoverMissedSchedules.ALL);
     }
 
-    private List<Label> getLabels(ConditionContext conditionContext, Backfill backfill) {
-        List<Label> labels = conditionContext.getFlow().getLabels() != null ? conditionContext.getFlow().getLabels() : new ArrayList<>();
+    private List<Label> generateLabels(ConditionContext conditionContext, Backfill backfill) {
+        List<Label> labels = new ArrayList<>();
+
+        if (conditionContext.getFlow().getLabels() != null) {
+            labels.addAll(conditionContext.getFlow().getLabels());
+        }
+
         if (backfill != null && backfill.getLabels() != null) {
             labels.addAll(backfill.getLabels());
         }
+
+        if (this.getLabels() != null) {
+            labels.addAll(this.getLabels());
+        }
+
         return labels;
     }
 
@@ -589,14 +599,6 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         @Schema(title = "The date of the previous schedule.")
         @NotNull
         private ZonedDateTime previous;
-    }
-
-    @Deprecated
-    public static class ScheduleBackfill {
-        @Schema(
-            title = "The first start date."
-        )
-        ZonedDateTime start;
     }
 
     public enum RecoverMissedSchedules {

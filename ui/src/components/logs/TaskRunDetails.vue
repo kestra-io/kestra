@@ -19,10 +19,10 @@
                         @update-logs="loadLogs($event)"
                     />
                     <for-each-status
-                        v-if="shouldDisplayProgressBar(currentTaskRun) && showProgressBar"
+                        v-if="shouldDisplayProgressBar(currentTaskRun)"
                         :execution-id="currentTaskRun.executionId"
-                        :subflows-status="currentTaskRun?.outputs?.iterations"
-                        :max="currentTaskRun.outputs.numberOfBatches"
+                        :subflows-status="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.iterations"
+                        :max="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.numberOfBatches"
                     />
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
@@ -46,7 +46,7 @@
                                     :exclude-metas="excludeMetas"
                                     v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
-                                <task-run-details
+                                <TaskRunDetails
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
                                     ref="subflows-logs"
                                     :level="level"
@@ -81,6 +81,7 @@
     import ForEachStatus from "../executions/ForEachStatus.vue";
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
+    import throttle from "lodash/throttle";
 
     export default {
         name: "TaskRunDetails",
@@ -159,6 +160,9 @@
                 flow: undefined,
                 logsBuffer: [],
                 shownSubflowsIds: [],
+                throttledExecutionUpdate: throttle(function (event) {
+                    this.followedExecution = JSON.parse(event.data)
+                }, 500)
             };
         },
         watch: {
@@ -171,7 +175,7 @@
             },
             execution: function () {
                 if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED) {
-                    this.closeSSE();
+                    this.closeExecutionSSE();
                 }
             },
             currentTaskRuns: {
@@ -179,7 +183,8 @@
                     // by default we preselect the last attempt for each task run
                     this.selectedAttemptNumberByTaskRunId = Object.fromEntries(taskRuns.map(taskRun => [taskRun.id, this.forcedAttemptNumber ?? this.attempts(taskRun).length - 1]));
                 },
-                immediate: true
+                immediate: true,
+                deep: true
             },
             targetExecution: {
                 handler: function (newExecution) {
@@ -216,10 +221,10 @@
                     }
 
                     if (![State.RUNNING, State.PAUSED].includes(this.followedExecution.state.current)) {
-                        this.executionSSE?.close();
+                        this.closeExecutionSSE()
                         // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
-                            this.logsSSE?.close();
+                            this.closeLogsSSE()
                         }, 2000);
 
                         if (!this.logsSSE) {
@@ -286,9 +291,31 @@
                 default:
                     return State.arrayAllStates().map(s => s.name)
                 }
+            },
+            taskTypeAndTaskRunByTaskId() {
+                return Object.fromEntries(this.followedExecution?.taskRunList?.map(taskRun => [taskRun.taskId, [this.taskType(taskRun), taskRun]]));
+            },
+            forEachItemExecutableByRootTaskId() {
+                return Object.fromEntries(
+                    Object.entries(this.taskTypeAndTaskRunByTaskId)
+                        .filter(([, taskTypeAndTaskRun]) => taskTypeAndTaskRun[0] === "io.kestra.core.tasks.flows.ForEachItem")
+                        .map(([taskId]) => [taskId, this.taskTypeAndTaskRunByTaskId?.[taskId + "_items"]?.[1]])
+                );
             }
         },
         methods: {
+            closeExecutionSSE() {
+                if (this.executionSSE) {
+                    this.executionSSE.close();
+                    this.executionSSE = undefined;
+                }
+            },
+            closeLogsSSE() {
+                if (this.logsSSE) {
+                    this.logsSSE.close();
+                    this.logsSSE = undefined;
+                }
+            },
             toggleExpandCollapseAll() {
                 this.shownAttemptsUid.length === 0 ? this.expandAll() : this.collapseAll();
             },
@@ -313,7 +340,9 @@
             },
             shouldDisplayProgressBar(taskRun) {
                 return this.showProgressBar &&
-                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem" &&
+                    this.forEachItemExecutableByRootTaskId[taskRun.taskId]?.outputs?.iterations !== undefined &&
+                    this.forEachItemExecutableByRootTaskId[taskRun.taskId]?.outputs?.numberOfBatches !== undefined;
             },
             shouldDisplayLogs(taskRun) {
                 return (this.taskRunId ||
@@ -326,8 +355,15 @@
                     .dispatch("execution/followExecution", {id: executionId})
                     .then(sse => {
                         this.executionSSE = sse;
-                        this.executionSSE.onmessage = async (event) => {
-                            this.followedExecution = JSON.parse(event.data);
+                        this.executionSSE.onmessage = executionEvent => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            if (isEnd) {
+                                this.closeExecutionSSE();
+                            }
+                            this.throttledExecutionUpdate(executionEvent);
+                            if (isEnd) {
+                                this.throttledExecutionUpdate.flush();
+                            }
                         }
                     });
             },
@@ -462,8 +498,8 @@
             }
         },
         beforeUnmount() {
-            this.executionSSE?.close();
-            this.logsSSE?.close();
+            this.closeExecutionSSE();
+            this.closeLogsSSE()
         },
     };
 </script>

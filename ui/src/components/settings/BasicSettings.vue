@@ -94,7 +94,7 @@
                 <el-button v-if="canReadFlows" :icon="Download" size="large" @click="exportFlows()">
                     {{ $t('export all flows') }}
                 </el-button>
-                <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()" :hidden="!configs.isTemplateEnabled">
+                <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled">
                     {{ $t('export all templates') }}
                 </el-button>
             </el-form-item>
@@ -214,7 +214,7 @@
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
-            this.editorFontSize = localStorage.getItem("editorFontSize") || 12;
+            this.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.envName = store.getters["layout/envName"] || this.configs?.environment?.name;

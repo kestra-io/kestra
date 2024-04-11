@@ -8,6 +8,8 @@ import io.kestra.core.serializers.YamlFlowParser;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
+import java.util.Collections;
+
 @CommandLine.Command(
     name = "validate",
     description = "validate a template"
@@ -29,7 +31,8 @@ public class TemplateValidateCommand extends AbstractValidateCommand {
             (Object object) -> {
                 Template template = (Template) object;
                 return template.getNamespace() + " / " + template.getId();
-            }
+            },
+            (Object object) -> Collections.emptyList()
         );
     }
 }

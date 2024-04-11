@@ -1,5 +1,5 @@
 <script setup>
-    import {computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch} from "vue";
+    import {computed, getCurrentInstance, h, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex"
 
     // Icons
@@ -23,6 +23,8 @@
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
     import {apiUrl} from "override/utils/route";
     import EditorButtons from "./EditorButtons.vue";
+    import Drawer from "../Drawer.vue";
+    import {ElMessageBox} from "element-plus";
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
@@ -167,12 +169,14 @@
     }
 
     const editorDomElement = ref(null);
-    const editorWidthStorageKey = "editor-width";
-    const editorWidth = ref(localStorage.getItem(editorWidthStorageKey));
+    const editorWidthStorageKey = "editor-size";
+    const localStorageStoredWidth = localStorage.getItem(editorWidthStorageKey);
+    const editorWidth = ref(localStorageStoredWidth ?? 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
     const haveChange = ref(props.isDirty)
     const flowYaml = ref("")
+    const flowYamlOrigin = ref("")
     const newTrigger = ref(null)
     const isNewTriggerOpen = ref(false)
     const newError = ref(null)
@@ -199,11 +203,7 @@
     })
 
     const leftEditorWidth = computed(() => {
-        return (editorWidth.value > 50 ? (editorWidth.value - 50) * 2 : 0) + "%";
-    })
-
-    const rightEditorWidth = computed(() => {
-        return (editorWidth.value < 50 ? (50 - editorWidth.value) * 2 : 0) + "%";
+        return editorWidth.value + "%";
     })
 
     const autoRestorelocalStorageKey = computed(() => {
@@ -235,7 +235,7 @@
 
     const initYamlSource = async () => {
         flowYaml.value = props.flow.source;
-
+        flowYamlOrigin.value = props.flow.source;
         if (flowHaveTasks()) {
             if ([editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
                 await fetchGraph();
@@ -564,28 +564,48 @@
                 title: t("invalid flow"),
                 message: t("invalid yaml"),
             })
+
             return;
         }
-
+        const overrideFlow = ref(false);
         if (flowErrors.value) {
-            saveAsDraft(flowErrors.value);
-            return;
+            if (props.flowValidation.outdated && props.isCreating) {
+                overrideFlow.value = await ElMessageBox({
+                    title: t("override.title"),
+                    message: () => {
+                        return h("div", null, [
+                            h("p", null, t("override.details")),
+
+                        ])
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: t("ok"),
+                    cancelButtonText: t("cancel"),
+                    center: false,
+                    showClose: false,
+                }).then(() => {
+                    overrideFlow.value = true;
+                    console.log("pop")
+                    return true;
+                }).catch(() => {
+                    return false
+                })
+
+            }
+
+            if (!overrideFlow.value) {
+                saveAsDraft(flowErrors.value);
+
+                return;
+            }
         }
 
-        if (props.isCreating) {
+
+        if (props.isCreating && !overrideFlow.value) {
             await store.dispatch("flow/createFlow", {flow: flowYaml.value})
                 .then((response) => {
                     toast.saved(response.id);
                     store.dispatch("core/isUnsaved", false);
-                    router.push({
-                        name: "flows/update",
-                        params: {
-                            id: flowParsed.value.id,
-                            namespace: flowParsed.value.namespace,
-                            tab: "editor",
-                            tenant: routeParams.tenant
-                        }
-                    });
                 })
         } else {
             await store.dispatch("flow/saveFlow", {flow: flowYaml.value})
@@ -593,6 +613,18 @@
                     toast.saved(response.id);
                     store.dispatch("core/isUnsaved", false);
                 })
+        }
+
+        if (props.isCreating || overrideFlow.value) {
+            router.push({
+                name: "flows/update",
+                params: {
+                    id: flowParsed.value.id,
+                    namespace: flowParsed.value.namespace,
+                    tab: "editor",
+                    tenant: routeParams.tenant
+                }
+            });
         }
 
         haveChange.value = false;
@@ -630,6 +662,7 @@
                 return;
             }
             saveWithoutRevisionGuard();
+            flowYamlOrigin.value = flowYaml.value;
         })
     };
 
@@ -759,7 +792,7 @@
             :is-read-only="props.isReadOnly"
             :can-delete="canDelete()"
             :is-allowed-edit="isAllowedEdit()"
-            :have-change="haveChange"
+            :have-change="flowYaml !== flowYamlOrigin"
             :flow-have-tasks="flowHaveTasks()"
             :errors="flowErrors"
             :warnings="flowWarnings"
@@ -771,12 +804,12 @@
             @open-edit-metadata="isEditMetadataOpen = true;"
         />
     </div>
-    <div class="main-editor" v-loading="isLoading">
+    <div v-bind="$attrs" class="main-editor" v-loading="isLoading">
         <editor
             ref="editorDomElement"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? {'flex-basis': leftEditorWidth} : {}"
+            :style="combinedEditor ? {'flex-basis': leftEditorWidth, 'flex-grow': 0} : {}"
             @save="save"
             @execute="execute"
             v-model="flowYaml"
@@ -790,7 +823,7 @@
             :navbar="false"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <div :style="combinedEditor ? {'flex-basis': rightEditorWidth} : viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
+        <div :style="viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
             <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
             <div
                 class="topology-display"
@@ -825,13 +858,10 @@
             />
         </div>
 
-        <el-drawer
+        <drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
             title="Add a global error handler"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <el-form label-position="top">
                 <task-editor
@@ -845,14 +875,11 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </el-drawer>
-        <el-drawer
+        </drawer>
+        <drawer
             v-if="isNewTriggerOpen"
             v-model="isNewTriggerOpen"
             title="Add a trigger"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <el-form label-position="top">
                 <task-editor
@@ -866,13 +893,10 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </el-drawer>
-        <el-drawer
+        </drawer>
+        <drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
         >
             <template #header>
                 <code>flow metadata</code>
@@ -896,7 +920,7 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </el-drawer>
+        </drawer>
     </div>
     <el-dialog v-if="confirmOutdatedSaveDialog" v-model="confirmOutdatedSaveDialog" destroy-on-close :append-to-body="true">
         <template #header>

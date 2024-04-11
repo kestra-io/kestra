@@ -18,7 +18,9 @@ kestra:
         url: https://repo.maven.apache.org/maven2/
       sonatype:
         url: https://s01.oss.sonatype.org/content/repositories/snapshots/
-
+  server:
+    liveness:
+      enabled: false
 micronaut:
   http:
     services:

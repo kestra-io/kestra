@@ -54,7 +54,7 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
 
 - You may need to enable java annotation processors since we are using it a lot.
 - The main class is `io.kestra.cli.App` from module `kestra.cli.main`
-- Pass as program arguments the server you want to develop, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/servers/#kestra-standalone-development-environment-servers)
+- Pass as program arguments the server you want to develop, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies)
 - ![Intellij Idea Configuration ](https://user-images.githubusercontent.com/2064609/161399626-1b681add-cfa8-4e0e-a843-2631cc59758d.png) Intellij Idea configuration can be found in screenshot below.
   - `MICRONAUT_ENVIRONMENTS`: can be set any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`
   - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on the startup.
@@ -76,10 +76,30 @@ The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` 
 - create a files `ui/.env.development.local` with content `VITE_APP_API_URL=http://localhost:8080` (or your actual server url)
 - `npm run dev` will start the development server with hot reload.
 - The server start by default on port 8090 and is reachable on `http://localhost:5173`
-- You can run `npm run build` in order to build the front-end that will be delivered from the
-backend (without running the `npm run dev`) above.
+- You can run `npm run build` in order to build the front-end that will be delivered from the backend (without running the `npm run dev`) above.
 
-If you have CORS restrictions when using the local development npm server, you need to configure the backend to allow the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
+Now, you need to start a backend server, you could:
+- start a [local server](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies) without database using this docker-compose file already configured with CORS enabled:
+```yaml
+services:
+  kestra:
+    image: kestra/kestra:latest-full
+    user: "root"
+    command: server local
+    environment:
+      KESTRA_CONFIGURATION: |
+        micronaut:
+          server:
+            cors:
+              enabled: true
+              configurations:
+                all:
+                  allowedOrigins:
+                    - http://localhost:5173
+    ports:
+      - "8080:8080"
+```
+- start the [Develop backend](#develop-backend) from your IDE and you need to configure CORS restrictions when using the local development npm server, changing the backend configuration allowing the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
 
 ```yaml
 micronaut:

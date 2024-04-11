@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -36,6 +37,7 @@ public class Size extends Task implements RunnableTask<Size.Output> {
         description = "Must be a `kestra://` storage URI."
     )
     @PluginProperty(dynamic = true)
+    @NotNull
     private String uri;
 
     @Override

@@ -1,6 +1,6 @@
 {% macro type(data) %}
     {%- if data['$ref'] -%}
-    [=={{- data['$ref'] | slice(8) -}}==](#{{- data['$ref'] | slice(8) | lower -}})
+    [=={{- data['$ref'] | slice(8) | substringAfterLast('.') -}}==](#{{- data['$ref'] | slice(8) | lower -}})
     {%- else -%}
     =={{- data.type -}}==
     {%- endif -%}
@@ -10,9 +10,15 @@
 {% macro fieldType(data) -%}
 {%- if data['$deprecated'] != null %}
 ::alert{type="warning"}
-🔒 Deprecated
+⚠ Deprecated
 ::
 {% endif %}
+
+{%- if data['$beta'] != null %}
+::alert{type="info"}
+This property is currently in beta. While it is considered safe for use, please be aware that its API could change in ways that are not compatible with earlier versions in future releases, or it might become unsupported.
+::
+{%- endif %}
 
 {%- if data.type != null -%}
 * **Type:** {{ type(data) -}}
@@ -87,17 +93,16 @@
 * **Possible Values:**
     {%- for current in data.enum %}
   * `{{current}}`
-    {%- endfor -%}
-{%- endif -%}
+    {%- endfor %}
+{% endif -%}
 
 {%- if data.title %}
-> {{ data.title }}
-{%- endif -%}
+**{{ data.title }}**
+{% endif -%}
 
 {%- if data.description %}
-{{ data.description }}
-{%- endif -%}
-
+> {{ data.description }}
+{%- endif %}
 {% endmacro %}
 
 

@@ -19,7 +19,13 @@ icon: {{ icon }}
 
 {% if deprecated %}
 ::alert{type="warning"}
-🔒 Deprecated
+⚠ Deprecated
+::
+{%- endif %}
+
+{% if beta %}
+::alert{type="info"}
+This plugin is currently in beta. While it is considered safe for use, please be aware that its API could change in ways that are not compatible with earlier versions in future releases, or it might become unsupported.
 ::
 {%- endif %}
 
@@ -28,10 +34,12 @@ type: "{{ cls }}"
 ```
 
 {% if docDescription -%}
-> {{ docDescription }}
+<span style="font-size:1.5em;">{{ docDescription }}</span>
 {%- endif %}
 
-{{ docBody }}
+{% if docBody -%}
+  {{ docBody }}
+{%- endif %}
 
 {% if docExamples != null %}
 ## Examples

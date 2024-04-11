@@ -1,11 +1,20 @@
 package io.kestra.repository.mysql;
 
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.AbstractJdbcRepository;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.model.Pageable;
-import org.jooq.*;
+import jakarta.inject.Inject;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
+import org.jooq.RecordMapper;
+import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
 import java.sql.Timestamp;
@@ -13,13 +22,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MysqlRepository<T>  extends AbstractJdbcRepository<T> {
-    public MysqlRepository(Class<T> cls, ApplicationContext applicationContext) {
-        super(cls, applicationContext);
+@MysqlRepositoryEnabled
+@EachBean(JdbcTableConfig.class)
+public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
+    @Inject
+    public MysqlRepository(@Parameter JdbcTableConfig jdbcTableConfig,
+                           QueueService queueService,
+                           JooqDSLContextWrapper dslContextWrapper) {
+        super(jdbcTableConfig, queueService, dslContextWrapper);
         this.table = DSL.table(DSL.quotedName(this.getTable().getName()));
     }
 
+    /** {@inheritDoc} **/
+    @Override
     public Condition fullTextCondition(List<String> fields, String query) {
         if (query == null || query.equals("*")) {
             return DSL.trueCondition();
@@ -31,7 +47,7 @@ public class MysqlRepository<T>  extends AbstractJdbcRepository<T> {
             .map(s -> "+" + s + "*")
             .collect(Collectors.joining(" "));
 
-        if (match.length() == 0) {
+        if (match.isEmpty()) {
             return DSL.falseCondition();
         }
 

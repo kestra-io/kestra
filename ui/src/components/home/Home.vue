@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar v-if="!embed" :title="routeInfo.title">
-        <template #additional-right>
+        <template #additional-right v-if="canCreate">
             <ul>
                 <li>
                     <router-link :to="{name: 'flows/create'}">
@@ -90,6 +90,8 @@
                     <home-summary-failed
                         v-if="dailyReady"
                         :filters="defaultFilters"
+                        :flow-id="flowId"
+                        :namespace="namespace"
                         class="mb-4"
                     />
                 </el-col>
@@ -332,6 +334,9 @@
                 return {
                     title: this.$t("homeDashboard.title"),
                 };
+            },
+            canCreate() {
+                return this.user.isAllowedGlobal(permission.FLOW, action.CREATE)
             },
             defaultFilters() {
                 return {

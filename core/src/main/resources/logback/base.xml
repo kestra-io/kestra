@@ -32,7 +32,11 @@
     <!-- Elastic deprecation warning that is not compatible with OpenSearch, we must disable all warnings ... -->
     <logger name="org.opensearch.client.RestClient" level="ERROR" />
 
-    <!-- Flyway log warnings for out-of-order or when using IF NOT EXISTS -->
-    <logger name="org.flywaydb.core.internal.command.DbMigrate" level="ERROR" />
+    <!--
+        We enable INFO for DbMigrate otherwise there is nothing displayed on the console when a migration is ongoing,
+        which can be make thinking Kestra is not starting when the migration is long.
+    -->
+    <logger name="org.flywaydb.core.internal.command.DbMigrate" level="INFO" />
+    <!-- Flyway log when using IF NOT EXISTS -->
     <logger name="org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor" level="ERROR" />
 </included>

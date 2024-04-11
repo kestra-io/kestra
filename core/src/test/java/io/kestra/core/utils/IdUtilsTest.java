@@ -35,4 +35,15 @@ class IdUtilsTest {
         assertThat(idWithNull, notNullValue());
         assertThat(idWithNull, is("namespace_flow"));
     }
+
+    @Test
+    void fromPartsAndSeparator() {
+        String id = IdUtils.fromPartsAndSeparator('|', "namespace", "flow");
+        assertThat(id, notNullValue());
+        assertThat(id, is("namespace|flow"));
+
+        String idWithNull = IdUtils.fromPartsAndSeparator('|', null, "namespace", "flow");
+        assertThat(idWithNull, notNullValue());
+        assertThat(idWithNull, is("namespace|flow"));
+    }
 }

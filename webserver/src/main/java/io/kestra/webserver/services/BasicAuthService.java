@@ -48,6 +48,8 @@ public class BasicAuthService {
     private void init() {
         if (Boolean.TRUE.equals(this.basicAuthConfiguration.getEnabled())) {
             this.save(this.basicAuthConfiguration);
+        } else if (Boolean.FALSE.equals(this.basicAuthConfiguration.getEnabled())) {
+            this.unsecure();
         }
     }
 

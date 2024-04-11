@@ -12,8 +12,9 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "expand",
-    description = "expand a flow"
+    description = "deprecated - expand a flow"
 )
+@Deprecated
 public class FlowExpandCommand extends AbstractCommand {
 
     @CommandLine.Parameters(index = "0", description = "the flow file to expand")
@@ -28,6 +29,7 @@ public class FlowExpandCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
+        stdErr("Warning, this functionality is deprecated and will be removed at some point.");
         String content = IncludeHelperExpander.expand(Files.readString(file), file.getParent());
         Flow flow = yamlFlowParser.parse(content, Flow.class);
         modelValidator.validate(flow);

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="trigger">
         <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <el-popover
@@ -11,9 +11,9 @@
                     :hide-after="0"
                 >
                     <template #reference>
-                        <el-avatar shape="square" class="me-1" size="small" button>
-                            {{ name(trigger) }}
-                        </el-avatar>
+                        <el-button>
+                            <task-icon :only-icon="true" :cls="trigger.type" :icons="icons" />
+                        </el-button>
                     </template>
                     <template #default>
                         <trigger-vars :data="trigger" />
@@ -25,6 +25,8 @@
 </template>
 <script>
     import TriggerVars from "./TriggerVars.vue";
+    import {mapState} from "vuex";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
     export default {
         props: {
@@ -38,6 +40,7 @@
             },
         },
         components: {
+            TaskIcon,
             TriggerVars
         },
         methods: {
@@ -51,6 +54,7 @@
             },
         },
         computed: {
+            ...mapState("plugin", ["icons"]),
             triggers() {
                 if (this.flow && this.flow.triggers) {
                     return this.flow.triggers
@@ -64,3 +68,15 @@
         }
     };
 </script>
+
+<style lang="scss" scoped>
+    .el-button {
+        display: inline-flex !important;
+        margin-right: calc(var(--spacer) / 4);
+    }
+
+    :deep(div.wrapper) {
+        width: 20px;
+        height: 20px;
+    }
+</style>

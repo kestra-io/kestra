@@ -44,6 +44,9 @@ public abstract class Input<T> implements Data {
     @Pattern(regexp="^[a-zA-Z0-9][.a-zA-Z0-9_-]*")
     String id;
 
+    @Deprecated
+    String name;
+
     @NotNull
     @Valid
     Type type;
@@ -58,11 +61,11 @@ public abstract class Input<T> implements Data {
     public abstract void validate(T input) throws ConstraintViolationException;
 
     @JsonSetter
-    @Deprecated
     public void setName(String name) {
         if (this.id == null) {
             this.id = name;
         }
-    }
 
+        this.name = name;
+    }
 }

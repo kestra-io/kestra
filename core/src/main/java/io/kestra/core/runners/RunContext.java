@@ -15,6 +15,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -42,10 +43,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -80,6 +79,14 @@ public class RunContext {
         this.initBean(applicationContext);
         this.initLogger(execution);
         this.initContext(flow, null, execution, null);
+        this.pluginConfiguration = Collections.emptyMap();
+    }
+
+    /**
+     * Equivalent to {@link #RunContext(ApplicationContext, Flow, Task, Execution, TaskRun, boolean)} with decryptVariables set to true
+     */
+    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
+        this(applicationContext, flow, task, execution, taskRun, true);
     }
 
     /**
@@ -90,11 +97,12 @@ public class RunContext {
      * @param task the current {@link io.kestra.core.models.tasks.Task}
      * @param execution the current {@link Execution}
      * @param taskRun the current {@link TaskRun}
+     * @param decryptVariables whether or not to decrypt secret variables
      */
-    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
+    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
         this.initBean(applicationContext);
         this.initLogger(taskRun, task);
-        this.initContext(flow, task, execution, taskRun);
+        this.initContext(flow, task, execution, taskRun, decryptVariables);
         this.initPluginConfiguration(applicationContext, task.getType());
     }
 
@@ -133,6 +141,7 @@ public class RunContext {
             },
             storageInterface
         );
+        this.pluginConfiguration = Collections.emptyMap();
     }
 
     private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
@@ -156,7 +165,11 @@ public class RunContext {
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
-        this.variables = this.variables(flow, task, execution, taskRun, null);
+        this.initContext(flow, task, execution, taskRun, true);
+    }
+
+    private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
+        this.variables = this.variables(flow, task, execution, taskRun, null, decryptVariables);
 
         if (taskRun != null && this.storageInterface != null) {
             this.storage = new InternalStorage(
@@ -234,6 +247,10 @@ public class RunContext {
     }
 
     protected Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun, AbstractTrigger trigger) {
+        return this.variables(flow, task, execution, taskRun, trigger, true);
+    }
+
+    protected Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun, AbstractTrigger trigger, boolean decryptVariables) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("envs", runContextCache.getEnvVars())
             .put("globals", runContextCache.getGlobalVars());
@@ -290,18 +307,22 @@ public class RunContext {
                 executionMap.put("originalId", execution.getOriginalId());
             }
 
+
             builder
                 .put("execution", executionMap.build());
 
             if (execution.getTaskRunList() != null) {
                 Map<String, Object> outputs = new HashMap<>(execution.outputs());
-                decryptOutputs(outputs);
+                if (decryptVariables) {
+                    decryptOutputs(outputs);
+                }
                 builder.put("outputs", outputs);
             }
 
+            Map<String, Object> inputs = new HashMap<>();
             if (execution.getInputs() != null) {
-                Map<String, Object> inputs = new HashMap<>(execution.getInputs());
-                if (flow != null && flow.getInputs() != null) {
+                inputs.putAll(execution.getInputs());
+                if (decryptVariables && flow != null && flow.getInputs() != null) {
                     // if some inputs are of type secret, we decode them
                     for (Input<?> input : flow.getInputs()) {
                         if (input instanceof SecretInput && inputs.containsKey(input.getId())) {
@@ -314,6 +335,14 @@ public class RunContext {
                         }
                     }
                 }
+            }
+            if (flow != null && flow.getInputs() != null) {
+                // we add default inputs value from the flow if not already set, this will be useful for triggers
+                flow.getInputs().stream()
+                    .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
+                    .forEach(input -> inputs.put(input.getId(), input.getDefaults()));
+            }
+            if (!inputs.isEmpty()) {
                 builder.put("inputs", inputs);
             }
 
@@ -324,6 +353,7 @@ public class RunContext {
             if (execution.getLabels() != null) {
                 builder.put("labels", execution.getLabels()
                     .stream()
+                    .filter(label -> label.value() != null)
                     .map(label -> new AbstractMap.SimpleEntry<>(
                         label.key(),
                         label.value()
@@ -506,7 +536,7 @@ public class RunContext {
         return forScheduler(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
     }
 
-    public RunContext forWorkerDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
+    public RunContext forWorkingDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
         forWorker(applicationContext, workerTask);
 
         Map<String, Object> clone = new HashMap<>(this.variables);
@@ -514,6 +544,12 @@ public class RunContext {
         clone.put("workerTaskrun", clone.get("taskrun"));
 
         this.variables = ImmutableMap.copyOf(clone);
+
+        return this;
+    }
+
+    public RunContext forTaskRunner(TaskRunner taskRunner) {
+        this.initPluginConfiguration(applicationContext, taskRunner.getType());
 
         return this;
     }
@@ -555,17 +591,27 @@ public class RunContext {
     }
 
     public Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException {
+        return renderMap(inline, Collections.emptyMap());
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (inline == null) {
+            return null;
+        }
+
+        Map<String, Object> allVariables = mergeWithNullableValues(this.variables, variables);
         return inline
             .entrySet()
             .stream()
             .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), variables),
-                this.render(entry.getValue(), variables)
+                this.render(entry.getKey(), allVariables),
+                this.render(entry.getValue(), allVariables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private String decrypt(String encrypted) throws GeneralSecurityException {
+    public String decrypt(String encrypted) throws GeneralSecurityException {
         if (secretKey.isPresent()) {
             return EncryptionService.decrypt(secretKey.get(), encrypted);
         } else {

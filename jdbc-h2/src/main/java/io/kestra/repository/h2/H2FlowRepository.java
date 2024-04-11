@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
@@ -13,8 +14,9 @@ import java.util.Map;
 @H2RepositoryEnabled
 public class H2FlowRepository extends AbstractJdbcFlowRepository {
     @Inject
-    public H2FlowRepository(ApplicationContext applicationContext) {
-        super(new H2Repository<>(Flow.class, applicationContext), applicationContext);
+    public H2FlowRepository(@Named("flows") H2Repository<Flow> repository,
+                            ApplicationContext applicationContext) {
+        super(repository, applicationContext);
     }
 
     @Override

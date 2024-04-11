@@ -12,4 +12,9 @@ public @interface Plugin {
     Example[] examples();
 
     Metric[] metrics() default {};
+
+    /**
+     * @return whether the plugin is in beta
+     */
+    boolean beta() default false;
 }

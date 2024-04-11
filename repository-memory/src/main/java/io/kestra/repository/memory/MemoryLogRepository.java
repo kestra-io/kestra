@@ -2,8 +2,10 @@ package io.kestra.repository.memory;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.utils.DateUtils;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
@@ -78,6 +80,11 @@ public class MemoryLogRepository implements LogRepositoryInterface {
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
     ) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<LogStatistics> statistics(@io.micronaut.core.annotation.Nullable String query, @io.micronaut.core.annotation.Nullable String tenantId, @io.micronaut.core.annotation.Nullable String namespace, @io.micronaut.core.annotation.Nullable String flowId, @io.micronaut.core.annotation.Nullable Level minLevel, @io.micronaut.core.annotation.Nullable ZonedDateTime startDate, @io.micronaut.core.annotation.Nullable ZonedDateTime endDate, @io.micronaut.core.annotation.Nullable DateUtils.GroupType groupBy) {
         throw new UnsupportedOperationException();
     }
 

@@ -22,6 +22,20 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
         </filter>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator>
+                <!--
+                    - Disabling Liquibase outOfOrder warning
+                    - Disabling JooQ POSTGRES version support warning, see https://github.com/kestra-io/kestra/issues/3321#issuecomment-2017665833
+                -->
+                <expression>
+                    return message.contains("outOfOrder mode is active. Migration of schema") ||
+                        message.contains("Database version is older than what dialect POSTGRES supports");
+                </expression>
+            </evaluator>
+            <OnMismatch>NEUTRAL</OnMismatch>
+            <OnMatch>DENY</OnMatch>
+        </filter>
         <encoder>
             <pattern>${pattern}</pattern>
         </encoder>

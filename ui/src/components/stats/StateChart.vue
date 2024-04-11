@@ -10,7 +10,7 @@
             <template #content>
                 <span v-html="tooltipContent" />
             </template>
-            <BarChart ref="chartRef" :chart-data="chartData" :options="options" />
+            <Bar ref="chartRef" :data="chartData" :options="options" />
         </el-tooltip>
     </div>
 </template>
@@ -18,13 +18,13 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router"
-    import {BarChart} from "vue-chart-3";
+    import {Bar} from "vue-chartjs";
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip, chartClick, backgroundFromState, getFormat} from "../../utils/charts.js";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({
-        components: {BarChart},
+        components: {Bar},
         props: {
             data: {
                 type: Array,

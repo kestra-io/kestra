@@ -34,6 +34,10 @@ public class Extension extends AbstractExtension {
     @Nullable
     private RenderFunction renderFunction;
 
+    @Inject
+    @Nullable
+    private RenderOnceFunction renderOnceFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -65,6 +69,7 @@ public class Extension extends AbstractExtension {
         filters.put("timestampMicro", new TimestampMicroFilter());
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
+        filters.put("escapeChar", new EscapeCharFilter());
         filters.put("json", new JsonFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());
@@ -75,6 +80,9 @@ public class Extension extends AbstractExtension {
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
         filters.put("flatten",new FlattenFilter());
+        filters.put("indent",new IndentFilter());
+        filters.put("nindent",new NindentFilter());
+        filters.put("yaml",new YamlFilter());
         return filters;
     }
 
@@ -99,8 +107,12 @@ public class Extension extends AbstractExtension {
         if (this.renderFunction != null) {
             functions.put("render", renderFunction);
         }
+        if (this.renderOnceFunction != null) {
+            functions.put("renderOnce", renderOnceFunction);
+        }
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
+        functions.put("yaml", new YamlFunction());
 
         return functions;
     }

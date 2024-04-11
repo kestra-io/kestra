@@ -20,14 +20,17 @@
     const store = useStore();
     const axios = inject("axios")
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const t = getCurrentInstance().appContext.config.globalProperties.$t;
 
     const loaded = ref([]);
     const dependencies = ref({
         nodes: [],
         edges: []
     });
+    const expanded = ref([]);
 
     const isLoading = ref(false);
+    const initialLoad = ref(true);
 
     const load = (options) => {
         isLoading.value = true;
@@ -41,8 +44,19 @@
                     dependencies.value.edges.push(...response.data.edges)
                 }
 
+                if (!initialLoad.value) {
+                    let newNodes = new Set(response.data.nodes.map(n => n.uid))
+                    let oldNodes = new Set(getNodes.value.map(n => n.id))
+                    store.dispatch("core/showMessage", {
+                        variant: "success",
+                        title: t("dependencies loaded"),
+                        message: t("loaded x dependencies", [...newNodes].filter(node => !oldNodes.has(node)).length),
+                    })
+                }
+
                 removeEdges(getEdges.value)
                 removeNodes(getNodes.value)
+                initialLoad.value = false
 
                 nextTick(() => {
                     generateGraph();
@@ -59,6 +73,7 @@
     };
 
     const expand = (data) => {
+        expanded.value.push(data.node.uid)
         load({namespace: data.namespace, id: data.flowId})
     };
 
@@ -110,7 +125,8 @@
                     flowId: node.id,
                     current: node.namespace === route.params.namespace && node.id === route.params.id,
                     color: "pink",
-                    link: true
+                    link: true,
+                    expandEnabled: !expanded.value.includes(node.uid)
                 }
             }]);
         }
@@ -151,7 +167,6 @@
             params: {
                 "namespace": data.namespace,
                 "id": data.flowId,
-                tab: "dependencies",
                 tenant: route.params.tenant
             },
         });

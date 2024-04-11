@@ -1,0 +1,12 @@
+id: retry-random
+namespace: io.kestra.tests
+
+tasks:
+  - id: failed
+    type: io.kestra.core.tasks.executions.Fail
+    retry:
+      type: random
+      maxAttempt: 3
+      maxDuration: PT15S
+      minInterval: PT0.20S
+      maxInterval: PT0.50S

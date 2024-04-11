@@ -10,7 +10,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface PluginProperty {
     /**
-     * @return If the properties is renderer
+     * @return whether the property is renderer
      */
     boolean dynamic() default false;
 
@@ -18,4 +18,9 @@ public @interface PluginProperty {
      * @return the Class for a map
      */
     Class<?> additionalProperties() default Object.class;
+
+    /**
+     * @return whether the property is in beta
+     */
+    boolean beta() default false;
 }

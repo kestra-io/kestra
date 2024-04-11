@@ -80,6 +80,14 @@
     import {defineComponent} from "vue";
 
     export default defineComponent({
+        emits: [
+            "delete-flow",
+            "copy",
+            "open-new-error",
+            "open-new-trigger",
+            "open-edit-metadata",
+            "save"
+        ],
         props: {
             isCreating: {
                 type: Boolean,

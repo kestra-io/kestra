@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
 import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -78,6 +79,14 @@ class JsonSchemaGeneratorTest {
             assertThat((List<String>) flow.get("required"), not(contains("deleted")));
             assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
+            Map<String, Object> items = map(
+                properties(flow)
+                .get("tasks")
+                .get("items")
+            );
+            assertThat(items.containsKey("anyOf"), is(false));
+            assertThat(items.containsKey("oneOf"), is(true));
+
             var bash = definitions.get("io.kestra.core.tasks.log.Log-1");
             assertThat((List<String>) bash.get("required"), not(contains("level")));
             assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
@@ -88,6 +97,10 @@ class JsonSchemaGeneratorTest {
 
             var bashType = definitions.get("io.kestra.core.tasks.log.Log-2");
             assertThat(bashType, is(notNullValue()));
+
+            var properties = (Map<String, Map<String, Object>>) flow.get("properties");
+            var listeners = properties.get("listeners");
+            assertThat(listeners.get("$deprecated"), is(true));
         });
     }
 
@@ -191,9 +204,22 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
     }
 
+    @Test
+    void betaTask() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
+        assertThat(generate, is(not(nullValue())));
+        assertThat(generate.get("$beta"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Map<String, Object>> properties(Map<String, Object> generate) {
         return (Map<String, Map<String, Object>>) generate.get("properties");
+    }
+
+    private Map<String, Object> map(Object object) {
+        return (Map<String, Object>) object;
     }
 
     @SuperBuilder
@@ -244,5 +270,19 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @Builder.Default
         private String stringWithDefault = "default";
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin(
+        beta = true,
+        examples = {}
+    )
+    private static class BetaTask extends Task {
+        @PluginProperty(beta = true)
+        private String beta;
     }
 }

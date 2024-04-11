@@ -1,11 +1,15 @@
 package io.kestra.core.services;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.Rethrow;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -19,20 +23,38 @@ public class GraphService {
     @Inject
     private FlowRepositoryInterface flowRepository;
     @Inject
+    private TriggerRepositoryInterface triggerRepository;
+    @Inject
     private TaskDefaultService taskDefaultService;
 
     public FlowGraph flowGraph(Flow flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException {
-        return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>()));
+        return this.flowGraph(flow, expandedSubflows, null);
+    }
+
+    public FlowGraph flowGraph(Flow flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException {
+        return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
     }
 
     public GraphCluster of(Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid) throws IllegalVariableEvaluationException {
-        return this.of(null, flow, expandedSubflows, flowByUid);
+        return this.of(flow, expandedSubflows, flowByUid, null);
+    }
+
+    public GraphCluster of(Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid, Execution execution) throws IllegalVariableEvaluationException {
+        return this.of(null, flow, expandedSubflows, flowByUid, execution);
     }
 
     public GraphCluster of(GraphCluster baseGraph, Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid) throws IllegalVariableEvaluationException {
+        return this.of(baseGraph, flow, expandedSubflows, flowByUid, null);
+    }
+
+    public GraphCluster of(GraphCluster baseGraph, Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid, Execution execution) throws IllegalVariableEvaluationException {
         String tenantId = flow.getTenantId();
         flow = taskDefaultService.injectDefaults(flow);
-        GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, null);
+        List<Trigger> triggers = null;
+        if (flow.getTriggers() != null) {
+            triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId());
+        }
+        GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, execution, triggers);
 
 
         Stream<Map.Entry<GraphCluster, SubflowGraphTask>> subflowToReplaceByParent = graphCluster.allNodesByParent().entrySet().stream()

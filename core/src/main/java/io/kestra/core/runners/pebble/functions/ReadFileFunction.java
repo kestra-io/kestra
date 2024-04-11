@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -25,6 +26,9 @@ public class ReadFileFunction implements Function {
     @Inject
     private StorageInterface storageInterface;
 
+    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
+    private String serverType;
+
     @Override
     public List<String> getArgumentNames() {
         return List.of("path");
@@ -32,17 +36,46 @@ public class ReadFileFunction implements Function {
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
+        // TODO it will be enabled on the next release so the code is kept commented out
+        //  don't forget to also re-enabled the test
+//        if (!calledOnWorker()) {
+//            throw new PebbleException(null, "The 'read' function can only be used in the Worker as it access the internal storage.", lineNumber, self.getName());
+//        }
+
         if (!args.containsKey("path")) {
             throw new PebbleException(null, ERROR_MESSAGE, lineNumber, self.getName());
         }
 
-        String path = (String) args.get("path");
-        try {
-            return path.startsWith(KESTRA_SCHEME) ? readFromInternalStorageUri(context, path) : readFromNamespaceFile(context, path);
+        Object path = args.get("path");
+        if (path instanceof URI uri) {
+            try {
+                return readFromInternalStorageUri(context, uri);
+            }
+            catch (IOException e) {
+                throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
+            }
+
+        } else if (path instanceof String str){
+            try {
+                return str.startsWith(KESTRA_SCHEME) ? readFromInternalStorageUri(context, URI.create(str)) : readFromNamespaceFile(context, str);
+            }
+            catch (IOException e) {
+                throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
+            }
+        } else {
+            throw new PebbleException(null, "Unable to read the file " + path, lineNumber, self.getName());
         }
-        catch (IOException e) {
-            throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
+    }
+
+    private boolean calledOnWorker() {
+        if ("WORKER".equals(serverType)) {
+            return true;
         }
+        if ("STANDALONE".equals(serverType)) {
+            // check that it's called inside a worker thread
+            return Thread.currentThread().getClass().getName().equals("io.kestra.core.runners.Worker$WorkerThread");
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -55,7 +88,7 @@ public class ReadFileFunction implements Function {
     }
 
     @SuppressWarnings("unchecked")
-    private String readFromInternalStorageUri(EvaluationContext context, String path) throws IOException {
+    private String readFromInternalStorageUri(EvaluationContext context, URI path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");
 
@@ -73,13 +106,13 @@ public class ReadFileFunction implements Function {
                 throw new IllegalArgumentException("Unable to read the file '" + path + "' as it didn't belong to the current execution");
             }
         }
-        URI internalStorageFile = URI.create(path);
-        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), internalStorageFile)) {
+
+        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), path)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 
-    private boolean validateFileUri(String namespace, String flowId, String executionId, String path) {
+    private boolean validateFileUri(String namespace, String flowId, String executionId, URI path) {
         // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion
         // We check that the file is for the given flow execution
         if (namespace == null || flowId == null || executionId == null) {
@@ -87,6 +120,6 @@ public class ReadFileFunction implements Function {
         }
 
         String authorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
-        return path.startsWith(authorizedBasePath);
+        return path.toString().startsWith(authorizedBasePath);
     }
 }

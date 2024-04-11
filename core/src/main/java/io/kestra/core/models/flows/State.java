@@ -108,6 +108,14 @@ public class State {
         return this.histories.get(this.histories.size() - 1).getDate();
     }
 
+    public Instant minDate() {
+        if (this.histories.size() == 0) {
+            return Instant.now();
+        }
+
+        return this.histories.get(0).getDate();
+    }
+
     @JsonIgnore
     public boolean isTerminated() {
         return this.current.isTerminated();
@@ -141,8 +149,18 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isRetrying() {
+        return this.current.isRetrying();
+    }
+
+    @JsonIgnore
     public boolean isRestartable() {
         return this.current.isFailed() || this.isPaused();
+    }
+
+    @JsonIgnore
+    public boolean isResumable() {
+        return this.current.isPaused() || this.current.isRetrying();
     }
 
 
@@ -158,10 +176,12 @@ public class State {
         FAILED,
         KILLED,
         CANCELLED,
-        QUEUED;
+        QUEUED,
+        RETRYING,
+        RETRIED;
 
         public boolean isTerminated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this ==  Type.CANCELLED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED;
         }
 
         public boolean isCreated() {
@@ -179,6 +199,11 @@ public class State {
         public boolean isPaused() {
             return this == Type.PAUSED;
         }
+
+        public boolean isRetrying() {
+            return this == Type.RETRYING || this == Type.RETRIED;
+        }
+
     }
 
     @Value

@@ -5,6 +5,7 @@ export default {
     state: {
         dailyGroupByFlow: undefined,
         daily: undefined,
+        logDaily: undefined,
         taskRunDaily: undefined,
         lastExecutions: undefined
     },
@@ -19,6 +20,13 @@ export default {
         daily({commit}, payload) {
             return this.$http.post(`${apiUrl(this)}/stats/executions/daily`, payload).then(response => {
                 commit("setDaily", response.data)
+
+                return response.data;
+            })
+        },
+        logDaily({commit}, payload) {
+            return this.$http.post(`${apiUrl(this)}/stats/logs/daily`, payload).then(response => {
+                commit("setLogDaily", response.data)
 
                 return response.data;
             })
@@ -44,6 +52,9 @@ export default {
         },
         setDaily(state, stats) {
             state.daily = stats
+        },
+        setLogDaily(state, stats) {
+            state.logDaily = stats
         },
         setTaskRunDaily(state, stats) {
             state.taskRunDaily = stats

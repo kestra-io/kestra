@@ -8,13 +8,10 @@
         </template>
     </el-input>
 
-    <el-drawer
+    <drawer
         v-if="isOpen"
         v-model="isOpen"
         :title="root"
-        destroy-on-close
-        size=""
-        :append-to-body="true"
     >
         <template #header>
             <code>{{ root }}</code>
@@ -33,7 +30,7 @@
                 {{ $t('save') }}
             </el-button>
         </template>
-    </el-drawer>
+    </drawer>
 </template>
 
 <script setup>
@@ -46,10 +43,11 @@
     import Task from "./Task"
     import YamlUtils from "../../../utils/yamlUtils";
     import TaskEditor from "../TaskEditor.vue"
+    import Drawer from "../../Drawer.vue"
 
     export default {
         mixins: [Task],
-        components: {TaskEditor},
+        components: {TaskEditor, Drawer},
         emits: ["update:modelValue"],
         data() {
             return {

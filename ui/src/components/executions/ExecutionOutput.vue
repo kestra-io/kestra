@@ -28,13 +28,9 @@
             </el-form-item>
         </collapse>
 
-        <el-drawer
+        <drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
-            destroy-on-close
-            lock-scroll
-            :append-to-body="true"
-            size=""
             :title="$t('eval.title')"
         >
             <template #footer>
@@ -52,7 +48,7 @@
                 <p><strong>{{ debugError }}</strong></p>
                 <pre class="mb-0">{{ debugStackTrace }}</pre>
             </el-alert>
-        </el-drawer>
+        </drawer>
 
         <el-table
             :data="outputsPaginated"
@@ -99,6 +95,7 @@
     import Pagination from "../layout/Pagination.vue";
     import {apiUrl} from "override/utils/route";
     import SubFlowLink from "../flows/SubFlowLink.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
         components: {
@@ -107,6 +104,7 @@
             VarValue,
             Editor,
             Collapse,
+            Drawer
         },
         data() {
             return {

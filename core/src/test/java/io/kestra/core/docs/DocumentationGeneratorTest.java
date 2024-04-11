@@ -1,5 +1,7 @@
 package io.kestra.core.docs;
 
+import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.models.tasks.runners.types.ProcessTaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -129,7 +131,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Echo"));
-        assertThat(render, containsString("\uD83D\uDD12 Deprecated"));
+        assertThat(render, containsString("Deprecated"));
     }
 
     @Test
@@ -155,5 +157,20 @@ class DocumentationGeneratorTest {
         Document doc = docs.get(0);
         assertThat(doc.getIcon(), is(notNullValue()));
         assertThat(doc.getBody(), containsString("## <img width=\"25\" src=\"data:image/svg+xml;base64,"));
+    }
+
+    @Test
+    void taskRunner() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class<ProcessTaskRunner> processTaskRunner = scan.findClass(ProcessTaskRunner.class.getName()).orElseThrow();
+
+        ClassPluginDocumentation<? extends TaskRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, processTaskRunner, TaskRunner.class);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render, containsString("title: ProcessTaskRunner"));
+        assertThat(render, containsString("Task runner that executes a task as a subprocess on the Kestra host."));
+        assertThat(render, containsString("This plugin is currently in beta"));
     }
 }

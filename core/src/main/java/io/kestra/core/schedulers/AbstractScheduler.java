@@ -18,12 +18,16 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -42,13 +46,15 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public abstract class AbstractScheduler implements Scheduler {
+public abstract class AbstractScheduler implements Scheduler, Service {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
     private final QueueInterface<Trigger> triggerQueue;
@@ -75,6 +81,13 @@ public abstract class AbstractScheduler implements Scheduler {
     @Getter
     private volatile Map<String, FlowWithPollingTriggerNextDate> schedulableNextDate = new ConcurrentHashMap<>();
 
+    private final String id = IdUtils.create();
+
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final AtomicReference<ServiceState> state = new AtomicReference<>();
+    private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
+
     @SuppressWarnings("unchecked")
     @Inject
     public AbstractScheduler(
@@ -93,6 +106,8 @@ public abstract class AbstractScheduler implements Scheduler {
         this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
         this.logService = applicationContext.getBean(LogService.class);
+        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        setState(ServiceState.CREATED);
     }
 
     protected boolean isReady() {
@@ -181,6 +196,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 }
             }
         );
+        setState(ServiceState.RUNNING);
     }
 
     // Initialized local trigger state,
@@ -674,10 +690,28 @@ public abstract class AbstractScheduler implements Scheduler {
         this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger), workerTrigger);
     }
 
+    /** {@inheritDoc} **/
     @Override
     @PreDestroy
     public void close() {
-        this.scheduleExecutor.shutdown();
+        close(null);
+    }
+
+    protected void close(final @Nullable Runnable onClose) {
+        if (shutdown.compareAndSet(false, true)) {
+            log.info("Terminating.");
+            setState(ServiceState.TERMINATING);
+            try {
+                if (onClose != null) {
+                    onClose.run();
+                }
+            } catch (Exception e) {
+                log.error("Unexpected error while terminating scheduler.", e);
+            }
+            this.scheduleExecutor.shutdown();
+            setState(ServiceState.TERMINATED_GRACEFULLY);
+            log.info("Scheduler closed ({}).", state.get().name().toLowerCase());
+        }
     }
 
     @SuperBuilder(toBuilder = true)
@@ -747,5 +781,28 @@ public abstract class AbstractScheduler implements Scheduler {
         public String uid() {
             return Trigger.uid(flow, AbstractTrigger);
         }
+    }
+
+    protected void setState(final ServiceState state) {
+        this.state.set(state);
+        eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public ServiceType getType() {
+        return ServiceType.SCHEDULER;
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public ServiceState getState() {
+        return state.get();
     }
 }

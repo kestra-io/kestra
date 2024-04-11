@@ -103,6 +103,7 @@ class RunContextLoggerTest {
 
         runContextLogger.usedSecret("doe.com");
         runContextLogger.usedSecret("myawesomepass");
+        runContextLogger.usedSecret(null);
 
         Logger logger = runContextLogger.logger();
         // exception are not handle and secret will not be replaced

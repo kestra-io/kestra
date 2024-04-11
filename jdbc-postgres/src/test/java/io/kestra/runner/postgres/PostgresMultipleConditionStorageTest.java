@@ -5,8 +5,10 @@ import io.kestra.core.models.triggers.multipleflows.AbstractMultipleConditionSto
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.repository.postgres.PostgresRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
@@ -18,12 +20,16 @@ class PostgresMultipleConditionStorageTest extends AbstractMultipleConditionStor
     @Inject
     JdbcTestUtils jdbcTestUtils;
 
+    @Inject
+    @Named("multipleconditions")
+    PostgresRepository<MultipleConditionWindow> repository;
+
     protected MultipleConditionStorageInterface multipleConditionStorage() {
-        return new PostgresMultipleConditionStorage(applicationContext);
+        return new PostgresMultipleConditionStorage(repository);
     }
 
     protected void save(MultipleConditionStorageInterface multipleConditionStorage, Flow flow, List<MultipleConditionWindow> multipleConditionWindows) {
-        ((PostgresMultipleConditionStorage) multipleConditionStorage).save(multipleConditionWindows);
+        multipleConditionStorage.save(multipleConditionWindows);
     }
 
 

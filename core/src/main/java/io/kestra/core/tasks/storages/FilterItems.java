@@ -15,10 +15,7 @@ import io.kestra.core.utils.TruthUtils;
 import io.micronaut.core.util.functional.ThrowingFunction;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.io.BufferedReader;
@@ -56,6 +53,7 @@ import java.util.Map;
 @ToString
 @EqualsAndHashCode
 @Getter
+@NoArgsConstructor
 public class FilterItems extends Task implements RunnableTask<FilterItems.Output> {
 
     @Schema(

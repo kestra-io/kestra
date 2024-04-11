@@ -16,7 +16,6 @@ import FlowCreate from "../components/flows/FlowCreate.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
-import Workers from "../components/admin/Workers.vue";
 import Editor from "../components/namespace/Editor.vue";
 import Stats from "override/components/admin/stats/Stats.vue";
 
@@ -39,7 +38,7 @@ export default [
 
     //Executions
     {name: "executions/list", path: "/:tenant?/executions", component: Executions},
-    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot, props: true},
+    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot},
 
     //TaskRuns
     {name: "taskruns/list", path: "/:tenant?/taskruns", component: TaskRuns},
@@ -65,7 +64,6 @@ export default [
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: Triggers},
-    {name: "admin/workers", path: "/:tenant?/admin/workers", component: Workers},
     {name: "admin/stats", path: "/:tenant?/admin/stats", component: Stats},
 
     //Errors

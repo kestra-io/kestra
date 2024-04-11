@@ -30,7 +30,7 @@ import java.util.Optional;
 @Plugin(
     examples = {
         @Example(
-            code = "format: \"{{task.id}} > {{taskrun.startDate}}\""
+            code = "format: \"{{ task.id }} > {{ taskrun.startDate }}\""
         )
     },
     metrics = {

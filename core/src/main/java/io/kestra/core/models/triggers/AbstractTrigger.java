@@ -2,10 +2,15 @@ package io.kestra.core.models.triggers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -19,6 +24,7 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.event.Level;
 
 import java.util.List;
+import java.util.Map;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
@@ -56,6 +62,13 @@ abstract public class AbstractTrigger {
     private WorkerGroup workerGroup;
 
     private Level logLevel;
+
+    @Schema(
+        title = "The labels to pass to the execution created."
+    )
+    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
+    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    private List<Label> labels;
 
     @PluginProperty
     @Schema(

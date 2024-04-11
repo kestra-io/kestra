@@ -4,10 +4,10 @@
         @change="onSelectedFilterType()"
         class="filter"
     >
-        <el-radio-button :label="filterType.RELATIVE">
+        <el-radio-button :value="filterType.RELATIVE">
             {{ $t("relative") }}
         </el-radio-button>
-        <el-radio-button :label="filterType.ABSOLUTE">
+        <el-radio-button :value="filterType.ABSOLUTE">
             {{ $t("absolute") }}
         </el-radio-button>
     </el-radio-group>
@@ -38,11 +38,6 @@
             "update:filterValue"
         ],
         created() {
-            this.filterType = {
-                RELATIVE: "REL",
-                ABSOLUTE: "ABS"
-            };
-
             this.selectedFilterType = (this.$route.query.startDate || this.$route.query.endDate) ? this.filterType.ABSOLUTE : this.filterType.RELATIVE;
         },
         mounted() {
@@ -50,7 +45,11 @@
         },
         data() {
             return {
-                selectedFilterType: undefined
+                selectedFilterType: undefined,
+                filterType: {
+                    RELATIVE: "REL",
+                    ABSOLUTE: "ABS"
+                }
             }
         },
         computed: {
@@ -66,7 +65,11 @@
         },
         methods: {
             onSelectedFilterType() {
-                this.$emit("update:isRelative", this.selectedFilterType === this.filterType.RELATIVE);
+                const relativeFilterSelected = this.selectedFilterType === this.filterType.RELATIVE;
+
+                this.$emit("update:isRelative", relativeFilterSelected);
+
+                this.tryOverrideAbsFilter(relativeFilterSelected);
             },
             onAbsFilterChange(event) {
                 const filter = {
@@ -86,6 +89,12 @@
             },
             updateFilter(filter) {
                 this.$emit("update:filterValue", filter);
+            },
+            tryOverrideAbsFilter(relativeFilterSelected) {
+                if (relativeFilterSelected && (this.$route.query.startDate || this.$route.query.endDate)) {
+                    const forcedDefaultRelativeFilter = {timeRange: undefined};
+                    this.onRelFilterChange(forcedDefaultRelativeFilter);
+                }
             }
         }
     }

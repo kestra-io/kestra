@@ -5,13 +5,13 @@
                 <li v-if="isAllowedEdit">
                     <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
                         <el-button :icon="Api">
-                            {{ $t('api') }}
+                            {{ $t("api") }}
                         </el-button>
                     </a>
                 </li>
                 <li v-if="canDelete">
                     <el-button :icon="Delete" @click="deleteExecution">
-                        {{ $t('delete') }}
+                        {{ $t("delete") }}
                     </el-button>
                 </li>
                 <li v-if="isAllowedEdit">
@@ -26,8 +26,13 @@
         </template>
     </top-nav-bar>
     <template v-if="ready">
-        <tabs :route-name="$route.params && $route.params.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
+        <tabs
+            :route-name="$route.params && $route.params.id ? 'executions/update': ''"
+            @follow="follow"
+            :tabs="tabs"
+        />
     </template>
+    <div v-else class="full-space" v-loading="!ready" />
 </template>
 
 <script setup>
@@ -53,6 +58,7 @@
     import State from "../../utils/state";
     import ExecutionMetric from "./ExecutionMetric.vue";
     import {apiUrl} from "override/utils/route"
+    import throttle from "lodash/throttle";
 
     export default {
         mixins: [RouteContext],
@@ -64,14 +70,38 @@
         data() {
             return {
                 sse: undefined,
-                previousExecutionId: undefined
+                previousExecutionId: undefined,
+                throttledExecutionUpdate: throttle(function (executionEvent) {
+                    let execution = JSON.parse(executionEvent.data);
+
+                    if (!this.flow ||
+                        execution.flowId !== this.flow.id ||
+                        execution.namespace !== this.flow.namespace ||
+                        execution.flowRevision !== this.flow.revision
+                    ) {
+                        this.$store.dispatch(
+                            "flow/loadFlow",
+                            {
+                                namespace: execution.namespace,
+                                id: execution.flowId,
+                                revision: execution.flowRevision
+                            }
+                        );
+                        this.$store.dispatch("flow/loadRevisions", {
+                            namespace: execution.namespace,
+                            id: execution.flowId
+                        })
+                    }
+
+                    this.$store.commit("execution/setExecution", execution);
+                }, 500)
             };
         },
         created() {
             this.follow();
             window.addEventListener("popstate", this.follow)
         },
-        mounted () {
+        mounted() {
             this.previousExecutionId = this.$route.params.id
         },
         watch: {
@@ -84,36 +114,31 @@
         },
         methods: {
             follow() {
-                const self = this;
                 this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;
                 this.$store
                     .dispatch("execution/followExecution", this.$route.params)
                     .then(sse => {
                         this.sse = sse;
-                        this.sse.onmessage = (event) => {
-                            if (event && event.lastEventId === "end") {
-                                self.closeSSE();
+                        this.sse.onmessage = (executionEvent) => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            if (isEnd) {
+                                this.closeSSE();
                             }
-
-                            let execution = JSON.parse(event.data);
-
-                            if (!this.flow ||
-                                execution.flowId !== this.flow.id ||
-                                execution.namespace !== this.flow.namespace ||
-                                execution.flowRevision !== this.flow.revision
-                            ) {
-                                this.$store.dispatch(
-                                    "flow/loadFlow",
-                                    {namespace: execution.namespace, id: execution.flowId, revision: execution.flowRevision}
-                                );
-                                this.$store.dispatch("flow/loadRevisions", {
-                                    namespace: execution.namespace,
-                                    id: execution.flowId
-                                })
+                            this.throttledExecutionUpdate(executionEvent);
+                            if (isEnd) {
+                                this.throttledExecutionUpdate.flush();
                             }
-
-                            this.$store.commit("execution/setExecution", execution);
+                        }
+                        // sse.onerror doesnt return the details of the error
+                        // but as our emitter can only throw an error on 404
+                        // we can safely assume that the error
+                        this.sse.onerror = () => {
+                            this.$store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: this.$t("error"),
+                                message: this.$t("errors.404.flow or execution"),
+                            });
                         }
                     });
             },
@@ -159,12 +184,14 @@
                 ];
             },
             editFlow() {
-                this.$router.push({name:"flows/update", params: {
-                    namespace: this.$route.params.namespace,
-                    id: this.$route.params.flowId,
-                    tab: "editor",
-                    tenant: this.$route.params.tenant
-                }})
+                this.$router.push({
+                    name: "flows/update", params: {
+                        namespace: this.$route.params.namespace,
+                        id: this.$route.params.flowId,
+                        tab: "editor",
+                        tenant: this.$route.params.tenant
+                    }
+                })
             },
             deleteExecution() {
                 if (this.execution) {
@@ -268,3 +295,8 @@
         }
     };
 </script>
+<style>
+    .full-space {
+        flex: 1 1 auto;
+    }
+</style>

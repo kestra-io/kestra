@@ -1,5 +1,6 @@
 <template>
     <el-table
+        v-bind="$attrs"
         :data="triggersWithType"
         stripe
         table-layout="auto"
@@ -27,7 +28,7 @@
                 <refresh-button
                     :can-auto-refresh="true"
                     @refresh="loadData"
-                    :size="'small'"
+                    size="small"
                     custom-class="mx-1"
                 />
             </template>
@@ -158,13 +159,9 @@
         </template>
     </el-dialog>
 
-    <el-drawer
+    <drawer
         v-if="isOpen"
         v-model="isOpen"
-        destroy-on-close
-        lock-scroll
-        size=""
-        :append-to-body="true"
     >
         <template #header>
             <code>{{ triggerId }}</code>
@@ -172,7 +169,7 @@
 
         <markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
         <vars :data="modalData" />
-    </el-drawer>
+    </drawer>
 </template>
 
 <script setup>
@@ -193,12 +190,13 @@
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
+    import Drawer from "../Drawer.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer},
         data() {
             return {
                 triggerId: undefined,
@@ -272,12 +270,12 @@
                     return true
                 }
                 if (this.flow.inputs) {
-                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null)
+                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
                     if (requiredInputs.length > 0) {
                         if (!this.backfill.inputs) {
                             return true
                         }
-                        const fillInputs = Object.keys(this.backfill.inputs)
+                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i])
                         if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                             return true
                         }

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Deprecated
 public abstract class IncludeHelperExpander {
 
     public static String expand(String value, Path directory) throws IOException {

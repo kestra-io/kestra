@@ -109,8 +109,7 @@
             onMenuCollapse(collapse) {
                 document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed");
                 document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
-            }
-            ,
+            },
             displayApp() {
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
                 Utils.switchTheme();
@@ -118,14 +117,12 @@
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
                 this.loaded = true;
-            }
-            ,
+            },
             setTitleEnvSuffix() {
                 const envSuffix = this.envName ? ` - ${this.envName}` : "";
 
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
-            }
-            ,
+            },
             async loadGeneralResources() {
                 let uid = localStorage.getItem("uid");
                 if (uid === null) {
@@ -146,8 +143,7 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
-            }
-            ,
+            },
             initStats(apiConfig, config, uid) {
                 if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
                     return;
@@ -163,20 +159,23 @@
                     }
                 )
 
-                posthog.register_once({
-                    from: "APP",
-                    iid: config.uuid,
-                    uid: uid,
-                    app: {
-                        version: config.version
-                    }
-                })
+                posthog.register_once(this.statsGlobalData(config, uid));
 
                 if (!posthog.get_property("__alias")) {
                     posthog.alias(apiConfig.id);
                 }
-            }
-            ,
+            },
+            statsGlobalData(config, uid) {
+                return {
+                    from: "APP",
+                    iid: config.uuid,
+                    uid: uid,
+                    app: {
+                        version: config.version,
+                        type: "OSS"
+                    }
+                }
+            },
             initGuidedTour() {
                 this.$store.dispatch("flow/findFlows", {size: 1})
                     .then(flows => {
@@ -189,10 +188,8 @@
                             });
                         }
                     });
-            }
-            ,
-        }
-        ,
+            },
+        },
         watch: {
             $route(to) {
                 if (this.user && to.name === "home" && this.overallTotal === 0) {
@@ -203,8 +200,7 @@
                         }
                     });
                 }
-            }
-            ,
+            },
             envName() {
                 this.setTitleEnvSuffix();
             }

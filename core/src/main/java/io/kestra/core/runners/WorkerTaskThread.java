@@ -7,15 +7,13 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import lombok.Getter;
-import org.slf4j.Logger;
 
 import java.time.Duration;
 
 import static io.kestra.core.models.flows.State.Type.*;
 
-public class WorkerThreadTask extends AbstractWorkerThread {
+public class WorkerTaskThread extends AbstractWorkerThread {
     RunnableTask<?> task;
-    RunContext runContext;
     MetricRegistry metricRegistry;
 
     @Getter
@@ -24,11 +22,10 @@ public class WorkerThreadTask extends AbstractWorkerThread {
     @Getter
     Output taskOutput;
 
-    public WorkerThreadTask(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
-        super(logger);
+    public WorkerTaskThread(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
+        super(runContext, task.getClass().getName());
         this.workerTask = workerTask;
         this.task = task;
-        this.runContext = runContext;
         this.metricRegistry = metricRegistry;
     }
 

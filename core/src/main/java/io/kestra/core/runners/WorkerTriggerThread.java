@@ -8,8 +8,7 @@ import java.util.Optional;
 
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
 
-public class WorkerThreadTrigger extends AbstractWorkerThread {
-    RunContext runContext;
+public class WorkerTriggerThread extends AbstractWorkerThread {
     PollingTriggerInterface pollingTrigger;
 
     @Getter
@@ -18,9 +17,8 @@ public class WorkerThreadTrigger extends AbstractWorkerThread {
     @Getter
     Optional<Execution> evaluate;
 
-    public WorkerThreadTrigger(WorkerTrigger workerTrigger, PollingTriggerInterface pollingTrigger) {
-        super(workerTrigger.getConditionContext().getRunContext().logger());
-        this.runContext = workerTrigger.getConditionContext().getRunContext();
+    public WorkerTriggerThread(WorkerTrigger workerTrigger, PollingTriggerInterface pollingTrigger) {
+        super(workerTrigger.getConditionContext().getRunContext(), pollingTrigger.getClass().getName());
         this.workerTrigger = workerTrigger;
         this.pollingTrigger = pollingTrigger;
     }

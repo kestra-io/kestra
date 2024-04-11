@@ -13,16 +13,24 @@ public class AbstractWorkerThread extends Thread {
     Logger logger;
 
     @Getter
+    RunContext runContext;
+
+    @Getter
+    String type;
+
+    @Getter
     io.kestra.core.models.flows.State.Type taskState;
 
     @Getter
     Throwable exception;
 
-    public AbstractWorkerThread(Logger logger) {
+    public AbstractWorkerThread(RunContext runContext, String type) {
         super("WorkerThread");
         this.setUncaughtExceptionHandler(this::exceptionHandler);
 
-        this.logger = logger;
+        this.logger = runContext.logger();
+        this.runContext = runContext;
+        this.type = type;
     }
 
     @Synchronized

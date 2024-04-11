@@ -30,6 +30,9 @@ public class ExecutorCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipExecutions = Collections.emptyList();
 
+    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "a list of flow identifiers (tenant|namespace|flowId) to skip, separated by a coma; for troubleshooting purpose only")
+    private List<String> skipFlows = Collections.emptyList();
+
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(
@@ -40,6 +43,7 @@ public class ExecutorCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         this.skipExecutionService.setSkipExecutions(skipExecutions);
+        this.skipExecutionService.setSkipFlows(skipFlows);
 
         super.call();
         this.shutdownHook(() -> KestraContext.getContext().shutdown());

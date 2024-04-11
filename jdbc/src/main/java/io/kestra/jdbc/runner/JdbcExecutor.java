@@ -79,9 +79,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private AbstractJdbcExecutionRepository executionRepository;
 
     @Inject
@@ -289,9 +286,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             .forEach(workerJobRunning -> {
                 // WorkerTaskRunning
                 if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-                    if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun().getExecutionId())) {
+                    if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun())) {
                         // if the execution is skipped, we remove the workerTaskRunning and skip its resubmission
-                        log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getId());
+                        log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getExecutionId());
                         workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
                     } else {
                         workerTaskQueue.emit(WorkerTask.builder()
@@ -334,7 +331,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         }
 
         Execution message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getId())) {
+        if (skipExecutionService.skipExecution(message)) {
             log.warn("Skipping execution {}", message.getId());
             return;
         }
@@ -512,7 +509,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         }
 
         WorkerTaskResult message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getTaskRun().getExecutionId())) {
+        if (skipExecutionService.skipExecution(message.getTaskRun())) {
             log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
             return;
         }
@@ -598,7 +595,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             log.warn("Skipping execution {}", message.getExecutionId());
             return;
         }
-        if (skipExecutionService.skipExecution(message.getParentTaskRun().getExecutionId())) {
+        if (skipExecutionService.skipExecution(message.getParentTaskRun())) {
             log.warn("Skipping execution {}", message.getParentTaskRun().getExecutionId());
             return;
         }

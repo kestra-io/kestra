@@ -25,8 +25,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 /**
- *  hard copy from {link io.micronaut.jackson.{@link io.micronaut.jackson.ObjectMapperFactory}} just to change
- *  the serializer {@link BeanSerializerFactoryWithGlobalIncludeDefaults} and to force the global ClassLoader.
+ *  Hard copy from {link io.micronaut.jackson.{@link io.micronaut.jackson.ObjectMapperFactory}} to force the Kestra ClassLoader.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 @Factory
@@ -65,9 +64,6 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
     @Override
     public ObjectMapper objectMapper(@Nullable JacksonConfiguration jacksonConfiguration, @Nullable JsonFactory jsonFactory) {
         ObjectMapper objectMapper = jsonFactory != null ? new ObjectMapper(jsonFactory) : new ObjectMapper();
-
-        objectMapper.setSerializerFactory(new BeanSerializerFactoryWithGlobalIncludeDefaults());
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
         final boolean hasConfiguration = jacksonConfiguration != null;
         if (!hasConfiguration || jacksonConfiguration.isModuleScan()) {

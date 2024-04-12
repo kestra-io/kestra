@@ -1,12 +1,12 @@
 package io.kestra.core.models.tasks.retrys;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import dev.failsafe.RetryPolicyBuilder;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import net.jodah.failsafe.RetryPolicy;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -28,11 +28,9 @@ public class Random extends AbstractRetry {
     private Duration maxInterval;
 
     @Override
-    public <T> RetryPolicy<T> toPolicy() {
-        RetryPolicy<T> policy = super.toPolicy();
-
-        return policy
-            .withDelay(minInterval.toMillis(), maxInterval.toMillis(), ChronoUnit.MILLIS);
+    public <T> RetryPolicyBuilder<T> toPolicy() {
+        RetryPolicyBuilder<T> policy = super.toPolicy();
+        return policy.withDelay(minInterval.toMillis(), maxInterval.toMillis(), ChronoUnit.MILLIS);
     }
 
     @Override

@@ -6,6 +6,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import dev.failsafe.Failsafe;
+import dev.failsafe.Timeout;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -41,8 +43,6 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -745,14 +745,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
         public void run() {
             Thread.currentThread().setContextClassLoader(this.task.getClass().getClassLoader());
 
+            final Duration workerTaskTimeout = workerTask.getTask().getTimeout();
             try {
-                // timeout
-                if (workerTask.getTask().getTimeout() != null) {
+                if (workerTaskTimeout != null) {
+                    Timeout<Object> taskTimeout = Timeout
+                        .builder(workerTaskTimeout)
+                        .withInterrupt() // use to awake blocking tasks.
+                        .build();
                     Failsafe
-                        .with(Timeout
-                            .of(workerTask.getTask().getTimeout())
-                            .withInterrupt(true)
-                            .onFailure(event -> metricRegistry
+                        .with(taskTimeout)
+                        .onFailure(event -> metricRegistry
                                 .counter(
                                     MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
                                     metricRegistry.tags(
@@ -761,20 +763,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
                                     )
                                 )
                                 .increment()
-                            )
                         )
                         .run(() -> taskOutput = task.run(runContext));
 
                 } else {
                     taskOutput = task.run(runContext);
                 }
-
                 taskState = SUCCESS;
                 if (taskOutput != null && taskOutput.finalState().isPresent()) {
                     taskState = taskOutput.finalState().get();
                 }
-            } catch (net.jodah.failsafe.TimeoutExceededException e) {
-                this.exceptionHandler(this, new TimeoutExceededException(workerTask.getTask().getTimeout(), e));
+            } catch (dev.failsafe.TimeoutExceededException e) {
+                this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout, e));
             } catch (Exception e) {
                 this.exceptionHandler(this, e);
             }

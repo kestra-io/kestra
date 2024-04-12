@@ -24,7 +24,6 @@ kestra:
       bool: true
       nested:
         int: 2
-
   tasks:
     defaults:
     - type: io.kestra.core.services.TaskDefaultServiceTest$DefaultTester

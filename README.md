@@ -11,6 +11,7 @@
 <div align="center">
  <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?color=blueviolet" alt="Last Version" /></a>
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="License" /></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fkestra-io%2Fkestra?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkestra-io%2Fkestra.svg?type=shield"/></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Github star" /></a> <br>
 <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?color=blueviolet" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
 <a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-Join%20Community-blueviolet?logo=slack" alt="Slack"></a>
@@ -31,6 +32,9 @@
     </a>
 </p>
 <p align="center" style="color:grey;"><i>"Click on the image to get started in 4 minutes with Kestra."</i></p>
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkestra-io%2Fkestra.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkestra-io%2Fkestra?ref=badge_large)
 
 ## Live Demo
 

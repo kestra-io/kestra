@@ -25,7 +25,7 @@
                             </span>
                         </el-tooltip>
                     </th>
-                    <td :colspan="dates.length">
+                    <td :colspan="dates.length" @click="onTaskSelect(serie.task)" class="cursor-pointer">
                         <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
                             <template #content>
                                 <span style="white-space: pre-wrap;">
@@ -321,6 +321,10 @@
             padding: 0;
         }
 
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
     }
 
     table {

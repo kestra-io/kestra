@@ -54,12 +54,12 @@ import java.util.Optional;
 
                   - id: pause
                     type: io.kestra.core.tasks.flows.Pause
-                    tasks:
-                      - id: run_post_approval
-                        type: io.kestra.plugin.scripts.shell.Commands
-                        runner: PROCESS
-                        commands:
-                          - echo "Manual approval received! Continuing the execution..."
+
+                  - id: run_post_approval
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    runner: PROCESS
+                    commands:
+                      - echo "Manual approval received! Continuing the execution..."
 
                   - id: post_resume
                     type: io.kestra.core.tasks.debugs.Return

@@ -6,7 +6,6 @@ import io.micronaut.context.env.Environment;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.contexts.KestraClassLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -22,12 +21,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 
 class PluginListCommandTest {
-    @BeforeAll
-    static void init() {
-        if (!KestraClassLoader.isInit()) {
-            KestraClassLoader.create(PluginInstallCommandTest.class.getClassLoader());
-        }
-    }
+
+    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.17.0-SNAPSHOT.jar";
 
     @Test
     void run() throws IOException, URISyntaxException {
@@ -36,8 +31,8 @@ class PluginListCommandTest {
 
         FileUtils.copyFile(
             new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()
-                .getResource("plugins/plugin-template-test-0.15.0-SNAPSHOT.jar")).toURI()),
-            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/plugin-template-test-0.15.0-SNAPSHOT.jar"))
+                .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)).toURI()),
+            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/" + PLUGIN_TEMPLATE_TEST))
         );
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

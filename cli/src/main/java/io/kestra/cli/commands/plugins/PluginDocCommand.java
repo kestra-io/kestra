@@ -3,7 +3,7 @@ package io.kestra.cli.commands.plugins;
 import com.google.common.base.Charsets;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.docs.DocumentationGenerator;
-import io.kestra.core.plugins.PluginScanner;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
@@ -35,21 +34,16 @@ public class PluginDocCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--icons"}, description = "Also write icon for each task")
     private boolean icons = false;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
     @Override
     public Integer call() throws Exception {
         super.call();
-
-        PluginScanner pluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
-        List<RegisteredPlugin> scan = new ArrayList<>(pluginScanner.scan(this.pluginsPath));
-
-        if (core) {
-            PluginScanner corePluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
-            scan.add(corePluginScanner.scan());
-        }
-
         DocumentationGenerator documentationGenerator = applicationContext.getBean(DocumentationGenerator.class);
 
-        for (RegisteredPlugin registeredPlugin : scan) {
+        List<RegisteredPlugin> plugins = core ? pluginRegistry.plugins() : pluginRegistry.externalPlugins();
+        for (RegisteredPlugin registeredPlugin : plugins) {
             documentationGenerator
                 .generate(registeredPlugin)
                 .forEach(s -> {

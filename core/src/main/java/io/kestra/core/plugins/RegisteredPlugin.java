@@ -1,6 +1,5 @@
 package io.kestra.core.plugins;
 
-import com.google.common.base.Charsets;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
@@ -33,14 +32,13 @@ public class RegisteredPlugin {
     private final List<Class<? extends Task>> tasks;
     private final List<Class<? extends AbstractTrigger>> triggers;
     private final List<Class<? extends Condition>> conditions;
-    private final List<Class<?>> controllers;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner>> taskRunners;
     private final List<String> guides;
 
     public boolean isValid() {
-        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !controllers.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !taskRunners.isEmpty();
+        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !taskRunners.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -102,7 +100,6 @@ public class RegisteredPlugin {
         result.put("tasks", Arrays.asList(this.getTasks().toArray(Class[]::new)));
         result.put("triggers", Arrays.asList(this.getTriggers().toArray(Class[]::new)));
         result.put("conditions", Arrays.asList(this.getConditions().toArray(Class[]::new)));
-        result.put("controllers", Arrays.asList(this.getControllers().toArray(Class[]::new)));
         result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
         result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
@@ -145,7 +142,7 @@ public class RegisteredPlugin {
     public String longDescription() {
         try (var is = this.getClassLoader().getResourceAsStream("doc/" + this.group() + ".md")) {
             if(is != null) {
-                return IOUtils.toString(is, Charsets.UTF_8);
+                return IOUtils.toString(is, StandardCharsets.UTF_8);
             }
         }
         catch (Exception e) {
@@ -160,7 +157,7 @@ public class RegisteredPlugin {
             .stream()
             .map(throwFunction(s -> new AbstractMap.SimpleEntry<>(
                 s,
-                IOUtils.toString(Objects.requireNonNull(this.getClassLoader().getResourceAsStream("doc/guides/" + s + ".md")), Charsets.UTF_8)
+                IOUtils.toString(Objects.requireNonNull(this.getClassLoader().getResourceAsStream("doc/guides/" + s + ".md")), StandardCharsets.UTF_8)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -182,7 +179,7 @@ public class RegisteredPlugin {
 
         if (resourceAsStream != null) {
             return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+                IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
             );
         }
 
@@ -194,7 +191,7 @@ public class RegisteredPlugin {
         InputStream resourceAsStream = this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
         if (resourceAsStream != null) {
             return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+                IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
             );
         }
 
@@ -226,12 +223,6 @@ public class RegisteredPlugin {
         if (!this.getConditions().isEmpty()) {
             b.append("[Conditions: ");
             b.append(this.getConditions().stream().map(Class::getName).collect(Collectors.joining(", ")));
-            b.append("] ");
-        }
-
-        if (!this.getControllers().isEmpty()) {
-            b.append("[Controllers: ");
-            b.append(this.getControllers().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

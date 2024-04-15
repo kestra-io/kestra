@@ -13,7 +13,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Introspected
-public class WebhookValidator  implements ConstraintValidator<WebhookValidation, Webhook> {
+public class WebhookValidator implements ConstraintValidator<WebhookValidation, Webhook> {
     @Override
     public boolean isValid(
         @Nullable Webhook value,
@@ -25,8 +25,9 @@ public class WebhookValidator  implements ConstraintValidator<WebhookValidation,
 
         if (value.getConditions() != null) {
             if (value.getConditions().stream().anyMatch(condition -> condition instanceof MultipleCondition)) {
-                context.messageTemplate("invalid webhook: conditions of type MultipleCondition are not supported");
-
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("invalid webhook: conditions of type MultipleCondition are not supported")
+                    .addConstraintViolation();
                 return false;
             }
         }

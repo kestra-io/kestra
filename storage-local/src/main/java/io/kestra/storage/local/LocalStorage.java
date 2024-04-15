@@ -1,5 +1,6 @@
 package io.kestra.storage.local;
 
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -18,11 +19,17 @@ import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Plugin
 @Singleton
 @LocalStorageEnabled
 public class LocalStorage implements StorageInterface {
     LocalConfig config;
 
+    /**
+     * No-arg constructor - required by Kestra service loader.
+     */
+    public LocalStorage() {}
+    
     @Inject
     public LocalStorage(LocalConfig config) throws IOException {
         this.config = config;

@@ -11,6 +11,7 @@ dependencies {
     annotationProcessor "io.micronaut.openapi:micronaut-openapi"
     implementation "io.swagger.core.v3:swagger-annotations"
 
+    annotationProcessor project(':processor')
     implementation project(":core")
 
     implementation "io.micronaut:micronaut-management"
@@ -20,6 +21,7 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
     // test
+    testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
     testImplementation("com.github.tomakehurst:wiremock-jre8:3.0.1")

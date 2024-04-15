@@ -1,12 +1,13 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.Plugin;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 
-public interface TriggerInterface {
+public interface TriggerInterface extends Plugin {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")

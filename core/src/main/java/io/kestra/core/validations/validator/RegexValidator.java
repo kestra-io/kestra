@@ -27,7 +27,9 @@ public class RegexValidator implements ConstraintValidator<Regex, String> {
         try {
             Pattern.compile(value);
         } catch (PatternSyntaxException e) {
-            context.messageTemplate("invalid pattern [" + value + "]");
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("invalid pattern [" + value + "]")
+                .addConstraintViolation();
             return false;
         }
 

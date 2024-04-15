@@ -21,9 +21,8 @@ public class EnumInput extends Input<String> {
     @Schema(
         title = "List of values."
     )
-    @Regex
     @NotNull
-    List<String> values;
+    List<@Regex String> values;
 
     @Override
     public void validate(String input) throws ConstraintViolationException {

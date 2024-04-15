@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.plugins.PluginRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.annotation.Introspected;
@@ -11,10 +12,6 @@ import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
-import io.kestra.core.contexts.KestraClassLoader;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.PluginScanner;
-import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.utils.Rethrow;
 import picocli.CommandLine;
 
@@ -25,7 +22,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import jakarta.inject.Inject;
@@ -45,6 +41,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
     @Inject
     private StartupHookInterface startupHook;
+
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
     private boolean[] verbose = new boolean[0];
@@ -77,8 +76,12 @@ abstract public class AbstractCommand implements Callable<Integer> {
         if (this.startupHook != null) {
             this.startupHook.start(this);
         }
-        startWebserver();
 
+        if (this.pluginsPath != null) {
+            this.pluginRegistry.registerIfAbsent(pluginsPath);
+        }
+
+        startWebserver();
         return 0;
     }
 
@@ -124,11 +127,8 @@ abstract public class AbstractCommand implements Callable<Integer> {
     }
 
     private void sendServerLog() {
-        if (log.isTraceEnabled() && KestraClassLoader.instance().getPluginRegistry() != null) {
-            KestraClassLoader.instance()
-                .getPluginRegistry()
-                .getPlugins()
-                .forEach(c -> log.trace(c.toString()));
+        if (log.isTraceEnabled() && pluginRegistry != null) {
+            pluginRegistry.plugins().forEach(c -> log.trace(c.toString()));
         }
     }
 
@@ -186,20 +186,5 @@ abstract public class AbstractCommand implements Callable<Integer> {
         }
 
         return ImmutableMap.of();
-    }
-
-    @SuppressWarnings("unused")
-    public PluginRegistry initPluginRegistry() {
-        if (this.pluginsPath == null || !this.pluginsPath.toFile().exists()) {
-            return null;
-        }
-
-        PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
-        List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
-
-        PluginRegistry pluginRegistry = new PluginRegistry(scan);
-        KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
-
-        return pluginRegistry;
     }
 }

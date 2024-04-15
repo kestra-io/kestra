@@ -1,13 +1,13 @@
 package io.kestra.core.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.models.Plugin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-public interface TaskInterface {
+public interface TaskInterface extends Plugin {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")

@@ -26,8 +26,9 @@ public class CronExpressionValidator implements ConstraintValidator<CronExpressi
             Cron parse = io.kestra.core.models.triggers.types.Schedule.CRON_PARSER.parse(value);
             parse.validate();
         } catch (IllegalArgumentException e) {
-            context.messageTemplate("invalid cron expression '({validatedValue})': " + e.getMessage());
-
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate( "invalid cron expression '({validatedValue})': " + e.getMessage())
+                .addConstraintViolation();
             return false;
         }
 

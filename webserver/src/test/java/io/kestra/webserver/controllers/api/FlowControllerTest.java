@@ -33,6 +33,7 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +60,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
     @Inject
     AbstractJdbcFlowRepository jdbcFlowRepository;
+
+    @BeforeAll
+    public static void beforeAll() {
+        Helpers.loadExternalPluginsFromClasspath();
+    }
 
     @BeforeEach
     protected void init() {

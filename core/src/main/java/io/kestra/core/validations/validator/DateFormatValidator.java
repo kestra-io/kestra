@@ -29,7 +29,9 @@ public class DateFormatValidator implements ConstraintValidator<DateFormat, Stri
             SimpleDateFormat dateFormat = new SimpleDateFormat(value);
             dateFormat.format(now);
         } catch (Exception e) {
-            context.messageTemplate("invalid date format value '({validatedValue})': " + e.getMessage());
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("invalid date format value '({validatedValue})': " + e.getMessage())
+                .addConstraintViolation();
 
             return false;
         }

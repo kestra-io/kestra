@@ -3,10 +3,7 @@ package io.kestra.cli.commands.plugins;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.contexts.KestraClassLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,12 +15,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 class PluginInstallCommandTest {
-    @BeforeAll
-    static void init() {
-        if (!KestraClassLoader.isInit()) {
-            KestraClassLoader.create(PluginInstallCommandTest.class.getClassLoader());
-        }
-    }
 
     @Test
     void fixedVersion() throws IOException {

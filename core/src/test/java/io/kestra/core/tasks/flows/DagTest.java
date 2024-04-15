@@ -49,7 +49,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks: Cyclic dependency detected: task1, task2"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: Cyclic dependency detected: task1, task2"));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks: Not existing task id in dependency: taskX"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: Not existing task id in dependency: taskX"));
     }
 
     private Flow parse(String path) {

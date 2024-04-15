@@ -13,7 +13,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Introspected
-public class WorkingDirectoryTaskValidator  implements ConstraintValidator<WorkingDirectoryTaskValidation, WorkingDirectory> {
+public class WorkingDirectoryTaskValidator implements ConstraintValidator<WorkingDirectoryTaskValidation, WorkingDirectory> {
     @Override
     public boolean isValid(
         @Nullable WorkingDirectory value,
@@ -24,17 +24,23 @@ public class WorkingDirectoryTaskValidator  implements ConstraintValidator<Worki
         }
 
         if (value.getTasks() == null || value.getTasks().isEmpty()) {
-            context.messageTemplate("The 'tasks' property cannot be empty");
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("The 'tasks' property cannot be empty")
+                .addConstraintViolation();
             return false;
         }
 
         if (value.getTasks().stream().anyMatch(task -> !(task instanceof RunnableTask<?>))) {
-            context.messageTemplate("Only runnable tasks are allowed as children of a WorkingDirectory task");
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Only runnable tasks are allowed as children of a WorkingDirectory task")
+                .addConstraintViolation();
             return false;
         }
 
         if (value.getTasks().stream().anyMatch(task -> task.getWorkerGroup() != null)) {
-            context.messageTemplate("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level");
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level")
+                .addConstraintViolation();
             return false;
         }
 

@@ -1,6 +1,9 @@
 package io.kestra.core.runners.pebble;
 
+import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
+import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.*;
+import io.kestra.core.runners.pebble.tests.JsonTest;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
@@ -8,17 +11,13 @@ import io.pebbletemplates.pebble.operator.BinaryOperator;
 import io.pebbletemplates.pebble.operator.BinaryOperatorImpl;
 import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
-import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
-import io.kestra.core.runners.pebble.filters.*;
-import io.kestra.core.runners.pebble.tests.JsonTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 
@@ -84,6 +83,7 @@ public class Extension extends AbstractExtension {
         filters.put("nindent", new NindentFilter());
         filters.put("yaml", new YamlFilter());
         filters.put("startsWith", new StartsWithFilter());
+        filters.put("endsWith", new EndsWithFilter());
         return filters;
     }
 

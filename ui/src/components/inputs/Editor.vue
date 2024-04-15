@@ -102,7 +102,6 @@
                     BookMultipleOutline: shallowRef(BookMultipleOutline),
                     Close: shallowRef(Close)
                 },
-                oldDecorations: [],
                 editorDocumentation: undefined,
                 plugin: undefined,
                 taskType: undefined,
@@ -209,6 +208,8 @@
 
                 this.editor = editor;
 
+                this.decorations = this.editor.createDecorationsCollection();
+
                 if (!this.original) {
                     this.editor.onDidBlurEditorWidget(() => {
                         this.$emit("focusout", editor.getValue());
@@ -308,27 +309,27 @@
                     this.editor.onDidContentSizeChange(_ => {
                         if (this.guidedProperties.monacoRange) {
                             editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
-                            let decorations = [
-                                {
-                                    range: this.guidedProperties.monacoRange,
-                                    options: {
-                                        isWholeLine: true,
-                                        inlineClassName: "highlight-text"
-                                    },
-                                    className: "highlight-text",
-                                }
-                            ];
-                            decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
-                                {
+                            const decorationsToAdd = [];
+                            decorationsToAdd.push({
+                                range: this.guidedProperties.monacoRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "highlight-text"
+                                },
+                                className: "highlight-text",
+                            });
+                            if (this.guidedProperties.monacoDisableRange) {
+                                decorationsToAdd.push({
                                     range: this.guidedProperties.monacoDisableRange,
                                     options: {
                                         isWholeLine: true,
                                         inlineClassName: "disable-text"
                                     },
                                     className: "disable-text",
-                                },
-                            ]) : decorations;
-                            this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                                });
+                            }
+
+                            this.decorations.set(decorationsToAdd);
                         } else {
                             this.highlightPebble();
                         }
@@ -363,14 +364,14 @@
             highlightPebble() {
                 // Highlight code that match pebble content
                 let model = this.editor.getModel();
-                let decorations = [];
                 let text = model.getValue();
                 let regex = new RegExp("\\{\\{(.+?)}}", "g");
                 let match;
+                const decorationsToAdd = [];
                 while ((match = regex.exec(text)) !== null) {
                     let startPos = model.getPositionAt(match.index);
                     let endPos = model.getPositionAt(match.index + match[0].length);
-                    decorations.push({
+                    decorationsToAdd.push({
                         range: {
                             startLineNumber: startPos.lineNumber,
                             startColumn: startPos.column,
@@ -382,7 +383,7 @@
                         }
                     });
                 }
-                this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations);
+                this.decorations.set(decorationsToAdd);
             }
         },
     };

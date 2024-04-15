@@ -45,6 +45,7 @@
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
     import {mapState} from "vuex";
     import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
+    import Connection from "vue-material-design-icons/Connection.vue";
     import {shallowRef} from "vue";
 
     export default {
@@ -166,6 +167,15 @@
                         title: this.$t("blueprints.title"),
                         icon: {
                             element: shallowRef(BallotOutline),
+                            class: "menu-icon"
+                        },
+                    },
+                    {
+                        href: {name: "plugins/list"},
+                        routes: this.routeStartWith("plugins"),
+                        title: this.$t("plugins.names"),
+                        icon: {
+                            element: shallowRef(Connection),
                             class: "menu-icon"
                         },
                     },

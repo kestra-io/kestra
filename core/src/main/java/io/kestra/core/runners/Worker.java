@@ -6,14 +6,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import dev.failsafe.Failsafe;
-import dev.failsafe.Timeout;
 import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -41,7 +37,6 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
-import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
@@ -61,6 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 @Introspected
@@ -108,7 +104,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Getter
     private final Map<String, AtomicInteger> evaluateTriggerRunningCount = new ConcurrentHashMap<>();
 
-    private final List<WorkerThread> workerThreadReferences = new ArrayList<>();
+    private final List<AbstractWorkerThread> workerThreadReferences = new ArrayList<>();
 
     private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
@@ -134,12 +130,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
      * @param workerGroupKey The worker group (EE).
      */
     @Inject
-    public Worker(@Parameter String workerId,
-                  @Parameter Integer numThreads,
-                  @Nullable @Parameter String workerGroupKey,
-                  ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-                  WorkerGroupService workerGroupService,
-                  ExecutorsUtils executorsUtils
+    public Worker(
+        @Parameter String workerId,
+        @Parameter Integer numThreads,
+        @Nullable @Parameter String workerGroupKey,
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        WorkerGroupService workerGroupService,
+        ExecutorsUtils executorsUtils
     ) {
         this.id = workerId;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
@@ -148,11 +145,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
         setState(ServiceState.CREATED);
     }
 
+    @SuppressWarnings("unchecked")
     @VisibleForTesting
     @Deprecated(forRemoval = true)
-    public Worker(ApplicationContext context,
-                  Integer numThreads,
-                  String workerGroupKey
+    public Worker(
+        ApplicationContext context,
+        Integer numThreads,
+        String workerGroupKey
     ) {
         this(
             UUID.randomUUID().toString(),
@@ -181,8 +180,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
             synchronized (this) {
                 workerThreadReferences
                     .stream()
+                    .filter(workerThread -> workerThread instanceof WorkerTaskThread)
+                    .map(workerThread -> (WorkerTaskThread) workerThread)
                     .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
-                    .forEach(WorkerThread::kill);
+                    .forEach(AbstractWorkerThread::kill);
             }
         });
 
@@ -359,15 +360,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
                             RunContext runContext = this.initRunContextForTrigger(workerTrigger);
 
-                            Optional<Execution> evaluate = pollingTrigger.evaluate(
-                                workerTrigger.getConditionContext().withRunContext(runContext),
-                                workerTrigger.getTriggerContext()
-                            );
+                            WorkerTriggerThread workerThread = new WorkerTriggerThread(workerTrigger, pollingTrigger);
 
-                            this.publishTriggerExecution(workerTrigger, evaluate);
+                            io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
+
+                            if (!state.equals(FAILED)) {
+                                this.publishTriggerExecution(workerTrigger, workerThread.getEvaluate());
+                            } else {
+                                this.handleTriggerError(workerTrigger, workerThread.getException());
+                            }
                         }
-                    } catch (Exception e) {
-                        this.handleTriggerError(workerTrigger, e);
                     } finally {
                         workerTrigger.getConditionContext().getRunContext().cleanup();
                     }
@@ -522,11 +524,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             Level.WARN,
             "[date: {}] Evaluate Failed with error '{}'",
             workerTrigger.getTriggerContext().getDate(),
-            e.getMessage(),
+            e != null ? e.getMessage() : "null",
             e
         );
 
-        if (logger.isTraceEnabled()) {
+        if (logger.isTraceEnabled() && e != null) {
             logger.trace(Throwables.getStackTraceAsString(e));
         }
     }
@@ -556,7 +558,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         metricRunningCount.incrementAndGet();
 
-        WorkerThread workerThread = new WorkerThread(logger, workerTask, task, runContext, metricRegistry, workerGroup);
+        WorkerTaskThread workerThread = new WorkerTaskThread(workerTask, task, runContext, metricRegistry);
 
         // emit attempts
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask
@@ -567,22 +569,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ));
 
         // run it
-        io.kestra.core.models.flows.State.Type state;
-        try {
-            synchronized (this) {
-                workerThreadReferences.add(workerThread);
-            }
-            workerThread.start();
-            workerThread.join();
-            state = workerThread.getTaskState();
-        } catch (InterruptedException e) {
-            logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
-            state = workerTask.getTask().isAllowFailure() ? WARNING : FAILED;
-        } finally {
-            synchronized (this) {
-                workerThreadReferences.remove(workerThread);
-            }
-        }
+        io.kestra.core.models.flows.State.Type state = runThread(workerThread, logger);
 
         metricRunningCount.decrementAndGet();
 
@@ -608,6 +595,32 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         return workerTask
             .withTaskRun(taskRun);
+    }
+
+    private io.kestra.core.models.flows.State.Type runThread(AbstractWorkerThread workerThread, Logger logger) {
+        // run it
+        io.kestra.core.models.flows.State.Type state;
+        try {
+            synchronized (this) {
+                workerThreadReferences.add(workerThread);
+            }
+            workerThread.start();
+            workerThread.join();
+            state = workerThread.getTaskState();
+        } catch (InterruptedException e) {
+            logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
+            if (workerThread instanceof WorkerTaskThread workerTaskThread) {
+                state = workerTaskThread.getWorkerTask().getTask().isAllowFailure() ? WARNING : FAILED;
+            } else {
+                state = FAILED;
+            }
+        } finally {
+            synchronized (this) {
+                workerThreadReferences.remove(workerThread);
+            }
+        }
+
+        return state;
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {
@@ -712,87 +725,19 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.executorService.shutdownNow();
     }
 
-    public List<WorkerTask> getWorkerThreadTasks() {
-        return this.workerThreadReferences.stream().map(thread -> thread.workerTask).toList();
-    }
-
-    @Getter
-    public static class WorkerThread extends Thread {
-        Logger logger;
-        WorkerTask workerTask;
-        RunnableTask<?> task;
-        RunContext runContext;
-        MetricRegistry metricRegistry;
-        String workerGroup;
-
-        Output taskOutput;
-        io.kestra.core.models.flows.State.Type taskState;
-        volatile boolean killed = false;
-
-        public WorkerThread(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry, String workerGroup) {
-            super("WorkerThread");
-            this.setUncaughtExceptionHandler(this::exceptionHandler);
-
-            this.logger = logger;
-            this.workerTask = workerTask;
-            this.task = task;
-            this.runContext = runContext;
-            this.metricRegistry = metricRegistry;
-            this.workerGroup = workerGroup;
-        }
-
-        @Override
-        public void run() {
-            Thread.currentThread().setContextClassLoader(this.task.getClass().getClassLoader());
-
-            final Duration workerTaskTimeout = workerTask.getTask().getTimeout();
-            try {
-                if (workerTaskTimeout != null) {
-                    Timeout<Object> taskTimeout = Timeout
-                        .builder(workerTaskTimeout)
-                        .withInterrupt() // use to awake blocking tasks.
-                        .build();
-                    Failsafe
-                        .with(taskTimeout)
-                        .onFailure(event -> metricRegistry
-                                .counter(
-                                    MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
-                                    metricRegistry.tags(
-                                        this.workerTask,
-                                        MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
-                                    )
-                                )
-                                .increment()
-                        )
-                        .run(() -> taskOutput = task.run(runContext));
-
+    public List<WorkerJob> getWorkerThreadTasks() throws Exception {
+        return this.workerThreadReferences
+            .stream()
+            .map(throwFunction(workerThread -> {
+                if (workerThread instanceof WorkerTaskThread workerTaskThread) {
+                    return workerTaskThread.workerTask;
+                } else if (workerThread instanceof WorkerTriggerThread workerTriggerThread) {
+                    return workerTriggerThread.workerTrigger;
                 } else {
-                    taskOutput = task.run(runContext);
+                    throw new Exception("Invalid thread type: '" + workerThread.getClass().getName() + "'");
                 }
-                taskState = SUCCESS;
-                if (taskOutput != null && taskOutput.finalState().isPresent()) {
-                    taskState = taskOutput.finalState().get();
-                }
-            } catch (dev.failsafe.TimeoutExceededException e) {
-                this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout, e));
-            } catch (Exception e) {
-                this.exceptionHandler(this, e);
-            }
-        }
-
-        @Synchronized
-        public void kill() {
-            this.killed = true;
-            taskState = KILLED;
-            this.interrupt();
-        }
-
-        private void exceptionHandler(Thread t, Throwable e) {
-            if (!this.killed) {
-                logger.error(e.getMessage(), e);
-                taskState = FAILED;
-            }
-        }
+            }))
+            .toList();
     }
 
     /**

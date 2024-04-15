@@ -62,7 +62,6 @@
             ...mapGetters("core", ["guidedProperties"]),
             logo() {
                 // get theme
-                console.log((localStorage.getItem("theme") || "light") === "light")
                 return (localStorage.getItem("theme") || "light") === "light" ? onboardingImageLight : onboardingImage;
             }
         }

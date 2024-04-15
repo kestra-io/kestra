@@ -1,0 +1,10 @@
+id: output-values
+namespace: io.kestra.tests
+
+tasks:
+  - id: return
+    type: io.kestra.core.tasks.outputs.OutputValues
+    values:
+      output1: xyz
+      output2: abc
+      taskInfo: "{{ task.id }} > {{ taskrun.startDate }}"

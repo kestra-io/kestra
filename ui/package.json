@@ -24,7 +24,7 @@
     "chartjs-chart-treemap": "^2.3.0",
     "core-js": "^3.36.1",
     "dagre": "^0.8.5",
-    "element-plus": "^2.6.3",
+    "element-plus": "^2.7.0",
     "humanize-duration": "^3.32.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",

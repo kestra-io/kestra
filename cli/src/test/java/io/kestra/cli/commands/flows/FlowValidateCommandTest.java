@@ -19,7 +19,7 @@ class FlowValidateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
 
@@ -39,7 +39,7 @@ class FlowValidateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
 

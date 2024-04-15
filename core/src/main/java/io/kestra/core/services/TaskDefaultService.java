@@ -34,6 +34,7 @@ public class TaskDefaultService {
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    @Nullable
     protected QueueInterface<LogEntry> logQueue;
 
     /**

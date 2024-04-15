@@ -82,7 +82,7 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks: No task defined, neither cases or default have any tasks"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: No task defined, neither cases or default have any tasks"));
     }
 
     @Test
@@ -93,7 +93,7 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks: Only runnable tasks are allowed as children of a WorkingDirectory task"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: Only runnable tasks are allowed as children of a WorkingDirectory task"));
     }
 
     @Test
@@ -102,9 +102,9 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(2));
+        assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks: The 'tasks' property cannot be empty"));
+        assertThat(validate.get().getMessage(), containsString("tasks[0]: The 'tasks' property cannot be empty"));
     }
 
     @Test

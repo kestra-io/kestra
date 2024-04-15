@@ -12,7 +12,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Introspected
-public class SwitchTaskValidator  implements ConstraintValidator<SwitchTaskValidation, Switch> {
+public class SwitchTaskValidator implements ConstraintValidator<SwitchTaskValidation, Switch> {
     @Override
     public boolean isValid(
         @Nullable Switch value,
@@ -22,8 +22,11 @@ public class SwitchTaskValidator  implements ConstraintValidator<SwitchTaskValid
             return true;
         }
 
-        if ((value.getCases() == null || value.getCases().isEmpty()) && (value.getDefaults() == null || value.getDefaults().isEmpty())) {
-            context.messageTemplate("No task defined, neither cases or default have any tasks");
+        if ((value.getCases() == null || value.getCases().isEmpty()) &&
+            (value.getDefaults() == null || value.getDefaults().isEmpty())) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("No task defined, neither cases or default have any tasks")
+                .addConstraintViolation();
 
             return false;
         }

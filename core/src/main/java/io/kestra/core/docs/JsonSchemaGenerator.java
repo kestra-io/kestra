@@ -20,20 +20,30 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.PluginService;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -42,8 +52,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class JsonSchemaGenerator {
+
+    private final PluginRegistry pluginRegistry;
+
     @Inject
-    private PluginService pluginService;
+    public JsonSchemaGenerator(final PluginRegistry pluginRegistry) {
+        this.pluginRegistry = pluginRegistry;
+    }
 
     Map<Class<?>, Object> defaultInstances = new HashMap<>();
 
@@ -65,21 +80,7 @@ public class JsonSchemaGenerator {
                     oNode.set("oneOf", oNode.remove("anyOf"));
                 }
             });
-
-            Map<String, Object> map = JacksonMapper.toMap(objectNode);
-
-            // hack
-            if (cls == Flow.class) {
-                fixFlow(map);
-                fixCondition(map);
-            } else if (cls == Task.class) {
-                fixTask(map);
-            } else if (cls == AbstractTrigger.class) {
-                fixTrigger(map);
-                fixCondition(map);
-            }
-
-            return map;
+            return JacksonMapper.toMap(objectNode);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -113,42 +114,6 @@ public class JsonSchemaGenerator {
 
             collectedTypeAttributes.set("markdownDescription", new TextNode(sb.toString()));
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void fixFlow(Map<String, Object> map) {
-        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var flow = definitions.get("io.kestra.core.models.flows.Flow");
-
-        var requireds = (List<String>) flow.get("required");
-        requireds.remove("deleted");
-
-        var properties = (Map<String, Object>) flow.get("properties");
-        properties.remove("deleted");
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void fixTask(Map<String, Object> map) {
-        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = definitions.get("io.kestra.core.models.tasks.Task-2");
-        var allOf = (List<Object>) task.get("allOf");
-        allOf.remove(1);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void fixTrigger(Map<String, Object> map) {
-        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var trigger = definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
-        var allOf = (List<Object>) trigger.get("allOf");
-        allOf.remove(1);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void fixCondition(Map<String, Object> map) {
-        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var condition = definitions.get("io.kestra.core.models.conditions.Condition-2");
-        var allOf = (List<Object>) condition.get("allOf");
-        allOf.remove(1);
     }
 
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {
@@ -326,18 +291,21 @@ public class JsonSchemaGenerator {
                         return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == AbstractTrigger.class) {
                         return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == Condition.class) {
                         return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == ScheduleCondition.class) {
@@ -345,12 +313,14 @@ public class JsonSchemaGenerator {
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                             .filter(ScheduleCondition.class::isAssignableFrom)
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     } else if (declaredType.getErasedType() == TaskRunner.class) {
                         return getRegisteredPlugins()
                             .stream()
                             .flatMap(registeredPlugin -> registeredPlugin.getTaskRunners().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                             .map(clz -> typeContext.resolveSubtype(declaredType, clz))
                             .collect(Collectors.toList());
                     }
@@ -422,12 +392,25 @@ public class JsonSchemaGenerator {
                     collectedTypeAttributes.remove("$examples");
                 }
             });
+
+            // Ensure that `type` is defined as a constant in JSON Schema.
+            // The `const` property is used by editors for auto-completion based on that schema.
+            builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                final Class<?> pluginType = scope.getType().getErasedType();
+                if (pluginType.getAnnotation(Plugin.class) != null) {
+                    ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
+                    if (properties != null) {
+                        properties.set("type", context.getGeneratorConfig().createObjectNode()
+                            .put("const", pluginType.getName())
+                        );
+                    }
+                }
+            });
         }
     }
 
     protected List<RegisteredPlugin> getRegisteredPlugins() {
-        return pluginService
-            .allPlugins();
+        return pluginRegistry.plugins();
     }
 
     private boolean defaultInAllOf(JsonNode property) {

@@ -1,6 +1,9 @@
 package io.kestra.core.contexts;
 
 import io.kestra.core.models.ServerType;
+import io.kestra.core.plugins.DefaultPluginRegistry;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
@@ -92,6 +95,7 @@ public abstract class KestraContext {
             this.version = Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null);
             this.environment = environment;
             KestraContext.setContext(this);
+            PluginDeserializer.setPluginRegistry(applicationContext.getBean(PluginRegistry.class));
         }
 
         /** {@inheritDoc} **/

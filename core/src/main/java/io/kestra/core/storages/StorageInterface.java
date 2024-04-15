@@ -2,6 +2,7 @@ package io.kestra.core.storages;
 
 import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.Plugin;
 import io.micronaut.core.annotation.Introspected;
 
 import java.io.BufferedInputStream;
@@ -14,7 +15,8 @@ import java.net.URI;
 import java.util.List;
 
 @Introspected
-public interface StorageInterface {
+public interface StorageInterface extends Plugin {
+
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(String tenantId, URI uri) throws IOException;
 

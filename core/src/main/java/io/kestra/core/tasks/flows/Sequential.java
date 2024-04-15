@@ -69,8 +69,8 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     protected List<Task> errors;
 
     @Valid
-    @NotEmpty
     @PluginProperty
+    // FIXME -> issue with Pause @NotEmpty
     private List<Task> tasks;
 
     @Override

@@ -28,7 +28,9 @@ public class WorkerGroupValidator  implements ConstraintValidator<WorkerGroupVal
         }
 
         if (EE_PACKAGE == null) {
-            context.messageTemplate("Worker Group is an Enterprise Edition functionality");
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Worker Group is an Enterprise Edition functionality")
+                .addConstraintViolation();
             return false;
         }
         return true;

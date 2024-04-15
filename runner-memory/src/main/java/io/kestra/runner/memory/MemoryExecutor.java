@@ -17,7 +17,6 @@ import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.ForEachItem;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.utils.Either;
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;

@@ -1,5 +1,7 @@
 dependencies {
+    annotationProcessor project(":processor")
     implementation project(":core")
 
+    testAnnotationProcessor project(":processor")
     testImplementation project(':core').sourceSets.test.output
 }

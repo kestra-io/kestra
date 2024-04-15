@@ -1,10 +1,9 @@
 package io.kestra.core.models.tasks.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.runners.RunContext;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -17,12 +16,11 @@ import java.util.*;
 /**
  * Base class for all task runners.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@io.kestra.core.models.annotations.Plugin
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
-public abstract class TaskRunner {
+public abstract class TaskRunner implements Plugin {
     @NotBlank
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;

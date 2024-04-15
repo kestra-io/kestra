@@ -239,7 +239,7 @@ public class FlowController {
     ) throws ConstraintViolationException {
         Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
-        return HttpResponse.ok(create(flowParsed, flow));
+        return HttpResponse.ok(doCreate(flowParsed, flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -248,10 +248,10 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
-        return HttpResponse.ok(create(flow, flow.generateSource()).toFlow());
+        return HttpResponse.ok(doCreate(flow, flow.generateSource()).toFlow());
     }
 
-    protected FlowWithSource create(Flow flow, String source) {
+    protected FlowWithSource doCreate(Flow flow, String source) {
         return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
     }
 
@@ -370,7 +370,7 @@ public class FlowController {
                 if (existingFlow.isPresent()) {
                     return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
                 } else {
-                    return this.create(flow, flowWithSource.getSource());
+                    return this.doCreate(flow, flowWithSource.getSource());
                 }
             })
             .toList();

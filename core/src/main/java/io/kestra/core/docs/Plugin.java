@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static java.util.function.Predicate.not;
 
 @NoArgsConstructor
 @Data
@@ -57,31 +58,29 @@ public class Plugin {
             .distinct()
             .toList();
 
-        plugin.tasks = className(filter(registeredPlugin.getTasks()).toArray(Class[]::new));
-        plugin.triggers = className(filter(registeredPlugin.getTriggers()).toArray(Class[]::new));
-        plugin.conditions = className(filter(registeredPlugin.getConditions()).toArray(Class[]::new));
-        plugin.controllers = className(filter(registeredPlugin.getControllers()).toArray(Class[]::new));
-        plugin.storages = className(filter(registeredPlugin.getStorages()).toArray(Class[]::new));
-        plugin.secrets = className(filter(registeredPlugin.getSecrets()).toArray(Class[]::new));
-        plugin.taskRunners = className(filter(registeredPlugin.getTaskRunners()).toArray(Class[]::new));
+        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks());
+        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers());
+        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions());
+        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages());
+        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets());
+        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners());
 
         return plugin;
     }
 
     /**
-     * we filter from documentation all legacy org.kestra code ...
-     * we do it only on docs to avoid remove backward compatibility everywhere (worker, executor...)
+     * Filters the given list of class all internal Plugin, as well as, all legacy org.kestra classes.
+     * Those classes are only filtered from the documentation to ensure backward compatibility.
+     *
+     * @param list The list of classes?
+     * @return  a filtered streams.
      */
-    private static <T extends Class<?>> Stream<T> filter(List<T> list) {
+    private static List<String> filterAndGetClassName(final List<? extends Class<?>> list) {
         return list
             .stream()
-            .filter(s -> !s.getName().startsWith("org.kestra."));
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static <T> List<String> className(Class[] classes) {
-        return Arrays.stream(classes)
+            .filter(not(io.kestra.core.models.Plugin::isInternal))
             .map(Class::getName)
-            .collect(Collectors.toList());
+            .filter(c -> !c.startsWith("org.kestra."))
+            .toList();
     }
 }

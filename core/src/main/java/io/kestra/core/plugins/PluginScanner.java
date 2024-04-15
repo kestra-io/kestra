@@ -1,27 +1,29 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.core.beans.BeanIntrospectionReference;
-import io.micronaut.core.io.service.SoftServiceLoader;
-import io.micronaut.http.annotation.Controller;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
-import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 public class PluginScanner {
     ClassLoader parent;
 
-    public PluginScanner(ClassLoader parent) {
+    public PluginScanner(final ClassLoader parent) {
         this.parent = parent;
     }
 
@@ -87,78 +89,53 @@ public class PluginScanner {
 
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private RegisteredPlugin scanClassLoader(final ClassLoader classLoader, ExternalPlugin externalPlugin, Manifest manifest) {
+    private RegisteredPlugin scanClassLoader(final ClassLoader classLoader,
+                                             final ExternalPlugin externalPlugin,
+                                             Manifest manifest) {
         List<Class<? extends Task>> tasks = new ArrayList<>();
         List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
         List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner>> taskRunners = new ArrayList<>();
-        List<Class<?>> controllers = new ArrayList<>();
         List<String> guides = new ArrayList<>();
-
-        final SoftServiceLoader<BeanIntrospectionReference> loader = SoftServiceLoader.load(
-            BeanIntrospectionReference.class,
-            classLoader
-        );
 
         if (manifest == null) {
             manifest = getManifest(classLoader);
         }
 
-        List<BeanIntrospectionReference> definitions = new ArrayList<>(100);
-        loader.collectAll(definitions);
+        final ServiceLoader<Plugin> sl = ServiceLoader.load(Plugin.class, classLoader);
+        sl.forEach(plugin -> {
 
-        for (BeanIntrospectionReference definition : definitions) {
-            Class beanType;
-            try {
-                beanType = definition.getBeanType();
-            } catch (Throwable e) {
-                log.warn(
-                    "Unable to load class '{}' on plugin '{}'",
-                    definition.getName(), externalPlugin  != null ? externalPlugin.getLocation().toString() : (manifest != null ? manifest.getMainAttributes().getValue("X-Kestra-Title") : ""),
-                    e
-                );
-                continue;
+            if(plugin.getClass().isAnnotationPresent(Hidden.class)) {
+                return;
             }
 
-            if (Modifier.isAbstract(beanType.getModifiers())) {
-                continue;
+            if (plugin instanceof Task task) {
+                log.debug("Loading Task plugin: '{}'", plugin.getClass());
+                tasks.add(task.getClass());
             }
-
-            if(beanType.isAnnotationPresent(Hidden.class)) {
-                continue;
+            else if (plugin instanceof AbstractTrigger trigger) {
+                log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
+                triggers.add(trigger.getClass());
             }
-
-            if (Task.class.isAssignableFrom(beanType)) {
-                tasks.add(beanType);
+            else if (plugin instanceof Condition condition) {
+                log.debug("Loading Condition plugin: '{}'", plugin.getClass());
+                conditions.add(condition.getClass());
             }
-
-            if (AbstractTrigger.class.isAssignableFrom(beanType)) {
-                triggers.add(beanType);
+            else if (plugin instanceof StorageInterface storage) {
+                log.debug("Loading Storage plugin: '{}'", plugin.getClass());
+                storages.add(storage.getClass());
             }
-
-            if (Condition.class.isAssignableFrom(beanType)) {
-                conditions.add(beanType);
+            else if (plugin instanceof SecretPluginInterface storage) {
+                log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
+                secrets.add(storage.getClass());
             }
-
-            if (StorageInterface.class.isAssignableFrom(beanType)) {
-                storages.add(beanType);
+            else if (plugin instanceof TaskRunner runner) {
+                log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
+                taskRunners.add(runner.getClass());
             }
-
-            if (SecretPluginInterface.class.isAssignableFrom(beanType)) {
-                secrets.add(beanType);
-            }
-
-            if (TaskRunner.class.isAssignableFrom(beanType)) {
-                taskRunners.add(beanType);
-            }
-
-            if (beanType.isAnnotationPresent(Controller.class)) {
-                controllers.add(beanType);
-            }
-        }
+        });
 
         var guidesDirectory = classLoader.getResource("doc/guides");
         if (guidesDirectory != null) {
@@ -185,7 +162,6 @@ public class PluginScanner {
             .tasks(tasks)
             .triggers(triggers)
             .conditions(conditions)
-            .controllers(controllers)
             .storages(storages)
             .secrets(secrets)
             .taskRunners(taskRunners)

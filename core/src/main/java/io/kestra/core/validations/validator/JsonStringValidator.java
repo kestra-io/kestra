@@ -29,7 +29,9 @@ public class JsonStringValidator  implements ConstraintValidator<JsonString, Str
         try {
             OBJECT_MAPPER.readTree(value);
         } catch (IOException e) {
-            context.messageTemplate("invalid json '({validatedValue})': " + e.getMessage());
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("invalid json '({validatedValue})': " + e.getMessage())
+                .addConstraintViolation();
 
             return false;
         }

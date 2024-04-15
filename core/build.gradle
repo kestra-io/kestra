@@ -9,9 +9,14 @@ task copyGradleProperties(type: Copy) {
     from '../gradle.properties'
     into 'src/main/resources'
 }
+
 processResources.dependsOn copyGradleProperties
 
 dependencies {
+    // Kestra
+    api project(':model')
+    annotationProcessor project(':processor')
+
     // serializers
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: jacksonVersion
 
@@ -34,6 +39,8 @@ dependencies {
     implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.35.0'
 
     // test
+    testAnnotationProcessor project(':processor')
+
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')

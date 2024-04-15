@@ -16,7 +16,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -24,7 +23,8 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import io.kestra.core.contexts.KestraClassLoader;
+import io.kestra.core.plugins.DefaultPluginRegistry;
+import io.kestra.core.plugins.PluginModule;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -122,11 +122,7 @@ public final class JacksonMapper {
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {
-        // unit test can be not init
-        if (KestraClassLoader.isInit()) {
-            TypeFactory tf = TypeFactory.defaultInstance().withClassLoader(KestraClassLoader.instance());
-            mapper.setTypeFactory(tf);
-        }
+        DefaultPluginRegistry.getOrCreate(); // ensure core plugins are loaded
 
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
@@ -135,6 +131,7 @@ public final class JacksonMapper {
             .registerModule(new Jdk8Module())
             .registerModule(new ParameterNamesModule())
             .registerModules(new GuavaModule())
+            .registerModule(new PluginModule())
             .setTimeZone(TimeZone.getDefault());
     }
 

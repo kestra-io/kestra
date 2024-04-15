@@ -2,8 +2,6 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.validations.FlowValidation;
@@ -79,7 +77,9 @@ public class FlowValidator  implements ConstraintValidator<FlowValidation, Flow>
         }
 
         if (!violations.isEmpty()) {
-            context.messageTemplate("Invalid Flow: " + String.join(", ", violations));
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Invalid Flow: " + String.join(", ", violations))
+                .addConstraintViolation();
             return false;
         } else {
             return true;

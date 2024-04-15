@@ -113,6 +113,7 @@ allprojects {
         implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         implementation "io.micronaut:micronaut-inject"
         implementation "io.micronaut.validation:micronaut-validation"
+        implementation "io.micronaut.beanvalidation:micronaut-hibernate-validator"
         implementation "io.micronaut:micronaut-runtime"
         implementation "io.micronaut:micronaut-retry"
         implementation "io.micronaut:micronaut-jackson-databind"
@@ -164,7 +165,7 @@ subprojects {
         // lombok
         testAnnotationProcessor "org.projectlombok:lombok:" + lombokVersion
         testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
-
+        
         // micronaut
         testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"

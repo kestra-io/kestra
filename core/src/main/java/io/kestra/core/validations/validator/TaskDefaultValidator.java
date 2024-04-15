@@ -1,16 +1,12 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.flows.TaskDefault;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import io.kestra.core.validations.TaskDefaultValidation;
 
@@ -32,8 +28,7 @@ public class TaskDefaultValidator implements ConstraintValidator<TaskDefaultVali
 
         if (value.getValues() == null) {
             violations.add("Null values map found");
-            context.messageTemplate("Invalid Task Default: " + String.join(", ", violations));
-
+            addConstraintViolation(context, violations);
             return false;
         }
 
@@ -45,12 +40,19 @@ public class TaskDefaultValidator implements ConstraintValidator<TaskDefaultVali
         }
 
         if (!violations.isEmpty()) {
-            context.messageTemplate("Invalid Task Default: " + String.join(", ", violations));
+            addConstraintViolation(context, violations);
 
             return false;
         } else {
 
             return true;
         }
+    }
+
+    private static void addConstraintViolation(final ConstraintValidatorContext context,
+                                               final List<String> violations) {
+        context.disableDefaultConstraintViolation();
+        context.buildConstraintViolationWithTemplate("Invalid Task Default: " + String.join(", ", violations))
+            .addConstraintViolation();
     }
 }

@@ -6,10 +6,13 @@ import io.kestra.core.docs.InputType;
 import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.plugins.DefaultPluginRegistry;
+import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -20,6 +23,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 class PluginControllerTest {
+
+    @BeforeAll
+    public static void beforeAll() {
+        Helpers.loadExternalPluginsFromClasspath();
+    }
+
     @Test
     void plugins() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
@@ -89,7 +98,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.debugs.Return"),
+                HttpRequest.GET("/api/v1/plugins/" + Return.class.getName()),
                 DocumentationWithSchema.class
             );
 
@@ -190,7 +199,7 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, Object.class)
             );
 
-            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.tasks.Task-2"));
+            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.tasks.Task"));
         });
     }
 

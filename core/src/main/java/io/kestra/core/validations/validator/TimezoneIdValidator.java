@@ -27,7 +27,9 @@ public class TimezoneIdValidator implements ConstraintValidator<TimezoneId, Stri
         try {
             ZoneId.of(value);
         } catch (DateTimeException e) {
-            context.messageTemplate("timezone '({validatedValue})' is not a valid time-zone ID");
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("timezone '({validatedValue})' is not a valid time-zone ID")
+                    .addConstraintViolation();
             return false;
         }
 

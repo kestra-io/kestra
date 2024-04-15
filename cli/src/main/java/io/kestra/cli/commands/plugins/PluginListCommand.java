@@ -1,9 +1,9 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.core.contexts.KestraClassLoader;
-import io.kestra.core.plugins.PluginScanner;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.util.List;
@@ -19,6 +19,9 @@ public class PluginListCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--core"}, description = "Also write core tasks plugins")
     private boolean core = false;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -29,15 +32,8 @@ public class PluginListCommand extends AbstractCommand {
             );
         }
 
-        PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
-        List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
-
-        if (core) {
-            PluginScanner corePluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
-            scan.add(corePluginScanner.scan());
-        }
-
-        scan.forEach(registeredPlugin -> stdOut(registeredPlugin.toString()));
+        List<RegisteredPlugin> plugins = core ? pluginRegistry.plugins() : pluginRegistry.externalPlugins();
+        plugins.forEach(registeredPlugin -> stdOut(registeredPlugin.toString()));
 
         return 0;
     }

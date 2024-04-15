@@ -211,7 +211,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    @Hidden
+    @Plugin(internal = true)
     public static class ExecutorTemplate extends Template {
         private io.kestra.core.models.templates.Template template;
 

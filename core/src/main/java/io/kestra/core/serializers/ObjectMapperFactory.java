@@ -8,8 +8,7 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import io.kestra.core.contexts.KestraClassLoader;
+import io.kestra.core.plugins.PluginModule;
 import io.micronaut.context.annotation.*;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.GenericTypeUtils;
@@ -66,12 +65,6 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
     @Override
     public ObjectMapper objectMapper(@Nullable JacksonConfiguration jacksonConfiguration, @Nullable JsonFactory jsonFactory) {
         ObjectMapper objectMapper = jsonFactory != null ? new ObjectMapper(jsonFactory) : new ObjectMapper();
-
-        // unit test can be not init
-        if (KestraClassLoader.isInit()) {
-            TypeFactory tf = TypeFactory.defaultInstance().withClassLoader(KestraClassLoader.instance());
-            objectMapper.setTypeFactory(tf);
-        }
 
         objectMapper.setSerializerFactory(new BeanSerializerFactoryWithGlobalIncludeDefaults());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
@@ -182,6 +175,7 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
             jacksonConfiguration.getGeneratorSettings().forEach(objectMapper::configure);
         }
 
+        objectMapper.registerModule(new PluginModule());
         return objectMapper;
     }
 }

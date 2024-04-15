@@ -7,11 +7,13 @@ import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.commands.templates.TemplateCommand;
-import io.kestra.core.contexts.KestraClassLoader;
+import io.kestra.core.contexts.KestraApplicationContext;
+import io.kestra.core.plugins.DefaultPluginRegistry;
+import io.kestra.core.plugins.PluginRegistry;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
-import io.kestra.core.contexts.KestraApplicationContextBuilder;
+import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Introspected;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -20,6 +22,7 @@ import picocli.CommandLine;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +64,8 @@ public class App implements Callable<Integer> {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
-        // Register a ClassLoader with isolation for plugins
-        Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
-
         // Init ApplicationContext
-        ApplicationContext applicationContext = App.applicationContext(cls, args);
+        ApplicationContext applicationContext = App.applicationContext(cls, args, DefaultPluginRegistry.getOrCreate());
 
         // Call Picocli command
         int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
@@ -83,8 +83,11 @@ public class App implements Callable<Integer> {
      * @param args args passed to java app
      * @return the application context created
      */
-    protected static ApplicationContext applicationContext(Class<?> mainClass, String[] args) {
-        KestraApplicationContextBuilder builder = (KestraApplicationContextBuilder) new KestraApplicationContextBuilder()
+    protected static ApplicationContext applicationContext(Class<?> mainClass,
+                                                           String[] args,
+                                                           PluginRegistry pluginRegistry) {
+
+        ApplicationContextBuilder builder = KestraApplicationContext.builder(pluginRegistry)
             .mainClass(mainClass)
             .environments(Environment.CLI);
 
@@ -121,8 +124,9 @@ public class App implements Callable<Integer> {
 
             builder.properties(properties);
 
-            // add plugins registry if plugin path defined
-            builder.pluginRegistry(getPropertiesFromMethod(cls, "initPluginRegistry", commandLine.getCommandSpec().userObject()));
+            // Load external plugins before starting ApplicationContext
+            Path pluginPath = ((AbstractCommand)commandLine.getCommandSpec().userObject()).pluginsPath;
+            pluginRegistry.registerIfAbsent(pluginPath);
         }
 
         return builder.build();

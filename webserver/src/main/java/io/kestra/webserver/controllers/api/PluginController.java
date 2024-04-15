@@ -8,8 +8,8 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.core.services.PluginService;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpHeaders;
@@ -39,7 +39,7 @@ public class PluginController {
     private JsonSchemaGenerator jsonSchemaGenerator;
 
     @Inject
-    private PluginService pluginService;
+    private PluginRegistry pluginRegistry;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -118,8 +118,7 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get list of plugins")
     public List<Plugin> search() {
-        return pluginService
-            .allPlugins()
+        return pluginRegistry.plugins()
             .stream()
             .map(Plugin::of)
             .collect(Collectors.toList());
@@ -129,8 +128,7 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> icons() {
-        Map<String, PluginIcon> icons = pluginService
-            .allPlugins()
+        Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
             .flatMap(plugin -> Stream
                 .concat(
@@ -161,8 +159,8 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> pluginGroupIcons() {
-        Map<String, PluginIcon> icons = pluginService
-            .allPlugins()
+        Map<String, PluginIcon> icons = pluginRegistry
+            .plugins()
             .stream()
             .filter(plugin -> plugin.group() != null)
             .collect(Collectors.toMap(
@@ -182,7 +180,7 @@ public class PluginController {
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
-            pluginService.allPlugins(),
+            pluginRegistry.plugins(),
             cls,
             allProperties
         );

@@ -2,8 +2,6 @@ package io.kestra.cli.commands.flows;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -20,9 +18,6 @@ class FlowValidateCommandTest {
         System.setOut(new PrintStream(out));
 
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
-            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
-            embeddedServer.start();
-
             String[] args = {
                 "--local",
                 "src/test/resources/helper/flow.yaml"
@@ -40,9 +35,6 @@ class FlowValidateCommandTest {
         System.setOut(new PrintStream(out));
 
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
-            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
-            embeddedServer.start();
-
             String[] args = {
                 "--local",
                 "src/test/resources/warning/flow-with-warning.yaml"

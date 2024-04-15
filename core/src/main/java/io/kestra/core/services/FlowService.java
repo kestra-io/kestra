@@ -36,6 +36,8 @@ import java.util.stream.StreamSupport;
 @Singleton
 @Slf4j
 public class FlowService {
+    private final IllegalStateException NO_REPOSITORY_EXCEPTION = new IllegalStateException("No flow repository found. Make sure the `kestra.repository.type` property is set.");
+
     @Inject
     RunContextFactory runContextFactory;
 
@@ -43,7 +45,7 @@ public class FlowService {
     ConditionService conditionService;
 
     @Inject
-    FlowRepositoryInterface flowRepository;
+    Optional<FlowRepositoryInterface> flowRepository;
 
     @Inject
     YamlFlowParser yamlFlowParser;
@@ -62,6 +64,11 @@ public class FlowService {
             .tenantId(tenantId)
             .build();
 
+        if (flowRepository.isEmpty()) {
+            throw NO_REPOSITORY_EXCEPTION;
+        }
+
+        FlowRepositoryInterface flowRepository = this.flowRepository.get();
         return flowRepository
             .findById(withTenant.getTenantId(), withTenant.getNamespace(), withTenant.getId())
             .map(previous -> flowRepository.update(withTenant, previous, source, taskDefaultService.injectDefaults(withTenant)))
@@ -69,7 +76,11 @@ public class FlowService {
     }
 
     public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {
-        return flowRepository.findByNamespaceWithSource(tenantId, namespace);
+        if (flowRepository.isEmpty()) {
+            throw NO_REPOSITORY_EXCEPTION;
+        }
+
+        return flowRepository.get().findByNamespaceWithSource(tenantId, namespace);
     }
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {

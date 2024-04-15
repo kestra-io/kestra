@@ -79,10 +79,11 @@ public class Extension extends AbstractExtension {
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());
         filters.put("substringAfter", new SubstringAfterFilter());
         filters.put("substringAfterLast", new SubstringAfterLastFilter());
-        filters.put("flatten",new FlattenFilter());
-        filters.put("indent",new IndentFilter());
-        filters.put("nindent",new NindentFilter());
-        filters.put("yaml",new YamlFilter());
+        filters.put("flatten", new FlattenFilter());
+        filters.put("indent", new IndentFilter());
+        filters.put("nindent", new NindentFilter());
+        filters.put("yaml", new YamlFilter());
+        filters.put("startsWith", new StartsWithFilter());
         return filters;
     }
 

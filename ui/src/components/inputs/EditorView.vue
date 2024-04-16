@@ -809,7 +809,7 @@
             ref="editorDomElement"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? {'flex-basis': leftEditorWidth, 'flex-grow': 0} : {}"
+            :style="combinedEditor ? {'flex': '0 0 ' + leftEditorWidth} : {}"
             @save="save"
             @execute="execute"
             v-model="flowYaml"

@@ -1,6 +1,8 @@
 import {createApp} from "vue"
 import VueAxios from "vue-axios";
 
+import {install as VueMonacoEditorPlugin} from "@guolao/vue-monaco-editor"
+
 import App from "./App.vue"
 import initApp from "./utils/init"
 import configureAxios from "./utils/axios"
@@ -21,6 +23,12 @@ configureAxios((instance) => {
     store.$http = app.$http;
     store.axios = app.axios;
 }, store, router);
+
+app.use(VueMonacoEditorPlugin, {
+    paths: {
+      vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.43.0/min/vs"
+    },
+  })
 
 // mount
 app.mount("#app")

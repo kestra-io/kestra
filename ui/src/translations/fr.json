@@ -491,6 +491,7 @@
     "source and doc": "Source et documentation",
     "source and blueprints": "Source et blueprints",
     "editor": "Éditeur",
+    "lighteditor": "Petit Éditeur",
     "error in editor": "Une erreur a été trouvé dans l'éditeur",
     "delete task confirm": "Êtes-vous sûr de vouloir supprimer la tâche <code>{taskId}</code> ?",
     "can not save": "Impossible de sauvegarder",

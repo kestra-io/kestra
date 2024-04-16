@@ -35,7 +35,7 @@
                             <div
                                 :style="{left: serie.start + '%', width: serie.width + '%'}"
                                 class="task-progress"
-                                @click="onTaskSelect(serie.task)"
+                                @click="onTaskSelect(serie.id)"
                             >
                                 <div class="progress">
                                     <div
@@ -58,7 +58,7 @@
                             @follow="forwardEvent('follow', $event)"
                             :target-execution="execution"
                             :target-flow="flow"
-                            :show-logs="taskTypeByTaskRunId[serie.task.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
+                            :show-logs="taskTypeByTaskRunId[serie.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                         />
                     </td>
                 </tr>
@@ -294,13 +294,13 @@
                 }
                 this.dates = dates;
             },
-            onTaskSelect(taskRun) {
-                if(this.selectedTaskRuns.includes(taskRun.id)) {
-                    this.selectedTaskRuns = this.selectedTaskRuns.filter(id => id !== taskRun.id);
+            onTaskSelect(taskRunId) {
+                if(this.selectedTaskRuns.includes(taskRunId)) {
+                    this.selectedTaskRuns = this.selectedTaskRuns.filter(id => id !== taskRunId);
                     return
                 }
 
-                this.selectedTaskRuns.push(taskRun.id);
+                this.selectedTaskRuns.push(taskRunId);
             },
             stopRealTime() {
                 this.realTime = false

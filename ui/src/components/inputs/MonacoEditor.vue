@@ -193,6 +193,15 @@
                 case "outputs":
                     autocompletions = flowAsJs?.tasks?.map(task => task.id);
                     break;
+                case "labels":
+                    autocompletions =  Object.keys(flowAsJs?.labels ?? {});
+                    break;
+                case "flow":
+                    autocompletions = ["id", "namespace", "revision"]
+                    break;
+                case "execution":
+                    autocompletions = ["id", "startDate", "originalId"]
+                    break;
                 case "vars":
                     autocompletions = Object.keys(flowAsJs?.variables ?? {});
                     break;

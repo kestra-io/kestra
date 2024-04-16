@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.runners;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -27,4 +28,6 @@ public interface TaskCommands {
     default boolean outputDirectoryEnabled() {
         return Boolean.TRUE.equals(this.getEnableOutputDirectory());
     }
+
+    Duration getTimeout();
 }

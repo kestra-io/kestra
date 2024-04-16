@@ -1,7 +1,6 @@
 package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -9,6 +8,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +179,11 @@ public class TaskRunnerTest {
         @Override
         public Boolean getEnableOutputDirectory() {
             return true;
+        }
+
+        @Override
+        public Duration getTimeout() {
+            return null;
         }
     }
 }

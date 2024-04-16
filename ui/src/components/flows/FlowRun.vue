@@ -95,7 +95,7 @@
                     :full-height="false"
                     :input="true"
                     :navbar="false"
-                    v-if="input.type === 'JSON'"
+                    v-if="input.type === 'JSON' || input.type === 'ARRAY'"
                     lang="json"
                     v-model="inputs[input.id]"
                 />

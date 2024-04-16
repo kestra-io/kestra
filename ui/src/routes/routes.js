@@ -17,7 +17,6 @@ import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
 import Editor from "../components/namespace/Editor.vue";
-import LightEditor from "../components/namespace/LightEditor.vue";
 import Stats from "override/components/admin/stats/Stats.vue";
 
 
@@ -30,7 +29,6 @@ export default [
 
     //Namespace file editor
     {name: "editor", path: "/:tenant?/editor/:namespace?", component: Editor},
-    {name: "lighteditor", path: "/:tenant?/lighteditor/:namespace?", component: LightEditor},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},

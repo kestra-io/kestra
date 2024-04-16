@@ -508,7 +508,6 @@
     "source and doc": "Source and documentation",
     "source and blueprints": "Source and blueprints",
     "editor": "Editor",
-    "lighteditor": "Light Editor",
     "error in editor": "An error have been found in the editor",
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code>?",
     "can not save": "Can not save",

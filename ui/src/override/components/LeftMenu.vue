@@ -124,14 +124,6 @@
                         },
                     },
                     {
-                        href: {name: "lighteditor"},
-                        title: this.$t("lighteditor"),
-                        icon: {
-                            element: shallowRef(FolderEditOutline),
-                            class: "menu-icon",
-                        },
-                    },
-                    {
                         href: {name: "templates/list"},
                         routes: this.routeStartWith("templates"),
                         title: this.$t("templates"),

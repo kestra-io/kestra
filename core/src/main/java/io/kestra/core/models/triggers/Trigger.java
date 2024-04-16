@@ -78,6 +78,10 @@ public class Trigger extends TriggerContext {
         );
     }
 
+    public String flowUid() {
+        return Flow.uid(this.getTenantId(), this.getNamespace(), this.getFlowId(), Optional.of(this.getFlowRevision()));
+    }
+
     /**
      * Create a new Trigger with no execution information and no evaluation lock.
      */

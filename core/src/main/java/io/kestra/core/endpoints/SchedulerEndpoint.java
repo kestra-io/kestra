@@ -26,7 +26,7 @@ public class SchedulerEndpoint {
     public SchedulerEndpointResult running() {
         Map<String, AbstractScheduler.FlowWithPollingTriggerNextDate> schedulableNextDate = scheduler.getSchedulableNextDate();
 
-        List<SchedulerEndpointSchedule> result = scheduler.getSchedulable()
+        List<SchedulerEndpointSchedule> result = scheduler.schedulerTriggers()
             .stream()
             .map(flowWithTrigger -> {
                 String uid = Trigger.uid(flowWithTrigger.getFlow(), flowWithTrigger.getAbstractTrigger());

@@ -1,5 +1,6 @@
 package io.kestra.core.serializers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,11 +12,11 @@ import org.junitpioneer.jupiter.RetryingTest;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.TimeZone;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 class JacksonMapperTest {
     Pojo pojo() {
@@ -54,6 +55,16 @@ class JacksonMapperTest {
         assertThat(s, containsString("nullable:null"));
         Pojo deserialize = mapper.readValue(s, Pojo.class);
         test(original, deserialize);
+    }
+
+    @Test
+    void toList() throws JsonProcessingException {
+        String list = "[1, 2, 3]";
+
+        List<Object> integerList = JacksonMapper.toList(list);
+
+        assertThat(integerList.size(), is(3));
+        assertThat(integerList, containsInAnyOrder(1, 2, 3));
     }
 
     void test(Pojo original, Pojo deserialize) {

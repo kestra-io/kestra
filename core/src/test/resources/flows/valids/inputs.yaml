@@ -92,6 +92,9 @@ inputs:
   required: false
 - name: secret
   type: SECRET
+- name: array
+  type: ARRAY
+  itemType: STRING
 
 tasks:
 - id: string
@@ -112,3 +115,10 @@ tasks:
 - id: secret
   type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.secret}}"
+- id: array
+  type: io.kestra.core.tasks.flows.EachSequential
+  value: "{{inputs.array}}"
+  tasks:
+    - id: log
+      type: io.kestra.core.tasks.debugs.Return
+      format: "{{taskrun.value}}"

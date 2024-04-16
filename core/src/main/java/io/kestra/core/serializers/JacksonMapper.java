@@ -30,11 +30,13 @@ import io.kestra.core.serializers.ion.IonModule;
 import org.yaml.snakeyaml.LoaderOptions;
 
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
 public final class JacksonMapper {
 
+    private static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
     private JacksonMapper() {}
 
     private static final ObjectMapper MAPPER = JacksonMapper.configure(
@@ -89,6 +91,10 @@ public final class JacksonMapper {
 
     public static Map<String, Object> toMap(String json) throws JsonProcessingException {
         return MAPPER.readValue(json, TYPE_REFERENCE);
+    }
+
+    public static List<Object> toList(String json) throws JsonProcessingException {
+        return MAPPER.readValue(json, LIST_TYPE_REFERENCE);
     }
 
     private static final TypeReference<Object> TYPE_REFERENCE_OBJECT = new TypeReference<>() {};

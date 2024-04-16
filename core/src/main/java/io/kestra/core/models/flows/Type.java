@@ -20,7 +20,8 @@ public enum Type {
     FILE(FileInput.class.getName()),
     JSON(JsonInput.class.getName()),
     URI(URIInput.class.getName()),
-    SECRET(SecretInput.class.getName());
+    SECRET(SecretInput.class.getName()),
+    ARRAY(ArrayInput.class.getName());
 
     private final String clsName;
 

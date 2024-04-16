@@ -105,7 +105,7 @@
             </el-row>
         </div>
         <div v-else-if="dailyReady">
-            <el-card class="pb-3">
+            <el-card class="pb-3 mb-4">
                 <el-row justify="center">
                     <span class="new-execution-img" />
                 </el-row>

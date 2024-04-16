@@ -76,6 +76,11 @@ export default (app, routes, stores, translations) => {
         history: createWebHistory(KESTRA_UI_PATH),
         routes
     });
+
+    router.afterEach((to) => {
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
+    })
+
     app.use(router)
 
     // Google Analytics

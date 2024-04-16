@@ -164,6 +164,24 @@
                 if (!posthog.get_property("__alias")) {
                     posthog.alias(apiConfig.id);
                 }
+
+                // close survey on page change
+                let surveyVisible = false;
+                window.addEventListener("PHSurveyShown", () => {
+                    surveyVisible = true;
+                });
+
+                window.addEventListener("PHSurveyClosed", () => {
+                    surveyVisible = false;
+                })
+
+                window.addEventListener("KestraRouterAfterEach", (event) => {
+                    console.log(event)
+                    if (surveyVisible) {
+                        window.dispatchEvent(new Event("PHSurveyClosed"))
+                        surveyVisible = false;
+                    }
+                })
             },
             statsGlobalData(config, uid) {
                 return {

@@ -355,18 +355,11 @@
     const updatePluginDocumentation = (event) => {
         const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        const pluginsDocumentation = store.getters["plugin/getPluginsDocumentation"];
         if (taskType && pluginSingleList && pluginSingleList.includes(taskType)) {
-            if (!pluginsDocumentation[taskType]) {
-                store
-                    .dispatch("plugin/load", {cls: taskType})
-                    .then(plugin => {
-                        store.commit("plugin/setPluginsDocumentation", {...pluginsDocumentation, [taskType]: plugin});
-                        store.commit("plugin/setEditorPlugin", plugin);
-                    });
-            } else if (pluginsDocumentation[taskType]) {
-                store.commit("plugin/setEditorPlugin", pluginsDocumentation[taskType]);
-            }
+            store.dispatch("plugin/load", {cls: taskType})
+                .then(plugin => {
+                    store.commit("plugin/setEditorPlugin", plugin);
+                });
         } else {
             store.commit("plugin/setEditorPlugin", undefined);
         }

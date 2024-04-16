@@ -263,16 +263,10 @@ export default {
         updatePluginDocumentation(event) {
             const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
             if (taskType && this.pluginSingleList.includes(taskType)) {
-                if (!this.pluginsDocumentation[taskType]) {
-                    this.$store
-                        .dispatch("plugin/load", {cls: taskType})
-                        .then(plugin => {
-                            this.$store.commit("plugin/setPluginsDocumentation", {...this.pluginsDocumentation, [taskType]: plugin});
-                            this.$store.commit("plugin/setEditorPlugin", plugin);
-                        });
-                } else if (this.pluginsDocumentation[taskType]) {
-                    this.$store.commit("plugin/setEditorPlugin", this.pluginsDocumentation[taskType]);
-                }
+                this.$store.dispatch("plugin/load", {cls: taskType})
+                    .then(plugin => {
+                        this.$store.commit("plugin/setEditorPlugin", plugin);
+                    });
             } else {
                 this.$store.commit("plugin/setEditorPlugin", undefined);
             }

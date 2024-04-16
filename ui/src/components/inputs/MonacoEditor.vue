@@ -16,6 +16,8 @@
     import {configureMonacoYaml} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas"
     import Utils from "../../utils/utils";
+    import YamlUtils from "../../utils/yamlUtils";
+    import {uniqBy} from "lodash";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -79,7 +81,7 @@
         watch: {
             options: {
                 deep: true,
-                handler: function(newValue, oldValue) {
+                handler: function (newValue, oldValue) {
                     if (this.editor && this.needReload(newValue, oldValue)) {
                         this.reload();
                     } else {
@@ -87,7 +89,7 @@
                     }
                 }
             },
-            value: function(newValue) {
+            value: function (newValue) {
                 if (this.editor) {
                     let editor = this.getModifiedEditor();
 
@@ -96,7 +98,7 @@
                     }
                 }
             },
-            original: function(newValue) {
+            original: function (newValue) {
                 if (this.editor && this.diffEditor) {
                     let editor = this.getOriginalEditor();
 
@@ -105,19 +107,19 @@
                     }
                 }
             },
-            language: function(newVal) {
+            language: function (newVal) {
                 if (this.editor) {
                     let editor = this.getModifiedEditor();
                     this.monaco.editor.setModelLanguage(editor.getModel(), newVal);
                 }
             },
-            theme: function(newVal) {
+            theme: function (newVal) {
                 if (this.editor) {
                     this.monaco.editor.setTheme(newVal);
                 }
             }
         },
-        mounted: function() {
+        mounted: function () {
             let _this = this;
 
             this.monaco = monaco;
@@ -133,12 +135,123 @@
                 format: true,
                 schemas: yamlSchemas(this.$store)
             });
+
+            this.autocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
+                triggerCharacters: ["."],
+                async provideCompletionItems(model, position) {
+                    const lineContent = model.getValueInRange({
+                        startLineNumber: position.lineNumber,
+                        startColumn: 1,
+                        endLineNumber: position.lineNumber,
+                        endColumn: model.getLineMaxColumn(position.lineNumber)
+                    });
+                    const tillCursorContent = lineContent.substring(0, position.column - 1);
+                    const match = tillCursorContent.match(/( *([^{ ]*)\.)([^.} ]*)$/);
+                    if (!match) {
+                        return {suggestions: []};
+                    }
+
+                    let nextDotIndex;
+                    // We're at the end of the line
+                    if (lineContent.length === tillCursorContent.length) {
+                        nextDotIndex = tillCursorContent.length;
+                    } else {
+                        const remainingLineText = lineContent.substring(tillCursorContent.length);
+                        const nextDotMatcher = remainingLineText.match(/[ .}]/);
+                        if (!nextDotMatcher) {
+                            nextDotIndex = lineContent.length - 1;
+                        } else {
+                            nextDotIndex = tillCursorContent.length + nextDotMatcher.index;
+                        }
+                    }
+
+                    const indexOfFieldToComplete = match.index + match[1].length;
+                    return {
+                        suggestions: await _this.autocompletion(
+                            model.getValue(),
+                            lineContent,
+                            match[2],
+                            match[3],
+                            position.lineNumber,
+                            [indexOfFieldToComplete, nextDotIndex]
+                        )
+                    };
+                }
+            })
         },
-        beforeUnmount: function() {
+        beforeUnmount: function () {
             this.destroy();
         },
         methods: {
-            initMonaco: function(monaco) {
+            async autocompletion(source, lineContent, field, rest, lineNumber, fieldToCompleteIndexes) {
+                const flowAsJs = YamlUtils.parse(source);
+                let autocompletions;
+                switch (field) {
+                case "inputs":
+                    autocompletions = flowAsJs?.inputs?.map(input => input.id);
+                    break;
+                case "outputs":
+                    autocompletions = flowAsJs?.tasks?.map(task => task.id);
+                    break;
+                case "vars":
+                    autocompletions = Object.keys(flowAsJs?.variables ?? {});
+                    break;
+                case "trigger":
+                    autocompletions = await this.triggerVars(flowAsJs);
+                    break;
+                default: {
+                    let match = field.match(/^outputs\.([^.]+)$/);
+                    if (match) {
+                        autocompletions = await this.outputsFor(match[1], flowAsJs);
+                    }
+                }
+                }
+
+                return autocompletions?.filter(autocomplete => rest ? autocomplete.startsWith(rest) : true)
+                    ?.map(value => {
+                        let endColumn = fieldToCompleteIndexes[1] + 1;
+                        const endsWithDot = value.endsWith(".");
+                        if (endsWithDot && lineContent.at(endColumn - 1) === ".") {
+                            endColumn++;
+                        }
+                        return {
+                            kind: monaco.languages.CompletionItemKind.Field,
+                            label: endsWithDot ? value.substring(0, value.length - 1) : value,
+                            insertText: value,
+                            range: {
+                                startLineNumber: lineNumber,
+                                endLineNumber: lineNumber,
+                                startColumn: fieldToCompleteIndexes[0] + 1,
+                                endColumn: endColumn
+                            }
+                        }
+                    }) ?? [];
+            },
+            async outputsFor(taskId, flowAsJs) {
+                const task = flowAsJs?.tasks?.find(task => task.id === taskId);
+                if (!task?.type) {
+                    return [];
+                }
+
+                const pluginDoc = await this.$store.dispatch("plugin/load", {cls: task.type, commit: false});
+
+                return Object.entries(pluginDoc?.schema?.outputs?.properties ?? {})
+                    .map(([propName, propInfo]) => propName + (propInfo.type === "object" ? "." : ""));
+            },
+            async triggerVars(flowAsJs) {
+                const fetchTriggerVarsByType = await Promise.all(
+                    uniqBy(flowAsJs?.triggers?.map(trigger => trigger.type))
+                        .map(async triggerType => {
+                            const triggerDoc = await this.$store.dispatch("plugin/load", {
+                                cls: triggerType,
+                                commit: false
+                            });
+                            return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {});
+                        })
+                );
+                return uniqBy(fetchTriggerVarsByType.flat());
+            },
+            initMonaco: function (monaco) {
                 let self = this;
 
                 this.$emit("editorWillMount", this.monaco);
@@ -170,7 +283,7 @@
                     }
 
                     monaco.editor.addKeybindingRule({
-                        keybinding:  monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
                         command: "editor.action.triggerSuggest"
                     })
 
@@ -188,26 +301,27 @@
                 });
                 this.$emit("editorDidMount", this.editor);
             },
-            getEditor: function() {
+            getEditor: function () {
                 return this.editor;
             },
-            getModifiedEditor: function() {
+            getModifiedEditor: function () {
                 return this.diffEditor ? this.editor.getModifiedEditor() : this.editor;
             },
-            getOriginalEditor: function() {
+            getOriginalEditor: function () {
                 return this.diffEditor ? this.editor.getOriginalEditor() : this.editor;
             },
-            focus: function() {
+            focus: function () {
                 this.editor.focus();
             },
-            destroy: function() {
+            destroy: function () {
                 this.monacoYaml?.dispose();
+                this.autocompletionProvider?.dispose();
                 this.editor?.dispose();
             },
-            needReload: function(newValue, oldValue) {
+            needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;
             },
-            reload: function() {
+            reload: function () {
                 this.destroy();
                 this.initMonaco(this.monaco);
             },

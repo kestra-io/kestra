@@ -12,7 +12,7 @@
                     <markdown :source="scope.row.value" />
                 </template>
                 <template v-else>
-                    <var-value :value="scope.row.value" />
+                    <var-value :value="scope.row.value" :execution="execution" />
                 </template>
             </template>
         </el-table-column>
@@ -33,10 +33,16 @@
             data: {
                 type: Object,
                 required: true
+            },
+            execution: {
+                type: Object,
+                required: false,
+                default: undefined
             }
         },
         computed: {
             variables() {
+                console.log(Utils.executionVars(this.data))
                 return Utils.executionVars(this.data);
             },
         },

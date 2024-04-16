@@ -7,8 +7,8 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
-import io.micronaut.core.annotation.NonNull;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
@@ -59,7 +59,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
             String[].class
         }
     )
-    @NonNull
+    @NotNull
     @PluginProperty(dynamic = true)
     private Object message;
 

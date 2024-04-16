@@ -79,7 +79,7 @@
                 <h5>{{ $t("revision") + `: ` + revision }}</h5>
             </template>
 
-            <editor v-model="revisionYaml" lang="yaml" />
+            <editor v-model="revisionYaml" lang="yaml" :full-height="false" :input="true" :navbar="false" :read-only="true" />
         </drawer>
     </div>
     <div v-else>

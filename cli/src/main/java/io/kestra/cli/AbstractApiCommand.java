@@ -3,10 +3,15 @@ package io.kestra.cli;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.body.ContextlessMessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.client.DefaultHttpClientConfiguration;
 import io.micronaut.http.client.HttpClientConfiguration;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import io.micronaut.http.netty.body.NettyJsonHandler;
+import io.micronaut.json.JsonMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import picocli.CommandLine;
@@ -39,7 +44,12 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     private HttpClientConfiguration httpClientConfiguration;
 
     protected DefaultHttpClient client() throws URISyntaxException {
-        return new DefaultHttpClient(server.toURI(), httpClientConfiguration != null ? httpClientConfiguration : new DefaultHttpClientConfiguration());
+        DefaultHttpClient defaultHttpClient = new DefaultHttpClient(server.toURI(), httpClientConfiguration != null ? httpClientConfiguration : new DefaultHttpClientConfiguration());
+        MessageBodyHandlerRegistry defaultHandlerRegistry = defaultHttpClient.getHandlerRegistry();
+        if (defaultHandlerRegistry instanceof ContextlessMessageBodyHandlerRegistry modifiableRegistry) {
+            modifiableRegistry.add(MediaType.TEXT_JSON_TYPE, new NettyJsonHandler<>(JsonMapper.createDefault()));
+        }
+        return defaultHttpClient;
     }
 
     protected <T> HttpRequest<T> requestOptions(MutableHttpRequest<T> request) {

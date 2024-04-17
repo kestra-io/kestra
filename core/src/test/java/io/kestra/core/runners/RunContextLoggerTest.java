@@ -5,8 +5,6 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.tasks.log.Log;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -40,7 +38,6 @@ class RunContextLoggerTest {
 
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
-        Log log = Log.builder().id(IdUtils.create()).type(Log.class.getName()).build();
 
         RunContextLogger runContextLogger = new RunContextLogger(
             logQueue,
@@ -86,14 +83,13 @@ class RunContextLoggerTest {
     }
 
     @Test
-    void secrets() throws InterruptedException {
+    void secrets() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         List<LogEntry> matchingLog;
         logQueue.receive(either -> logs.add(either.getLeft()));
 
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
-        Log log = Log.builder().id(IdUtils.create()).type(Log.class.getName()).build();
 
         RunContextLogger runContextLogger = new RunContextLogger(
             logQueue,

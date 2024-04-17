@@ -66,6 +66,10 @@ import jakarta.validation.constraints.NotNull;
     )
 )
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
+
+    private static final String TRIGGER_VAR = "trigger";
+    private static final String OUTPUTS_VAR = "outputs";
+
     @Nullable
     @Schema(
         title = "Fill input of this flow based on output of current flow, allowing to pass data or file to the triggered flow.",
@@ -100,7 +104,16 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             ));
 
         try {
-            builder.inputs(runContext.render(this.inputs == null ? new HashMap<>() : this.inputs));
+            if (this.inputs != null) {
+                Map<String, Object> outputs = current.getOutputs();
+                if (outputs != null && !outputs.isEmpty()) {
+                    builder.inputs(runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs))));
+                } else {
+                    builder.inputs(runContext.render(this.inputs));
+                }
+            } else {
+                builder.inputs(new HashMap<>());
+            }
             return Optional.of(builder.build());
         } catch (Exception e) {
             logger.warn(
@@ -110,7 +123,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this.getId(),
                 e
             );
-
             return Optional.empty();
         }
     }

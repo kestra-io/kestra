@@ -105,10 +105,17 @@ abstract public class TestsUtils {
     }
 
     public static Execution mockExecution(Flow flow, Map<String, Object> inputs) {
-        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs);
+        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, null);
     }
 
-    private static Execution mockExecution(StackTraceElement caller, Flow flow, Map<String, Object> inputs) {
+    public static Execution mockExecution(Flow flow, Map<String, Object> inputs, Map<String, Object> outputs) {
+        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, outputs);
+    }
+
+    private static Execution mockExecution(StackTraceElement caller,
+                                           Flow flow,
+                                           Map<String, Object> inputs,
+                                           Map<String, Object> outputs) {
         return Execution.builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -116,6 +123,7 @@ abstract public class TestsUtils {
             .flowId(flow.getId())
             .inputs(inputs)
             .state(new State())
+            .outputs(outputs)
             .build()
             .withState(State.Type.RUNNING);
     }
@@ -161,7 +169,7 @@ abstract public class TestsUtils {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
         Flow flow = TestsUtils.mockFlow(caller);
-        Execution execution = TestsUtils.mockExecution(caller, flow, inputs);
+        Execution execution = TestsUtils.mockExecution(caller, flow, inputs, null);
         TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
 
         return runContextFactory.of(flow, task, execution, taskRun);

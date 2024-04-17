@@ -98,11 +98,45 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @Override
+    public Optional<Flow> findByIdWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Select<Record1<String>> from;
+
+                if (revision.isPresent()) {
+                    from = context
+                        .select(field("value", String.class))
+                        .from(jdbcRepository.getTable())
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(field("namespace").eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(revision.get()));
+                } else {
+                    from = context
+                        .select(field("value", String.class))
+                        .from(fromLastRevision(true))
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(field("namespace", String.class).eq(namespace))
+                        .and(field("id", String.class).eq(id));
+                }
+
+
+                return this.jdbcRepository.fetchOne(from);
+            });
+    }
+
     protected Table<Record> fromLastRevision(boolean asterisk) {
         return JdbcFlowRepositoryService.lastRevision(jdbcRepository, asterisk);
     }
 
     protected Condition revisionDefaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    protected Condition noAclDefaultFilter(String tenantId) {
         return buildTenantCondition(tenantId);
     }
 

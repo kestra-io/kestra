@@ -963,7 +963,7 @@ public class ExecutionController {
             throw new IllegalStateException("Execution is not paused, can't resume it");
         }
 
-        var flow = flowRepository.findByExecution(execution);
+        var flow = flowRepository.findByExecutionWithoutAcl(execution);
 
         Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING, flow);
         this.executionQueue.emit(resumeExecution);
@@ -1015,7 +1015,7 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
-            var flow = flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) != null ? flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) : flowRepository.findByExecution(execution);
+            var flow = flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) != null ? flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) : flowRepository.findByExecutionWithoutAcl(execution);
             flows.put(execution.getFlowId() + "_" + execution.getFlowRevision(), flow);
             Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING, flow);
             this.executionQueue.emit(resumeExecution);
@@ -1212,7 +1212,7 @@ public class ExecutionController {
 
                 Flow flow;
                 try {
-                    flow = flowRepository.findByExecution(execution);
+                    flow = flowRepository.findByExecutionWithoutAcl(execution);
                 } catch (IllegalStateException e)  {
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the flow for the execution " + executionId));
                     return;

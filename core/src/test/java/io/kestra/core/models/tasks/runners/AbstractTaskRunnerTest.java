@@ -204,6 +204,7 @@ public abstract class AbstractTaskRunnerTest {
         Mockito.when(commands.getAdditionalVars()).thenReturn(Collections.emptyMap());
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(true);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(true);
+        Mockito.when(commands.getTimeout()).thenReturn(null);
 
         return commands;
     }

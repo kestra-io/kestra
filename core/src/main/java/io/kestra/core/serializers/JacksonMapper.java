@@ -40,6 +40,8 @@ public final class JacksonMapper {
 
     private static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
 
+    private static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {};
+
     private JacksonMapper() {}
 
     private static final ObjectMapper MAPPER = JacksonMapper.configure(
@@ -97,11 +99,8 @@ public final class JacksonMapper {
     public static List<Object> toList(String json) throws JsonProcessingException {
         return MAPPER.readValue(json, LIST_TYPE_REFERENCE);
     }
-
-    private static final TypeReference<Object> TYPE_REFERENCE_OBJECT = new TypeReference<>() {};
-
     public static Object toObject(String json) throws JsonProcessingException {
-        return MAPPER.readValue(json, TYPE_REFERENCE_OBJECT);
+        return MAPPER.readValue(json, OBJECT_TYPE_REFERENCE);
     }
 
     public static <T> T cast(Object object, Class<T> cls) throws JsonProcessingException {

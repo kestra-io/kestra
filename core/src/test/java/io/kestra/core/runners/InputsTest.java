@@ -160,7 +160,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(10));
+        assertThat(execution.getTaskRunList(), hasSize(12));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(
             (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
@@ -347,7 +347,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, map)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getTaskRunList(), hasSize(12));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         assertThat(execution.getInputs().get("json"), instanceOf(Map.class));

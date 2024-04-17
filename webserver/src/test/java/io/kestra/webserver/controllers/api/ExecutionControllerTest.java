@@ -37,6 +37,7 @@ import io.micronaut.reactor.http.client.ReactorSseClient;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -179,7 +180,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Execution result = triggerInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(result.getTaskRunList().size(), is(10));
+        assertThat(result.getTaskRunList().size(), is(12));
     }
 
     @Test
@@ -538,7 +539,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void downloadFile() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList(), hasSize(10));
+        assertThat(execution.getTaskRunList(), hasSize(12));
 
         String path = (String) execution.getInputs().get("file");
 
@@ -573,7 +574,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void filePreview() throws TimeoutException {
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList(), hasSize(10));
+        assertThat(defaultExecution.getTaskRunList(), hasSize(12));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -599,7 +600,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList(), hasSize(10));
+        assertThat(latin1Execution.getTaskRunList(), hasSize(12));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

@@ -532,6 +532,10 @@ public class RunContext {
         this.initBean(applicationContext);
         this.initLogger(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
 
+        Map<String, Object> clone = new HashMap<>(this.variables);
+        clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
+        this.variables = ImmutableMap.copyOf(clone);
+
         // Mutability hack to update the triggerExecutionId for each evaluation on the worker
         return forScheduler(workerTrigger.getTriggerContext(), workerTrigger.getTrigger());
     }

@@ -197,6 +197,7 @@ subprojects {
         environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
         environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
         environment 'SECRET_NON_B64_SECRET', "some secret value"
+        environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
         environment 'KESTRA_TEST1', "true"
         environment 'KESTRA_TEST2', "Pass by env"
     }

@@ -35,6 +35,10 @@ public class GraphService {
         return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
     }
 
+    public FlowGraph executionGraph(Flow flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException {
+        return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
+    }
+
     public GraphCluster of(Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid) throws IllegalVariableEvaluationException {
         return this.of(flow, expandedSubflows, flowByUid, null);
     }
@@ -75,7 +79,7 @@ public class GraphService {
                 SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
                 Flow subflow = flowByUid.computeIfAbsent(
                     subflowGraphTask.getExecutableTask().subflowId().flowUid(),
-                    uid -> flowRepository.findById(
+                    uid -> flowRepository.findByIdWithoutAcl(
                         tenantId,
                         subflowGraphTask.getExecutableTask().subflowId().namespace(),
                         subflowGraphTask.getExecutableTask().subflowId().flowId(),

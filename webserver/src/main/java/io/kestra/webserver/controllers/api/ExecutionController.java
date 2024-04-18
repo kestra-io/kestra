@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.FlowGraph;
@@ -213,7 +214,7 @@ public class ExecutionController {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
             .map(throwFunction(execution -> {
-                Optional<Flow> flow = flowRepository.findById(
+                Optional<Flow> flow = flowRepository.findByIdWithoutAcl(
                     execution.getTenantId(),
                     execution.getNamespace(),
                     execution.getFlowId(),
@@ -221,7 +222,9 @@ public class ExecutionController {
                 );
 
                 return flow
-                    .map(throwFunction(value -> graphService.flowGraph(value, null,  execution)))
+                    .map(throwFunction(value ->
+                        graphService.executionGraph(value, null,  execution).forExecution()
+                    ))
                     .orElse(null);
             }))
             .orElse(null);
@@ -1422,5 +1425,28 @@ public class ExecutionController {
             .block();
 
         return setLabelsByIds(new SetLabelsByIdsRequest(ids, setLabels));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/flow")
+    @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
+    public FlowForExecution getFlowForExecutionById(
+        @Parameter(description = "The execution that you want flow information's") String executionId
+    ) {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow();
+
+        return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/flow/{namespace}/{flowId}")
+    @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
+    public FlowForExecution getFlowForExecution(
+        @Parameter(description = "The namespace of the flow") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId,
+        @Parameter(description = "The flow revision") @Nullable Integer revision
+    ) {
+
+        return FlowForExecution.of(flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow());
     }
 }

@@ -14,7 +14,9 @@ export default {
         metrics: [],
         metricsTotal: 0,
         filePreview: undefined,
-        subflowsExecutions: {}
+        subflowsExecutions: {},
+        flow: undefined,
+        flowGraph: undefined
     },
     actions: {
         loadExecutions({commit}, options) {
@@ -214,6 +216,24 @@ export default {
         },
         bulkSetLabels({_commit}, options) {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
+        },
+        loadFlowForExecution({commit}, options) {
+            return this.$http.get(`${apiUrl(this)}/executions/flow/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
+                .then(response => {
+                    commit("setFlow", response.data)
+                });
+        },
+        loadFlowForExecutionByExecutionId({commit}, options) {
+            return this.$http.get(`${apiUrl(this)}/executions/${options.id}/flow`)
+                .then(response => {
+                    commit("setFlow", response.data)
+                });
+        },
+        loadGraph({commit}, options) {
+            return this.$http.get(`${apiUrl(this)}/executions/${options.id}/graph`)
+                .then(response => {
+                    commit("setFlowGraph", response.data)
+                })
         }
     },
     mutations: {
@@ -259,6 +279,12 @@ export default {
         },
         setFilePreview(state, filePreview) {
             state.filePreview = filePreview
+        },
+        setFlow(state, flow) {
+            state.flow = flow
+        },
+        setFlowGraph(state, flowGraph) {
+            state.flowGraph = flowGraph
         }
     },
     getters: {

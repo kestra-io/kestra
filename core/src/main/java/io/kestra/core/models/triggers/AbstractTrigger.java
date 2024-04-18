@@ -24,7 +24,6 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.event.Level;
 
 import java.util.List;
-import java.util.Map;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
@@ -32,7 +31,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Introspected
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-abstract public class AbstractTrigger {
+abstract public class AbstractTrigger implements AbstractTriggerInterface {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")

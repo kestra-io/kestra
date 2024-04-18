@@ -120,8 +120,7 @@
             this.paint();
         },
         computed: {
-            ...mapState("execution", ["execution"]),
-            ...mapState("flow", ["flow"]),
+            ...mapState("execution", ["flow", "execution"]),
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },

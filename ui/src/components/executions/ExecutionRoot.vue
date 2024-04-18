@@ -74,23 +74,17 @@
                 throttledExecutionUpdate: throttle(function (executionEvent) {
                     let execution = JSON.parse(executionEvent.data);
 
-                    if (!this.flow ||
+                    if ((!this.flow ||
                         execution.flowId !== this.flow.id ||
                         execution.namespace !== this.flow.namespace ||
-                        execution.flowRevision !== this.flow.revision
+                        execution.flowRevision !== this.flow.revision)
                     ) {
                         this.$store.dispatch(
-                            "flow/loadFlow",
+                            "execution/loadFlowForExecutionByExecutionId",
                             {
-                                namespace: execution.namespace,
-                                id: execution.flowId,
-                                revision: execution.flowRevision
+                                id: execution.id,
                             }
                         );
-                        this.$store.dispatch("flow/loadRevisions", {
-                            namespace: execution.namespace,
-                            id: execution.flowId
-                        })
                     }
 
                     this.$store.commit("execution/setExecution", execution);
@@ -169,7 +163,7 @@
                     {
                         name: "topology",
                         component: Topology,
-                        title: title("topology"),
+                        title: title("topology")
                     },
                     {
                         name: "outputs",
@@ -218,10 +212,13 @@
                         });
                 }
             },
+            canReadFlow() {
+                return this.user.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
+            }
         },
         computed: {
-            ...mapState("flow", ["flow", "revisions"]),
-            ...mapState("execution", ["execution"]),
+            // ...mapState("flow", ["flow", "revisions"]),
+            ...mapState("execution", ["execution", "flow"]),
             ...mapState("auth", ["user"]),
             finalApiUrl() {
                 return apiUrl(this.$store);

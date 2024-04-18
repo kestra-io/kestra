@@ -73,16 +73,17 @@
                 return this.disabled || this.flow?.deleted;
             },
             loadDefinition() {
-                this.$store.dispatch("flow/loadFlow", {
-                    id: this.flowId,
-                    namespace: this.namespace,
-                    allowDeleted: true
+                this.$store.dispatch("execution/loadFlowForExecution", {
+                    flowId: this.flowId,
+                    namespace: this.namespace
                 });
             }
         },
         computed: {
-            ...mapState("flow", ["flow", "executeFlow"]),
+            ...mapState("flow", ["executeFlow"]),
             ...mapState("core", ["guidedProperties"]),
+            ...mapState("execution", ["flow"]),
+            ...mapState("auth", ["user"])
         },
         watch: {
             guidedProperties: {

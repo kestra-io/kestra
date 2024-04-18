@@ -36,7 +36,9 @@ import java.util.Map;
 
         To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
 
-        Note that when the Kestra Worker running this task is terminated, the process will be interrupted and re-created at worker restart."""
+        Note that:
+        - This task runner is Operating System agnostic. You can use it also on Windows without any additional configuration.
+        - When the Kestra Worker running this task is terminated, the process will be interrupted and re-created at worker restart."""
 )
 @Plugin(
     examples = {

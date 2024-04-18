@@ -28,7 +28,7 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 @NoArgsConstructor
 @Schema(
     title = "Condition based on the outputs of an execution.",
-    description = "The condition returns `false` if the execution has no output. If the result is an empty string `""`, a space `" "`, or `false`, the condition will also be considered as `false`."
+    description = "The condition returns `false` if the execution has no output. If the result is an empty string, a space, or `false`, the condition will also be considered as `false`."
 )
 @Plugin(
     examples = {

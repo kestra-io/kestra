@@ -23,10 +23,9 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Debugging task that returns a rendered value.",
-    description = "Deprecated task, please use io.kestra.core.tasks.outputs.OutputValues\n" +
-        "This task is mostly useful for debugging purpose.\n\n" +
-        "It allows you to see inputs or output variables or to debug some templated functions."
+    title = "Return a value for debugging purposes.",
+    description = "This task is mostly useful for troubleshooting.\n\n" +
+        "It allows you to return some templated functions, inputs or outputs."
 )
 @Plugin(
     examples = {
@@ -39,7 +38,6 @@ import java.util.Optional;
         @Metric(name = "duration", type = Timer.TYPE)
     }
 )
-@Deprecated
 public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(
         title = "The templated string to render."

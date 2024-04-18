@@ -18,17 +18,34 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Task that allows output of multiples values.",
-    description = "This task is mostly useful for debugging purpose.\n\n" +
-        "It allows you to see inputs or output variables or to debug some templated functions."
+    title = "Output one or more values.",
+    description = """
+    You can use this task to return some outputs and pass them to downstream tasks. 
+    It's helpful for parsing and returning values from a task. You can then access these outputs in your downstream tasks 
+    using the expression `{{ outputs.mytask_id.values.my_output_name }}` and you can see them in the Outputs tab.
+    """
 )
 @Plugin(
     examples = {
         @Example(
+            full = true,
             code = """
-                values:
-                    taskInfo: \"{{ task.id }} > {{ taskrun.startDate }}\"
-                """
+id: outputs_flow
+namespace: myteam
+
+tasks:
+  - id: output_values_task
+    type: io.kestra.core.tasks.outputs.OutputValues
+    values:
+      taskrun_data: "{{ task.id }} > {{ taskrun.startDate }}"
+      execution_data: "{{ flow.id }} > {{ execution.startDate }}"
+
+  - id: log_values
+    type: io.kestra.core.tasks.log.Log
+    message: |
+      Got the following outputs from the previous task:
+      {{ outputs.output_values.values.taskrun_data }}
+      {{ outputs.output_values.values.execution_data }}"""
         )
     }
 )

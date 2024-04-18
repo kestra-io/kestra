@@ -99,16 +99,34 @@ public class VariableRenderer {
             Writer writer = new JsonWriter(new StringWriter());
             compiledTemplate.evaluate(writer, variables);
             result = writer.toString();
-        } catch (IOException e) {
-            throw new IllegalVariableEvaluationException(e);
-        } catch (PebbleException e) {
-            throw properPebbleException(e);
+        } catch (IOException | PebbleException e) {
+            String alternativeRender = this.alternativeRender(e, inline, variables);
+            if (alternativeRender == null) {
+                if (e instanceof PebbleException) {
+                    throw properPebbleException((PebbleException) e);
+                }
+                throw new IllegalVariableEvaluationException(e);
+            } else {
+                result = alternativeRender;
+            }
         }
 
         // post-process raw tags
         result = putBackRawTags(replacers, result);
 
         return result;
+    }
+
+    /**
+     * This method can be used in fallback for rendering an input string.
+     *
+     * @param e         The exception that was throw by the default variable renderer.
+     * @param inline    The expression to be rendered.
+     * @param variables The context variables.
+     * @return          The rendered string.
+     */
+    protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return null;
     }
 
     private static String putBackRawTags(Map<String, String> replacers, String result) {

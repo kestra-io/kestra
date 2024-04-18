@@ -34,7 +34,7 @@ id: outputs_flow
 namespace: myteam
 
 tasks:
-  - id: output_values_task
+  - id: output_values
     type: io.kestra.core.tasks.outputs.OutputValues
     values:
       taskrun_data: "{{ task.id }} > {{ taskrun.startDate }}"

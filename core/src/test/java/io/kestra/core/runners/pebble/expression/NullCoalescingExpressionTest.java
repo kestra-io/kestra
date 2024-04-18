@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
 
+import java.util.Map;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,5 +64,17 @@ class NullCoalescingExpressionTest {
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ missing ?? missing2 }}", vars);
         });
+    }
+
+
+    @Test
+    void emptyObject() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "block", Map.of()
+        );
+
+        String render = variableRenderer.render("{{ block ?? 'UNDEFINED' }}", vars);
+
+        assertThat(render, is("{}"));
     }
 }

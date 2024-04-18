@@ -73,7 +73,7 @@ jackson:
   serialization:
     writeDatesAsTimestamps: false
     writeDurationsAsTimestamps: false
-  serialization-inclusion: non_default
+  serialization-inclusion: non_null
   deserialization:
     FAIL_ON_UNKNOWN_PROPERTIES: false
 

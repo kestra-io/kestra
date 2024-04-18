@@ -69,28 +69,28 @@ class ObjectMapperFactoryTest {
 
         String s = objectMapper.writeValueAsString(b);
 
-        assertThat(s, not(containsString("\"intNull\":0")));
-        assertThat(s, not(containsString("\"intDefault\":")));
+        assertThat(s, containsString("\"intNull\":0"));
+        assertThat(s, containsString("\"intDefault\":0"));
         assertThat(s, containsString("\"intChange\":1"));
 
         assertThat(s, not(containsString("\"integerNull\":")));
-        assertThat(s, not(containsString("\"integerDefault\":")));
+        assertThat(s, containsString("\"integerDefault\":0"));
         assertThat(s, containsString("\"integerChange\":1"));
 
-        assertThat(s, not(containsString("\"boolNull\":")));
-        assertThat(s, not(containsString("\"boolDefaultTrue\":")));
+        assertThat(s, containsString("\"boolNull\":false"));
+        assertThat(s, containsString("\"boolDefaultTrue\":true"));
         assertThat(s, containsString("\"boolChangeTrue\":false"));
-        assertThat(s, not(containsString("\"boolDefaultFalse\":")));
+        assertThat(s, containsString("\"boolDefaultFalse\":false"));
         assertThat(s, containsString("\"boolChangeTrue\":false"));
 
         assertThat(s, not(containsString("\"booleanNull\":")));
-        assertThat(s, not(containsString("\"booleanDefaultTrue\":")));
+        assertThat(s, containsString("\"booleanDefaultTrue\":true"));
         assertThat(s, containsString("\"booleanChangeTrue\":false"));
-        assertThat(s, not(containsString("\"booleanDefaultFalse\":")));
+        assertThat(s, containsString("\"booleanDefaultFalse\":false"));
         assertThat(s, containsString("\"booleanChangeTrue\":false"));
 
         assertThat(s, not(containsString("\"stringNull\":")));
-        assertThat(s, not(containsString("\"stringDefault\":")));
+        assertThat(s, containsString("\"stringDefault\":\"bla\""));
         assertThat(s, containsString("\"stringChange\":\"foo\""));
 
         assertThat(s, containsString("\"duration\":\"PT5M\""));

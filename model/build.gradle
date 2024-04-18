@@ -8,5 +8,4 @@ dependencies {
     api 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
     api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     api 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
-
 }

@@ -68,7 +68,39 @@ type: io.kestra.core.tasks.log.Log
 message: "replaced"
 `
 
+const extractMapsSample = `
+firstMap:
+  populatedField:
+  presentField:
+  extraField: "firstMap"
+secondMap:
+  populatedField: "populated"
+  presentField:
+  extraField: "secondMap"
+thirdMap:
+  populatedField: "populated"
+  extraField: "thirdMap"
+`
+
 describe("YamlUtils", () => {
+    it("extractMaps with field conditions", () => {
+        const extractMaps = YamlUtils.extractMaps(extractMapsSample, {
+            populatedField: {
+                populated: true
+            },
+            presentField: {
+                present: true
+            }
+        });
+
+        expect(extractMaps.length).toBe(1);
+        const map = extractMaps[0].map;
+        expect(map.populatedField).toBe("populated");
+        expect(map.presentField).toBe(undefined);
+        expect(map.extraField).toBe("secondMap");
+        expect(extractMaps[0].range).toStrictEqual([83,153,153]);
+    })
+
     it("extractTask from a flat flow", () => {
         let doc = YamlUtils.extractTask(flat, "1-1", "tasks");
 

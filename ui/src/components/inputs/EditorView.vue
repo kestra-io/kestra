@@ -414,7 +414,7 @@
 
     const onEdit = (event) => {
         flowYaml.value = event;
-        if (!props.isCreating && (routeParams.id !== flowParsed.value.id || routeParams.namespace !== flowParsed.value.namespace)) {
+        if (flowParsed.value && !props.isCreating && (routeParams.id !== flowParsed.value.id || routeParams.namespace !== flowParsed.value.namespace)) {
             store.dispatch("core/showMessage", {
                 variant: "error",
                 title: t("readonly property"),

@@ -196,6 +196,38 @@ export default class YamlUtils {
         return maps;
     }
 
+    static extractMaps(source, fieldConditions) {
+        const yamlDoc = yaml.parseDocument(source);
+        const maps = [];
+        yaml.visit(yamlDoc, {
+            Map(_, yamlMap) {
+                if (yamlMap.items) {
+                    const map = yamlMap.toJS(yamlDoc);
+                    for (let [fieldName, condition] of Object.entries(fieldConditions)) {
+                        if (condition.present) {
+                            if (map[fieldName] === undefined) {
+                                return;
+                            }
+
+                            if (map[fieldName] === null) {
+                                map[fieldName] = undefined;
+                            }
+                        }
+                        if (condition.populated) {
+                            if (map[fieldName] === undefined || map[fieldName] === null || map[fieldName] === "") {
+                                return;
+                            }
+                        }
+                    }
+
+                    maps.push({map, range: yamlMap.range});
+                }
+            }
+        });
+
+        return maps;
+    }
+
     static extractAllTypes(source) {
         return this.extractFieldFromMaps(source, "type", (yamlDoc) => yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks", "triggers", "errors"].includes(e.key.value)))
     }

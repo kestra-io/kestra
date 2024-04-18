@@ -60,7 +60,7 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}?source=true`,
+            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}${options.source === undefined ? "?source=true" : ""}`,
                 {
                     params: options,
                     validateStatus: (status) => {

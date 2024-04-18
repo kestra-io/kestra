@@ -44,6 +44,8 @@ import TaskObject from "../components/flows/tasks/TaskObject.vue";
 import TaskString from "../components/flows/tasks/TaskString.vue";
 import TaskTask from "../components/flows/tasks/TaskTask.vue";
 import TaskAnyOf from "../components/flows/tasks/TaskAnyOf.vue";
+import TaskNamespace from "../components/flows/tasks/TaskNamespace.vue";
+import TaskFlowId from "../components/flows/tasks/TaskFlowId.vue";
 
 export default (app, routes, stores, translations) => {
     // charts
@@ -142,6 +144,8 @@ export default (app, routes, stores, translations) => {
     app.component("TaskString", TaskString)
     app.component("TaskTask", TaskTask)
     app.component("TaskAnyOf", TaskAnyOf)
+    app.component("TaskNamespace", TaskNamespace)
+    app.component("TaskFlowId", TaskFlowId)
 
     return {store, router};
 }

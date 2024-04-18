@@ -18,6 +18,7 @@
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
     import {uniqBy} from "lodash";
+    import {mapState} from "vuex";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -44,6 +45,9 @@
     });
 
     export default defineComponent({
+        computed: {
+            ...mapState("namespace", ["datatypeNamespaces"])
+        },
         props: {
             original: {
                 type: String,
@@ -136,15 +140,85 @@
                 schemas: yamlSchemas(this.$store)
             });
 
-            this.autocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
+            this.subflowAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
+                triggerCharacters: [":"],
+                async provideCompletionItems(model, position) {
+                    const lineContent = _this.lineContent(model, position);
+                    const tillCursorContent = lineContent.substring(0, position.column - 1);
+
+                    let match = tillCursorContent.match(/^( *namespace:( *))(.*)$/);
+                    let indexOfFieldToComplete;
+                    if (match) {
+                        indexOfFieldToComplete = match.index + match[1].length;
+                        if (!_this.datatypeNamespaces) {
+                            await _this.$store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})
+                        }
+                        let filteredNamespaces = _this.datatypeNamespaces;
+                        if (match[3].length > 0) {
+                            filteredNamespaces = filteredNamespaces.filter(n => n.startsWith(match[3]));
+                        }
+                        return {
+                            suggestions: filteredNamespaces.map(namespace => ({
+                                kind: monaco.languages.CompletionItemKind.Value,
+                                label: namespace,
+                                insertText: (match[2].length > 0 ? "" : " ") + namespace,
+                                range: {
+                                    startLineNumber: position.lineNumber,
+                                    endLineNumber: position.lineNumber,
+                                    startColumn: indexOfFieldToComplete + 1,
+                                    endColumn: YamlUtils.nextDelimiterIndex(lineContent, position.column - 1)
+                                }
+                            }))
+                        };
+                    }
+
+                    match = tillCursorContent.match(/^( *flowId:( *))(.*)$/);
+                    if (!match) {
+                        return {suggestions: []};
+                    }
+
+                    indexOfFieldToComplete = match.index + match[1].length;
+
+                    const source = model.getValue();
+                    const namespacesWithRange = YamlUtils.extractFieldFromMaps(source, "namespace").reverse();
+                    const namespace = namespacesWithRange.find(namespaceWithRange => {
+                        const range = namespaceWithRange.range;
+                        return range[0] < position.offset < range[2];
+                    })?.namespace;
+                    if (namespace === undefined) {
+                        return {suggestions: []};
+                    }
+
+                    const flowAsJs = YamlUtils.parse(source);
+                    let flowIds = (await _this.$store.dispatch("flow/flowsByNamespace", namespace))
+                        .map(flow => flow.id)
+                    if (match[3].length > 0) {
+                        flowIds = flowIds.filter(flowId => flowId.startsWith(match[3]));
+                    }
+                    if (flowAsJs?.id) {
+                        flowIds = flowIds.filter(flowId => flowId !== flowAsJs?.id);
+                    }
+
+                    return {
+                        suggestions: flowIds.map(flowId => ({
+                            kind: monaco.languages.CompletionItemKind.Value,
+                            label: flowId,
+                            insertText: (match[2].length > 0 ? "" : " ") + flowId,
+                            range: {
+                                startLineNumber: position.lineNumber,
+                                endLineNumber: position.lineNumber,
+                                startColumn: indexOfFieldToComplete + 1,
+                                endColumn: YamlUtils.nextDelimiterIndex(lineContent, position.column - 1)
+                            }
+                        }))
+                    };
+                }
+            })
+
+            this.nestedFieldAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
                 triggerCharacters: ["."],
                 async provideCompletionItems(model, position) {
-                    const lineContent = model.getValueInRange({
-                        startLineNumber: position.lineNumber,
-                        startColumn: 1,
-                        endLineNumber: position.lineNumber,
-                        endColumn: model.getLineMaxColumn(position.lineNumber)
-                    });
+                    const lineContent = _this.lineContent(model, position);
                     const tillCursorContent = lineContent.substring(0, position.column - 1);
                     const match = tillCursorContent.match(/( *([^{ ]*)\.)([^.} ]*)$/);
                     if (!match) {
@@ -183,6 +257,14 @@
             this.destroy();
         },
         methods: {
+            lineContent(model, position) {
+                return model.getValueInRange({
+                    startLineNumber: position.lineNumber,
+                    startColumn: 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: model.getLineMaxColumn(position.lineNumber)
+                });
+            },
             async autocompletion(source, lineContent, field, rest, lineNumber, fieldToCompleteIndexes) {
                 const flowAsJs = YamlUtils.parse(source);
                 let autocompletions;
@@ -324,7 +406,8 @@
             },
             destroy: function () {
                 this.monacoYaml?.dispose();
-                this.autocompletionProvider?.dispose();
+                this.subflowAutocompletionProvider?.dispose();
+                this.nestedFieldAutocompletionProvider?.dispose();
                 this.editor?.dispose();
             },
             needReload: function (newValue, oldValue) {

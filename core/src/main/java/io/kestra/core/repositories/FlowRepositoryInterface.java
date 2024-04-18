@@ -112,6 +112,18 @@ public interface FlowRepositoryInterface {
 
     List<String> findDistinctNamespaceExecutable(String tenantId);
 
+    default List<String> findDistinctNamespace(String tenantId, String prefix) {
+        List<String> distinctNamespaces = this.findDistinctNamespace(tenantId);
+
+        if (prefix == null) {
+            return distinctNamespaces;
+        }
+
+        return distinctNamespaces.stream()
+            .filter(n -> n.startsWith(prefix))
+            .toList();
+    }
+
     FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults);
 
     FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException;

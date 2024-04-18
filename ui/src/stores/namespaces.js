@@ -4,13 +4,13 @@ import Utils from "../utils/utils";
 export default {
     namespaced: true,
     state: {
-        namespaces: undefined,
+        datatypeNamespaces: undefined,
     },
 
     actions: {
-        loadNamespaces({commit}, options) {
+        loadNamespacesForDatatype({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/${options.dataType}s/distinct-namespaces`).then(response => {
-                commit("setNamespaces", response.data)
+                commit("setDatatypeNamespaces", response.data)
             })
         },
         importFile({_commit}, options) {
@@ -38,8 +38,8 @@ export default {
         }
     },
     mutations: {
-        setNamespaces(state, namespaces) {
-            state.namespaces = namespaces
+        setDatatypeNamespaces(state, datatypeNamespaces) {
+            state.datatypeNamespaces = datatypeNamespaces
         }
     },
     getters: {}

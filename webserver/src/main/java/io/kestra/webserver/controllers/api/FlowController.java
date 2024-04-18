@@ -464,8 +464,10 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces")
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
-    public List<String> listDistinctNamespace() {
-        return flowRepository.findDistinctNamespace(tenantService.resolveTenant());
+    public List<String> listDistinctNamespace(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query
+    ) {
+        return flowRepository.findDistinctNamespace(tenantService.resolveTenant(), query);
     }
 
 

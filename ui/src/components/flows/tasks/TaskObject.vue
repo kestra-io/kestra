@@ -18,14 +18,15 @@
                     </span>
                     <span>
                         <el-tag disable-transitions type="info" size="small">
-                            {{ getType(schema, key) }}
+                            {{ getType(schema) }}
                         </el-tag>
                     </span>
                 </span>
             </template>
             <component
-                :is="`task-${getType(schema)}`"
+                :is="`task-${getType(schema, key)}`"
                 :model-value="getPropertiesValue(key)"
+                :task="modelValue"
                 @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"
                 :schema="schema"

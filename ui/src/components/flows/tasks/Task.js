@@ -11,6 +11,10 @@ export default {
             type: Boolean,
             default: false
         },
+        task: {
+            type: Object,
+            default: undefined
+        },
         root: {
             type: String,
             default: undefined
@@ -28,7 +32,7 @@ export default {
         isRequired(key) {
             return this.schema.required && this.schema.required.includes(key);
         },
-        getType(property) {
+        getType(property, key) {
             if (property.enum !== undefined) {
                 return "enum";
             }
@@ -55,6 +59,10 @@ export default {
 
             if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
                 return "anyOf";
+            }
+
+            if (key === "namespace" || key === "flowId") {
+                return key;
             }
 
             return property.type || "dynamic";

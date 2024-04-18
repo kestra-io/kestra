@@ -175,8 +175,7 @@
                     surveyVisible = false;
                 })
 
-                window.addEventListener("KestraRouterAfterEach", (event) => {
-                    console.log(event)
+                window.addEventListener("KestraRouterAfterEach", () => {
                     if (surveyVisible) {
                         window.dispatchEvent(new Event("PHSurveyClosed"))
                         surveyVisible = false;

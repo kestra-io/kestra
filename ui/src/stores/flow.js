@@ -54,6 +54,11 @@ export default {
                 return response.data;
             })
         },
+        flowsByNamespace(_, namespace) {
+            return this.$http.get(`${apiUrl(this)}/flows/${namespace}`).then(response => {
+                return response.data;
+            })
+        },
         loadFlow({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}?source=true`,
                 {

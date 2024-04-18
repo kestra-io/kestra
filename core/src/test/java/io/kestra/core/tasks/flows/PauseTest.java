@@ -11,6 +11,7 @@ import io.kestra.core.services.ExecutionService;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 
@@ -31,7 +32,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
         suite.run(runnerUtils);
     }
 
-    @RetryingTest(maxAttempts = 10, suspendForMs = 10)
+    @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
     void delay() throws Exception {
         suite.runDelay(runnerUtils);
     }

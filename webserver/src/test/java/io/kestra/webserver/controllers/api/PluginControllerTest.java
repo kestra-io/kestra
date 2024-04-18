@@ -53,9 +53,7 @@ class PluginControllerTest {
                 .orElseThrow();
 
             assertThat(core.getCategories(), containsInAnyOrder(
-                PluginSubGroup.PluginCategory.FLOW,
                 PluginSubGroup.PluginCategory.STORAGE,
-                PluginSubGroup.PluginCategory.MISC,
                 PluginSubGroup.PluginCategory.CORE
             ));
 

@@ -96,7 +96,7 @@ class PluginControllerTest {
             );
 
             assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.debugs.Return"));
-            assertThat(doc.getMarkdown(), containsString("Debugging task that returns"));
+            assertThat(doc.getMarkdown(), containsString("Return a value for debugging purposes."));
             assertThat(doc.getMarkdown(), containsString("The templated string to render"));
             assertThat(doc.getMarkdown(), containsString("The generated string"));
             assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(1));

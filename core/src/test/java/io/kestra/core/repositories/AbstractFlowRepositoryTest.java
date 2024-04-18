@@ -96,6 +96,21 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByIdWithoutAcl() {
+        Flow flow = builder()
+            .revision(3)
+            .build();
+        flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
+
+        Optional<Flow> full = flowRepository.findByIdWithoutAcl(null, flow.getNamespace(), flow.getId(), Optional.empty());
+        assertThat(full.isPresent(), is(true));
+        assertThat(full.get().getRevision(), is(1));
+
+        full = flowRepository.findByIdWithoutAcl(null, flow.getNamespace(), flow.getId(), Optional.empty());
+        assertThat(full.isPresent(), is(true));
+    }
+
+    @Test
     void findByIdWithSource() {
         Flow flow = builder()
             .revision(3)

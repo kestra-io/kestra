@@ -20,6 +20,30 @@ public interface FlowRepositoryInterface {
         return this.findById(tenantId, namespace, id, revision, false);
     }
 
+    Optional<Flow> findByIdWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
+
+    /**
+     * Used only if result is used internally and not exposed to the user.
+     * It is useful when we want to restart/resume a flow.
+     */
+    default Flow findByExecutionWithoutAcl(Execution execution) {
+        Optional<Flow> find = this.findByIdWithoutAcl(
+            execution.getTenantId(),
+            execution.getNamespace(),
+            execution.getFlowId(),
+            Optional.of(execution.getFlowRevision())
+        );
+
+        if (find.isEmpty()) {
+            throw new IllegalStateException("Unable to find flow '" + execution.getNamespace() + "." +
+                execution.getFlowId() + "' with revision " + execution.getFlowRevision() + " on execution " +
+                execution.getId()
+            );
+        } else {
+            return find.get();
+        }
+    }
+
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
             execution.getTenantId(),

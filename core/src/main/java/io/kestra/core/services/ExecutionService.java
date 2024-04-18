@@ -102,7 +102,7 @@ public class ExecutionService {
             );
         }
 
-        final Flow flow = flowRepositoryInterface.findByExecution(execution);
+        final Flow flow = flowRepositoryInterface.findByExecutionWithoutAcl(execution);
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
@@ -170,7 +170,7 @@ public class ExecutionService {
         final String newExecutionId = IdUtils.create();
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if(taskRunId != null){
-            final Flow flow = flowRepositoryInterface.findByExecution(execution);
+            final Flow flow = flowRepositoryInterface.findByExecutionWithoutAcl(execution);
 
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
 

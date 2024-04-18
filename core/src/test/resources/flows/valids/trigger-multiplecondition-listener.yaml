@@ -1,9 +1,5 @@
 id: trigger-multiplecondition-listener
 namespace: io.kestra.tests.trigger
-#
-#inputs:
-#  - id: from-parent
-#    type: STRING
 
 tasks:
   - id: only-listener
@@ -13,8 +9,6 @@ tasks:
 triggers:
   - id: multiple-listen-flow
     type: io.kestra.core.models.triggers.types.Flow
-#    inputs:
-#      from-parent: '{{ outputs.only.value }}'
     conditions:
       - id: multiple
         type: io.kestra.core.models.conditions.types.MultipleCondition

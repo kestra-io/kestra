@@ -54,7 +54,7 @@ import jakarta.validation.constraints.NotNull;
             "  - id: listen-flow\n" +
             "    type: io.kestra.core.models.triggers.types.Flow\n" +
             "    inputs:\n" +
-            "      from-parent: '{{ outputs.myTask.uri }}'\n" +
+            "      from-parent: '{{ trigger.outputs.myTask.uri }}'\n" +
             "    conditions:\n" +
             "      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition\n" +
             "        namespace: io.kestra.tests\n" +

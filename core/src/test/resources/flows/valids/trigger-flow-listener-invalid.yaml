@@ -14,7 +14,7 @@ triggers:
   - id: listen-flow-invalid
     type: io.kestra.core.models.triggers.types.Flow
     inputs:
-      from-parent: '{{ outputs.invalid.value }}'
+      from-parent: '{{ trigger.outputs.invalid.value }}'
     conditions:
       - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
         namespace: io.kestra.tests.trigger

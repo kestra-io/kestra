@@ -14,7 +14,7 @@ triggers:
   - id: listen-flow
     type: io.kestra.core.models.triggers.types.Flow
     inputs:
-      from-parent: '{{ outputs.only.value }}'
+      from-parent: '{{ trigger.outputs.only.value }}'
     conditions:
       - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
         in:

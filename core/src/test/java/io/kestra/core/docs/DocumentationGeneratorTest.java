@@ -98,7 +98,7 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("Debugging task that return"));
+        assertThat(render, containsString("Return a value for debugging purposes."));
         assertThat(render, containsString("is mostly useful"));
         assertThat(render, containsString("## Metrics"));
         assertThat(render, containsString("### `length`\n" + "* **Type:** ==counter== "));

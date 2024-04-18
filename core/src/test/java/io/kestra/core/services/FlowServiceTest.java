@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.tasks.debugs.Return;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -133,7 +134,7 @@ class FlowServiceTest {
                     .type(Type.STRING)
                     .build()
             ))
-            .tasks(Collections.singletonList(Return.builder()
+            .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
                 .format("test")

@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -21,7 +20,6 @@ import jakarta.validation.constraints.Pattern;
 @Getter
 @NoArgsConstructor
 @Introspected
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ArrayInput.class, name = "ARRAY"),

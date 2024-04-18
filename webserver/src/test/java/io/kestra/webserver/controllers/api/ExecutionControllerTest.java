@@ -103,6 +103,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("secret", "secret")
         .put("array", """
             ["s1", "s2", "s3"]""")
+        .put("json", "{}")
         .build();
 
     @Test
@@ -144,6 +145,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .addPart("secret", "secret")
             .addPart("array", """
             ["s1", "s2", "s3"]""")
+            .addPart("json", "{}")
             .build();
     }
 
@@ -593,6 +595,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("secret", "secret")
             .put("array", """
             ["s1", "s2", "s3"]""")
+            .put("json", "{}")
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));

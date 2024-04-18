@@ -1,5 +1,7 @@
 package io.kestra.core.services;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -25,6 +27,10 @@ import jakarta.validation.ConstraintViolationException;
 
 @Singleton
 public class TaskDefaultService {
+    private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
+        .copy()
+        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+
     @Nullable
     @Inject
     protected TaskGlobalDefaultConfiguration globalDefault;
@@ -90,7 +96,7 @@ public class TaskDefaultService {
             flow = ((FlowWithSource) flow).toFlow();
         }
 
-        Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
+        Map<String, Object> flowAsMap = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
         List<TaskDefault> allDefaults = mergeAllDefaults(flow);
         Map<Boolean, List<TaskDefault>> allDefaultsGroup = allDefaults

@@ -759,7 +759,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 current.put("taskrun", Map.of("value", childTaskRun.getValue()));
             }
 
-            if (childTaskRun.getOutputs() != null) {
+            if (childTaskRun.getOutputs() != null && !childTaskRun.getOutputs().isEmpty()) {
                 current.put("outputs", childTaskRun.getOutputs());
             }
 

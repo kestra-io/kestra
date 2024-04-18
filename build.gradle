@@ -66,6 +66,7 @@ allprojects {
 
     configurations {
         developmentOnly // for dependencies that are needed for development only
+        micronaut
     }
 
     //
@@ -99,6 +100,7 @@ allprojects {
         }
     }
 
+
     // dependencies
     dependencies {
         // lombok
@@ -111,18 +113,18 @@ allprojects {
         annotationProcessor "io.micronaut.validation:micronaut-validation-processor"
 
         implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        implementation "io.micronaut:micronaut-inject"
-        implementation "io.micronaut.validation:micronaut-validation"
-        implementation "io.micronaut.beanvalidation:micronaut-hibernate-validator"
-        implementation "io.micronaut:micronaut-runtime"
-        implementation "io.micronaut:micronaut-retry"
-        implementation "io.micronaut:micronaut-jackson-databind"
-        implementation "io.micronaut.data:micronaut-data-model"
-        implementation "io.micronaut:micronaut-management"
-        implementation "io.micrometer:micrometer-core"
-        implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
-        implementation "io.micronaut:micronaut-http-client"
-        implementation "io.micronaut.reactor:micronaut-reactor-http-client"
+        micronaut "io.micronaut:micronaut-inject"
+        micronaut "io.micronaut.validation:micronaut-validation"
+        micronaut "io.micronaut.beanvalidation:micronaut-hibernate-validator"
+        micronaut "io.micronaut:micronaut-runtime"
+        micronaut "io.micronaut:micronaut-retry"
+        micronaut "io.micronaut:micronaut-jackson-databind"
+        micronaut "io.micronaut.data:micronaut-data-model"
+        micronaut "io.micronaut:micronaut-management"
+        micronaut "io.micrometer:micrometer-core"
+        micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
+        micronaut "io.micronaut:micronaut-http-client"
+        micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
 
         // logs
         implementation "org.slf4j:slf4j-api"
@@ -249,7 +251,7 @@ run.jvmArgs(
  **********************************************************************************************************************/
 jar {
     manifest {
-        attributes (
+        attributes(
             "Main-Class": mainClassName,
             "X-Kestra-Name": project.name,
             "X-Kestra-Title": project.name,
@@ -277,7 +279,7 @@ shadowJar.dependsOn 'ui:assembleFrontend'
 def executableDir = file("${buildDir}/executable")
 def executable = file("${buildDir}/executable/${project.name}-${project.version}")
 
-task writeExecutableJar()  {
+task writeExecutableJar() {
     group "build"
     description "Write an executable jar from shadow jar"
     dependsOn = [shadowJar]

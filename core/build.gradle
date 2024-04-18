@@ -1,5 +1,6 @@
 configurations {
     tests
+    implementation.extendsFrom(micronaut)
 }
 
 task copyGradleProperties(type: Copy) {

@@ -1,3 +1,6 @@
+configurations {
+    implementation.extendsFrom(micronaut)
+}
 dependencies {
     // micronaut
     implementation "info.picocli:picocli"

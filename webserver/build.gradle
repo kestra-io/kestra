@@ -6,6 +6,10 @@ if (rootProject.name == "kestra") {
     }
 }
 
+configurations {
+    implementation.extendsFrom(micronaut)
+}
+
 dependencies {
 
     annotationProcessor "io.micronaut.openapi:micronaut-openapi"

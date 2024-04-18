@@ -1,3 +1,7 @@
+configurations {
+    implementation.extendsFrom(micronaut)
+}
+
 dependencies {
     implementation project(":core")
 

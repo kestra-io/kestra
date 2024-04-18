@@ -1,17 +1,3 @@
-configurations {
-    tests
-}
-
-task copyGradleProperties(type: Copy) {
-    group = "build"
-    shouldRunAfter compileJava
-
-    from '../gradle.properties'
-    into 'src/main/resources'
-}
-
-processResources.dependsOn copyGradleProperties
-
 dependencies {
     // Kestra
     api project(':model')

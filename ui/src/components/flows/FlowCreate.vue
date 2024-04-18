@@ -68,7 +68,7 @@ labels:
 inputs:
   - id: payload
     type: JSON
-    defaults: |
+    defaults: |-
       [{"name": "kestra", "rating": "best in class"}]
 
 tasks:

@@ -2,7 +2,7 @@ package io.kestra.core.models.annotations;
 
 import java.lang.annotation.*;
 
-import static io.kestra.core.models.annotations.PluginSubGroup.PluginCategory.MISC;
+import static io.kestra.core.models.annotations.PluginSubGroup.PluginCategory.OTHER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
@@ -13,21 +13,23 @@ public @interface PluginSubGroup {
     String title() default "";
     String description() default "";
 
-    PluginCategory[] categories() default { MISC };
+    PluginCategory[] categories() default {OTHER};
 
     enum PluginCategory {
         DATABASE,
         MESSAGING,
         SCRIPT,
         TRANSFORMATION,
-        FLOW,
         BATCH,
         ALERTING,
         CLOUD,
         STORAGE,
-        MISC,
+        OTHER,
         TOOL,
         AI,
-        CORE
+        CORE,
+        INGESTION,
+        BI,
+        DATA_QUALITY
     }
 }

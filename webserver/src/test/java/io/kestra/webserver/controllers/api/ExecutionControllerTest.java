@@ -24,10 +24,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -1085,5 +1082,22 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void nullLabels() {
+        MultipartBody requestBody = createInputsFlowBody();
+
+        // null keys are forbidden
+        MutableHttpRequest<MultipartBody> requestNullKey = HttpRequest
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=:value", requestBody)
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullKey, Execution.class));
+
+        // null values are forbidden
+        MutableHttpRequest<MultipartBody> requestNullValue = HttpRequest
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=key:", requestBody)
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullValue, Execution.class));
     }
 }

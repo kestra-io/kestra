@@ -27,12 +27,15 @@
             }
         },
         watch: {
-            async namespace() {
-                this.flowIds = (await this.$store.dispatch("flow/flowsByNamespace", this.namespace))
-                    .map(flow => flow.id);
+            namespace: {
+                immediate: true,
+                async handler() {
+                    this.flowIds = (await this.$store.dispatch("flow/flowsByNamespace", this.namespace))
+                        .map(flow => flow.id);
 
-                if (this.namespace === this.flow.namespace) {
-                    this.flowIds = this.flowIds.filter(id => id !== this.flow.id)
+                    if (this.namespace === this.flow.namespace) {
+                        this.flowIds = this.flowIds.filter(id => id !== this.flow.id)
+                    }
                 }
             }
         },

@@ -286,7 +286,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Test
     void withNullLabel() throws IllegalVariableEvaluationException {
         Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults("test").build())).build();
-        Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).labels(List.of(new Label("key", null))).build();
+        Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).labels(List.of(new Label("key", null), new Label(null, "value"))).build();
 
         RunContext runContext = runContextFactory.of(flow, execution);
 

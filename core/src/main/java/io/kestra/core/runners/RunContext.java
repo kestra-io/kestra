@@ -353,12 +353,13 @@ public class RunContext {
             if (execution.getLabels() != null) {
                 builder.put("labels", execution.getLabels()
                     .stream()
-                    .filter(label -> label.value() != null)
+                    .filter(label -> label.value() != null && label.key() != null)
                     .map(label -> new AbstractMap.SimpleEntry<>(
                         label.key(),
                         label.value()
                     ))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                    // using an accumulator in case labels with the same key exists: the first is kept
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first))
                 );
             }
 

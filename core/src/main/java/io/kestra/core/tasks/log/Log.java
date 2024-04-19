@@ -54,7 +54,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "One or more message(s) to be sent to the backend as logs.",
         description = "It can be a string or an array of strings.",
-        anyOf = {
+        oneOf = {
             String.class,
             String[].class
         }

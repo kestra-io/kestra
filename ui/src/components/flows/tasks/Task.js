@@ -49,16 +49,16 @@ export default {
                 return "complex";
             }
 
+            if (Object.prototype.hasOwnProperty.call(property, "oneOf")) {
+                return "oneOf";
+            }
+
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
                 return "dict";
             }
 
             if (property.type === "integer") {
                 return "number";
-            }
-
-            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
-                return "anyOf";
             }
 
             if (key === "namespace" || key === "flowId") {

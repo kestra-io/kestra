@@ -24,9 +24,9 @@ This property is currently in beta. While it is considered safe for use, please 
 * **Type:** {{ type(data) -}}
 {%- elseif data['$ref'] -%}
 * **Type:** {{ type(data) }}
-{%- elseif data.anyOf != null -%}
+{%- elseif data.oneOf != null -%}
 * **Type:**
-{%- for current in data.anyOf %}
+{%- for current in data.oneOf %}
   * {{ type(current) -}}
 {%- endfor -%}
 {%- else -%}

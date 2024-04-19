@@ -53,6 +53,7 @@
     import Kicon from "../../Kicon.vue";
     import Editor from "../../inputs/Editor.vue";
     import Markdown from "../../layout/Markdown.vue";
+    import YamlUtils from "../../../utils/yamlUtils";
 
     export default {
         name: "TaskObject",
@@ -122,7 +123,7 @@
             },
             onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
-                currentValue[properties] = value;
+                currentValue[properties] = YamlUtils.parse(value);
                 this.$emit("update:modelValue", currentValue);
             },
             isValidated(key) {

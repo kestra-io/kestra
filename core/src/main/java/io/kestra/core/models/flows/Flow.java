@@ -63,7 +63,7 @@ public class Flow extends AbstractFlow {
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @Schema(implementation = Object.class, anyOf = {List.class, Map.class})
+    @Schema(implementation = Object.class, oneOf = {List.class, Map.class})
     List<Label> labels;
 
     Map<String, Object> variables;

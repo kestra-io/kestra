@@ -75,15 +75,20 @@ public class JsonSchemaGenerator {
         SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
-            objectNode.findParents("anyOf").forEach(jsonNode -> {
-                if (jsonNode instanceof ObjectNode oNode) {
-                    oNode.set("oneOf", oNode.remove("anyOf"));
-                }
-            });
+            replaceAnyOfWithOneOf(objectNode);
+
             return JacksonMapper.toMap(objectNode);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
+    }
+
+    private static void replaceAnyOfWithOneOf(ObjectNode objectNode) {
+        objectNode.findParents("anyOf").forEach(jsonNode -> {
+            if (jsonNode instanceof ObjectNode oNode) {
+                oNode.set("oneOf", oNode.remove("anyOf"));
+            }
+        });
     }
 
     private void mutateDescription(ObjectNode collectedTypeAttributes) {
@@ -443,6 +448,7 @@ public class JsonSchemaGenerator {
         SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
+            replaceAnyOfWithOneOf(objectNode);
 
             return JacksonMapper.toMap(extractMainRef(objectNode));
         } catch (IllegalArgumentException e) {

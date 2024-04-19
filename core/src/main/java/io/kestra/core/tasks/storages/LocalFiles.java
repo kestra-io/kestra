@@ -120,7 +120,7 @@ import java.util.Map;
 public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFilesOutput> {
     @Schema(
         title = "The files to be created on the local filesystem. It can be a map or a JSON object.",
-        anyOf = { Map.class, String.class }
+        oneOf = { Map.class, String.class }
     )
     @PluginProperty(dynamic = true)
     private Object inputs;

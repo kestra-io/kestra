@@ -234,7 +234,7 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @Schema(
             title = "Title from the attribute",
-            anyOf = {String.class, Example[].class, Example.class}
+            oneOf = {String.class, Example[].class, Example.class}
         )
         private Object testObject;
 

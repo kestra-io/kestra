@@ -23,6 +23,9 @@ export default class YamlUtils {
     }
 
     static parse(item) {
+        if (item === undefined) {
+            return undefined;
+        }
         return JsYaml.load(item);
     }
 

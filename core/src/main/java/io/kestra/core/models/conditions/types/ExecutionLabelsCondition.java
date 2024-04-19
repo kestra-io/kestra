@@ -50,7 +50,7 @@ public class ExecutionLabelsCondition extends Condition {
     @NotNull
     @Schema(
         description = "List of labels to match in the execution.",
-        implementation = Object.class, anyOf = {List.class, Map.class}
+        implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @PluginProperty
     List<Label> labels;

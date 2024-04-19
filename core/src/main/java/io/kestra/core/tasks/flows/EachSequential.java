@@ -87,7 +87,7 @@ import java.util.Optional;
                 "        type: io.kestra.core.tasks.debugs.Return",
                 "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
             }
-        ),        
+        ),
     }
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
@@ -96,7 +96,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     @Schema(
         title = "The list of values for this task.",
         description = "The value car be passed as a string, a list of strings, or a list of objects.",
-        anyOf = {String.class, Object[].class}
+        oneOf = {String.class, Object[].class}
     )
     private Object value;
 

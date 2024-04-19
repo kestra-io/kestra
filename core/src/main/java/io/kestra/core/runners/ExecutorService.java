@@ -392,11 +392,16 @@ public class ExecutorService {
     }
 
     private Executor handleNext(Executor executor) {
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
+            executor.getExecution(),
+                ResolvedTask.of(executor.getFlow().getTasks()),
+                ResolvedTask.of(executor.getFlow().getErrors()),
+                null
+
+        );
         List<NextTaskRun> nextTaskRuns = FlowableUtils
             .resolveSequentialNexts(
-                executor.getExecution(),
-                ResolvedTask.of(executor.getFlow().getTasks()),
-                ResolvedTask.of(executor.getFlow().getErrors())
+               sequentialNextsContext
             );
 
         if (nextTaskRuns.isEmpty()) {

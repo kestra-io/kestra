@@ -19,6 +19,7 @@ import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.micronaut.context.ApplicationContext;
@@ -166,12 +167,14 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
-
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(template.getErrors(), parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+            sequentialNextsContext
         );
     }
 

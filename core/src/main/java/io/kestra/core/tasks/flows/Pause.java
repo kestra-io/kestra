@@ -17,6 +17,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -112,12 +113,14 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
         if (this.needPause(parentTaskRun) || parentTaskRun.getState().getCurrent() == State.Type.PAUSED) {
             return new ArrayList<>();
         }
-
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+            sequentialNextsContext
         );
     }
 

@@ -327,11 +327,14 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+          sequentialNextsContext
         );
     }
 

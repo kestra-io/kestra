@@ -16,6 +16,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
 import io.micronaut.core.annotation.Introspected;
@@ -163,11 +164,14 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveState(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun,
+            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            parentTaskRun
+        );
+        return FlowableUtils.resolveState(
+            sequentialNextsContext,
             runContext,
             this.isAllowFailure()
         );
@@ -175,11 +179,14 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+           sequentialNextsContext
         );
     }
 

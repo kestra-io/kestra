@@ -11,6 +11,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
+import io.kestra.core.tasks.flows.Sequential;
 
 import java.util.List;
 import java.util.Optional;
@@ -63,11 +65,14 @@ public interface FlowableTask <T extends Output> {
      * Resolve the state of a flowable task.
      */
     default Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveState(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun,
+            parentTaskRun
+        );
+        return FlowableUtils.resolveState(
+            sequentialNextsContext,
             runContext,
             isAllowFailure()
         );

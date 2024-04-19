@@ -18,6 +18,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 
 import java.util.List;
@@ -112,11 +113,15 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveParallelNexts(
+        
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-            parentTaskRun,
+            parentTaskRun
+        );
+        return FlowableUtils.resolveParallelNexts(
+            sequentialNextsContext,
             this.concurrent
         );
     }

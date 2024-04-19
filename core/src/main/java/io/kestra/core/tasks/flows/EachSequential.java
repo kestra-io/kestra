@@ -15,6 +15,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -127,12 +128,14 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
         if (childTasks.isEmpty()) {
             return Optional.of(State.Type.SUCCESS);
         }
-
-        return FlowableUtils.resolveState(
+        SequentialNextsContext sequentialNextsContext= new SequentialNextsContext(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun,
+            parentTaskRun
+        );
+        return FlowableUtils.resolveState(
+            sequentialNextsContext,
             runContext,
             this.isAllowFailure()
         );
@@ -140,11 +143,14 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+            sequentialNextsContext
         );
     }
 }

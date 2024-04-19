@@ -263,7 +263,7 @@
                 if (match[3].length > 0) {
                     flowIds = flowIds.filter(flowId => flowId.startsWith(match[3]));
                 }
-                if (flowAsJs?.id) {
+                if (flowAsJs?.id && flowAsJs?.namespace === namespace) {
                     flowIds = flowIds.filter(flowId => flowId !== flowAsJs?.id);
                 }
 

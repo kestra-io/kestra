@@ -29,8 +29,11 @@
         watch: {
             async namespace() {
                 this.flowIds = (await this.$store.dispatch("flow/flowsByNamespace", this.namespace))
-                    .map(flow => flow.id)
-                    .filter(id => id !== this.flow.id);
+                    .map(flow => flow.id);
+
+                if (this.namespace === this.flow.namespace) {
+                    this.flowIds = this.flowIds.filter(id => id !== this.flow.id)
+                }
             }
         },
         computed: {

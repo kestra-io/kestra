@@ -16,19 +16,25 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section v-bind="$attrs" :class="containerClass">
-        <component
-            v-bind="{...activeTab.props, ...attrsWithoutClass}"
-            v-on="activeTab['v-on'] ?? {}"
-            ref="tabContent"
-            :is="activeTab.component"
-            embed
-        />
+    <section v-bind="$attrs" :class="{...containerClass, 'flex-row': isEditorActiveTab}">
+        <EditorSidebar v-if="isEditorActiveTab" />
+        <div :class="{'w-75': isEditorActiveTab}">
+            <component
+                v-bind="{...activeTab.props, ...attrsWithoutClass}"
+                v-on="activeTab['v-on'] ?? {}"
+                ref="tabContent"
+                :is="activeTab.component"
+                embed
+            />
+        </div>
     </section>
 </template>
 
 <script>
+    import EditorSidebar from "./inputs/EditorSidebar.vue";
+
     export default {
+        components: {EditorSidebar},
         props: {
             tabs: {
                 type: Array,
@@ -109,6 +115,9 @@
             activeTab() {
                 return this.tabs
                     .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];
+            },
+            isEditorActiveTab() {
+                return this.activeTab.name === "editor";
             },
             // Those are passed to the rendered component
             // We need to exclude class as it's already applied to this component root div

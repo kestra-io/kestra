@@ -569,13 +569,35 @@
       }
     },
     "namespace files": {
-      "import": {
-        "file": "Importer depuis un ZIP ou ajouter des fichiers",
-        "folder": "Importer depuis un dossier",
-        "success": "Fichier(s) importé(s) avec succès",
-        "error": "Une erreur est survenue lors de l'importation"
+      "filter": "Filtrer",
+      "no_items": "Aucun élément",
+      "create": {
+        "label": "Créer",
+        "file": "Créer un fichier",
+        "folder": "Créer un dossier"
       },
-      "export": "Export as ZIP file"
+      "rename": {
+        "label": "Renommer",
+        "file": "Renommer le fichier",
+        "folder": "Renommer le dossier"
+      },
+      "delete": {
+        "label": "Supprimer",
+        "file": "Supprimer le fichier",
+        "folder": "Supprimer le dossier"
+      },
+      "import": {
+        "import": "Importer",
+        "file": "Importer un fichier",
+        "folder": "Importer un dossier",
+        "success": "Fichier(s) importé(s) avec succès",
+        "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
+      },
+      "dialog": {
+        "name": "Nom",
+        "select": "Sélectionner",
+        "select_folder": "Sélectionner un dossier"
+      }
     },
     "relative": "Relative",
     "relative start date": "Date de début relative",

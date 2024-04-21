@@ -962,6 +962,7 @@
         padding: calc(var(--spacer) / 2) 0px;
         background: var(--bs-body-bg);
         display: flex;
+        height: calc(100% - 49px);
         min-height: 0;
         max-height: 100%;
 

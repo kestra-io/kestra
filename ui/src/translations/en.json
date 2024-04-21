@@ -593,13 +593,35 @@
       }
     },
     "namespace files": {
+      "filter": "Filter",
+      "no_items": "No items",
+      "create": {
+        "label": "Create",
+        "file": "Create file",
+        "folder": "Create folder"
+      },
+      "rename": {
+        "label": "Rename",
+        "file": "Rename file",
+        "folder": "Rename folder"
+      },
+      "delete": {
+        "label": "Delete",
+        "file": "Delete file",
+        "folder": "Delete folder"
+      },
       "import": {
-        "file": "Import from ZIP or add file(s)",
-        "folder": "Import from folder",
+        "import": "Import",
+        "file": "Import file",
+        "folder": "Import folder",
         "success": "File(s) successfully imported",
         "error": "Error(s) occurred while importing the file(s)"
       },
-      "export": "Export as a ZIP file"
+      "dialog": {
+        "name": "Name",
+        "select": "Select",
+        "select_folder": "Select folder"
+      }
     },
     "continue backfill": "Continue the backfill",
     "delete backfill": "Delete the backfill",

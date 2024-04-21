@@ -118,7 +118,7 @@
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="removeItem(data.name)">
+                            <el-dropdown-item @click="confirmRemove(data)">
                                 {{
                                     $t(
                                         `namespace files.delete.${
@@ -200,6 +200,34 @@
                 </div>
             </template>
         </el-dialog>
+
+        <el-dialog
+            v-model="confirmation.visible"
+            :title="
+                Array.isArray(confirmation.data.children)
+                    ? $t('namespace files.dialog.folder_deletion')
+                    : $t('namespace files.dialog.file_deletion')
+            "
+            width="500"
+        >
+            <span class="py-3">
+                {{
+                    Array.isArray(confirmation.data.children)
+                        ? $t("namespace files.dialog.folder_deletion_description")
+                        : $t("namespace files.dialog.file_deletion_description")
+                }}
+            </span>
+            <template #footer>
+                <div>
+                    <el-button @click="confirmation.visible = false">
+                        {{ $t("cancel") }}
+                    </el-button>
+                    <el-button type="primary" @click="removeItem(confirmation.data.name)">
+                        {{ $t("namespace files.dialog.confirm") }}
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -246,6 +274,8 @@
                 dropdownRef: "",
 
                 currentFolder: "",
+
+                confirmation: {visible: false, data: {}},
 
                 items: [],
             };
@@ -407,6 +437,9 @@
                 })(this.items);
 
                 this.dialog = {...DIALOG_DEFAULTS};
+            },
+            confirmRemove(data) {
+                this.confirmation = {visible: true, data};
             },
             removeItem(name) {
                 function removeChildren(array) {

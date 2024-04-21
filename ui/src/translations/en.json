@@ -620,7 +620,12 @@
       "dialog": {
         "name": "Name",
         "select": "Select",
-        "select_folder": "Select folder"
+        "select_folder": "Select folder",
+        "file_deletion": "Confirm file deletion",
+        "folder_deletion": "Confirm folder deletion",
+        "file_deletion_description": "Are you sure you want to delete this file?",
+        "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
+        "confirm": "Confirm"
       }
     },
     "continue backfill": "Continue the backfill",

@@ -596,7 +596,12 @@
       "dialog": {
         "name": "Nom",
         "select": "Sélectionner",
-        "select_folder": "Sélectionner un dossier"
+        "select_folder": "Sélectionner un dossier",
+        "file_deletion": "Confirmer la suppression du fichier",
+        "folder_deletion": "Confirmer la suppression du dossier",
+        "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
+        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tout son contenu ?",
+        "confirm": "Confirmer"
       }
     },
     "relative": "Relative",

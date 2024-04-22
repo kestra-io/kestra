@@ -23,6 +23,21 @@ esac
 # Opens java.lang due to https://github.com/kestra-io/kestra/issues/1755, see https://github.com/micronaut-projects/micronaut-core/issues/9573
 JAVA_ADD_OPENS="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED"
 
+# classpath for Kestra
+CLASSPATH="$CLASSPATH":"$0"
+
+# classpath for additional libs
+if [ -d "$(dirname "$0")/libs" ] ; then
+CLASSPATH="$CLASSPATH:$(dirname "$0")/libs/*"
+fi
+
+# Remove a possible colon prefix from the classpath
+CLASSPATH=${CLASSPATH#:}
+
+if [ -z "$KESTRA_RUN_CLASS" ]; then
+    KESTRA_RUN_CLASS=io.kestra.cli.App
+fi
+
 # Exec
-exec java ${JAVA_OPTS} ${JAVA_ADD_OPENS} -Djava.security.manager=allow -jar "$0" "$@"
+exec java ${JAVA_OPTS} -cp "${CLASSPATH}" ${JAVA_ADD_OPENS} -Djava.security.manager=allow ${KESTRA_RUN_CLASS} "$@"
 exit 127

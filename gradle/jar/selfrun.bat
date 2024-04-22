@@ -76,7 +76,22 @@ REM Opens java.util due to https://github.com/Azure/azure-sdk-for-java/issues/27
 REM Opens java.lang due to https://github.com/kestra-io/kestra/issues/1755, see https://github.com/micronaut-projects/micronaut-core/issues/9573
 SET "JAVA_ADD_OPENS=--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED"
 
-java %JAVA_OPTS% %JAVA_ADD_OPENS% -Djava.security.manager=allow -jar "%this%" %*
+REM Set classpath for Kestra
+SET "CLASSPATH=%CLASSPATH%;%this%"
+
+REM Set classpath for additional libs
+IF EXIST "%~dp0libs\" (
+    SET "CLASSPATH=%CLASSPATH%;%~dp0libs\*"
+)
+
+REM Remove a possible semicolon prefix from the classpath
+SET "CLASSPATH=%CLASSPATH:~1%"
+
+IF NOT DEFINED KESTRA_RUN_CLASS (
+    SET "KESTRA_RUN_CLASS=io.kestra.cli.App"
+)
+
+java %JAVA_OPTS% %JAVA_ADD_OPENS% %CLASSPATH% -Djava.security.manager=allow %KESTRA_RUN_CLASS% %*
 
 ENDLOCAL
 

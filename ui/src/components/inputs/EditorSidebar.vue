@@ -472,7 +472,31 @@
                         name: this.dialog.name,
                     };
 
-                this.items.push({name, children: folder?.children ?? []});
+                const NEW = {name, children: folder?.children ?? []};
+
+                if (!this.dialog.folder) {
+                    this.items.push(NEW);
+                } else {
+                    const SELF = this;
+                    (function pushItemToFolder(array) {
+                        for (let i = 0; i < array.length; i++) {
+                            const item = array[i];
+                            if (
+                                item.name === SELF.dialog.folder &&
+                                Array.isArray(item.children)
+                            ) {
+                                item.children.push(NEW);
+                                return true; // Return true if the folder is found and item is pushed
+                            } else if (Array.isArray(item.children)) {
+                                if (pushItemToFolder(item.children)) {
+                                    return true; // Return true if the folder is found and item is pushed in recursive call
+                                }
+                            }
+                        }
+                        return false; // Return false if the folder is not found
+                    })(this.items);
+                }
+
                 this.dialog = {...DIALOG_DEFAULTS};
             },
         },

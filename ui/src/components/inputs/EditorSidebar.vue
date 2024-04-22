@@ -155,41 +155,43 @@
             @open="focusInput()"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
-            <el-input
-                ref="name"
-                v-model="dialog.name"
-                :placeholder="$t('namespace files.dialog.name')"
-                size="large"
-                class="mb-3"
-            />
-            <el-select
-                v-if="dialog.type === 'file' && !dialog.rename"
-                v-model="dialog.extension"
-                :placeholder="$t('namespace files.dialog.select')"
-                size="large"
-                class="mb-3"
-            >
-                <el-option
-                    v-for="extension in extensions"
-                    :key="extension.value"
-                    :value="extension.value"
-                    :label="extension.label"
-                />
-            </el-select>
-            <el-select
-                v-if="!dialog.rename"
-                v-model="dialog.folder"
-                :placeholder="$t('namespace files.dialog.select_folder')"
-                size="large"
-                class="mb-3"
-            >
-                <el-option
-                    v-for="folder in folders"
-                    :key="folder"
-                    :value="folder"
-                    :label="folder"
-                />
-            </el-select>
+            <div class="pb-1">
+                <span>
+                    {{
+                        $t("namespace files.dialog.type_name", {
+                            type: dialog.type === "file" ? "File" : "Folder",
+                        })
+                    }}
+                </span>
+            </div>
+            <el-input ref="name" v-model="dialog.name" size="large" class="mb-3" />
+
+            <template v-if="dialog.type === 'file' && !dialog.rename">
+                <div class="py-1">
+                    <span>{{ $t("namespace files.dialog.extension") }}</span>
+                </div>
+                <el-select v-model="dialog.extension" size="large" class="mb-3">
+                    <el-option
+                        v-for="extension in extensions"
+                        :key="extension.value"
+                        :value="extension.value"
+                        :label="extension.label"
+                    />
+                </el-select>
+            </template>
+            <template v-if="!dialog.rename">
+                <div class="py-1">
+                    <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+                </div>
+                <el-select v-model="dialog.folder" size="large" class="mb-3">
+                    <el-option
+                        v-for="folder in folders"
+                        :key="folder"
+                        :value="folder"
+                        :label="folder"
+                    />
+                </el-select>
+            </template>
             <template #footer>
                 <div>
                     <el-button @click="toggleDialog(false)">
@@ -305,11 +307,10 @@
                             names.push(...extractNames(item.children));
                         }
                     });
-
-                    return ["root", ...names];
+                    return names;
                 }
 
-                return extractNames(this.items);
+                return ["root", ...extractNames(this.items)];
             },
         },
         methods: {

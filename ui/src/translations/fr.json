@@ -594,13 +594,13 @@
         "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
       },
       "dialog": {
-        "name": "Nom",
-        "select": "Sélectionner",
-        "select_folder": "Sélectionner un dossier",
+        "type_name": "{type} nom",
+        "extension": "Extension",
+        "parent_folder": "Dossier parent",
         "file_deletion": "Confirmer la suppression du fichier",
         "folder_deletion": "Confirmer la suppression du dossier",
         "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
-        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tout son contenu ?",
+        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tous ses contenus ?",
         "confirm": "Confirmer"
       },
       "path": {

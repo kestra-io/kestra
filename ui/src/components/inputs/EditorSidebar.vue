@@ -250,12 +250,12 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import {YamlUtils} from "@kestra-io/ui-libs";
 
-    const YAML = "yml";
+    const YAML = {label: "YAML", value: "yml"};
     const DIALOG_DEFAULTS = {
         visible: false,
         type: undefined,
         name: undefined,
-        extension: YAML,
+        extension: YAML.value,
         folder: "root",
         rename: false,
     };
@@ -276,7 +276,7 @@
                 filter: "",
 
                 dialog: {...DIALOG_DEFAULTS},
-                extensions: [{label: YAML.toUpperCase(), value: YAML}],
+                extensions: [YAML],
                 dropdownRef: "",
 
                 currentFolder: "",
@@ -517,7 +517,7 @@
                     if (flow && flow.length) {
                         this.addFile({
                             name: `${flow[0].id}`,
-                            extension: YAML,
+                            extension: YAML.value,
                             content: YamlUtils.parse(flow[0]),
                         });
                     }

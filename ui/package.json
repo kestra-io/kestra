@@ -75,7 +75,7 @@
     "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.74.1",
     "typescript": "^5.4.4",
-    "vite": "^5.2.8",
+    "vite": "^5.2.10",
     "vite-plugin-rewrite-all": "1.0.1",
     "vitest": "^1.4.0",
     "vscode-web": "^1.82.0"

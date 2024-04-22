@@ -463,6 +463,7 @@
                     });
                 };
                 remove(this.items);
+                this.confirmation = {visible: false, data: {}};
             },
             addFolder(folder) {
                 const {name} = folder

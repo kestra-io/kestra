@@ -26,6 +26,13 @@ public interface SchedulerTriggerStateInterface {
 
     List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext);
 
-    // Required for Kafka
+    /**
+     * Required for Kafka
+     */
     List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<Flow> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext);
+
+    /**
+     * Required for Kafka
+     */
+    void unlock(Trigger trigger);
 }

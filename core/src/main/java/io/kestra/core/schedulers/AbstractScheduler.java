@@ -336,6 +336,11 @@ public abstract class AbstractScheduler implements Scheduler {
                     .conditionContext(flowWithTriggers.getConditionContext())
                     .triggerContext(flowWithTriggers.TriggerContext.toBuilder().date(now()).stopAfter(flowWithTriggers.getAbstractTrigger().getStopAfter()).build())
                     .build())
+                .peek(f -> {
+                    if (f.getTriggerContext().getEvaluateRunningDate() != null || isExecutionNotRunning(f)) {
+                        this.triggerState.unlock(f.getTriggerContext());
+                    }
+                })
                 .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null)
                 .filter(this::isExecutionNotRunning)
                 .map(FlowWithPollingTriggerNextDate::of)

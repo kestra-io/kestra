@@ -81,7 +81,7 @@ allprojects {
             force("org.apache.httpcomponents:httpclient:4.5.14")
 
             // ugly bug on crypto plugin
-            force('org.bouncycastle:bcprov-jdk18on:1.78')
+            force('org.bouncycastle:bcprov-jdk18on:1.78.1')
             force('org.bouncycastle:bcpg-jdk18on:1.78')
 
             // ugly bug for jackson

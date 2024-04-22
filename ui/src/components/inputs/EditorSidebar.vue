@@ -103,10 +103,16 @@
                     </el-row>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item @click="toggleDialog(true, 'file', node)">
+                            <el-dropdown-item
+                                v-if="Array.isArray(data.children)"
+                                @click="toggleDialog(true, 'file', node)"
+                            >
                                 {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="toggleDialog(true, 'folder', node)">
+                            <el-dropdown-item
+                                v-if="Array.isArray(data.children)"
+                                @click="toggleDialog(true, 'folder', node)"
+                            >
                                 {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
                             <el-dropdown-item @click="renameItemDialog(data)">
@@ -250,7 +256,7 @@
         type: undefined,
         name: undefined,
         extension: YAML,
-        folder: "",
+        folder: "root",
         rename: false,
     };
 
@@ -294,7 +300,7 @@
                         }
                     });
 
-                    return names;
+                    return ["root", ...names];
                 }
 
                 return extractNames(this.items);
@@ -331,7 +337,7 @@
 
                     this.dialog.visible = true;
                     this.dialog.type = type;
-                    this.dialog.folder = folder ?? node?.label ?? "";
+                    this.dialog.folder = folder ?? node?.label ?? "root";
 
                     this.focusInput();
                 } else {
@@ -389,7 +395,7 @@
                     };
                 const NEW = {name: `${name}.${extension}`, extension, content};
 
-                if (!this.dialog.folder) {
+                if (!this.dialog.folder || this.dialog.folder === "root") {
                     this.items.push(NEW);
                 } else {
                     const SELF = this;
@@ -474,7 +480,7 @@
 
                 const NEW = {name, children: folder?.children ?? []};
 
-                if (!this.dialog.folder) {
+                if (!this.dialog.folder || this.dialog.folder === "root") {
                     this.items.push(NEW);
                 } else {
                     const SELF = this;

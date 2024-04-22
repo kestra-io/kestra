@@ -13,7 +13,7 @@
             :navbar="false"
             :full-height="false"
             :input="true"
-            lang="text"
+            lang="plaintext"
             @update:model-value="onInput"
         />
     </template>
@@ -39,16 +39,10 @@
                 return true;
             },
             durationValue() {
-                if (this.values) {
-                    if (typeof this.values === "number") {
-                        const duration = this.$moment.duration(this.values, "seconds");
+                if (typeof this.values === "string") {
+                    const duration = this.$moment.duration(this.values);
 
-                        return new Date(1981, 1, 1, duration.hours(), duration.minutes(), duration.seconds());
-                    } else if (typeof this.values === "string") {
-                        const duration = this.$moment.duration(this.values);
-
-                        return new Date(1981, 1, 1, duration.hours(), duration.minutes(), duration.seconds())
-                    }
+                    return new Date(1981, 1, 1, duration.hours(), duration.minutes(), duration.seconds())
                 }
 
                 return undefined;
@@ -59,13 +53,13 @@
         },
         methods: {
             onInputDuration(value) {
-                const emited = value === "" || value === null ? undefined : this.$moment.duration({
+                const emitted = value === "" || value === null ? undefined : this.$moment.duration({
                     seconds: value.getSeconds(),
                     minutes: value.getMinutes(),
                     hours: value.getHours(),
-                }).asSeconds();
+                }).toString();
 
-                this.$emit("update:modelValue", emited);
+                this.$emit("update:modelValue", emitted);
             }
         }
     };

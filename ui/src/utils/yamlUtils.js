@@ -200,6 +200,10 @@ export default class YamlUtils {
     }
 
     static extractMaps(source, fieldConditions) {
+        if (source.match(/^\s*{{/)) {
+            return [];
+        }
+
         const yamlDoc = yaml.parseDocument(source);
         const maps = [];
         yaml.visit(yamlDoc, {

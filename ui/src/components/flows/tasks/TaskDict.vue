@@ -9,7 +9,7 @@
         </div>
         <div class="flex-fill flex-grow-1 w-100 me-2">
             <component
-                :is="`task-${getType(schema.additionalProperties)}`"
+                :is="`task-${schema.additionalProperties ? getType(schema.additionalProperties) : 'expression'}`"
                 :model-value="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"

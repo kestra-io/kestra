@@ -3,8 +3,8 @@
         :model-value="values"
         @update:model-value="onInput"
         :state="isValid"
-        :min="schema.min"
-        :max="schema.max"
+        :min="schema.minimum"
+        :max="schema.maximum"
         :step="schema.step"
         type="number"
     />

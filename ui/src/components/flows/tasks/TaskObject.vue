@@ -36,12 +36,14 @@
         </el-form-item>
     </template>
     <template v-else>
-        <task-dynamic
-            :model-value="editorValue"
+        <task-dict
+            :model-value="modelValue"
+            :task="task"
+            @update:model-value="value => $emit('update:modelValue', value)"
             :root="root"
             :schema="schema"
+            :required="required"
             :definitions="definitions"
-            @update:model-value="onInput"
         />
     </template>
 </template>
@@ -53,12 +55,13 @@
     import Kicon from "../../Kicon.vue";
     import Editor from "../../inputs/Editor.vue";
     import Markdown from "../../layout/Markdown.vue";
-    import YamlUtils from "../../../utils/yamlUtils";
+    import TaskDict from "./TaskDict.vue";
 
     export default {
         name: "TaskObject",
         mixins: [Task],
         components: {
+            TaskDict,
             Information,
             Help,
             Kicon,
@@ -123,7 +126,7 @@
             },
             onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
-                currentValue[properties] = YamlUtils.parse(value);
+                currentValue[properties] = value;
                 this.$emit("update:modelValue", currentValue);
             },
             isValidated(key) {

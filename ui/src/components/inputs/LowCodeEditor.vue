@@ -325,7 +325,6 @@
             v-if="source"
             component="div"
             is-hidden
-            :emit-task-only="true"
             class="node-action"
             :section="taskEditData?.section"
             :task="taskObject"
@@ -333,7 +332,6 @@
             size="small"
             :namespace="namespace"
             :revision="execution ? execution.flowRevision : undefined"
-            :emit-only="true"
             @update:task="confirmEdit($event)"
             @close="closeEdit()"
             :flow-source="source"

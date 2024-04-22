@@ -233,6 +233,10 @@
         return `revision: ${props.nextRevision}\n${flowYaml.value}`;
     })
 
+    watch(flowYaml, (newYaml) => {
+        store.commit("core/setAutocompletionSource", newYaml)
+    })
+
     const initYamlSource = async () => {
         flowYaml.value = props.flow.source;
         flowYamlOrigin.value = props.flow.source;
@@ -285,6 +289,7 @@
 
     onMounted(async () => {
         await initYamlSource();
+
         // Save on ctrl+s in topology
         document.addEventListener("keydown", save);
         // Guided tour
@@ -305,6 +310,7 @@
     })
 
     onBeforeUnmount(() => {
+        store.commit("core/setAutocompletionSource", undefined);
         window.removeEventListener("resize", onResize)
 
         store.commit("plugin/setEditorPlugin", undefined);

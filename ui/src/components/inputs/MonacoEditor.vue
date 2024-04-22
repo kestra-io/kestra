@@ -51,7 +51,8 @@
             }
         },
         computed: {
-            ...mapState("namespace", ["datatypeNamespaces"])
+            ...mapState("namespace", ["datatypeNamespaces"]),
+            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"])
         },
         props: {
             original: {
@@ -136,74 +137,85 @@
                 _this.initMonaco(monaco);
             });
 
-            this.monacoYaml = configureMonacoYaml(this.monaco, {
-                enableSchemaRequest: true,
-                hover: true,
-                completion: true,
-                validate: true,
-                format: true,
-                schemas: yamlSchemas(this.$store)
-            });
+            if (!this.monacoYamlConfigured) {
+                this.$store.commit("core/setMonacoYamlConfigured", true)
+                configureMonacoYaml(this.monaco, {
+                    enableSchemaRequest: true,
+                    hover: true,
+                    completion: true,
+                    validate: true,
+                    format: true,
+                    schemas: yamlSchemas(this.$store)
+                });
+            }
 
-            this.subflowAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
-                triggerCharacters: [":"],
-                async provideCompletionItems(model, position) {
-                    const namespaceAutocompletion = await _this.namespaceAutocompletion(model, position);
-                    if (namespaceAutocompletion) {
-                        return namespaceAutocompletion;
-                    }
-
-                    const flowIdAutocompletion = await _this.flowIdAutocompletion(model, position);
-                    if (flowIdAutocompletion) {
-                        return flowIdAutocompletion;
-                    }
-
-                    const subflowInputsAutocompletion = await _this.subflowInputsAutocompletion(model, position);
-                    if (subflowInputsAutocompletion) {
-                        return subflowInputsAutocompletion;
-                    }
-
-                    return {suggestions: []};
-                }
-            })
-
-            this.nestedFieldAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
-                triggerCharacters: ["."],
-                async provideCompletionItems(model, position) {
-                    const lineContent = _this.lineContent(model, position);
-                    const tillCursorContent = _this.tillCursorContent(lineContent, position);
-                    const match = tillCursorContent.match(/( *([^{ ]*)\.)([^.} ]*)$/);
-                    if (!match) {
-                        return {suggestions: []};
-                    }
-
-                    let nextDotIndex;
-                    // We're at the end of the line
-                    if (lineContent.length === tillCursorContent.length) {
-                        nextDotIndex = tillCursorContent.length;
-                    } else {
-                        const remainingLineText = lineContent.substring(tillCursorContent.length);
-                        const nextDotMatcher = remainingLineText.match(/[ .}]/);
-                        if (!nextDotMatcher) {
-                            nextDotIndex = lineContent.length - 1;
-                        } else {
-                            nextDotIndex = tillCursorContent.length + nextDotMatcher.index;
+            const noSuggestions = {suggestions: []};
+            if (this.schemaType === "flow") {
+                // If we have an autocompletion source, it means we don't have the full model so we won't be able to provide cursor-based autocompletion
+                this.subflowAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
+                    triggerCharacters: [":"],
+                    async provideCompletionItems(model, position) {
+                        if (_this.schemaType !== "flow") {
+                            return noSuggestions;
                         }
-                    }
 
-                    const indexOfFieldToComplete = match.index + match[1].length;
-                    return {
-                        suggestions: await _this.autocompletion(
-                            model.getValue(),
-                            lineContent,
-                            match[2],
-                            match[3],
-                            position.lineNumber,
-                            [indexOfFieldToComplete, nextDotIndex]
-                        )
-                    };
-                }
-            })
+                        const namespaceAutocompletion = await _this.namespaceAutocompletion(model, position);
+                        if (namespaceAutocompletion) {
+                            return namespaceAutocompletion;
+                        }
+
+                        const flowIdAutocompletion = await _this.flowIdAutocompletion(model, position);
+                        if (flowIdAutocompletion) {
+                            return flowIdAutocompletion;
+                        }
+
+                        const subflowInputsAutocompletion = await _this.subflowInputsAutocompletion(model, position);
+                        if (subflowInputsAutocompletion) {
+                            return subflowInputsAutocompletion;
+                        }
+
+                        return noSuggestions;
+                    }
+                })
+
+                this.nestedFieldAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
+                    triggerCharacters: ["."],
+                    async provideCompletionItems(model, position) {
+                        const lineContent = _this.lineContent(model, position);
+                        const tillCursorContent = _this.tillCursorContent(lineContent, position);
+                        const match = tillCursorContent.match(/( *([^{ ]*)\.)([^.} ]*)$/);
+                        if (!match) {
+                            return noSuggestions;
+                        }
+
+                        let nextDotIndex;
+                        // We're at the end of the line
+                        if (lineContent.length === tillCursorContent.length) {
+                            nextDotIndex = tillCursorContent.length;
+                        } else {
+                            const remainingLineText = lineContent.substring(tillCursorContent.length);
+                            const nextDotMatcher = remainingLineText.match(/[ .}]/);
+                            if (!nextDotMatcher) {
+                                nextDotIndex = lineContent.length - 1;
+                            } else {
+                                nextDotIndex = tillCursorContent.length + nextDotMatcher.index;
+                            }
+                        }
+
+                        const indexOfFieldToComplete = match.index + match[1].length;
+                        return {
+                            suggestions: await _this.autocompletion(
+                                _this.autocompletionSource,
+                                lineContent,
+                                match[2],
+                                match[3],
+                                position.lineNumber,
+                                [indexOfFieldToComplete, nextDotIndex]
+                            )
+                        };
+                    }
+                })
+            }
         },
         beforeUnmount: function () {
             this.destroy();
@@ -508,10 +520,11 @@
                 this.editor.focus();
             },
             destroy: function () {
-                this.monacoYaml?.dispose();
                 this.subflowAutocompletionProvider?.dispose();
                 this.nestedFieldAutocompletionProvider?.dispose();
+                this.editor?.getModel()?.dispose();
                 this.editor?.dispose();
+
             },
             needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;

@@ -365,29 +365,69 @@
                 });
             },
             async importFiles(event) {
-                const folder = event.target.files[0].webkitRelativePath;
-                const imported = [...event.target.files];
+                const importedFiles = event.target.files;
 
                 try {
-                    if (folder) {
-                        const name = folder.split("/")[0];
-                        this.addFolder({name});
-                        this.dialog.folder = name;
+                    for (const file of importedFiles) {
+                        if (file.webkitRelativePath) {
+                            const filePath = file.webkitRelativePath;
+                            const pathParts = filePath.split("/");
+                            let currentFolder = this.items;
+                            let folderPath = [];
+
+                            // Traverse through each folder level in the path
+                            for (let i = 0; i < pathParts.length - 1; i++) {
+                                const folderName = pathParts[i];
+                                folderPath.push(folderName);
+
+                                // Find the folder in the current folder's children array
+                                const folderIndex = currentFolder.findIndex(
+                                    (item) => typeof item === "object" && item.name === folderName
+                                );
+                                if (folderIndex === -1) {
+                                    // If the folder doesn't exist, create it
+                                    const newFolder = {name: folderName, children: []};
+                                    currentFolder.push(newFolder);
+                                    currentFolder = newFolder.children;
+                                } else {
+                                    // If the folder exists, move to the next level
+                                    currentFolder = currentFolder[folderIndex].children;
+                                }
+                            }
+
+                            // Extract file details
+                            const fileName = pathParts[pathParts.length - 1];
+                            const [name, extension] = fileName.split(".");
+
+                            // Read file content
+                            const content = await this.readFile(file);
+
+                            // Add file to the current folder
+                            currentFolder.push({
+                                name: `${name}.${extension}`,
+                                extension,
+                                content,
+                            });
+                        } else {
+                            // Process files at root level (not in any folder)
+                            const content = await this.readFile(file);
+                            const [name, extension] = file.name.split(".");
+
+                            this.items.push({
+                                name: `${name}.${extension}`,
+                                extension,
+                                content,
+                            });
+                        }
                     }
 
-                    for (const file of imported) {
-                        const content = await this.readFile(file);
-                        const [name, extension] = file.name.split(".");
-
-                        this.addFile({name, extension, content}, false);
-                    }
                     this.$toast().success(this.$t("namespace files.import.success"));
-                } catch (_error) {
+                } catch (error) {
+                    console.error(error);
                     this.$toast().error(this.$t("namespace files.import.error"));
                 } finally {
                     event.target.value = "";
                     this.import = "file";
-
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },

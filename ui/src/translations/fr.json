@@ -602,6 +602,11 @@
         "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
         "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tout son contenu ?",
         "confirm": "Confirmer"
+      },
+      "path": {
+        "copy": "Copier le chemin",
+        "success": "Chemin copié dans le presse-papiers",
+        "error": "Des erreurs se sont produites lors de la copie du chemin dans le presse-papiers"
       }
     },
     "relative": "Relative",

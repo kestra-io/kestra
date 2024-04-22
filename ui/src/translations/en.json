@@ -626,6 +626,11 @@
         "file_deletion_description": "Are you sure you want to delete this file?",
         "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
         "confirm": "Confirm"
+      },
+      "path": {
+        "copy": "Copy path",
+        "success": "Path copied to clipboard",
+        "error": "Error(s) occurred while copying the path to clipboard"
       }
     },
     "continue backfill": "Continue the backfill",

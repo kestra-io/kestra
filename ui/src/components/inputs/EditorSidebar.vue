@@ -115,6 +115,9 @@
                             >
                                 {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
+                            <el-dropdown-item @click="copyPath(data.name)">
+                                {{ $t("namespace files.path.copy") }}
+                            </el-dropdown-item>
                             <el-dropdown-item @click="renameItemDialog(data)">
                                 {{
                                     $t(
@@ -240,6 +243,8 @@
 <script>
     import {mapState} from "vuex";
 
+    import Utils from "../../utils/utils";
+
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
@@ -248,9 +253,10 @@
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
     import FolderOutline from "vue-material-design-icons/FolderOutline.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
-    import {YamlUtils} from "@kestra-io/ui-libs";
 
+    import {YamlUtils} from "@kestra-io/ui-libs";
     const YAML = {label: "YAML", value: "yml"};
+
     const DIALOG_DEFAULTS = {
         visible: false,
         type: undefined,
@@ -504,6 +510,33 @@
                 }
 
                 this.dialog = {...DIALOG_DEFAULTS};
+            },
+
+            copyPath(name) {
+                const PATH = (function findElementPathByName(
+                    array,
+                    targetName,
+                    path = []
+                ) {
+                    for (const obj of array) {
+                        if (obj.name === targetName) return [...path, obj.name].join("/");
+                        if (obj.children) {
+                            const nestedPath = findElementPathByName(obj.children, targetName, [
+                                ...path,
+                                obj.name,
+                            ]);
+                            if (nestedPath) return nestedPath;
+                        }
+                    }
+                    return null;
+                })(this.items, name);
+
+                try {
+                    Utils.copy(PATH);
+                    this.$toast().success(this.$t("namespace files.path.success"));
+                } catch (_error) {
+                    this.$toast().error(this.$t("namespace files.path.error"));
+                }
             },
         },
         watch: {

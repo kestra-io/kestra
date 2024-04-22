@@ -70,6 +70,22 @@
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
+                <el-tooltip
+                    :content="
+                        $t(
+                            `namespace files.tree.${tree.allExpanded ? 'collapse' : 'expand'}`
+                        )
+                    "
+                    transition=""
+                    :hide-after="0"
+                    :persistent="false"
+                >
+                    <el-button class="px-2" @click="toggleExpanded(!tree.allExpanded)">
+                        <component
+                            :is="tree.allExpanded ? 'CollapseAllOutline' : 'ExpandAllOutline'"
+                        />
+                    </el-button>
+                </el-tooltip>
             </el-button-group>
         </div>
 
@@ -88,7 +104,7 @@
             <template #default="{data, node}">
                 <el-dropdown
                     :ref="`dropdown__${data.name}`"
-                    @contextmenu.prevent="toggleDropdown(`dropdown__${data.name}`)"
+                    @contextmenu.prevent.stop="toggleDropdown(`dropdown__${data.name}`)"
                     trigger="contextmenu"
                 >
                     <el-row justify="space-between">
@@ -103,6 +119,9 @@
                     </el-row>
                     <template #dropdown>
                         <el-dropdown-menu>
+                            <el-dropdown-item @click="toggleExpanded(false)">
+                                expand all
+                            </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="Array.isArray(data.children)"
                                 @click="toggleDialog(true, 'file', node)"
@@ -252,6 +271,8 @@
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
+    import CollapseAllOutline from "vue-material-design-icons/CollapseAllOutline.vue";
+    import ExpandAllOutline from "vue-material-design-icons/ExpandAllOutline.vue";
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
     import FolderOutline from "vue-material-design-icons/FolderOutline.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -275,6 +296,8 @@
             FilePlus,
             FolderPlus,
             PlusBox,
+            CollapseAllOutline,
+            ExpandAllOutline,
             FileDocumentOutline,
             FolderOutline,
             Delete,
@@ -286,6 +309,8 @@
                 dialog: {...DIALOG_DEFAULTS},
                 extensions: [YAML],
                 dropdownRef: "",
+
+                tree: {allExpanded: false},
 
                 currentFolder: "",
 
@@ -314,6 +339,13 @@
             },
         },
         methods: {
+            toggleExpanded(isExpanded) {
+                Object.keys(this.$refs.tree.store.nodesMap).forEach((key) => {
+                    this.$refs.tree.store.nodesMap[key].expanded = isExpanded;
+                });
+
+                this.tree.allExpanded = isExpanded;
+            },
             toggleDropdown(reference) {
                 if (this.dropdownRef) {
                     this.$refs[this.dropdownRef].handleClose();

@@ -5,11 +5,7 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
@@ -690,34 +686,38 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             return;
         }
 
-        if (skipExecutionService.skipExecution(event.getExecutionId())) {
-            log.warn("Skipping execution {}", event.getExecutionId());
+        if (!(event instanceof ExecutionKilledExecution killedExecution)) {
+            return;
+        }
+
+        if (skipExecutionService.skipExecution(killedExecution.getExecutionId())) {
+            log.warn("Skipping execution {}", killedExecution.getExecutionId());
             return;
         }
 
         if (log.isDebugEnabled()) {
-            executorService.log(log, true, event);
+            executorService.log(log, true, killedExecution);
         }
 
         // Immediately fire the event in EXECUTED state to notify the Workers to kill
         // any remaining tasks for that executing regardless of if the execution exist or not.
         // Note, that this event will be a noop if all tasks for that execution are already killed or completed.
-        killQueue.emit(ExecutionKilled
+        killQueue.emit(ExecutionKilledExecution
             .builder()
-            .executionId(event.getExecutionId())
+            .executionId(killedExecution.getExecutionId())
             .isOnKillCascade(false)
             .state(ExecutionKilled.State.EXECUTED)
             .build()
         );
 
-        Executor executor = mayTransitExecutionToKillingStateAndGet(event.getExecutionId());
+        Executor executor = mayTransitExecutionToKillingStateAndGet(killedExecution.getExecutionId());
 
         // Check whether kill event should be propagated to downstream executions.
         // By default, always propagate the ExecutionKill to sub-flows (for backward compatibility).
-        Boolean isOnKillCascade = Optional.ofNullable(event.getIsOnKillCascade()).orElse(true);
+        Boolean isOnKillCascade = Optional.ofNullable(killedExecution.getIsOnKillCascade()).orElse(true);
         if (isOnKillCascade) {
             executionService
-                .killSubflowExecutions(event.getTenantId(), event.getExecutionId())
+                .killSubflowExecutions(event.getTenantId(), killedExecution.getExecutionId())
                 .doOnNext(killQueue::emit)
                 .blockLast();
         }

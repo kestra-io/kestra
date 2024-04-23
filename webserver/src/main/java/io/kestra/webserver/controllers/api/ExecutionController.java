@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
@@ -882,7 +883,7 @@ public class ExecutionController {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
-        killQueue.emit(ExecutionKilled
+        killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
             .executionId(executionId)
@@ -938,7 +939,7 @@ public class ExecutionController {
         }
 
         executions.forEach(execution -> {
-            killQueue.emit(ExecutionKilled
+            killQueue.emit(ExecutionKilledExecution
                 .builder()
                 .state(ExecutionKilled.State.REQUESTED)
                 .executionId(execution.getId())

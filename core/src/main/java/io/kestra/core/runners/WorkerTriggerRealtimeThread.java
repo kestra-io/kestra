@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
-import lombok.Getter;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -10,13 +9,10 @@ import java.util.function.Consumer;
 
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
 
-public class WorkerTriggerRealtimeThread extends AbstractWorkerThread {
+public class WorkerTriggerRealtimeThread extends AbstractWorkerTriggerThread {
     RealtimeTriggerInterface streamingTrigger;
     Consumer<? super Throwable> onError;
     Consumer<Execution> onNext;
-
-    @Getter
-    WorkerTrigger workerTrigger;
 
     public WorkerTriggerRealtimeThread(
         WorkerTrigger workerTrigger,
@@ -24,8 +20,7 @@ public class WorkerTriggerRealtimeThread extends AbstractWorkerThread {
         Consumer<? super Throwable> onError,
         Consumer<Execution> onNext
     ) {
-        super(workerTrigger.getConditionContext().getRunContext(), realtimeTrigger.getClass().getName());
-        this.workerTrigger = workerTrigger;
+        super(workerTrigger.getConditionContext().getRunContext(), realtimeTrigger.getClass().getName(), workerTrigger);
         this.streamingTrigger = realtimeTrigger;
         this.onError = onError;
         this.onNext = onNext;
@@ -48,6 +43,7 @@ public class WorkerTriggerRealtimeThread extends AbstractWorkerThread {
         }
 
         Flux.from(evaluate)
+            .onBackpressureBuffer()
             .doOnError(onError)
             .doOnNext(onNext)
             .onErrorComplete()

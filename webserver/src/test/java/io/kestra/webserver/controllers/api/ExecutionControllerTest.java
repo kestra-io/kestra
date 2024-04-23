@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
@@ -1004,7 +1005,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // listen to the executionkilled queue
         CountDownLatch executionKilledLatch = new CountDownLatch(1);
         killQueue.receive(e -> {
-            if (e.getLeft().getExecutionId().equals(runningExecution.getId())) {
+            if (((ExecutionKilledExecution) e.getLeft()).getExecutionId().equals(runningExecution.getId())) {
                 executionKilledLatch.countDown();
             }
         });

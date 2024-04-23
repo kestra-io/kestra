@@ -30,8 +30,8 @@ public class QueueService {
             return ((Flow) object).uid();
         } else if (object.getClass() == Template.class) {
             return ((Template) object).uid();
-        } else if (object.getClass() == ExecutionKilled.class) {
-            return ((ExecutionKilled) object).getExecutionId();
+        } else if (object instanceof ExecutionKilled) {
+            return ((ExecutionKilled) object).uid();
         } else if (object.getClass() == Trigger.class) {
             return ((Trigger) object).uid();
         } else if (object.getClass() == MultipleConditionWindow.class) {

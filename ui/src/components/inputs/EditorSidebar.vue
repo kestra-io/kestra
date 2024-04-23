@@ -109,19 +109,18 @@
                 >
                     <el-row justify="space-between">
                         <el-col :span="10">
-                            <el-button class="ps-0">
-                                <component
-                                    :is="data.children ? 'FolderOutline' : 'FileDocumentOutline'"
-                                />
-                            </el-button>
+                            <span class="me-2">
+                                <img
+                                    :src="getIcon(Array.isArray(data.children), data.name)"
+                                    :alt="data.extension"
+                                    width="18"
+                                >
+                            </span>
                             <span class="filename"> {{ data.name }}</span>
                         </el-col>
                     </el-row>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item @click="toggleExpanded(false)">
-                                expand all
-                            </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="Array.isArray(data.children)"
                                 @click="toggleDialog(true, 'file', node)"
@@ -277,6 +276,8 @@
     import FolderOutline from "vue-material-design-icons/FolderOutline.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
 
+    import {getVSIFileIcon, getVSIFolderIcon} from "file-extension-icon-js";
+
     import {YamlUtils} from "@kestra-io/ui-libs";
     const YAML = {label: "YAML", value: "yml"};
 
@@ -339,6 +340,16 @@
             },
         },
         methods: {
+            getIcon(isFolder, name) {
+                if (isFolder) return getVSIFolderIcon("folder");
+
+                // Making sure icon is correct for 'yml' files
+                if (name.endsWith(".yml")) {
+                    name = name.replace(/\.yml$/, ".yaml");
+                }
+
+                return getVSIFileIcon(name);
+            },
             toggleExpanded(isExpanded) {
                 Object.keys(this.$refs.tree.store.nodesMap).forEach((key) => {
                     this.$refs.tree.store.nodesMap[key].expanded = isExpanded;

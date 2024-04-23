@@ -133,7 +133,7 @@
                             >
                                 {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="copyPath(data.name)">
+                            <el-dropdown-item @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
                             <el-dropdown-item @click="renameItemDialog(data)">
@@ -174,29 +174,10 @@
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
-                <span>
-                    {{
-                        $t("namespace files.dialog.type_name", {
-                            type: dialog.type === "file" ? "File" : "Folder",
-                        })
-                    }}
-                </span>
+                <span> {{ $t(`namespace files.dialog.name.${dialog.type}`) }} </span>
             </div>
             <el-input ref="name" v-model="dialog.name" size="large" class="mb-3" />
 
-            <template v-if="dialog.type === 'file' && !dialog.rename">
-                <div class="py-1">
-                    <span>{{ $t("namespace files.dialog.extension") }}</span>
-                </div>
-                <el-select v-model="dialog.extension" size="large" class="mb-3">
-                    <el-option
-                        v-for="extension in extensions"
-                        :key="extension.value"
-                        :value="extension.value"
-                        :label="extension.label"
-                    />
-                </el-select>
-            </template>
             <template v-if="!dialog.rename">
                 <div class="py-1">
                     <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
@@ -285,7 +266,6 @@
         visible: false,
         type: undefined,
         name: undefined,
-        extension: YAML.value,
         folder: "root",
         rename: false,
     };
@@ -308,7 +288,6 @@
                 filter: "",
 
                 dialog: {...DIALOG_DEFAULTS},
-                extensions: [YAML],
                 dropdownRef: "",
 
                 tree: {allExpanded: false},
@@ -479,9 +458,11 @@
                 const {name, extension, content} = file
                     ? file
                     : {
-                        name: this.dialog.name,
-                        extension: this.dialog.extension,
-                        content: `# Initial content of your ${this.dialog.name}.${this.dialog.extension} file`,
+                        name: this.dialog.name.split(".")[0],
+                        extension: this.dialog.name.split(".")[1],
+                        content: `# Initial content of your ${
+                            this.dialog.name.split(".")[0]
+                        }.${this.dialog.name.split(".")[1]} file`,
                     };
                 const NEW = {name: `${name}.${extension}`, extension, content};
 
@@ -708,7 +689,7 @@
     color: var(--el-text-color-regular);
 
     &:hover {
-      color: var(--bs-primary);
+      color: white;
     }
   }
 }

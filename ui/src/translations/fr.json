@@ -598,9 +598,11 @@
         "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
       },
       "dialog": {
-        "type_name": "{type} nom",
-        "extension": "Extension",
-        "parent_folder": "Dossier parent",
+        "name": {
+          "file": "Nom avec extension :",
+          "folder": "Nom du dossier :"
+        },
+        "parent_folder": "Dossier parent :",
         "file_deletion": "Confirmer la suppression du fichier",
         "folder_deletion": "Confirmer la suppression du dossier",
         "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",

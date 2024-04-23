@@ -593,6 +593,10 @@
       }
     },
     "namespace files": {
+      "toggle": {
+        "show": "Show file explorer",
+        "hide": "Hide file explorer"
+      },
       "filter": "Filter",
       "no_items": "No items",
       "tree": {

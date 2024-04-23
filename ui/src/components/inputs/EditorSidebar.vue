@@ -1,5 +1,5 @@
 <template>
-    <div class="w-25 p-3 sidebar">
+    <div v-show="explorerVisible" class="w-25 p-3 sidebar">
         <div class="d-flex flex-row">
             <el-input
                 v-model="filter"
@@ -300,8 +300,10 @@
             };
         },
         computed: {
-            ...mapState("flow", ["flows", "total"]),
-
+            ...mapState({
+                flows: (state) => state.flow.flows,
+                explorerVisible: (state) => state.editor.explorerVisible,
+            }),
             folders() {
                 function extractNames(array) {
                     const names = [];

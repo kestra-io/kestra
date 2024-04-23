@@ -4,6 +4,8 @@
 
     // Icons
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
+    import MenuClose from "vue-material-design-icons/MenuClose.vue";
 
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -34,6 +36,7 @@
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
+    const toggleExplorer = ref(null);
 
     const props = defineProps({
         flowGraph: {
@@ -192,6 +195,12 @@
     const routeParams = router.currentRoute.value.params;
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
+
+    const explorerVisible = computed(() => store.state.editor.explorerVisible);
+    const toggleExplorerVisibility = () => {
+        toggleExplorer.value.hide();
+        store.commit("editor/toggleExplorerVisibility");
+    }
 
     const persistViewType = (value) => {
         viewType.value = value;
@@ -778,30 +787,38 @@
 
 <template>
     <div class="button-top">
-        <switch-view
-            :type="viewType"
-            class="to-topology-button"
-            @switch-view="switchViewType"
-        />
+        <el-tooltip ref="toggleExplorer" :content="$t(`namespace files.toggle.${explorerVisible ? 'hide': 'show'}`)">
+            <el-button @click="toggleExplorerVisibility()">
+                <component :is="explorerVisible ? MenuOpen : MenuClose" />
+            </el-button>
+        </el-tooltip>
 
-        <ValidationError ref="validationDomElement" class="validation" tooltip-placement="bottom-start" :errors="flowErrors" :warnings="flowWarnings" />
+        <div class="d-flex">
+            <switch-view
+                :type="viewType"
+                class="to-topology-button"
+                @switch-view="switchViewType"
+            />
 
-        <EditorButtons
-            :is-creating="props.isCreating"
-            :is-read-only="props.isReadOnly"
-            :can-delete="canDelete()"
-            :is-allowed-edit="isAllowedEdit()"
-            :have-change="flowYaml !== flowYamlOrigin"
-            :flow-have-tasks="flowHaveTasks()"
-            :errors="flowErrors"
-            :warnings="flowWarnings"
-            @delete-flow="deleteFlow"
-            @save="save"
-            @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
-            @open-new-error="isNewErrorOpen = true;"
-            @open-new-trigger="isNewTriggerOpen = true;"
-            @open-edit-metadata="isEditMetadataOpen = true;"
-        />
+            <ValidationError ref="validationDomElement" class="validation" tooltip-placement="bottom-start" :errors="flowErrors" :warnings="flowWarnings" />
+
+            <EditorButtons
+                :is-creating="props.isCreating"
+                :is-read-only="props.isReadOnly"
+                :can-delete="canDelete()"
+                :is-allowed-edit="isAllowedEdit()"
+                :have-change="flowYaml !== flowYamlOrigin"
+                :flow-have-tasks="flowHaveTasks()"
+                :errors="flowErrors"
+                :warnings="flowWarnings"
+                @delete-flow="deleteFlow"
+                @save="save"
+                @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
+                @open-new-error="isNewErrorOpen = true;"
+                @open-new-trigger="isNewTriggerOpen = true;"
+                @open-edit-metadata="isEditMetadataOpen = true;"
+            />
+        </div>
     </div>
     <div v-bind="$attrs" class="main-editor" v-loading="isLoading">
         <editor
@@ -947,14 +964,31 @@
         background: var(--card-bg);
         border-bottom: 1px solid var(--bs-border-color);
         padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
+        padding-left: calc(var(--spacer) / 2);
         display: flex;
-        justify-content: end;
+        justify-content: space-between;
         flex-grow: 0;
 
         :deep(.validation) {
             border: 0;
             padding-left: calc(var(--spacer) / 2);
             padding-right: calc(var(--spacer) / 2);
+        }
+
+        :deep(.el-button) {
+            border: 0;
+            background: none;
+            opacity: 0.5;
+            padding-left: calc(var(--spacer) / 2);
+            padding-right: calc(var(--spacer) / 2);
+
+            &.el-button--primary {
+                opacity: 1;
+            }
+        }
+
+        button.el-button--primary {
+            color: var(--bs-primary);
         }
     }
 

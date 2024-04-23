@@ -569,6 +569,10 @@
       }
     },
     "namespace files": {
+      "toggle": {
+        "show": "Afficher l'explorateur de fichiers",
+        "hide": "Masquer l'explorateur de fichiers"
+      },
       "filter": "Filtrer",
       "no_items": "Aucun élément",
       "tree": {

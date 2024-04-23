@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -26,13 +25,15 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import lombok.*;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ import java.util.stream.Stream;
 @ToString
 @EqualsAndHashCode
 @FlowValidation
-public class Flow implements DeletedInterface, TenantInterface {
+public class Flow extends AbstractFlow {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
@@ -58,31 +59,12 @@ public class Flow implements DeletedInterface, TenantInterface {
             }
         });
 
-    @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
-    String tenantId;
-
-    @NotNull
-    @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
-    String id;
-
-    @NotNull
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
-    String namespace;
-
-    @Min(value = 1)
-    Integer revision;
-
     String description;
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(implementation = Object.class, anyOf = {List.class, Map.class})
     List<Label> labels;
-
-    @Valid
-    List<Input<?>> inputs;
 
     Map<String, Object> variables;
 
@@ -102,14 +84,6 @@ public class Flow implements DeletedInterface, TenantInterface {
 
     @Valid
     List<TaskDefault> taskDefaults;
-
-    @NotNull
-    @Builder.Default
-    boolean disabled = false;
-
-    @NotNull
-    @Builder.Default
-    boolean deleted = false;
 
     @Valid
     Concurrency concurrency;

@@ -1,9 +1,9 @@
 package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.tasks.TaskInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.TaskForExecution;
-import io.kestra.core.models.tasks.TaskInterface;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.Setter;

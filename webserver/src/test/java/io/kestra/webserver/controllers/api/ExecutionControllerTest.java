@@ -5,11 +5,14 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
+import io.kestra.core.models.tasks.TaskForExecution;
+import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.models.triggers.types.Webhook;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -18,7 +21,6 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.controllers.api.ExecutionController;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -53,7 +55,8 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
@@ -86,6 +89,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     ReactorSseClient sseClient;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
+    public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
 
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("failed", "NO")
@@ -1105,5 +1109,38 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=key:", requestBody)
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullValue, Execution.class));
+    }
+
+    @Test
+    void getFlowForExecution() {
+        FlowForExecution result = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/flow/io.kestra.tests/full"),
+            FlowForExecution.class
+        );
+
+        assertThat(result, notNullValue());
+        assertThat(result.getTasks(), hasSize(5));
+        assertThat((result.getTasks().get(0) instanceof TaskForExecution), is(true));
+    }
+
+    @Test
+    void getFlowForExecutionById() {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + TESTS_WEBHOOK_KEY + "?name=john&age=12&age=13",
+                    ImmutableMap.of("a", 1, "b", true)
+                ),
+            Execution.class
+        );
+
+        FlowForExecution result = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/flow"),
+            FlowForExecution.class
+        );
+
+        assertThat(result.getId(), is(execution.getFlowId()));
+        assertThat(result.getTriggers(), hasSize(1));
+        assertThat((result.getTriggers().get(0) instanceof AbstractTriggerForExecution), is(true));
     }
 }

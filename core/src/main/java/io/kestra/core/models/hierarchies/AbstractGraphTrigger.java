@@ -1,9 +1,6 @@
 package io.kestra.core.models.hierarchies;
 
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.AbstractTriggerForExecution;
-import io.kestra.core.models.triggers.AbstractTriggerInterface;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.*;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +11,7 @@ import lombok.ToString;
 @Introspected
 public abstract class AbstractGraphTrigger extends AbstractGraph {
     @Setter
-    private AbstractTriggerInterface triggerDeclaration;
+    private TriggerInterface triggerDeclaration;
     private final Trigger trigger;
 
     public AbstractGraphTrigger(AbstractTrigger triggerDeclaration, Trigger trigger) {

@@ -1,59 +1,38 @@
 package io.kestra.core.models.flows;
 
 import io.kestra.core.models.tasks.TaskForExecution;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.micronaut.core.annotation.Introspected;
+import io.kestra.core.models.triggers.AbstractTriggerForExecution;
+import io.kestra.core.utils.ListUtils;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import lombok.*;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @Getter
-@NoArgsConstructor
-@Introspected
 @ToString
-@EqualsAndHashCode
-public class FlowForExecution {
-    @NotNull
-    @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
-    String id;
-
-    @NotNull
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
-    String namespace;
-
-    @Min(value = 1)
-    Integer revision;
-
-    @Valid
-    List<Input<?>> inputs;
-
+@NoArgsConstructor
+public class FlowForExecution extends AbstractFlow {
     @Valid
     @NotEmpty
     List<TaskForExecution> tasks;
 
     @Valid
-    List<AbstractTrigger> triggers;
-
-    @NotNull
-    @Builder.Default
-    boolean disabled = false;
-
-    @NotNull
-    @Builder.Default
-    boolean deleted = false;
+    List<AbstractTriggerForExecution> triggers;
 
     public static FlowForExecution of(Flow flow) {
         return FlowForExecution.builder()
             .id(flow.getId())
+            .tenantId((flow.getTenantId()))
             .namespace(flow.getNamespace())
             .revision(flow.getRevision())
             .inputs(flow.getInputs())
             .tasks(flow.getTasks().stream().map(TaskForExecution::of).toList())
+            .triggers(ListUtils.emptyOnNull(flow.getTriggers()).stream().map(AbstractTriggerForExecution::of).toList())
             .disabled(flow.isDisabled())
             .deleted(flow.isDeleted())
             .build();

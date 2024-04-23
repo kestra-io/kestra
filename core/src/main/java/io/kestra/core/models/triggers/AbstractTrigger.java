@@ -14,9 +14,7 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,17 +29,10 @@ import java.util.List;
 @NoArgsConstructor
 @Introspected
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-abstract public class AbstractTrigger implements AbstractTriggerInterface {
-    @NotNull
-    @NotBlank
-    @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
-    @Schema(title = "A unique ID for the whole flow.")
+abstract public class AbstractTrigger implements TriggerInterface {
+
     protected String id;
 
-    @NotNull
-    @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
-    @Schema(title = "The class name for this current trigger.")
     protected String type;
 
     private String description;

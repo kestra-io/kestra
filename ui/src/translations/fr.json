@@ -570,8 +570,8 @@
     },
     "namespace files": {
       "toggle": {
-        "show": "Afficher l'explorateur de fichiers",
-        "hide": "Masquer l'explorateur de fichiers"
+        "show": "Afficher les fichiers de l'espace de noms",
+        "hide": "Masquer les fichiers de l'espace de noms"
       },
       "filter": "Filtrer",
       "no_items": "Aucun élément",

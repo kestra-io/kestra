@@ -594,8 +594,8 @@
     },
     "namespace files": {
       "toggle": {
-        "show": "Show file explorer",
-        "hide": "Hide file explorer"
+        "show": "Show namespace files",
+        "hide": "Hide namespace files"
       },
       "filter": "Filter",
       "no_items": "No items",

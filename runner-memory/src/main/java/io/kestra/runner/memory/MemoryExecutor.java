@@ -506,12 +506,14 @@ public class MemoryExecutor implements ExecutorInterface {
             return;
         }
 
-        ExecutionKilled message = either.getLeft();
+        if (!(either.getLeft() instanceof ExecutionKilledExecution message)) {
+            return;
+        }
+
         if (skipExecutionService.skipExecution(message.getExecutionId())) {
             log.warn("Skipping execution {}", message.getExecutionId());
             return;
         }
-
 
         synchronized (this) {
             if (log.isDebugEnabled()) {

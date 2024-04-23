@@ -926,7 +926,7 @@ public class ExecutorService {
         );
     }
 
-    public void log(Logger log, Boolean in, ExecutionKilled value) {
+    public void log(Logger log, Boolean in, ExecutionKilledExecution value) {
         log.debug(
             "{} {} [key='{}']\n{}",
             in ? "<< IN " : ">> OUT",

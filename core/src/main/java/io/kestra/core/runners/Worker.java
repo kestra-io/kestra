@@ -17,6 +17,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -176,19 +177,32 @@ public class Worker implements Service, Runnable, AutoCloseable {
             if (executionKilled == null || !executionKilled.isLeft()) {
                 return;
             }
+
             ExecutionKilled.State state = executionKilled.getLeft().getState();
+
             if (state != null && state != ExecutionKilled.State.EXECUTED) {
                 return;
             }
-            // @FIXME: the hashset will never expire killed execution
-            killedExecution.add(executionKilled.getLeft().getExecutionId());
+
             synchronized (this) {
-                workerThreadReferences
-                    .stream()
-                    .filter(workerThread -> workerThread instanceof WorkerTaskThread)
-                    .map(workerThread -> (WorkerTaskThread) workerThread)
-                    .filter(workerThread -> executionKilled.getLeft().getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
-                    .forEach(AbstractWorkerThread::kill);
+                if (executionKilled.getLeft() instanceof ExecutionKilledExecution executionKilledExecution) {
+                    // @FIXME: the hashset will never expire killed execution
+                    killedExecution.add(executionKilledExecution.getExecutionId());
+
+                    workerThreadReferences
+                        .stream()
+                        .filter(workerThread -> workerThread instanceof WorkerTaskThread)
+                        .map(workerThread -> (WorkerTaskThread) workerThread)
+                        .filter(workerThread -> executionKilledExecution.isEqual(workerThread.getWorkerTask()))
+                        .forEach(AbstractWorkerThread::kill);
+                } else if (executionKilled.getLeft() instanceof ExecutionKilledTrigger executionKilledTrigger) {
+                    workerThreadReferences
+                        .stream()
+                        .filter(workerThread -> workerThread instanceof AbstractWorkerTriggerThread)
+                        .map(workerThread -> (AbstractWorkerTriggerThread) workerThread)
+                        .filter(workerThread -> executionKilledTrigger.isEqual(workerThread.getWorkerTrigger().getTriggerContext()))
+                        .forEach(abstractWorkerTriggerThread -> abstractWorkerTriggerThread.kill());
+                }
             }
         });
 
@@ -368,10 +382,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             WorkerTriggerThread workerThread = new WorkerTriggerThread(workerTrigger, pollingTrigger);
                             io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
+                            if (workerThread.getException() != null || !state.equals(SUCCESS)) {
+                                this.handleTriggerError(workerTrigger, workerThread.getException());
+                            }
+
                             if (!state.equals(FAILED)) {
                                 this.publishTriggerExecution(workerTrigger, workerThread.getEvaluate());
-                            } else {
-                                this.handleTriggerError(workerTrigger, workerThread.getException());
                             }
                         } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
                             WorkerTriggerRealtimeThread workerThread = new WorkerTriggerRealtimeThread(
@@ -382,7 +398,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             );
                             io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
-                            if (!state.equals(FAILED)) {
+                            if (workerThread.getException() != null || !state.equals(SUCCESS)) {
                                 this.handleTriggerError(workerTrigger, workerThread.getException());
                             }
                         }
@@ -749,7 +765,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .map(throwFunction(workerThread -> {
                 if (workerThread instanceof WorkerTaskThread workerTaskThread) {
                     return workerTaskThread.workerTask;
-                } else if (workerThread instanceof WorkerTriggerThread workerTriggerThread) {
+                } else if (workerThread instanceof AbstractWorkerTriggerThread workerTriggerThread) {
                     return workerTriggerThread.workerTrigger;
                 } else {
                     throw new Exception("Invalid thread type: '" + workerThread.getClass().getName() + "'");

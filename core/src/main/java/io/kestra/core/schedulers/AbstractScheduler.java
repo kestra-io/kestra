@@ -7,6 +7,8 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
@@ -60,6 +62,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final QueueInterface<Trigger> triggerQueue;
     private final QueueInterface<WorkerJob> workerTaskQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
+    private QueueInterface<ExecutionKilled> executionKilledQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
@@ -98,6 +101,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.workerTaskQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
+        this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
@@ -145,27 +149,51 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         );
         thread.start();
 
-        // remove trigger on flow update & update local triggers store
+        // remove trigger on flow update, update local triggers store, and stop the trigger on the worker
         this.flowListeners.listen((flow, previous) -> {
             if (flow.isDeleted() || previous != null) {
-                List<AbstractTrigger> triggersDeleted = flow.isDeleted() ? ListUtils.emptyOnNull(flow.getTriggers()) : FlowService
-                    .findRemovedTrigger(flow, previous);
+                List<AbstractTrigger> triggersDeleted = flow.isDeleted() ?
+                    ListUtils.emptyOnNull(flow.getTriggers()) :
+                    FlowService.findRemovedTrigger(flow, previous);
+
                 triggersDeleted.forEach(abstractTrigger -> {
                     Trigger trigger = Trigger.of(flow, abstractTrigger);
                     this.triggerQueue.delete(trigger);
+
+                    this.executionKilledQueue.emit(ExecutionKilledTrigger
+                        .builder()
+                        .tenantId(trigger.getTenantId())
+                        .namespace(trigger.getNamespace())
+                        .flowId(trigger.getFlowId())
+                        .triggerId(trigger.getTriggerId())
+                        .build()
+                    );
                 });
+
             }
+
             if (previous != null) {
                 FlowService.findUpdatedTrigger(flow, previous)
                     .forEach(abstractTrigger -> {
                         if (abstractTrigger instanceof WorkerTriggerInterface) {
                             RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                             ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
+
                             try {
                                 this.triggerState.update(flow, abstractTrigger, conditionContext);
                             } catch (Exception e) {
                                 logError(conditionContext, flow, abstractTrigger, e);
                             }
+
+                            this.executionKilledQueue.emit(ExecutionKilledTrigger
+                                .builder()
+                                .tenantId(trigger.getTenantId())
+                                .namespace(trigger.getNamespace())
+                                .flowId(trigger.getFlowId())
+                                .triggerId(trigger.getTriggerId())
+                                .build()
+                            );
                         }
                     });
             }

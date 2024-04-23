@@ -3,10 +3,7 @@ package io.kestra.core.services;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
@@ -393,7 +390,7 @@ public class ExecutionService {
      * @param executionId   of the parent execution.
      * @return  a {@link Flux} of zero or more {@link ExecutionKilled}.
      */
-    public Flux<ExecutionKilled> killSubflowExecutions(final String tenantId, final String executionId) {
+    public Flux<ExecutionKilledExecution> killSubflowExecutions(final String tenantId, final String executionId) {
         // Lookup for all executions triggered by the current execution being killed.
         Flux<Execution> executions = executionRepository.findAllByTriggerExecutionId(
             tenantId,
@@ -408,7 +405,7 @@ public class ExecutionService {
                 State state = childExecution.getState();
                 return state.getCurrent() != State.Type.KILLING && state.getCurrent() != State.Type.KILLED;
             })
-            .map(childExecution -> ExecutionKilled
+            .map(childExecution -> ExecutionKilledExecution
                 .builder()
                 .executionId(childExecution.getId())
                 .isOnKillCascade(true)

@@ -51,8 +51,8 @@ dependencies {
 allprojects {
     group "io.kestra"
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    sourceCompatibility = 21
+    targetCompatibility = 21
 
     repositories {
         mavenCentral()

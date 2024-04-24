@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Repository service for storing service instance.
@@ -119,5 +120,12 @@ public interface ServiceInstanceRepositoryInterface {
         }
     }
 
-
+    /**
+     * Returns the function to be used for mapping column used to sort result.
+     *
+     * @return  the mapping function.
+     */
+    default Function<String, String> sortMapping(){
+        return Function.identity();
+    }
 }

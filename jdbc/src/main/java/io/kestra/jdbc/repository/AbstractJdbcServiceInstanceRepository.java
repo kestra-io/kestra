@@ -22,8 +22,10 @@ import org.jooq.TransactionalRunnable;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.using;
@@ -296,5 +298,16 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
 
     private Table<Record> table() {
         return this.jdbcRepository.getTable();
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public Function<String, String> sortMapping() {
+        Map<String, String> mapper = Map.of(
+            "createdAt", CREATED_AT.getName(),
+            "updatedAt", UPDATED_AT.getName(),
+            "serviceId", SERVICE_ID.getName()
+        );
+        return mapper::get;
     }
 }

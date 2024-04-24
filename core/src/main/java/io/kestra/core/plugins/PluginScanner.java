@@ -40,7 +40,8 @@ public class PluginScanner {
      * @param pluginPaths the absolute path to a top-level plugin directory.
      */
     public List<RegisteredPlugin> scan(final Path pluginPaths) {
-        return new PluginResolver(pluginPaths)
+        long start = System.currentTimeMillis();
+        List<RegisteredPlugin> scanResult = new PluginResolver(pluginPaths)
             .resolves()
             .stream()
             .map(plugin -> {
@@ -61,7 +62,11 @@ public class PluginScanner {
                 return scanClassLoader(classLoader, plugin, null);
             })
             .filter(RegisteredPlugin::isValid)
-            .collect(Collectors.toList());
+            .toList();
+
+        int nbPlugins = scanResult.stream().mapToInt(registeredPlugin -> registeredPlugin.allClass().size()).sum();
+        log.info("Registered {} plugins int {} groups (scan done in {}ms)", nbPlugins, scanResult.size(), System.currentTimeMillis() - start);
+        return scanResult;
     }
 
     /**

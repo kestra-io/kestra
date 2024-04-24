@@ -44,6 +44,10 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
         PluginDeserializer.pluginRegistry = pluginRegistry;
     }
 
+    public static boolean isInitialized() {
+        return PluginDeserializer.pluginRegistry != null;
+    }
+
     /**
      * {@inheritDoc}
      */

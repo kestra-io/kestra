@@ -25,6 +25,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginModule;
+import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -122,8 +123,10 @@ public final class JacksonMapper {
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {
-        DefaultPluginRegistry.getOrCreate(); // ensure core plugins are loaded
-
+        // ensure core plugins are loaded and plugin-deserializer is configured.
+        if (!PluginDeserializer.isInitialized()) {
+            PluginDeserializer.setPluginRegistry(DefaultPluginRegistry.getOrCreate());
+        }
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)

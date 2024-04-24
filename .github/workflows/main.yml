@@ -228,6 +228,7 @@ jobs:
               io.kestra.plugin:plugin-jdbc-dremio:$PLUGIN_VERSION
               io.kestra.plugin:plugin-jdbc-arrow-flight:$PLUGIN_VERSION
               io.kestra.plugin:plugin-jdbc-sqlite:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-jdbc-sybase:$PLUGIN_VERSION
               io.kestra.plugin:plugin-kafka:$PLUGIN_VERSION
               io.kestra.plugin:plugin-kubernetes:$PLUGIN_VERSION
               io.kestra.plugin:plugin-malloy:$PLUGIN_VERSION

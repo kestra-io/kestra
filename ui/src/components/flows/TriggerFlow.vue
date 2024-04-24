@@ -3,11 +3,47 @@
         <el-button :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+        <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <flow-run @execution-trigger="closeModal" :redirect="true" />
+        </el-dialog>
+        <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
+            <el-form
+                label-position="top"
+            >
+                <el-form-item :label="$t('namespace')">
+                    <el-select
+                        v-model="localNamespace"
+                    >
+                        <el-option
+                            v-for="np in namespaces"
+                            :key="np"
+                            :label="np"
+                            :value="np"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item
+                    v-if="localNamespace && flowsExecutable.length > 0"
+                    :label="$t('flow')"
+                >
+                    <el-select
+                        v-model="localFlow"
+                    >
+                        <el-option
+                            v-for="flow in flowsExecutable"
+                            :key="flow.id"
+                            :label="flow.id"
+                            :value="flow"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item v-if="localFlow" :label="$t('inputs')">
+                    <flow-run @execution-trigger="closeModal" :redirect="true" />
+                </el-form-item>
+            </el-form>
         </el-dialog>
     </div>
 </template>
@@ -45,6 +81,9 @@
         data() {
             return {
                 isOpen: false,
+                isSelectFlowOpen: false,
+                localFlow: undefined,
+                localNamespace: undefined,
                 icon: {
                     Flash: shallowRef(Flash)
                 }
@@ -63,8 +102,12 @@
                     });
                     this.$tours["guidedTour"].nextStep();
                     return;
+                } else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
+                    this.isOpen = !this.isOpen;
+                } else {
+                    this.$store.dispatch("execution/loadNamespaces");
+                    this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
-                this.isOpen = !this.isOpen;
             },
             closeModal() {
                 this.isOpen = false;
@@ -77,13 +120,25 @@
                     flowId: this.flowId,
                     namespace: this.namespace
                 });
+            },
+            reset() {
+                this.isOpen = false;
+                this.isSelectFlowOpen = false;
+                this.localFlow = undefined;
+                this.localNamespace = undefined;
             }
         },
         computed: {
             ...mapState("flow", ["executeFlow"]),
             ...mapState("core", ["guidedProperties"]),
-            ...mapState("execution", ["flow"]),
-            ...mapState("auth", ["user"])
+            ...mapState("execution", ["flow", "namespaces", "flowsExecutable"]),
+            ...mapState("auth", ["user"]),
+            computedFlowId() {
+                return this.flowId || this.localFlow?.id;
+            },
+            computedNamespace() {
+                return this.namespace || this.localNamespace;
+            }
         },
         watch: {
             guidedProperties: {
@@ -111,13 +166,33 @@
                     this.loadDefinition();
                 },
                 immediate: true
+            },
+            localNamespace: {
+                handler() {
+                    if (!this.localNamespace) {
+                        return;
+                    }
+                    this.$store.dispatch("execution/loadFlowsExecutable", {
+                        namespace: this.localNamespace
+                    });
+                },
+                immediate: true
+            },
+            localFlow: {
+                handler() {
+                    if (!this.localFlow) {
+                        return;
+                    }
+                    this.$store.commit("execution/setFlow", this.localFlow);
+                },
+                immediate: true
             }
         }
     };
 </script>
 
 <style scoped>
-.trigger-flow-wrapper {
-    display: inline;
-}
+    .trigger-flow-wrapper {
+        display: inline;
+    }
 </style>

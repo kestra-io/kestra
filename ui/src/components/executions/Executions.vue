@@ -2,6 +2,13 @@
     <top-nav-bar v-if="topbar" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
+                <template v-if="$route.name === 'executions/list'">
+                    <li>
+                        <template v-if="hasAnyExecute">
+                            <trigger-flow />
+                        </template>
+                    </li>
+                </template>
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
@@ -588,7 +595,7 @@
                 return this.$moment().subtract(30, "days").toISOString(true);
             },
             displayButtons() {
-                return (this.$route.name === "flows/update");
+                return (this.$route.name === "flows/update") || (this.$route.name === "executions/list");
             },
             canCheck() {
                 return this.canDelete || this.canUpdate;
@@ -604,6 +611,9 @@
             },
             isAllowedEdit() {
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+            },
+            hasAnyExecute() {
+                return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
                 return this.embed === false || this.filter

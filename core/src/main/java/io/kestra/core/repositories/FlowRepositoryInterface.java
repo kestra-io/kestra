@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.micronaut.data.model.Pageable;
 
@@ -86,6 +87,8 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findByNamespace(String tenantId, String namespace);
 
+    List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace);
+
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);
 
     ArrayListTotal<Flow> find(
@@ -106,6 +109,8 @@ public interface FlowRepositoryInterface {
     ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace);
 
     List<String> findDistinctNamespace(String tenantId);
+
+    List<String> findDistinctNamespaceExecutable(String tenantId);
 
     FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults);
 

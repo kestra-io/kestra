@@ -1439,7 +1439,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/flow/{namespace}/{flowId}")
+    @Get(uri = "/flows/{namespace}/{flowId}")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowForExecution(
         @Parameter(description = "The namespace of the flow") @PathVariable String namespace,
@@ -1449,4 +1449,21 @@ public class ExecutionController {
 
         return FlowForExecution.of(flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow());
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/namespaces")
+    @Operation(tags = {"Executions"}, summary = "Get all namespaces that have executable flows")
+    public List<String> listDistinctNamespace() {
+        return flowRepository.findDistinctNamespaceExecutable(tenantService.resolveTenant());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/namespaces/{namespace}/flows")
+    @Operation(tags = {"Executions"}, summary = "Get all flow ids for a namespace")
+    public List<FlowForExecution> getFlowsByNamespace(
+        @Parameter(description = "The namespace") @PathVariable String namespace
+    ) {
+        return flowRepository.findByNamespaceExecutable(tenantService.resolveTenant(), namespace);
+    }
+
 }

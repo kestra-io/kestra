@@ -1114,7 +1114,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void getFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/flow/io.kestra.tests/full"),
+            HttpRequest.GET("/api/v1/executions/flows/io.kestra.tests/full"),
             FlowForExecution.class
         );
 
@@ -1143,4 +1143,25 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getTriggers(), hasSize(1));
         assertThat((result.getTriggers().get(0) instanceof AbstractTriggerForExecution), is(true));
     }
+
+    @Test
+    void getDistinctNamespaceExecutables() {
+        List<String> result = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/namespaces"),
+            Argument.of(List.class, String.class)
+        );
+
+        assertThat(result.size(), greaterThanOrEqualTo(5));
+    }
+
+    @Test
+    void getFlowFromNamespace() {
+        List<FlowForExecution> result = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
+            Argument.of(List.class, FlowForExecution.class)
+        );
+
+        assertThat(result.size(), greaterThan(100));
+    }
+
 }

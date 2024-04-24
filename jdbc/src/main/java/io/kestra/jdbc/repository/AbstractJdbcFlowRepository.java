@@ -7,6 +7,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
@@ -140,6 +141,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return buildTenantCondition(tenantId);
     }
 
+    protected Condition defaultExecutionFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
     @Override
     public Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
         return jdbcRepository
@@ -256,14 +261,36 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(fromLastRevision(true))
-                    .where(field("namespace").eq(namespace))
+                SelectConditionStep<Record1<Object>> select =
+                    findByNamespaceSelect(tenantId, namespace)
                     .and(this.defaultFilter(tenantId));
 
                 return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
+    public List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select =
+                    findByNamespaceSelect(tenantId, namespace)
+                    .and(this.defaultExecutionFilter(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            }).stream().map(FlowForExecution::of).toList();
+    }
+
+    private SelectConditionStep<Record1<Object>> findByNamespaceSelect(String tenantId, String namespace) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                return DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(fromLastRevision(true))
+                    .where(field("namespace").eq(namespace));
             });
     }
 
@@ -505,6 +532,21 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .select(field("namespace"))
                 .from(fromLastRevision(true))
                 .where(this.defaultFilter(tenantId))
+                .groupBy(field("namespace"))
+                .fetch()
+                .map(record -> record.getValue("namespace", String.class))
+            );
+    }
+
+    @Override
+    public List<String> findDistinctNamespaceExecutable(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .select(field("namespace"))
+                .from(fromLastRevision(true))
+                .where(this.defaultExecutionFilter(tenantId))
                 .groupBy(field("namespace"))
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))

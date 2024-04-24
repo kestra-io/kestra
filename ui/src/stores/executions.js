@@ -16,7 +16,9 @@ export default {
         filePreview: undefined,
         subflowsExecutions: {},
         flow: undefined,
-        flowGraph: undefined
+        flowGraph: undefined,
+        namespaces: [],
+        flowsExecutable: []
     },
     actions: {
         loadExecutions({commit}, options) {
@@ -218,7 +220,7 @@ export default {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
         },
         loadFlowForExecution({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/executions/flow/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
+            return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
                 .then(response => {
                     commit("setFlow", response.data)
                 });
@@ -233,6 +235,18 @@ export default {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}/graph`)
                 .then(response => {
                     commit("setFlowGraph", response.data)
+                })
+        },
+        loadNamespaces({commit}) {
+            return this.$http.get(`${apiUrl(this)}/executions/namespaces`)
+                .then(response => {
+                    commit("setNamespaces", response.data)
+                })
+        },
+        loadFlowsExecutable({commit}, options) {
+            return this.$http.get(`${apiUrl(this)}/executions/namespaces/${options.namespace}/flows`)
+                .then(response => {
+                    commit("setFlowsExecutable", response.data)
                 })
         }
     },
@@ -285,6 +299,12 @@ export default {
         },
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph
+        },
+        setNamespaces(state, namespaces) {
+            state.namespaces = namespaces
+        },
+        setFlowsExecutable(state, flowsExecutable) {
+            state.flowsExecutable = flowsExecutable
         }
     },
     getters: {

@@ -4,6 +4,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -139,6 +140,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .filter(flow -> (tenantId == null && flow.getTenantId() == null) || (tenantId != null && tenantId.equals(flow.getTenantId())))
             .sorted(Comparator.comparingInt(Flow::getRevision))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace) {
+        return List.of();
     }
 
     @Override
@@ -298,5 +304,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         ArrayList<String> namespacesList = new ArrayList<>(namespaces);
         Collections.sort(namespacesList);
         return new ArrayList<>(namespacesList);
+    }
+
+    @Override
+    public List<String> findDistinctNamespaceExecutable(String tenantId) {
+        return List.of();
     }
 }

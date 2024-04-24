@@ -106,7 +106,7 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
 
         // verify that the target flow exists, and the current execution is authorized to access it
         FlowExecutorInterface flowExecutor = runContext.getApplicationContext().getBean(FlowExecutorInterface.class);
-        flowExecutor.findByIdFromFlowTask(
+        flowExecutor.findByIdFromTask(
             runContext.tenantId(),
             realNamespace,
             realFlowId,

@@ -909,13 +909,13 @@ public class RunContext {
     }
 
     @SuppressWarnings("unchecked")
-    public FlowId flowId() {
+    public FlowInfo flowInfo() {
         Map<String, Object> flow = (Map<String, Object>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
-        return flow == null ? null : new FlowId((String) flow.get("tenantId"), (String) flow.get("namespace"), (String) flow.get("id"), (Integer) flow.get("revision"));
+        return flow == null ? null : new FlowInfo((String) flow.get("tenantId"), (String) flow.get("namespace"), (String) flow.get("id"), (Integer) flow.get("revision"));
     }
 
-    public record FlowId(String tenantId, String namespace, String id, Integer revision) {}
+    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {}
 
     /**
      * Returns the value of the specified configuration property for the plugin type

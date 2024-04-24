@@ -7,13 +7,28 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface FlowExecutorInterface {
+    /**
+     * Find all flows.
+     * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
+     */
     Collection<Flow> allLastVersion();
 
+    /**
+     * Find a flow.
+     * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
+     */
     Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision);
 
+    /**
+     * Whether the FlowExecutorInterface is ready to be used.
+     */
     Boolean isReady();
 
-    default Optional<Flow> findByIdFromFlowTask(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant, String fromNamespace, String fromId) {
+    /**
+     * Find a flow.
+     * This method will check if the namespace is allowed, so it can be used inside a task.
+     */
+    default Optional<Flow> findByIdFromTask(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant, String fromNamespace, String fromId) {
         return this.findById(
             tenantId,
             namespace,
@@ -22,6 +37,10 @@ public interface FlowExecutorInterface {
         );
     }
 
+    /**
+     * Find a flow from an execution.
+     * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
+     */
     default Optional<Flow> findByExecution(Execution execution) {
         return this.findById(
             execution.getTenantId(),

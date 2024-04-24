@@ -1,11 +1,22 @@
 <script setup>
-    import {computed, getCurrentInstance, h, onBeforeUnmount, onMounted, ref, watch} from "vue";
-    import {useStore} from "vuex"
+    import {
+        computed,
+        getCurrentInstance,
+        h,
+        onBeforeUnmount,
+        onMounted,
+        ref,
+        watch,
+    } from "vue";
+    import {useStore} from "vuex";
 
     // Icons
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
+    import Close from "vue-material-design-icons/Close.vue";
+
+    import {getVSIFileIcon} from "file-extension-icon-js";
 
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -30,126 +41,128 @@
 
     const store = useStore();
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
-    const emit = defineEmits(["follow", "expand-subflow"])
+    const emit = defineEmits(["follow", "expand-subflow"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
-    const toggleExplorer = ref(null);
 
     const props = defineProps({
         flowGraph: {
             type: Object,
             required: false,
-            default: undefined
+            default: undefined,
         },
         flowId: {
             type: String,
             required: false,
-            default: undefined
+            default: undefined,
         },
         flow: {
             type: Object,
             required: false,
-            default: undefined
+            default: undefined,
         },
         namespace: {
             type: String,
             required: false,
-            default: undefined
+            default: undefined,
         },
         execution: {
             type: Object,
-            default: undefined
+            default: undefined,
         },
         isCreating: {
             type: Boolean,
-            default: false
+            default: false,
         },
         isReadOnly: {
             type: Boolean,
-            default: true
+            default: true,
         },
         isDirty: {
             type: Boolean,
-            default: false
+            default: false,
         },
         graphOnly: {
             type: Boolean,
-            default: false
+            default: false,
         },
         total: {
             type: Number,
-            default: null
+            default: null,
         },
         guidedProperties: {
             type: Object,
             default: () => {
                 return {tourStarted: false};
-            }
+            },
         },
         flowValidation: {
             type: Object,
-            default: undefined
+            default: undefined,
         },
         expandedSubflows: {
             type: Array,
-            default: () => []
+            default: () => [],
         },
         nextRevision: {
             type: Number,
-            default: 1
-        }
-    })
+            default: 1,
+        },
+    });
 
     const flowErrors = computed(() => {
-        const flowExistsError = props.flowValidation?.outdated && props.isCreating
-            ? [outdatedMessage.value]
-            : [];
+        const flowExistsError =
+            props.flowValidation?.outdated && props.isCreating
+                ? [outdatedMessage.value]
+                : [];
 
-        const constraintsError = props.flowValidation?.constraints?.split(/, ?/) ?? [];
+        const constraintsError =
+            props.flowValidation?.constraints?.split(/, ?/) ?? [];
 
-        const errors = [
-            ...flowExistsError,
-            ...constraintsError
-        ];
+        const errors = [...flowExistsError, ...constraintsError];
 
         return errors.length === 0 ? undefined : errors;
-    })
+    });
 
     const baseOutdatedTranslationKey = computed(() => {
         const createOrUpdateKey = props.isCreating ? "create" : "update";
         return "outdated revision save confirmation." + createOrUpdateKey;
-    })
+    });
 
     const outdatedMessage = computed(() => {
-        return `${t(baseOutdatedTranslationKey.value + ".description")} ${t(baseOutdatedTranslationKey.value + ".details")}`
-    })
+        return `${t(baseOutdatedTranslationKey.value + ".description")} ${t(
+            baseOutdatedTranslationKey.value + ".details"
+        )}`;
+    });
 
     const flowWarnings = computed(() => {
-        const outdatedWarning = props.flowValidation?.outdated && !props.isCreating
-            ? [outdatedMessage.value]
-            : [];
+        const outdatedWarning =
+            props.flowValidation?.outdated && !props.isCreating
+                ? [outdatedMessage.value]
+                : [];
 
-        const deprecationWarnings = props.flowValidation?.deprecationPaths
-            ?.map(f => `${f} ${t("is deprecated")}.`)
-            ?? [];
+        const deprecationWarnings =
+            props.flowValidation?.deprecationPaths?.map(
+                (f) => `${f} ${t("is deprecated")}.`
+            ) ?? [];
 
         const otherWarnings = props.flowValidation?.warnings ?? [];
 
         const warnings = [
             ...outdatedWarning,
             ...deprecationWarnings,
-            ...otherWarnings
+            ...otherWarnings,
         ];
 
         return warnings.length === 0 ? undefined : warnings;
-    })
+    });
 
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);
-    }
+    };
 
     const initViewType = () => {
         const defaultValue = editorViewTypes.SOURCE_DOC;
@@ -165,11 +178,13 @@
 
         localStorage.setItem(editorViewTypes.STORAGE_KEY, defaultValue);
         return defaultValue;
-    }
+    };
 
     const isHorizontalDefault = () => {
-        return viewType.value === editorViewTypes.SOURCE_TOPOLOGY ? false : localStorage.getItem("topology-orientation") === "1"
-    }
+        return viewType.value === editorViewTypes.SOURCE_TOPOLOGY
+            ? false
+            : localStorage.getItem("topology-orientation") === "1";
+    };
 
     const editorDomElement = ref(null);
     const editorWidthStorageKey = "editor-size";
@@ -177,70 +192,99 @@
     const editorWidth = ref(localStorageStoredWidth ?? 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const haveChange = ref(props.isDirty)
-    const flowYaml = ref("")
-    const flowYamlOrigin = ref("")
-    const newTrigger = ref(null)
-    const isNewTriggerOpen = ref(false)
-    const newError = ref(null)
-    const isNewErrorOpen = ref(false)
-    const isEditMetadataOpen = ref(false)
+    const haveChange = ref(props.isDirty);
+    const flowYaml = ref("");
+    const flowYamlOrigin = ref("");
+    const newTrigger = ref(null);
+    const isNewTriggerOpen = ref(false);
+    const newError = ref(null);
+    const isNewErrorOpen = ref(false);
+    const isEditMetadataOpen = ref(false);
     const metadata = ref(null);
     const viewType = ref(initViewType());
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
     const timer = ref(null);
-    const taskError = ref(store.getters["flow/taskError"])
+    const taskError = ref(store.getters["flow/taskError"]);
     const user = store.getters["auth/user"];
     const routeParams = router.currentRoute.value.params;
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
 
+    const toggleExplorer = ref(null);
     const explorerVisible = computed(() => store.state.editor.explorerVisible);
     const toggleExplorerVisibility = () => {
         toggleExplorer.value.hide();
         store.commit("editor/toggleExplorerVisibility");
-    }
+    };
+    const currentTab = computed(() => store.state.editor.current);
+    const openedTabs = computed(() => store.state.editor.tabs);
+    const editorTEMPvalue = ref("");
+    const changeCurrentTab = (name, extension) => {
+        store.commit("editor/changeOpenedTabs", {action: "open", name, extension});
+        editorTEMPvalue.value = flowYaml.value;
+    };
+    const closeTab = (name, index) => {
+        store.commit("editor/changeOpenedTabs", {action: "close", name, index});
+    };
+    const getIcon = (name) => {
+        // Making sure icon is correct for 'yml' files
+        if (name.endsWith(".yml")) {
+            name = name.replace(/\.yml$/, ".yaml");
+        }
+
+        return getVSIFileIcon(name);
+    };
 
     const persistViewType = (value) => {
         viewType.value = value;
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
-    }
+    };
 
     const localStorageKey = computed(() => {
-        return (props.isCreating ? "creation" : `${props.flow.namespace}.${props.flow.id}`) + "_draft";
-    })
+        return (
+            (props.isCreating
+                ? "creation"
+                : `${props.flow.namespace}.${props.flow.id}`) + "_draft"
+        );
+    });
 
     const leftEditorWidth = computed(() => {
         return editorWidth.value + "%";
-    })
+    });
 
     const autoRestorelocalStorageKey = computed(() => {
         return "autoRestore-" + localStorageKey.value;
-    })
-
-    watch(() => store.getters["flow/taskError"], async () => {
-        taskError.value = store.getters["flow/taskError"];
     });
+
+    watch(
+        () => store.getters["flow/taskError"],
+        async () => {
+            taskError.value = store.getters["flow/taskError"];
+        }
+    );
 
     const taskErrors = computed(() => {
         return taskError.value?.split(/, ?/);
-    })
-
-    watch(() => props.expandedSubflows, (_, oldValue) => {
-        fetchGraph().catch(() => {
-            emit("expand-subflow", oldValue);
-        });
     });
 
+    watch(
+        () => props.expandedSubflows,
+        (_, oldValue) => {
+            fetchGraph().catch(() => {
+                emit("expand-subflow", oldValue);
+            });
+        }
+    );
+
     const flowHaveTasks = (source) => {
-        const flow = source ? source : flowYaml.value
+        const flow = source ? source : flowYaml.value;
         return flow ? YamlUtils.flowHaveTasks(flow) : false;
-    }
+    };
 
     const yamlWithNextRevision = computed(() => {
         return `revision: ${props.nextRevision}\n${flowYaml.value}`;
-    })
+    });
 
     watch(flowYaml, (newYaml) => {
         store.commit("core/setAutocompletionSource", newYaml)
@@ -250,7 +294,11 @@
         flowYaml.value = props.flow.source;
         flowYamlOrigin.value = props.flow.source;
         if (flowHaveTasks()) {
-            if ([editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
+            if (
+                [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(
+                    viewType.value
+                )
+            ) {
                 await fetchGraph();
             } else {
                 fetchGraph();
@@ -259,14 +307,25 @@
 
         if (!props.isReadOnly) {
             let restoredLocalStorageKey;
-            const sourceFromLocalStorage = localStorage.getItem((restoredLocalStorageKey = autoRestorelocalStorageKey.value)) ?? localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
+            const sourceFromLocalStorage =
+                localStorage.getItem(
+                    (restoredLocalStorageKey = autoRestorelocalStorageKey.value)
+                ) ??
+                localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
             if (sourceFromLocalStorage !== null) {
                 if (restoredLocalStorageKey === autoRestorelocalStorageKey.value) {
                     onEdit(sourceFromLocalStorage);
                 } else {
-                    toast.confirm(props.isCreating ? t("save draft.retrieval.creation") : t("save draft.retrieval.existing", {flowFullName: `${props.flow.namespace}.${props.flow.id}`}), () => {
-                        onEdit(sourceFromLocalStorage);
-                    })
+                    toast.confirm(
+                        props.isCreating
+                            ? t("save draft.retrieval.creation")
+                            : t("save draft.retrieval.existing", {
+                                flowFullName: `${props.flow.namespace}.${props.flow.id}`,
+                            }),
+                        () => {
+                            onEdit(sourceFromLocalStorage);
+                        }
+                    );
                 }
 
                 localStorage.removeItem(restoredLocalStorageKey);
@@ -274,27 +333,30 @@
         }
 
         // validate flow on first load
-        store.dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
-            .then(value => {
-                if(validationDomElement.value && editorDomElement.value) {
-                    validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+        store
+            .dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
+            .then((value) => {
+                if (validationDomElement.value && editorDomElement.value) {
+                    validationDomElement.value.onResize(
+                        editorDomElement.value.$el.offsetWidth
+                    );
                 }
 
                 return value;
             });
-    }
+    };
 
     const persistEditorWidth = () => {
         if (editorWidth.value !== null) {
             localStorage.setItem(editorWidthStorageKey, editorWidth.value);
         }
-    }
+    };
 
     const onResize = () => {
-        if(validationDomElement.value && editorDomElement.value) {
+        if (validationDomElement.value && editorDomElement.value) {
             validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
         }
-    }
+    };
 
     onMounted(async () => {
         await initYamlSource();
@@ -303,24 +365,28 @@
         document.addEventListener("keydown", save);
         // Guided tour
         setTimeout(() => {
-            if (!props.guidedProperties.tourStarted
-                && localStorage.getItem("tourDoneOrSkip") !== "true"
-                && props.total === 0) {
+            if (
+                !props.guidedProperties.tourStarted &&
+                localStorage.getItem("tourDoneOrSkip") !== "true" &&
+                props.total === 0
+            ) {
                 tours["guidedTour"].start();
                 persistViewType(editorViewTypes.SOURCE);
             }
-        }, 200)
+        }, 200);
         window.addEventListener("popstate", () => {
             stopTour();
         });
         window.addEventListener("beforeunload", persistEditorWidth);
 
-        window.addEventListener("resize", onResize)
-    })
+        window.addEventListener("resize", onResize);
+
+        editorTEMPvalue.value = flowYaml.value;
+    });
 
     onBeforeUnmount(() => {
         store.commit("core/setAutocompletionSource", undefined);
-        window.removeEventListener("resize", onResize)
+        window.removeEventListener("resize", onResize);
 
         store.commit("plugin/setEditorPlugin", undefined);
         document.removeEventListener("keydown", save);
@@ -335,32 +401,36 @@
         if (!store.getters["auth/isLogged"] && haveChange.value) {
             persistEditorContent(true);
         }
-    })
-
+    });
 
     const stopTour = () => {
         tours["guidedTour"].stop();
         store.commit("core/setGuidedProperties", {
             ...props.guidedProperties,
-            tourStarted: false
+            tourStarted: false,
         });
-    }
+    };
 
-    watch(() => props.guidedProperties, () => {
-        if (localStorage.getItem("tourDoneOrSkip") !== "true") {
-            if (props.guidedProperties.source !== undefined) {
-                haveChange.value = true;
-                flowYaml.value = props.guidedProperties.source
-                updatedFromEditor.value = true;
-            }
-            if (props.guidedProperties.saveFlow) {
-                save();
+    watch(
+        () => props.guidedProperties,
+        () => {
+            if (localStorage.getItem("tourDoneOrSkip") !== "true") {
+                if (props.guidedProperties.source !== undefined) {
+                    haveChange.value = true;
+                    flowYaml.value = props.guidedProperties.source;
+                    updatedFromEditor.value = true;
+                }
+                if (props.guidedProperties.saveFlow) {
+                    save();
+                }
             }
         }
-    });
+    );
 
     const isAllowedEdit = () => {
-        return user && user.isAllowed(permission.FLOW, action.UPDATE, props.namespace);
+        return (
+            user && user.isAllowed(permission.FLOW, action.UPDATE, props.namespace)
+        );
     };
 
     const forwardEvent = (type, event) => {
@@ -368,13 +438,15 @@
     };
 
     const updatePluginDocumentation = (event) => {
-        const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
+        const taskType = yamlUtils.getTaskType(
+            event.model.getValue(),
+            event.position
+        );
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
         if (taskType && pluginSingleList && pluginSingleList.includes(taskType)) {
-            store.dispatch("plugin/load", {cls: taskType})
-                .then(plugin => {
-                    store.commit("plugin/setEditorPlugin", plugin);
-                });
+            store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
+                store.commit("plugin/setEditorPlugin", plugin);
+            });
         } else {
             store.commit("plugin/setEditorPlugin", undefined);
         }
@@ -385,10 +457,13 @@
             return;
         }
 
-        localStorage.setItem(autoRestore ? autoRestorelocalStorageKey.value : localStorageKey.value, flowYaml.value);
+        localStorage.setItem(
+            autoRestore ? autoRestorelocalStorageKey.value : localStorageKey.value,
+            flowYaml.value
+        );
         store.dispatch("core/isUnsaved", false);
         haveChange.value = false;
-    }
+    };
 
     const errorsToast = (title, message, errors) => {
         store.dispatch("core/showMessage", {
@@ -396,21 +471,21 @@
             message: message,
             content: {
                 _embedded: {
-                    errors: errors.map(error => {
+                    errors: errors.map((error) => {
                         return {
-                            message: error
-                        }
-                    })
-                }
+                            message: error,
+                        };
+                    }),
+                },
             },
-            variant: "error"
+            variant: "error",
         });
-    }
+    };
 
     const saveAsDraft = (errors) => {
         errorsToast(t("save draft.message"), t("invalid flow"), errors);
         persistEditorContent(false);
-    }
+    };
 
     const fetchGraph = () => {
         return store.dispatch("flow/loadGraphFromSource", {
@@ -422,61 +497,85 @@
                 },
                 validateStatus: (status) => {
                     return status === 200 || status === 422;
-                }
-            }
-        })
-    }
+                },
+            },
+        });
+    };
 
     const onEdit = (event) => {
         flowYaml.value = event;
-        if (flowParsed.value && !props.isCreating && (routeParams.id !== flowParsed.value.id || routeParams.namespace !== flowParsed.value.namespace)) {
+        if (
+            flowParsed.value &&
+            !props.isCreating &&
+            (routeParams.id !== flowParsed.value.id ||
+                routeParams.namespace !== flowParsed.value.namespace)
+        ) {
             store.dispatch("core/showMessage", {
                 variant: "error",
                 title: t("readonly property"),
                 message: t("namespace and id readonly"),
-            })
-            flowYaml.value = YamlUtils.replaceIdAndNamespace(flowYaml.value, routeParams.id, routeParams.namespace);
+            });
+            flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                flowYaml.value,
+                routeParams.id,
+                routeParams.namespace
+            );
             return;
         }
 
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
-        clearTimeout(timer.value)
-        return store.dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
-            .then(value => {
-                if (flowHaveTasks() && [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
-                    fetchGraph()
+        clearTimeout(timer.value);
+        return store
+            .dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
+            .then((value) => {
+                if (
+                    flowHaveTasks() &&
+                    [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(
+                        viewType.value
+                    )
+                ) {
+                    fetchGraph();
                 }
 
-                if(validationDomElement.value) {
-                    validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+                if (validationDomElement.value) {
+                    validationDomElement.value.onResize(
+                        editorDomElement.value.$el.offsetWidth
+                    );
                 }
 
                 return value;
             });
-    }
+    };
 
     const loadingState = (value) => {
         isLoading.value = value;
-    }
+    };
 
     const onUpdateNewTrigger = (event) => {
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
-            task: event,
-            section: SECTIONS.TRIGGERS
-        }), 500);
+        timer.value = setTimeout(
+            () =>
+                store.dispatch("flow/validateTask", {
+                    task: event,
+                    section: SECTIONS.TRIGGERS,
+                }),
+            500
+        );
         newTrigger.value = event;
-    }
+    };
 
     const onSaveNewTrigger = () => {
         const source = flowYaml.value;
-        const existingTask = YamlUtils.checkTaskAlreadyExist(source, newTrigger.value);
+        const existingTask = YamlUtils.checkTaskAlreadyExist(
+            source,
+            newTrigger.value
+        );
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
                 title: "Trigger Id already exist",
-                message: `Trigger Id ${existingTask} already exist in the flow.`
+                message: `Trigger Id ${existingTask} already exist in the flow.`,
             });
             return;
         }
@@ -484,17 +583,21 @@
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
         haveChange.value = true;
-    }
+    };
 
     const onUpdateNewError = (event) => {
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => store.dispatch("flow/validateTask", {
-            task: event,
-            section: SECTIONS.TASKS
-        }), 500);
+        timer.value = setTimeout(
+            () =>
+                store.dispatch("flow/validateTask", {
+                    task: event,
+                    section: SECTIONS.TASKS,
+                }),
+            500
+        );
 
         newError.value = event;
-    }
+    };
 
     const onSaveNewError = () => {
         const source = flowYaml.value;
@@ -503,59 +606,65 @@
             store.dispatch("core/showMessage", {
                 variant: "error",
                 title: "Task Id already exist",
-                message: `Task Id ${existingTask} already exist in the flow.`
+                message: `Task Id ${existingTask} already exist in the flow.`,
             });
             return;
         }
         onEdit(YamlUtils.insertError(source, newError.value));
         newError.value = null;
         isNewErrorOpen.value = false;
-    }
+    };
 
     const getFlowMetadata = () => {
         return YamlUtils.getMetadata(flowYaml.value);
-    }
+    };
 
     const checkRequiredMetadata = () => {
         if (metadata.value) {
-            return metadata.value.id.length > 0 && metadata.value.namespace.length > 0
+            return metadata.value.id.length > 0 && metadata.value.namespace.length > 0;
         }
-        return getFlowMetadata().id.length > 0 && getFlowMetadata().namespace.length > 0
-    }
+        return (
+            getFlowMetadata().id.length > 0 && getFlowMetadata().namespace.length > 0
+        );
+    };
 
     const onUpdateMetadata = (event) => {
         metadata.value = event;
-    }
+    };
 
     const onSaveMetadata = () => {
         const source = flowYaml.value;
-        flowYaml.value = YamlUtils.updateMetadata(source, metadata.value)
+        flowYaml.value = YamlUtils.updateMetadata(source, metadata.value);
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
-    }
+    };
 
     const editorUpdate = (event) => {
         updatedFromEditor.value = true;
         flowYaml.value = event;
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(event), 500)
-    }
+        timer.value = setTimeout(() => onEdit(event), 500);
+    };
 
     const switchViewType = (event) => {
         persistViewType(event);
-        if ([editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(viewType.value)) {
+        if (
+            [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(
+                viewType.value
+            )
+        ) {
             isHorizontal.value = isHorizontalDefault();
             if (updatedFromEditor.value) {
-                onEdit(flowYaml.value)
+                onEdit(flowYaml.value);
                 updatedFromEditor.value = false;
             }
         }
         if (event === editorViewTypes.SOURCE && editorDomElement?.value?.$el) {
             editorDomElement.value.$el.style = null;
         }
-    }
+    };
 
     const flowParsed = computed(() => {
         try {
@@ -563,7 +672,7 @@
         } catch (e) {
             return undefined;
         }
-    })
+    });
 
     const saveWithoutRevisionGuard = async () => {
         if (flowParsed.value === undefined) {
@@ -571,7 +680,7 @@
                 variant: "error",
                 title: t("invalid flow"),
                 message: t("invalid yaml"),
-            })
+            });
 
             return;
         }
@@ -581,24 +690,22 @@
                 overrideFlow.value = await ElMessageBox({
                     title: t("override.title"),
                     message: () => {
-                        return h("div", null, [
-                            h("p", null, t("override.details")),
-
-                        ])
+                        return h("div", null, [h("p", null, t("override.details"))]);
                     },
                     showCancelButton: true,
                     confirmButtonText: t("ok"),
                     cancelButtonText: t("cancel"),
                     center: false,
                     showClose: false,
-                }).then(() => {
-                    overrideFlow.value = true;
-                    console.log("pop")
-                    return true;
-                }).catch(() => {
-                    return false
                 })
-
+                    .then(() => {
+                        overrideFlow.value = true;
+                        console.log("pop");
+                        return true;
+                    })
+                    .catch(() => {
+                        return false;
+                    });
             }
 
             if (!overrideFlow.value) {
@@ -608,19 +715,20 @@
             }
         }
 
-
         if (props.isCreating && !overrideFlow.value) {
-            await store.dispatch("flow/createFlow", {flow: flowYaml.value})
+            await store
+                .dispatch("flow/createFlow", {flow: flowYaml.value})
                 .then((response) => {
                     toast.saved(response.id);
                     store.dispatch("core/isUnsaved", false);
-                })
+                });
         } else {
-            await store.dispatch("flow/saveFlow", {flow: flowYaml.value})
+            await store
+                .dispatch("flow/saveFlow", {flow: flowYaml.value})
                 .then((response) => {
                     toast.saved(response.id);
                     store.dispatch("core/isUnsaved", false);
-                })
+                });
         }
 
         if (props.isCreating || overrideFlow.value) {
@@ -630,14 +738,16 @@
                     id: flowParsed.value.id,
                     namespace: flowParsed.value.namespace,
                     tab: "editor",
-                    tenant: routeParams.tenant
-                }
+                    tenant: routeParams.tenant,
+                },
             });
         }
 
         haveChange.value = false;
-        await store.dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
-    }
+        await store.dispatch("flow/validateFlow", {
+            flow: yamlWithNextRevision.value,
+        });
+    };
 
     const save = (e) => {
         if (!haveChange.value) {
@@ -658,20 +768,20 @@
                     step: tours["guidedTour"].currentStep._value,
                     action: "next",
                 },
-                page: pageFromRoute(router.currentRoute.value)
+                page: pageFromRoute(router.currentRoute.value),
             });
             tours["guidedTour"].nextStep();
             return;
         }
 
-        onEdit(flowYaml.value).then(validation => {
+        onEdit(flowYaml.value).then((validation) => {
             if (validation.outdated && !props.isCreating) {
                 confirmOutdatedSaveDialog.value = true;
                 return;
             }
             saveWithoutRevisionGuard();
             flowYamlOrigin.value = flowYaml.value;
-        })
+        });
     };
 
     const execute = (_) => {
@@ -679,30 +789,32 @@
     };
 
     const canDelete = () => {
-        return (
-            user.isAllowed(
-                permission.FLOW,
-                action.DELETE,
-                props.namespace
-            )
-        );
-    }
+        return user.isAllowed(permission.FLOW, action.DELETE, props.namespace);
+    };
 
     const deleteFlow = () => {
         const metadata = getFlowMetadata();
 
         return http
-            .get(`${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id}/dependencies`, {params: {destinationOnly: true}})
-            .then(response => {
+            .get(
+                `${apiUrl(store)}/flows/${metadata.namespace}/${
+                    metadata.id
+                }/dependencies`,
+                {params: {destinationOnly: true}}
+            )
+            .then((response) => {
                 let warning = "";
 
                 if (response.data && response.data.nodes) {
                     const deps = response.data.nodes
-                        .filter(n => !(n.namespace === metadata.namespace && n.id === metadata.id))
-                        .map(n => "<li>" + n.namespace + ".<code>" + n.id + "</code></li>")
+                        .filter(
+                            (n) => !(n.namespace === metadata.namespace && n.id === metadata.id)
+                        )
+                        .map((n) => "<li>" + n.namespace + ".<code>" + n.id + "</code></li>")
                         .join("\n");
 
-                    warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                    warning =
+                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
                         "<div class=\"el-alert__content\">\n" +
                         "<p class=\"el-alert__description\">\n" +
                         t("dependencies delete flow") +
@@ -711,31 +823,37 @@
                         "</ul>\n" +
                         "</p>\n" +
                         "</div>\n" +
-                        "</div>"
+                        "</div>";
                 }
 
                 return t("delete confirm", {name: metadata.id}) + warning;
-            }).then(message => {
-                toast
-                    .confirm(message, () => {
-                        return store
-                            .dispatch("flow/deleteFlow", metadata)
-                            .then(() => {
-                                return router.push({
-                                    name: "flows/list",
-                                    params: {
-                                        tenant: routeParams.tenant
-                                    }
-                                });
-                            })
-                            .then(() => {
-                                toast.deleted(metadata.id);
-                            })
-                    });
+            })
+            .then((message) => {
+                toast.confirm(message, () => {
+                    return store
+                        .dispatch("flow/deleteFlow", metadata)
+                        .then(() => {
+                            return router.push({
+                                name: "flows/list",
+                                params: {
+                                    tenant: routeParams.tenant,
+                                },
+                            });
+                        })
+                        .then(() => {
+                            toast.deleted(metadata.id);
+                        });
+                });
             });
-    }
+    };
 
-    const combinedEditor = computed(() => [editorViewTypes.SOURCE_DOC, editorViewTypes.SOURCE_TOPOLOGY, editorViewTypes.SOURCE_BLUEPRINTS].includes(viewType.value));
+    const combinedEditor = computed(() =>
+        [
+            editorViewTypes.SOURCE_DOC,
+            editorViewTypes.SOURCE_TOPOLOGY,
+            editorViewTypes.SOURCE_BLUEPRINTS,
+        ].includes(viewType.value)
+    );
 
     const dragEditor = (e) => {
         let dragX = e.clientX;
@@ -744,54 +862,83 @@
         let blockWidthPercent = (blockWidth / parentWidth) * 100;
 
         document.onmousemove = function onMouseMove(e) {
-            let percent = (blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100);
+            let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
             if (percent > 75) {
-                percent = 75
+                percent = 75;
             } else if (percent < 25) {
-                percent = 25
+                percent = 25;
             }
 
             editorWidth.value = percent;
-            validationDomElement.value.onResize(percent * parentWidth / 100);
-        }
+            validationDomElement.value.onResize((percent * parentWidth) / 100);
+        };
 
         document.onmouseup = () => {
             document.onmousemove = document.onmouseup = null;
-        }
-    }
+        };
+    };
 
     const onExpandSubflow = (e) => {
         emit("expand-subflow", e);
-    }
+    };
 
     const onSwappedTask = (swappedTasks) => {
-        emit("expand-subflow", props.expandedSubflows.map(expandedSubflow => {
-            let swappedTaskSplit;
-            if (expandedSubflow === swappedTasks[0]) {
-                swappedTaskSplit = swappedTasks[1].split(".");
-                swappedTaskSplit.pop();
+        emit(
+            "expand-subflow",
+            props.expandedSubflows.map((expandedSubflow) => {
+                let swappedTaskSplit;
+                if (expandedSubflow === swappedTasks[0]) {
+                    swappedTaskSplit = swappedTasks[1].split(".");
+                    swappedTaskSplit.pop();
 
-                return swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow);
-            }
-            if (expandedSubflow === swappedTasks[1]) {
-                swappedTaskSplit = swappedTasks[0].split(".");
-                swappedTaskSplit.pop();
+                    return (
+                        swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow)
+                    );
+                }
+                if (expandedSubflow === swappedTasks[1]) {
+                    swappedTaskSplit = swappedTasks[0].split(".");
+                    swappedTaskSplit.pop();
 
-                return swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow);
-            }
+                    return (
+                        swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow)
+                    );
+                }
 
-            return expandedSubflow;
-        }));
-    }
+                return expandedSubflow;
+            })
+        );
+    };
 </script>
 
 <template>
     <div class="button-top">
-        <el-tooltip ref="toggleExplorer" :content="$t(`namespace files.toggle.${explorerVisible ? 'hide': 'show'}`)">
-            <el-button @click="toggleExplorerVisibility()">
-                <component :is="explorerVisible ? MenuOpen : MenuClose" />
-            </el-button>
-        </el-tooltip>
+        <div class="d-inline-flex">
+            <el-tooltip
+                ref="toggleExplorer"
+                :content="
+                    $t(`namespace files.toggle.${explorerVisible ? 'hide' : 'show'}`)
+                "
+            >
+                <el-button @click="toggleExplorerVisibility()">
+                    <component :is="explorerVisible ? MenuOpen : MenuClose" />
+                </el-button>
+            </el-tooltip>
+            <el-scrollbar>
+                <el-button
+                    v-for="(tab, index) in openedTabs"
+                    :key="index"
+                    :class="{'tab-active': tab.name === currentTab.name}"
+                    @click="changeCurrentTab(tab.name, tab.extension)"
+                >
+                    <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
+                    <span class="tab-name px-1">{{ tab.name }}</span>
+                    <Close
+                        v-if="!tab.persistent"
+                        @click.prevent.stop="closeTab(tab.name, index)"
+                    />
+                </el-button>
+            </el-scrollbar>
+        </div>
 
         <div class="d-flex">
             <switch-view
@@ -800,7 +947,13 @@
                 @switch-view="switchViewType"
             />
 
-            <ValidationError ref="validationDomElement" class="validation" tooltip-placement="bottom-start" :errors="flowErrors" :warnings="flowWarnings" />
+            <ValidationError
+                ref="validationDomElement"
+                class="validation"
+                tooltip-placement="bottom-start"
+                :errors="flowErrors"
+                :warnings="flowWarnings"
+            />
 
             <EditorButtons
                 :is-creating="props.isCreating"
@@ -813,10 +966,17 @@
                 :warnings="flowWarnings"
                 @delete-flow="deleteFlow"
                 @save="save"
-                @copy="() => router.push({name: 'flows/create', query: {copy: true}, params: {tenant: routeParams.tenant}})"
-                @open-new-error="isNewErrorOpen = true;"
-                @open-new-trigger="isNewTriggerOpen = true;"
-                @open-edit-metadata="isEditMetadataOpen = true;"
+                @copy="
+                    () =>
+                        router.push({
+                            name: 'flows/create',
+                            query: {copy: true},
+                            params: {tenant: routeParams.tenant},
+                        })
+                "
+                @open-new-error="isNewErrorOpen = true"
+                @open-new-trigger="isNewTriggerOpen = true"
+                @open-edit-metadata="isEditMetadataOpen = true"
             />
         </div>
     </div>
@@ -825,10 +985,10 @@
             ref="editorDomElement"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? {'flex': '0 0 ' + leftEditorWidth} : {}"
+            :style="combinedEditor ? {flex: '0 0 ' + leftEditorWidth} : {}"
             @save="save"
             @execute="execute"
-            v-model="flowYaml"
+            v-model="editorTEMPvalue"
             schema-type="flow"
             lang="yaml"
             @update:model-value="editorUpdate($event)"
@@ -839,12 +999,27 @@
             :navbar="false"
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <div :style="viewType === editorViewTypes.SOURCE ? {'display': 'none'} : {}">
-            <Blueprints v-if="viewType === 'source-blueprints' || blueprintsLoaded" @loaded="blueprintsLoaded = true" :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}" embed class="combined-right-view enhance-readability" />
+        <div
+            :style="viewType === editorViewTypes.SOURCE ? {display: 'none'} : {}"
+        >
+            <Blueprints
+                v-if="viewType === 'source-blueprints' || blueprintsLoaded"
+                @loaded="blueprintsLoaded = true"
+                :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}"
+                embed
+                class="combined-right-view enhance-readability"
+            />
             <div
                 class="topology-display"
-                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
-                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
+                v-if="
+                    viewType === editorViewTypes.SOURCE_TOPOLOGY ||
+                        viewType === editorViewTypes.TOPOLOGY
+                "
+                :class="
+                    viewType === editorViewTypes.SOURCE_TOPOLOGY
+                        ? 'combined-right-view'
+                        : 'vueflow'
+                "
             >
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -887,7 +1062,12 @@
             </el-form>
             <template #footer>
                 <ValidationError :errors="taskErrors" />
-                <el-button :icon="ContentSave" @click="onSaveNewError()" type="primary" :disabled="taskErrors">
+                <el-button
+                    :icon="ContentSave"
+                    @click="onSaveNewError()"
+                    type="primary"
+                    :disabled="taskErrors"
+                >
                     {{ $t("save") }}
                 </el-button>
             </template>
@@ -905,15 +1085,17 @@
             </el-form>
             <template #footer>
                 <ValidationError :errors="taskErrors" />
-                <el-button :icon="ContentSave" @click="onSaveNewTrigger()" type="primary" :disabled="taskErrors">
+                <el-button
+                    :icon="ContentSave"
+                    @click="onSaveNewTrigger()"
+                    type="primary"
+                    :disabled="taskErrors"
+                >
                     {{ $t("save") }}
                 </el-button>
             </template>
         </drawer>
-        <drawer
-            v-if="isEditMetadataOpen"
-            v-model="isEditMetadataOpen"
-        >
+        <drawer v-if="isEditMetadataOpen" v-model="isEditMetadataOpen">
             <template #header>
                 <code>flow metadata</code>
             </template>
@@ -938,27 +1120,36 @@
             </template>
         </drawer>
     </div>
-    <el-dialog v-if="confirmOutdatedSaveDialog" v-model="confirmOutdatedSaveDialog" destroy-on-close :append-to-body="true">
+    <el-dialog
+        v-if="confirmOutdatedSaveDialog"
+        v-model="confirmOutdatedSaveDialog"
+        destroy-on-close
+        :append-to-body="true"
+    >
         <template #header>
             <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
         </template>
-        {{ $t(`${baseOutdatedTranslationKey}.description`) }} {{ $t(`${baseOutdatedTranslationKey}.details`) }}
+        {{ $t(`${baseOutdatedTranslationKey}.description`) }}
+        {{ $t(`${baseOutdatedTranslationKey}.details`) }}
         <template #footer>
             <el-button @click="confirmOutdatedSaveDialog = false">
-                {{ $t('cancel') }}
+                {{ $t("cancel") }}
             </el-button>
             <el-button
                 type="warning"
-                @click="saveWithoutRevisionGuard(); confirmOutdatedSaveDialog = false"
+                @click="
+                    saveWithoutRevisionGuard();
+                    confirmOutdatedSaveDialog = false;
+                "
             >
-                {{ $t('ok') }}
+                {{ $t("ok") }}
             </el-button>
         </template>
     </el-dialog>
 </template>
 
 <style lang="scss" scoped>
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+    @use "element-plus/theme-chalk/src/mixins/mixins" as *;
 
     .button-top {
         background: var(--card-bg);
@@ -1022,7 +1213,8 @@
         background-color: var(--bs-gray-500);
     }
 
-    :deep(.combined-right-view), .combined-right-view {
+    :deep(.combined-right-view),
+    .combined-right-view {
         flex: 1;
         position: relative;
         overflow-y: auto;
@@ -1072,10 +1264,22 @@
     }
 
     .vueflow {
-        height: 100%
+        height: 100%;
     }
 
     .topology-display .el-alert {
         margin-top: calc(3 * var(--spacer));
+    }
+
+    .tab-active {
+        background: #21242e !important;
+    }
+
+    .tab-name {
+        color: white;
+        font-family: "Public sans";
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
     }
 </style>

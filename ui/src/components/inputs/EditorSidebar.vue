@@ -100,6 +100,16 @@
             :empty-text="$t('namespace files.no_items')"
             :props="{label: 'name', children: 'children', class: 'node'}"
             class="mt-3"
+            @node-click="
+                (data) =>
+                    Array.isArray(data.children)
+                        ? undefined
+                        : changeOpenedTabs({
+                            action: 'open',
+                            name: data.name,
+                            extension: data.extension,
+                        })
+            "
         >
             <template #default="{data, node}">
                 <el-dropdown
@@ -242,7 +252,7 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapMutations} from "vuex";
 
     import Utils from "../../utils/utils";
 
@@ -258,9 +268,6 @@
     import Delete from "vue-material-design-icons/Delete.vue";
 
     import {getVSIFileIcon, getVSIFolderIcon} from "file-extension-icon-js";
-
-    import {YamlUtils} from "@kestra-io/ui-libs";
-    const YAML = {label: "YAML", value: "yml"};
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -321,6 +328,7 @@
             },
         },
         methods: {
+            ...mapMutations("editor", ["changeOpenedTabs"]),
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
 
@@ -606,6 +614,23 @@
                 }
             },
         },
+        mounted() {
+            const URL =
+                "http://localhost:8080/api/v1/namespaces/myteam/files/directory";
+            this.$http(URL).then((response) => {
+                const {data} = response;
+                // console.log(data);
+
+                for (let index = 0; index < data.length; index++) {
+                    // console.log(data[index])
+                    this.addFile({
+                        name: data[index].fileName.split(".")[0],
+                        extension: data[index].fileName.split(".")[1],
+                        content: "test",
+                    });
+                }
+            });
+        },
         watch: {
             filter(value) {
                 if (this.$refs.tree) {
@@ -615,10 +640,10 @@
             flows: {
                 handler(flow) {
                     if (flow && flow.length) {
-                        this.addFile({
+                        this.changeOpenedTabs({
+                            action: "open",
                             name: `${flow[0].id}`,
-                            extension: YAML.value,
-                            content: YamlUtils.parse(flow[0]),
+                            persistent: true,
                         });
                     }
                 },
@@ -656,7 +681,7 @@
     --el-tree-node-hover-bg-color: transparent;
     line-height: 36px;
 
-    .el-tree-node__content .el-row {
+    .el-tree-node__content {
       width: 100%;
     }
   }

@@ -3,7 +3,7 @@
         <div class="vueflow">
             <low-code-editor
                 :key="execution.id"
-                v-if="execution && flowGraph && flow?.source"
+                v-if="execution && flowGraph"
                 :flow-id="execution.flowId"
                 :namespace="execution.namespace"
                 :flow-graph="flowGraph"
@@ -33,8 +33,8 @@
             LowCodeEditor
         },
         computed: {
-            ...mapState("flow", ["flow","flowGraph"]),
-            ...mapState("execution", ["execution"]),
+            ...mapState("flow", ["flow"]),
+            ...mapState("execution", ["execution", "flowGraph"]),
             ...mapGetters("execution", ["subflowsExecutions"])
         },
         data() {
@@ -108,12 +108,8 @@
             loadGraph(force) {
                 if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
                     this.previousExecutionId = this.execution.id;
-                    this.$store.dispatch("flow/loadGraph", {
-                        flow: {
-                            namespace: this.execution.namespace,
-                            id: this.execution.flowId,
-                            revision: this.execution.flowRevision
-                        },
+                    this.$store.dispatch("execution/loadGraph", {
+                        id: this.execution.id,
                         params: {
                             subflows: this.expandedSubflows
                         }
@@ -157,7 +153,7 @@
                             }).forEach(edge => edge.unused = true);
 
                         // force refresh
-                        this.$store.commit("flow/setFlowGraph", Object.assign({}, this.flowGraph));
+                        this.$store.commit("execution/setFlowGraph", Object.assign({}, this.flowGraph));
                     })
                 }
             },

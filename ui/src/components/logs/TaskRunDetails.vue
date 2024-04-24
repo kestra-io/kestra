@@ -210,12 +210,11 @@
 
                     if (!this.targetFlow) {
                         this.flow = await this.$store.dispatch(
-                            "flow/loadFlow",
+                            "execution/loadFlowForExecution",
                             {
                                 namespace: newExecution.namespace,
-                                id: newExecution.flowId,
-                                revision: newExecution.flowRevision,
-                                store: false
+                                flowId: newExecution.flowId,
+                                revision: newExecution.flowRevision
                             }
                         );
                     }
@@ -251,6 +250,7 @@
         },
         computed: {
             ...mapState("plugin", ["icons"]),
+            ...mapState("auth", ["user"]),
             Download() {
                 return Download
             },

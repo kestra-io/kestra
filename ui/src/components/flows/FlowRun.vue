@@ -206,9 +206,8 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         computed: {
-            ...mapState("flow", ["flow"]),
             ...mapState("core", ["guidedProperties"]),
-            ...mapState("execution", ["execution"]),
+            ...mapState("execution", ["flow", "execution"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },

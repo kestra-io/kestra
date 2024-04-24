@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class FlowGraph {
     List<AbstractGraph> nodes;
     List<Edge> edges;
@@ -31,6 +31,20 @@ public class FlowGraph {
                     g.getKey().getRoot().getUid(),
                     g.getKey().getEnd().getUid()
                 ))
+                .collect(Collectors.toList())
+            )
+            .build();
+    }
+
+    /**
+     * This method is used to clean the graph for informations
+     * people with only EXECUTION - READ permission should not have access to.
+     */
+    public FlowGraph forExecution() {
+        return this.toBuilder()
+            .nodes(this.nodes
+                .stream()
+                .map(AbstractGraph::forExecution)
                 .collect(Collectors.toList())
             )
             .build();

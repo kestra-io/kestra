@@ -42,7 +42,6 @@
         },
         computed: {
             variables() {
-                console.log(Utils.executionVars(this.data))
                 return Utils.executionVars(this.data);
             },
         },

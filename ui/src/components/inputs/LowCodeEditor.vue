@@ -322,6 +322,7 @@
 
         <!-- Drawer to create/add task -->
         <task-edit
+            v-if="source"
             component="div"
             is-hidden
             :emit-task-only="true"

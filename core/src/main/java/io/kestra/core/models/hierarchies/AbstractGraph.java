@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -40,5 +41,9 @@ public abstract class AbstractGraph {
 
     public void updateErrorWithChildren(boolean error) {
         this.error = error;
+    }
+
+    public AbstractGraph forExecution() {
+        return this;
     }
 }

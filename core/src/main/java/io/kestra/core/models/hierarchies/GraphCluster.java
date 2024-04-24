@@ -3,7 +3,9 @@ package io.kestra.core.models.hierarchies;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,8 @@ public class GraphCluster extends AbstractGraph {
     @JsonIgnore
     private final GraphClusterEnd end;
 
-    private final AbstractGraphTask taskNode;
+    @Setter
+    private AbstractGraphTask taskNode;
 
     public GraphCluster() {
         this("root");
@@ -124,5 +127,11 @@ public class GraphCluster extends AbstractGraph {
         this.taskNode.error = error;
         this.root.error = error;
         this.end.error = error;
+    }
+
+    @Override
+    public AbstractGraph forExecution() {
+        this.setTaskNode(null);
+        return this;
     }
 }

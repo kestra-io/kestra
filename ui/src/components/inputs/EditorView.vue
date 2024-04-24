@@ -912,35 +912,34 @@
 
 <template>
     <div class="button-top">
-        <div class="d-inline-flex">
-            <el-tooltip
-                ref="toggleExplorer"
-                :content="
-                    $t(`namespace files.toggle.${explorerVisible ? 'hide' : 'show'}`)
-                "
-            >
-                <el-button @click="toggleExplorerVisibility()">
-                    <component :is="explorerVisible ? MenuOpen : MenuClose" />
-                </el-button>
-            </el-tooltip>
-            <el-scrollbar>
-                <el-button
-                    v-for="(tab, index) in openedTabs"
-                    :key="index"
-                    :class="{'tab-active': tab.name === currentTab.name}"
-                    @click="changeCurrentTab(tab.name, tab.extension)"
-                >
-                    <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
-                    <span class="tab-name px-1">{{ tab.name }}</span>
-                    <Close
-                        v-if="!tab.persistent"
-                        @click.prevent.stop="closeTab(tab.name, index)"
-                    />
-                </el-button>
-            </el-scrollbar>
-        </div>
+        <el-tooltip
+            ref="toggleExplorer"
+            :content="
+                $t(`namespace files.toggle.${explorerVisible ? 'hide' : 'show'}`)
+            "
+        >
+            <el-button @click="toggleExplorerVisibility()">
+                <component :is="explorerVisible ? MenuOpen : MenuClose" />
+            </el-button>
+        </el-tooltip>
 
-        <div class="d-flex">
+        <el-scrollbar class="tabs">
+            <el-button
+                v-for="(tab, index) in openedTabs"
+                :key="index"
+                :class="{'tab-active': tab.name === currentTab.name}"
+                @click="changeCurrentTab(tab.name, tab.extension)"
+            >
+                <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
+                <span class="tab-name px-1">{{ tab.name }}</span>
+                <Close
+                    v-if="!tab.persistent"
+                    @click.prevent.stop="closeTab(tab.name, index)"
+                />
+            </el-button>
+        </el-scrollbar>
+
+        <div class="d-inline-flex">
             <switch-view
                 :type="viewType"
                 class="to-topology-button"
@@ -1157,8 +1156,8 @@
         padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
         padding-left: calc(var(--spacer) / 2);
         display: flex;
+        align-items: center;
         justify-content: space-between;
-        flex-grow: 0;
 
         :deep(.validation) {
             border: 0;
@@ -1271,15 +1270,21 @@
         margin-top: calc(3 * var(--spacer));
     }
 
-    .tab-active {
-        background: #21242e !important;
-    }
+    .tabs {
+        flex: 1;
+        overflow-x: auto;
+        white-space: nowrap;
 
-    .tab-name {
-        color: white;
-        font-family: "Public sans";
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
+        .tab-active {
+            background: #21242e !important;
+        }
+
+        .tab-name {
+          color: white;
+          font-family: "Public sans";
+          font-size: 12px;
+          font-style: normal;
+          font-weight: 500;
+        }
     }
 </style>

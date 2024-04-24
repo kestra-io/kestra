@@ -120,7 +120,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
     ) {
-        throw new UnsupportedOperationException();
+       return Collections.emptyList();
     }
 
     @Override

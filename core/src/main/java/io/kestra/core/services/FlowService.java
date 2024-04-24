@@ -292,4 +292,22 @@ public class FlowService {
 
         return object;
     }
+
+    /**
+     * Return true if the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
+     * As namespace restriction is an EE feature, this will always return true in OSS.
+     */
+    public boolean isAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
+        return true;
+    }
+
+    /**
+     * Check that the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
+     * If not, throw an IllegalArgumentException.
+     */
+    public void checkAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
+        if (!isAllowedNamespace(tenant, namespace, fromTenant, fromNamespace)) {
+            throw new IllegalArgumentException("Namespace " + namespace + " is not allowed.");
+        }
+    }
 }

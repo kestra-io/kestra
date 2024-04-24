@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -112,7 +112,6 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
     @PluginProperty(dynamic = true)
     protected String expression;
 
-    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
@@ -120,9 +119,14 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
             .getApplicationContext()
             .getBean(ExecutionRepositoryInterface.class);
 
-        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
+        var flowId = runContext.flowId();
+
+        // check that all flows are allowed
+        FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
+        flows.forEach(flow -> flowService.checkAllowedNamespace(flowId.tenantId(), flow.getNamespace(), flowId.tenantId(), flowId.namespace()));
+
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(
-            flowVars.get("tenantId"),
+            flowId.tenantId(),
             flows,
             this.states,
             startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,

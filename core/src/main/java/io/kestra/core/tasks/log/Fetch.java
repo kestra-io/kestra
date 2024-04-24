@@ -8,6 +8,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.services.FlowService;
+import io.kestra.core.tasks.PluginUtilsService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -53,8 +55,22 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 )
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(
+        title = "Filter for a specific namespace in case `executionId` is set."
+    )
+    @PluginProperty(dynamic = true)
+    private String namespace;
+
+    @Schema(
+        title = "Filter for a specific flow identifier in case `executionId` is set."
+    )
+    @PluginProperty(dynamic = true)
+    private String flowId;
+
+    @Schema(
         title = "Filter for a specific execution.",
-        description = "If not set, the task will use the ID of the current execution."
+        description = """
+            If not set, the task will use the ID of the current execution.
+            If set, it will try to locate the execution on the current flow unless the `namespace` and `flowId` properties are set."""
     )
     @PluginProperty(dynamic = true)
     private String executionId;
@@ -72,23 +88,20 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @PluginProperty
     private Level level = Level.INFO;
 
-    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
-        String executionId = this.executionId != null ? runContext.render(this.executionId) : (String) new HashMap<>((Map<String, Object>) runContext.getVariables().get("execution")).get("id");
+        var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, this.namespace, this.flowId, this.executionId);
+
         LogRepositoryInterface logRepository = runContext.getApplicationContext().getBean(LogRepositoryInterface.class);
 
         File tempFile = runContext.tempFile(".ion").toFile();
         AtomicLong count = new AtomicLong();
 
-        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
-        String tenantId = flowVars.get("tenantId");
-
         try (OutputStream output = new FileOutputStream(tempFile)) {
             if (this.tasksId != null) {
                 for (String taskId : tasksId) {
                     logRepository
-                        .findByExecutionIdAndTaskId(tenantId, executionId, taskId, level)
+                        .findByExecutionIdAndTaskId(executionInfo.tenantId(), executionInfo.namespace(), executionInfo.flowId(), executionInfo.id(), taskId, level)
                         .forEach(throwConsumer(log -> {
                             count.incrementAndGet();
                             FileSerde.write(output, log);
@@ -96,7 +109,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
                 }
             } else {
                 logRepository
-                    .findByExecutionId(tenantId, executionId, level)
+                    .findByExecutionId(executionInfo.tenantId(), executionInfo.namespace(), executionInfo.flowId(), executionInfo.id(), level)
                     .forEach(throwConsumer(log -> {
                         count.incrementAndGet();
                         FileSerde.write(output, log);
@@ -106,7 +119,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
 
         return Output
             .builder()
-            .uri(runContext.putTempFile(tempFile))
+            .uri(runContext.storage().putFile(tempFile))
             .size(count.get())
             .build();
     }

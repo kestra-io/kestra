@@ -16,9 +16,25 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable);
 
+    /**
+     * This method is the same as {@link #findByExecutionId(String, String, Level)} but with
+     * namespace and flow as additional parameters so that the logs are only found if it is an execution for this flow.
+     * <p>
+     * This method is designed to be used in tasks that must check that they are allowed to access the namespace of the execution.
+     */
+    List<LogEntry> findByExecutionId(String tenantId, String namespace, String flowId, String executionId, Level minLevel);
+
     List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel);
 
     ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable);
+
+    /**
+     * This method is the same as {@link #findByExecutionIdAndTaskId(String, String, String, Level)} but with
+     * namespace and flow as additional parameters so that the logs are only found if it is an execution for this flow.
+     * <p>
+     * This method is designed to be used in tasks that must check that they are allowed to access the namespace of the execution.
+     */
+    List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String namespace, String flowId, String executionId, String taskId, Level minLevel);
 
     List<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel);
 

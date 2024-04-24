@@ -119,14 +119,14 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
             .getApplicationContext()
             .getBean(ExecutionRepositoryInterface.class);
 
-        var flowId = runContext.flowId();
+        var flowInfo = runContext.flowInfo();
 
         // check that all flows are allowed
         FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
-        flows.forEach(flow -> flowService.checkAllowedNamespace(flowId.tenantId(), flow.getNamespace(), flowId.tenantId(), flowId.namespace()));
+        flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
 
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(
-            flowId.tenantId(),
+            flowInfo.tenantId(),
             flows,
             this.states,
             startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,

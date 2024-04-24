@@ -243,6 +243,17 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
+    public List<LogEntry> findByExecutionId(String tenantId, String namespace, String flowId, String executionId, Level minLevel) {
+        return this.query(
+            tenantId,
+            field("execution_id").eq(executionId)
+                .and(field("namespace").eq(namespace))
+                .and(field("flow_id").eq(flowId)),
+            minLevel
+        );
+    }
+
+    @Override
     public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel) {
         return this.query(
             tenantId,
@@ -259,6 +270,18 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 .and(field("task_id").eq(taskId)),
             minLevel,
             pageable
+        );
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String namespace, String flowId, String executionId, String taskId, Level minLevel) {
+        return this.query(
+            tenantId,
+            field("execution_id").eq(executionId)
+                .and(field("namespace").eq(namespace))
+                .and(field("flow_id").eq(flowId))
+                .and(field("task_id").eq(taskId)),
+            minLevel
         );
     }
 

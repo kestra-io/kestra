@@ -67,7 +67,7 @@ public final class ExecutableUtils {
         String subflowId = runContext.render(currentTask.subflowId().flowId());
         Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
+        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromTask(
                 currentExecution.getTenantId(),
                 subflowNamespace,
                 subflowId,

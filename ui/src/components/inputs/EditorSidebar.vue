@@ -617,6 +617,7 @@
         mounted() {
             const URL =
                 "http://localhost:8080/api/v1/namespaces/myteam/files/directory";
+
             this.$http(URL).then((response) => {
                 const {data} = response;
                 // console.log(data);

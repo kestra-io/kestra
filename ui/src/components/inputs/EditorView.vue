@@ -16,6 +16,7 @@
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
     import Close from "vue-material-design-icons/Close.vue";
 
+    import KestraLogo from "../../assets/icon.svg";
     import {getVSIFileIcon} from "file-extension-icon-js";
 
     import ValidationError from "../flows/ValidationError.vue";
@@ -228,10 +229,11 @@
         store.commit("editor/changeOpenedTabs", {action: "close", name, index});
     };
     const getIcon = (name) => {
+        // Returning logo for files without extension
+        if (name.split(".").length < 2) return KestraLogo;
+
         // Making sure icon is correct for 'yml' files
-        if (name.endsWith(".yml")) {
-            name = name.replace(/\.yml$/, ".yaml");
-        }
+        if (name.endsWith(".yml")) name = name.replace(/\.yml$/, ".yaml");
 
         return getVSIFileIcon(name);
     };
@@ -931,7 +933,7 @@
                 @click="changeCurrentTab(tab.name, tab.extension)"
             >
                 <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
-                <span class="tab-name px-1">{{ tab.name }}</span>
+                <span class="tab-name px-2">{{ tab.name }}</span>
                 <Close
                     v-if="!tab.persistent"
                     @click.prevent.stop="closeTab(tab.name, index)"

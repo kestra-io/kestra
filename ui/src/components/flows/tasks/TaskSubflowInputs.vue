@@ -39,6 +39,7 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
     import TaskExpression from "./TaskExpression.vue";
+    import axios from "axios";
 
     export default {
         components: {TaskExpression},
@@ -63,16 +64,26 @@
                 return {"": undefined};
             },
             async fetchInputKeys(namespace, flowId, revision) {
-                return (await this.$store.dispatch(
-                    "flow/loadFlow",
-                    {
-                        namespace: namespace,
-                        id: flowId,
-                        revision: revision,
-                        source: false,
-                        store: false
-                    }
-                )).inputs?.map(input => input.id) ?? [];
+                try {
+                    return (await this.$store.dispatch(
+                        "flow/loadFlow",
+                        {
+                            namespace: namespace,
+                            id: flowId,
+                            revision: revision,
+                            source: false,
+                            store: false,
+                            httpClient: axios
+                        }
+                    )).inputs?.map(input => input.id) ?? [];
+                } catch(e) {
+                    this.$store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: this.$t("error"),
+                        message: e.message,
+                    })
+                    return [];
+                }
             },
             filteredInputs(toKeep) {
                 const selectedInputs = Object.keys(this.inputsWithValue);
@@ -96,6 +107,11 @@
                 this.inputsWithValue[key] = value;
             }
         },
+        async created() {
+            if (this.task.namespace && this.task.flowId) {
+                this.subflowInputs = await this.fetchInputKeys(this.task.namespace, this.task.flowId, this.task.revision);
+            }
+        },
         watch: {
             inputsWithValue: {
                 deep: true,
@@ -104,17 +120,15 @@
                 }
             },
             "task.namespace": {
-                immediate: true,
-                async handler() {
-                    if (this.task.flowId) {
+                async handler(newNamespace) {
+                    if (this.task.flowId && newNamespace) {
                         this.subflowInputs = await this.fetchInputKeys(this.task.namespace, this.task.flowId, this.task.revision);
                     }
                 }
             },
             "task.flowId": {
-                immediate: true,
-                async handler() {
-                    if (this.task.namespace) {
+                async handler(newFlowId) {
+                    if (this.task.namespace && newFlowId) {
                         this.subflowInputs = await this.fetchInputKeys(this.task.namespace, this.task.flowId, this.task.revision);
                     }
                 }

@@ -18,6 +18,11 @@ class Me {
     isAllowedGlobal(permission, action) {
         return true;
     }
+
+    // eslint-disable-next-line no-unused-vars
+    hasAnyActionOnAnyNamespace(permission, action) {
+        return true;
+    }
 }
 
 export default {

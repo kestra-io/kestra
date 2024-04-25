@@ -91,7 +91,7 @@
 
         <el-tree
             ref="tree"
-            :data="items"
+            :data="sortedItems"
             node-key="name"
             :filter-node-method="filterNode"
             highlight-current
@@ -329,6 +329,14 @@
                 }
 
                 return extractNames(this.items);
+            },
+            sortedItems() {
+                return this.items.slice().sort((a, b) => {
+                    if (a.children && !b.children) return -1;
+                    else if (!a.children && b.children) return 1;
+
+                    return a.name.localeCompare(b.name);
+                });
             },
         },
         methods: {

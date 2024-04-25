@@ -36,7 +36,7 @@ export default {
 
         // Get namespace file content
         async readFile(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?path=/${payload.file}`;
+            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
             const request = await this.$http.get(URL);
 
             return request.data ?? [];
@@ -47,9 +47,16 @@ export default {
             console.log("moveFileDirectory", payload);
         },
 
+        // Rename a file or directory
+        async renameFileDirectory(_, payload) {
+            const URL = `${BASE(payload.namespace)}/files?from=${payload.old}&to=${payload.new}`;
+            await this.$http.put(URL);
+        },
+
         // Delete a file or directory
         async deleteFileDirectory(_, payload) {
-            console.log("deleteFileDirectory", payload);
+            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            await this.$http.delete(URL);
         },
 
         // Export namespace files as a ZIP

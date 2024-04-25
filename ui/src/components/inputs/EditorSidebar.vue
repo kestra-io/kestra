@@ -184,11 +184,13 @@
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
-                <span> {{ $t(`namespace files.dialog.name.${dialog.type}`) }} </span>
+                <span>
+                    {{ $t(`namespace files.dialog.name.${dialog.type}`) ?? "" }}
+                </span>
             </div>
             <el-input ref="name" v-model="dialog.name" size="large" class="mb-3" />
 
-            <template v-if="!dialog.rename">
+            <template v-if="dialog.folder && !dialog.rename">
                 <div class="py-1">
                     <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
                 </div>
@@ -273,7 +275,7 @@
         visible: false,
         type: undefined,
         name: undefined,
-        folder: "root",
+        folder: undefined,
         rename: false,
     };
 
@@ -326,7 +328,7 @@
                     return names;
                 }
 
-                return ["root", ...extractNames(this.items)];
+                return extractNames(this.items);
             },
         },
         methods: {
@@ -335,6 +337,8 @@
                 "createDirectory",
                 "readDirectory",
                 "createFile",
+                "renameFileDirectory",
+                "deleteFileDirectory",
             ]),
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
@@ -383,10 +387,11 @@
 
                     this.dialog.visible = true;
                     this.dialog.type = type;
-                    this.dialog.folder = folder ?? node?.label ?? "root";
+                    this.dialog.folder = folder ?? node?.label ?? undefined;
 
                     this.focusInput();
                 } else {
+                    this.dialog.visible = false;
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
@@ -477,7 +482,7 @@
                     : {
                         name: this.dialog.name.split(".")[0],
                         extension: this.dialog.name.split(".")[1],
-                        content: `# Initial content of your ${
+                        content: `// Initial content of your ${
                             this.dialog.name.split(".")[0]
                         }.${this.dialog.name.split(".")[1]} file`,
                     };
@@ -488,7 +493,7 @@
                     this.createFile({namespace: this.namespace, path: NAME, content});
                 }
 
-                if (!this.dialog.folder || this.dialog.folder === "root") {
+                if (!this.dialog.folder) {
                     this.items.push(NEW);
                 } else {
                     const SELF = this;
@@ -516,7 +521,13 @@
                 }
             },
             renameItemDialog(item) {
-                this.dialog = {visible: true, rename: true, name: item.name, item};
+                this.dialog = {
+                    visible: true,
+                    rename: true,
+                    name: item.name,
+                    item,
+                    old: item.name,
+                };
             },
             renameItem() {
                 const SELF = this;
@@ -534,6 +545,12 @@
                     }
                     return false;
                 })(this.items);
+
+                this.renameFileDirectory({
+                    namespace: this.namespace,
+                    old: SELF.dialog.old,
+                    new: SELF.dialog.name,
+                });
 
                 this.dialog = {...DIALOG_DEFAULTS};
             },
@@ -562,6 +579,9 @@
                     });
                 };
                 remove(this.items);
+
+                this.deleteFileDirectory({namespace: this.namespace, path: name});
+
                 this.confirmation = {visible: false, data: {}};
             },
             addFolder(folder) {
@@ -574,7 +594,7 @@
                 const NEW = {name, children: folder?.children ?? []};
                 this.createDirectory({namespace: this.namespace, path: name});
 
-                if (!this.dialog.folder || this.dialog.folder === "root") {
+                if (!this.dialog.folder) {
                     this.items.push(NEW);
                 } else {
                     const SELF = this;
@@ -655,7 +675,7 @@
                     if (flow && flow.length) {
                         this.changeOpenedTabs({
                             action: "open",
-                            name: `${flow[0].id}`,
+                            name: "Flow",
                             persistent: true,
                         });
                     }

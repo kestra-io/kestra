@@ -103,10 +103,19 @@
                     } else {
                         const payload = {
                             namespace: this.$route.params.namespace,
-                            file: newValue.name,
+                            path: newValue.name,
                         };
+
+                        const MAP = {
+                            json: "json",
+                            html: "html",
+                            css: "css",
+                            ts: "typescript",
+                            js: "javascript",
+                        };
+
                         await this.readFile(payload).then((content) => {
-                            this.changeTab(content, newValue.extension);
+                            this.changeTab(content, MAP[newValue.extension]);
                         });
                     }
                 },

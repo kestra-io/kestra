@@ -115,7 +115,7 @@
     });
 
     const flowErrors = computed(() => {
-        const isFlow = currentTab.value.extension === undefined;
+        const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {
             const flowExistsError =
@@ -146,7 +146,7 @@
     });
 
     const flowWarnings = computed(() => {
-        const isFlow = currentTab.value.extension === undefined;
+        const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {
             const outdatedWarning =
@@ -292,7 +292,7 @@
     );
 
     const flowHaveTasks = (source) => {
-        const isFlow = currentTab.value.extension === undefined;
+        const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {
             const flow = source ? source : flowYaml.value;
@@ -807,8 +807,11 @@
                 flowYamlOrigin.value = flowYaml.value;
             });
         } else {
-            // TODO: Implement saving namespace files
-            console.log("Namespace file saving.");
+            store.dispatch("namespace/createFile", {
+                namespace: props.namespace,
+                path: currentTab.value.name,
+                content: editorDomElement.value.$refs.monacoEditor.value,
+            });
         }
     };
 
@@ -1305,6 +1308,7 @@
 
         .tab-active {
             background: #21242e !important;
+            cursor: default;
         }
 
         .tab-name {

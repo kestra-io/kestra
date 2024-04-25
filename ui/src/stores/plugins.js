@@ -21,6 +21,13 @@ export default {
                 return response.data;
             })
         },
+        listWithSubgroup({commit}) {
+            return this.$http.get(`${apiUrl(this)}/plugins/groups/subgroups`, {}).then(response => {
+                commit("setPlugins", response.data)
+                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages, plugin.taskRunners)).flat())
+                return response.data;
+            })
+        },
         load({commit, state}, options) {
             if (options.cls === undefined) {
                 throw new Error("missing required cls");

@@ -1,9 +1,9 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <section :class="pluginIsSelected ? 'mt-4': ''">
         <el-row :gutter="15">
             <el-col :span="4" v-if="pluginIsSelected">
-                <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins" />
+                <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
             </el-col>
             <el-col :span="(pluginIsSelected) ? 18 : 24" class="markdown" v-loading="isLoading">
                 <markdown v-if="pluginIsSelected" :source="plugin.markdown" :permalink="true" />
@@ -68,7 +68,7 @@
         },
         methods: {
             loadToc() {
-                this.$store.dispatch("plugin/list")
+                this.$store.dispatch("plugin/listWithSubgroup")
             },
 
             loadPlugin() {

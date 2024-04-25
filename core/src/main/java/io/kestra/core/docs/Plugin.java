@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.micronaut.core.annotation.Nullable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -29,11 +30,16 @@ public class Plugin {
     private List<String> taskRunners;
     private List<String> guides;
     private List<PluginSubGroup.PluginCategory> categories;
+    private String subGroup;
 
-    public static Plugin of(RegisteredPlugin registeredPlugin) {
+    public static Plugin of(RegisteredPlugin registeredPlugin, @Nullable String subgroup) {
         Plugin plugin = new Plugin();
         plugin.name = registeredPlugin.name();
-        plugin.title = registeredPlugin.title();
+        if (subgroup == null) {
+            plugin.title = registeredPlugin.title();
+        } else {
+            plugin.title = subgroup.substring(subgroup.lastIndexOf('.') + 1);
+        }
         plugin.group = registeredPlugin.group();
         plugin.description = registeredPlugin.description();
         plugin.longDescription = registeredPlugin.longDescription();
@@ -58,12 +64,15 @@ public class Plugin {
             .distinct()
             .toList();
 
-        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks());
-        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers());
-        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions());
-        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages());
-        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets());
-        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners());
+        plugin.subGroup = subgroup;
+
+        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+
 
         return plugin;
     }

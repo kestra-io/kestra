@@ -68,7 +68,7 @@
                 </div>
             </template>
             <div v-if="isVisible(plugin)" class="plugin-card" @click="openGroup(plugin)">
-                <task-icon class="size" :only-icon="true" :cls="plugin.group" :icons="icons" />
+                <task-icon class="size" :only-icon="true" :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group" :icons="icons" />
                 <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
             </div>
         </el-tooltip>
@@ -103,9 +103,23 @@
         },
         computed: {
             countPlugin() {
-                return this.plugins.reduce((acc, plugin) => {
-                    return acc + plugin.tasks.length + plugin.triggers.length + plugin.conditions.length + plugin.taskRunners.length
-                }, 0)
+                let allTasks = [];
+                let allTriggers = [];
+                let allConditions = [];
+                let allTaskRunners = [];
+
+                // avoid duplicate across groups and subgroups
+                this.plugins.forEach(plugin => {
+                    allTasks = [...allTasks, ...plugin.tasks];
+                    allTriggers = [...allTriggers, ...plugin.triggers];
+                    allConditions = [...allConditions, ...plugin.conditions];
+                    allTaskRunners = [...allTaskRunners, ...plugin.taskRunners];
+                });
+
+                return (new Set(allTasks)).size +
+                    (new Set(allTriggers)).size +
+                    (new Set(allConditions)).size +
+                    (new Set(allTaskRunners)).size;
             },
             pluginsList() {
                 return this.plugins
@@ -140,6 +154,9 @@
             },
             isVisible(plugin) {
                 return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
+            },
+            hasIcon(cls) {
+                return this.icons[cls] !== undefined;
             }
 
         }

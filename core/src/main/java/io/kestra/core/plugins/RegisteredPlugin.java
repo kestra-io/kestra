@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
@@ -112,6 +113,31 @@ public class RegisteredPlugin {
         result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
 
         return result;
+    }
+
+//    public Map<String, Map<String,List<Class>>> allClassGroupedBySubGroup() {
+//
+//    }
+
+    public Set<String> subGroupNames() {
+        return allClass()
+            .stream()
+            .map(clazz -> {
+                var pluginSubGroup = clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
+
+                // some plugins declare subgroup for main plugins
+                if (clazz.getPackageName().length() == this.group().length()) {
+                    pluginSubGroup = null;
+                }
+
+                if (pluginSubGroup != null && clazz.getPackageName().startsWith(this.group()) ) {
+                    return this.group() + "." + clazz.getPackageName().substring(this.group().length() + 1);
+                } else {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     }
 
     public String name() {

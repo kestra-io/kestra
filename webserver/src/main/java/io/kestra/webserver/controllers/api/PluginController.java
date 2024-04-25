@@ -120,7 +120,7 @@ public class PluginController {
     public List<Plugin> search() {
         return pluginRegistry.plugins()
             .stream()
-            .map(Plugin::of)
+            .map(p -> Plugin.of(p, null))
             .collect(Collectors.toList());
     }
 
@@ -159,15 +159,21 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> pluginGroupIcons() {
-        Map<String, PluginIcon> icons = pluginRegistry
-            .plugins()
-            .stream()
+        Map<String, PluginIcon> icons = new HashMap<>();
+
+        pluginRegistry.plugins().stream()
             .filter(plugin -> plugin.group() != null)
-            .collect(Collectors.toMap(
-                RegisteredPlugin::group,
-                plugin -> new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false),
-                (a1, a2) -> a1
-            ));
+            .forEach(plugin -> {
+                String group = plugin.group();
+                if (group != null) {
+                    icons.put(group, new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false));
+                }
+
+                plugin.subGroupNames().forEach(subgroup -> {
+                    icons.put(subgroup, new PluginIcon("plugin-icon", plugin.icon(subgroup), false));
+                });
+            });
+
         return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
@@ -198,6 +204,26 @@ public class PluginController {
             ))
             .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
+
+    @Get("/groups/subgroups")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Plugins"}, summary = "Get plugins group by subgroups")
+    public List<Plugin> subgroups() {
+        return Stream.concat(
+                pluginRegistry.plugins()
+                    .stream()
+                    .map(p -> Plugin.of(p, null)),
+                pluginRegistry.plugins()
+                    .stream()
+                    .flatMap(p -> p.subGroupNames()
+                        .stream()
+                        .map(subgroup -> Plugin.of(p, subgroup))
+                    )
+            )
+            .distinct()
+            .toList();
+    }
+
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Cacheable("default")

@@ -40,6 +40,7 @@ public class MiscController {
     CollectorService collectorService;
 
     @Inject
+    @Nullable
     BasicAuthService basicAuthService;
 
     @Inject

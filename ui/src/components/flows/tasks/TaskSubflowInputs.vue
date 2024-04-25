@@ -10,6 +10,8 @@
             @update:model-value="onSelectedInputChange(inputWithValue[0], $event)"
             filterable
             :persistent="false"
+            :placeholder="task.namespace && task.flowId ? 'Select' : 'Select namespace and flowId first'"
+            :disabled="!task.namespace || !task.flowId"
         >
             <el-option
                 v-for="item in filteredInputs(inputWithValue[0])"
@@ -97,8 +99,8 @@
                 this.inputsWithValue[""] = undefined;
             },
             removeItem(inputId) {
-                if (this.inputsWithValue.length === 1) {
-                    this.inputsWithValue = this.emptyValue;
+                if (Object.entries(this.inputsWithValue).length === 1) {
+                    this.inputsWithValue = this.emptyValueProvider();
                     return;
                 }
                 delete this.inputsWithValue[inputId];

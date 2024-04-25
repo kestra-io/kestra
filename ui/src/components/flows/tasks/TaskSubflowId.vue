@@ -6,6 +6,8 @@
         clearable
         :persistent="false"
         allow-create
+        :placeholder="task.namespace ? 'Select' : 'Select namespace first'"
+        :disabled="!task.namespace"
     >
         <el-option
             v-for="item in flowIds"

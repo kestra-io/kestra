@@ -21,7 +21,7 @@
         <div class="flex-shrink-1">
             <el-button-group class="d-flex flex-nowrap">
                 <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" :disabled="index === 0 && values.length === 1" />
+                <el-button :icon="Minus" @click="removeItem(index)" />
             </el-button-group>
         </div>
     </div>
@@ -35,6 +35,14 @@
 <script>
     import {toRaw} from "vue";
     import Task from "./Task";
+
+    function emptyValueObjectProvider() {
+        return {"": undefined};
+    }
+
+    function emptyValueEntriesProvider() {
+        return ["", undefined];
+    }
 
     export default {
         mixins: [Task],
@@ -50,7 +58,7 @@
         computed: {
             values() {
                 if (this.modelValue === undefined) {
-                    return {"": undefined};
+                    return emptyValueObjectProvider();
                 }
 
                 return this.modelValue;
@@ -95,8 +103,12 @@
                 this.emitLocal();
             },
             removeItem(x) {
-                const local = this.currentValue || [];
-                local.splice(x, 1);
+                let local = this.currentValue || [];
+                if (local.length === 1) {
+                    local = [emptyValueEntriesProvider()];
+                } else {
+                    local.splice(x, 1);
+                }
 
                 this.currentValue = local;
 

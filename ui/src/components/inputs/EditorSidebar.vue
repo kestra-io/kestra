@@ -380,7 +380,9 @@
                     this.renameItem();
                     return;
                 } else {
-                    type === "file" ? this.addFile({creation: true}) : this.addFolder();
+                    type === "file"
+                        ? this.addFile({creation: true})
+                        : this.addFolder(undefined, true);
                 }
             },
             filterNode(value, data) {
@@ -597,7 +599,7 @@
 
                 this.confirmation = {visible: false, data: {}};
             },
-            addFolder(folder) {
+            addFolder(folder, creation) {
                 const {name} = folder
                     ? folder
                     : {
@@ -605,7 +607,10 @@
                     };
 
                 const NEW = {name, children: folder?.children ?? []};
-                this.createDirectory({namespace: this.namespace, path: name});
+
+                if (creation) {
+                    this.createDirectory({namespace: this.namespace, path: name});
+                }
 
                 if (!this.dialog.folder) {
                     this.items.push(NEW);

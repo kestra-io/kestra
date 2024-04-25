@@ -43,7 +43,7 @@
     "prismjs": "^1.29.0",
     "throttle-debounce": "^5.0.0",
     "vite-plugin-eslint": "^1.8.1",
-    "vue": "^3.4.21",
+    "vue": "^3.4.25",
     "vue-axios": "3.5.2",
     "vue-chartjs": "^5.3.1",
     "vue-gtag": "^2.0.1",

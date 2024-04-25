@@ -102,9 +102,15 @@
                 );
             },
             message() {
-                return !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
+                let logMessage = !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
                     allowList: {"span": ["style"]}
                 }));
+
+                logMessage = logMessage.replaceAll(
+                    /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
+                    "$1<a href='$2' target='_blank'>$2</a>$3"
+                );
+                return logMessage;
             }
         },
     };

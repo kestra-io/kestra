@@ -252,7 +252,7 @@
 </template>
 
 <script>
-    import {mapState, mapMutations} from "vuex";
+    import {mapState, mapMutations, mapActions} from "vuex";
 
     import Utils from "../../utils/utils";
 
@@ -292,6 +292,8 @@
         },
         data() {
             return {
+                namespace: undefined,
+
                 filter: "",
 
                 dialog: {...DIALOG_DEFAULTS},
@@ -329,6 +331,11 @@
         },
         methods: {
             ...mapMutations("editor", ["changeOpenedTabs"]),
+            ...mapActions("namespace", [
+                "createDirectory",
+                "readDirectory",
+                "createFile",
+            ]),
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
 
@@ -361,7 +368,7 @@
                     this.renameItem();
                     return;
                 } else {
-                    type === "file" ? this.addFile() : this.addFolder();
+                    type === "file" ? this.addFile({creation: true}) : this.addFolder();
                 }
             },
             filterNode(value, data) {
@@ -464,7 +471,7 @@
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-            addFile(file, shouldReset = true) {
+            addFile({file, creation, shouldReset = true}) {
                 const {name, extension, content} = file
                     ? file
                     : {
@@ -474,7 +481,12 @@
                             this.dialog.name.split(".")[0]
                         }.${this.dialog.name.split(".")[1]} file`,
                     };
-                const NEW = {name: `${name}.${extension}`, extension, content};
+                const NAME = `${name}.${extension}`;
+                const NEW = {name: NAME, extension, content};
+
+                if (creation) {
+                    this.createFile({namespace: this.namespace, path: NAME, content});
+                }
 
                 if (!this.dialog.folder || this.dialog.folder === "root") {
                     this.items.push(NEW);
@@ -560,6 +572,7 @@
                     };
 
                 const NEW = {name, children: folder?.children ?? []};
+                this.createDirectory({namespace: this.namespace, path: name});
 
                 if (!this.dialog.folder || this.dialog.folder === "root") {
                     this.items.push(NEW);
@@ -614,21 +627,20 @@
                 }
             },
         },
-        mounted() {
-            const URL =
-                "http://localhost:8080/api/v1/namespaces/myteam/files/directory";
+        async mounted() {
+            this.namespace = this.$route.params.namespace;
 
-            this.$http(URL).then((response) => {
-                const {data} = response;
-                // console.log(data);
+            const payload = {namespace: this.namespace};
+            await this.readDirectory(payload).then((items) => {
+                for (let i = 0; i < items.length; i++) {
+                    const {type, fileName} = items[i];
 
-                for (let index = 0; index < data.length; index++) {
-                    // console.log(data[index])
-                    this.addFile({
-                        name: data[index].fileName.split(".")[0],
-                        extension: data[index].fileName.split(".")[1],
-                        content: "test",
-                    });
+                    if (type === "Directory") {
+                        this.addFolder({name: fileName});
+                    } else if (type === "File") {
+                        const [name, extension] = items[i].fileName.split(".");
+                        this.addFile({file: {name, extension, content: ""}});
+                    }
                 }
             });
         },

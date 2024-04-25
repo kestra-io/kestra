@@ -115,17 +115,23 @@
     });
 
     const flowErrors = computed(() => {
-        const flowExistsError =
-            props.flowValidation?.outdated && props.isCreating
-                ? [outdatedMessage.value]
-                : [];
+        const isFlow = currentTab.value.extension === undefined;
 
-        const constraintsError =
-            props.flowValidation?.constraints?.split(/, ?/) ?? [];
+        if (isFlow) {
+            const flowExistsError =
+                props.flowValidation?.outdated && props.isCreating
+                    ? [outdatedMessage.value]
+                    : [];
 
-        const errors = [...flowExistsError, ...constraintsError];
+            const constraintsError =
+                props.flowValidation?.constraints?.split(/, ?/) ?? [];
 
-        return errors.length === 0 ? undefined : errors;
+            const errors = [...flowExistsError, ...constraintsError];
+
+            return errors.length === 0 ? undefined : errors;
+        }
+
+        return undefined;
     });
 
     const baseOutdatedTranslationKey = computed(() => {
@@ -140,25 +146,31 @@
     });
 
     const flowWarnings = computed(() => {
-        const outdatedWarning =
-            props.flowValidation?.outdated && !props.isCreating
-                ? [outdatedMessage.value]
-                : [];
+        const isFlow = currentTab.value.extension === undefined;
 
-        const deprecationWarnings =
-            props.flowValidation?.deprecationPaths?.map(
-                (f) => `${f} ${t("is deprecated")}.`
-            ) ?? [];
+        if (isFlow) {
+            const outdatedWarning =
+                props.flowValidation?.outdated && !props.isCreating
+                    ? [outdatedMessage.value]
+                    : [];
 
-        const otherWarnings = props.flowValidation?.warnings ?? [];
+            const deprecationWarnings =
+                props.flowValidation?.deprecationPaths?.map(
+                    (f) => `${f} ${t("is deprecated")}.`
+                ) ?? [];
 
-        const warnings = [
-            ...outdatedWarning,
-            ...deprecationWarnings,
-            ...otherWarnings,
-        ];
+            const otherWarnings = props.flowValidation?.warnings ?? [];
 
-        return warnings.length === 0 ? undefined : warnings;
+            const warnings = [
+                ...outdatedWarning,
+                ...deprecationWarnings,
+                ...otherWarnings,
+            ];
+
+            return warnings.length === 0 ? undefined : warnings;
+        }
+
+        return undefined;
     });
 
     const loadViewType = () => {
@@ -220,10 +232,10 @@
     };
     const currentTab = computed(() => store.state.editor.current);
     const openedTabs = computed(() => store.state.editor.tabs);
-    const editorTEMPvalue = ref("");
+
     const changeCurrentTab = (name, extension) => {
-        store.commit("editor/changeOpenedTabs", {action: "open", name, extension});
-        editorTEMPvalue.value = flowYaml.value;
+        const payload = extension ? {extension} : {persistent: true};
+        store.commit("editor/changeOpenedTabs", {action: "open", name, ...payload});
     };
     const closeTab = (name, index) => {
         store.commit("editor/changeOpenedTabs", {action: "close", name, index});
@@ -280,8 +292,12 @@
     );
 
     const flowHaveTasks = (source) => {
-        const flow = source ? source : flowYaml.value;
-        return flow ? YamlUtils.flowHaveTasks(flow) : false;
+        const isFlow = currentTab.value.extension === undefined;
+
+        if (isFlow) {
+            const flow = source ? source : flowYaml.value;
+            return flow ? YamlUtils.flowHaveTasks(flow) : false;
+        } else return false;
     };
 
     const yamlWithNextRevision = computed(() => {
@@ -382,8 +398,6 @@
         window.addEventListener("beforeunload", persistEditorWidth);
 
         window.addEventListener("resize", onResize);
-
-        editorTEMPvalue.value = flowYaml.value;
     });
 
     onBeforeUnmount(() => {
@@ -504,25 +518,28 @@
         });
     };
 
-    const onEdit = (event) => {
+    const onEdit = (event, isFlow = false) => {
         flowYaml.value = event;
-        if (
-            flowParsed.value &&
-            !props.isCreating &&
-            (routeParams.id !== flowParsed.value.id ||
-                routeParams.namespace !== flowParsed.value.namespace)
-        ) {
-            store.dispatch("core/showMessage", {
-                variant: "error",
-                title: t("readonly property"),
-                message: t("namespace and id readonly"),
-            });
-            flowYaml.value = YamlUtils.replaceIdAndNamespace(
-                flowYaml.value,
-                routeParams.id,
-                routeParams.namespace
-            );
-            return;
+
+        if (isFlow) {
+            if (
+                flowParsed.value &&
+                !props.isCreating &&
+                (routeParams.id !== flowParsed.value.id ||
+                    routeParams.namespace !== flowParsed.value.namespace)
+            ) {
+                store.dispatch("core/showMessage", {
+                    variant: "error",
+                    title: t("readonly property"),
+                    message: t("namespace and id readonly"),
+                });
+                flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                    flowYaml.value,
+                    routeParams.id,
+                    routeParams.namespace
+                );
+                return;
+            }
         }
 
         haveChange.value = true;
@@ -643,11 +660,13 @@
     };
 
     const editorUpdate = (event) => {
+        const isFlow = currentTab.value.extension === undefined;
+
         updatedFromEditor.value = true;
         flowYaml.value = event;
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(event), 500);
+        timer.value = setTimeout(() => onEdit(event, isFlow), 500);
     };
 
     const switchViewType = (event) => {
@@ -776,14 +795,21 @@
             return;
         }
 
-        onEdit(flowYaml.value).then((validation) => {
-            if (validation.outdated && !props.isCreating) {
-                confirmOutdatedSaveDialog.value = true;
-                return;
-            }
-            saveWithoutRevisionGuard();
-            flowYamlOrigin.value = flowYaml.value;
-        });
+        const isFlow = currentTab.value.extension === undefined;
+
+        if (isFlow) {
+            onEdit(flowYaml.value).then((validation) => {
+                if (validation.outdated && !props.isCreating) {
+                    confirmOutdatedSaveDialog.value = true;
+                    return;
+                }
+                saveWithoutRevisionGuard();
+                flowYamlOrigin.value = flowYaml.value;
+            });
+        } else {
+            // TODO: Implement saving namespace files
+            console.log("Namespace file saving.");
+        }
     };
 
     const execute = (_) => {
@@ -989,7 +1015,7 @@
             :style="combinedEditor ? {flex: '0 0 ' + leftEditorWidth} : {}"
             @save="save"
             @execute="execute"
-            v-model="editorTEMPvalue"
+            v-model="flowYaml"
             schema-type="flow"
             lang="yaml"
             @update:model-value="editorUpdate($event)"
@@ -1282,11 +1308,11 @@
         }
 
         .tab-name {
-          color: white;
-          font-family: "Public sans";
-          font-size: 12px;
-          font-style: normal;
-          font-weight: 500;
+            color: white;
+            font-family: "Public sans";
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 500;
         }
     }
 </style>

@@ -3,7 +3,8 @@
 </template>
 
 <script>
-    import {defineComponent} from "vue"
+    import {defineComponent} from "vue";
+    import {mapState, mapActions} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
@@ -14,11 +15,10 @@
     import YamlWorker from "./yaml.worker.js?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
-    import {yamlSchemas} from "override/utils/yamlSchemas"
+    import {yamlSchemas} from "override/utils/yamlSchemas";
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
     import {uniqBy} from "lodash";
-    import {mapState} from "vuex";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -65,7 +65,7 @@
             },
             theme: {
                 type: String,
-                "default": "vs"
+                default: "vs"
             },
             language: {
                 type: String,
@@ -81,14 +81,36 @@
             },
             diffEditor: {
                 type: Boolean,
-                "default": false
+                default: false
             }
         },
         emits: ["editorWillMount", "editorDidMount", "change", "update:value"],
         model: {
             event: "change"
         },
+        computed: {
+            ...mapState({
+                currentTab: (state) => state.editor.current,
+                flow: (state) => state.flow.flow
+            }),
+        },
         watch: {
+            currentTab: {
+                deep: true,
+                handler: async function (newValue) {
+                    if (newValue.persistent) {
+                        this.changeTab(YamlUtils.stringify(this.flow), "yaml");
+                    } else {
+                        const payload = {
+                            namespace: this.$route.params.namespace,
+                            file: newValue.name,
+                        };
+                        await this.readFile(payload).then((content) => {
+                            this.changeTab(content, newValue.extension);
+                        });
+                    }
+                },
+            },
             options: {
                 deep: true,
                 handler: function (newValue, oldValue) {
@@ -221,6 +243,7 @@
             this.destroy();
         },
         methods: {
+            ...mapActions("namespace", ["readFile"]),
             async namespaceAutocompletion(model, position) {
                 const lineContent = this.lineContent(model, position);
                 const match = this.tillCursorContent(lineContent, position).match(/^( *namespace:( *))(.*)$/);
@@ -386,7 +409,14 @@
             tillCursorContent(lineContent, position) {
                 return lineContent.substring(0, position.column - 1);
             },
-            async autocompletion(source, lineContent, field, rest, lineNumber, fieldToCompleteIndexes) {
+            async autocompletion(
+                source,
+                lineContent,
+                field,
+                rest,
+                lineNumber,
+                fieldToCompleteIndexes
+            ) {
                 const flowAsJs = YamlUtils.parse(source);
                 let autocompletions;
                 switch (field) {
@@ -397,13 +427,13 @@
                     autocompletions = flowAsJs?.tasks?.map(task => task.id);
                     break;
                 case "labels":
-                    autocompletions =  Object.keys(flowAsJs?.labels ?? {});
+                    autocompletions = Object.keys(flowAsJs?.labels ?? {});
                     break;
                 case "flow":
-                    autocompletions = ["id", "namespace", "revision"]
+                    autocompletions = ["id", "namespace", "revision"];
                     break;
                 case "execution":
-                    autocompletions = ["id", "startDate", "originalId"]
+                    autocompletions = ["id", "startDate", "originalId"];
                     break;
                 case "vars":
                     autocompletions = Object.keys(flowAsJs?.variables ?? {});
@@ -508,10 +538,15 @@
 
                     if (self.value !== value) {
                         self.$emit("change", value, event);
-                        self.$emit("update:value", value)
+                        self.$emit("update:value", value);
                     }
                 });
                 this.$emit("editorDidMount", this.editor);
+            },
+            changeTab: function (value, language) {
+                const model = monaco.editor.createModel(value, language);
+                this.editor.setModel(model);
+                this.focus();
             },
             getEditor: function () {
                 return this.editor;
@@ -530,7 +565,6 @@
                 this.nestedFieldAutocompletionProvider?.dispose();
                 this.editor?.getModel()?.dispose();
                 this.editor?.dispose();
-
             },
             needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;
@@ -548,5 +582,4 @@
         height: 100%;
         outline: none;
     }
-
 </style>

@@ -6,103 +6,107 @@
         </el-alert>
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <el-form-item
-                v-for="input in flow.inputs || []"
-                :key="input.id"
-                :label="input.id"
-                :required="input.required !== false"
-                :prop="input.id"
-            >
-                <editor
-                    :full-height="false"
-                    :input="true"
-                    :navbar="false"
-                    v-if="input.type === 'STRING' || input.type === 'URI'"
-                    v-model="inputs[input.id]"
-                />
-                <el-select
-                    :full-height="false"
-                    :input="true"
-                    :navbar="false"
-                    v-if="input.type === 'ENUM'"
-                    v-model="inputs[input.id]"
+            <template v-if="flow.inputs">
+                <el-form-item
+                    v-for="input in flow.inputs || []"
+                    :key="input.id"
+                    :label="input.id"
+                    :required="input.required !== false"
+                    :prop="input.id"
                 >
-                    <el-option
-                        v-for="item in input.values"
-                        :key="item"
-                        :label="item"
-                        :value="item"
+                    <editor
+                        :full-height="false"
+                        :input="true"
+                        :navbar="false"
+                        v-if="input.type === 'STRING' || input.type === 'URI'"
+                        v-model="inputs[input.id]"
+                    />
+                    <el-select
+                        :full-height="false"
+                        :input="true"
+                        :navbar="false"
+                        v-if="input.type === 'ENUM'"
+                        v-model="inputs[input.id]"
                     >
-                        {{ item }}
-                    </el-option>
-                </el-select>
-                <el-input
-                    type="password"
-                    v-if="input.type === 'SECRET'"
-                    v-model="inputs[input.id]"
-                    show-password
-                />
-                <el-input-number
-                    v-if="input.type === 'INT'"
-                    v-model="inputs[input.id]"
-                    :step="1"
-                />
-                <el-input-number
-                    v-if="input.type === 'FLOAT'"
-                    v-model="inputs[input.id]"
-                    :step="0.001"
-                />
-                <el-radio-group
-                    v-if="input.type === 'BOOLEAN'"
-                    v-model="inputs[input.id]"
-                >
-                    <el-radio-button :label="$t('true')" value="true" />
-                    <el-radio-button :label="$t('false')" value="false" />
-                    <el-radio-button :label="$t('undefined')" value="undefined" />
-                </el-radio-group>
-                <el-date-picker
-                    v-if="input.type === 'DATETIME'"
-                    v-model="inputs[input.id]"
-                    type="datetime"
-                />
-                <el-date-picker
-                    v-if="input.type === 'DATE'"
-                    v-model="inputs[input.id]"
-                    type="date"
-                />
-                <el-time-picker
-                    v-if="input.type === 'TIME' || input.type === 'DURATION'"
-                    v-model="inputs[input.id]"
-                    type="time"
-                />
-                <div class="el-input el-input-file">
-                    <div class="el-input__wrapper" v-if="input.type === 'FILE'">
-                        <input
-                            :id="input.id+'-file'"
-                            class="el-input__inner"
-                            type="file"
-                            @change="onFileChange(input, $event)"
-                            autocomplete="off"
-                            :style="{display: typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///') ? 'none': ''}"
+                        <el-option
+                            v-for="item in input.values"
+                            :key="item"
+                            :label="item"
+                            :value="item"
                         >
-                        <label
-                            v-if="typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///')"
-                            :for="input.id+'-file'"
-                        >Kestra Internal Storage File</label>
+                            {{ item }}
+                        </el-option>
+                    </el-select>
+                    <el-input
+                        type="password"
+                        v-if="input.type === 'SECRET'"
+                        v-model="inputs[input.id]"
+                        show-password
+                    />
+                    <el-input-number
+                        v-if="input.type === 'INT'"
+                        v-model="inputs[input.id]"
+                        :step="1"
+                    />
+                    <el-input-number
+                        v-if="input.type === 'FLOAT'"
+                        v-model="inputs[input.id]"
+                        :step="0.001"
+                    />
+                    <el-radio-group
+                        v-if="input.type === 'BOOLEAN'"
+                        v-model="inputs[input.id]"
+                    >
+                        <el-radio-button :label="$t('true')" value="true" />
+                        <el-radio-button :label="$t('false')" value="false" />
+                        <el-radio-button :label="$t('undefined')" value="undefined" />
+                    </el-radio-group>
+                    <el-date-picker
+                        v-if="input.type === 'DATETIME'"
+                        v-model="inputs[input.id]"
+                        type="datetime"
+                    />
+                    <el-date-picker
+                        v-if="input.type === 'DATE'"
+                        v-model="inputs[input.id]"
+                        type="date"
+                    />
+                    <el-time-picker
+                        v-if="input.type === 'TIME' || input.type === 'DURATION'"
+                        v-model="inputs[input.id]"
+                        type="time"
+                    />
+                    <div class="el-input el-input-file">
+                        <div class="el-input__wrapper" v-if="input.type === 'FILE'">
+                            <input
+                                :id="input.id+'-file'"
+                                class="el-input__inner"
+                                type="file"
+                                @change="onFileChange(input, $event)"
+                                autocomplete="off"
+                                :style="{display: typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///') ? 'none': ''}"
+                            >
+                            <label
+                                v-if="typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///')"
+                                :for="input.id+'-file'"
+                            >Kestra Internal Storage File</label>
+                        </div>
                     </div>
-                </div>
-                <editor
-                    :full-height="false"
-                    :input="true"
-                    :navbar="false"
-                    v-if="input.type === 'JSON' || input.type === 'ARRAY'"
-                    lang="json"
-                    v-model="inputs[input.id]"
-                />
+                    <editor
+                        :full-height="false"
+                        :input="true"
+                        :navbar="false"
+                        v-if="input.type === 'JSON' || input.type === 'ARRAY'"
+                        lang="json"
+                        v-model="inputs[input.id]"
+                    />
 
-                <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
-            </el-form-item>
-
+                    <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
+                </el-form-item>
+            </template>
+            <p v-else>
+                {{ $t("no inputs") }}
+            </p>
             <el-collapse class="mt-4" v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
                     <el-form-item

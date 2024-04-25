@@ -1,10 +1,13 @@
 package io.kestra.storage.local;
 
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -20,28 +23,27 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Plugin
-@Singleton
-@LocalStorageEnabled
+@Plugin.Id("local")
+@Getter
+@Setter
+@NoArgsConstructor
 public class LocalStorage implements StorageInterface {
-    LocalConfig config;
 
-    /**
-     * No-arg constructor - required by Kestra service loader.
-     */
-    public LocalStorage() {}
-    
-    @Inject
-    public LocalStorage(LocalConfig config) throws IOException {
-        this.config = config;
+    @PluginProperty
+    @NotNull
+    private Path basePath;
 
-        if (!Files.exists(config.getBasePath())) {
-            Files.createDirectories(config.getBasePath());
+    /** {@inheritDoc} **/
+    @Override
+    public void init() throws IOException {
+        if (!Files.exists(this.basePath)) {
+            Files.createDirectories(this.basePath);
         }
     }
 
     private Path getPath(String tenantId, URI uri) {
-        Path basePath = tenantId == null ? config.getBasePath().toAbsolutePath()
-            : Paths.get(config.getBasePath().toAbsolutePath().toString(), tenantId);
+        Path basePath = tenantId == null ? this.basePath.toAbsolutePath()
+            : Paths.get(this.basePath.toAbsolutePath().toString(), tenantId);
         if(uri == null) {
             return basePath;
         }
@@ -191,8 +193,8 @@ public class LocalStorage implements StorageInterface {
 
     private URI getKestraUri(String tenantId, Path path) {
         Path prefix = (tenantId == null) ?
-            config.getBasePath().toAbsolutePath() :
-            Path.of(config.getBasePath().toAbsolutePath().toString(), tenantId);
+            basePath.toAbsolutePath() :
+            Path.of(basePath.toAbsolutePath().toString(), tenantId);
         return URI.create("kestra:///" + prefix.relativize(path));
     }
 

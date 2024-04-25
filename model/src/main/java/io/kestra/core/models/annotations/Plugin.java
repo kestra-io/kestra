@@ -21,7 +21,7 @@ public @interface Plugin {
     /**
      * Specifies whether the annotated plugin class is internal to Kestra.
      * <p>
-     * An internal plugin can be resolved through the {@link io.kestra.core.plugins.PluginRegistry}, but cannot
+     * An internal plugin can be resolved through the PluginRegistry, but cannot
      * be referenced directly in a YAML flow definition.
      *
      * @return {@code true} if the plugin is internal. Otherwise {@link false}.
@@ -35,4 +35,16 @@ public @interface Plugin {
      * For the moment, aliases are considered as deprecated plugins replaced by the class annotated.
      */
     String[] aliases() default {};
+
+    @Documented
+    @Inherited
+    @Retention(RUNTIME)
+    @Target({ElementType.TYPE})
+    @interface Id {
+        /**
+         * Specifies the unique ID for identifying a plugin. ID is case-insensitive.
+         * @return  The string identifier.
+         */
+        String value();
+    }
 }

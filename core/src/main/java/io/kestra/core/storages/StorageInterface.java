@@ -15,7 +15,24 @@ import java.net.URI;
 import java.util.List;
 
 @Introspected
-public interface StorageInterface extends Plugin {
+public interface StorageInterface extends AutoCloseable, Plugin {
+
+    /**
+     * Opens any resources or perform any pre-checks for initializing this storage.
+     *
+     * @throws IOException if an error happens during initialization.
+     */
+    default void init() throws IOException {
+        // no-op
+    }
+
+    /**
+     * Closes any resources used by this class.
+     */
+    @Override
+    default void close() {
+        // no-op
+    }
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(String tenantId, URI uri) throws IOException;

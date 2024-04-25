@@ -67,7 +67,7 @@ public class PluginScanner {
             .toList();
 
         int nbPlugins = scanResult.stream().mapToInt(registeredPlugin -> registeredPlugin.allClass().size()).sum();
-        log.info("Registered {} plugins int {} groups (scan done in {}ms)", nbPlugins, scanResult.size(), System.currentTimeMillis() - start);
+        log.info("Registered {} plugins from {} groups (scan done in {}ms)", nbPlugins, scanResult.size(), System.currentTimeMillis() - start);
         return scanResult;
     }
 
@@ -76,13 +76,16 @@ public class PluginScanner {
      */
     public RegisteredPlugin scan() {
         try {
+            long start = System.currentTimeMillis();
             Manifest manifest = new Manifest(IOUtils.toInputStream("Manifest-Version: 1.0\n" +
                 "X-Kestra-Title: core\n" +
                 "X-Kestra-Group: io.kestra.core.tasks\n",
                 StandardCharsets.UTF_8
             ));
 
-            return scanClassLoader(PluginScanner.class.getClassLoader(), null, manifest);
+            RegisteredPlugin corePlugin = scanClassLoader(PluginScanner.class.getClassLoader(), null, manifest);
+            log.info("Registered {} core plugins (scan done in {}ms)", corePlugin.allClass().size(), System.currentTimeMillis() - start);
+            return corePlugin;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

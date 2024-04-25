@@ -7,7 +7,6 @@ import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.commands.templates.TemplateCommand;
-import io.kestra.core.contexts.KestraApplicationContext;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -65,7 +64,7 @@ public class App implements Callable<Integer> {
         SLF4JBridgeHandler.install();
 
         // Init ApplicationContext
-        ApplicationContext applicationContext = App.applicationContext(cls, args, DefaultPluginRegistry.getOrCreate());
+        ApplicationContext applicationContext = App.applicationContext(cls, args);
 
         // Call Picocli command
         int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
@@ -84,10 +83,10 @@ public class App implements Callable<Integer> {
      * @return the application context created
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass,
-                                                           String[] args,
-                                                           PluginRegistry pluginRegistry) {
+                                                           String[] args) {
 
-        ApplicationContextBuilder builder = KestraApplicationContext.builder(pluginRegistry)
+        ApplicationContextBuilder builder = ApplicationContext
+            .builder()
             .mainClass(mainClass)
             .environments(Environment.CLI);
 
@@ -123,12 +122,7 @@ public class App implements Callable<Integer> {
                 });
 
             builder.properties(properties);
-
-            // Load external plugins before starting ApplicationContext
-            Path pluginPath = ((AbstractCommand)commandLine.getCommandSpec().userObject()).pluginsPath;
-            pluginRegistry.registerIfAbsent(pluginPath);
         }
-
         return builder.build();
     }
 

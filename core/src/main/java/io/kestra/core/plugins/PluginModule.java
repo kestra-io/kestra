@@ -3,7 +3,6 @@ package io.kestra.core.plugins;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;

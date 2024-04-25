@@ -499,6 +499,11 @@
 
                 if (creation) {
                     this.createFile({namespace: this.namespace, path: NAME, content});
+                    this.changeOpenedTabs({
+                        action: "open",
+                        name: NAME,
+                        extension: extension,
+                    });
                 }
 
                 if (!this.dialog.folder) {

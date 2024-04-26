@@ -287,7 +287,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger) {
-        if (abstractTrigger instanceof WorkerTriggerIntervalInterface interval) {
+        if (abstractTrigger instanceof PollingTriggerInterface interval) {
             return interval.nextEvaluationDate();
         } else {
             return ZonedDateTime.now();
@@ -295,7 +295,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
-        if (abstractTrigger instanceof WorkerTriggerIntervalInterface interval) {
+        if (abstractTrigger instanceof PollingTriggerInterface interval) {
             return interval.nextEvaluationDate(conditionContext, last);
         } else {
             return ZonedDateTime.now();
@@ -303,7 +303,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     private Duration interval(AbstractTrigger abstractTrigger) {
-        if (abstractTrigger instanceof WorkerTriggerIntervalInterface interval) {
+        if (abstractTrigger instanceof PollingTriggerInterface interval) {
             return interval.getInterval();
         } else {
             return Duration.ofSeconds(1);

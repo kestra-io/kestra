@@ -17,7 +17,7 @@
         />
     </el-row>
     <div class="plugins-container pb-2">
-        <el-tooltip v-for="plugin in pluginsList" :key="plugin.title">
+        <el-tooltip v-for="(plugin, index) in pluginsList" :key="index">
             <template #content>
                 <div class="tasks-tooltips">
                     <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0">
@@ -140,7 +140,6 @@
 
                         return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
                     })
-
             }
         },
         methods: {

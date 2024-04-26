@@ -550,7 +550,7 @@
                         self.$emit("change", value, event);
                         self.$emit("update:value", value);
 
-                        if (self.currentTab.name) {
+                        if (self.currentTab && self.currentTab.name) {
                             self.changeOpenedTabs({
                                 action: "dirty",
                                 name: self.currentTab.name,

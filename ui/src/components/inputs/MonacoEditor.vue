@@ -263,7 +263,7 @@
                 const namespacesWithRange = YamlUtils.extractFieldFromMaps(source, "namespace").reverse();
                 const namespace = namespacesWithRange.find(namespaceWithRange => {
                     const range = namespaceWithRange.range;
-                    return range[0] < position.offset < range[2];
+                    return range[0] < position.offset && position.offset < range[2];
                 })?.namespace;
                 if (namespace === undefined) {
                     return undefined;
@@ -301,6 +301,12 @@
                 });
 
                 const previousWordCharWithInputsCapture = model.findPreviousMatch("(inputs)?([\\w:])", position, true, false, null, true);
+                if (!previousWordCharWithInputsCapture) {
+                    return undefined;
+                }
+
+                const previousWordOffset = model.getOffsetAt({column: previousWordCharWithInputsCapture.range.startColumn, lineNumber: previousWordCharWithInputsCapture.range.startLineNumber});
+
                 let prefixAtPosition = model.getWordUntilPosition(position);
                 if (prefixAtPosition?.word === "") {
                     prefixAtPosition = null;
@@ -308,7 +314,7 @@
                 const wordAtPosition = model.getWordAtPosition(position);
                 const subflowTaskWithRange = subflowsWithRange.reverse().find(subflowWithRange => {
                     const range = subflowWithRange.range;
-                    return range[0] < previousWordCharWithInputsCapture.range.endOffset < range[2];
+                    return range[0] < previousWordOffset && previousWordOffset < range[2];
                 });
 
                 const subflowTask = subflowTaskWithRange?.map;

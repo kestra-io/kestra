@@ -401,7 +401,7 @@
         window.addEventListener("resize", onResize);
 
         if (props.isCreating) {
-            store.commit("editor/flowCreation");
+            store.commit("editor/closeTabs");
         }
     });
 
@@ -422,6 +422,8 @@
         if (!store.getters["auth/isLogged"] && haveChange.value) {
             persistEditorContent(true);
         }
+
+        store.commit("editor/closeTabs");
     });
 
     const stopTour = () => {
@@ -973,11 +975,11 @@
             </el-button>
         </el-tooltip>
 
-        <el-scrollbar class="tabs">
+        <el-scrollbar v-if="!isCreating" class="tabs">
             <el-button
                 v-for="(tab, index) in openedTabs"
                 :key="index"
-                :class="{'tab-active': tab.name === currentTab.name}"
+                :class="{'tab-active': tab?.name === currentTab.name}"
                 @click="changeCurrentTab(tab.name, tab.extension)"
             >
                 <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">

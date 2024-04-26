@@ -41,8 +41,10 @@ export default {
                 state.current.dirty = dirty;
             }
         },
-        flowCreation(state) {
-            state.tabs = [state.tabs[0]];
+        closeTabs(state) {
+            if (state.tabs[0]) {
+                state.tabs = [state.tabs[0]];
+            }
         },
     },
 };

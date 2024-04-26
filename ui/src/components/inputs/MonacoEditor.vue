@@ -96,7 +96,7 @@
             currentTab: {
                 deep: true,
                 handler: async function (newValue) {
-                    if (newValue.persistent) {
+                    if (newValue.persistent && this.flow?.source) {
                         this.changeTab(this.flow.source, "yaml");
                     } else {
                         const payload = {

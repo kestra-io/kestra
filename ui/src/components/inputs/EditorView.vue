@@ -399,6 +399,10 @@
         window.addEventListener("beforeunload", persistEditorWidth);
 
         window.addEventListener("resize", onResize);
+
+        if (props.isCreating) {
+            store.commit("editor/flowCreation");
+        }
     });
 
     onBeforeUnmount(() => {
@@ -958,6 +962,7 @@
 <template>
     <div class="button-top">
         <el-tooltip
+            v-if="!isCreating"
             ref="toggleExplorer"
             :content="
                 $t(`namespace files.toggle.${explorerVisible ? 'hide' : 'show'}`)

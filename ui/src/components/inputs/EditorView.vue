@@ -1320,3 +1320,9 @@
         }
     }
 </style>
+
+<style lang="scss">
+.tabs .el-scrollbar__bar.is-horizontal {
+  height: 1px !important;
+}
+</style>

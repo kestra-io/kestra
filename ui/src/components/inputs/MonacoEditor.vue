@@ -112,9 +112,13 @@
                             js: "javascript",
                         };
 
-                        await this.readFile(payload).then((content) => {
-                            this.changeTab(content, MAP[newValue.extension]);
-                        });
+                        if (newValue.creation) {
+                            this.changeTab("", MAP[newValue.extension]);
+                        } else {
+                            await this.readFile(payload).then((content) => {
+                                this.changeTab(content, MAP[newValue.extension]);
+                            });
+                        }
                     }
                 },
             },
@@ -167,7 +171,7 @@
             })
 
             if (!this.monacoYamlConfigured) {
-                this.$store.commit("core/setMonacoYamlConfigured", true)
+                this.$store.commit("core/setMonacoYamlConfigured", true);
                 configureMonacoYaml(this.monaco, {
                     enableSchemaRequest: true,
                     hover: true,

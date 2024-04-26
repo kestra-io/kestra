@@ -185,7 +185,7 @@
         >
             <div class="pb-1">
                 <span>
-                    {{ $t(`namespace files.dialog.name.${dialog.type}`) ?? "" }}
+                    {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
             <el-input ref="name" v-model="dialog.name" size="large" class="mb-3" />
@@ -273,7 +273,7 @@
 
     const DIALOG_DEFAULTS = {
         visible: false,
-        type: undefined,
+        type: "file",
         name: undefined,
         folder: undefined,
         rename: false,
@@ -503,6 +503,7 @@
                         action: "open",
                         name: NAME,
                         extension: extension,
+                        creation: true,
                     });
                 }
 

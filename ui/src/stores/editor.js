@@ -10,8 +10,15 @@ export default {
             state.explorerVisible = !state.explorerVisible;
         },
         changeOpenedTabs(state, payload) {
-            const {action, name, extension, index, persistent, dirty} =
-                payload;
+            const {
+                action,
+                name,
+                extension,
+                index,
+                persistent,
+                creation,
+                dirty,
+            } = payload;
 
             if (action === "open") {
                 const index = state.tabs.findIndex((tab) => tab.name === name);
@@ -25,10 +32,18 @@ export default {
                     isDirty = state.tabs[index].dirty;
                 }
 
-                state.current = {name, extension, persistent, dirty: isDirty};
+                state.current = {
+                    name,
+                    extension,
+                    persistent,
+                    dirty: isDirty,
+                    creation,
+                };
             } else if (action === "close") {
                 state.tabs = state.tabs.filter((tab) => tab.name !== name);
-                const POSITION = index ? index : state.tabs.findIndex((tab) => tab.name !== name);
+                const POSITION = index
+                    ? index
+                    : state.tabs.findIndex((tab) => tab.name !== name);
 
                 if (state.current.name === name) {
                     const i = POSITION - 1 >= 0;

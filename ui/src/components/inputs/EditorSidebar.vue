@@ -492,9 +492,7 @@
                     : {
                         name: this.dialog.name.split(".")[0],
                         extension: this.dialog.name.split(".")[1],
-                        content: `// Initial content of your ${
-                            this.dialog.name.split(".")[0]
-                        }.${this.dialog.name.split(".")[1]} file`,
+                        content: "",
                     };
                 const NAME = `${name}.${extension}`;
                 const NEW = {name: NAME, extension, content};

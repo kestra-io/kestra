@@ -9,6 +9,7 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
+import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
@@ -25,11 +26,19 @@ import java.util.Optional;
 
 @Filter("/**")
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "micronaut.security.enabled", notEquals = "true") // don't add this filter in EE
 public class AuthenticationFilter implements HttpServerFilter {
     private static final String PREFIX = "Basic";
+    private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
 
     @Inject
     private BasicAuthService basicAuthService;
+
+
+    @Override
+    public int getOrder() {
+        return ORDER;
+    }
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {

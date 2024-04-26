@@ -95,7 +95,7 @@
         watch: {
             currentTab: {
                 deep: true,
-                handler: async function (newValue) {
+                handler: async function (newValue, oldValue) {
                     if (newValue.persistent && this.flow?.source) {
                         this.changeTab(this.flow.source, "yaml");
                     } else {
@@ -112,12 +112,14 @@
                             js: "javascript",
                         };
 
-                        if (newValue.creation) {
+                        if (newValue.local) {
                             this.changeTab("", MAP[newValue.extension]);
                         } else {
-                            await this.readFile(payload).then((content) => {
-                                this.changeTab(content, MAP[newValue.extension]);
-                            });
+                            if (JSON.stringify(newValue) !==JSON.stringify(oldValue)) {
+                                await this.readFile(payload).then((content) => {
+                                    this.changeTab(content,MAP[newValue.extension]);
+                                });
+                            }
                         }
                     }
                 },

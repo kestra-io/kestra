@@ -831,6 +831,7 @@
                 action: "dirty",
                 name: currentTab.value.name,
                 dirty: false,
+                local: true
             });
         }
     };

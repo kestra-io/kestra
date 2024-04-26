@@ -503,7 +503,7 @@
                         action: "open",
                         name: NAME,
                         extension: extension,
-                        creation: true,
+                        local: true,
                     });
                 }
 

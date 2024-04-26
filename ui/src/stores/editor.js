@@ -16,7 +16,7 @@ export default {
                 extension,
                 index,
                 persistent,
-                creation,
+                local,
                 dirty,
             } = payload;
 
@@ -37,7 +37,7 @@ export default {
                     extension,
                     persistent,
                     dirty: isDirty,
-                    creation,
+                    local,
                 };
             } else if (action === "close") {
                 state.tabs = state.tabs.filter((tab) => tab.name !== name);

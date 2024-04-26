@@ -220,6 +220,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             .task(task)
             .taskRun(TaskRun.builder()
                 .id(IdUtils.create())
+                .tenantId(parent.getTenantId())
                 .executionId(parent.getExecutionId())
                 .namespace(parent.getNamespace())
                 .flowId(parent.getFlowId())

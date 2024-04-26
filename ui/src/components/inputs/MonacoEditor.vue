@@ -550,11 +550,13 @@
                         self.$emit("change", value, event);
                         self.$emit("update:value", value);
 
-                        self.changeOpenedTabs({
-                            action: "dirty",
-                            name: self.currentTab.name,
-                            dirty: true
-                        });
+                        if (self.currentTab.name) {
+                            self.changeOpenedTabs({
+                                action: "dirty",
+                                name: self.currentTab.name,
+                                dirty: true,
+                            });
+                        }
                     }
                 });
                 this.$emit("editorDidMount", this.editor);

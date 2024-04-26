@@ -28,10 +28,11 @@ export default {
                 state.current = {name, extension, persistent, dirty: isDirty};
             } else if (action === "close") {
                 state.tabs = state.tabs.filter((tab) => tab.name !== name);
+                const POSITION = index ? index : state.tabs.findIndex((tab) => tab.name !== name);
 
                 if (state.current.name === name) {
-                    const i = index - 1 >= 0;
-                    state.current = i ? state.tabs[index - 1] : undefined;
+                    const i = POSITION - 1 >= 0;
+                    state.current = i ? state.tabs[POSITION - 1] : undefined;
                 }
             } else if (action === "dirty") {
                 state.tabs.map((tab) => {

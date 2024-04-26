@@ -367,7 +367,7 @@
             },
             toggleDropdown(reference) {
                 if (this.dropdownRef) {
-                    this.$refs[this.dropdownRef].handleClose();
+                    this.$refs[this.dropdownRef]?.handleClose();
                 }
 
                 this.dropdownRef = reference;
@@ -596,6 +596,7 @@
                 remove(this.items);
 
                 this.deleteFileDirectory({namespace: this.namespace, path: name});
+                this.changeOpenedTabs({action: "close", name})
 
                 this.confirmation = {visible: false, data: {}};
             },

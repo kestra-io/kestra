@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -88,5 +89,14 @@ public abstract class TaskRunner implements Plugin {
 
     protected Map<String, String> runnerEnv(RunContext runContext, TaskCommands taskCommands) throws IllegalVariableEvaluationException {
         return new HashMap<>();
+    }
+
+    public String toAbsolutePath(RunContext runContext, TaskCommands taskCommands, String relativePath) throws IllegalVariableEvaluationException {
+        Path workingDir = (Path) this.additionalVars(runContext, taskCommands).get(ScriptService.VAR_WORKING_DIR);
+        if (workingDir == null) {
+            return relativePath;
+        }
+
+        return workingDir + "/" + relativePath;
     }
 }

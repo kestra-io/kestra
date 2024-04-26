@@ -52,7 +52,11 @@
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
-            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"])
+            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"]),
+            ...mapState({
+                currentTab: (state) => state.editor.current,
+                flow: (state) => state.flow.flow
+            }),
         },
         props: {
             original: {
@@ -87,12 +91,6 @@
         emits: ["editorWillMount", "editorDidMount", "change", "update:value"],
         model: {
             event: "change"
-        },
-        computed: {
-            ...mapState({
-                currentTab: (state) => state.editor.current,
-                flow: (state) => state.flow.flow
-            }),
         },
         watch: {
             currentTab: {

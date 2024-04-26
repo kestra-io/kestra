@@ -99,7 +99,7 @@
                 deep: true,
                 handler: async function (newValue) {
                     if (newValue.persistent) {
-                        this.changeTab(YamlUtils.stringify(this.flow), "yaml");
+                        this.changeTab(this.flow.source, "yaml");
                     } else {
                         const payload = {
                             namespace: this.$route.params.namespace,

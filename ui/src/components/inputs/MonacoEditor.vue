@@ -4,7 +4,7 @@
 
 <script>
     import {defineComponent} from "vue";
-    import {mapState, mapActions} from "vuex";
+    import {mapState, mapMutations, mapActions} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
@@ -252,6 +252,7 @@
             this.destroy();
         },
         methods: {
+            ...mapMutations("editor", ["changeOpenedTabs"]),
             ...mapActions("namespace", ["readFile"]),
             async namespaceAutocompletion(model, position) {
                 const lineContent = this.lineContent(model, position);
@@ -548,6 +549,12 @@
                     if (self.value !== value) {
                         self.$emit("change", value, event);
                         self.$emit("update:value", value);
+
+                        self.changeOpenedTabs({
+                            action: "dirty",
+                            name: self.currentTab.name,
+                            dirty: true
+                        });
                     }
                 });
                 this.$emit("editorDidMount", this.editor);

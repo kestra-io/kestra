@@ -15,6 +15,7 @@
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
     import Close from "vue-material-design-icons/Close.vue";
+    import CircleMedium from "vue-material-design-icons/CircleMedium.vue";
 
     import KestraLogo from "../../assets/icon.svg";
     import {getVSIFileIcon} from "file-extension-icon-js";
@@ -660,7 +661,7 @@
     };
 
     const editorUpdate = (event) => {
-        const isFlow = currentTab.value.extension === undefined;
+        const isFlow = currentTab?.value?.extension === undefined;
 
         updatedFromEditor.value = true;
         flowYaml.value = event;
@@ -795,7 +796,7 @@
             return;
         }
 
-        const isFlow = currentTab.value.extension === undefined;
+        const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {
             onEdit(flowYaml.value).then((validation) => {
@@ -805,12 +806,22 @@
                 }
                 saveWithoutRevisionGuard();
                 flowYamlOrigin.value = flowYaml.value;
+                store.commit("editor/changeOpenedTabs", {
+                    action: "dirty",
+                    name: currentTab.value.name,
+                    dirty: false,
+                });
             });
         } else {
             store.dispatch("namespace/createFile", {
                 namespace: props.namespace,
                 path: currentTab.value.name,
                 content: editorDomElement.value.$refs.monacoEditor.value,
+            });
+            store.commit("editor/changeOpenedTabs", {
+                action: "dirty",
+                name: currentTab.value.name,
+                dirty: false,
             });
         }
     };
@@ -963,9 +974,11 @@
             >
                 <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
                 <span class="tab-name px-2">{{ tab.name }}</span>
+                <CircleMedium v-show="tab.dirty" />
                 <Close
                     v-if="!tab.persistent"
                     @click.prevent.stop="closeTab(tab.name, index)"
+                    class="cursor-pointer"
                 />
             </el-button>
         </el-scrollbar>
@@ -1324,5 +1337,9 @@
 <style lang="scss">
 .tabs .el-scrollbar__bar.is-horizontal {
   height: 1px !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

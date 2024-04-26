@@ -806,11 +806,14 @@
                 }
                 saveWithoutRevisionGuard();
                 flowYamlOrigin.value = flowYaml.value;
-                store.commit("editor/changeOpenedTabs", {
-                    action: "dirty",
-                    name: currentTab.value.name,
-                    dirty: false,
-                });
+
+                if (self.currentTab && self.currentTab.name) {
+                    store.commit("editor/changeOpenedTabs", {
+                        action: "dirty",
+                        name: currentTab.value.name,
+                        dirty: false,
+                    });
+                }
             });
         } else {
             store.dispatch("namespace/createFile", {

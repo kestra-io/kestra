@@ -813,10 +813,10 @@
                 saveWithoutRevisionGuard();
                 flowYamlOrigin.value = flowYaml.value;
 
-                if (self.currentTab && self.currentTab.name) {
+                if (currentTab.value && currentTab.value.name) {
                     store.commit("editor/changeOpenedTabs", {
                         action: "dirty",
-                        name: currentTab.value.name,
+                        name: "Flow",
                         dirty: false,
                     });
                 }

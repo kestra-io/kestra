@@ -72,7 +72,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
     @Schema(
         title = "Labels to add to the current execution.",
         description = "The value should result in a list of labels or a labelKey:labelValue map",
-        anyOf = {
+        oneOf = {
             String.class,
             Label[].class,
             Map.class

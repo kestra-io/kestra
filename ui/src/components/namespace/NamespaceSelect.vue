@@ -44,13 +44,13 @@
         emits: ["update:modelValue"],
         created() {
             this.$store
-                .dispatch("namespace/loadNamespaces", {dataType: this.dataType})
+                .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
                 .then(() => {
-                    this.groupedNamespaces = this.groupNamespaces(this.namespaces);
+                    this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces);
                 });
         },
         computed: {
-            ...mapState("namespace", ["namespaces"])
+            ...mapState("namespace", ["datatypeNamespaces"])
         },
         data() {
             return {

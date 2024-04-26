@@ -18,6 +18,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import lombok.experimental.SuperBuilder;
 
 import lombok.Builder;
@@ -83,6 +84,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
     )
     @PluginProperty(dynamic = true)
+    @Min(value = 1)
     private Integer revision;
 
     @Schema(

@@ -1,3 +1,5 @@
+import YamlUtils from "../../../utils/yamlUtils";
+
 export default {
     props: {
         modelValue: {
@@ -5,11 +7,15 @@ export default {
         },
         schema: {
             type: Object,
-            required: true
+            default: undefined
         },
         required: {
             type: Boolean,
             default: false
+        },
+        task: {
+            type: Object,
+            default: undefined
         },
         root: {
             type: String,
@@ -19,6 +25,7 @@ export default {
             type: Object,
             default: () => undefined
         }
+
     },
     emits: ["update:modelValue"],
     methods: {
@@ -28,7 +35,7 @@ export default {
         isRequired(key) {
             return this.schema.required && this.schema.required.includes(key);
         },
-        getType(property) {
+        getType(property, key) {
             if (property.enum !== undefined) {
                 return "enum";
             }
@@ -45,6 +52,10 @@ export default {
                 return "complex";
             }
 
+            if (Object.prototype.hasOwnProperty.call(property, "oneOf")) {
+                return "one-of";
+            }
+
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
                 return "dict";
             }
@@ -53,11 +64,21 @@ export default {
                 return "number";
             }
 
-            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
-                return "anyOf";
+            if (key === "namespace") {
+                return "subflow-namespace";
             }
 
-            return property.type || "dynamic";
+            const properties = Object.keys(this.schema?.properties ?? {});
+            const hasNamespaceProperty = properties.includes("namespace");
+            if (key === "flowId" && hasNamespaceProperty) {
+                return "subflow-id";
+            }
+
+            if (key === "inputs" && hasNamespaceProperty && properties.includes("flowId")) {
+                return "subflow-inputs";
+            }
+
+            return property.type || "expression";
         },
         // eslint-disable-next-line no-unused-vars
         onShow(key) {
@@ -70,13 +91,17 @@ export default {
     computed: {
         values() {
             if (this.modelValue === undefined) {
-                return this.schema.default;
+                return this.schema?.default;
             }
 
             return this.modelValue;
         },
         editorValue() {
-            return this.values ? this.values : "";
+            if (typeof this.values === "string") {
+                return this.values;
+            }
+
+            return YamlUtils.stringify(this.values);
         },
         info() {
             return `${this.schema.title || this.schema.type}`

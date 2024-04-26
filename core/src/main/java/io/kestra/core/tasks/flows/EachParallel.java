@@ -123,7 +123,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The list of values for this task.",
         description = "The value can be passed as a string, a list of strings, or a list of objects.",
-        anyOf = {String.class, Object[].class}
+        oneOf = {String.class, Object[].class}
     )
     private Object value;
 

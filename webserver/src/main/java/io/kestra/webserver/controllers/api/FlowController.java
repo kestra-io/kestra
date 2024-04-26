@@ -135,7 +135,7 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}")
     @Operation(tags = {"Flows"}, summary = "Get a flow")
     @Schema(
-        anyOf = {FlowWithSource.class, Flow.class}
+        oneOf = {FlowWithSource.class, Flow.class}
     )
     //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
     public Object index(
@@ -464,8 +464,10 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces")
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
-    public List<String> listDistinctNamespace() {
-        return flowRepository.findDistinctNamespace(tenantService.resolveTenant());
+    public List<String> listDistinctNamespace(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query
+    ) {
+        return flowRepository.findDistinctNamespace(tenantService.resolveTenant(), query);
     }
 
 

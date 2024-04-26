@@ -12,7 +12,9 @@ export default {
             validateInputs: false,
             monacoRange: undefined,
             monacoDisableRange: undefined,
-        }
+        },
+        monacoYamlConfigured: false,
+        autocompletionSource: undefined
     },
     actions: {
         showMessage({commit}, message) {
@@ -37,6 +39,12 @@ export default {
         },
         setGuidedProperties(state, guidedProperties) {
             state.guidedProperties = guidedProperties
+        },
+        setMonacoYamlConfigured(state, monacoYamlConfigured) {
+            state.monacoYamlConfigured = monacoYamlConfigured
+        },
+        setAutocompletionSource(state, autocompletionSource) {
+            state.autocompletionSource = autocompletionSource
         }
     },
     getters: {

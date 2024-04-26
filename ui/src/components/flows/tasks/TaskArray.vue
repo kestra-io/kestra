@@ -31,6 +31,11 @@
     export default {
         mixins: [Task],
         emits: ["update:modelValue"],
+        created() {
+            if (!Array.isArray(this.modelValue)) {
+                this.$emit("update:modelValue", []);
+            }
+        },
         computed: {
             values() {
                 if (this.modelValue === undefined) {

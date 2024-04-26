@@ -54,8 +54,14 @@ export default {
                 return response.data;
             })
         },
+        flowsByNamespace(_, namespace) {
+            return this.$http.get(`${apiUrl(this)}/flows/${namespace}`).then(response => {
+                return response.data;
+            })
+        },
         loadFlow({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}?source=true`,
+            const httpClient = options.httpClient ?? this.$http
+            return httpClient.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}${options.source === undefined ? "?source=true" : ""}`,
                 {
                     params: options,
                     validateStatus: (status) => {

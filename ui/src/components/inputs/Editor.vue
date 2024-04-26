@@ -223,18 +223,20 @@
                     this.$refs.monacoEditor.focus();
                 }
 
-                this.editor.addAction({
-                    id: "kestra-save",
-                    label: "Save",
-                    keybindings: [
-                        KeyMod.CtrlCmd | KeyCode.KeyS,
-                    ],
-                    contextMenuGroupId: "navigation",
-                    contextMenuOrder: 1.5,
-                    run: (ed) => {
-                        this.$emit("save", ed.getValue())
-                    }
-                });
+                if (!this.readOnly) {
+                    this.editor.addAction({
+                        id: "kestra-save",
+                        label: "Save",
+                        keybindings: [
+                            KeyMod.CtrlCmd | KeyCode.KeyS,
+                        ],
+                        contextMenuGroupId: "navigation",
+                        contextMenuOrder: 1.5,
+                        run: (ed) => {
+                            this.$emit("save", ed.getValue())
+                        }
+                    });
+                }
 
                 this.editor.addAction({
                     id: "kestra-execute",

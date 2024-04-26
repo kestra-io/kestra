@@ -91,7 +91,7 @@
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
     import Drawer from "../Drawer.vue";
-    import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
+    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import {mapGetters, mapState} from "vuex";
     import Utils from "../../utils/utils";
     import Markdown from "../layout/Markdown.vue";
@@ -148,6 +148,10 @@
             readOnly: {
                 type: Boolean,
                 default: false
+            },
+            flowSource: {
+                type: String,
+                default: undefined
             }
         },
         watch: {
@@ -195,46 +199,14 @@
                                 store: false
                             });
                     }
-
-                    return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId).toString();
                 }
 
-                return YamlUtils.extractTask(this.flow.source, taskId).toString();
+                return YamlUtils.extractTask(this.source, taskId).toString();
             },
-
             saveTask() {
-                if (this.emitTaskOnly) {
-                    this.$emit("update:task", this.taskYaml);
-                    this.taskYaml = "";
-                    this.isModalOpen = false;
-
-                    return
-                }
-                let updatedSource;
-                try {
-                    updatedSource = YamlUtils.replaceTaskInDocument(
-                        this.flow.source,
-                        this.taskId ? this.taskId : this.task.id,
-                        this.taskYaml
-                    );
-                } catch (err) {
-                    this.$toast().warning(
-                        err.message,
-                        this.$t("invalid yaml"),
-                    );
-
-                    return;
-                }
-
-                if (this.emitOnly) {
-                    this.$emit("update:task", updatedSource);
-                    this.isModalOpen = false;
-                } else {
-                    saveFlowTemplate(this, updatedSource, "flow")
-                        .then(() => {
-                            this.isModalOpen = false;
-                        })
-                }
+                this.$emit("update:task", this.taskYaml);
+                this.taskYaml = "";
+                this.isModalOpen = false;
             },
             async onShow() {
                 this.isModalOpen = !this.isModalOpen;
@@ -286,6 +258,9 @@
             },
             isLoading() {
                 return this.taskYaml === undefined;
+            },
+            source() {
+                return this.revision ? this.revisions?.[this.revision - 1]?.source : this.flow?.source;
             }
         }
     };

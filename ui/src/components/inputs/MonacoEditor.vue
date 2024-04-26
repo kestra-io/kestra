@@ -18,6 +18,7 @@
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
     import {uniqBy} from "lodash";
+    import {mapState} from "vuex";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -44,6 +45,15 @@
     });
 
     export default defineComponent({
+        data() {
+            return {
+                flowsInputsCache: {}
+            }
+        },
+        computed: {
+            ...mapState("namespace", ["datatypeNamespaces"]),
+            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"])
+        },
         props: {
             original: {
                 type: String,
@@ -127,62 +137,249 @@
                 _this.initMonaco(monaco);
             });
 
-            this.monacoYaml = configureMonacoYaml(this.monaco, {
-                enableSchemaRequest: true,
-                hover: true,
-                completion: true,
-                validate: true,
-                format: true,
-                schemas: yamlSchemas(this.$store)
-            });
+            if (!this.monacoYamlConfigured) {
+                this.$store.commit("core/setMonacoYamlConfigured", true)
+                configureMonacoYaml(this.monaco, {
+                    enableSchemaRequest: true,
+                    hover: true,
+                    completion: true,
+                    validate: true,
+                    format: true,
+                    schemas: yamlSchemas(this.$store)
+                });
+            }
 
-            this.autocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
-                triggerCharacters: ["."],
-                async provideCompletionItems(model, position) {
-                    const lineContent = model.getValueInRange({
-                        startLineNumber: position.lineNumber,
-                        startColumn: 1,
-                        endLineNumber: position.lineNumber,
-                        endColumn: model.getLineMaxColumn(position.lineNumber)
-                    });
-                    const tillCursorContent = lineContent.substring(0, position.column - 1);
-                    const match = tillCursorContent.match(/( *([^{ ]*)\.)([^.} ]*)$/);
-                    if (!match) {
-                        return {suggestions: []};
-                    }
-
-                    let nextDotIndex;
-                    // We're at the end of the line
-                    if (lineContent.length === tillCursorContent.length) {
-                        nextDotIndex = tillCursorContent.length;
-                    } else {
-                        const remainingLineText = lineContent.substring(tillCursorContent.length);
-                        const nextDotMatcher = remainingLineText.match(/[ .}]/);
-                        if (!nextDotMatcher) {
-                            nextDotIndex = lineContent.length - 1;
-                        } else {
-                            nextDotIndex = tillCursorContent.length + nextDotMatcher.index;
+            const noSuggestions = {suggestions: []};
+            if (this.schemaType === "flow") {
+                // If we have an autocompletion source, it means we don't have the full model so we won't be able to provide cursor-based autocompletion
+                this.subflowAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
+                    triggerCharacters: [":"],
+                    async provideCompletionItems(model, position) {
+                        if (_this.schemaType !== "flow") {
+                            return noSuggestions;
                         }
-                    }
 
-                    const indexOfFieldToComplete = match.index + match[1].length;
-                    return {
-                        suggestions: await _this.autocompletion(
-                            model.getValue(),
-                            lineContent,
-                            match[2],
-                            match[3],
-                            position.lineNumber,
-                            [indexOfFieldToComplete, nextDotIndex]
-                        )
-                    };
-                }
-            })
+                        const namespaceAutocompletion = await _this.namespaceAutocompletion(model, position);
+                        if (namespaceAutocompletion) {
+                            return namespaceAutocompletion;
+                        }
+
+                        const flowIdAutocompletion = await _this.flowIdAutocompletion(model, position);
+                        if (flowIdAutocompletion) {
+                            return flowIdAutocompletion;
+                        }
+
+                        const subflowInputsAutocompletion = await _this.subflowInputsAutocompletion(model, position);
+                        if (subflowInputsAutocompletion) {
+                            return subflowInputsAutocompletion;
+                        }
+
+                        return noSuggestions;
+                    }
+                })
+
+                this.nestedFieldAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
+                    triggerCharacters: ["."],
+                    async provideCompletionItems(model, position) {
+                        const lineContent = _this.lineContent(model, position);
+                        const tillCursorContent = _this.tillCursorContent(lineContent, position);
+                        const match = tillCursorContent.match(/( *([^{ ]*)\.)([^.} ]*)$/);
+                        if (!match) {
+                            return noSuggestions;
+                        }
+
+                        let nextDotIndex;
+                        // We're at the end of the line
+                        if (lineContent.length === tillCursorContent.length) {
+                            nextDotIndex = tillCursorContent.length;
+                        } else {
+                            const remainingLineText = lineContent.substring(tillCursorContent.length);
+                            const nextDotMatcher = remainingLineText.match(/[ .}]/);
+                            if (!nextDotMatcher) {
+                                nextDotIndex = lineContent.length - 1;
+                            } else {
+                                nextDotIndex = tillCursorContent.length + nextDotMatcher.index;
+                            }
+                        }
+
+                        const indexOfFieldToComplete = match.index + match[1].length;
+                        return {
+                            suggestions: await _this.autocompletion(
+                                _this.autocompletionSource,
+                                lineContent,
+                                match[2],
+                                match[3],
+                                position.lineNumber,
+                                [indexOfFieldToComplete, nextDotIndex]
+                            )
+                        };
+                    }
+                })
+            }
         },
         beforeUnmount: function () {
             this.destroy();
         },
         methods: {
+            async namespaceAutocompletion(model, position) {
+                const lineContent = this.lineContent(model, position);
+                const match = this.tillCursorContent(lineContent, position).match(/^( *namespace:( *))(.*)$/);
+                if (!match) {
+                    return undefined;
+                }
+
+                const indexOfFieldToComplete = match.index + match[1].length;
+                if (!this.datatypeNamespaces) {
+                    await this.$store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})
+                }
+                let filteredNamespaces = this.datatypeNamespaces;
+                if (match[3].length > 0) {
+                    filteredNamespaces = filteredNamespaces.filter(n => n.startsWith(match[3]));
+                }
+                return {
+                    suggestions: filteredNamespaces.map(namespace => ({
+                        kind: monaco.languages.CompletionItemKind.Value,
+                        label: namespace,
+                        insertText: (match[2].length > 0 ? "" : " ") + namespace,
+                        range: {
+                            startLineNumber: position.lineNumber,
+                            endLineNumber: position.lineNumber,
+                            startColumn: indexOfFieldToComplete + 1,
+                            endColumn: YamlUtils.nextDelimiterIndex(lineContent, position.column - 1)
+                        }
+                    }))
+                };
+            },
+            async flowIdAutocompletion(model, position) {
+                const lineContent = this.lineContent(model, position);
+                const match = this.tillCursorContent(lineContent, position).match(/^( *flowId:( *))(.*)$/);
+                if (!match) {
+                    return undefined;
+                }
+
+                const indexOfFieldToComplete = match.index + match[1].length;
+
+                const source = model.getValue();
+                const namespacesWithRange = YamlUtils.extractFieldFromMaps(source, "namespace").reverse();
+                const namespace = namespacesWithRange.find(namespaceWithRange => {
+                    const range = namespaceWithRange.range;
+                    return range[0] < position.offset < range[2];
+                })?.namespace;
+                if (namespace === undefined) {
+                    return undefined;
+                }
+
+                const flowAsJs = YamlUtils.parse(source);
+                let flowIds = (await this.$store.dispatch("flow/flowsByNamespace", namespace))
+                    .map(flow => flow.id)
+                if (match[3].length > 0) {
+                    flowIds = flowIds.filter(flowId => flowId.startsWith(match[3]));
+                }
+                if (flowAsJs?.id && flowAsJs?.namespace === namespace) {
+                    flowIds = flowIds.filter(flowId => flowId !== flowAsJs?.id);
+                }
+
+                return {
+                    suggestions: flowIds.map(flowId => ({
+                        kind: this.monaco.languages.CompletionItemKind.Value,
+                        label: flowId,
+                        insertText: (match[2].length > 0 ? "" : " ") + flowId,
+                        range: {
+                            startLineNumber: position.lineNumber,
+                            endLineNumber: position.lineNumber,
+                            startColumn: indexOfFieldToComplete + 1,
+                            endColumn: YamlUtils.nextDelimiterIndex(lineContent, position.column - 1)
+                        }
+                    }))
+                };
+            },
+            async subflowInputsAutocompletion(model, position) {
+                const subflowsWithRange = YamlUtils.extractMaps(model.getValue(), {
+                    namespace: {populated: true},
+                    flowId: {populated: true},
+                    inputs: {present: true}
+                });
+
+                const previousWordCharWithInputsCapture = model.findPreviousMatch("(inputs)?([\\w:])", position, true, false, null, true);
+                let prefixAtPosition = model.getWordUntilPosition(position);
+                if (prefixAtPosition?.word === "") {
+                    prefixAtPosition = null;
+                }
+                const wordAtPosition = model.getWordAtPosition(position);
+                const subflowTaskWithRange = subflowsWithRange.reverse().find(subflowWithRange => {
+                    const range = subflowWithRange.range;
+                    return range[0] < previousWordCharWithInputsCapture.range.endOffset < range[2];
+                });
+
+                const subflowTask = subflowTaskWithRange?.map;
+                if (!subflowTask) {
+                    return undefined;
+                }
+
+                const subflowUid = subflowTask.namespace + "." + subflowTask.flowId;
+                if (!this.flowsInputsCache[subflowUid]) {
+                    try {
+                        this.flowsInputsCache[subflowUid] = (await this.$store.dispatch(
+                            "flow/loadFlow",
+                            {
+                                namespace: subflowTask.namespace,
+                                id: subflowTask.flowId,
+                                revision: subflowTask.revision,
+                                source: false,
+                                store: false
+                            }
+                        )).inputs?.map(input => input.id) ?? [];
+                    } catch (e) {
+                        return undefined;
+                    }
+                }
+
+                let flowInputs = this.flowsInputsCache[subflowUid].filter(input => subflowTask.inputs?.[input] === undefined);
+                if (prefixAtPosition?.word) {
+                    flowInputs = flowInputs.filter(input => input.startsWith(prefixAtPosition.word));
+                }
+
+                let preInsertText = "";
+                // We don't have any word under cursor but we're on the same line as the previous word => We must add a newline
+                if (!wordAtPosition && previousWordCharWithInputsCapture?.range?.endLineNumber === position.lineNumber) {
+                    preInsertText = "\n";
+                    // By default, the new line will respect the parent indent. The only border case is when being on the same line as the expected parent (inputs), we must add manually the child indent
+                    if (previousWordCharWithInputsCapture.matches[1]) {
+                        preInsertText += "  ";
+                    } else if (previousWordCharWithInputsCapture.matches[2] === ":") {
+                        // User is filling an input value
+                        return undefined;
+                    }
+                }
+
+                return {
+                    suggestions: flowInputs.map(input => {
+                        const insertText = input + ": ";
+                        return {
+                            kind: this.monaco.languages.CompletionItemKind.Value,
+                            label: input,
+                            insertText: preInsertText + insertText,
+                            range: {
+                                startLineNumber: position.lineNumber,
+                                endLineNumber: position.lineNumber,
+                                startColumn: wordAtPosition?.startColumn ?? position.column,
+                                endColumn: wordAtPosition?.endColumn ?? position.column
+                            }
+                        };
+                    })
+                }
+            },
+            lineContent(model, position) {
+                return model.getValueInRange({
+                    startLineNumber: position.lineNumber,
+                    startColumn: 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: model.getLineMaxColumn(position.lineNumber)
+                });
+            },
+            tillCursorContent(lineContent, position) {
+                return lineContent.substring(0, position.column - 1);
+            },
             async autocompletion(source, lineContent, field, rest, lineNumber, fieldToCompleteIndexes) {
                 const flowAsJs = YamlUtils.parse(source);
                 let autocompletions;
@@ -323,9 +520,11 @@
                 this.editor.focus();
             },
             destroy: function () {
-                this.monacoYaml?.dispose();
-                this.autocompletionProvider?.dispose();
+                this.subflowAutocompletionProvider?.dispose();
+                this.nestedFieldAutocompletionProvider?.dispose();
+                this.editor?.getModel()?.dispose();
                 this.editor?.dispose();
+
             },
             needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;

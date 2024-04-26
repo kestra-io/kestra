@@ -19,7 +19,7 @@
             <template #label>
                 <span class="d-flex flex-grow-1">
                     <span class="me-auto">
-                        <code> Any of</code>&nbsp;
+                        <code> One of</code>&nbsp;
                     </span>
                 </span>
             </template>
@@ -73,7 +73,7 @@
             };
         },
         created() {
-            this.schemas = this.schema?.anyOf ?? []
+            this.schemas = this.schema?.oneOf ?? []
         },
         methods: {
             onSelect(value) {
@@ -92,7 +92,13 @@
         },
         computed: {
             currentSchema() {
-                return this.definitions[this.selectedSchema] ?? {type: this.selectedSchema}
+                return this.definitions[this.selectedSchema] ?? this.schemaByType[this.selectedSchema]
+            },
+            schemaByType() {
+                return this.schemas.reduce((acc, schema) => {
+                    acc[schema.type] = schema
+                    return acc
+                }, {})
             },
             schemaOptions() {
                 return this.schemas.map(schema => {

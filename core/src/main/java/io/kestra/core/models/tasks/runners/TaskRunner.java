@@ -94,7 +94,7 @@ public abstract class TaskRunner {
     }
 
     public String toAbsolutePath(RunContext runContext, TaskCommands taskCommands, String relativePath) throws IllegalVariableEvaluationException {
-        Path workingDir = (Path) this.additionalVars(runContext, taskCommands).get(ScriptService.VAR_WORKING_DIR);
+        Object workingDir = this.additionalVars(runContext, taskCommands).get(ScriptService.VAR_WORKING_DIR);
         if (workingDir == null) {
             return relativePath;
         }

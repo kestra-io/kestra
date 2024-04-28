@@ -587,7 +587,9 @@
       "rename": {
         "label": "Renommer",
         "file": "Renommer le fichier",
-        "folder": "Renommer le dossier"
+        "folder": "Renommer le dossier",
+        "new_file": "Nouveau nom avec extension :",
+        "new_folder": "Nouveau nom de dossier :"
       },
       "delete": {
         "label": "Supprimer",

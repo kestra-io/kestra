@@ -611,7 +611,9 @@
       "rename": {
         "label": "Rename",
         "file": "Rename file",
-        "folder": "Rename folder"
+        "folder": "Rename folder",
+        "new_file": "New name with extension:",
+        "new_folder": "New folder name:"
       },
       "delete": {
         "label": "Delete",

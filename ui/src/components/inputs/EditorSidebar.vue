@@ -32,7 +32,10 @@
                     :hide-after="0"
                     :persistent="false"
                 >
-                    <el-button class="px-2" @click="toggleDialog(true, 'folder')">
+                    <el-button
+                        class="px-2"
+                        @click="toggleDialog(true, 'folder')"
+                    >
                         <FolderPlus />
                     </el-button>
                 </el-tooltip>
@@ -64,7 +67,9 @@
                             <el-dropdown-item @click="$refs.filePicker.click()">
                                 {{ $t("namespace files.import.file") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="$refs.folderPicker.click()">
+                            <el-dropdown-item
+                                @click="$refs.folderPicker.click()"
+                            >
                                 {{ $t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
@@ -73,16 +78,25 @@
                 <el-tooltip
                     :content="
                         $t(
-                            `namespace files.tree.${tree.allExpanded ? 'collapse' : 'expand'}`
+                            `namespace files.tree.${
+                                tree.allExpanded ? 'collapse' : 'expand'
+                            }`
                         )
                     "
                     transition=""
                     :hide-after="0"
                     :persistent="false"
                 >
-                    <el-button class="px-2" @click="toggleExpanded(!tree.allExpanded)">
+                    <el-button
+                        class="px-2"
+                        @click="toggleExpanded(!tree.allExpanded)"
+                    >
                         <component
-                            :is="tree.allExpanded ? 'CollapseAllOutline' : 'ExpandAllOutline'"
+                            :is="
+                                tree.allExpanded
+                                    ? 'CollapseAllOutline'
+                                    : 'ExpandAllOutline'
+                            "
                         />
                     </el-button>
                 </el-tooltip>
@@ -114,14 +128,21 @@
             <template #default="{data, node}">
                 <el-dropdown
                     :ref="`dropdown__${data.name}`"
-                    @contextmenu.prevent.stop="toggleDropdown(`dropdown__${data.name}`)"
+                    @contextmenu.prevent.stop="
+                        toggleDropdown(`dropdown__${data.name}`)
+                    "
                     trigger="contextmenu"
                 >
                     <el-row justify="space-between">
                         <el-col :span="10">
                             <span class="me-2">
                                 <img
-                                    :src="getIcon(Array.isArray(data.children), data.name)"
+                                    :src="
+                                        getIcon(
+                                            Array.isArray(data.children),
+                                            data.name
+                                        )
+                                    "
                                     :alt="data.extension"
                                     width="18"
                                 >
@@ -146,11 +167,23 @@
                             <el-dropdown-item @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="renameItemDialog(data)">
+                            <el-dropdown-item
+                                @click="
+                                    toggleRenameDialog(
+                                        true,
+                                        Array.isArray(data.children)
+                                            ? 'folder'
+                                            : 'file',
+                                        data.name
+                                    )
+                                "
+                            >
                                 {{
                                     $t(
                                         `namespace files.rename.${
-                                            Array.isArray(data.children) ? "folder" : "file"
+                                            Array.isArray(data.children)
+                                                ? "folder"
+                                                : "file"
                                         }`
                                     )
                                 }}
@@ -159,7 +192,9 @@
                                 {{
                                     $t(
                                         `namespace files.delete.${
-                                            Array.isArray(data.children) ? "folder" : "file"
+                                            Array.isArray(data.children)
+                                                ? "folder"
+                                                : "file"
                                         }`
                                     )
                                 }}
@@ -170,17 +205,15 @@
             </template>
         </el-tree>
 
+        <!-- Creation dialog -->
         <el-dialog
             v-model="dialog.visible"
             :title="
-                dialog.rename
-                    ? $t('namespace files.rename.label')
-                    : dialog.type === 'file'
-                        ? $t('namespace files.create.file')
-                        : $t('namespace files.create.folder')
+                dialog.type === 'file'
+                    ? $t('namespace files.create.file')
+                    : $t('namespace files.create.folder')
             "
             width="500"
-            @open="focusInput()"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
@@ -188,11 +221,18 @@
                     {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
-            <el-input ref="name" v-model="dialog.name" size="large" class="mb-3" />
+            <el-input
+                ref="creation_name"
+                v-model="dialog.name"
+                size="large"
+                class="mb-3"
+            />
 
-            <template v-if="dialog.folder && !dialog.rename">
+            <template v-if="dialog.folder">
                 <div class="py-1">
-                    <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+                    <span>
+                        {{ $t("namespace files.dialog.parent_folder") }}
+                    </span>
                 </div>
                 <el-select v-model="dialog.folder" size="large" class="mb-3">
                     <el-option
@@ -213,11 +253,41 @@
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
-                        {{
-                            dialog.rename
-                                ? $t("namespace files.rename.label")
-                                : $t("namespace files.create.label")
-                        }}
+                        {{ $t("namespace files.create.label") }}
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog>
+
+        <!-- Renaming dialog -->
+        <el-dialog
+            v-model="renameDialog.visible"
+            :title="$t(`namespace files.rename.${renameDialog.type}`)"
+            width="500"
+            @keydown.enter.prevent="renameItem()"
+        >
+            <div class="pb-1">
+                <span>
+                    {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
+                </span>
+            </div>
+            <el-input
+                ref="renaming_name"
+                v-model="renameDialog.name"
+                size="large"
+                class="mb-3"
+            />
+            <template #footer>
+                <div>
+                    <el-button @click="toggleRenameDialog(false)">
+                        {{ $t("cancel") }}
+                    </el-button>
+                    <el-button
+                        type="primary"
+                        :disabled="!renameDialog.name"
+                        @click="renameItem()"
+                    >
+                        {{ $t("namespace files.rename.label") }}
                     </el-button>
                 </div>
             </template>
@@ -235,7 +305,9 @@
             <span class="py-3">
                 {{
                     Array.isArray(confirmation.data.children)
-                        ? $t("namespace files.dialog.folder_deletion_description")
+                        ? $t(
+                            "namespace files.dialog.folder_deletion_description"
+                        )
                         : $t("namespace files.dialog.file_deletion_description")
                 }}
             </span>
@@ -244,7 +316,10 @@
                     <el-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
                     </el-button>
-                    <el-button type="primary" @click="removeItem(confirmation.data.name)">
+                    <el-button
+                        type="primary"
+                        @click="removeItem(confirmation.data.name)"
+                    >
                         {{ $t("namespace files.dialog.confirm") }}
                     </el-button>
                 </div>
@@ -276,7 +351,13 @@
         type: "file",
         name: undefined,
         folder: undefined,
-        rename: false,
+    };
+
+    const RENAME_DEFAULTS = {
+        visible: false,
+        type: "file",
+        name: undefined,
+        old: undefined,
     };
 
     export default {
@@ -299,6 +380,7 @@
                 filter: "",
 
                 dialog: {...DIALOG_DEFAULTS},
+                renameDialog: {...RENAME_DEFAULTS},
                 dropdownRef: "",
 
                 tree: {allExpanded: false},
@@ -374,16 +456,9 @@
                 this.$refs[reference].handleOpen();
             },
             dialogHandler() {
-                const {rename, type} = this.dialog;
-
-                if (rename) {
-                    this.renameItem();
-                    return;
-                } else {
-                    type === "file"
-                        ? this.addFile({creation: true})
-                        : this.addFolder(undefined, true);
-                }
+                this.dialog.type === "file"
+                    ? this.addFile({creation: true})
+                    : this.addFolder(undefined, true);
             },
             filterNode(value, data) {
                 if (!value) return true;
@@ -393,21 +468,61 @@
                 if (isShown) {
                     const selected = this.$refs.tree.getCurrentNode();
                     const folder =
-                        selected && Array.isArray(selected.children) ? selected.name : null;
+                        selected && Array.isArray(selected.children)
+                            ? selected.name
+                            : null;
 
                     this.dialog.visible = true;
                     this.dialog.type = type;
                     this.dialog.folder = folder ?? node?.label ?? undefined;
 
-                    this.focusInput();
+                    this.focusCreationInput();
                 } else {
                     this.dialog.visible = false;
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-            focusInput() {
+            toggleRenameDialog(isShown, type, name) {
+                if (isShown) {
+                    this.renameDialog = {visible: true, type, name, old: name};
+                    this.focusRenamingInput();
+                } else {
+                    this.renameDialog = {...RENAME_DEFAULTS};
+                }
+            },
+            renameItem() {
+                const SELF = this;
+                (function rename(array) {
+                    for (let i = 0; i < array.length; i++) {
+                        const item = array[i];
+                        if (item.name === SELF.renameDialog.old) {
+                            item.name = SELF.renameDialog.name;
+                            return true;
+                        } else if (Array.isArray(item.children)) {
+                            if (rename(item.children)) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                })(this.items);
+
+                this.renameFileDirectory({
+                    namespace: this.namespace,
+                    old: this.renameDialog.old,
+                    new: this.renameDialog.name,
+                });
+
+                this.renameDialog = {...RENAME_DEFAULTS};
+            },
+            focusCreationInput() {
                 setTimeout(() => {
-                    this.$refs.name.focus();
+                    this.$refs.creation_name.focus();
+                }, 10);
+            },
+            focusRenamingInput() {
+                setTimeout(() => {
+                    this.$refs.renaming_name.focus();
                 }, 10);
             },
 
@@ -437,16 +552,22 @@
 
                                 // Find the folder in the current folder's children array
                                 const folderIndex = currentFolder.findIndex(
-                                    (item) => typeof item === "object" && item.name === folderName
+                                    (item) =>
+                                        typeof item === "object" &&
+                                        item.name === folderName
                                 );
                                 if (folderIndex === -1) {
                                     // If the folder doesn't exist, create it
-                                    const newFolder = {name: folderName, children: []};
+                                    const newFolder = {
+                                        name: folderName,
+                                        children: [],
+                                    };
                                     currentFolder.push(newFolder);
                                     currentFolder = newFolder.children;
                                 } else {
                                     // If the folder exists, move to the next level
-                                    currentFolder = currentFolder[folderIndex].children;
+                                    currentFolder =
+                                        currentFolder[folderIndex].children;
                                 }
                             }
 
@@ -476,7 +597,9 @@
                         }
                     }
 
-                    this.$toast().success(this.$t("namespace files.import.success"));
+                    this.$toast().success(
+                        this.$t("namespace files.import.success")
+                    );
                 } catch (error) {
                     console.error(error);
                     this.$toast().error(this.$t("namespace files.import.error"));
@@ -498,7 +621,11 @@
                 const NEW = {name: NAME, extension, content};
 
                 if (creation) {
-                    this.createFile({namespace: this.namespace, path: NAME, content});
+                    this.createFile({
+                        namespace: this.namespace,
+                        path: NAME,
+                        content,
+                    });
                     this.changeOpenedTabs({
                         action: "open",
                         name: NAME,
@@ -534,50 +661,17 @@
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-            renameItemDialog(item) {
-                this.dialog = {
-                    visible: true,
-                    rename: true,
-                    name: item.name,
-                    item,
-                    old: item.name,
-                };
-            },
-            renameItem() {
-                const SELF = this;
-                (function rename(array) {
-                    for (let i = 0; i < array.length; i++) {
-                        const item = array[i];
-                        if (item.name === SELF.dialog.item.name) {
-                            item.name = SELF.dialog.name;
-                            return true;
-                        } else if (Array.isArray(item.children)) {
-                            if (rename(item.children)) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                })(this.items);
 
-                this.renameFileDirectory({
-                    namespace: this.namespace,
-                    old: SELF.dialog.old,
-                    new: SELF.dialog.name,
-                });
-
-                this.dialog = {...DIALOG_DEFAULTS};
-            },
             confirmRemove(data) {
                 this.confirmation = {visible: true, data};
             },
             removeItem(name) {
                 function removeChildren(array) {
                     for (let i = 0; i < array.length; i++) {
-                        const child = array[i]; // Renamed item to child
+                        const child = array[i];
                         if (child.name === name) {
                             array.splice(i, 1);
-                            i--; // Adjust the loop index due to removal
+                            i--;
                         } else if (Array.isArray(child.children)) {
                             removeChildren(child.children, name);
                         }
@@ -595,7 +689,7 @@
                 remove(this.items);
 
                 this.deleteFileDirectory({namespace: this.namespace, path: name});
-                this.changeOpenedTabs({action: "close", name})
+                this.changeOpenedTabs({action: "close", name});
 
                 this.confirmation = {visible: false, data: {}};
             },
@@ -638,27 +732,15 @@
                 this.dialog = {...DIALOG_DEFAULTS};
             },
 
+            getPath(name) {
+                const nodes = this.$refs.tree.getNodePath(name);
+                return nodes.map((obj) => obj.name).join("/");
+            },
             copyPath(name) {
-                const PATH = (function findElementPathByName(
-                    array,
-                    targetName,
-                    path = []
-                ) {
-                    for (const obj of array) {
-                        if (obj.name === targetName) return [...path, obj.name].join("/");
-                        if (obj.children) {
-                            const nestedPath = findElementPathByName(obj.children, targetName, [
-                                ...path,
-                                obj.name,
-                            ]);
-                            if (nestedPath) return nestedPath;
-                        }
-                    }
-                    return null;
-                })(this.items, name);
+                const path = this.getPath(name);
 
                 try {
-                    Utils.copy(PATH);
+                    Utils.copy(path);
                     this.$toast().success(this.$t("namespace files.path.success"));
                 } catch (_error) {
                     this.$toast().error(this.$t("namespace files.path.error"));
@@ -707,68 +789,68 @@
 
 <style lang="scss">
 .filter .el-input__wrapper {
-  padding-right: 0px;
+    padding-right: 0px;
 }
 
 .el-tree {
-  height: calc(100% - 64px);
-  overflow: hidden auto;
+    height: calc(100% - 64px);
+    overflow: hidden auto;
 
-  &::-webkit-scrollbar {
-    width: 2px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--card-bg);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--bs-primary);
-    border-radius: 0px;
-  }
-
-  .node {
-    --el-tree-node-content-height: 36px;
-    --el-tree-node-hover-bg-color: transparent;
-    line-height: 36px;
-
-    .el-tree-node__content {
-      width: 100%;
+    &::-webkit-scrollbar {
+        width: 2px;
     }
-  }
+
+    &::-webkit-scrollbar-track {
+        background: var(--card-bg);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--bs-primary);
+        border-radius: 0px;
+    }
+
+    .node {
+        --el-tree-node-content-height: 36px;
+        --el-tree-node-hover-bg-color: transparent;
+        line-height: 36px;
+
+        .el-tree-node__content {
+            width: 100%;
+        }
+    }
 }
 </style>
 
 <style lang="scss" scoped>
 .sidebar {
-  flex: unset;
-  background: var(--card-bg);
-  border-right: 1px solid var(--bs-border-color);
+    flex: unset;
+    background: var(--card-bg);
+    border-right: 1px solid var(--bs-border-color);
 
-  :deep(.el-button):not(.el-dialog .el-button) {
-    border: 0;
-    background: none;
-    outline: none;
-    opacity: 0.5;
-    padding-left: calc(var(--spacer) / 2);
-    padding-right: calc(var(--spacer) / 2);
+    :deep(.el-button):not(.el-dialog .el-button) {
+        border: 0;
+        background: none;
+        outline: none;
+        opacity: 0.5;
+        padding-left: calc(var(--spacer) / 2);
+        padding-right: calc(var(--spacer) / 2);
 
-    &.el-button--primary {
-      opacity: 1;
+        &.el-button--primary {
+            opacity: 1;
+        }
     }
-  }
 
-  .hidden {
-    display: none;
-  }
-
-  .filename {
-    font-size: var(--el-font-size-small);
-    color: var(--el-text-color-regular);
-
-    &:hover {
-      color: white;
+    .hidden {
+        display: none;
     }
-  }
+
+    .filename {
+        font-size: var(--el-font-size-small);
+        color: var(--el-text-color-regular);
+
+        &:hover {
+            color: white;
+        }
+    }
 }
 </style>

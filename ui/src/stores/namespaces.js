@@ -49,7 +49,7 @@ export default {
 
         // Rename a file or directory
         async renameFileDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?from=${payload.old}&to=${payload.new}`;
+            const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;
             await this.$http.put(URL);
         },
 

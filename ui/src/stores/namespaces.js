@@ -30,7 +30,7 @@ export default {
             const BLOB = new Blob([payload.content], {type: "text/plain"});
             DATA.append("fileContent", BLOB);
 
-            const URL = `${BASE(payload.namespace)}/files?path=${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
             await this.$http.post(URL, DATA, HEADERS);
         },
 

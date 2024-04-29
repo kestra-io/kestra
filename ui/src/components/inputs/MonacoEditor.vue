@@ -101,7 +101,7 @@
                     } else {
                         const payload = {
                             namespace: this.$route.params.namespace,
-                            path: newValue.name,
+                            path: newValue.path ?? newValue.name,
                         };
 
                         const MAP = {

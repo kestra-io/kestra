@@ -847,7 +847,7 @@
         } else {
             store.dispatch("namespace/createFile", {
                 namespace: props.namespace,
-                path: currentTab.value.name,
+                path: currentTab.value.path ?? currentTab.value.name,
                 content: editorDomElement.value.$refs.monacoEditor.value,
             });
             store.commit("editor/changeOpenedTabs", {

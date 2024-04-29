@@ -107,20 +107,23 @@
             ref="tree"
             lazy
             :load="loadNodes"
+            :data="items"
             node-key="name"
             highlight-current
             draggable
+            :filter-node-method="filterNodes"
             :allow-drop="(_, drop) => !drop.leaf"
             :empty-text="$t('namespace files.no_items')"
             :props="{class: 'node', isLeaf: 'leaf'}"
             class="mt-3"
             @node-click="
-                (data) =>
+                (data, node) =>
                     data.leaf
                         ? changeOpenedTabs({
                             action: 'open',
                             name: data.fileName,
                             extension: data.fileName.split('.')[0],
+                            path: getPath(node)
                         })
                         : undefined
             "
@@ -133,9 +136,10 @@
                         toggleDropdown(`dropdown__${data.fileName}`)
                     "
                     trigger="contextmenu"
+                    class="w-100"
                 >
-                    <el-row justify="space-between">
-                        <el-col :span="10">
+                    <el-row justify="space-between" class="w-100">
+                        <el-col class="w-100">
                             <span class="me-2">
                                 <img
                                     :src="getIcon(!data.leaf, data.fileName)"
@@ -308,7 +312,7 @@
                     </el-button>
                     <el-button
                         type="primary"
-                        @click="removeItem(confirmation.data.name)"
+                        @click="removeItem(confirmation.data.fileName)"
                     >
                         {{ $t("namespace files.dialog.confirm") }}
                     </el-button>
@@ -422,16 +426,16 @@
                 "moveFileDirectory",
                 "deleteFileDirectory",
             ]),
-            renderNodes(nodes) {
-                for (let i = 0; i < nodes.length; i++) {
-                    const {type, fileName} = nodes[i];
+            renderNodes(items) {
+                for (let i = 0; i < items.length; i++) {
+                    const {type, fileName} = items[i];
 
                     if (type === "Directory") {
-                        this.addFolder({name: fileName, leaf: false});
+                        this.addFolder({fileName: fileName, leaf: false});
                     } else if (type === "File") {
-                        const [name, extension] = nodes[i].fileName.split(".");
+                        const [fileName, extension] = items[i].fileName.split(".");
                         const file = {
-                            name,
+                            fileName,
                             extension,
                             content: "",
                             leaf: true,
@@ -452,7 +456,7 @@
                         leaf: item.type === "File",
                     }));
 
-                    resolve(resolved);
+                    this.items = resolved;
                 }
 
                 if (node.level >= 1) {
@@ -461,17 +465,37 @@
                         path: this.getPath(node),
                     };
 
-                    const items = await this.readDirectory(payload);
-
-                    this.renderNodes(items);
-
-                    const resolved = items.map((item) => ({
+                    let items = await this.readDirectory(payload);
+                    items = items.map((item) => ({
                         ...item,
-                        leaf: item.type === "File",
+                        leaf: item.type === "File" ? true : false,
                     }));
 
-                    resolve(resolved);
+                    // eslint-disable-next-line no-inner-declarations
+                    function updateChildren(items, fileName, newChildren) {
+                        items.forEach((item, index) => {
+                            if (item.fileName === fileName) {
+                                // Update children if the fileName matches
+                                items[index].children = newChildren;
+                            } else if (Array.isArray(item.children)) {
+                                // Recursively search in children array
+                                updateChildren(
+                                    item.children,
+                                    fileName,
+                                    newChildren
+                                );
+                            }
+                        });
+                    }
+
+                    updateChildren(this.items, node.data.fileName, items);
+
+                    resolve(items);
                 }
+            },
+            async filterNodes(value, data) {
+                if (!value) return true;
+                return data.fileName.includes(value);
             },
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
@@ -565,7 +589,7 @@
                         new: `${this.getPath(target)}/${this.getPath(node)}`,
                     });
                 } else {
-                    // console.log(node, target);
+                // console.log(node, target);
                 }
             },
             focusCreationInput() {
@@ -662,17 +686,24 @@
                 }
             },
             addFile({file, creation, shouldReset = true}) {
-                const {name, extension, content} = file
+                const {fileName, extension, content, leaf} = file
                     ? file
                     : {
-                        name: this.dialog.name.split(".")[0],
+                        fileName: this.dialog.name.split(".")[0],
                         extension: this.dialog.name.split(".")[1],
                         content: "",
+                        leaf: true,
                     };
-                const NAME = `${name}.${extension}`;
-                const NEW = {name: NAME, extension, content};
+
+                const NAME = `${fileName}.${extension}`;
+                const NEW = {fileName: NAME, extension, content, leaf};
 
                 if (creation) {
+                    if (!extension) {
+                        this.$toast().error("Missing file extension");
+                        return;
+                    }
+
                     const path = `/${
                         this.dialog.path ? `${this.dialog.path}/` : ""
                     }${NAME}`;
@@ -698,7 +729,7 @@
                         for (let i = 0; i < array.length; i++) {
                             const item = array[i];
                             if (
-                                item.name === SELF.dialog.folder &&
+                                item.fileName === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
                                 item.children.push(NEW);
@@ -725,7 +756,7 @@
                 function removeChildren(array) {
                     for (let i = 0; i < array.length; i++) {
                         const child = array[i];
-                        if (child.name === name) {
+                        if (child.fileName === name) {
                             array.splice(i, 1);
                             i--;
                         } else if (Array.isArray(child.children)) {
@@ -733,15 +764,17 @@
                         }
                     }
                 }
+
                 const remove = (items) => {
                     items.forEach((item, index) => {
-                        if (item.name === name) {
+                        if (item.fileName === name) {
                             items.splice(index, 1);
                         } else if (Array.isArray(item.children)) {
                             removeChildren(item.children);
                         }
                     });
                 };
+
                 remove(this.items);
 
                 this.deleteFileDirectory({
@@ -753,22 +786,29 @@
                 this.confirmation = {visible: false, data: {}};
             },
             addFolder(folder, creation) {
-                const {name} = folder
+                const {fileName} = folder
                     ? folder
                     : {
-                        name: this.dialog.name,
+                        fileName: this.dialog.name,
                     };
 
-                const NEW = {name, leaf: false, children: folder?.children ?? []};
+                const NEW = {
+                    fileName,
+                    leaf: false,
+                    children: folder?.children ?? [],
+                };
 
                 if (creation) {
                     const path = `/${
                         this.dialog.path ? `${this.dialog.path}/` : ""
-                    }${name}`;
+                    }${fileName}`;
                     this.createDirectory({
                         namespace: this.$route.params.namespace,
                         path,
                     });
+
+                    const parts = path.split("/");
+                    this.dialog.folder = parts[parts.length - 1];
                 }
 
                 if (!this.dialog.folder) {
@@ -779,7 +819,7 @@
                         for (let i = 0; i < array.length; i++) {
                             const item = array[i];
                             if (
-                                item.name === SELF.dialog.folder &&
+                                item.fileName === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
                                 item.children.push(NEW);

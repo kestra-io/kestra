@@ -18,6 +18,7 @@ export default {
                 persistent,
                 local,
                 dirty,
+                path,
             } = payload;
 
             if (action === "open") {
@@ -26,7 +27,7 @@ export default {
                 let isDirty;
 
                 if (index === -1) {
-                    state.tabs.push({name, extension, persistent});
+                    state.tabs.push({name, extension, persistent, path});
                     isDirty = false;
                 } else {
                     isDirty = state.tabs[index].dirty;
@@ -38,6 +39,7 @@ export default {
                     persistent,
                     dirty: isDirty,
                     local,
+                    path
                 };
             } else if (action === "close") {
                 state.tabs = state.tabs.filter((tab) => tab.name !== name);

@@ -106,6 +106,10 @@ public final class ExecutableUtils {
                 .build()
             );
 
+        if (currentExecution.getMetadata().getExecutionStartedBy() != null) {
+            execution = execution.withMetadata(execution.getMetadata().withExecutionStartedBy(currentExecution.getMetadata().getExecutionStartedBy()));
+        }
+
         return SubflowExecution.builder()
             .parentTask(currentTask)
             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))

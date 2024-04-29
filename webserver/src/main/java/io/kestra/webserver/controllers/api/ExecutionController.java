@@ -66,6 +66,7 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -121,7 +122,7 @@ public class ExecutionController {
     private GraphService graphService;
 
     @Inject
-    private FlowInputOutput flowInputOutput;
+    protected FlowInputOutput flowInputOutput;
 
     @Inject
     private StorageInterface storageInterface;
@@ -555,11 +556,11 @@ public class ExecutionController {
         }
 
         Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
-        Execution current = Execution.newExecution(
+        Execution current = setMetadata(Execution.newExecution(
             found,
             throwBiFunction((flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputMap, files)),
             parseLabels(labels)
-        );
+        ));
 
         executionQueue.emit(current);
         eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
@@ -594,7 +595,7 @@ public class ExecutionController {
             .block();
     }
 
-    private List<Label> parseLabels(List<String> labels) {
+    protected List<Label> parseLabels(List<String> labels) {
         return labels == null ? null : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
@@ -808,7 +809,7 @@ public class ExecutionController {
 
         this.controlRevision(execution.get(), revision);
 
-        Execution replay = executionService.replay(execution.get(), taskRunId, revision);
+        Execution replay = setMetadata(executionService.replay(execution.get(), taskRunId, revision));
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.CREATE));
 
@@ -1177,7 +1178,7 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
-            Execution replay = executionService.replay(execution, null, null);
+            Execution replay = setMetadata(executionService.replay(execution, null, null));
             executionQueue.emit(replay);
             eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.CREATE));
         }
@@ -1466,4 +1467,7 @@ public class ExecutionController {
         return flowRepository.findByNamespaceExecutable(tenantService.resolveTenant(), namespace);
     }
 
+    protected Execution setMetadata(Execution execution) {
+        return execution;
+    }
 }

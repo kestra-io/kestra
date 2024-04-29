@@ -75,7 +75,7 @@
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
-                <el-tooltip
+                <!-- <el-tooltip
                     :content="
                         $t(
                             `namespace files.tree.${
@@ -99,7 +99,7 @@
                             "
                         />
                     </el-button>
-                </el-tooltip>
+                </el-tooltip> -->
             </el-button-group>
         </div>
 
@@ -107,7 +107,7 @@
             ref="tree"
             lazy
             :load="loadNodes"
-            :data="items"
+            :data="sortedItems"
             node-key="name"
             highlight-current
             draggable
@@ -123,7 +123,7 @@
                             action: 'open',
                             name: data.fileName,
                             extension: data.fileName.split('.')[0],
-                            path: getPath(node)
+                            path: getPath(node),
                         })
                         : undefined
             "
@@ -412,7 +412,7 @@
                     if (a.children && !b.children) return -1;
                     else if (!a.children && b.children) return 1;
 
-                    return a.name.localeCompare(b.name);
+                    return a.fileName.localeCompare(b.fileName);
                 });
             },
         },
@@ -425,6 +425,7 @@
                 "renameFileDirectory",
                 "moveFileDirectory",
                 "deleteFileDirectory",
+                "importFileDirectory",
             ]),
             renderNodes(items) {
                 for (let i = 0; i < items.length; i++) {
@@ -636,7 +637,7 @@
                                 if (folderIndex === -1) {
                                     // If the folder doesn't exist, create it
                                     const newFolder = {
-                                        name: folderName,
+                                        fileName: folderName,
                                         children: [],
                                     };
                                     currentFolder.push(newFolder);
@@ -655,9 +656,17 @@
                             // Read file content
                             const content = await this.readFile(file);
 
+                            this.importFileDirectory({
+                                namespace: this.$route.params.namespace,
+                                content,
+                                path: `${folderPath}/${fileName}`,
+                            });
+
                             // Add file to the current folder
                             currentFolder.push({
-                                name: `${name}.${extension}`,
+                                fileName: `${name}${
+                                    extension ? `.${extension}` : ""
+                                }`,
                                 extension,
                                 content,
                             });
@@ -666,10 +675,19 @@
                             const content = await this.readFile(file);
                             const [name, extension] = file.name.split(".");
 
+                            this.importFileDirectory({
+                                namespace: this.$route.params.namespace,
+                                content,
+                                path: file.name,
+                            });
+
                             this.items.push({
-                                name: `${name}.${extension}`,
+                                fileName: `${name}${
+                                    extension ? `.${extension}` : ""
+                                }`,
                                 extension,
                                 content,
+                                leaf: extension ? true : false,
                             });
                         }
                     }

@@ -42,6 +42,16 @@ export default {
             return request.data ?? [];
         },
 
+        // Import a file or directory
+        async importFileDirectory(_, payload) {
+            const DATA = new FormData();
+            const BLOB = new Blob([payload.content], {type: "text/plain"});
+            DATA.append("fileContent", BLOB);
+
+            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            await this.$http.post(URL, DATA, HEADERS);
+        },
+
         // Move a file or directory
         async moveFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;

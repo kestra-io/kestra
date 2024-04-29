@@ -77,7 +77,7 @@
     "typescript": "^5.4.4",
     "vite": "^5.2.8",
     "vite-plugin-rewrite-all": "1.0.1",
-    "vitest": "^1.4.0",
+    "vitest": "^1.5.2",
     "vscode-web": "^1.82.0"
   },
   "overrides": {

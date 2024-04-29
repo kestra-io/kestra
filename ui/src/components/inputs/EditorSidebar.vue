@@ -107,7 +107,7 @@
             ref="tree"
             lazy
             :load="loadNodes"
-            :data="sortedItems"
+            :data="items"
             node-key="name"
             highlight-current
             draggable
@@ -407,14 +407,6 @@
 
                 return extractNames(this.items);
             },
-            sortedItems() {
-                return this.items.slice().sort((a, b) => {
-                    if (a.children && !b.children) return -1;
-                    else if (!a.children && b.children) return 1;
-
-                    return a.fileName.localeCompare(b.fileName);
-                });
-            },
         },
         methods: {
             ...mapMutations("editor", ["changeOpenedTabs"]),
@@ -457,7 +449,14 @@
                         leaf: item.type === "File",
                     }));
 
-                    this.items = resolved;
+                    this.items = resolved.sort((a, b) => {
+                        if (a.type === "Directory" && b.type !== "Directory")
+                            return -1;
+                        else if (a.type !== "Directory" && b.type === "Directory")
+                            return 1;
+
+                        return a.fileName.localeCompare(b.fileName);
+                    });
                 }
 
                 if (node.level >= 1) {
@@ -467,10 +466,22 @@
                     };
 
                     let items = await this.readDirectory(payload);
-                    items = items.map((item) => ({
-                        ...item,
-                        leaf: item.type === "File" ? true : false,
-                    }));
+                    items = items
+                        .map((item) => ({
+                            ...item,
+                            leaf: item.type === "File" ? true : false,
+                        }))
+                        .sort((a, b) => {
+                            if (a.type === "Directory" && b.type !== "Directory")
+                                return -1;
+                            else if (
+                                a.type !== "Directory" &&
+                                b.type === "Directory"
+                            )
+                                return 1;
+
+                            return a.fileName.localeCompare(b.fileName);
+                        });
 
                     // eslint-disable-next-line no-inner-declarations
                     function updateChildren(items, fileName, newChildren) {

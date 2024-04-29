@@ -1023,7 +1023,7 @@
             <el-button
                 v-for="(tab, index) in openedTabs"
                 :key="index"
-                :class="{'tab-active': tab?.name === currentTab.name}"
+                :class="{'tab-active': currentTab ? (tab?.name === currentTab.name) : false}"
                 @click="changeCurrentTab(tab.name, tab.extension)"
             >
                 <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">

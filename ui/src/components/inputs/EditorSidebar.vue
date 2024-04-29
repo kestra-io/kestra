@@ -122,7 +122,7 @@
                         ? changeOpenedTabs({
                             action: 'open',
                             name: data.fileName,
-                            extension: data.fileName.split('.')[0],
+                            extension: data.fileName.split('.')[1],
                             path: getPath(node),
                         })
                         : undefined

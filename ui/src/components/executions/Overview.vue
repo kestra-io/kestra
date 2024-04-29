@@ -119,8 +119,7 @@
             }
         },
         computed: {
-            ...mapState("flow", ["flow"]),
-            ...mapState("execution", ["execution"]),
+            ...mapState("execution", ["flow", "execution"]),
             items() {
                 if (!this.execution) {
                     return []

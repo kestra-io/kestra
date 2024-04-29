@@ -3,7 +3,6 @@ package io.kestra.core.storages;
 import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.Plugin;
-import io.micronaut.core.annotation.Introspected;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -14,7 +13,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
-@Introspected
 public interface StorageInterface extends AutoCloseable, Plugin {
 
     /**

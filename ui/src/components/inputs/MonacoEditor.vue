@@ -98,6 +98,9 @@
                 handler: async function (newValue, oldValue) {
                     if (newValue.persistent && this.flow?.source) {
                         this.changeTab(this.flow.source, "yaml");
+                        await this.$store.dispatch("flow/validateFlow", {
+                            flow: this.flow.source,
+                        });
                     } else {
                         const payload = {
                             namespace: this.$route.params.namespace,
@@ -115,9 +118,15 @@
                         if (newValue.local) {
                             this.changeTab("", MAP[newValue.extension]);
                         } else {
-                            if (JSON.stringify(newValue) !==JSON.stringify(oldValue)) {
+                            if (
+                                JSON.stringify(newValue) !==
+                                JSON.stringify(oldValue)
+                            ) {
                                 await this.readFile(payload).then((content) => {
-                                    this.changeTab(content,MAP[newValue.extension]);
+                                    this.changeTab(
+                                        content,
+                                        MAP[newValue.extension]
+                                    );
                                 });
                             }
                         }
@@ -337,22 +346,38 @@
                     inputs: {present: true}
                 });
 
-                const previousWordCharWithInputsCapture = model.findPreviousMatch("(inputs)?([\\w:])", position, true, false, null, true);
+                const previousWordCharWithInputsCapture = model.findPreviousMatch(
+                    "(inputs)?([\\w:])",
+                    position,
+                    true,
+                    false,
+                    null,
+                    true
+                );
                 if (!previousWordCharWithInputsCapture) {
                     return undefined;
                 }
 
-                const previousWordOffset = model.getOffsetAt({column: previousWordCharWithInputsCapture.range.startColumn, lineNumber: previousWordCharWithInputsCapture.range.startLineNumber});
+                const previousWordOffset = model.getOffsetAt({
+                    column: previousWordCharWithInputsCapture.range.startColumn,
+                    lineNumber:
+                        previousWordCharWithInputsCapture.range.startLineNumber,
+                });
 
                 let prefixAtPosition = model.getWordUntilPosition(position);
                 if (prefixAtPosition?.word === "") {
                     prefixAtPosition = null;
                 }
                 const wordAtPosition = model.getWordAtPosition(position);
-                const subflowTaskWithRange = subflowsWithRange.reverse().find(subflowWithRange => {
-                    const range = subflowWithRange.range;
-                    return range[0] < previousWordOffset && previousWordOffset < range[2];
-                });
+                const subflowTaskWithRange = subflowsWithRange
+                    .reverse()
+                    .find((subflowWithRange) => {
+                        const range = subflowWithRange.range;
+                        return (
+                            range[0] < previousWordOffset &&
+                            previousWordOffset < range[2]
+                        );
+                    });
 
                 const subflowTask = subflowTaskWithRange?.map;
                 if (!subflowTask) {

@@ -184,7 +184,7 @@
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="confirmRemove(data)">
+                            <el-dropdown-item @click="confirmRemove(data, node)">
                                 {{
                                     $t(
                                         `namespace files.delete.${
@@ -733,7 +733,7 @@
                         return;
                     }
 
-                    const path = `/${
+                    const path = `${
                         this.dialog.path ? `${this.dialog.path}/` : ""
                     }${NAME}`;
                     this.createFile({
@@ -748,9 +748,14 @@
                         extension: extension,
                         local: true,
                     });
+
+                    const parts = path.split("/");
+                    this.dialog.folder =
+                        parts.length > 1 ? parts[parts.length - 1] : "";
                 }
 
                 if (!this.dialog.folder) {
+                    console.log("insisde")
                     this.items.push(NEW);
                 } else {
                     const SELF = this;
@@ -778,8 +783,8 @@
                 }
             },
 
-            confirmRemove(data) {
-                this.confirmation = {visible: true, data};
+            confirmRemove(data, node) {
+                this.confirmation = {visible: true, data, node};
             },
             removeItem(name) {
                 function removeChildren(array) {
@@ -797,7 +802,7 @@
                 const remove = (items) => {
                     items.forEach((item, index) => {
                         if (item.fileName === name) {
-                            items.splice(index, 1);
+                            items.slice(index, 1);
                         } else if (Array.isArray(item.children)) {
                             removeChildren(item.children);
                         }
@@ -808,11 +813,11 @@
 
                 this.deleteFileDirectory({
                     namespace: this.$route.params.namespace,
-                    path: name,
+                    path: this.getPath(this.confirmation.node),
                 });
                 this.changeOpenedTabs({action: "close", name});
 
-                this.confirmation = {visible: false, data: {}};
+                this.confirmation = {visible: false, data: {}, node: undefined};
             },
             addFolder(folder, creation) {
                 const {fileName} = folder
@@ -837,7 +842,8 @@
                     });
 
                     const parts = path.split("/");
-                    this.dialog.folder = parts[parts.length - 1];
+                    this.dialog.folder =
+                        parts.length > 2 ? parts[parts.length - 1] : "";
                 }
 
                 if (!this.dialog.folder) {

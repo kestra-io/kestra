@@ -96,6 +96,8 @@
             currentTab: {
                 deep: true,
                 handler: async function (newValue, oldValue) {
+                    if(!newValue) return;
+
                     if (newValue.persistent && this.flow?.source) {
                         this.changeTab(this.flow.source, "yaml");
                         await this.$store.dispatch("flow/validateFlow", {

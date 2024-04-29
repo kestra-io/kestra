@@ -12,13 +12,13 @@ export default {
     actions: {
         // Create a directory
         async createDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files/directory?path=/${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files/directory?path=${payload.path}`;
             await this.$http.post(URL);
         },
 
         // List directory content
         async readDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files/directory`;
+            const URL = `${BASE(payload.namespace)}/files/directory${payload.path ? `?path=/${payload.path}` : ""}`;
             const request = await this.$http.get(URL);
 
             return request.data ?? [];
@@ -30,7 +30,7 @@ export default {
             const BLOB = new Blob([payload.content], {type: "text/plain"});
             DATA.append("fileContent", BLOB);
 
-            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${payload.path}`;
             await this.$http.post(URL, DATA, HEADERS);
         },
 
@@ -44,7 +44,8 @@ export default {
 
         // Move a file or directory
         async moveFileDirectory(_, payload) {
-            console.log("moveFileDirectory", payload);
+            const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;
+            await this.$http.put(URL);
         },
 
         // Rename a file or directory
@@ -65,9 +66,11 @@ export default {
         },
 
         loadNamespacesForDatatype({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/${options.dataType}s/distinct-namespaces`).then(response => {
-                commit("setDatatypeNamespaces", response.data)
-            })
+            return this.$http
+                .get(`${apiUrl(this)}/${options.dataType}s/distinct-namespaces`)
+                .then((response) => {
+                    commit("setDatatypeNamespaces", response.data);
+                });
         },
         importFile({_commit}, options) {
             const file = options.file;
@@ -85,7 +88,7 @@ export default {
             return this.$http.post(
                 `${apiUrl(this)}/namespaces/${options.namespace}/files?path=/${path}`,
                 formData,
-                HEADERS
+                HEADERS,
             );
         },
         exportFiles({_commit}, options) {
@@ -103,7 +106,7 @@ export default {
     },
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {
-            state.datatypeNamespaces = datatypeNamespaces
-        }
-    }
-}
+            state.datatypeNamespaces = datatypeNamespaces;
+        },
+    },
+};

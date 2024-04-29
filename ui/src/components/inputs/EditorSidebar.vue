@@ -105,31 +105,32 @@
 
         <el-tree
             ref="tree"
-            :data="sortedItems"
+            lazy
+            :load="loadNodes"
             node-key="name"
-            :filter-node-method="filterNode"
             highlight-current
-            default-expand-all
             draggable
+            :allow-drop="(_, drop) => !drop.leaf"
             :empty-text="$t('namespace files.no_items')"
-            :props="{label: 'name', children: 'children', class: 'node'}"
+            :props="{class: 'node', isLeaf: 'leaf'}"
             class="mt-3"
             @node-click="
                 (data) =>
-                    Array.isArray(data.children)
-                        ? undefined
-                        : changeOpenedTabs({
+                    data.leaf
+                        ? changeOpenedTabs({
                             action: 'open',
-                            name: data.name,
-                            extension: data.extension,
+                            name: data.fileName,
+                            extension: data.fileName.split('.')[0],
                         })
+                        : undefined
             "
+            @node-drop="nodeMoved"
         >
             <template #default="{data, node}">
                 <el-dropdown
-                    :ref="`dropdown__${data.name}`"
+                    :ref="`dropdown__${data.fileName}`"
                     @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.name}`)
+                        toggleDropdown(`dropdown__${data.fileName}`)
                     "
                     trigger="contextmenu"
                 >
@@ -137,29 +138,24 @@
                         <el-col :span="10">
                             <span class="me-2">
                                 <img
-                                    :src="
-                                        getIcon(
-                                            Array.isArray(data.children),
-                                            data.name
-                                        )
-                                    "
+                                    :src="getIcon(!data.leaf, data.fileName)"
                                     :alt="data.extension"
                                     width="18"
                                 >
                             </span>
-                            <span class="filename"> {{ data.name }}</span>
+                            <span class="filename"> {{ data.fileName }}</span>
                         </el-col>
                     </el-row>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
-                                v-if="Array.isArray(data.children)"
+                                v-if="!data.leaf"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                v-if="Array.isArray(data.children)"
+                                v-if="!data.leaf"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
@@ -171,19 +167,15 @@
                                 @click="
                                     toggleRenameDialog(
                                         true,
-                                        Array.isArray(data.children)
-                                            ? 'folder'
-                                            : 'file',
-                                        data.name
+                                        !data.leaf ? 'folder' : 'file',
+                                        data.fileName
                                     )
                                 "
                             >
                                 {{
                                     $t(
                                         `namespace files.rename.${
-                                            Array.isArray(data.children)
-                                                ? "folder"
-                                                : "file"
+                                            !data.leaf ? "folder" : "file"
                                         }`
                                     )
                                 }}
@@ -192,9 +184,7 @@
                                 {{
                                     $t(
                                         `namespace files.delete.${
-                                            Array.isArray(data.children)
-                                                ? "folder"
-                                                : "file"
+                                            !data.leaf ? "folder" : "file"
                                         }`
                                     )
                                 }}
@@ -351,6 +341,7 @@
         type: "file",
         name: undefined,
         folder: undefined,
+        path: undefined,
     };
 
     const RENAME_DEFAULTS = {
@@ -430,8 +421,61 @@
                 "renameFileDirectory",
                 "deleteFileDirectory",
             ]),
+            renderNodes(nodes) {
+                for (let i = 0; i < nodes.length; i++) {
+                    const {type, fileName} = nodes[i];
+
+                    if (type === "Directory") {
+                        this.addFolder({name: fileName, leaf: false});
+                    } else if (type === "File") {
+                        const [name, extension] = nodes[i].fileName.split(".");
+                        const file = {
+                            name,
+                            extension,
+                            content: "",
+                            leaf: true,
+                        };
+                        this.addFile({file});
+                    }
+                }
+            },
+            async loadNodes(node, resolve) {
+                if (node.level === 0) {
+                    const payload = {namespace: this.$route.params.namespace};
+                    const items = await this.readDirectory(payload);
+
+                    this.renderNodes(items);
+
+                    const resolved = items.map((item) => ({
+                        ...item,
+                        leaf: item.type === "File",
+                    }));
+
+                    resolve(resolved);
+                }
+
+                if (node.level >= 1) {
+                    const payload = {
+                        namespace: this.$route.params.namespace,
+                        path: this.getPath(node),
+                    };
+
+                    const items = await this.readDirectory(payload);
+
+                    this.renderNodes(items);
+
+                    const resolved = items.map((item) => ({
+                        ...item,
+                        leaf: item.type === "File",
+                    }));
+
+                    resolve(resolved);
+                }
+            },
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
+
+                if (!name) return;
 
                 // Making sure icon is correct for 'yml' files
                 if (name.endsWith(".yml")) {
@@ -460,10 +504,6 @@
                     ? this.addFile({creation: true})
                     : this.addFolder(undefined, true);
             },
-            filterNode(value, data) {
-                if (!value) return true;
-                return data.name.includes(value);
-            },
             toggleDialog(isShown, type, node) {
                 if (isShown) {
                     const selected = this.$refs.tree.getCurrentNode();
@@ -475,6 +515,7 @@
                     this.dialog.visible = true;
                     this.dialog.type = type;
                     this.dialog.folder = folder ?? node?.label ?? undefined;
+                    this.dialog.path = this.getPath(node);
 
                     this.focusCreationInput();
                 } else {
@@ -508,12 +549,15 @@
                 })(this.items);
 
                 this.renameFileDirectory({
-                    namespace: this.namespace,
+                    namespace: this.$route.params.namespace,
                     old: this.renameDialog.old,
                     new: this.renameDialog.name,
                 });
 
                 this.renameDialog = {...RENAME_DEFAULTS};
+            },
+            nodeMoved(one, two, three) {
+                console.log(one, two, three);
             },
             focusCreationInput() {
                 setTimeout(() => {
@@ -601,7 +645,6 @@
                         this.$t("namespace files.import.success")
                     );
                 } catch (error) {
-                    console.error(error);
                     this.$toast().error(this.$t("namespace files.import.error"));
                 } finally {
                     event.target.value = "";
@@ -621,11 +664,15 @@
                 const NEW = {name: NAME, extension, content};
 
                 if (creation) {
+                    const path = `/${
+                        this.dialog.path ? `${this.dialog.path}/` : ""
+                    }${NAME}`;
                     this.createFile({
-                        namespace: this.namespace,
-                        path: NAME,
+                        namespace: this.$route.params.namespace,
+                        path,
                         content,
                     });
+
                     this.changeOpenedTabs({
                         action: "open",
                         name: NAME,
@@ -688,7 +735,10 @@
                 };
                 remove(this.items);
 
-                this.deleteFileDirectory({namespace: this.namespace, path: name});
+                this.deleteFileDirectory({
+                    namespace: this.$route.params.namespace,
+                    path: name,
+                });
                 this.changeOpenedTabs({action: "close", name});
 
                 this.confirmation = {visible: false, data: {}};
@@ -700,10 +750,16 @@
                         name: this.dialog.name,
                     };
 
-                const NEW = {name, children: folder?.children ?? []};
+                const NEW = {name, leaf: false, children: folder?.children ?? []};
 
                 if (creation) {
-                    this.createDirectory({namespace: this.namespace, path: name});
+                    const path = `/${
+                        this.dialog.path ? `${this.dialog.path}/` : ""
+                    }${name}`;
+                    this.createDirectory({
+                        namespace: this.$route.params.namespace,
+                        path,
+                    });
                 }
 
                 if (!this.dialog.folder) {
@@ -734,7 +790,7 @@
 
             getPath(name) {
                 const nodes = this.$refs.tree.getNodePath(name);
-                return nodes.map((obj) => obj.name).join("/");
+                return nodes.map((obj) => obj.fileName).join("/");
             },
             copyPath(name) {
                 const path = this.getPath(name);
@@ -746,23 +802,6 @@
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
             },
-        },
-        async mounted() {
-            this.namespace = this.$route.params.namespace;
-
-            const payload = {namespace: this.namespace};
-            await this.readDirectory(payload).then((items) => {
-                for (let i = 0; i < items.length; i++) {
-                    const {type, fileName} = items[i];
-
-                    if (type === "Directory") {
-                        this.addFolder({name: fileName});
-                    } else if (type === "File") {
-                        const [name, extension] = items[i].fileName.split(".");
-                        this.addFile({file: {name, extension, content: ""}});
-                    }
-                }
-            });
         },
         watch: {
             filter(value) {

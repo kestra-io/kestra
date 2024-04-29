@@ -236,12 +236,18 @@
 
     const changeCurrentTab = (name, extension) => {
         const payload = extension ? {extension} : {persistent: true};
-        store.commit("editor/changeOpenedTabs", {action: "open", name, ...payload});
+        store.commit("editor/changeOpenedTabs", {
+            action: "open",
+            name,
+            ...payload,
+        });
     };
     const closeTab = (name, index) => {
         store.commit("editor/changeOpenedTabs", {action: "close", name, index});
     };
     const getIcon = (name) => {
+        if (!name) return;
+
         // Returning logo for files without extension
         if (name.split(".").length < 2) return KestraLogo;
 
@@ -306,17 +312,18 @@
     });
 
     watch(flowYaml, (newYaml) => {
-        store.commit("core/setAutocompletionSource", newYaml)
-    })
+        store.commit("core/setAutocompletionSource", newYaml);
+    });
 
     const initYamlSource = async () => {
         flowYaml.value = props.flow.source;
         flowYamlOrigin.value = props.flow.source;
         if (flowHaveTasks()) {
             if (
-                [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(
-                    viewType.value
-                )
+                [
+                    editorViewTypes.TOPOLOGY,
+                    editorViewTypes.SOURCE_TOPOLOGY,
+                ].includes(viewType.value)
             ) {
                 await fetchGraph();
             } else {
@@ -330,7 +337,9 @@
                 localStorage.getItem(
                     (restoredLocalStorageKey = autoRestorelocalStorageKey.value)
                 ) ??
-                localStorage.getItem((restoredLocalStorageKey = localStorageKey.value));
+                localStorage.getItem(
+                    (restoredLocalStorageKey = localStorageKey.value)
+                );
             if (sourceFromLocalStorage !== null) {
                 if (restoredLocalStorageKey === autoRestorelocalStorageKey.value) {
                     onEdit(sourceFromLocalStorage);
@@ -373,7 +382,9 @@
 
     const onResize = () => {
         if (validationDomElement.value && editorDomElement.value) {
-            validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
+            validationDomElement.value.onResize(
+                editorDomElement.value.$el.offsetWidth
+            );
         }
     };
 
@@ -557,9 +568,10 @@
             .then((value) => {
                 if (
                     flowHaveTasks() &&
-                    [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(
-                        viewType.value
-                    )
+                    [
+                        editorViewTypes.TOPOLOGY,
+                        editorViewTypes.SOURCE_TOPOLOGY,
+                    ].includes(viewType.value)
                 ) {
                     fetchGraph();
                 }
@@ -627,7 +639,10 @@
 
     const onSaveNewError = () => {
         const source = flowYaml.value;
-        const existingTask = YamlUtils.checkTaskAlreadyExist(source, newError.value);
+        const existingTask = YamlUtils.checkTaskAlreadyExist(
+            source,
+            newError.value
+        );
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
@@ -647,10 +662,13 @@
 
     const checkRequiredMetadata = () => {
         if (metadata.value) {
-            return metadata.value.id.length > 0 && metadata.value.namespace.length > 0;
+            return (
+                metadata.value.id.length > 0 && metadata.value.namespace.length > 0
+            );
         }
         return (
-            getFlowMetadata().id.length > 0 && getFlowMetadata().namespace.length > 0
+            getFlowMetadata().id.length > 0 &&
+            getFlowMetadata().namespace.length > 0
         );
     };
 
@@ -718,7 +736,9 @@
                 overrideFlow.value = await ElMessageBox({
                     title: t("override.title"),
                     message: () => {
-                        return h("div", null, [h("p", null, t("override.details"))]);
+                        return h("div", null, [
+                            h("p", null, t("override.details")),
+                        ]);
                     },
                     showCancelButton: true,
                     confirmButtonText: t("ok"),
@@ -789,7 +809,10 @@
                 e.preventDefault();
             }
         }
-        if (tours["guidedTour"].isRunning.value && !props.guidedProperties.saveFlow) {
+        if (
+            tours["guidedTour"].isRunning.value &&
+            !props.guidedProperties.saveFlow
+        ) {
             store.dispatch("api/events", {
                 type: "ONBOARDING",
                 onboarding: {
@@ -831,7 +854,7 @@
                 action: "dirty",
                 name: currentTab.value.name,
                 dirty: false,
-                local: true
+                local: true,
             });
         }
     };
@@ -860,9 +883,20 @@
                 if (response.data && response.data.nodes) {
                     const deps = response.data.nodes
                         .filter(
-                            (n) => !(n.namespace === metadata.namespace && n.id === metadata.id)
+                            (n) =>
+                                !(
+                                    n.namespace === metadata.namespace &&
+                                    n.id === metadata.id
+                                )
                         )
-                        .map((n) => "<li>" + n.namespace + ".<code>" + n.id + "</code></li>")
+                        .map(
+                            (n) =>
+                                "<li>" +
+                                n.namespace +
+                                ".<code>" +
+                                n.id +
+                                "</code></li>"
+                        )
                         .join("\n");
 
                     warning =
@@ -914,7 +948,8 @@
         let blockWidthPercent = (blockWidth / parentWidth) * 100;
 
         document.onmousemove = function onMouseMove(e) {
-            let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
+            let percent =
+                blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
             if (percent > 75) {
                 percent = 75;
             } else if (percent < 25) {
@@ -944,7 +979,9 @@
                     swappedTaskSplit.pop();
 
                     return (
-                        swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow)
+                        swappedTaskSplit.join(".") +
+                        "." +
+                        Utils.afterLastDot(expandedSubflow)
                     );
                 }
                 if (expandedSubflow === swappedTasks[1]) {
@@ -952,7 +989,9 @@
                     swappedTaskSplit.pop();
 
                     return (
-                        swappedTaskSplit.join(".") + "." + Utils.afterLastDot(expandedSubflow)
+                        swappedTaskSplit.join(".") +
+                        "." +
+                        Utils.afterLastDot(expandedSubflow)
                     );
                 }
 
@@ -968,7 +1007,11 @@
             v-if="!isCreating"
             ref="toggleExplorer"
             :content="
-                $t(`namespace files.toggle.${explorerVisible ? 'hide' : 'show'}`)
+                $t(
+                    `namespace files.toggle.${
+                        explorerVisible ? 'hide' : 'show'
+                    }`
+                )
             "
         >
             <el-button @click="toggleExplorerVisibility()">
@@ -1054,12 +1097,16 @@
         />
         <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
         <div
-            :style="viewType === editorViewTypes.SOURCE ? {display: 'none'} : {}"
+            :style="
+                viewType === editorViewTypes.SOURCE ? {display: 'none'} : {}
+            "
         >
             <Blueprints
                 v-if="viewType === 'source-blueprints' || blueprintsLoaded"
                 @loaded="blueprintsLoaded = true"
-                :class="{'d-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS}"
+                :class="{
+                    'd-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS,
+                }"
                 embed
                 class="combined-right-view enhance-readability"
             />
@@ -1203,154 +1250,154 @@
 </template>
 
 <style lang="scss" scoped>
-    @use "element-plus/theme-chalk/src/mixins/mixins" as *;
+@use "element-plus/theme-chalk/src/mixins/mixins" as *;
 
-    .button-top {
-        background: var(--card-bg);
-        border-bottom: 1px solid var(--bs-border-color);
-        padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
+.button-top {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
+    padding-left: calc(var(--spacer) / 2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    :deep(.validation) {
+        border: 0;
         padding-left: calc(var(--spacer) / 2);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        padding-right: calc(var(--spacer) / 2);
+    }
 
-        :deep(.validation) {
-            border: 0;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-        }
+    :deep(.el-button) {
+        border: 0;
+        background: none;
+        opacity: 0.5;
+        padding-left: calc(var(--spacer) / 2);
+        padding-right: calc(var(--spacer) / 2);
 
-        :deep(.el-button) {
-            border: 0;
-            background: none;
-            opacity: 0.5;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-
-            &.el-button--primary {
-                opacity: 1;
-            }
-        }
-
-        button.el-button--primary {
-            color: var(--bs-primary);
+        &.el-button--primary {
+            opacity: 1;
         }
     }
 
-    .main-editor {
-        padding: calc(var(--spacer) / 2) 0px;
-        background: var(--bs-body-bg);
-        display: flex;
-        height: calc(100% - 49px);
-        min-height: 0;
-        max-height: 100%;
-
-        > * {
-            flex: 1;
-        }
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
-        }
+    button.el-button--primary {
+        color: var(--bs-primary);
     }
+}
 
-    .editor-combined {
-        width: 50%;
-        min-width: 0;
-    }
+.main-editor {
+    padding: calc(var(--spacer) / 2) 0px;
+    background: var(--bs-body-bg);
+    display: flex;
+    height: calc(100% - 49px);
+    min-height: 0;
+    max-height: 100%;
 
-    .vueflow {
-        width: 100%;
-    }
-
-    html.dark .el-card :deep(.enhance-readability) {
-        background-color: var(--bs-gray-500);
-    }
-
-    :deep(.combined-right-view),
-    .combined-right-view {
+    > * {
         flex: 1;
-        position: relative;
-        overflow-y: auto;
-        height: 100%;
-
-        &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
-            background-color: var(--bs-gray-100);
-        }
-
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--bs-primary);
-        }
     }
 
-    .hide-view {
-        width: 0;
-        overflow: hidden;
+    html.dark & {
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.editor-combined {
+    width: 50%;
+    min-width: 0;
+}
+
+.vueflow {
+    width: 100%;
+}
+
+html.dark .el-card :deep(.enhance-readability) {
+    background-color: var(--bs-gray-500);
+}
+
+:deep(.combined-right-view),
+.combined-right-view {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+
+    &.enhance-readability {
+        padding: calc(var(--spacer) * 1.5);
+        background-color: var(--bs-gray-100);
     }
 
-    .plugin-doc {
-        overflow-x: hidden;
-        width: 100%;
+    &::-webkit-scrollbar {
+        width: 5px;
     }
 
-    .slider {
-        flex: 0 0 calc(1rem / 7);
-        border-radius: 0.15rem;
-        margin: 0 0.25rem;
-        background-color: var(--bs-border-color);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
-
-        &:hover {
-            background-color: var(--bs-secondary);
-        }
+    &::-webkit-scrollbar-track {
+        -webkit-border-radius: 10px;
     }
 
-    .vueflow {
-        height: 100%;
+    &::-webkit-scrollbar-thumb {
+        -webkit-border-radius: 10px;
+        background: var(--bs-primary);
+    }
+}
+
+.hide-view {
+    width: 0;
+    overflow: hidden;
+}
+
+.plugin-doc {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+.slider {
+    flex: 0 0 calc(1rem / 7);
+    border-radius: 0.15rem;
+    margin: 0 0.25rem;
+    background-color: var(--bs-border-color);
+    border: none;
+    cursor: col-resize;
+    user-select: none; /* disable selection */
+
+    &:hover {
+        background-color: var(--bs-secondary);
+    }
+}
+
+.vueflow {
+    height: 100%;
+}
+
+.topology-display .el-alert {
+    margin-top: calc(3 * var(--spacer));
+}
+
+.tabs {
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+
+    .tab-active {
+        background: #21242e !important;
+        cursor: default;
     }
 
-    .topology-display .el-alert {
-        margin-top: calc(3 * var(--spacer));
+    .tab-name {
+        color: white;
+        font-family: "Public sans";
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
     }
-
-    .tabs {
-        flex: 1;
-        overflow-x: auto;
-        white-space: nowrap;
-
-        .tab-active {
-            background: #21242e !important;
-            cursor: default;
-        }
-
-        .tab-name {
-            color: white;
-            font-family: "Public sans";
-            font-size: 12px;
-            font-style: normal;
-            font-weight: 500;
-        }
-    }
+}
 </style>
 
 <style lang="scss">
 .tabs .el-scrollbar__bar.is-horizontal {
-  height: 1px !important;
+    height: 1px !important;
 }
 
 .cursor-pointer {
-  cursor: pointer;
+    cursor: pointer;
 }
 </style>

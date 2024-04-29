@@ -649,7 +649,6 @@
       "title2": "Search for tasks and triggers to build your flow.",
       "search": "Search across +{count} plugins"
     },
-    "no inputs": "This flow has no inputs.",
-    "executionStartedBy": "Execution started by"
+    "no inputs": "This flow has no inputs."
   }
 }

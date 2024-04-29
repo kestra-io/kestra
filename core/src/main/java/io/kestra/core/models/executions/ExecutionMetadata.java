@@ -17,9 +17,6 @@ public class ExecutionMetadata {
 
     Instant originalCreatedDate;
 
-    @With
-    String executionStartedBy;
-
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()
             .attemptNumber(this.attemptNumber + 1)

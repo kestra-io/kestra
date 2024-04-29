@@ -144,13 +144,6 @@
                     {key: this.$t("originalCreatedDate"), value: this.execution?.metadata?.originalCreatedDate, date: true},
                 ];
 
-                if (this.execution?.metadata?.executionStartedBy) {
-                    ret.push({
-                        key: this.$t("executionStartedBy"),
-                        value: this.execution.metadata.executionStartedBy
-                    });
-                }
-
                 if (this.execution.parentId) {
                     ret.push({
                         key: this.$t("parent execution"),

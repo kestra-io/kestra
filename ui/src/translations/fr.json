@@ -625,7 +625,6 @@
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux.",
       "search": "Cherchez à travers +{count} plugins"
     },
-    "no inputs": "Ce flow n'a pas d'entrée.",
-    "executionStartedBy": "Exécution démarré par"
+    "no inputs": "Ce flow n'a pas d'entrée."
   }
 }

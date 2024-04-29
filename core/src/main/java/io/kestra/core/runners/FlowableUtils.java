@@ -29,22 +29,23 @@ public class FlowableUtils {
     }
 
     public static List<NextTaskRun> resolveSequentialNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors
+        ResolveStateContext context
     ) {
-        return resolveSequentialNexts(execution, tasks, errors, null);
+        SequentialNextsContext seqContext = new SequentialNextsContext(
+            context.getExecution(),
+            context.getTasks(),
+            context.getErrors(),
+            context.getParentTaskRun()
+        );
+        return resolveSequentialNexts(seqContext);
     }
 
     public static List<NextTaskRun> resolveSequentialNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        TaskRun parentTaskRun
+        SequentialNextsContext context
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
+        List<ResolvedTask> currentTasks = context.getExecution().findTaskDependingFlowState(context.getTasks(), context.getErrors(), context.getParentTaskRun());
 
-        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
+        return FlowableUtils.innerResolveSequentialNexts(context.getExecution(), currentTasks, context.getParentTaskRun());
     }
 
     private static List<NextTaskRun> innerResolveSequentialNexts(
@@ -89,21 +90,19 @@ public class FlowableUtils {
     }
 
     public static Optional<State.Type> resolveState(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        TaskRun parentTaskRun,
+        SequentialNextsContext context,
         RunContext runContext,
         boolean allowFailure
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
+        List<ResolvedTask> currentTasks = context.getExecution().findTaskDependingFlowState(
+            context.getTasks(), context.getErrors(), context.getParentTaskRun());
 
         if (currentTasks == null) {
             runContext.logger().warn(
                 "No task found on flow '{}', task '{}', execution '{}'",
-                execution.getNamespace() + "." + execution.getFlowId(),
-                parentTaskRun.getTaskId(),
-                execution.getId()
+                context.getExecution().getNamespace() + "." + context.getExecution().getFlowId(),
+                context.getParentTaskRun().getTaskId(),
+                context.getExecution().getId()
             );
 
             return Optional.of(allowFailure ? State.Type.WARNING : State.Type.FAILED);
@@ -112,13 +111,13 @@ public class FlowableUtils {
             return Optional.of(State.Type.SUCCESS);
         } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analysed
-            if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure));
+            if (context.getExecution().isTerminated(currentTasks, context.getParentTaskRun())) {
+                return Optional.of(context.getExecution().guessFinalState(context.getTasks(), context.getParentTaskRun(), allowFailure));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure));
+            if (context.getExecution().hasFailed(context.getTasks(), context.getParentTaskRun())) {
+                return Optional.of(context.getExecution().guessFinalState(context.getTasks(), context.getParentTaskRun(), allowFailure));
             }
         }
 
@@ -141,34 +140,23 @@ public class FlowableUtils {
     }
 
     public static List<NextTaskRun> resolveParallelNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        TaskRun parentTaskRun,
+        SequentialNextsContext context,
         Integer concurrency
     ) {
         return resolveParallelNexts(
-            execution,
-            tasks, errors,
-            parentTaskRun,
+            context,
             concurrency,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
         );
     }
 
     public static List<NextTaskRun> resolveDagNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        TaskRun parentTaskRun,
+        SequentialNextsContext context,
         Integer concurrency,
         List<Dag.DagTask> taskDependencies
     ) {
         return resolveParallelNexts(
-            execution,
-            tasks,
-            errors,
-            parentTaskRun,
+            context,
             concurrency,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
                 .filter(nextTaskRun -> {
@@ -197,32 +185,29 @@ public class FlowableUtils {
     }
 
     public static List<NextTaskRun> resolveParallelNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        TaskRun parentTaskRun,
+        SequentialNextsContext context,
         Integer concurrency,
         BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction
     ) {
-        if (execution.getState().getCurrent() == State.Type.KILLING) {
+        if (context.getExecution().getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
         }
 
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
-            tasks,
-            errors,
-            parentTaskRun
+        List<ResolvedTask> currentTasks = context.getExecution().findTaskDependingFlowState(
+            context.getTasks(),
+            context.getErrors(),
+            context.getParentTaskRun()
         );
 
         // all tasks run
-        List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
+        List<TaskRun> taskRuns = context.getExecution().findTaskRunByTasks(currentTasks, context.getParentTaskRun());
 
         // find all not created tasks
         List<ResolvedTask> notFinds = currentTasks
             .stream()
             .filter(resolvedTask -> taskRuns
                 .stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
+                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, context.getParentTaskRun()))
             )
             .toList();
 
@@ -237,12 +222,12 @@ public class FlowableUtils {
         }
 
         // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
+        Optional<TaskRun> lastCreated = context.getExecution().findLastCreated(taskRuns);
 
         if (!notFinds.isEmpty() && lastCreated.isEmpty()) {
             Stream<NextTaskRun> nextTaskRunStream = notFinds
                 .stream()
-                .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
+                .map(resolvedTask -> resolvedTask.toNextTaskRun(context.getExecution()));
 
             nextTaskRunStream = nextTaskRunFunction.apply(nextTaskRunStream, taskRuns);
 

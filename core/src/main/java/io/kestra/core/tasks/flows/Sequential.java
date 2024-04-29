@@ -16,6 +16,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -105,11 +106,14 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+           sequentialNextsContext
         );
     }
 }

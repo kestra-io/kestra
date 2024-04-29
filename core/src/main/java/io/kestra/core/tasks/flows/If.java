@@ -17,6 +17,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -146,11 +147,14 @@ public class If extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+        return FlowableUtils.resolveSequentialNexts(
+           sequentialNextsContext
         );
     }
 
@@ -161,12 +165,14 @@ public class If extends Task implements FlowableTask<VoidOutput> {
             // no next task to run, we guess the state from the parent task
             return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure()));
         }
-
-        return FlowableUtils.resolveState(
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun,
+            parentTaskRun
+        );
+        return FlowableUtils.resolveState(
+           sequentialNextsContext,
             runContext,
             this.isAllowFailure()
         );

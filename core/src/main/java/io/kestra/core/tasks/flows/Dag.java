@@ -12,6 +12,7 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.DagTaskValidation;
 import io.micronaut.core.annotation.Introspected;
@@ -150,12 +151,12 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         this.controlTask();
-
-        return FlowableUtils.resolveDagNexts(
-            execution,
+        SequentialNextsContext sequentialNextsContext = new SequentialNextsContext( execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-            parentTaskRun,
+            parentTaskRun);
+        return FlowableUtils.resolveDagNexts(
+           sequentialNextsContext,
             this.concurrent,
             this.tasks
         );

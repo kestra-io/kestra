@@ -17,6 +17,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.SequentialNextsContext;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,10 +61,7 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
         List<ResolvedTask> resolvedErrors = FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun);
 
         Optional<State.Type> type = FlowableUtils.resolveState(
-            execution,
-            resolvedTasks,
-            resolvedErrors,
-            parentTaskRun,
+            new SequentialNextsContext(execution, resolvedTasks, resolvedErrors, parentTaskRun),
             runContext,
             this.isAllowFailure()
         );
@@ -72,10 +70,7 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
             return type;
         } else {
             Optional<State.Type> normalState = FlowableUtils.resolveState(
-                execution,
-                resolvedTasks,
-                null,
-                parentTaskRun,
+                new SequentialNextsContext(execution, resolvedTasks, null, parentTaskRun),
                 runContext,
                 this.isAllowFailure()
             );

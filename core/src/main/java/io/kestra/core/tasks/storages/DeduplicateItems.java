@@ -1,7 +1,6 @@
 package io.kestra.core.tasks.storages;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -173,16 +172,6 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
         private final RunContext runContext;
         private final String expression;
 
-        /** {@inheritDoc} */
-        @Override
-        public String apply(String data) throws Exception {
-            try {
-                return extract(MAPPER.readTree(data));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
         /**
          * Creates a new {@link PebbleFieldExtractor} instance.
          *
@@ -194,10 +183,20 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
             this.expression = expression;
         }
 
-        public String extract(final JsonNode jsonNode) throws Exception {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = MAPPER.convertValue(jsonNode, Map.class);
-            return runContext.render(expression, map);
+
+        /** {@inheritDoc} */
+        @Override
+        @SuppressWarnings("unchecked")
+        public String apply(String data) throws Exception {
+            try {
+                return extract(MAPPER.readValue(data, Map.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public String extract(final Map<String, Object> item) throws Exception {
+            return runContext.render(expression, item);
         }
     }
 }

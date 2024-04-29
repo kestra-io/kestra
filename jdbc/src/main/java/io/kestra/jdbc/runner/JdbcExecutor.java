@@ -733,7 +733,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private Executor mayTransitExecutionToKillingStateAndGet(final String executionId) {
         return executionRepository.lock(executionId, pair -> {
             Execution currentExecution = pair.getLeft();
-            Execution killing = executionService.kill(currentExecution);
+            Flow flow = this.flowRepository.findByExecution(currentExecution);
+
+            Execution killing = executionService.kill(currentExecution, flow);
             Executor current = new Executor(currentExecution, null)
                 .withExecution(killing, "joinKillingExecution");
             return Pair.of(current, pair.getRight());
@@ -833,6 +835,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         executionDelayStorage.get(executionDelay -> {
             Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
+                Flow flow = flowRepository.findByExecution(pair.getLeft());
 
                 try {
                     // Handle paused tasks
@@ -840,6 +843,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                         Execution markAsExecution = executionService.markAs(
                             pair.getKey(),
+                            flow,
                             executionDelay.getTaskRunId(),
                             executionDelay.getState()
                         );

@@ -19,6 +19,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.Pause;
@@ -27,6 +28,7 @@ import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.multipart.StreamingFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -34,6 +36,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -70,6 +73,9 @@ public class ExecutionService {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    private FlowInputOutput flowInputOutput;
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
@@ -226,9 +232,11 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
-    public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
-        final Flow flow = flowRepositoryInterface.findByExecution(execution);
+    public Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
+         return this.markAs(execution, flow, taskRunId, newState, null, null);
+    }
 
+    private Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs, @Nullable Publisher<StreamingFileUpload> onResumeFiles) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -238,10 +246,26 @@ public class ExecutionService {
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
-            boolean isFlowable = flow.findTaskByTaskId(originalTaskRun.getTaskId()).isFlowable();
+            Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
+            boolean isFlowable = task.isFlowable();
 
             if (!isFlowable || s.equals(taskRunId)) {
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
+
+                if (task instanceof Pause pauseTask && pauseTask.getOnResume() != null) {
+                    Map<String, Object> pauseOutputs = flowInputOutput.typedInputs(
+                        pauseTask.getOnResume(),
+                        execution,
+                        onResumeInputs,
+                        onResumeFiles
+                    );
+
+                    newTaskRun = newTaskRun.withOutputs(pauseTask.generateOutputs(pauseOutputs));
+                }
+
+                if (task instanceof Pause pauseTask && pauseTask.getTasks() == null && newState == State.Type.RUNNING) {
+                    newTaskRun = newTaskRun.withState(State.Type.SUCCESS);
+                }
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
                     ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
@@ -254,7 +278,6 @@ public class ExecutionService {
                 newExecution = newExecution.withTaskRun(originalTaskRun.withState(State.Type.RUNNING));
             }
         }
-
 
         if (newExecution.getTaskRunList().stream().anyMatch(t -> t.getState().getCurrent() == State.Type.PAUSED)) {
             // there is still some tasks paused, this can occur with parallel pause
@@ -332,59 +355,37 @@ public class ExecutionService {
      *
      * @param execution the execution to resume
      * @param newState  should be RUNNING or KILLING, other states may lead to undefined behaviour
+     * @param flow      the flow of the execution
      * @return the execution in the new state.
-     * @throws InternalException if the state of the execution cannot be updated
+     * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(Execution execution, State.Type newState) throws InternalException {
-        var runningTaskRun = execution
-            .findFirstByState(State.Type.PAUSED)
-            .map(taskRun ->
-                taskRun.withState(newState)
-            )
-            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
-
-        var unpausedExecution = execution
-            .withTaskRun(runningTaskRun)
-            .withState(newState);
-        this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
-        return unpausedExecution;
+    public Execution resume(Execution execution, Flow flow, State.Type newState) throws Exception {
+        return this.resume(execution, flow, newState, null, null);
     }
 
     /**
      * Resume a paused execution to a new state.
-     * Providing the flow, we can check if the PauseTask has subtasks,
-     * if not, we can directly set the task to success.
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
      * @param newState  should be RUNNING or KILLING, other states may lead to undefined behaviour
      * @param flow      the flow of the execution
+     * @param inputs    the onResume inputs
+     * @param files     the onResume files
      * @return the execution in the new state.
-     * @throws InternalException if the state of the execution cannot be updated
+     * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(Execution execution, State.Type newState, Flow flow) throws InternalException {
+    public Execution resume(final Execution execution, Flow flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable Publisher<StreamingFileUpload> files) throws Exception {
         var runningTaskRun = execution
             .findFirstByState(State.Type.PAUSED)
-            .map(taskRun -> {
-                    try {
-                        Task task = flow.findTaskByTaskId(taskRun.getTaskId());
-                        if (task instanceof Pause pauseTask && pauseTask.getTasks() == null && newState == State.Type.RUNNING) {
-                            return taskRun.withState(State.Type.SUCCESS);
-                        }
-                        return taskRun.withState(newState);
-                    } catch (InternalException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            )
             .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
 
-        var unpausedExecution = execution
-            .withTaskRun(runningTaskRun)
-            .withState(newState);
+        var unpausedExecution = this.markAs(execution, flow, runningTaskRun.getId(), newState, inputs, files);
+
         this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
         return unpausedExecution;
     }
+
     /**
      * Lookup for all executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
@@ -422,13 +423,13 @@ public class ExecutionService {
      *
      * @return the execution in a KILLING state if not already terminated
      */
-    public Execution kill(Execution execution) {
+    public Execution kill(Execution execution, Flow flow) {
         if (execution.getState().isPaused()) {
             // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
             // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
             try {
-                return this.resume(execution, State.Type.KILLING);
-            } catch (InternalException e) {
+                return this.resume(execution, flow, State.Type.KILLING);
+            } catch (Exception e) {
                 // if we cannot resume, we set it anyway to killing, so we don't throw
                 log.warn("Unable to resume a paused execution before killing it", e);
             }

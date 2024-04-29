@@ -32,11 +32,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,33 +44,58 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class FlowInputOutput {
-
     public static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
 
     private final StorageInterface storageInterface;
     private final String secretKey;
 
     @Inject
-    public FlowInputOutput(StorageInterface storageInterface,
-                           @Nullable @Value("${kestra.encryption.secret-key}") String secretKey) {
+    public FlowInputOutput(
+        StorageInterface storageInterface,
+        @Nullable @Value("${kestra.encryption.secret-key}") String secretKey
+    ) {
         this.storageInterface = storageInterface;
         this.secretKey = secretKey;
     }
 
     /**
-     * Utility method for retrieving types inputs.
+     * Utility method for retrieving types inputs for a flow.
      *
      * @param flow      The Flow
      * @param execution The Execution.
      * @param in        The Flow's inputs.
      * @return The Map of typed inputs.
      */
-    public Map<String, Object> typedInputs(final Flow flow,
-                                           final Execution execution,
-                                           final Map<String, Object> in,
-                                           final Publisher<StreamingFileUpload> files) throws IOException {
+    public Map<String, Object> typedInputs(
+        final Flow flow,
+        final Execution execution,
+        final Map<String, Object> in,
+        final Publisher<StreamingFileUpload> files
+    ) throws IOException {
+        return this.typedInputs(
+            flow.getInputs(),
+            execution,
+            in,
+            files
+        );
+    }
+
+    /**
+     * Utility method for retrieving types inputs.
+     *
+     * @param inputs    The Inputs.
+     * @param execution The Execution.
+     * @param in        The Flow's inputs.
+     * @return The Map of typed inputs.
+     */
+    public Map<String, Object> typedInputs(
+        final List<Input<?>> inputs,
+        final Execution execution,
+        final Map<String, Object> in,
+        final Publisher<StreamingFileUpload> files
+    ) throws IOException {
         if (files == null) {
-            return this.typedInputs(flow, execution, in);
+            return this.typedInputs(inputs, execution, in);
         }
 
         Map<String, String> uploads = Flux.from(files)
@@ -107,27 +128,48 @@ public class FlowInputOutput {
 
         merged.putAll(uploads);
 
-        return this.typedInputs(flow, execution, merged);
+        return this.typedInputs(inputs, execution, merged);
+    }
+
+    /**
+     * Utility method for retrieving types inputs for a flow.
+     *
+     * @param flow      The inputs Flow?
+     * @param execution The Execution.
+     * @param in        The Flow's inputs.
+     * @return The Map of typed inputs.
+     */
+    public Map<String, Object> typedInputs(
+        final Flow flow,
+        final Execution execution,
+        final Map<String, Object> in
+    ) {
+        return this.typedInputs(
+            flow.getInputs(),
+            execution,
+            in
+        );
     }
 
     /**
      * Utility method for retrieving types inputs.
      *
-     * @param flow      The Flow
+     * @param inputs    The inputs.
      * @param execution The Execution.
      * @param in        The Flow's inputs.
      * @return The Map of typed inputs.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public Map<String, Object> typedInputs(final Flow flow,
-                                           final Execution execution,
-                                           final Map<String, Object> in) {
-        if (flow.getInputs() == null) {
+    private Map<String, Object> typedInputs(
+        final List<Input<?>> inputs,
+        final Execution execution,
+        final Map<String, Object> in
+    ) {
+        if (inputs == null) {
             return ImmutableMap.of();
         }
 
-        Map<String, Object> results = flow
-            .getInputs()
+        Map<String, Object> results = inputs
             .stream()
             .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
                 Object current = in == null ? null : in.get(input.getId());
@@ -158,9 +200,11 @@ public class FlowInputOutput {
         return handleNestedInputs(results);
     }
 
-    public Map<String, Object> typedOutputs(final Flow flow,
-                                            final Execution execution,
-                                            final Map<String, Object> in) {
+    public Map<String, Object> typedOutputs(
+        final Flow flow,
+        final Execution execution,
+        final Map<String, Object> in
+    ) {
         if (flow.getOutputs() == null) {
             return ImmutableMap.of();
         }
@@ -188,9 +232,11 @@ public class FlowInputOutput {
         return JacksonMapper.toMap(results);
     }
 
-    private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(final Execution execution,
-                                                                        final Data data,
-                                                                        final Object current) {
+    private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(
+        final Execution execution,
+        final Data data,
+        final Object current
+    ) {
         if (data.getType() == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }

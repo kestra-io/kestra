@@ -1,0 +1,15 @@
+id: pause_on_resume_optional
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.core.tasks.flows.Pause
+    onResume:
+      - id: asked
+        type: STRING
+        required: false
+
+  - id: last
+    type: io.kestra.core.tasks.outputs.OutputValues
+    values:
+      asked: "{{outputs.pause.onResume.asked ?? 'MISSING'}}"

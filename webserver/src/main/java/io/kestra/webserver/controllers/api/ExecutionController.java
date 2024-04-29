@@ -844,7 +844,9 @@ public class ExecutionController {
             return null;
         }
 
-        Execution replay = executionService.markAs(execution.get(), stateRequest.getTaskRunId(), stateRequest.getState());
+        Flow flow = flowRepository.findByExecution(execution.get());
+
+        Execution replay = executionService.markAs(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
 
@@ -949,13 +951,15 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume")
+    @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
     public HttpResponse<?> resume(
-        @Parameter(description = "The execution id") @PathVariable String executionId
-    ) throws InternalException {
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The inputs") HttpRequest<?> inputs, // FIXME we had to inject the HttpRequest here due to https://github.com/micronaut-projects/micronaut-core/issues/9694
+        @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files
+    ) throws Exception {
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
             return HttpResponse.notFound();
@@ -968,7 +972,9 @@ public class ExecutionController {
 
         var flow = flowRepository.findByExecutionWithoutAcl(execution);
 
-        Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING, flow);
+        Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
+
+        Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING, inputMap, files);
         this.executionQueue.emit(resumeExecution);
         return HttpResponse.noContent();
     }
@@ -980,7 +986,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Resumed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> resumeByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
-    ) throws InternalException {
+    ) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
         Map<String, Flow> flows = new HashMap<>();
@@ -1020,7 +1026,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             var flow = flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) != null ? flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) : flowRepository.findByExecutionWithoutAcl(execution);
             flows.put(execution.getFlowId() + "_" + execution.getFlowRevision(), flow);
-            Execution resumeExecution = this.executionService.resume(execution, State.Type.RUNNING, flow);
+            Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING);
             this.executionQueue.emit(resumeExecution);
         }
 
@@ -1044,7 +1050,7 @@ public class ExecutionController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
-    ) throws InternalException {
+    ) throws Exception {
         var ids = executionRepository
             .find(
                 query,

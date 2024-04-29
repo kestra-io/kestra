@@ -1,0 +1,18 @@
+id: pause_on_resume
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.core.tasks.flows.Pause
+    onResume:
+      - id: asked
+        type: STRING
+      - id: data
+        type: FILE
+        required: false
+
+  - id: last
+    type: io.kestra.core.tasks.outputs.OutputValues
+    values:
+      asked: "{{outputs.pause.onResume.asked}}"
+      data: "{{outputs.pause.onResume.data}}"

@@ -419,6 +419,7 @@
                 "readDirectory",
                 "createFile",
                 "renameFileDirectory",
+                "moveFileDirectory",
                 "deleteFileDirectory",
             ]),
             renderNodes(nodes) {
@@ -556,8 +557,16 @@
 
                 this.renameDialog = {...RENAME_DEFAULTS};
             },
-            nodeMoved(one, two, three) {
-                console.log(one, two, three);
+            nodeMoved(node, target, type) {
+                if (type === "inner") {
+                    this.moveFileDirectory({
+                        namespace: this.$route.params.namespace,
+                        old: this.getPath(node),
+                        new: `${this.getPath(target)}/${this.getPath(node)}`,
+                    });
+                } else {
+                    // console.log(node, target);
+                }
             },
             focusCreationInput() {
                 setTimeout(() => {

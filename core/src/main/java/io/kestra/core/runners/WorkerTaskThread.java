@@ -30,21 +30,13 @@ public class WorkerTaskThread extends AbstractWorkerThread {
     }
 
     @Override
-    public void kill() {
-        super.kill();
+    protected void kill(final io.kestra.core.models.flows.State.Type type) {
         try {
             task.kill();
         } catch (Exception e) {
             logger.warn("Error while killing task: '{}'", e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void shutdown() {
-        try {
-            task.stop();
-        } catch (Exception e) {
-            logger.warn("Error while stopping task: '{}'", e.getMessage(), e);
+        } finally {
+            super.kill(type); //interrupt
         }
     }
 
@@ -57,7 +49,6 @@ public class WorkerTaskThread extends AbstractWorkerThread {
             if (workerTaskTimeout != null) {
                 Timeout<Object> taskTimeout = Timeout
                     .builder(workerTaskTimeout)
-                    .withInterrupt() // use to awake blocking tasks.
                     .build();
                 Failsafe
                     .with(taskTimeout)
@@ -81,6 +72,7 @@ public class WorkerTaskThread extends AbstractWorkerThread {
                 taskState = taskOutput.finalState().get();
             }
         } catch (dev.failsafe.TimeoutExceededException e) {
+            kill(FAILED); // Task is be marked as FAILED on timeout
             this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout, e));
         } catch (Exception e) {
             this.exceptionHandler(this, e);

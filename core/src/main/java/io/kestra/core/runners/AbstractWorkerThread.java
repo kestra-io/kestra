@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.flows.State;
 import lombok.Getter;
 import lombok.Synchronized;
 import org.slf4j.Logger;
@@ -35,13 +36,13 @@ public abstract class AbstractWorkerThread extends Thread {
 
     @Synchronized
     public void kill() {
-        this.killed = true;
-        taskState = KILLED;
-        this.interrupt();
+        this.kill(KILLED);
     }
-
-    public void shutdown() {
-
+    
+    protected void kill(io.kestra.core.models.flows.State.Type type) {
+        this.killed = true;
+        taskState = type;
+        this.interrupt();
     }
 
     protected void exceptionHandler(Thread t, Throwable e) {

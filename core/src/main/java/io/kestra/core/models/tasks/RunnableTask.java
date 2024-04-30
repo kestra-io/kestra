@@ -10,8 +10,6 @@ import io.kestra.core.runners.RunContext;
 public interface RunnableTask <T extends Output> extends Plugin, WorkerJobLifecycle {
     /**
      * This method is called inside the Worker to run (execute) the task.
-     * <p>
-     * When this task is stopped this method is expected to unblock, quickly finish up any remaining processing, and return.
      */
     T run(RunContext runContext) throws Exception;
 }

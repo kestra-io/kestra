@@ -49,7 +49,7 @@ public abstract class FilesService {
                     file.createNewFile();
                  } else {
                      if (fileContent.startsWith("kestra://")) {
-                         try (var is = runContext.uriToInputStream(URI.create(fileContent));
+                         try (var is = runContext.storage().getFile(URI.create(fileContent));
                               var out = new FileOutputStream(file)) {
                              IOUtils.copyLarge(is, out);
                          }
@@ -85,7 +85,7 @@ public abstract class FilesService {
                 .filter(path -> pathMatcher.matches(runContext.tempDir().relativize(path)))
                 .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
                     runContext.tempDir().relativize(path).toString(),
-                    runContext.putTempFile(path.toFile())
+                    runContext.storage().putFile(path.toFile())
                 )))
                 .toList()
                 .stream();

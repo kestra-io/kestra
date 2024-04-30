@@ -26,7 +26,7 @@ public abstract class StorageService {
             extension = fromPath.substring(fromPath.lastIndexOf('.'));
         }
 
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.uriToInputStream(from)))) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.storage().getFile(from)))) {
             List<Path> splited;
 
             if (storageSplitInterface.getBytes() != null) {
@@ -45,7 +45,7 @@ public abstract class StorageService {
 
             return splited
                 .stream()
-                .map(throwFunction(path -> runContext.putTempFile(path.toFile())))
+                .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
                 .collect(Collectors.toList());
         }
     }

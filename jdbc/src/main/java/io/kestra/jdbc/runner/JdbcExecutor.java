@@ -947,11 +947,17 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @PreDestroy
     public void close() {
         if (shutdown.compareAndSet(false, true)) {
-            log.info("Terminating.");
+            if (log.isDebugEnabled()) {
+                log.debug("Terminating");
+            }
+
             setState(ServiceState.TERMINATING);
             scheduledDelay.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
-            log.info("Executor closed ({}).", state.get().name().toLowerCase());
+
+            if (log.isDebugEnabled()) {
+                log.debug("Closed ({})", state.get().name());
+            }
         }
     }
 

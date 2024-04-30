@@ -708,7 +708,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @VisibleForTesting
     public void closeWorker(final Duration timeout) {
-        log.info("Terminating.");
+        if (log.isDebugEnabled()) {
+            log.debug("Terminating");
+        }
+
         setState(ServiceState.TERMINATING);
         workerJobQueue.pause();
 
@@ -724,7 +727,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         ServiceState state = terminatedGracefully ? TERMINATED_GRACEFULLY : TERMINATED_FORCED;
         setState(state);
-        log.info("Worker closed ({}).", state.name().toLowerCase());
+
+        if (log.isDebugEnabled()) {
+            log.debug("Closed ({}).", state.name());
+        }
     }
 
     private boolean waitForTasksCompletion(final Duration timeout) {

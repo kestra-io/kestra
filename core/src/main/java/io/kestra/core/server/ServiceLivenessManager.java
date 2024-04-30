@@ -101,11 +101,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         );
         ServiceInstance instance = serviceRepository.save(localServiceState.instance());
         this.serviceRegistry.register(localServiceState.with(instance));
-        log.info("[Service id={}, type='{}', hostname='{}'] Connected.",
-            instance.id(),
-            instance.type(),
-            instance.server().hostname()
-        );
+        if (log.isDebugEnabled()) {
+            log.debug("[Service id={}, type='{}', hostname='{}'] Connected.",
+                instance.id(),
+                instance.type(),
+                instance.server().hostname()
+            );
+        }
     }
 
     /**

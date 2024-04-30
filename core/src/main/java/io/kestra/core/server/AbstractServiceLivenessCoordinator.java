@@ -94,12 +94,14 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
                 .stream()
                 .filter(instance -> instance.createdAt().isAfter(lastScheduledExecution()))
                 .forEach(instance -> {
-                    log.info("Detected new service [id={}, type={}, hostname={}] (started at: {}).",
-                        instance.id(),
-                        instance.type(),
-                        instance.server().hostname(),
-                        instance.createdAt()
-                    );
+                    if (log.isDebugEnabled()) {
+                        log.debug("Detected new service [id={}, type={}, hostname={}] (started at: {}).",
+                            instance.id(),
+                            instance.type(),
+                            instance.server().hostname(),
+                            instance.createdAt()
+                        );
+                    }
                 });
         }
     }

@@ -787,7 +787,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     protected void close(final @Nullable Runnable onClose) {
         if (shutdown.compareAndSet(false, true)) {
-            log.info("Terminating.");
+            if (log.isDebugEnabled()) {
+                log.debug("Terminating");
+            }
+
             setState(ServiceState.TERMINATING);
             try {
                 if (onClose != null) {
@@ -798,7 +801,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             }
             this.scheduleExecutor.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
-            log.info("Scheduler closed ({}).", state.get().name().toLowerCase());
+
+            if (log.isDebugEnabled()) {
+                log.debug("Closed ({}).", state.get().name());
+            }
         }
     }
 

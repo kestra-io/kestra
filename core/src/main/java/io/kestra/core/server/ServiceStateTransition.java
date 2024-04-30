@@ -53,13 +53,15 @@ public final class ServiceStateTransition {
 
         // Logs if the state was changed, otherwise this method called for heartbeat purpose.
         if (!oldInstance.state().equals(newInstance.state())) {
-            LOG.info("Service [id={}, type={}, hostname={}] transition from {} to {}.",
-                initial.id(),
-                initial.type(),
-                initial.server().hostname(),
-                oldInstance.state(),
-                newInstance.state()
-            );
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Service [id={}, type={}, hostname={}] transition from {} to {}.",
+                    initial.id(),
+                    initial.type(),
+                    initial.server().hostname(),
+                    oldInstance.state(),
+                    newInstance.state()
+                );
+            }
         }
         return new Response(Result.SUCCEED, newInstance);
     }

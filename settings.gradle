@@ -16,3 +16,4 @@ include 'jdbc-postgres'
 
 include 'webserver'
 include 'ui'
+include 'script'

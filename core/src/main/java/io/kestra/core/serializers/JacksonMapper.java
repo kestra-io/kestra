@@ -123,10 +123,6 @@ public final class JacksonMapper {
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {
-        // ensure core plugins are loaded and plugin-deserializer is configured.
-        if (!PluginDeserializer.isInitialized()) {
-            PluginDeserializer.setPluginRegistry(DefaultPluginRegistry.getOrCreate());
-        }
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)

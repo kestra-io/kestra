@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,11 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
     }
 
     private static void checkState() {
-        if (pluginRegistry == null) throw new IllegalStateException("PluginRegistry not initialized.");
+        if (pluginRegistry == null) {
+            // Usually a plugin registry is always initialized. This warn should only be logged in some tests.
+            log.warn("No plugin registry was initialized. Use default implementation.");
+            pluginRegistry = DefaultPluginRegistry.getOrCreate();
+        }
     }
 
     @SuppressWarnings("unchecked")

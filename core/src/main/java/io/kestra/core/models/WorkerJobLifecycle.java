@@ -10,20 +10,8 @@ public interface WorkerJobLifecycle {
     /**
      * Forces termination of the underlying job and its associated processes.
      * <p>
-     * This method is invoked when the job is killed.
-     * <p>
-     * Must be non-blocking.
+     * This method is invoked when the job is killed or timeout.
      */
     default void kill() { /* noop */ }
-
-    /**
-     * Signal the job to stop.
-     * <p>
-     * This method is invoked when the Worker running the job is shutting down.
-     * The job must complete and return as soon as possible from its main method.
-     * <p>
-     * Must be non-blocking.
-     *
-     */
-    default void stop() { /* noop */ }
+    
 }

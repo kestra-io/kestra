@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.IdUtils;
 
 import java.util.Map;
 
@@ -19,8 +20,9 @@ public abstract class TriggerService {
         Map<String, Object> variables
     ) {
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables);
+        RunContext runContext = conditionContext.getRunContext();
 
-        return generateExecution(trigger, conditionContext, context, executionTrigger);
+        return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger);
     }
 
     public static Execution generateExecution(
@@ -30,20 +32,29 @@ public abstract class TriggerService {
         Output output
     ) {
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output);
+        RunContext runContext = conditionContext.getRunContext();
 
-        return generateExecution(trigger, conditionContext, context, executionTrigger);
+        return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger);
+    }
+
+    public static Execution generateRealtimeExecution(
+        AbstractTrigger trigger,
+        TriggerContext context,
+        Output output
+    ) {
+        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output);
+
+        return generateExecution(IdUtils.create(), trigger, context, executionTrigger);
     }
 
     private static Execution generateExecution(
+        String id,
         AbstractTrigger trigger,
-        ConditionContext conditionContext,
         TriggerContext context,
         ExecutionTrigger executionTrigger
     ) {
-        RunContext runContext = conditionContext.getRunContext();
-
         return Execution.builder()
-            .id(runContext.getTriggerExecutionId())
+            .id(id)
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())

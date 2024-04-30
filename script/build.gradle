@@ -1,7 +1,6 @@
 dependencies {
     // Kestra
     implementation project(':core')
-    annotationProcessor project(':processor')
 
     implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     implementation 'io.micronaut:micronaut-context'

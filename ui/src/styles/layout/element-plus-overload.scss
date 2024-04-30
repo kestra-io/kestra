@@ -202,6 +202,19 @@
     }
 }
 
+.el-input-number__increase, .el-input-number__decrease {
+    background: var(--bs-primary);
+}
+
+.el-input-file {
+    .el-input__inner::file-selector-button {
+        background: var(--bs-primary);
+        border: 0;
+        margin: 2px 10px 0 4px;
+        border-radius: var(--el-border-radius-base);
+    }
+}
+
 // form horizontal
 form.ks-horizontal {
     .el-form-item {

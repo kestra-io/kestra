@@ -39,7 +39,7 @@ export default {
                     persistent,
                     dirty: isDirty,
                     local,
-                    path
+                    path,
                 };
             } else if (action === "close") {
                 state.tabs = state.tabs.filter((tab) => tab.name !== name);
@@ -49,7 +49,9 @@ export default {
 
                 if (state.current.name === name) {
                     const i = POSITION - 1 >= 0;
-                    state.current = i ? state.tabs[POSITION - 1] : undefined;
+                    state.current = i
+                        ? state.tabs[POSITION - 1]
+                        : state.tabs[0];
                 }
             } else if (action === "dirty") {
                 state.tabs.map((tab) => {

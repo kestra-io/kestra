@@ -1,0 +1,14 @@
+id: waitfor-max-duration
+namespace: io.kestra.tests
+
+tasks:
+  - id: waitfor
+    type: io.kestra.core.tasks.flows.WaitFor
+    condition: "{{ previous.values.count == '-5'}}"
+    maxDuration: PT5S
+    failOnMaxReached: true
+    task:
+      id: output_values
+      type: io.kestra.core.tasks.outputs.OutputValues
+      values:
+        count: "{{ (previous.values.count | default('0')) | number + 1 }}"

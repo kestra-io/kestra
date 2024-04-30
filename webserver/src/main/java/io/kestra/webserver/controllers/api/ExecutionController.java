@@ -950,6 +950,7 @@ public class ExecutionController {
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
+    @SuppressWarnings("unchecked")
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")

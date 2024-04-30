@@ -8,7 +8,7 @@
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                <resume :execution="execution" class="ms-0" />
+                <resume :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
                 <status :status="execution.state.current" class="ms-0" />
             </el-col>

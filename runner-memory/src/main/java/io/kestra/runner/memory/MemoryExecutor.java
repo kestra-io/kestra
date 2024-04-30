@@ -519,7 +519,7 @@ public class MemoryExecutor implements ExecutorInterface {
                 executorService.log(log, true, message);
             }
 
-            final Flow flowRepository = this.flowRepository.findByExecution(EXECUTIONS.get(message.getExecutionId()).execution);
+            final Flow flowFromRepository = this.flowRepository.findByExecution(EXECUTIONS.get(message.getExecutionId()).execution);
 
             // save WorkerTaskResult on current QueuedExecution
             EXECUTIONS.compute(message.getExecutionId(), (s, executionState) -> {
@@ -527,10 +527,10 @@ public class MemoryExecutor implements ExecutorInterface {
                     throw new IllegalStateException("Execution state don't exist for " + s + ", receive " + message);
                 }
 
-                return executionState.from(executionService.kill(executionState.execution, flowRepository));
+                return executionState.from(executionService.kill(executionState.execution, flowFromRepository));
             });
 
-            Flow flow = transform(flowRepository, EXECUTIONS.get(message.getExecutionId()).execution);
+            Flow flow = transform(flowFromRepository, EXECUTIONS.get(message.getExecutionId()).execution);
 
             this.toExecution(new Executor(EXECUTIONS.get(message.getExecutionId()).execution, null).withFlow(flow));
         }

@@ -185,6 +185,7 @@
     "killed confirm": "Are you sure to kill execution <code>{id}</code>?",
     "killed done": "Execution is queued for killing",
     "resume": "Resume",
+    "resumed title": "Resume execution <code>{id}</code>",
     "resumed confirm": "Are you sure to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
     "toggle output": "Toggle outputs",

@@ -6,107 +6,7 @@
         </el-alert>
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <template v-if="flow.inputs">
-                <el-form-item
-                    v-for="input in flow.inputs || []"
-                    :key="input.id"
-                    :label="input.id"
-                    :required="input.required !== false"
-                    :prop="input.id"
-                >
-                    <editor
-                        :full-height="false"
-                        :input="true"
-                        :navbar="false"
-                        v-if="input.type === 'STRING' || input.type === 'URI'"
-                        v-model="inputs[input.id]"
-                    />
-                    <el-select
-                        :full-height="false"
-                        :input="true"
-                        :navbar="false"
-                        v-if="input.type === 'ENUM'"
-                        v-model="inputs[input.id]"
-                    >
-                        <el-option
-                            v-for="item in input.values"
-                            :key="item"
-                            :label="item"
-                            :value="item"
-                        >
-                            {{ item }}
-                        </el-option>
-                    </el-select>
-                    <el-input
-                        type="password"
-                        v-if="input.type === 'SECRET'"
-                        v-model="inputs[input.id]"
-                        show-password
-                    />
-                    <el-input-number
-                        v-if="input.type === 'INT'"
-                        v-model="inputs[input.id]"
-                        :step="1"
-                    />
-                    <el-input-number
-                        v-if="input.type === 'FLOAT'"
-                        v-model="inputs[input.id]"
-                        :step="0.001"
-                    />
-                    <el-radio-group
-                        v-if="input.type === 'BOOLEAN'"
-                        v-model="inputs[input.id]"
-                    >
-                        <el-radio-button :label="$t('true')" value="true" />
-                        <el-radio-button :label="$t('false')" value="false" />
-                        <el-radio-button :label="$t('undefined')" value="undefined" />
-                    </el-radio-group>
-                    <el-date-picker
-                        v-if="input.type === 'DATETIME'"
-                        v-model="inputs[input.id]"
-                        type="datetime"
-                    />
-                    <el-date-picker
-                        v-if="input.type === 'DATE'"
-                        v-model="inputs[input.id]"
-                        type="date"
-                    />
-                    <el-time-picker
-                        v-if="input.type === 'TIME' || input.type === 'DURATION'"
-                        v-model="inputs[input.id]"
-                        type="time"
-                    />
-                    <div class="el-input el-input-file">
-                        <div class="el-input__wrapper" v-if="input.type === 'FILE'">
-                            <input
-                                :id="input.id+'-file'"
-                                class="el-input__inner"
-                                type="file"
-                                @change="onFileChange(input, $event)"
-                                autocomplete="off"
-                                :style="{display: typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///') ? 'none': ''}"
-                            >
-                            <label
-                                v-if="typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///')"
-                                :for="input.id+'-file'"
-                            >Kestra Internal Storage File</label>
-                        </div>
-                    </div>
-                    <editor
-                        :full-height="false"
-                        :input="true"
-                        :navbar="false"
-                        v-if="input.type === 'JSON' || input.type === 'ARRAY'"
-                        lang="json"
-                        v-model="inputs[input.id]"
-                    />
-
-                    <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
-                </el-form-item>
-            </template>
-            <p v-else>
-                {{ $t("no inputs") }}
-            </p>
+            <inputs-form :inputs-list="flow.inputs" v-model="inputs" />
             <el-collapse class="mt-4" v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
                     <el-form-item
@@ -151,14 +51,13 @@
 <script>
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
-    import Editor from "../../components/inputs/Editor.vue";
+    import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
-    import Markdown from "../layout/Markdown.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
 
     export default {
-        components: {Editor, LabelInput, Markdown,},
+        components: {LabelInput, InputsForm},
         props: {
             redirect: {
                 type: Boolean,
@@ -180,51 +79,12 @@
             };
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
-        created() {
-            for (const input of this.flow.inputs || []) {
-                this.inputs[input.id] = input.defaults;
-
-                if (input.type === "BOOLEAN" && input.defaults === undefined){
-                    this.inputs[input.id] = "undefined";
-                }
-            }
-        },
-        mounted() {
-            setTimeout(() => {
-                const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
-                if (input && !input.className.includes("mx-input")) {
-                    input.focus()
-                }
-            }, 500)
-
-            this._keyListener = function(e) {
-                if (e.keyCode === 13 && (e.ctrlKey || e.metaKey))  {
-                    e.preventDefault();
-                    this.onSubmit(this.$refs.form);
-                }
-            };
-
-            document.addEventListener("keydown", this._keyListener.bind(this));
-        },
-        beforeUnmount() {
-            document.removeEventListener("keydown", this._keyListener);
-        },
         computed: {
             ...mapState("core", ["guidedProperties"]),
             ...mapState("execution", ["flow", "execution"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
-            // Required to have "undefined" value for boolean
-            cleanInputs() {
-                var inputs = this.inputs
-                for (const input of this.flow.inputs || []) {
-                    if (input.type === "BOOLEAN" && inputs[input.id] === "undefined") {
-                        inputs[input.id] = undefined;
-                    }
-                }
-                return inputs;
-            }
         },
         methods: {
             getExecutionLabels() {
@@ -282,7 +142,7 @@
                             return false;
                         }
 
-                        executeTask(this, this.flow, this.cleanInputs, {
+                        executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,
                             id: this.flow.id,
@@ -328,17 +188,7 @@
 
                 return this.$tours["guidedTour"].finish();
             },
-            onFileChange(input, e) {
-                if (!e.target) {
-                    return;
-                }
 
-                const files = e.target.files || e.dataTransfer.files;
-                if (!files.length) {
-                    return;
-                }
-                this.inputs[input.id] = e.target.files[0];
-            },
             state(input) {
                 const required = input.required === undefined ? true : input.required;
 

@@ -789,7 +789,6 @@
                         namespace: this.$route.params.namespace,
                         path,
                         fileName,
-                        toast: this.$toast
                     });
 
                     const folder = path.split("/");

@@ -547,6 +547,7 @@
                     namespace: this.$route.params.namespace,
                     old: `${start}${this.renameDialog.old}`,
                     new: `${start}${this.renameDialog.name}`,
+                    type: this.renameDialog.type,
                 });
 
                 this.$refs.tree.getNode(this.renameDialog.node).data.fileName =
@@ -699,6 +700,8 @@
                         namespace: this.$route.params.namespace,
                         path,
                         content,
+                        name: NAME,
+                        creation: true,
                     });
 
                     this.changeOpenedTabs({
@@ -744,12 +747,14 @@
                 this.confirmation = {visible: true, data, node};
             },
             removeItem() {
+                const {node, data} = this.confirmation;
+
                 this.deleteFileDirectory({
                     namespace: this.$route.params.namespace,
                     path: this.getPath(this.confirmation.node),
+                    name: data.fileName,
+                    type: data.type,
                 });
-
-                const {node, data} = this.confirmation;
 
                 const parent = node.parent;
                 const children = parent.data.children || parent.data;
@@ -788,7 +793,7 @@
                     this.createDirectory({
                         namespace: this.$route.params.namespace,
                         path,
-                        fileName,
+                        name: fileName,
                     });
 
                     const folder = path.split("/");

@@ -13,6 +13,9 @@ const app = createApp(App)
 const translations = {...fr,...en}
 const {store, router} = initApp(app, routes, stores, translations);
 
+// Passing toast to VUEX store to be used in modules
+store.$toast = app.config.globalProperties.$toast();
+
 // axios
 configureAxios((instance) => {
     app.use(VueAxios, instance);

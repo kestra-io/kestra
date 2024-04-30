@@ -4,6 +4,11 @@ import {apiUrl} from "override/utils/route";
 const BASE = (namespace) => `${apiUrl(this)}/namespaces/${namespace}`;
 const HEADERS = {headers: {"Content-Type": "multipart/form-data"}};
 
+const NOTIFY = ({toast, status, action, name, type}) => {
+    if (status === 200) toast.success(`${type} ${name} is ${action}.`);
+    else toast.error("An unexpected error occurred.");
+};
+
 export default {
     namespaced: true,
     state: {
@@ -13,7 +18,15 @@ export default {
         // Create a directory
         async createDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files/directory?path=${payload.path}`;
-            await this.$http.post(URL);
+            const request = await this.$http.post(URL);
+
+            NOTIFY({
+                toast: this.$toast,
+                status: request.status,
+                action: "created",
+                name: payload.name,
+                type: "Directory",
+            });
         },
 
         // List directory content
@@ -31,7 +44,15 @@ export default {
             DATA.append("fileContent", BLOB);
 
             const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
-            await this.$http.post(URL, DATA, HEADERS);
+            const request = await this.$http.post(URL, DATA, HEADERS);
+
+            NOTIFY({
+                toast: this.$toast,
+                status: request.status,
+                action: payload.creation ? "created" : "updated",
+                name: payload.name ? payload.name : "content",
+                type: "File",
+            });
         },
 
         // Get namespace file content
@@ -61,13 +82,29 @@ export default {
         // Rename a file or directory
         async renameFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;
-            await this.$http.put(URL);
+            const request = await this.$http.put(URL);
+
+            NOTIFY({
+                toast: this.$toast,
+                status: request.status,
+                action: "renamed",
+                name: payload.new,
+                type: payload.type,
+            });
         },
 
         // Delete a file or directory
         async deleteFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
-            await this.$http.delete(URL);
+            const request = await this.$http.delete(URL);
+
+            NOTIFY({
+                toast: this.$toast,
+                status: request.status,
+                action: "deleted",
+                name: payload.name,
+                type: payload.type,
+            });
         },
 
         // Export namespace files as a ZIP

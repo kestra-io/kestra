@@ -18,4 +18,5 @@ include 'webserver'
 include 'ui'
 include 'model'
 include 'processor'
+include 'script'
 

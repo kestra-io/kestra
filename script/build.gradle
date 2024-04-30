@@ -1,0 +1,18 @@
+dependencies {
+    // Kestra
+    implementation project(':core')
+    annotationProcessor project(':processor')
+
+    implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
+    implementation 'io.micronaut:micronaut-context'
+
+    implementation ('com.github.docker-java:docker-java:3.3.6') {
+        exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
+    }
+    implementation 'com.github.docker-java:docker-java-transport-zerodep:3.3.6'
+
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':storage-local')
+    testImplementation project(':repository-memory')
+    testImplementation project(':runner-memory')
+}

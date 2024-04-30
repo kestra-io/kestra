@@ -27,6 +27,7 @@ dependencies {
 
     // modules
     implementation project(":core")
+    implementation project(":script")
 
     implementation project(":repository-memory")
 

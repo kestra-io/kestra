@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+    <property name="pattern" value="%d{ISO8601} %highlight(%-5.5level) %magenta(%-12.12thread) %cyan(%-12.12logger{12}) %msg%n" />
+    <withJansi>true</withJansi>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <immediateFlush>true</immediateFlush>
+        <encoder>
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+
+
+    <root level="WARN">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <logger name="io.kestra" level="INFO" />
+    <logger name="flow" level="INFO" />
+
+</configuration>

@@ -7,29 +7,31 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.GraphTask;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
@@ -68,7 +70,7 @@ import java.util.Optional;
         )
     }
 )
-public class Pause extends Sequential implements FlowableTask<VoidOutput> {
+public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(
         title = "Duration of the pause — useful if you want to pause the execution for a fixed amount of time.",
         description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
@@ -82,6 +84,16 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
     )
     @PluginProperty
     private Duration timeout;
+
+    @Valid
+    @Schema(
+        title = "Timeout of the pause — useful to avoid never-ending workflows in a human-in-the-loop scenario. For example, if you want to pause the execution until a human validates some data generated in a previous task, you can set a timeout of e.g. 24 hours. If no manual approval happens within 24 hours, the execution will automatically resume without a prior data validation.",
+        description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
+    )
+    private List<Input<?>> onResume;
+
+    @Valid
+    protected List<Task> errors;
 
     @Valid
     @PluginProperty
@@ -105,6 +117,21 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
         );
 
         return subGraph;
+    }
+
+    @Override
+    public List<Task> allChildTasks() {
+        return Stream
+            .concat(
+                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
+                this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
+            )
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
     }
 
     @Override
@@ -136,6 +163,20 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
             return Optional.of(State.Type.SUCCESS);
         }
 
-        return super.resolveState(runContext, execution, parentTaskRun);
+        return FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
+    }
+
+    public Map<String, Object> generateOutputs(Map<String, Object> inputs) {
+        Output build = Output.builder()
+            .onResume(inputs)
+            .build();
+
+        return JacksonMapper.toMap(build);
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements io.kestra.core.models.tasks.Output {
+        private Map<String, Object> onResume;
     }
 }

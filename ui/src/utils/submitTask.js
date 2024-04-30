@@ -1,6 +1,21 @@
-export const executeTask = (submitor, flow, values, options) => {
+// Required to have "undefined" value for boolean
+const cleanInputs = (inputsList, values) => {
+    var inputs = values
+    for (const input of inputsList || []) {
+        if (input.type === "BOOLEAN" && inputs[input.id] === "undefined") {
+            inputs[input.id] = undefined;
+        }
+    }
+    return inputs;
+}
+
+
+export const inputsToFormDate = (submitor, inputsList, values) => {
+    values = cleanInputs(inputsList, values);
+
     const formData = new FormData();
-    for (let input of flow.inputs || []) {
+
+    for (let input of inputsList || []) {
         const inputName = input.id;
         const inputValue = values[inputName];
         if (inputValue !== undefined) {
@@ -30,6 +45,13 @@ export const executeTask = (submitor, flow, values, options) => {
             return;
         }
     }
+
+    return formData;
+}
+
+export const executeTask = (submitor, flow, values, options) => {
+    const formData = inputsToFormDate(submitor, flow.inputs, values);
+
     submitor.$store
         .dispatch("execution/triggerExecution", {
             ...options,

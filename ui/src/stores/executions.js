@@ -105,8 +105,14 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/executions/kill/by-query`, {params: options});
         },
         resume(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume`);
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume`, options.formData, {
+                timeout: 60 * 60 * 1000,
+                headers: {
+                    "content-type": "multipart/form-data"
+                }
+            });
         },
+
         loadExecution({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)

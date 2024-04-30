@@ -173,6 +173,7 @@
     "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "resume": "Reprendre",
+    "resumed title": "Reprendre l'exécution <code>{id}</code>",
     "resumed confirm": "Êtes-vous sur de vouloir reprendre l'exécution <code>{id}</code>?",
     "resumed done": "L'exécution est reprise",
     "toggle output": "Voir les sorties",

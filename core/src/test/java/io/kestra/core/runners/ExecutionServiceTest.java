@@ -255,10 +255,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Test
     void markAsEachPara() throws Exception {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested");
+        Flow flow = flowRepository.findByExecution(execution);
+
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-        Execution restart = executionService.markAs(execution, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), State.Type.FAILED);
+        Execution restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), State.Type.FAILED);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -268,7 +270,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories(), hasSize(4));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts(), nullValue());
 
-        restart = executionService.markAs(execution, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
+        restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -281,31 +283,35 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void resumePausedToRunning() throws TimeoutException, InternalException {
+    void resumePausedToRunning() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause");
+        Flow flow = flowRepository.findByExecution(execution);
+
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 
-        Execution resume = executionService.resume(execution, State.Type.RUNNING);
+        Execution resume = executionService.resume(execution, flow, State.Type.RUNNING);
 
-        assertThat(resume.getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(resume.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(resume.getState().getHistories(), hasSize(4));
 
         IllegalArgumentException e = assertThrows(
             IllegalArgumentException.class,
-            () -> executionService.resume(resume, State.Type.RUNNING)
+            () -> executionService.resume(resume, flow, State.Type.RUNNING)
         );
     }
 
     @Test
-    void resumePausedToKilling() throws TimeoutException, InternalException {
+    void resumePausedToKilling() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause");
+        Flow flow = flowRepository.findByExecution(execution);
+
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 
-        Execution resume = executionService.resume(execution, State.Type.KILLING);
+        Execution resume = executionService.resume(execution, flow, State.Type.KILLING);
 
-        assertThat(resume.getState().getCurrent(), is(State.Type.KILLING));
+        assertThat(resume.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(resume.getState().getHistories(), hasSize(4));
     }
 }

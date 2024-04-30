@@ -755,6 +755,41 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution.getState().isPaused(), is(false));
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void resumePausedWithInputs() throws TimeoutException, InterruptedException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause_on_resume");
+        assertThat(pausedExecution.getState().isPaused(), is(true));
+
+        File applicationFile = new File(Objects.requireNonNull(
+            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
+        ).getPath());
+
+        MultipartBody multipartBody = MultipartBody.builder()
+            .addPart("asked", "myString")
+            .addPart("files", "data", MediaType.TEXT_PLAIN_TYPE, applicationFile)
+            .build();
+
+        // resume the execution
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/executions/" + pausedExecution.getId() + "/resume", multipartBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        assertThat(resumeResponse.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        // check that the execution is no more paused
+        Thread.sleep(100);
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
+            Execution.class);
+        assertThat(execution.getState().isPaused(), is(false));
+
+        Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").get(0).getOutputs().get("onResume");
+        assertThat(outputs.get("asked"), is("myString"));
+        assertThat((String) outputs.get("data"), startsWith("kestra://"));
+    }
+
     @Test
     void resumeByIds() throws TimeoutException, InterruptedException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");

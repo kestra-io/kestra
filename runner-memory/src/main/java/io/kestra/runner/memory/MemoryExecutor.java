@@ -222,6 +222,7 @@ public class MemoryExecutor implements ExecutorInterface {
                                     if (workerTaskResultDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
                                         Execution markAsExecution = executionService.markAs(
                                             executionState.execution,
+                                            flow,
                                             workerTaskResultDelay.getTaskRunId(),
                                             workerTaskResultDelay.getState()
                                         );
@@ -518,17 +519,18 @@ public class MemoryExecutor implements ExecutorInterface {
                 executorService.log(log, true, message);
             }
 
+            final Flow flowFromRepository = this.flowRepository.findByExecution(EXECUTIONS.get(message.getExecutionId()).execution);
+
             // save WorkerTaskResult on current QueuedExecution
             EXECUTIONS.compute(message.getExecutionId(), (s, executionState) -> {
                 if (executionState == null) {
                     throw new IllegalStateException("Execution state don't exist for " + s + ", receive " + message);
                 }
 
-                return executionState.from(executionService.kill(executionState.execution));
+                return executionState.from(executionService.kill(executionState.execution, flowFromRepository));
             });
 
-            Flow flow = this.flowRepository.findByExecution(EXECUTIONS.get(message.getExecutionId()).execution);
-            flow = transform(flow, EXECUTIONS.get(message.getExecutionId()).execution);
+            Flow flow = transform(flowFromRepository, EXECUTIONS.get(message.getExecutionId()).execution);
 
             this.toExecution(new Executor(EXECUTIONS.get(message.getExecutionId()).execution, null).withFlow(flow));
         }

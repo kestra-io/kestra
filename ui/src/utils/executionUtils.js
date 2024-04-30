@@ -24,6 +24,10 @@ export default class ExecutionUtils {
         });
     }
 
+    static findTaskRunsByState(execution, state)  {
+        return execution.taskRunList.filter((taskRun) => taskRun.state.current === state);
+    }
+
     static statePredicate(execution, current) {
         return current.state.histories.length >= execution.state.histories.length
     }

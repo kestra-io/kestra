@@ -198,7 +198,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         .filter(workerThread -> workerThread instanceof AbstractWorkerTriggerThread)
                         .map(workerThread -> (AbstractWorkerTriggerThread) workerThread)
                         .filter(workerThread -> executionKilledTrigger.isEqual(workerThread.getWorkerTrigger().getTriggerContext()))
-                        .forEach(abstractWorkerTriggerThread -> abstractWorkerTriggerThread.kill());
+                        .forEach(AbstractWorkerThread::kill);
                 }
             }
         });
@@ -717,6 +717,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         final boolean terminatedGracefully;
         if (!skipGracefulTermination.get()) {
+            // Signals all threads to stop associated job.
+            workerThreadReferences.forEach(AbstractWorkerThread::shutdown);
             terminatedGracefully = waitForTasksCompletion(timeout);
         } else {
             log.info("Terminating now and skip waiting for tasks completions.");

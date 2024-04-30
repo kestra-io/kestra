@@ -30,6 +30,25 @@ public class WorkerTaskThread extends AbstractWorkerThread {
     }
 
     @Override
+    public void kill() {
+        super.kill();
+        try {
+            task.kill();
+        } catch (Exception e) {
+            logger.warn("Error while killing task: '{}'", e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void shutdown() {
+        try {
+            task.stop();
+        } catch (Exception e) {
+            logger.warn("Error while stopping task: '{}'", e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void run() {
         Thread.currentThread().setContextClassLoader(this.task.getClass().getClassLoader());
 

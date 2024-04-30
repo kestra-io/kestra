@@ -40,6 +40,10 @@ public abstract class AbstractWorkerThread extends Thread {
         this.interrupt();
     }
 
+    public void shutdown() {
+
+    }
+
     protected void exceptionHandler(Thread t, Throwable e) {
         this.exception = e;
 

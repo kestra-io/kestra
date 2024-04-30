@@ -75,7 +75,7 @@ public class NamespaceFilesService {
         );
     }
 
-    private List<URI> recursiveList(String tenantId, String namespace, @Nullable URI path) throws IOException {
+    public List<URI> recursiveList(String tenantId, String namespace, @Nullable URI path) throws IOException {
         URI uri = uri(namespace, path);
 
         List<URI> result = new ArrayList<>();
@@ -110,6 +110,10 @@ public class NamespaceFilesService {
             );
     }
 
+    public InputStream content(String tenantId, String namespace, URI path) throws IOException {
+        return storageInterface.get(tenantId, uri(namespace, path));
+    }
+
     private void copy(String tenantId, String namespace, Path basePath, List<URI> files) throws IOException {
         files
             .forEach(throwConsumer(f -> {
@@ -120,7 +124,7 @@ public class NamespaceFilesService {
                     destination.getParent().toFile().mkdirs();
                 }
 
-                try (InputStream inputStream = storageInterface.get(tenantId, uri(namespace, f))) {
+                try (InputStream inputStream = this.content(tenantId, namespace, f)) {
                     Files.copy(inputStream, destination, REPLACE_EXISTING);
                 }
             }));

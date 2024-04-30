@@ -135,7 +135,7 @@ abstract public class PluginUtilsService {
 
                 if (render.startsWith("kestra://")) {
                     try (
-                        InputStream inputStream = runContext.uriToInputStream(new URI(render));
+                        InputStream inputStream = runContext.storage().getFile(new URI(render));
                         OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath))
                     ) {
                         int byteRead;

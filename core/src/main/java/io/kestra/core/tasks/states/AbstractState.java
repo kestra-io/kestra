@@ -54,7 +54,7 @@ public abstract class AbstractState extends Task {
 
 
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        try (InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue)) {
+        try (InputStream taskStateFile = runContext.storage().getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace, this.taskrunValue)) {
             return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
         }
     }

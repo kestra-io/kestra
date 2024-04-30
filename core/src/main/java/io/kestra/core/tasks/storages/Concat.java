@@ -129,7 +129,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
 
             finalFiles.forEach(throwConsumer(s -> {
                 URI from = new URI(runContext.render(s));
-                try (InputStream inputStream = runContext.uriToInputStream(from)) {
+                try (InputStream inputStream = runContext.storage().getFile(from)) {
                     IOUtils.copyLarge(inputStream, fileOutputStream);
                 }
 
@@ -140,7 +140,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         }
 
         return Concat.Output.builder()
-            .uri(runContext.putTempFile(tempFile))
+            .uri(runContext.storage().putFile(tempFile))
             .build();
     }
 

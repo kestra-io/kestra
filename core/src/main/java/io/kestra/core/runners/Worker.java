@@ -10,14 +10,11 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -42,10 +39,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Publisher;
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -371,12 +368,23 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup))
             .record(() -> {
+                    StopWatch stopWatch = new StopWatch();
+                    stopWatch.start();
+
                     this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
                         .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
                     try {
                         RunContext runContext = this.initRunContextForTrigger(workerTrigger);
+
+                        logService.logTrigger(
+                            workerTrigger.getTriggerContext(),
+                            workerTrigger.getConditionContext().getRunContext().logger(),
+                            Level.INFO,
+                            "Type {} started",
+                            workerTrigger.getTrigger().getType()
+                        );
 
                         if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
                             WorkerTriggerThread workerThread = new WorkerTriggerThread(workerTrigger, pollingTrigger);
@@ -406,6 +414,15 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         this.handleTriggerError(workerTrigger, e);
                     } finally {
                         workerTrigger.getConditionContext().getRunContext().cleanup();
+
+                        logService.logTrigger(
+                            workerTrigger.getTriggerContext(),
+                            workerTrigger.getConditionContext().getRunContext().logger(),
+                            Level.INFO,
+                            "Type {} completed in {}",
+                            workerTrigger.getTrigger().getType(),
+                            DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
+                        );
                     }
 
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
@@ -701,7 +718,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } else {
             log.info("Terminating now and skip waiting for tasks completions.");
             this.executorService.shutdownNow();
-            closeWorkerTaskResultQueue();
+            closeQueue();
             terminatedGracefully = false;
         }
 
@@ -711,6 +728,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     private boolean waitForTasksCompletion(final Duration timeout) {
+        // start shutdown
         new Thread(
             () -> {
                 try {
@@ -723,6 +741,24 @@ public class Worker implements Service, Runnable, AutoCloseable {
             "worker-shutdown"
         ).start();
 
+        // interrupt RealtimeThread since never ending
+        this.workerThreadReferences
+            .stream()
+            .filter(t -> t instanceof WorkerTriggerRealtimeThread)
+            .map(t -> (WorkerTriggerRealtimeThread) t)
+            .forEach(t -> {
+                t.interrupt();
+
+                logService.logTrigger(
+                    t.getWorkerTrigger().getTriggerContext(),
+                    t.getWorkerTrigger().getConditionContext().getRunContext().logger(),
+                    Level.INFO,
+                    "Type {} interrupted",
+                    t.getWorkerTrigger().getTrigger().getType()
+                );
+            });
+
+        // wait for task completion
         final AtomicBoolean cleanShutdown = new AtomicBoolean(false);
         Await.until(
             () -> {
@@ -730,7 +766,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     log.info("All working threads are terminated.");
 
                     // we ensure that last produce message are send
-                    closeWorkerTaskResultQueue();
+                    closeQueue();
                     cleanShutdown.set(true);
                     return true;
                 }
@@ -743,14 +779,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
             },
             Duration.ofSeconds(1)
         );
+
+        // cleanup
         return cleanShutdown.get();
     }
 
-    private void closeWorkerTaskResultQueue() {
+    private void closeQueue() {
         try {
             this.workerTaskResultQueue.close();
+            this.workerTriggerResultQueue.close();
         } catch (IOException e) {
-            log.error("Failed to close the workerTaskResultQueue", e);
+            log.error("Failed to close the queue", e);
         }
     }
 

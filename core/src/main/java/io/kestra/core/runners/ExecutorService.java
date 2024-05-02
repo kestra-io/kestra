@@ -462,7 +462,7 @@ public class ExecutorService {
                     if (parentTask != null) {
                         taskId = parentTask.getId();
                     }
-                } while(parentTask != null && parentTask.getRetry() == null);
+                } while (parentTask != null && parentTask.getRetry() == null);
             }
 
             /*
@@ -494,7 +494,7 @@ public class ExecutorService {
                     nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                         taskRun.nextRetryDate(retry, executor.getExecution()) :
                         taskRun.nextRetryDate(retry);
-                 }
+                }
                 // Case flow has a retry
                 else {
                     retry = executor.getFlow().getRetry();
@@ -511,12 +511,13 @@ public class ExecutorService {
                             ExecutionDelay.DelayType.RESTART_FAILED_FLOW :
                             ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                     executionDelays.add(executionDelayBuilder.build());
-                    executor.withExecution(executor.getExecution()
-                            .withTaskRun(taskRun.withState(State.Type.RETRYING))
-                        .withState(retry.getBehavior().equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                            State.Type.RETRIED :
-                            State.Type.RETRYING
-                            ),
+                    executor.withExecution(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
+                            executionService.markTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true) :
+                            executionService.markTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false)
+                                .withState(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
+                                    State.Type.RETRIED :
+                                    State.Type.RETRYING
+                                ),
                         "handleRetryTask");
                     // Prevent workerTaskResult of flowable to be sent
                     // because one of its children is retrying

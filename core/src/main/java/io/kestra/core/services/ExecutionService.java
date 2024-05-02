@@ -78,10 +78,10 @@ public class ExecutionService {
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     /**
-    * Retry set the given taskRun in created state
-    * and return the execution in running state
-    **/
-     public Execution retryTask(Execution execution, String taskRunId) {
+     * Retry set the given taskRun in created state
+     * and return the execution in running state
+     **/
+    public Execution retryTask(Execution execution, String taskRunId) {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
@@ -172,7 +172,7 @@ public class ExecutionService {
     public Execution replay(final Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
         final String newExecutionId = IdUtils.create();
         List<TaskRun> newTaskRuns = new ArrayList<>();
-        if(taskRunId != null){
+        if (taskRunId != null) {
             final Flow flow = flowRepositoryInterface.findByExecutionWithoutAcl(execution);
 
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
@@ -186,16 +186,16 @@ public class ExecutionService {
 
             newTaskRuns.addAll(
                 execution.getTaskRunList()
-                .stream()
-                .map(throwFunction(originalTaskRun -> this.mapTaskRun(
-                    flow,
-                    originalTaskRun,
-                    mappingTaskRunId,
-                    newExecutionId,
-                    State.Type.RESTARTED,
-                    taskRunToRestart.contains(originalTaskRun.getId()))
-                ))
-                .collect(Collectors.toList())
+                    .stream()
+                    .map(throwFunction(originalTaskRun -> this.mapTaskRun(
+                        flow,
+                        originalTaskRun,
+                        mappingTaskRunId,
+                        newExecutionId,
+                        State.Type.RESTARTED,
+                        taskRunToRestart.contains(originalTaskRun.getId()))
+                    ))
+                    .collect(Collectors.toList())
             );
 
             // remove all child for replay task id
@@ -230,7 +230,7 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
-         return this.markAs(execution, flow, taskRunId, newState, null, null);
+        return this.markAs(execution, flow, taskRunId, newState, null, null);
     }
 
     private Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs, @Nullable Publisher<StreamingFileUpload> onResumeFiles) throws Exception {
@@ -284,6 +284,17 @@ public class ExecutionService {
             .withState(State.Type.RESTARTED);
     }
 
+    public Execution markTaskRunAs(final Execution execution, String taskRunId, State.Type newState, Boolean markParents) throws Exception {
+        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
+        Execution updatedExecution = execution.withTaskRun(taskRun.withState(newState));
+
+        if (markParents && taskRun.getParentTaskRunId() != null) {
+            return this.markTaskRunAs(updatedExecution, taskRun.getParentTaskRunId(), newState, true);
+        }
+
+        return updatedExecution;
+    }
+
     public PurgeResult purge(
         Boolean purgeExecution,
         Boolean purgeLog,
@@ -319,7 +330,7 @@ public class ExecutionService {
                     builder.logsCount(this.logRepository.purge(execution));
                 }
 
-                if(purgeMetric) {
+                if (purgeMetric) {
                     this.metricRepository.purge(execution);
                 }
 
@@ -387,9 +398,9 @@ public class ExecutionService {
      * Lookup for all executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
      *
-     * @param tenantId      of the parent execution.
-     * @param executionId   of the parent execution.
-     * @return  a {@link Flux} of zero or more {@link ExecutionKilled}.
+     * @param tenantId    of the parent execution.
+     * @param executionId of the parent execution.
+     * @return a {@link Flux} of zero or more {@link ExecutionKilled}.
      */
     public Flux<ExecutionKilledExecution> killSubflowExecutions(final String tenantId, final String executionId) {
         // Lookup for all executions triggered by the current execution being killed.
@@ -526,8 +537,7 @@ public class ExecutionService {
         if (!task.isFlowable() || task instanceof WorkingDirectory) {
             // The current task run is the reference task run, its default state will be newState
             alterState = originalTaskRun.withState(newStateType).getState();
-        }
-        else {
+        } else {
             // The current task run is an ascendant of the reference task run
             alterState = originalTaskRun.withState(State.Type.RUNNING).getState();
         }
@@ -549,7 +559,8 @@ public class ExecutionService {
 
     /**
      * This method is used to retrieve previous existing execution
-     * @param retry The retry define in the flow of the failed execution
+     *
+     * @param retry     The retry define in the flow of the failed execution
      * @param execution The failed execution
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */

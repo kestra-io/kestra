@@ -4,7 +4,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 public class DockerService {
     public static DockerClient client(DockerClientConfig dockerClientConfig) {
-        ZerodepDockerHttpClient dockerHttpClient = new ZerodepDockerHttpClient.Builder()
+        DockerHttpClient dockerHttpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(dockerClientConfig.getDockerHost())
             .build();
 

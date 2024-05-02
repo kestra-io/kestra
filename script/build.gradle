@@ -7,9 +7,10 @@ dependencies {
     implementation 'io.micronaut:micronaut-context'
 
     implementation ('com.github.docker-java:docker-java:3.3.6') {
+        exclude group: 'com.github.docker-java', module: 'docker-java-transport-netty'
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
     }
-    implementation 'com.github.docker-java:docker-java-transport-zerodep:3.3.6'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.6'
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')

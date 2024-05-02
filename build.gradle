@@ -1,3 +1,15 @@
+import net.e175.klaus.zip.ZipPrefixer
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "net.e175.klaus:zip-prefixer:0.3.1"
+    }
+}
+
 plugins {
     // micronaut
     id "java"
@@ -167,7 +179,7 @@ subprojects {
         // lombok
         testAnnotationProcessor "org.projectlombok:lombok:" + lombokVersion
         testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
-        
+
         // micronaut
         testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"
@@ -289,15 +301,16 @@ task writeExecutableJar() {
     }
 
     doLast {
-        executable.write("")
-        executable.append("\n: <<END_OF_KESTRA_SELFRUN\r\n")
-        executable.append(file("gradle/jar/selfrun.bat").readBytes())
-        executable.append("\r\nEND_OF_KESTRA_SELFRUN\r\n\n")
-        executable.append(file("gradle/jar/selfrun.sh").readBytes())
         executable.append(file("${buildDir}/libs/${project.name}-${project.version}.jar").readBytes())
+        ByteArrayOutputStream executableBytes = new ByteArrayOutputStream()
+        executableBytes.write("\n: <<END_OF_KESTRA_SELFRUN\r\n".getBytes())
+        executableBytes.write(file("gradle/jar/selfrun.bat").readBytes())
+        executableBytes.write("\r\n".getBytes())
+        executableBytes.write("END_OF_KESTRA_SELFRUN\r\n\n".getBytes())
+        executableBytes.write(file("gradle/jar/selfrun.sh").readBytes())
+        ZipPrefixer.applyPrefixBytesToZip(executable.toPath(), executableBytes.toByteArray())
         executable.setExecutable(true)
     }
-
 }
 
 task executableJar(type: Zip) {

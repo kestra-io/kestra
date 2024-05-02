@@ -22,7 +22,7 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: jacksonVersion
 
     // utils
-    implementation 'com.github.oshi:oshi-core:6.5.0'
+    implementation 'com.github.oshi:oshi-core:6.6.0'
     implementation 'io.pebbletemplates:pebble:3.2.2'
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
     implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.27.0'

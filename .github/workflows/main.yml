@@ -101,7 +101,7 @@ jobs:
           java-version: 21
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v2
+        uses: gradle/wrapper-validation-action@v3
 
       # Gradle check
       - name: Build with Gradle

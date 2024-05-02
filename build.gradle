@@ -32,9 +32,9 @@ plugins {
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
     id 'net.researchgate.release' version '3.0.2'
-    id "com.gorylenko.gradle-git-properties" version "2.4.1"
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id 'signing'
-    id 'ru.vyarus.pom' version '2.2.2' apply false
+    id 'ru.vyarus.pom' version '3.0.0' apply false
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 }
 
@@ -162,7 +162,7 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20240207'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '33.1.0-jre'
+        api group: 'com.google.guava', name: 'guava', version: '33.2.0-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.16.1'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"
@@ -449,13 +449,13 @@ subprojects {
         site 'https://kestra.io'
     }
 
-    pom {
+    maven.pom {
         description 'The modern, scalable orchestrator & scheduler open source platform'
 
         developers {
             developer {
-                id "tchiotludo"
-                name "Ludovic Dehon"
+                id = "tchiotludo"
+                name = "Ludovic Dehon"
             }
         }
     }

@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.plugins.PluginRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
@@ -41,10 +42,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
     @Inject
     private StartupHookInterface startupHook;
-
-    @Inject
+    
     private PluginRegistry pluginRegistry;
-
+    
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
     private boolean[] verbose = new boolean[0];
 
@@ -77,12 +77,27 @@ abstract public class AbstractCommand implements Callable<Integer> {
             this.startupHook.start(this);
         }
 
-        if (this.pluginsPath != null) {
-            this.pluginRegistry.registerIfAbsent(pluginsPath);
+        if (this.pluginsPath != null && loadExternalPlugins()) {
+            pluginRegistry = pluginRegistry();
+            pluginRegistry.registerIfAbsent(pluginsPath);
         }
 
         startWebserver();
         return 0;
+    }
+    
+    /**
+     * Specifies whether external plugins must be loaded.
+     * This method can be overridden by concrete commands.
+     *
+     * @return {@code true} if external plugins must be loaded.
+     */
+    protected boolean loadExternalPlugins() {
+        return true;
+    }
+    
+    protected PluginRegistry pluginRegistry() {
+        return KestraContext.getContext().getPluginRegistry(); // Lazy init
     }
 
     private static String message(String message, Object... format) {

@@ -34,15 +34,12 @@ public class PluginDocCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--icons"}, description = "Also write icon for each task")
     private boolean icons = false;
 
-    @Inject
-    private PluginRegistry pluginRegistry;
-
     @Override
     public Integer call() throws Exception {
         super.call();
         DocumentationGenerator documentationGenerator = applicationContext.getBean(DocumentationGenerator.class);
 
-        List<RegisteredPlugin> plugins = core ? pluginRegistry.plugins() : pluginRegistry.externalPlugins();
+        List<RegisteredPlugin> plugins = core ?  pluginRegistry().plugins() : pluginRegistry().externalPlugins();
         for (RegisteredPlugin registeredPlugin : plugins) {
             documentationGenerator
                 .generate(registeredPlugin)

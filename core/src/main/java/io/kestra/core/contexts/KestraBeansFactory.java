@@ -3,6 +3,7 @@ package io.kestra.core.contexts;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageInterfaceFactory;
 import io.micronaut.context.annotation.Bean;
@@ -46,7 +47,7 @@ public class KestraBeansFactory {
     @Bean(preDestroy = "close")
     public StorageInterface storageInterface(final PluginRegistry pluginRegistry) throws IOException {
         String pluginId = storageType.orElseThrow(() -> new KestraRuntimeException(String.format(
-            "No storage configured through the application property '%s'. Support types are: %s"
+            "No storage configured through the application property '%s'. Supported types are: %s"
             , KESTRA_STORAGE_TYPE_CONFIG,
             StorageInterfaceFactory.getLoggableStorageIds(pluginRegistry)
         )));

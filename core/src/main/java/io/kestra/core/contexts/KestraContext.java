@@ -1,15 +1,12 @@
 package io.kestra.core.contexts;
 
 import io.kestra.core.models.ServerType;
-import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
-import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +59,14 @@ public abstract class KestraContext {
      * @return the string version.
      */
     public abstract String getVersion();
-
+    
+    /**
+     * Returns the Kestra Plugin Registry.
+     *
+     * @return the {@link PluginRegistry}.
+     */
+    public abstract PluginRegistry getPluginRegistry();
+    
     /**
      * Shutdowns the Kestra application.
      */
@@ -95,7 +99,6 @@ public abstract class KestraContext {
             this.version = Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null);
             this.environment = environment;
             KestraContext.setContext(this);
-            PluginDeserializer.setPluginRegistry(applicationContext.getBean(PluginRegistry.class));
         }
 
         /** {@inheritDoc} **/
@@ -120,6 +123,13 @@ public abstract class KestraContext {
         @Override
         public String getVersion() {
             return version;
+        }
+        
+        /** {@inheritDoc} **/
+        @Override
+        public PluginRegistry getPluginRegistry() {
+            // Lazy init of the PluginRegistry.
+            return this.applicationContext.getBean(PluginRegistry.class);
         }
     }
 }

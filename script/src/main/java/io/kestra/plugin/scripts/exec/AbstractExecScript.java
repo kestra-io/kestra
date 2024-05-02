@@ -93,9 +93,11 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
 
     @Schema(
         title = "Whether to setup the output directory mechanism.",
-        description = "Required to use the {{ outputDir }} expression. Note that it could increase the starting time.",
-        defaultValue = "false"
+        description = "Required to use the {{ outputDir }} expression. Note that it could increase the starting time. Deprecated, use the `outputFiles` property instead.",
+        defaultValue = "false",
+        deprecated = true
     )
+    @Deprecated
     private Boolean outputDirectory;
 
     abstract public DockerOptions getDocker();

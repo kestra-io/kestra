@@ -269,7 +269,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     workerTask = workerTask.fail();
                     this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
                     this.logTerminated(workerTask);
-
                     return;
                 }
 
@@ -293,8 +292,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
                     runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
                 }
-
-                workingDirectory.postExecuteTasks(runContext, workerTask.getTaskRun());
+                
+                // postExecuteTasks
+                try {
+                    workingDirectory.postExecuteTasks(runContext, workerTask.getTaskRun());
+                } catch (Exception e) {
+                    runContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+                    workerTask = workerTask.fail();
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                    this.logTerminated(workerTask);
+                    return;
+                }
             } finally {
                 runContext.cleanup();
             }

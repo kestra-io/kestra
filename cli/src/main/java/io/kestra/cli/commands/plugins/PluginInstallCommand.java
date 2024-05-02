@@ -97,4 +97,9 @@ public class PluginInstallCommand extends AbstractCommand {
 
         return 0;
     }
+    
+    @Override
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
 }

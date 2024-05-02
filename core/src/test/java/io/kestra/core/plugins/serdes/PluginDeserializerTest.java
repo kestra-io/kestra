@@ -21,17 +21,12 @@ class PluginDeserializerTest {
 
     @Mock
     private PluginRegistry registry;
-
-    @BeforeEach
-    void beforeEach() {
-        PluginDeserializer.setPluginRegistry(registry);
-    }
-
+    
     @Test
     void shouldSucceededDeserializePluginGivenValidType() throws JsonProcessingException {
         // Given
         ObjectMapper om = new ObjectMapper()
-            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>()));
+            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)));
         String input = """
             { "plugin": { "type": "io.kestra.core.plugins.serdes.PluginDeserializerTest.TestPlugin"} }
             """;
@@ -52,7 +47,7 @@ class PluginDeserializerTest {
     void shouldFailedDeserializePluginGivenInvalidType() {
         // Given
         ObjectMapper om = new ObjectMapper()
-            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>()));
+            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)));
         String input = """
             { "plugin": { "type": "io.kestra.core.plugins.serdes.Unknown"} }
             """;

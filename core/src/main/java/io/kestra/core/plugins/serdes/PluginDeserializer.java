@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -22,33 +22,28 @@ import java.util.Optional;
  * a plugin type.
  */
 public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
-
+    
     private static final Logger log = LoggerFactory.getLogger(PluginDeserializer.class);
-
+    
     private static final String TYPE = "type";
-
-    private volatile static PluginRegistry pluginRegistry;
-
+    
+    private volatile PluginRegistry pluginRegistry;
+    
     /**
      * Creates a new {@link PluginDeserializer} instance.
      */
     public PluginDeserializer() {
     }
-
+    
     /**
-     * Sets the static {@link PluginRegistry} to be used by the deserializer.
+     * Creates a new {@link PluginDeserializer} instance.
      *
-     * @param pluginRegistry the {@link PluginRegistry}.
+     * @param pluginRegistry The {@link PluginRegistry}.
      */
-    public static void setPluginRegistry(final PluginRegistry pluginRegistry) {
-        Objects.requireNonNull(pluginRegistry, "PluginRegistry cannot be null");
-        PluginDeserializer.pluginRegistry = pluginRegistry;
+    PluginDeserializer(final PluginRegistry pluginRegistry) {
+        this.pluginRegistry = pluginRegistry;
     }
-
-    public static boolean isInitialized() {
-        return PluginDeserializer.pluginRegistry != null;
-    }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -62,21 +57,27 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             return null;
         }
     }
-
-    private static void checkState() {
+    
+    private void checkState() {
         if (pluginRegistry == null) {
-            // Usually a plugin registry is always initialized. This warn should only be logged in some tests.
-            log.warn("No plugin registry was initialized. Use default implementation.");
-            pluginRegistry = DefaultPluginRegistry.getOrCreate();
+            try {
+                // By default, if no plugin-registry is configured retrieve
+                // the one configured from the static Kestra's context.
+                pluginRegistry = KestraContext.getContext().getPluginRegistry();
+            } catch (IllegalStateException ignore) {
+                // This error can only happen if the KestraContext is not initialized (i.e. in unit tests).
+                log.error("No plugin registry was initialized. Use default implementation.");
+                pluginRegistry = DefaultPluginRegistry.getOrCreate();
+            }
         }
     }
-
+    
     @SuppressWarnings("unchecked")
-    private static <T extends Plugin> T fromObjectNode(JsonParser jp,
-                                                       JsonNode node,
-                                                       DeserializationContext context) throws IOException {
+    private T fromObjectNode(JsonParser jp,
+                             JsonNode node,
+                             DeserializationContext context) throws IOException {
         Class<? extends Plugin> pluginType = null;
-
+        
         final String identifier = extractPluginRawIdentifier(node);
         if (identifier != null) {
             log.trace("Looking for Plugin for: {}",
@@ -84,7 +85,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             );
             pluginType = pluginRegistry.findClassByIdentifier(identifier);
         }
-
+        
         if (pluginType == null) {
             String type = Optional.ofNullable(identifier).orElse("<null>");
             throwInvalidTypeException(context, type);
@@ -96,12 +97,12 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             // the following method will end up to a StackOverflowException as the `PluginDeserializer` will be re-invoked.
             return (T) jp.getCodec().treeToValue(node, pluginType);
         }
-
+        
         // should not happen.
         log.warn("Failed get plugin type from JsonNode");
         return null;
     }
-
+    
     private static void throwInvalidTypeException(final DeserializationContext context,
                                                   final String type) throws JsonMappingException {
         throw context.invalidTypeIdException(
@@ -110,7 +111,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             "No plugin registered for the defined type: '" + type + "'"
         );
     }
-
+    
     static String extractPluginRawIdentifier(final JsonNode node) {
         JsonNode type = node.get(TYPE);
         if (type == null || type.textValue().isEmpty()) {

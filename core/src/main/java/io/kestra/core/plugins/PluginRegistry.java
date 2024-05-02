@@ -58,14 +58,14 @@ public interface PluginRegistry {
      * @param predicate The {@link Predicate} to filter the returned plugins.
      * @return the list of registered plugins.
      */
-    public List<RegisteredPlugin> plugins(final Predicate<RegisteredPlugin> predicate);
+    List<RegisteredPlugin> plugins(final Predicate<RegisteredPlugin> predicate);
 
     /**
      * Gets a list containing only external registered plugins.
      *
      * @return the list of external registered plugins.
      */
-    public List<RegisteredPlugin> externalPlugins();
+    List<RegisteredPlugin> externalPlugins();
 
     /**
      * Clear the registry.

@@ -96,6 +96,9 @@ allprojects {
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
             force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
             force("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:" + jacksonVersion)
+
+            // issue with the Docker lib having a too old version for the k8s extension
+            force("org.apache.commons:commons-compress:1.26.1")
         }
     }
 

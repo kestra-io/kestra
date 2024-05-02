@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.ConnectionClosedException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -24,6 +23,7 @@ import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -47,11 +47,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     title = "Task runner that executes a task inside a container in a Docker compatible engine.",
     description = """
         This task runner is container-based so the `containerImage` property must be set.
-        
+
         To access the task's working directory, use the `{{workingDir}}` Pebble expression or the `WORKING_DIR` environment variable. Input files and namespace files will be available in this directory.
 
         To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
-         
+
         Note that when the Kestra Worker running this task is terminated, the container will still run until completion, except if Kestra itself is run inside a container and Docker-In-Docker (dind) is used as the dind engine will also be terminated."""
 )
 @Plugin(
@@ -61,7 +61,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             code = """
                 id: new-shell
                 namespace: myteam
-                
+
                 tasks:
                   - id: shell
                     type: io.kestra.plugin.scripts.shell.Commands
@@ -76,11 +76,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             code = """
                 id: new-shell-with-file
                 namespace: myteam
-                
+
                 inputs:
                   - id: file
                     type: FILE
-                
+
                 tasks:
                   - id: shell
                     type: io.kestra.plugin.scripts.shell.Commands

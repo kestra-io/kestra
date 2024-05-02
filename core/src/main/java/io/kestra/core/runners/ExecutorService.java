@@ -512,12 +512,8 @@ public class ExecutorService {
                             ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                     executionDelays.add(executionDelayBuilder.build());
                     executor.withExecution(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                            executionService.markTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true) :
-                            executionService.markTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false)
-                                .withState(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                                    State.Type.RETRIED :
-                                    State.Type.RETRYING
-                                ),
+                            executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true):
+                            executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false),
                         "handleRetryTask");
                     // Prevent workerTaskResult of flowable to be sent
                     // because one of its children is retrying

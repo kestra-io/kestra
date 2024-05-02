@@ -284,15 +284,15 @@ public class ExecutionService {
             .withState(State.Type.RESTARTED);
     }
 
-    public Execution markTaskRunAs(final Execution execution, String taskRunId, State.Type newState, Boolean markParents) throws Exception {
+    public Execution markWithTaskRunAs(final Execution execution, String taskRunId, State.Type newState, Boolean markParents) throws Exception {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
         Execution updatedExecution = execution.withTaskRun(taskRun.withState(newState));
 
         if (markParents && taskRun.getParentTaskRunId() != null) {
-            return this.markTaskRunAs(updatedExecution, taskRun.getParentTaskRunId(), newState, true);
+            return this.markWithTaskRunAs(updatedExecution, taskRun.getParentTaskRunId(), newState, true);
         }
 
-        return updatedExecution;
+        return updatedExecution.withState(newState);
     }
 
     public PurgeResult purge(

@@ -129,13 +129,13 @@
                 }
             }
         },
-        mounted: function () {
+        mounted: async function () {
             let _this = this;
 
             this.monaco = monaco;
-            this.$nextTick(function () {
-                _this.initMonaco(monaco);
-            });
+            await document.fonts.ready.then(() => {
+                this.initMonaco(monaco)
+            })
 
             if (!this.monacoYamlConfigured) {
                 this.$store.commit("core/setMonacoYamlConfigured", true)

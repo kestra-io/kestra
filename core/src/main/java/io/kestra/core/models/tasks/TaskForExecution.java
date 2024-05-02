@@ -16,6 +16,8 @@ public class TaskForExecution implements TaskInterface {
 
     protected String type;
 
+    protected List<TaskForExecution> tasks;
+
     protected List<Input<?>> inputs;
 
     public static TaskForExecution of(Task task) {
@@ -25,10 +27,15 @@ public class TaskForExecution implements TaskInterface {
             inputs = pauseTask.getOnResume();
         }
 
-        return TaskForExecution.builder()
+        TaskForExecutionBuilder<?, ?> taskForExecutionBuilder = TaskForExecution.builder()
             .id(task.getId())
             .type(task.getType())
-            .inputs(inputs)
-            .build();
+            .inputs(inputs);
+
+        if (task instanceof FlowableTask<?> flowable) {
+            taskForExecutionBuilder.tasks(flowable.allChildTasks().stream().map(TaskForExecution::of).toList());
+        }
+
+        return taskForExecutionBuilder.build();
     }
 }

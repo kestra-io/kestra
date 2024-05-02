@@ -1,0 +1,13 @@
+id: working-directory-inputs
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    inputFiles:
+      input.txt: Hello World
+    tasks:
+      - id: inputFiles
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - input.txt

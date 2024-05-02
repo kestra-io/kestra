@@ -3,6 +3,7 @@ package io.kestra.core.tasks.flows;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -15,8 +16,11 @@ import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.io.FileMatchers.anExistingFile;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +70,16 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     void namespaceFiles() throws TimeoutException, InternalException, IOException {
         suite.namespaceFiles(runnerUtils);
     }
+    
+    @Test
+    void inputFiles() throws Exception {
+        suite.inputFiles(runnerUtils);
+    }
+    
+    @Test
+    void outputFiles() throws Exception {
+        suite.outputFiles(runnerUtils);
+    }
 
     @Singleton
     public static class Suite {
@@ -98,7 +113,41 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
             assertThat((String) execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), startsWith("kestra://"));
         }
-
+        
+        public void outputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+            
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-outputs");
+            
+            assertThat(execution.getTaskRunList(), hasSize(2));
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            
+            StorageContext storageContext = StorageContext.forTask(execution.getTaskRunList().get(1));
+            InternalStorage storage = new InternalStorage(
+                null,
+                storageContext
+                , storageInterface
+            );
+            URI fileURI = URI.create("kestra:" + storageContext.getContextStorageURI() + "/output.txt");
+            assertThat(new String(storage.getFile(fileURI).readAllBytes()), is("Hello World"));
+        }
+        
+        public void inputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+            
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-inputs");
+            
+            assertThat(execution.getTaskRunList(), hasSize(2));
+            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            
+            StorageContext storageContext = StorageContext.forTask(execution.getTaskRunList().get(1));
+            InternalStorage storage = new InternalStorage(
+                null,
+                storageContext
+                , storageInterface
+            );
+            URI fileURI = URI.create("kestra:" + storageContext.getContextStorageURI() + "/input.txt");
+            assertThat(new String(storage.getFile(fileURI).readAllBytes()), is("Hello World"));
+        }
+        
         @SuppressWarnings("unchecked")
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist

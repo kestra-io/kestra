@@ -2,8 +2,6 @@ package io.kestra.core.models.flows;
 
 import io.kestra.core.validations.TaskDefaultValidation;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.convert.format.MapFormat;
-import io.micronaut.core.naming.conventions.StringConvention;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +19,6 @@ public class TaskDefault {
     @Builder.Default
     private final boolean forced = false;
 
-    @MapFormat(transformation = MapFormat.MapTransformation.NESTED, keyFormat = StringConvention.CAMEL_CASE)
     private final Map<String, Object> values;
 }
 

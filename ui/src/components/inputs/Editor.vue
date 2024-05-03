@@ -64,6 +64,7 @@
     import {mapGetters} from "vuex";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
+    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
 
     const MonacoEditor = defineAsyncComponent(() =>
         import("./MonacoEditor.vue")
@@ -256,13 +257,15 @@
                     }
                 });
 
+                // TabFocus is global to all editor so revert the behavior on non inputs
+                this.editor.onDidFocusEditorText(() => {
+                    TabFocus.setTabFocusMode(this.input);
+                })
+
                 if (this.input) {
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {
-                    })
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {
-                    })
-                    this.editor.addCommand(KeyCode.F1, () => {
-                    })
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {});
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {});
+                    this.editor.addCommand(KeyCode.F1, () => {});
                 }
 
                 if (this.original === undefined && this.navbar && this.fullHeight) {

@@ -78,8 +78,8 @@
                 @update:model-value="onChange"
                 type="time"
             />
-            <div class="el-input el-input-file">
-                <div class="el-input__wrapper" v-if="input.type === 'FILE'">
+            <div class="el-input el-input-file" v-if="input.type === 'FILE'">
+                <div class="el-input__wrapper">
                     <input
                         :id="input.id+'-file'"
                         class="el-input__inner"

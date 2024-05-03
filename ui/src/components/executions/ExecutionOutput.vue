@@ -2,6 +2,9 @@
     <div v-if="execution && outputs">
         <collapse>
             <el-form-item>
+                <search-field />
+            </el-form-item>
+            <el-form-item>
                 <el-select
                     filterable
                     clearable
@@ -96,6 +99,7 @@
     import {apiUrl} from "override/utils/route";
     import SubFlowLink from "../flows/SubFlowLink.vue";
     import Drawer from "../Drawer.vue";
+    import SearchField from "../layout/SearchField.vue";
 
     export default {
         components: {
@@ -104,7 +108,8 @@
             VarValue,
             Editor,
             Collapse,
-            Drawer
+            Drawer,
+            SearchField
         },
         data() {
             return {
@@ -114,8 +119,8 @@
                 debugError: "",
                 debugStackTrace: "",
                 isModalOpen: false,
-                size: this.$route.query.size ? this.$route.query.size : 25,
-                page: this.$route.query.page ? this.$route.query.page : 1,
+                size: this.$route.query.size ? parseInt(this.$route.query.size) : 25,
+                page: this.$route.query.page ? parseInt(this.$route.query.page) : 1,
                 isPreviewOpen: false,
                 selectedPreview: null
             };
@@ -190,23 +195,26 @@
 
                 return Object.values(options);
             },
+            filteredOutputs() {
+                return (this.execution.taskRunList || [])
+                    .filter((taskRun) => this.filter === undefined || taskRun.id === this.filter)
+                    .filter((taskRun) => this.$route.query.q === undefined || (JSON.stringify(taskRun.outputs) || "").indexOf(this.$route.query.q) !== -1)
+            },
             outputs() {
                 const outputs = [];
-                for (const taskRun of this.execution.taskRunList || []) {
-                    const token = taskRun.id;
-                    if (this.filter === undefined || token === this.filter) {
-                        Utils.executionVars(taskRun.outputs).forEach(output => {
-                            const item = {
-                                key: output.key,
-                                output: output.value,
-                                task: taskRun.taskId,
-                                value: taskRun.value
-                            };
+                for (const taskRun of this.filteredOutputs) {
+                    Utils.executionVars(taskRun.outputs).forEach(output => {
+                        const item = {
+                            key: output.key,
+                            output: output.value,
+                            task: taskRun.taskId,
+                            value: taskRun.value
+                        };
 
-                            outputs.push(item);
-                        })
-                    }
+                        outputs.push(item);
+                    })
                 }
+
                 return outputs;
             },
             outputsPaginated() {

@@ -140,6 +140,7 @@
                 if (input.type === "BOOLEAN" && input.defaults === undefined){
                     this.inputs[input.id] = "undefined";
                 }
+                this.onChange();
             }
         },
         mounted() {

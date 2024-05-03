@@ -186,6 +186,13 @@
                     this.$store.commit("execution/setFlow", this.localFlow);
                 },
                 immediate: true
+            },
+            isOpen: {
+                handler() {
+                    if (this.isOpen && this.flowId && this.namespace) {
+                        this.loadDefinition();
+                    }
+                }
             }
         }
     };

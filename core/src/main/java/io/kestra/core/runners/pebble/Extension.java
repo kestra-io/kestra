@@ -114,6 +114,7 @@ public class Extension extends AbstractExtension {
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
         functions.put("yaml", new YamlFunction());
+        functions.put("dump", new DumpFunction());
 
         return functions;
     }

@@ -176,7 +176,7 @@
 
                 let inputs = toRaw(this.execution.inputs);
                 Object.keys(inputs).forEach(key => {
-                    this.flow.inputs.forEach(input => {
+                    (this.flow.inputs || []).forEach(input => {
                         if (key === input.name && input.type === "SECRET") {
                             inputs[key] = "******";
                         }

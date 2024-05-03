@@ -237,6 +237,11 @@
                         }
                     });
                 }
+                else {
+                    if (this.lang === "json") {
+                        editor.getAction("editor.action.formatDocument").run()
+                    }
+                }
 
                 this.editor.addAction({
                     id: "kestra-execute",

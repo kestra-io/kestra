@@ -40,7 +40,6 @@
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
     "posthog-js": "^1.130.2",
-    "prismjs": "^1.29.0",
     "throttle-debounce": "^5.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vue": "^3.4.26",
@@ -60,6 +59,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.2",
+    "@shikijs/markdown-it": "^1.4.0",
     "@typescript-eslint/parser": "^7.8.0",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/eslint-config-prettier": "^9.0.0",

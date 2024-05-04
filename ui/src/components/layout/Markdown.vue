@@ -5,9 +5,6 @@
 </template>
 
 <script>
-    import Prism from "prismjs";
-    import "prismjs/themes/prism-okaidia.css";
-    import "prismjs/components/prism-yaml.min";
     import Markdown from "../../utils/markdown";
 
     export default {
@@ -29,24 +26,32 @@
                 default: "font-size-sm"
             }
         },
-        emits: ["rendered"],
-        computed: {
-            markdownRenderer() {
-                const outHtml = Markdown.render(this.source, {
+        data() {
+            return {
+                markdownRenderer: undefined
+            }
+        },
+        async created() {
+            this.markdownRenderer = await this.renderMarkdown();
+        },
+        watch: {
+            async source() {
+                this.markdownRenderer = await this.renderMarkdown();
+            }
+        },
+        methods: {
+            async renderMarkdown() {
+                return  await Markdown.render(this.source, {
                     permalink: this.permalink,
                 });
-
-                this.$emit("rendered", outHtml);
-
-                // eslint-disable-next-line vue/no-async-in-computed-properties
-                this.$nextTick(() => {
-                    Prism.highlightAll();
-                });
-
-                return outHtml;
             },
+        },
+        computed: {
             fontSizeCss() {
                 return `var(--${this.fontSizeVar})`;
+            },
+            permalinkCss() {
+                return this.permalink ? "-20px" : "0";
             }
         },
     };
@@ -54,6 +59,7 @@
 
 <style lang="scss">
     .markdown {
+        font-size: v-bind(fontSizeCss);
 
         table {
             border-collapse: collapse;
@@ -77,12 +83,9 @@
             text-align: left;
         }
 
-
-        font-size: v-bind(fontSizeCss);
-
         a.header-anchor {
             color: var(--bs-gray-600);
-            font-size: var(--font-size-md);
+            font-size: var(--font-size-base);
             font-weight: normal;
         }
 
@@ -109,6 +112,70 @@
 
             p:last-child {
                 margin-bottom: 0;
+            }
+        }
+
+        pre {
+            border-radius: var(--bs-border-radius-lg);
+            border: 1px solid var(--bs-border-color);
+        }
+
+        blockquote {
+            margin-top: 0;
+        }
+
+        mark {
+            background: var(--bs-success);
+            color: var(--bs-white);
+            font-size: var(--font-size-sm);
+            padding: 2px 8px 2px 8px;
+            border-radius: var(--bs-border-radius-sm);
+
+            * {
+                color: var(--bs-white) !important;
+            }
+        }
+
+        h2 {
+            margin-top: calc(var(--spacer) * 2);
+        }
+
+        h3 {
+            margin-top: calc(var(--spacer) * 1.5);
+        }
+
+        h4 {
+            margin-top: calc(var(--spacer) * 1.25);
+        }
+
+        h2, h3, h4, h5 {
+            margin-left: v-bind(permalinkCss);
+
+            .header-anchor {
+                opacity: 0;
+                transition: all ease 0.2s;
+            }
+
+            &:hover {
+                .header-anchor {
+                    opacity: 1;
+                }
+            }
+        }
+
+        h3, h4, h5 {
+            code {
+                background: var(--bs-white);
+                font-size: 0.65em;
+                padding: 2px 8px;
+                font-weight: 400;
+                border-radius: var(--bs-border-radius-sm);
+                border: 1px solid var(--bs-border-color);
+                color: var(--bs-body-color);
+
+                html.dark & {
+                    background: var(--bs-gray-100);
+                }
             }
         }
     }

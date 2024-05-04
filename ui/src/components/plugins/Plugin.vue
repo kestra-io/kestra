@@ -95,68 +95,8 @@
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     section {
         overflow-x: hidden;
     }
-    .markdown {
-        h1 {
-            font-size: calc(var(--font-size-base) * 2);
-        }
-
-        blockquote {
-            margin-top: 0;
-        }
-
-        mark {
-            background: var(--bs-success);
-            color: var(--bs-white);
-            font-size: var(--font-size-sm);
-            padding: 2px 8px 2px 8px;
-            border-radius: var(--bs-border-radius-sm);
-
-            * {
-                color: var(--bs-white) !important;
-            }
-        }
-
-        h2 {
-            margin-top: calc(var(--spacer) * 2);
-            border-bottom: 1px solid var(--bs-gray-500);
-            font-weight: bold;
-            color: var(--bs-gray-700)
-        }
-
-        h3 {
-            code {
-                display: inline-block;
-                font-size: calc(var(--font-size-base) * 1.10);
-                font-weight: 400;
-            }
-        }
-
-        h2, h3 {
-            margin-left: -15px;
-
-            .header-anchor {
-                opacity: 0;
-                transition: all ease 0.2s;
-            }
-
-            &:hover {
-                .header-anchor {
-                    opacity: 1;
-                }
-            }
-        }
-
-        h4 {
-            code {
-                display: inline-block;
-                font-size: calc(var(--font-size-base) * 1.00);
-                font-weight: 400;
-            }
-        }
-    }
-
 </style>

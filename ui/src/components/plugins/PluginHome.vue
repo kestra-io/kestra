@@ -16,7 +16,7 @@
             clearable
         />
     </el-row>
-    <div class="plugins-container pb-2">
+    <section class="container plugins-container pb-2">
         <el-tooltip v-for="(plugin, index) in pluginsList" :key="index">
             <template #content>
                 <div class="tasks-tooltips">
@@ -72,7 +72,7 @@
                 <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
             </div>
         </el-tooltip>
-    </div>
+    </section>
 </template>
 
 <script>
@@ -183,7 +183,9 @@
         display: flex;
         gap: 16px;
         flex-wrap: wrap;
+        margin: 0 auto;
         justify-content: center;
+        align-items: flex-start;
     }
 
     .tasks-tooltips {

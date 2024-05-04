@@ -22,7 +22,7 @@
                             <h6>{{ namespace }}</h6>
                             <ul class="toc-h4">
                                 <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
-                                    <h6>{{ $filters.cap(type).toUpperCase() }}</h6>
+                                    <h6>{{ $filters.cap(type) }}</h6>
                                     <ul class="section-nav toc-h5">
                                         <li v-for="cls in classes" :key="cls">
                                             <router-link

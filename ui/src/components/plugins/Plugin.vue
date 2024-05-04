@@ -1,15 +1,15 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <section :class="pluginIsSelected ? 'mt-4': ''">
+    <template v-if="!pluginIsSelected">
+        <plugin-home v-if="plugins" :plugins="plugins" />
+    </template>
+    <section v-else class="container">
         <el-row :gutter="15">
-            <el-col :span="4" v-if="pluginIsSelected">
+            <el-col :span="4">
                 <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
             </el-col>
-            <el-col :span="(pluginIsSelected) ? 18 : 24" class="markdown" v-loading="isLoading">
-                <markdown v-if="pluginIsSelected" :source="plugin.markdown" :permalink="true" />
-                <div v-else>
-                    <plugin-home v-if="plugins" :plugins="plugins" />
-                </div>
+            <el-col :offset="1" :span="19" class="markdown" v-loading="isLoading">
+                <markdown :source="plugin.markdown" :permalink="true" />
             </el-col>
         </el-row>
     </section>

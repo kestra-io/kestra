@@ -8,22 +8,22 @@ import {getHighlighterCore} from "shiki/core"
 import githubDark from "shiki/themes/github-dark.mjs";
 import githubLight from "shiki/themes/github-light.mjs";
 
-githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
-githubLight["colors"]["editor.background"] = "var(--bs-white)";
-
-const highlighter = await getHighlighterCore({
-    themes: [
-        githubDark,
-        githubLight
-    ],
-    langs: [
-        import("shiki/langs/yaml.mjs"),
-    ],
-    loadWasm: import("shiki/wasm")
-})
-
 export default class Markdown {
     static async render(markdown, options) {
+        githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
+        githubLight["colors"]["editor.background"] = "var(--bs-white)";
+
+        const highlighter = await getHighlighterCore({
+            themes: [
+                githubDark,
+                githubLight
+            ],
+            langs: [
+                import("shiki/langs/yaml.mjs"),
+            ],
+            loadWasm: import("shiki/wasm")
+        })
+
         options = options || {}
 
         const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;

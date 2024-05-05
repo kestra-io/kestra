@@ -67,10 +67,17 @@
             color: var(--bs-body-color);
         }
 
+        table {
+            background-color: var(--bs-white);
+            html.dark & {
+                background-color: var(--bs-gray-500);
+            }
+        }
+
         table,
         th,
         td {
-            border: 1px solid var(--bs-gray-600);
+            border: 1px solid var(--bs-border-color);
         }
 
         th,
@@ -79,7 +86,6 @@
         }
 
         th {
-            background-color: var(--card-bg);
             text-align: left;
         }
 

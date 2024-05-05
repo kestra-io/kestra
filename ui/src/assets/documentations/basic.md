@@ -57,7 +57,6 @@ The following core properties are available in all tasks.
 | `logLevel`     | The level of log detail to be stored.                                                                                                                                                 |
 
 
----
 
 ## Flow example
 

@@ -28,5 +28,11 @@
 <style scoped lang="scss">
     .plugin-documentation-div {
         width: 0;
+
+        :deep(.markdown) {
+            :first-child {
+                margin-top: 0;
+            }
+        }
     }
 </style>

@@ -39,3 +39,8 @@ blockquote {
         color: var(--bs-gray-700);
     }
 }
+
+hr {
+    border-color: var(--bs-border-color);
+    opacity: 1;
+}

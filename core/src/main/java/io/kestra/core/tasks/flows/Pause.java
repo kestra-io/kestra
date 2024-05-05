@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 @Plugin(
     examples = {
         @Example(
+            title = "Pause the execution and wait for a manual approval",
             full = true,
             code = """
                 id: human_in_the_loop
@@ -67,6 +68,64 @@ import java.util.stream.Stream;
                     type: io.kestra.core.tasks.debugs.Return
                     format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
+        ),
+        @Example(
+            title = "Vacation approval process pausing the execution for approval and waiting for input from a human to approve or reject the request.",
+            full = true,
+            code = """
+                id: vacation_approval_process
+                namespace: dev
+
+                inputs:
+                  - id: request.name
+                    type: STRING
+                    defaults: Rick Astley
+
+                  - id: request.start_date
+                    type: DATE
+                    defaults: 2042-07-01
+
+                  - id: request.end_date
+                    type: DATE
+                    defaults: 2042-07-07
+
+                  - id: slack_webhook_uri
+                    type: URI
+                    defaults: https://reqres.in/api/slack
+
+                tasks:
+                  - id: send_approval_request
+                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                    url: "{{ inputs.slack_webhook_uri }}"
+                    payload: |
+                      {
+                        "channel": "#vacation",
+                        "text": "Validate holiday request for {{ inputs.request.name }}. To approve the request, click on the `Resume` button here http://localhost:28080/ui/executions/{{flow.namespace}}/{{flow.id}}/{{execution.id}}"
+                      }
+
+                  - id: wait_for_approval
+                    type: io.kestra.core.tasks.flows.Pause
+                    onResume:
+                      - id: approved
+                        description: Whether to approve the request
+                        type: BOOLEAN
+                        defaults: true
+                      - id: reason
+                        description: Reason for approval or rejection
+                        type: STRING
+                        defaults: Well-deserved vacation
+
+                  - id: approve
+                    type: io.kestra.plugin.fs.http.Request
+                    uri: https://reqres.in/api/products
+                    method: POST
+                    contentType: application/json
+                    body: "{{ inputs.request }}"
+
+                  - id: log
+                    type: io.kestra.core.tasks.log.Log
+                    message: Status is {{ outputs.wait_for_approval.onResume.reason }}. Process finished with {{ outputs.approve.body }}
+                """
         )
     }
 )
@@ -87,8 +146,8 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Valid
     @Schema(
-        title = "Timeout of the pause — useful to avoid never-ending workflows in a human-in-the-loop scenario. For example, if you want to pause the execution until a human validates some data generated in a previous task, you can set a timeout of e.g. 24 hours. If no manual approval happens within 24 hours, the execution will automatically resume without a prior data validation.",
-        description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
+        title = "Inputs to be passed to the execution when it's resumed.",
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task."
     )
     private List<Input<?>> onResume;
 

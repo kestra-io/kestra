@@ -1,6 +1,7 @@
 <template>
     <span class="kicon">
         <el-tooltip
+            effect="light"
             v-if="tooltip"
             :content="tooltip"
             :raw-content="true"

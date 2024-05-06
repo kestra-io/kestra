@@ -128,7 +128,7 @@
                                     class="switch-text"
                                     :active-action-icon="Check"
                                 />
-                                <el-tooltip v-else :content="'flow source not found'">
+                                <el-tooltip v-else :content="'flow source not found'" effect="light">
                                     <AlertCircle class="trigger-issue-icon" />
                                 </el-tooltip>
                             </template>

@@ -1,5 +1,6 @@
 <template>
     <el-tooltip
+        effect="light"
         placement="bottom"
         trigger="hover"
         :persistent="false"

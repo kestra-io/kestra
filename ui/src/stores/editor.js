@@ -21,7 +21,12 @@ export default {
             } = payload;
 
             if (action === "open") {
-                const index = state.tabs.findIndex((tab) => tab.name === name);
+                const index = state.tabs.findIndex((tab) => {
+                    if (path) {
+                        return tab.path === path;
+                    }
+                    return tab.name === name
+                });
 
                 let isDirty;
 
@@ -40,10 +45,20 @@ export default {
                     path
                 };
             } else if (action === "close") {
-                state.tabs = state.tabs.filter((tab) => tab.name !== name);
+                state.tabs = state.tabs.filter((tab) => {
+                    if (path) {
+                        return tab.path !== path;
+                    }
+                    return tab.name !== name
+                });
                 const POSITION = index
                     ? index
-                    : state.tabs.findIndex((tab) => tab.name !== name);
+                    : state.tabs.findIndex((tab) => {
+                        if (path) {
+                            return tab.path === path;
+                        }
+                        return tab.name === name
+                    });
 
                 if (state.current.name === name) {
                     const i = POSITION - 1 >= 0;
@@ -52,10 +67,14 @@ export default {
                         : state.tabs[0];
                 }
             } else if (action === "dirty") {
-                state.tabs.map((tab) => {
-                    if (tab.name === name) tab.dirty = dirty;
+                const tabIdxToDirty = state.tabs.findIndex((tab) => {
+                    if (path) {
+                        return tab.path === path;
+                    }
+                    return tab.name === name
                 });
 
+                state.tabs[tabIdxToDirty].dirty = dirty;
                 state.current.dirty = dirty;
             }
         },

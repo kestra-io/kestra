@@ -5,6 +5,7 @@
                 <div class="text-nowrap">
                     <el-button-group>
                         <el-tooltip
+                            effect="light"
                             :content="$t('Fold content lines')"
                             :persistent="false"
                             transition=""
@@ -13,6 +14,7 @@
                             <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
                         </el-tooltip>
                         <el-tooltip
+                            effect="light"
                             :content="$t('Unfold content lines')"
                             :persistent="false"
                             transition=""

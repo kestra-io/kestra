@@ -235,16 +235,14 @@
     const currentTab = computed(() => store.state.editor.current);
     const openedTabs = computed(() => store.state.editor.tabs);
 
-    const changeCurrentTab = (name, extension) => {
-        const payload = extension ? {extension} : {persistent: true};
+    const changeCurrentTab = (tab) => {
         store.commit("editor/changeOpenedTabs", {
+            ...tab,
             action: "open",
-            name,
-            ...payload,
         });
     };
-    const closeTab = (name, index) => {
-        store.commit("editor/changeOpenedTabs", {action: "close", name, index});
+    const closeTab = (tab, index) => {
+        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
     };
     const getIcon = (name) => {
         if (!name) return;
@@ -1002,7 +1000,17 @@
         );
     };
 
-    const isActiveTab = (tab) => currentTab.value ? (tab?.name === currentTab.value.name) : false;
+    const isActiveTab = (tab) => {
+        if (!currentTab.value) {
+            return false;
+        }
+
+        if (tab.path) {
+            return tab.path === currentTab.value.path;
+        }
+
+        return tab.name === currentTab.value.name;
+    }
 
     watch(currentTab, () => {
         nextTick(() => {
@@ -1018,6 +1026,7 @@
 <template>
     <div class="button-top">
         <el-tooltip
+            effect="light"
             v-if="!isCreating"
             ref="toggleExplorer"
             :content="
@@ -1038,15 +1047,25 @@
                 v-for="(tab, index) in openedTabs"
                 :key="index"
                 :class="{'tab-active': isActiveTab(tab)}"
-                @click="changeCurrentTab(tab.name, tab.extension)"
+                @click="changeCurrentTab(tab)"
                 :disabled="isActiveTab(tab)"
             >
                 <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
-                <span class="tab-name px-2">{{ tab.name }}</span>
+                <el-tooltip
+                    effect="light"
+                    v-if="tab.path"
+                    :content="tab.path"
+                    transition=""
+                    :hide-after="0"
+                    :persistent="false"
+                >
+                    <span class="tab-name px-2">{{ tab.name }}</span>
+                </el-tooltip>
+                <span class="tab-name px-2" v-else>{{ tab.name }}</span>
                 <CircleMedium v-show="tab.dirty" />
                 <Close
                     v-if="!tab.persistent"
-                    @click.prevent.stop="closeTab(tab.name, index)"
+                    @click.prevent.stop="closeTab(tab, index)"
                     class="cursor-pointer"
                 />
             </el-button>
@@ -1266,147 +1285,147 @@
 </template>
 
 <style lang="scss" scoped>
-@use "element-plus/theme-chalk/src/mixins/mixins" as *;
+    @use "element-plus/theme-chalk/src/mixins/mixins" as *;
 
-.button-top {
-    background: var(--card-bg);
-    border-bottom: 1px solid var(--bs-border-color);
-    padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
-    padding-left: calc(var(--spacer) / 2);
-    display: flex;
-    align-items: center;
-    justify-content: end;
-
-    :deep(.validation) {
-        border: 0;
+    .button-top {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--bs-border-color);
+        padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
         padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
-    }
+        display: flex;
+        align-items: center;
+        justify-content: end;
 
-    :deep(.el-button) {
-        border: 0;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
-    }
-}
+        :deep(.validation) {
+            border: 0;
+            padding-left: calc(var(--spacer) / 2);
+            padding-right: calc(var(--spacer) / 2);
+        }
 
-.main-editor {
-    padding: calc(var(--spacer) / 2) 0px;
-    background: var(--bs-body-bg);
-    display: flex;
-    height: calc(100% - 49px);
-    min-height: 0;
-    max-height: 100%;
-
-    > * {
-        flex: 1;
-    }
-
-    html.dark & {
-        background-color: var(--bs-gray-100);
-    }
-}
-
-.editor-combined {
-    width: 50%;
-    min-width: 0;
-}
-
-.vueflow {
-    width: 100%;
-}
-
-html.dark .el-card :deep(.enhance-readability) {
-    background-color: var(--bs-gray-500);
-}
-
-:deep(.combined-right-view),
-.combined-right-view {
-    flex: 1;
-    position: relative;
-    overflow-y: auto;
-    height: 100%;
-
-    &.enhance-readability {
-        padding: calc(var(--spacer) * 1.5);
-        background-color: var(--bs-gray-100);
-    }
-
-    &::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-        -webkit-border-radius: 10px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        -webkit-border-radius: 10px;
-        background: var(--bs-primary);
-    }
-}
-
-.hide-view {
-    width: 0;
-    overflow: hidden;
-}
-
-.plugin-doc {
-    overflow-x: hidden;
-    width: 100%;
-}
-
-.slider {
-    flex: 0 0 calc(1rem / 7);
-    border-radius: 0.15rem;
-    margin: 0 0.25rem;
-    background-color: var(--bs-border-color);
-    border: none;
-    cursor: col-resize;
-    user-select: none; /* disable selection */
-
-    &:hover {
-        background-color: var(--bs-secondary);
-    }
-}
-
-.vueflow {
-    height: 100%;
-}
-
-.topology-display .el-alert {
-    margin-top: calc(3 * var(--spacer));
-}
-
-.tabs {
-    flex: 1;
-    overflow-x: auto;
-    white-space: nowrap;
-
-    .tab-active {
-        background: var(--bs-gray-200) !important;
-        cursor: default;
-
-        .tab-name {
-            font-weight: 600;
+        :deep(.el-button) {
+            border: 0;
+            padding-left: calc(var(--spacer) / 2);
+            padding-right: calc(var(--spacer) / 2);
         }
     }
 
-    .tab-name {
-        font-family: "Public sans",sans-serif;
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
+    .main-editor {
+        padding: calc(var(--spacer) / 2) 0px;
+        background: var(--bs-body-bg);
+        display: flex;
+        height: calc(100% - 49px);
+        min-height: 0;
+        max-height: 100%;
+
+        > * {
+            flex: 1;
+        }
+
+        html.dark & {
+            background-color: var(--bs-gray-100);
+        }
     }
-}
+
+    .editor-combined {
+        width: 50%;
+        min-width: 0;
+    }
+
+    .vueflow {
+        width: 100%;
+    }
+
+    html.dark .el-card :deep(.enhance-readability) {
+        background-color: var(--bs-gray-500);
+    }
+
+    :deep(.combined-right-view),
+    .combined-right-view {
+        flex: 1;
+        position: relative;
+        overflow-y: auto;
+        height: 100%;
+
+        &.enhance-readability {
+            padding: calc(var(--spacer) * 1.5);
+            background-color: var(--bs-gray-100);
+        }
+
+        &::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        &::-webkit-scrollbar-track {
+            -webkit-border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            -webkit-border-radius: 10px;
+            background: var(--bs-primary);
+        }
+    }
+
+    .hide-view {
+        width: 0;
+        overflow: hidden;
+    }
+
+    .plugin-doc {
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    .slider {
+        flex: 0 0 calc(1rem / 7);
+        border-radius: 0.15rem;
+        margin: 0 0.25rem;
+        background-color: var(--bs-border-color);
+        border: none;
+        cursor: col-resize;
+        user-select: none; /* disable selection */
+
+        &:hover {
+            background-color: var(--bs-secondary);
+        }
+    }
+
+    .vueflow {
+        height: 100%;
+    }
+
+    .topology-display .el-alert {
+        margin-top: calc(3 * var(--spacer));
+    }
+
+    .tabs {
+        flex: 1;
+        overflow-x: auto;
+        white-space: nowrap;
+
+        .tab-active {
+            background: var(--bs-gray-200) !important;
+            cursor: default;
+
+            .tab-name {
+                font-weight: 600;
+            }
+        }
+
+        .tab-name {
+            font-family: "Public sans", sans-serif;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 500;
+        }
+    }
 </style>
 
 <style lang="scss">
-.tabs .el-scrollbar__bar.is-horizontal {
-    height: 1px !important;
-}
+    .tabs .el-scrollbar__bar.is-horizontal {
+        height: 1px !important;
+    }
 
-.cursor-pointer {
-    cursor: pointer;
-}
+    .cursor-pointer {
+        cursor: pointer;
+    }
 </style>

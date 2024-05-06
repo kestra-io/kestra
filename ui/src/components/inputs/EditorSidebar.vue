@@ -17,10 +17,12 @@
             </el-input>
             <el-button-group class="d-flex">
                 <el-tooltip
+                    effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
                     :hide-after="0"
                     :persistent="false"
+                    popper-class="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -30,10 +32,12 @@
                     </el-button>
                 </el-tooltip>
                 <el-tooltip
+                    effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
                     :hide-after="0"
                     :persistent="false"
+                    popper-class="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -371,19 +375,20 @@
                 explorerVisible: (state) => state.editor.explorerVisible,
             }),
             folders() {
-                function extractNames(array) {
-                    const names = [];
+                function extractPaths(basePath = "", array) {
+                    const paths = [];
 
                     array.forEach((item) => {
                         if (item.type === "Directory") {
-                            names.push(item.fileName);
-                            names.push(...extractNames(item.children ?? []));
+                            const folderPath = `${basePath}${item.fileName}`;
+                            paths.push(folderPath);
+                            paths.push(...extractPaths(`${folderPath}/`, item.children ?? []));
                         }
                     });
-                    return names;
+                    return paths;
                 }
 
-                return extractNames(this.items);
+                return extractPaths(undefined, this.items);
             },
         },
         methods: {
@@ -397,6 +402,16 @@
                 "deleteFileDirectory",
                 "importFileDirectory",
             ]),
+            sorted(items) {
+                return items.sort((a, b) => {
+                    if (a.type === "Directory" && b.type !== "Directory")
+                        return -1;
+                    else if (a.type !== "Directory" && b.type === "Directory")
+                        return 1;
+
+                    return a.fileName.localeCompare(b.fileName);
+                });
+            },
             renderNodes(items) {
                 if (this.items === undefined) {
                     this.items = [];
@@ -420,14 +435,7 @@
 
                     this.renderNodes(items);
 
-                    this.items = this.items.sort((a, b) => {
-                        if (a.type === "Directory" && b.type !== "Directory")
-                            return -1;
-                        else if (a.type !== "Directory" && b.type === "Directory")
-                            return 1;
-
-                        return a.fileName.localeCompare(b.fileName);
-                    });
+                    this.items = this.sorted(this.items)
                 }
 
                 if (node.level >= 1) {
@@ -436,50 +444,39 @@
                         path: this.getPath(node),
                     };
 
-                    let items = await this.readDirectory(payload);
-                    items = items
-                        .map((item) => ({
+                    let children = await this.readDirectory(payload);
+                    children = this.sorted(
+                        children.map((item) => ({
                             ...item,
                             id: Utils.uid(),
                             leaf: item.type === "File",
                         }))
-                        .sort((a, b) => {
-                            if (a.type === "Directory" && b.type !== "Directory")
-                                return -1;
-                            else if (
-                                a.type !== "Directory" &&
-                                b.type === "Directory"
-                            )
-                                return 1;
-
-                            return a.fileName.localeCompare(b.fileName);
-                        });
+                    );
 
                     // eslint-disable-next-line no-inner-declarations
-                    function updateChildren(items, fileName, newChildren) {
+                    const updateChildren = (items, path, newChildren) => {
                         items.forEach((item, index) => {
-                            if (item.fileName === fileName) {
+                            if (this.getPath(item.id) === path) {
                                 // Update children if the fileName matches
                                 items[index].children = newChildren;
                             } else if (Array.isArray(item.children)) {
                                 // Recursively search in children array
                                 updateChildren(
                                     item.children,
-                                    fileName,
+                                    path,
                                     newChildren
                                 );
                             }
                         });
                     }
 
-                    updateChildren(this.items, node.data.fileName, items);
+                    updateChildren(this.items, this.getPath(node.data.id), children);
 
-                    resolve(items);
+                    resolve(children);
                 }
             },
-            async filterNodes(value, data) {
-                if (!value) return true;
-                return data.fileName.includes(value);
+            filterNodes(value, data) {
+                return this.getPath(data.id).includes(value);
             },
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
@@ -510,18 +507,17 @@
                 if (isShown) {
                     let folder;
                     if (node?.data?.leaf === false) {
-                        folder = node.data.fileName;
+                        folder = this.getPath(node.data.id);
                     } else {
                         const selectedNode = this.$refs.tree.getCurrentNode();
                         if (selectedNode?.leaf === false) {
                             node = selectedNode.id;
-                            folder = selectedNode.fileName;
+                            folder = this.getPath(selectedNode.id);
                         }
                     }
                     this.dialog.visible = true;
                     this.dialog.type = type;
                     this.dialog.folder = folder;
-                    this.dialog.path = this.getPath(node);
 
                     this.focusCreationInput();
                 } else {
@@ -596,7 +592,7 @@
                 try {
                     for (const file of importedFiles) {
                         if (file.webkitRelativePath) {
-                            const filePath = file.webkitRelativePath;
+                            const filePath = file.webkitRelativePath.replaceAll(" ", "%20");
                             const pathParts = filePath.split("/");
                             let currentFolder = this.items;
                             let folderPath = [];
@@ -621,6 +617,7 @@
                                         type: "Directory"
                                     };
                                     currentFolder.push(newFolder);
+                                    this.sorted(currentFolder);
                                     currentFolder = newFolder.children;
                                 } else {
                                     // If the folder exists, move to the next level
@@ -721,7 +718,7 @@
                     }
 
                     const path = `${
-                        this.dialog.path ? `${this.dialog.path}/` : ""
+                        this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${NAME}`;
                     await this.createFile({
                         namespace: this.$route.params.namespace,
@@ -734,6 +731,7 @@
                     this.changeOpenedTabs({
                         action: "open",
                         name: NAME,
+                        path,
                         extension: extension
                     });
 
@@ -743,25 +741,28 @@
 
                 if (!this.dialog.folder) {
                     this.items.push(NEW);
+                    this.items = this.sorted(this.items);
                 } else {
                     const SELF = this;
-                    (function pushItemToFolder(array) {
+                    (function pushItemToFolder(basePath = "", array) {
                         for (let i = 0; i < array.length; i++) {
                             const item = array[i];
+                            const folderPath = `${basePath}${item.fileName}`;
                             if (
-                                item.fileName === SELF.dialog.folder &&
+                                folderPath === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
                                 item.children.push(NEW);
+                                item.children = SELF.sorted(item.children);
                                 return true; // Return true if the folder is found and item is pushed
                             } else if (Array.isArray(item.children)) {
-                                if (pushItemToFolder(item.children)) {
+                                if (pushItemToFolder(`${folderPath}/`, item.children)) {
                                     return true; // Return true if the folder is found and item is pushed in recursive call
                                 }
                             }
                         }
                         return false; // Return false if the folder is not found
-                    })(this.items);
+                    })(undefined, this.items);
                 }
 
                 if (shouldReset) {
@@ -811,8 +812,8 @@
                 };
 
                 if (creation) {
-                    const path = `/${
-                        this.dialog.path ? `${this.dialog.path}/` : ""
+                    const path = `${
+                        this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${fileName}`;
 
                     await this.createDirectory({
@@ -820,32 +821,32 @@
                         path,
                         name: fileName,
                     });
-
-                    const folder = path.split("/");
-                    this.dialog.folder = folder[folder.length - 2] ?? undefined;
                 }
 
                 if (!this.dialog.folder) {
                     this.items.push(NEW);
+                    this.items = this.sorted(this.items);
                 } else {
                     const SELF = this;
-                    (function pushItemToFolder(array) {
+                    (function pushItemToFolder(basePath = "", array) {
                         for (let i = 0; i < array.length; i++) {
                             const item = array[i];
+                            const folderPath = `${basePath}${item.fileName}`;
                             if (
-                                item.fileName === SELF.dialog.folder &&
+                                folderPath === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
                                 item.children.push(NEW);
+                                item.children = SELF.sorted(item.children);
                                 return true; // Return true if the folder is found and item is pushed
                             } else if (Array.isArray(item.children)) {
-                                if (pushItemToFolder(item.children)) {
+                                if (pushItemToFolder(`${folderPath}/`, item.children)) {
                                     return true; // Return true if the folder is found and item is pushed in recursive call
                                 }
                             }
                         }
                         return false; // Return false if the folder is not found
-                    })(this.items);
+                    })(undefined, this.items);
                 }
 
                 this.dialog = {...DIALOG_DEFAULTS};
@@ -890,69 +891,69 @@
 </script>
 
 <style lang="scss">
-.filter .el-input__wrapper {
-    padding-right: 0px;
-}
-
-.el-tree {
-    height: calc(100% - 64px);
-    overflow: hidden auto;
-
-    &::-webkit-scrollbar {
-        width: 2px;
+    .filter .el-input__wrapper {
+        padding-right: 0px;
     }
 
-    &::-webkit-scrollbar-track {
-        background: var(--card-bg);
-    }
+    .el-tree {
+        height: calc(100% - 64px);
+        overflow: hidden auto;
 
-    &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
-        border-radius: 0px;
-    }
+        &::-webkit-scrollbar {
+            width: 2px;
+        }
 
-    .node {
-        --el-tree-node-content-height: 36px;
-        --el-tree-node-hover-bg-color: transparent;
-        line-height: 36px;
+        &::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
 
-        .el-tree-node__content {
-            width: 100%;
+        &::-webkit-scrollbar-thumb {
+            background: var(--bs-primary);
+            border-radius: 0px;
+        }
+
+        .node {
+            --el-tree-node-content-height: 36px;
+            --el-tree-node-hover-bg-color: transparent;
+            line-height: 36px;
+
+            .el-tree-node__content {
+                width: 100%;
+            }
         }
     }
-}
 </style>
 
 <style lang="scss" scoped>
-.sidebar {
-    flex: unset;
-    background: var(--card-bg);
-    border-right: 1px solid var(--bs-border-color);
+    .sidebar {
+        flex: unset;
+        background: var(--card-bg);
+        border-right: 1px solid var(--bs-border-color);
 
-    :deep(.el-button):not(.el-dialog .el-button) {
-        border: 0;
-        background: none;
-        outline: none;
-        opacity: 0.5;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        :deep(.el-button):not(.el-dialog .el-button) {
+            border: 0;
+            background: none;
+            outline: none;
+            opacity: 0.5;
+            padding-left: calc(var(--spacer) / 2);
+            padding-right: calc(var(--spacer) / 2);
 
-        &.el-button--primary {
-            opacity: 1;
+            &.el-button--primary {
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .filename {
+            font-size: var(--el-font-size-small);
+            color: var(--el-text-color-regular);
+
+            &:hover {
+                color: var(--el-text-color-primary);
+            }
         }
     }
-
-    .hidden {
-        display: none;
-    }
-
-    .filename {
-        font-size: var(--el-font-size-small);
-        color: var(--el-text-color-regular);
-
-        &:hover {
-            color: white;
-        }
-    }
-}
 </style>

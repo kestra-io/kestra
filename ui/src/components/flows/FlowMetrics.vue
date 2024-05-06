@@ -69,6 +69,7 @@
     <div v-bind="$attrs" v-loading="isLoading">
         <el-card>
             <el-tooltip
+                effect="light"
                 placement="bottom"
                 :persistent="false"
                 :hide-after="0"

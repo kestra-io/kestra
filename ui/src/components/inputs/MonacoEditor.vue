@@ -58,6 +58,9 @@
                 tabs: (state) => state.editor.tabs,
                 flow: (state) => state.flow.flow
             }),
+            prefix() {
+                return this.schemaType ? `${this.schemaType}-` : "";
+            }
         },
         props: {
             original: {
@@ -98,6 +101,16 @@
             event: "change"
         },
         watch: {
+            tabs(newValue, oldValue) {
+                if (newValue?.length < oldValue?.length) {
+                    const openedTabPaths = newValue.map(tab => (tab.path ?? tab.name));
+                    monaco.editor?.getModels().filter(model => {
+                        return !openedTabPaths.includes(model.uri?.path.substring(this.prefix.length + 1));
+                    }).forEach(model => {
+                        model.dispose();
+                    });
+                }
+            },
             async currentTab(newValue, oldValue) {
                 if (!newValue) return;
 
@@ -339,8 +352,7 @@
 
                 const previousWordOffset = model.getOffsetAt({
                     column: previousWordCharWithInputsCapture.range.startColumn,
-                    lineNumber:
-                        previousWordCharWithInputsCapture.range.startLineNumber,
+                    lineNumber: previousWordCharWithInputsCapture.range.startLineNumber,
                 });
 
                 let prefixAtPosition = model.getWordUntilPosition(position);
@@ -540,7 +552,7 @@
 
                     this.editor = monaco.editor.create(this.$el, options);
 
-                    await this.changeTab(this.currentTab?.name, () => this.value);
+                    await this.changeTab(this.currentTab?.path ?? this.currentTab?.name, () => this.value);
                 }
 
                 let editor = this.getModifiedEditor();
@@ -553,7 +565,7 @@
                         if (self.currentTab && self.currentTab.name) {
                             self.changeOpenedTabs({
                                 action: "dirty",
-                                name: self.currentTab.name,
+                                ...self.currentTab,
                                 dirty: true,
                             });
                         }
@@ -561,22 +573,16 @@
                 });
                 this.$emit("editorDidMount", this.editor);
             },
-            async changeTab(name, valueSupplier, useModelCache = true) {
-                let prefix = this.schemaType ? `${this.schemaType}-` : "";
-                const tabName = this.editor?.getModel()?.uri?.path.substring(prefix.length + 1);
-                if (!this.tabs.some((tab) => tab.name === tabName)) {
-                    this.editor?.getModel()?.dispose();
-                }
-
+            async changeTab(pathOrName, valueSupplier, useModelCache = true) {
                 let model;
-                if (name === undefined) {
+                if (pathOrName === undefined) {
                     model = monaco.editor.createModel(
                         await valueSupplier(),
                         this.language,
-                        monaco.Uri.file(prefix + Utils.uid() + (this.language ? `.${this.language}` : ""))
+                        monaco.Uri.file(this.prefix + Utils.uid() + (this.language ? `.${this.language}` : ""))
                     );
                 } else {
-                    const fileUri = monaco.Uri.file(prefix + name);
+                    const fileUri = monaco.Uri.file(this.prefix + pathOrName);
                     model = monaco.editor.getModel(fileUri);
                     if (model === null) {
                         model = monaco.editor.createModel(

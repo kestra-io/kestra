@@ -9,7 +9,7 @@
                 <span class="d-flex flex-grow-1">
                     <span class="me-auto">
                         <code>{{ getKey(key) }}</code>&nbsp;
-                        <el-tooltip v-if="hasTooltip(schema)" :persistent="false" transition="" :hide-after="0">
+                        <el-tooltip v-if="hasTooltip(schema)" :persistent="false" transition="" :hide-after="0" effect="light">
                             <template #content>
                                 <markdown class="markdown-tooltip" :source="helpText(schema)" />
                             </template>

@@ -1,6 +1,7 @@
 <template>
     <div :id="uuid" class="namespace-treemap" v-if="dataReady">
         <el-tooltip
+            effect="light"
             :persistent="false"
             :hide-after="0"
             transition=""

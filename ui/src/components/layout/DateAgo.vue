@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip :key="uid('tooltip')" v-if="date" :content="inverted ? from : full" :persistent="false" transition="" :hide-after="0">
+    <el-tooltip :key="uid('tooltip')" v-if="date" :content="inverted ? from : full" :persistent="false" transition="" :hide-after="0" effect="light">
         <span :class="className">{{ inverted ? full : from }}</span>
     </el-tooltip>
 </template>

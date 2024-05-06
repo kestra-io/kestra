@@ -9,6 +9,8 @@ const NOTIFY = ({toast, status, action, name, type}) => {
     else toast.error("An unexpected error occurred.");
 };
 
+const slashPrefix = (path) => (path.startsWith("/") ? path : `/${path}`);
+
 export default {
     namespaced: true,
     state: {
@@ -17,7 +19,7 @@ export default {
     actions: {
         // Create a directory
         async createDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files/directory?path=${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
             const request = await this.$http.post(URL);
 
             NOTIFY({
@@ -31,7 +33,7 @@ export default {
 
         // List directory content
         async readDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files/directory${payload.path ? `?path=/${payload.path}` : ""}`;
+            const URL = `${BASE(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(payload.path)}` : ""}`;
             const request = await this.$http.get(URL);
 
             return request.data ?? [];
@@ -43,7 +45,7 @@ export default {
             const BLOB = new Blob([payload.content], {type: "text/plain"});
             DATA.append("fileContent", BLOB);
 
-            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
             const request = await this.$http.post(URL, DATA, HEADERS);
 
             NOTIFY({
@@ -57,7 +59,7 @@ export default {
 
         // Get namespace file content
         async readFile(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
             const request = await this.$http.get(URL);
 
             return request.data ?? [];
@@ -69,13 +71,13 @@ export default {
             const BLOB = new Blob([payload.content], {type: "text/plain"});
             DATA.append("fileContent", BLOB);
 
-            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
             await this.$http.post(URL, DATA, HEADERS);
         },
 
         // Move a file or directory
         async moveFileDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;
+            const URL = `${BASE(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
             const request = await this.$http.put(URL);
 
             NOTIFY({
@@ -89,7 +91,7 @@ export default {
 
         // Rename a file or directory
         async renameFileDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;
+            const URL = `${BASE(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
             const request = await this.$http.put(URL);
 
             NOTIFY({
@@ -103,7 +105,7 @@ export default {
 
         // Delete a file or directory
         async deleteFileDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?path=/${payload.path}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
             const request = await this.$http.delete(URL);
 
             NOTIFY({
@@ -141,7 +143,7 @@ export default {
             path = path.replace(" ", "_");
 
             return this.$http.post(
-                `${apiUrl(this)}/namespaces/${options.namespace}/files?path=/${path}`,
+                `${apiUrl(this)}/namespaces/${options.namespace}/files?path=${slashPrefix(path)}`,
                 formData,
                 HEADERS,
             );

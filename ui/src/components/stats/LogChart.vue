@@ -1,6 +1,7 @@
 <template>
     <div class="executions-charts big" v-if="dataReady">
         <el-tooltip
+            effect="light"
             placement="bottom"
             :persistent="false"
             :hide-after="0"

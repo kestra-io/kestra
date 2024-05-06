@@ -331,7 +331,7 @@
                             align="center"
                         >
                             <template #default="scope">
-                                <el-tooltip>
+                                <el-tooltip effect="light">
                                     <template #content>
                                         <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, "\t") }}</pre>
                                     </template>
@@ -346,7 +346,7 @@
                             :label="$t('task id')"
                         >
                             <template #header="scope">
-                                <el-tooltip :content="$t('taskid column details')">
+                                <el-tooltip :content="$t('taskid column details')" effect="light">
                                     {{ scope.column.label }}
                                 </el-tooltip>
                             </template>

@@ -12,7 +12,7 @@
             class="task-id flex-grow-1"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
-            <el-tooltip :persistent="false" transition="" :hide-after="0">
+            <el-tooltip :persistent="false" transition="" :hide-after="0" effect="light">
                 <template #content>
                     {{ $t("from") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}

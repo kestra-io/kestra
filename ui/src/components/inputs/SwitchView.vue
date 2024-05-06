@@ -1,18 +1,18 @@
 <template>
     <el-button-group>
-        <el-tooltip :content="$t('source')" transition="" :hide-after="0" :persistent="false">
+        <el-tooltip :content="$t('source')" transition="" :hide-after="0" :persistent="false" effect="light">
             <el-button :type="buttonType(editorViewTypes.SOURCE)" @click="switchView(editorViewTypes.SOURCE)" :icon="FileDocumentEditOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('source and doc')" transition="" :hide-after="0" :persistent="false">
+        <el-tooltip :content="$t('source and doc')" transition="" :hide-after="0" :persistent="false" effect="light">
             <el-button :type="buttonType(editorViewTypes.SOURCE_DOC)" @click="switchView(editorViewTypes.SOURCE_DOC)" :icon="BookOpenOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('source and topology')" transition="" :hide-after="0" :persistent="false">
+        <el-tooltip :content="$t('source and topology')" transition="" :hide-after="0" :persistent="false" effect="light">
             <el-button :type="buttonType(editorViewTypes.SOURCE_TOPOLOGY)" @click="switchView(editorViewTypes.SOURCE_TOPOLOGY)" :icon="FileTableOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('topology')" transition="" :hide-after="0" :persistent="false">
+        <el-tooltip :content="$t('topology')" transition="" :hide-after="0" :persistent="false" effect="light">
             <el-button :type="buttonType(editorViewTypes.TOPOLOGY)" @click="switchView(editorViewTypes.TOPOLOGY)" :icon="FileTreeOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('source and blueprints')" transition="" :hide-after="0" :persistent="false">
+        <el-tooltip :content="$t('source and blueprints')" transition="" :hide-after="0" :persistent="false" effect="light">
             <el-button :type="buttonType(editorViewTypes.SOURCE_BLUEPRINTS)" @click="switchView(editorViewTypes.SOURCE_BLUEPRINTS)" :icon="BallotOutline" />
         </el-tooltip>
     </el-button-group>

@@ -44,7 +44,7 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel) {
         return logs
             .stream()
-            .filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getTaskId().equals(taskId) && logEntry.getLevel().equals(minLevel))
+            .filter(logEntry -> logEntry.getExecutionId() != null && logEntry.getExecutionId().equals(executionId) && logEntry.getTaskId().equals(taskId) && logEntry.getLevel().equals(minLevel))
             .filter(logEntry -> (tenantId == null && logEntry.getTenantId() == null) || (tenantId != null && tenantId.equals(logEntry.getTenantId())))
             .collect(Collectors.toList());
     }

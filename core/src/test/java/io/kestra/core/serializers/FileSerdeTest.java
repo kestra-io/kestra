@@ -88,7 +88,7 @@ class FileSerdeTest {
     void readAll_fromEmptySource() throws IOException {
         final Path inputTempFilePath = createTempFile();
 
-        final List<Object> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath)).collectList().block();
+        final List<Object> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath)).collectList().block();
         assertThat(outputValues, empty());
     }
 
@@ -99,7 +99,7 @@ class FileSerdeTest {
         final List<String> inputLines = List.of("{id:1,value:\"value1\"}");
         Files.write(inputTempFilePath, inputLines);
 
-        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
+        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
         assertThat(outputValues, hasSize(1));
         assertThat(outputValues.getFirst(), equalTo(new SimpleEntry(1, "value1")));
     }
@@ -111,7 +111,7 @@ class FileSerdeTest {
         final List<String> inputLines = List.of("{id:1,value:\"value1\"}", "{id:2,value:\"value2\"}", "{id:3,value:\"value3\"}");
         Files.write(inputTempFilePath, inputLines);
 
-        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
+        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
         assertThat(outputValues, hasSize(3));
         assertThat(outputValues.getFirst(), equalTo(new SimpleEntry(1, "value1")));
         assertThat(outputValues.get(1), equalTo(new SimpleEntry(2, "value2")));
@@ -122,7 +122,7 @@ class FileSerdeTest {
     void writeAll_fromEmptySource() throws IOException {
         final Path outputTempFilePath = createTempFile();
 
-        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.empty()).block();
+        final Long outputCount = FileSerde.writeAll(Files.newBufferedWriter(outputTempFilePath), Flux.empty()).block();
         assertThat(outputCount, is(0L));
     }
 
@@ -131,7 +131,7 @@ class FileSerdeTest {
         final Path outputTempFilePath = createTempFile();
 
         final List<SimpleEntry> inputValues = List.of(new SimpleEntry(1, "value1"));
-        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+        final Long outputCount = FileSerde.writeAll(Files.newBufferedWriter(outputTempFilePath), Flux.fromIterable(inputValues)).block();
         assertThat(outputCount, is(1L));
 
         final List<String> outputLines = Files.readAllLines(outputTempFilePath);
@@ -144,7 +144,7 @@ class FileSerdeTest {
         final Path outputTempFilePath = createTempFile();
 
         final List<SimpleEntry> inputValues = List.of(new SimpleEntry(1, "value1"), new SimpleEntry(2, "value2"), new SimpleEntry(3, "value3"));
-        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+        final Long outputCount = FileSerde.writeAll(Files.newBufferedWriter(outputTempFilePath), Flux.fromIterable(inputValues)).block();
         assertThat(outputCount, is(3L));
 
         final List<String> outputLines = Files.readAllLines(outputTempFilePath);
@@ -162,8 +162,8 @@ class FileSerdeTest {
         final List<String> inputLines = List.of("{id:1,value:\"value1\"}", "{id:2,value:\"value2\"}", "{id:3,value:\"value3\"}");
         Files.write(inputTempFilePath, inputLines);
 
-        final Flux<Object> inputFlux = FileSerde.readAll(Files.newInputStream(inputTempFilePath));
-        final Long outputCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), inputFlux).block();
+        final Flux<Object> inputFlux = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath));
+        final Long outputCount = FileSerde.writeAll(Files.newBufferedWriter(outputTempFilePath), inputFlux).block();
         assertThat(outputCount, is(3L));
 
         final List<String> outputLines = Files.readAllLines(outputTempFilePath);

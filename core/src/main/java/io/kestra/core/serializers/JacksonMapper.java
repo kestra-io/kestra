@@ -2,12 +2,7 @@
 package io.kestra.core.serializers;
 
 import com.amazon.ion.IonSystem;
-import com.amazon.ion.impl._Private_IonBinaryWriterBuilder;
-import com.amazon.ion.impl._Private_Utils;
-import com.amazon.ion.system.IonBinaryWriterBuilder;
-import com.amazon.ion.system.IonReaderBuilder;
-import com.amazon.ion.system.IonTextWriterBuilder;
-import com.amazon.ion.system.SimpleCatalog;
+import com.amazon.ion.system.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -38,8 +33,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-
-import static com.amazon.ion.impl.lite._Private_LiteDomTrampoline.newLiteSystem;
 
 public final class JacksonMapper {
     public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
@@ -145,34 +138,9 @@ public final class JacksonMapper {
     }
 
     private static IonSystem createIonSystem() {
-        // This code is inspired by the IonSystemBuilder#build() method and the usage of "withWriteTopLevelValuesOnNewLines(true)".
-        //
-        // After the integration of the relevant pull request (https://github.com/amazon-ion/ion-java/pull/781),
-        // it is expected that this code should be replaced with a more simplified version.
-        //
-        // The simplified code would look like below:
-        //
-        // return IonSystemBuilder.standard()
-        //    .withIonTextWriterBuilder(IonTextWriterBuilder.standard().withWriteTopLevelValuesOnNewLines(true))
-        //    .build();
-        //
-        // TODO: Simplify this code once the pull request is integrated.
-
-        final var catalog = new SimpleCatalog();
-
-        final var textWriterBuilder = IonTextWriterBuilder.standard()
-            .withCatalog(catalog)
-            .withCharsetAscii()
-            .withWriteTopLevelValuesOnNewLines(true); // write line separators on new lines instead of spaces
-
-        final var binaryWriterBuilder = IonBinaryWriterBuilder.standard()
-            .withCatalog(catalog)
-            .withInitialSymbolTable(_Private_Utils.systemSymtab(1));
-
-        final var readerBuilder = IonReaderBuilder.standard()
-            .withCatalog(catalog);
-
-        return newLiteSystem(textWriterBuilder, (_Private_IonBinaryWriterBuilder) binaryWriterBuilder, readerBuilder);
+         return IonSystemBuilder.standard()
+            .withIonTextWriterBuilder(IonTextWriterBuilder.standard().withWriteTopLevelValuesOnNewLines(true))
+            .build();
     }
 
     public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object previous, Object current)  {

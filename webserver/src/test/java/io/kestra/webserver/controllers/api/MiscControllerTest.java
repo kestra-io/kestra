@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;

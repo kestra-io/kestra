@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @Singleton
-public class ContextFunction implements Function {
+public class PrintContextFunction implements Function {
     public List<String> getArgumentNames() {
         return List.of();
     }

@@ -15,13 +15,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-class ContextFunctionTest {
+class PrintContextFunctionTest {
     @Inject
     VariableRenderer variableRenderer;
 
     @Test
     void fromString() throws IllegalVariableEvaluationException, JsonProcessingException {
-        String render = variableRenderer.render("{{ dump() }}", Map.of("test", "value", "array", List.of("a", "b", "c")));
+        String render = variableRenderer.render("{{ printContext() }}", Map.of("test", "value", "array", List.of("a", "b", "c")));
         assertThat(JacksonMapper.toMap(render).get("test"), is("value"));
         assertThat(JacksonMapper.toMap(render).get("array"), is(List.of("a", "b", "c")));
     }

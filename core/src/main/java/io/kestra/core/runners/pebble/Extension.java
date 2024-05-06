@@ -114,7 +114,7 @@ public class Extension extends AbstractExtension {
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
         functions.put("yaml", new YamlFunction());
-        functions.put("context", new ContextFunction());
+        functions.put("printContext", new PrintContextFunction());
 
         return functions;
     }

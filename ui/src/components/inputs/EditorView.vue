@@ -2,7 +2,7 @@
     import {
         computed,
         getCurrentInstance,
-        h,
+        h, nextTick,
         onBeforeUnmount,
         onMounted,
         ref,
@@ -49,6 +49,7 @@
     const http = getCurrentInstance().appContext.config.globalProperties.$http;
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
+    const tabsScrollRef = ref();
 
     const props = defineProps({
         flowGraph: {
@@ -447,7 +448,7 @@
 
     watch(
         () => props.guidedProperties,
-        () => {
+        async () => {
             if (localStorage.getItem("tourDoneOrSkip") !== "true") {
                 if (props.guidedProperties.source !== undefined) {
                     haveChange.value = true;
@@ -455,7 +456,7 @@
                     updatedFromEditor.value = true;
                 }
                 if (props.guidedProperties.saveFlow) {
-                    save();
+                    await save();
                 }
             }
         }
@@ -797,7 +798,7 @@
         });
     };
 
-    const save = (e) => {
+    const save = async (e) => {
         if (!haveChange.value) {
             return;
         }
@@ -840,12 +841,12 @@
                     store.commit("editor/changeOpenedTabs", {
                         action: "dirty",
                         name: "Flow",
-                        dirty: false,
+                        dirty: false
                     });
                 }
             });
         } else {
-            store.dispatch("namespace/createFile", {
+            await store.dispatch("namespace/createFile", {
                 namespace: props.namespace,
                 path: currentTab.value.path ?? currentTab.value.name,
                 content: editorDomElement.value.$refs.monacoEditor.value,
@@ -853,9 +854,10 @@
             store.commit("editor/changeOpenedTabs", {
                 action: "dirty",
                 name: currentTab.value.name,
-                dirty: false,
-                local: true,
+                dirty: false
             });
+
+            store.dispatch("core/isUnsaved", false);
         }
     };
 
@@ -999,6 +1001,18 @@
             })
         );
     };
+
+    const isActiveTab = (tab) => currentTab.value ? (tab?.name === currentTab.value.name) : false;
+
+    watch(currentTab, () => {
+        nextTick(() => {
+            const activeTabElement = tabsScrollRef.value.wrapRef.querySelector(".tab-active");
+            const rightMostCurrentTabPixel = activeTabElement.offsetLeft + activeTabElement.clientWidth;
+
+            const tabsWrapper = tabsScrollRef.value.wrapRef;
+            tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
+        });
+    })
 </script>
 
 <template>
@@ -1019,12 +1033,13 @@
             </el-button>
         </el-tooltip>
 
-        <el-scrollbar v-if="!isCreating" class="tabs">
+        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="tabs">
             <el-button
                 v-for="(tab, index) in openedTabs"
                 :key="index"
-                :class="{'tab-active': currentTab ? (tab?.name === currentTab.name) : false}"
+                :class="{'tab-active': isActiveTab(tab)}"
                 @click="changeCurrentTab(tab.name, tab.extension)"
+                :disabled="isActiveTab(tab)"
             >
                 <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
                 <span class="tab-name px-2">{{ tab.name }}</span>
@@ -1087,7 +1102,8 @@
             @execute="execute"
             v-model="flowYaml"
             schema-type="flow"
-            lang="yaml"
+            :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
+            :extension="currentTab?.extension"
             @update:model-value="editorUpdate($event)"
             @cursor="updatePluginDocumentation($event)"
             :creating="isCreating"
@@ -1259,7 +1275,7 @@
     padding-left: calc(var(--spacer) / 2);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: end;
 
     :deep(.validation) {
         border: 0;
@@ -1269,18 +1285,8 @@
 
     :deep(.el-button) {
         border: 0;
-        background: none;
-        opacity: 0.5;
         padding-left: calc(var(--spacer) / 2);
         padding-right: calc(var(--spacer) / 2);
-
-        &.el-button--primary {
-            opacity: 1;
-        }
-    }
-
-    button.el-button--primary {
-        color: var(--bs-primary);
     }
 }
 
@@ -1378,13 +1384,16 @@ html.dark .el-card :deep(.enhance-readability) {
     white-space: nowrap;
 
     .tab-active {
-        background: #21242e !important;
+        background: var(--bs-gray-200) !important;
         cursor: default;
+
+        .tab-name {
+            font-weight: 600;
+        }
     }
 
     .tab-name {
-        color: white;
-        font-family: "Public sans";
+        font-family: "Public sans",sans-serif;
         font-size: 12px;
         font-style: normal;
         font-weight: 500;

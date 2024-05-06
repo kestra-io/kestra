@@ -1,5 +1,5 @@
 <template>
-    <div v-show="explorerVisible" class="w-25 p-3 sidebar">
+    <div v-show="explorerVisible" class="w-25 p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
         <div class="d-flex flex-row">
             <el-input
                 v-model="filter"
@@ -24,7 +24,7 @@
                 >
                     <el-button
                         class="px-2"
-                        @click="toggleDialog(true, 'file', node)"
+                        @click="toggleDialog(true, 'file')"
                     >
                         <FilePlus />
                     </el-button>
@@ -37,7 +37,7 @@
                 >
                     <el-button
                         class="px-2"
-                        @click="toggleDialog(true, 'folder', node)"
+                        @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
                     </el-button>
@@ -86,11 +86,13 @@
             lazy
             :load="loadNodes"
             :data="items"
-            node-key="name"
             highlight-current
             :filter-node-method="filterNodes"
-            :allow-drop="(_, drop) => !drop.leaf"
-            :empty-text="$t('namespace files.no_items')"
+            :allow-drop="(_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'"
+            draggable
+            node-key="id"
+            empty-text=""
+            v-loading="items === undefined"
             :props="{class: 'node', isLeaf: 'leaf'}"
             class="mt-3"
             @node-click="
@@ -104,14 +106,14 @@
                         })
                         : undefined
             "
+            @node-drag-start="nodeBeforeDrag = {parent: $event.parent.data.id, path: getPath($event.data.id)}"
             @node-drop="nodeMoved"
+            @keydown.delete.prevent="deleteKeystroke"
         >
             <template #default="{data, node}">
                 <el-dropdown
                     :ref="`dropdown__${data.fileName}`"
-                    @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.fileName}`)
-                    "
+                    @contextmenu.prevent.stop="toggleDropdown(`dropdown__${data.fileName}`)"
                     trigger="contextmenu"
                     class="w-100"
                 >
@@ -163,7 +165,7 @@
                                 }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                @click="confirmRemove(data, node)"
+                                @click="confirmRemove(node)"
                             >
                                 {{
                                     $t(
@@ -273,15 +275,16 @@
         <el-dialog
             v-model="confirmation.visible"
             :title="
-                Array.isArray(confirmation.data.children)
+                Array.isArray(confirmation.node?.data?.children)
                     ? $t('namespace files.dialog.folder_deletion')
                     : $t('namespace files.dialog.file_deletion')
             "
             width="500"
+            @keydown.enter.prevent="removeItem()"
         >
             <span class="py-3">
                 {{
-                    Array.isArray(confirmation.data.children)
+                    Array.isArray(confirmation.node?.data?.children)
                         ? $t(
                             "namespace files.dialog.folder_deletion_description"
                         )
@@ -303,7 +306,7 @@
 </template>
 
 <script>
-    import {mapState, mapMutations, mapActions} from "vuex";
+    import {mapActions, mapMutations, mapState} from "vuex";
 
     import Utils from "../../utils/utils";
 
@@ -351,20 +354,15 @@
         data() {
             return {
                 namespace: undefined,
-
                 filter: "",
-
                 dialog: {...DIALOG_DEFAULTS},
                 renameDialog: {...RENAME_DEFAULTS},
                 dropdownRef: "",
-
                 tree: {allExpanded: false},
-
-                currentFolder: "",
-
+                currentFolder: undefined,
                 confirmation: {visible: false, data: {}},
-
-                items: [],
+                items: undefined,
+                nodeBeforeDrag: undefined
             };
         },
         computed: {
@@ -400,6 +398,9 @@
                 "importFileDirectory",
             ]),
             renderNodes(items) {
+                if (this.items === undefined) {
+                    this.items = [];
+                }
                 for (let i = 0; i < items.length; i++) {
                     const {type, fileName} = items[i];
 
@@ -419,12 +420,7 @@
 
                     this.renderNodes(items);
 
-                    const resolved = items.map((item) => ({
-                        ...item,
-                        leaf: item.type === "File",
-                    }));
-
-                    this.items = resolved.sort((a, b) => {
+                    this.items = this.items.sort((a, b) => {
                         if (a.type === "Directory" && b.type !== "Directory")
                             return -1;
                         else if (a.type !== "Directory" && b.type === "Directory")
@@ -444,7 +440,8 @@
                     items = items
                         .map((item) => ({
                             ...item,
-                            leaf: item.type === "File" ? true : false,
+                            id: Utils.uid(),
+                            leaf: item.type === "File",
                         }))
                         .sort((a, b) => {
                             if (a.type === "Directory" && b.type !== "Directory")
@@ -511,9 +508,16 @@
             },
             toggleDialog(isShown, type, node) {
                 if (isShown) {
-                    const folder =
-                        node && !node.data?.leaf ? node.data.fileName : undefined;
-
+                    let folder;
+                    if (node?.data?.leaf === false) {
+                        folder = node.data.fileName;
+                    } else {
+                        const selectedNode = this.$refs.tree.getCurrentNode();
+                        if (selectedNode?.leaf === false) {
+                            node = selectedNode.id;
+                            folder = selectedNode.fileName;
+                        }
+                    }
                     this.dialog.visible = true;
                     this.dialog.type = type;
                     this.dialog.folder = folder;
@@ -554,8 +558,18 @@
                     this.renameDialog.name;
                 this.renameDialog = {...RENAME_DEFAULTS};
             },
-            nodeMoved() {
-            // TODO: Handle node moving on server & add back draggable property for el-tree
+            async nodeMoved(draggedNode) {
+                try {
+                    await this.moveFileDirectory({
+                        namespace: this.$route.params.namespace,
+                        old: this.nodeBeforeDrag.path,
+                        new: this.getPath(draggedNode.data.id),
+                        type: draggedNode.data.type,
+                    });
+                } catch (e) {
+                    this.$refs.tree.remove(draggedNode.data.id);
+                    this.$refs.tree.append(draggedNode.data, this.nodeBeforeDrag.parent);
+                }
             },
             focusCreationInput() {
                 setTimeout(() => {
@@ -601,8 +615,10 @@
                                 if (folderIndex === -1) {
                                     // If the folder doesn't exist, create it
                                     const newFolder = {
+                                        id: Utils.uid(),
                                         fileName: folderName,
                                         children: [],
+                                        type: "Directory"
                                     };
                                     currentFolder.push(newFolder);
                                     currentFolder = newFolder.children;
@@ -628,10 +644,12 @@
 
                             // Add file to the current folder
                             currentFolder.push({
+                                id: Utils.uid(),
                                 fileName: `${name}${
                                     extension ? `.${extension}` : ""
                                 }`,
                                 extension,
+                                type: "File"
                             });
                         } else {
                             // Process files at root level (not in any folder)
@@ -645,11 +663,13 @@
                             });
 
                             this.items.push({
+                                id: Utils.uid(),
                                 fileName: `${name}${
                                     extension ? `.${extension}` : ""
                                 }`,
                                 extension,
-                                leaf: extension ? true : false,
+                                leaf: !!extension,
+                                type: "File"
                             });
                         }
                     }
@@ -665,7 +685,7 @@
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-            addFile({file, creation, shouldReset = true}) {
+            async addFile({file, creation, shouldReset = true}) {
                 let FILE;
 
                 if (creation) {
@@ -685,7 +705,14 @@
 
                 const {fileName, extension, content, leaf} = FILE;
                 const NAME = `${fileName}.${extension}`;
-                const NEW = {fileName: NAME, extension, content, leaf};
+                const NEW = {
+                    id: Utils.uid(),
+                    fileName: NAME,
+                    extension,
+                    content,
+                    leaf,
+                    type: "File"
+                };
 
                 if (creation) {
                     if (!extension) {
@@ -696,7 +723,7 @@
                     const path = `${
                         this.dialog.path ? `${this.dialog.path}/` : ""
                     }${NAME}`;
-                    this.createFile({
+                    await this.createFile({
                         namespace: this.$route.params.namespace,
                         path,
                         content,
@@ -707,8 +734,7 @@
                     this.changeOpenedTabs({
                         action: "open",
                         name: NAME,
-                        extension: extension,
-                        local: true,
+                        extension: extension
                     });
 
                     const folder = path.split("/");
@@ -742,37 +768,34 @@
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-
-            confirmRemove(data, node) {
-                this.confirmation = {visible: true, data, node};
+            confirmRemove(node) {
+                this.confirmation = {visible: true, node};
             },
-            removeItem() {
-                const {node, data} = this.confirmation;
+            async removeItem() {
+                const {node, node: {data}} = this.confirmation;
 
-                this.deleteFileDirectory({
+                await this.deleteFileDirectory({
                     namespace: this.$route.params.namespace,
-                    path: this.getPath(this.confirmation.node),
+                    path: this.getPath(node),
                     name: data.fileName,
                     type: data.type,
                 });
 
-                const parent = node.parent;
-                const children = parent.data.children || parent.data;
-                const index = children.findIndex(
-                    (d) => d.$treeNodeId === data.$treeNodeId
-                );
-                children.splice(index, 1);
-
-                this.items = [...this.items];
+                this.$refs.tree.remove(data.id);
 
                 this.changeOpenedTabs({
                     action: "close",
-                    name: this.confirmation.data.fileName,
+                    name: data.fileName,
                 });
 
-                this.confirmation = {visible: false, data: {}, node: undefined};
+                this.confirmation = {visible: false, node: undefined};
             },
-            addFolder(folder, creation) {
+            deleteKeystroke() {
+                if (this.$refs.tree.getCurrentNode()) {
+                    this.confirmRemove(this.$refs.tree.getNode(this.$refs.tree.getCurrentNode().id));
+                }
+            },
+            async addFolder(folder, creation) {
                 const {fileName} = folder
                     ? folder
                     : {
@@ -780,9 +803,11 @@
                     };
 
                 const NEW = {
+                    id: Utils.uid(),
                     fileName,
                     leaf: false,
                     children: folder?.children ?? [],
+                    type: "Directory"
                 };
 
                 if (creation) {
@@ -790,7 +815,7 @@
                         this.dialog.path ? `${this.dialog.path}/` : ""
                     }${fileName}`;
 
-                    this.createDirectory({
+                    await this.createDirectory({
                         namespace: this.$route.params.namespace,
                         path,
                         name: fileName,

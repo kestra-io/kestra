@@ -76,7 +76,15 @@ export default {
         // Move a file or directory
         async moveFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?from=/${payload.old}&to=/${payload.new}`;
-            await this.$http.put(URL);
+            const request = await this.$http.put(URL);
+
+            NOTIFY({
+                toast: this.$toast,
+                status: request.status,
+                action: "moved",
+                name: payload.new,
+                type: payload.type,
+            });
         },
 
         // Rename a file or directory

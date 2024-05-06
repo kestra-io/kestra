@@ -154,6 +154,14 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void listWithoutPreCreation() {
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(false));
+        List<FileAttributes> res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory"), TestFileAttributes[].class));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(true));
+        assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("getting-started.md"));
+    }
+
+    @Test
     void createDirectory() throws IOException {
         client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/test", null));
         FileAttributes res = storageInterface.getAttributes(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));

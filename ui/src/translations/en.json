@@ -598,7 +598,6 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
-      "no_items": "No items",
       "tree": {
         "expand": "Expand all folders",
         "collapse": "Collapse all folders"

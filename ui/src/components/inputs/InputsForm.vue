@@ -114,6 +114,7 @@
 <script>
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
+    import Inputs from "../../utils/inputs";
 
     export default {
         components: {Editor, Markdown},
@@ -134,14 +135,7 @@
         },
         emits: ["update:modelValue"],
         created() {
-            for (const input of this.inputsList || []) {
-                this.inputs[input.id] = input.defaults;
-
-                if (input.type === "BOOLEAN" && input.defaults === undefined){
-                    this.inputs[input.id] = "undefined";
-                }
-                this.onChange();
-            }
+            this.updateDefaults();
         },
         mounted() {
             setTimeout(() => {
@@ -167,6 +161,12 @@
 
         },
         methods: {
+            updateDefaults() {
+                for (const input of this.inputsList || []) {
+                    this.inputs[input.id] = Inputs.normalize(input.type, input.defaults);
+                    this.onChange();
+                }
+            },
             onChange() {
                 this.$emit("update:modelValue", this.inputs);
             },
@@ -189,6 +189,11 @@
                     this.$emit("update:modelValue", this.inputs);
                 },
             },
+            inputsList: {
+                handler() {
+                    this.updateDefaults();
+                },
+            }
         }
     };
 </script>

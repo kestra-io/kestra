@@ -55,6 +55,7 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
+    import Inputs from "../../utils/inputs";
 
     export default {
         components: {LabelInput, InputsForm},
@@ -110,27 +111,12 @@
                 }
 
                 const nonEmptyInputNames = Object.keys(this.execution.inputs);
-                this.inputs = Object.fromEntries(
-                    this.flow.inputs.filter(input => nonEmptyInputNames.includes(input.id))
-                        .map(input => {
-                            const inputName = input.id;
-                            const inputType = input.type;
-                            let inputValue = this.execution.inputs[inputName];
-                            if (inputType === "DATE" || inputType === "DATETIME") {
-                                inputValue = this.$moment(inputValue).toISOString()
-                            }else if (inputType === "DURATION" || inputType === "TIME") {
-                                inputValue = this.$moment().startOf("day").add(inputValue, "seconds").toString()
-                            }else if (inputType === "JSON") {
-                                inputValue = JSON.stringify(inputValue).toString()
-                            }
-
-                            if(inputValue === null) {
-                                inputValue = undefined;
-                            }
-
-                            return [inputName, inputValue]
-                        })
-                );
+                this.flow.inputs
+                    .filter(input => nonEmptyInputNames.includes(input.id))
+                    .forEach(input => {
+                        let value = this.execution.inputs[input.id];
+                        this.inputs[input.id] =  Inputs.normalize(input.type, value);
+                    });
             },
             onSubmit(formRef) {
                 if (this.$tours["guidedTour"].isRunning.value) {

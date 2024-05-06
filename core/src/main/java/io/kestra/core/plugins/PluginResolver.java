@@ -36,7 +36,7 @@ public class PluginResolver {
     }
 
     public List<ExternalPlugin> resolves() {
-        List<ExternalPlugin> plugins = new ArrayList<>();
+        List<ExternalPlugin> plugins = new ArrayList<>(100);
         try (
             final DirectoryStream<Path> paths = Files.newDirectoryStream(
                 pluginPath,

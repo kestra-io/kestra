@@ -40,7 +40,7 @@ public class PluginScanner {
         long start = System.currentTimeMillis();
         List<RegisteredPlugin> scanResult = new PluginResolver(pluginPaths)
             .resolves()
-            .stream()
+            .parallelStream()
             .map(plugin -> {
                 log.debug("Loading plugins from path: {}", plugin.getLocation());
 

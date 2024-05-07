@@ -1,20 +1,25 @@
 <template>
     <div v-show="explorerVisible" class="w-25 p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
         <div class="d-flex flex-row">
-            <el-input
+            <el-select
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
+                filterable
+                remote
+                :remote-method="searchFilesList"
                 class="filter"
             >
-                <template #suffix>
-                    <el-button
-                        class="px-2"
-                        @click="filter.length ? (filter = '') : undefined"
-                    >
-                        <component :is="filter.length ? 'Close' : 'Magnify'" />
-                    </el-button>
+                <template #prefix>
+                    <Magnify />
                 </template>
-            </el-input>
+                <el-option
+                    v-for="item in searchResults"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                    @click.prevent.stop="chooseSearchResults(item)"
+                />
+            </el-select>
             <el-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
@@ -106,7 +111,6 @@
             :load="loadNodes"
             :data="items"
             highlight-current
-            :filter-node-method="filterNodes"
             :allow-drop="(_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'"
             draggable
             node-key="id"
@@ -330,16 +334,10 @@
     import Utils from "../../utils/utils";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
-    import Close from "vue-material-design-icons/Close.vue";
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
-    import CollapseAllOutline from "vue-material-design-icons/CollapseAllOutline.vue";
-    import ExpandAllOutline from "vue-material-design-icons/ExpandAllOutline.vue";
-    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
-    import FolderOutline from "vue-material-design-icons/FolderOutline.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
 
     import {getVSIFileIcon, getVSIFolderIcon} from "file-extension-icon-js";
 
@@ -361,16 +359,10 @@
     export default {
         components: {
             Magnify,
-            Close,
             FilePlus,
             FolderPlus,
             PlusBox,
-            FolderDownloadOutline,
-            CollapseAllOutline,
-            ExpandAllOutline,
-            FileDocumentOutline,
-            FolderOutline,
-            Delete,
+            FolderDownloadOutline
         },
         data() {
             return {
@@ -383,7 +375,8 @@
                 currentFolder: undefined,
                 confirmation: {visible: false, data: {}},
                 items: undefined,
-                nodeBeforeDrag: undefined
+                nodeBeforeDrag: undefined,
+                searchResults: []
             };
         },
         computed: {
@@ -414,6 +407,7 @@
                 "createDirectory",
                 "readDirectory",
                 "createFile",
+                "searchFiles",
                 "renameFileDirectory",
                 "moveFileDirectory",
                 "deleteFileDirectory",
@@ -493,8 +487,19 @@
                     resolve(children);
                 }
             },
-            filterNodes(value, data) {
-                return this.getPath(data.id).includes(value);
+            async searchFilesList(value) {
+                if(!value) return;
+                this.searchResults =  await this.searchFiles({namespace: this.$route.params.namespace, query: value})
+            },
+            chooseSearchResults(item){
+                this.changeOpenedTabs({
+                    action: "open",
+                    name: item,
+                    extension: item.split(".")[1],
+                    path: item,
+                })
+
+                this.filter = "";
             },
             getIcon(isFolder, name) {
                 if (isFolder) return getVSIFolderIcon("folder");
@@ -889,11 +894,6 @@
             },
         },
         watch: {
-            filter(value) {
-                if (this.$refs.tree) {
-                    this.$refs.tree.filter(value);
-                }
-            },
             flows: {
                 handler(flow) {
                     if (flow && flow.length) {

@@ -66,6 +66,14 @@ export default {
             return request.data ?? [];
         },
 
+        // Search for namespace files
+        async searchFiles(_, payload) {
+            const URL = `${BASE(payload.namespace)}/files/search?q=${payload.query}`;
+            const request = await this.$http.get(URL);
+
+            return request.data ?? [];
+        },
+
         // Import a file or directory
         async importFileDirectory(_, payload) {
             const DATA = new FormData();

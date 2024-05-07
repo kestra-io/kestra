@@ -489,12 +489,14 @@
             },
             async searchFilesList(value) {
                 if(!value) return;
-                this.searchResults =  await this.searchFiles({namespace: this.$route.params.namespace, query: value})
+
+                const results = await this.searchFiles({namespace: this.$route.params.namespace, query: value});
+                this.searchResults = results.map(result => result.replace(/^\/+/, ""));
             },
             chooseSearchResults(item){
                 this.changeOpenedTabs({
                     action: "open",
-                    name: item,
+                    name: item.split("/").pop(),
                     extension: item.split(".")[1],
                     path: item,
                 })
@@ -918,7 +920,7 @@
 
     .el-tree {
         height: calc(100% - 64px);
-        overflow: hidden auto;
+        overflow: auto auto;
 
         &::-webkit-scrollbar {
             width: 2px;

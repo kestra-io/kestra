@@ -144,7 +144,10 @@ export KESTRA_POSTGRES_CONFIGURATION
 # Build and deploy Kestra in standalone mode (using Postgres backend)
 --private-start-standalone-postgres:
 	docker compose -f ./docker-compose-ci.yml up postgres -d;
-
+	echo "Waiting for postgres to be running"
+	until [ "`docker inspect -f {{.State.Running}} kestra-postgres-1`"=="true" ]; do \
+		sleep 1; \
+	done; \
 	rm -rf ${KESTRA_BASEDIR}/bin/confs/ && \
 	mkdir -p ${KESTRA_BASEDIR}/bin/confs/ ${KESTRA_BASEDIR}/logs/ && \
 	touch ${KESTRA_BASEDIR}/bin/confs/application.yml

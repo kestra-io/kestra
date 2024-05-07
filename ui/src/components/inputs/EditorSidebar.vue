@@ -920,7 +920,7 @@
 
     .el-tree {
         height: calc(100% - 64px);
-        overflow: auto auto;
+        overflow: hidden auto;
 
         &::-webkit-scrollbar {
             width: 2px;

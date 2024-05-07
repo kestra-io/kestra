@@ -851,6 +851,7 @@
             });
             store.commit("editor/changeOpenedTabs", {
                 action: "dirty",
+                path: currentTab.value.path,
                 name: currentTab.value.name,
                 dirty: false
             });

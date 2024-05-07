@@ -491,7 +491,7 @@
                 if(!value) return;
 
                 const results = await this.searchFiles({namespace: this.$route.params.namespace, query: value});
-                this.searchResults = results.map(result => result.replace(/^\/+/, ""));
+                this.searchResults = results.map(result => result.replace(/^\/*/, ""));
             },
             chooseSearchResults(item){
                 this.changeOpenedTabs({
@@ -617,7 +617,7 @@
                 try {
                     for (const file of importedFiles) {
                         if (file.webkitRelativePath) {
-                            const filePath = file.webkitRelativePath.replaceAll(" ", "%20");
+                            const filePath = file.webkitRelativePath;
                             const pathParts = filePath.split("/");
                             let currentFolder = this.items;
                             let folderPath = [];

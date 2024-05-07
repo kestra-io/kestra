@@ -582,6 +582,9 @@
                         monaco.Uri.file(this.prefix + Utils.uid() + (this.language ? `.${this.language}` : ""))
                     );
                 } else {
+                    if (!pathOrName.includes(".") && this.language) {
+                        pathOrName = `${pathOrName}.${this.language}`;
+                    }
                     const fileUri = monaco.Uri.file(this.prefix + pathOrName);
                     model = monaco.editor.getModel(fileUri);
                     if (model === null) {

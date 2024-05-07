@@ -10,6 +10,7 @@ const NOTIFY = ({toast, status, action, name, type}) => {
 };
 
 const slashPrefix = (path) => (path.startsWith("/") ? path : `/${path}`);
+const safePath = (path) => encodeURIComponent(path).replace(/%2C|%2F/g, "/");
 
 export default {
     namespaced: true,
@@ -33,7 +34,7 @@ export default {
 
         // List directory content
         async readDirectory(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(payload.path)}` : ""}`;
+            const URL = `${BASE(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
             const request = await this.$http.get(URL);
 
             return request.data ?? [];
@@ -59,7 +60,7 @@ export default {
 
         // Get namespace file content
         async readFile(_, payload) {
-            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
             const request = await this.$http.get(URL);
 
             return request.data ?? [];
@@ -71,7 +72,7 @@ export default {
             const BLOB = new Blob([payload.content], {type: "text/plain"});
             DATA.append("fileContent", BLOB);
 
-            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
+            const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
             await this.$http.post(URL, DATA, HEADERS);
         },
 

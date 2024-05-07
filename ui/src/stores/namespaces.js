@@ -119,7 +119,19 @@ export default {
 
         // Export namespace files as a ZIP
         async exportFileDirectory(_, payload) {
-            console.log("exportFileDirectory", payload);
+            const URL = `${BASE(payload.namespace)}/files/export`;
+            const request = await this.$http.get(URL);
+
+            const name = payload.namespace + "_files.zip";
+            Utils.downloadUrl(request.request.responseURL, name);
+
+            NOTIFY({
+                toast: this.$toast,
+                status: request.status,
+                action: "exported",
+                name,
+                type: "File",
+            });
         },
 
         loadNamespacesForDatatype({commit}, options) {
@@ -147,19 +159,7 @@ export default {
                 formData,
                 HEADERS,
             );
-        },
-        exportFiles({_commit}, options) {
-            this.$http
-                .get(
-                    `${apiUrl(this)}/namespaces/${options.namespace}/files/export`,
-                )
-                .then((response) =>
-                    Utils.downloadUrl(
-                        response.request.responseURL,
-                        options.namespace + "_files.zip",
-                    ),
-                );
-        },
+        }
     },
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {

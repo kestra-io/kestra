@@ -602,6 +602,7 @@
         "success": "Fichier(s) importé(s) avec succès",
         "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
       },
+      "export": "Exporter les fichiers du namespace",
       "dialog": {
         "name": {
           "file": "Nom avec extension :",

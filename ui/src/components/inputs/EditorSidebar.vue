@@ -82,6 +82,21 @@
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
+                <el-tooltip
+                    effect="light"
+                    :content="$t('namespace files.export')"
+                    transition=""
+                    :hide-after="0"
+                    :persistent="false"
+                    popper-class="text-base"
+                >
+                    <el-button
+                        class="px-2"
+                        @click="exportFiles()"
+                    >
+                        <Export />
+                    </el-button>
+                </el-tooltip>
             </el-button-group>
         </div>
 
@@ -319,6 +334,7 @@
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
+    import Export from "vue-material-design-icons/Export.vue";
     import CollapseAllOutline from "vue-material-design-icons/CollapseAllOutline.vue";
     import ExpandAllOutline from "vue-material-design-icons/ExpandAllOutline.vue";
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
@@ -349,6 +365,7 @@
             FilePlus,
             FolderPlus,
             PlusBox,
+            Export,
             CollapseAllOutline,
             ExpandAllOutline,
             FileDocumentOutline,
@@ -401,6 +418,7 @@
                 "moveFileDirectory",
                 "deleteFileDirectory",
                 "importFileDirectory",
+                "exportFileDirectory",
             ]),
             sorted(items) {
                 return items.sort((a, b) => {
@@ -681,6 +699,9 @@
                     this.import = "file";
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
+            },
+            exportFiles() {
+                this.exportFileDirectory({namespace: this.$route.params.namespace});
             },
             async addFile({file, creation, shouldReset = true}) {
                 let FILE;

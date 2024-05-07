@@ -36,12 +36,12 @@ public abstract class AbstractWorkerThread extends Thread {
 
     @Synchronized
     public void kill() {
-        this.kill(KILLED);
+        this.kill(true);
     }
     
-    protected void kill(io.kestra.core.models.flows.State.Type type) {
-        this.killed = true;
-        taskState = type;
+    protected void kill(boolean markAsKilled) {
+        this.killed = markAsKilled;
+        this.taskState = KILLED;
         this.interrupt();
     }
 

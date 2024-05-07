@@ -10,7 +10,7 @@ export default class Inputs {
             res = moment(res).toISOString()
         } else if (type === "DURATION" || type === "TIME") {
             res = moment().startOf("day").add(res, "seconds").toString()
-        } else if (type === "JSON") {
+        } else if (type === "JSON" || type === "ARRAY") {
             res = JSON.stringify(res).toString()
         } else if (type === "BOOLEAN" && type === undefined){
             res = "undefined";

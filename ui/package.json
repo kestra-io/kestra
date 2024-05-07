@@ -78,7 +78,7 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vite-plugin-rewrite-all": "1.0.1",
-    "vitest": "^1.5.3"
+    "vitest": "^1.6.0"
   },
   "overrides": {
     "bootstrap": {

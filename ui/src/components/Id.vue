@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip v-if="hasTooltip" transition="" :hide-after="0" :persistent="false" placement="top">
+    <el-tooltip v-if="hasTooltip" transition="" :hide-after="0" :persistent="false" placement="top" effect="light">
         <template #content>
             <code>{{ value }}</code>
         </template>

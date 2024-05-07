@@ -25,6 +25,7 @@
     "core-js": "^3.37.0",
     "dagre": "^0.8.5",
     "element-plus": "^2.7.2",
+    "file-extension-icon-js": "^1.1.6",
     "humanize-duration": "^3.32.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",

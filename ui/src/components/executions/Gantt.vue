@@ -14,7 +14,7 @@
             <tbody v-for="serie in filteredSeries" :key="serie.id">
                 <tr>
                     <th dir="rtl">
-                        <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0">
+                        <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0" effect="light">
                             <template #content>
                                 <code>{{ serie.name }}</code>
                                 <small v-if="serie.task && serie.task.value"><br>{{ serie.task.value }}</small>
@@ -26,7 +26,7 @@
                         </el-tooltip>
                     </th>
                     <td :colspan="dates.length" @click="onTaskSelect(serie.task)" class="cursor-pointer">
-                        <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
+                        <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
                             <template #content>
                                 <span style="white-space: pre-wrap;">
                                     {{ serie.tooltip }}

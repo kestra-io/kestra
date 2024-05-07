@@ -195,7 +195,7 @@
 
             <Controls :show-interactive="false">
                 <ControlButton>
-                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0">
+                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
                         <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
                     </el-tooltip>
                 </ControlButton>

@@ -3,7 +3,8 @@
 </template>
 
 <script>
-    import {defineComponent} from "vue"
+    import {defineComponent} from "vue";
+    import {mapState, mapMutations, mapActions} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
@@ -14,11 +15,10 @@
     import YamlWorker from "./yaml.worker.js?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
-    import {yamlSchemas} from "override/utils/yamlSchemas"
+    import {yamlSchemas} from "override/utils/yamlSchemas";
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
     import {uniqBy} from "lodash";
-    import {mapState} from "vuex";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -52,7 +52,15 @@
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
-            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"])
+            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"]),
+            ...mapState({
+                currentTab: (state) => state.editor.current,
+                tabs: (state) => state.editor.tabs,
+                flow: (state) => state.flow.flow
+            }),
+            prefix() {
+                return this.schemaType ? `${this.schemaType}-` : "";
+            }
         },
         props: {
             original: {
@@ -65,11 +73,15 @@
             },
             theme: {
                 type: String,
-                "default": "vs"
+                default: "vs"
             },
             language: {
                 type: String,
-                required: true,
+                default: undefined
+            },
+            extension: {
+                type: String,
+                default: undefined
             },
             options: {
                 type: Object,
@@ -81,14 +93,44 @@
             },
             diffEditor: {
                 type: Boolean,
-                "default": false
+                default: false
             }
         },
-        emits: ["editorWillMount", "editorDidMount", "change", "update:value"],
+        emits: ["editorDidMount", "change"],
         model: {
             event: "change"
         },
         watch: {
+            tabs(newValue, oldValue) {
+                if (newValue?.length < oldValue?.length) {
+                    const openedTabPaths = newValue.map(tab => (tab.path ?? tab.name));
+                    monaco.editor?.getModels().filter(model => {
+                        return !openedTabPaths.includes(model.uri?.path.substring(this.prefix.length + 1));
+                    }).forEach(model => {
+                        model.dispose();
+                    });
+                }
+            },
+            async currentTab(newValue, oldValue) {
+                if (!newValue) return;
+
+                const newTabName = (newValue.path ?? newValue.name);
+                // Tab hasn't changed, it's probably only the dirty flag that changed
+                if (newTabName === (oldValue?.path ?? oldValue?.name)) {
+                    return;
+                }
+
+                if (newValue.persistent && this.flow?.source) {
+                    await this.changeTab("Flow", () => this.flow.source);
+                } else {
+                    const payload = {
+                        namespace: this.$route.params.namespace,
+                        path: newValue.path ?? newValue.name,
+                    };
+
+                    await this.changeTab(newTabName, () => this.readFile(payload));
+                }
+            },
             options: {
                 deep: true,
                 handler: function (newValue, oldValue) {
@@ -117,15 +159,9 @@
                     }
                 }
             },
-            language: function (newVal) {
-                if (this.editor) {
-                    let editor = this.getModifiedEditor();
-                    this.monaco.editor.setModelLanguage(editor.getModel(), newVal);
-                }
-            },
             theme: function (newVal) {
                 if (this.editor) {
-                    this.monaco.editor.setTheme(newVal);
+                    monaco.editor.setTheme(newVal);
                 }
             }
         },
@@ -138,8 +174,8 @@
             })
 
             if (!this.monacoYamlConfigured) {
-                this.$store.commit("core/setMonacoYamlConfigured", true)
-                configureMonacoYaml(this.monaco, {
+                this.$store.commit("core/setMonacoYamlConfigured", true);
+                configureMonacoYaml(monaco, {
                     enableSchemaRequest: true,
                     hover: true,
                     completion: true,
@@ -152,7 +188,7 @@
             const noSuggestions = {suggestions: []};
             if (this.schemaType === "flow") {
                 // If we have an autocompletion source, it means we don't have the full model so we won't be able to provide cursor-based autocompletion
-                this.subflowAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider("yaml", {
+                this.subflowAutocompletionProvider = monaco.languages.registerCompletionItemProvider("yaml", {
                     triggerCharacters: [":"],
                     async provideCompletionItems(model, position) {
                         if (_this.schemaType !== "flow") {
@@ -178,7 +214,7 @@
                     }
                 })
 
-                this.nestedFieldAutocompletionProvider = this.monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
+                this.nestedFieldAutocompletionProvider = monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
                     triggerCharacters: ["."],
                     async provideCompletionItems(model, position) {
                         const lineContent = _this.lineContent(model, position);
@@ -221,6 +257,8 @@
             this.destroy();
         },
         methods: {
+            ...mapMutations("editor", ["changeOpenedTabs"]),
+            ...mapActions("namespace", ["readFile"]),
             async namespaceAutocompletion(model, position) {
                 const lineContent = this.lineContent(model, position);
                 const match = this.tillCursorContent(lineContent, position).match(/^( *namespace:( *))(.*)$/);
@@ -281,7 +319,7 @@
 
                 return {
                     suggestions: flowIds.map(flowId => ({
-                        kind: this.monaco.languages.CompletionItemKind.Value,
+                        kind: monaco.languages.CompletionItemKind.Value,
                         label: flowId,
                         insertText: (match[2].length > 0 ? "" : " ") + flowId,
                         range: {
@@ -300,22 +338,37 @@
                     inputs: {present: true}
                 });
 
-                const previousWordCharWithInputsCapture = model.findPreviousMatch("(inputs)?([\\w:])", position, true, false, null, true);
+                const previousWordCharWithInputsCapture = model.findPreviousMatch(
+                    "(inputs)?([\\w:])",
+                    position,
+                    true,
+                    false,
+                    null,
+                    true
+                );
                 if (!previousWordCharWithInputsCapture) {
                     return undefined;
                 }
 
-                const previousWordOffset = model.getOffsetAt({column: previousWordCharWithInputsCapture.range.startColumn, lineNumber: previousWordCharWithInputsCapture.range.startLineNumber});
+                const previousWordOffset = model.getOffsetAt({
+                    column: previousWordCharWithInputsCapture.range.startColumn,
+                    lineNumber: previousWordCharWithInputsCapture.range.startLineNumber,
+                });
 
                 let prefixAtPosition = model.getWordUntilPosition(position);
                 if (prefixAtPosition?.word === "") {
                     prefixAtPosition = null;
                 }
                 const wordAtPosition = model.getWordAtPosition(position);
-                const subflowTaskWithRange = subflowsWithRange.reverse().find(subflowWithRange => {
-                    const range = subflowWithRange.range;
-                    return range[0] < previousWordOffset && previousWordOffset < range[2];
-                });
+                const subflowTaskWithRange = subflowsWithRange
+                    .reverse()
+                    .find((subflowWithRange) => {
+                        const range = subflowWithRange.range;
+                        return (
+                            range[0] < previousWordOffset &&
+                            previousWordOffset < range[2]
+                        );
+                    });
 
                 const subflowTask = subflowTaskWithRange?.map;
                 if (!subflowTask) {
@@ -362,7 +415,7 @@
                     suggestions: flowInputs.map(input => {
                         const insertText = input + ": ";
                         return {
-                            kind: this.monaco.languages.CompletionItemKind.Value,
+                            kind: monaco.languages.CompletionItemKind.Value,
                             label: input,
                             insertText: preInsertText + insertText,
                             range: {
@@ -386,7 +439,14 @@
             tillCursorContent(lineContent, position) {
                 return lineContent.substring(0, position.column - 1);
             },
-            async autocompletion(source, lineContent, field, rest, lineNumber, fieldToCompleteIndexes) {
+            async autocompletion(
+                source,
+                lineContent,
+                field,
+                rest,
+                lineNumber,
+                fieldToCompleteIndexes
+            ) {
                 const flowAsJs = YamlUtils.parse(source);
                 let autocompletions;
                 switch (field) {
@@ -397,13 +457,13 @@
                     autocompletions = flowAsJs?.tasks?.map(task => task.id);
                     break;
                 case "labels":
-                    autocompletions =  Object.keys(flowAsJs?.labels ?? {});
+                    autocompletions = Object.keys(flowAsJs?.labels ?? {});
                     break;
                 case "flow":
-                    autocompletions = ["id", "namespace", "revision"]
+                    autocompletions = ["id", "namespace", "revision"];
                     break;
                 case "execution":
-                    autocompletions = ["id", "startDate", "originalId"]
+                    autocompletions = ["id", "startDate", "originalId"];
                     break;
                 case "vars":
                     autocompletions = Object.keys(flowAsJs?.variables ?? {});
@@ -463,11 +523,8 @@
                 );
                 return uniqBy(fetchTriggerVarsByType.flat());
             },
-            initMonaco: function (monaco) {
+            initMonaco: async function () {
                 let self = this;
-
-                this.$emit("editorWillMount", this.monaco);
-
                 let options = {
                     ...{
                         value: this.value,
@@ -488,18 +545,14 @@
                         modified: modifiedModel
                     });
                 } else {
-                    if (this.schemaType) {
-                        options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}-${Utils.uid()}.yaml`))
-                    } else {
-                        options["model"] = monaco.editor.createModel(this.value.toString(), this.language);
-                    }
-
                     monaco.editor.addKeybindingRule({
                         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
                         command: "editor.action.triggerSuggest"
                     })
 
                     this.editor = monaco.editor.create(this.$el, options);
+
+                    await this.changeTab(this.currentTab?.path ?? this.currentTab?.name, () => this.value);
                 }
 
                 let editor = this.getModifiedEditor();
@@ -508,10 +561,40 @@
 
                     if (self.value !== value) {
                         self.$emit("change", value, event);
-                        self.$emit("update:value", value)
+
+                        if (self.currentTab && self.currentTab.name) {
+                            self.changeOpenedTabs({
+                                action: "dirty",
+                                ...self.currentTab,
+                                dirty: true,
+                            });
+                        }
                     }
                 });
                 this.$emit("editorDidMount", this.editor);
+            },
+            async changeTab(pathOrName, valueSupplier, useModelCache = true) {
+                let model;
+                if (pathOrName === undefined) {
+                    model = monaco.editor.createModel(
+                        await valueSupplier(),
+                        this.language,
+                        monaco.Uri.file(this.prefix + Utils.uid() + (this.language ? `.${this.language}` : ""))
+                    );
+                } else {
+                    const fileUri = monaco.Uri.file(this.prefix + pathOrName);
+                    model = monaco.editor.getModel(fileUri);
+                    if (model === null) {
+                        model = monaco.editor.createModel(
+                            await valueSupplier(),
+                            this.language,
+                            fileUri
+                        );
+                    } else if (!useModelCache) {
+                        model.setValue(await valueSupplier());
+                    }
+                }
+                this.editor.setModel(model);
             },
             getEditor: function () {
                 return this.editor;
@@ -530,14 +613,13 @@
                 this.nestedFieldAutocompletionProvider?.dispose();
                 this.editor?.getModel()?.dispose();
                 this.editor?.dispose();
-
             },
             needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;
             },
             reload: function () {
                 this.destroy();
-                this.initMonaco(this.monaco);
+                this.initMonaco();
             },
         },
     });
@@ -548,5 +630,4 @@
         height: 100%;
         outline: none;
     }
-
 </style>

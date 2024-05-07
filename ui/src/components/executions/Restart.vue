@@ -1,5 +1,6 @@
 <template>
     <el-tooltip
+        effect="light"
         v-if="isReplay || enabled"
         :persistent="false"
         transition=""

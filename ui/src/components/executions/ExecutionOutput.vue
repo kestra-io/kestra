@@ -23,7 +23,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item>
-                <el-tooltip :content="$t('eval.tooltip')" :persistent="false" transition="" :hide-after="0">
+                <el-tooltip :content="$t('eval.tooltip')" :persistent="false" transition="" :hide-after="0" effect="light">
                     <el-button :disabled="!filter" @click="isModalOpen = !isModalOpen">
                         {{ $t("eval.title") }}
                     </el-button>

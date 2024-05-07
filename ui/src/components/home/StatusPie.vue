@@ -1,6 +1,7 @@
 <template>
     <div class="status-pie" v-if="dataReady">
         <el-tooltip
+            effect="light"
             placement="right"
             :persistent="false"
             :hide-after="0"

@@ -1,5 +1,6 @@
 <template>
     <el-tooltip
+        effect="light"
         :persistent="false"
         transition=""
         :hide-after="0"

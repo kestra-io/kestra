@@ -5,6 +5,7 @@
                 <div class="text-nowrap">
                     <el-button-group>
                         <el-tooltip
+                            effect="light"
                             :content="$t('Fold content lines')"
                             :persistent="false"
                             transition=""
@@ -13,6 +14,7 @@
                             <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
                         </el-tooltip>
                         <el-tooltip
+                            effect="light"
                             :content="$t('Unfold content lines')"
                             :persistent="false"
                             transition=""
@@ -37,7 +39,8 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
-                    :language="lang ?? 'undefined'"
+                    :language="lang"
+                    :extension="extension"
                     :schema-type="schemaType"
                     class="position-relative"
                 />
@@ -75,6 +78,7 @@
             modelValue: {type: String, default: ""},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
+            extension: {type: String, default: undefined},
             schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},

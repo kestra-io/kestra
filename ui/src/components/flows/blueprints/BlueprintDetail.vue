@@ -44,7 +44,7 @@
                     <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
                         <template #nav>
                             <div class="position-absolute copy-wrapper">
-                                <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000">
+                                <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">
                                     <el-button text round :icon="icon.ContentCopy" @click="Utils.copy(blueprint.flow)" />
                                 </el-tooltip>
                             </div>

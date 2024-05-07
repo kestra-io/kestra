@@ -593,13 +593,57 @@
       }
     },
     "namespace files": {
+      "toggle": {
+        "show": "Show namespace files",
+        "hide": "Hide namespace files"
+      },
+      "filter": "Filter",
+      "tree": {
+        "expand": "Expand all folders",
+        "collapse": "Collapse all folders"
+      },
+      "create": {
+        "label": "Create",
+        "file": "Create file",
+        "folder": "Create folder"
+      },
+      "rename": {
+        "label": "Rename",
+        "file": "Rename file",
+        "folder": "Rename folder",
+        "new_file": "New name with extension:",
+        "new_folder": "New folder name:"
+      },
+      "delete": {
+        "label": "Delete",
+        "file": "Delete file",
+        "folder": "Delete folder"
+      },
       "import": {
-        "file": "Import from ZIP or add file(s)",
-        "folder": "Import from folder",
+        "import": "Import",
+        "file": "Import file",
+        "folder": "Import folder",
         "success": "File(s) successfully imported",
         "error": "Error(s) occurred while importing the file(s)"
       },
-      "export": "Export as a ZIP file"
+      "export": "Export namespace files",
+      "dialog": {
+        "name": {
+          "file": "Name with extension:",
+          "folder": "Folder name:"
+        },
+        "parent_folder": "Parent folder:",
+        "file_deletion": "Confirm file deletion",
+        "folder_deletion": "Confirm folder deletion",
+        "file_deletion_description": "Are you sure you want to delete this file?",
+        "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
+        "confirm": "Confirm"
+      },
+      "path": {
+        "copy": "Copy path",
+        "success": "Path copied to clipboard",
+        "error": "Error(s) occurred while copying the path to clipboard"
+      }
     },
     "continue backfill": "Continue the backfill",
     "delete backfill": "Delete the backfill",

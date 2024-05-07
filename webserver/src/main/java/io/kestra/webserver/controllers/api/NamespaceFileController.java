@@ -134,12 +134,20 @@ public class NamespaceFileController {
         if (path == null) {
             path = URI.create("/");
         }
+
         String pathString = path.getPath();
+        Stream<FileAttributes> staticFilesAttributes = staticFiles.stream()
+            .filter(staticFile -> staticFile.getServedPath().startsWith(pathString))
+            .map(staticFile -> staticFile.getStats(Map.of("namespace", namespace)));
+
+        if (pathString.equals("/") && !storageInterface.exists(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null))) {
+            storageInterface.createDirectory(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null));
+            return staticFilesAttributes.toList();
+        }
+
         return Stream.concat(
             storageInterface.list(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path)).stream(),
-            staticFiles.stream()
-                .filter(staticFile -> staticFile.getServedPath().startsWith(pathString))
-                .map(staticFile -> staticFile.getStats(Map.of("namespace", namespace)))
+            staticFilesAttributes
         ).toList();
     }
 

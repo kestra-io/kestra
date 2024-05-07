@@ -569,13 +569,57 @@
       }
     },
     "namespace files": {
-      "import": {
-        "file": "Importer depuis un ZIP ou ajouter des fichiers",
-        "folder": "Importer depuis un dossier",
-        "success": "Fichier(s) importé(s) avec succès",
-        "error": "Une erreur est survenue lors de l'importation"
+      "toggle": {
+        "show": "Afficher les fichiers de l'espace de noms",
+        "hide": "Masquer les fichiers de l'espace de noms"
       },
-      "export": "Export as ZIP file"
+      "filter": "Filtrer",
+      "tree": {
+        "expand": "Développer tous les dossiers",
+        "collapse": "Réduire tous les dossiers"
+      },
+      "create": {
+        "label": "Créer",
+        "file": "Créer un fichier",
+        "folder": "Créer un dossier"
+      },
+      "rename": {
+        "label": "Renommer",
+        "file": "Renommer le fichier",
+        "folder": "Renommer le dossier",
+        "new_file": "Nouveau nom avec extension :",
+        "new_folder": "Nouveau nom de dossier :"
+      },
+      "delete": {
+        "label": "Supprimer",
+        "file": "Supprimer le fichier",
+        "folder": "Supprimer le dossier"
+      },
+      "import": {
+        "import": "Importer",
+        "file": "Importer un fichier",
+        "folder": "Importer un dossier",
+        "success": "Fichier(s) importé(s) avec succès",
+        "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
+      },
+      "export": "Exporter les fichiers du namespace",
+      "dialog": {
+        "name": {
+          "file": "Nom avec extension :",
+          "folder": "Nom du dossier :"
+        },
+        "parent_folder": "Dossier parent :",
+        "file_deletion": "Confirmer la suppression du fichier",
+        "folder_deletion": "Confirmer la suppression du dossier",
+        "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
+        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tous ses contenus ?",
+        "confirm": "Confirmer"
+      },
+      "path": {
+        "copy": "Copier le chemin",
+        "success": "Chemin copié dans le presse-papiers",
+        "error": "Des erreurs se sont produites lors de la copie du chemin dans le presse-papiers"
+      }
     },
     "relative": "Relative",
     "relative start date": "Date de début relative",

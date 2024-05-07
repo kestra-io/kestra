@@ -1,6 +1,7 @@
 <template>
     <div :class="'executions-charts' + (global ? (big ? ' big' : '') : ' mini')" v-if="dataReady">
         <el-tooltip
+            effect="light"
             :placement="(global ? 'bottom' : 'left')"
             :persistent="false"
             :hide-after="0"

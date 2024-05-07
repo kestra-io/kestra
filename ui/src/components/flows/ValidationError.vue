@@ -7,6 +7,7 @@
 
         <!-- Errors -->
         <el-tooltip
+            effect="light"
             v-if="errors"
             popper-class="p-0 bg-transparent"
             :placement="tooltipPlacement"
@@ -35,6 +36,7 @@
 
         <!-- Warnings -->
         <el-tooltip
+            effect="light"
             v-if="warnings"
             popper-class="p-0 bg-transparent"
             :placement="tooltipPlacement"

@@ -41,7 +41,7 @@
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
-            <el-tooltip :hide-after="50" :content="$t('namespace files.export')">
+            <el-tooltip :hide-after="50" :content="$t('namespace files.export')" effect="light">
                 <el-button :icon="FolderZip" class="p-2 m-0" @click="exportNsFiles" />
             </el-tooltip>
             <trigger-flow

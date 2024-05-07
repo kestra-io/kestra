@@ -610,10 +610,19 @@ form.ks-horizontal {
 
     .el-dropdown-menu {
         padding: 0;
+        background-color: transparent;
     }
 
     // no longer require focus to get hover effect on dropdowns
     .el-dropdown-menu__item {
+        &:first-child {
+            border-top-left-radius: calc(var(--el-border-radius-base) * 2);
+            border-top-right-radius: calc(var(--el-border-radius-base) * 2);
+        }
+        &:last-child {
+            border-bottom-left-radius: calc(var(--el-border-radius-base) * 2);
+            border-bottom-right-radius: calc(var(--el-border-radius-base) * 2);
+        }
         &:is(li) {
             display: flex;
             gap: calc(var(--spacer) / 2);
@@ -1024,4 +1033,8 @@ form.ks-horizontal {
         box-shadow: none;
         background: var(--bs-gray-500);
     }
+}
+
+.text-base {
+    font-size: var(--el-font-size-base);
 }

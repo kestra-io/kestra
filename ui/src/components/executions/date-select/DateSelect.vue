@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip :content="tooltip">
+    <el-tooltip :content="tooltip" effect="light">
         <el-select
             :model-value="value"
             @change="$emit('change', $event)"

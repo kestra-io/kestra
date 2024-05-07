@@ -15,6 +15,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -318,8 +319,29 @@ public class RunContext {
                 }
                 builder.put("outputs", outputs);
             }
-
-            Map<String, Object> inputs = new HashMap<>();
+            
+            if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
+                builder.put("trigger", execution.getTrigger().getVariables());
+            }
+            
+            if (execution.getLabels() != null) {
+                builder.put("labels", execution.getLabels()
+                    .stream()
+                    .filter(label -> label.value() != null && label.key() != null)
+                    .map(label -> new AbstractMap.SimpleEntry<>(
+                        label.key(),
+                        label.value()
+                    ))
+                    // using an accumulator in case labels with the same key exists: the first is kept
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first))
+                );
+            }
+            
+            if (execution.getVariables() != null) {
+                builder.putAll(execution.getVariables());
+            }
+            
+            final Map<String, Object> inputs = new HashMap<>();
             if (execution.getInputs() != null) {
                 inputs.putAll(execution.getInputs());
                 if (decryptVariables && flow != null && flow.getInputs() != null) {
@@ -336,35 +358,26 @@ public class RunContext {
                     }
                 }
             }
+            
             if (flow != null && flow.getInputs() != null) {
                 // we add default inputs value from the flow if not already set, this will be useful for triggers
                 flow.getInputs().stream()
                     .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
                     .forEach(input -> inputs.put(input.getId(), input.getDefaults()));
             }
+            
             if (!inputs.isEmpty()) {
                 builder.put("inputs", inputs);
-            }
-
-            if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-                builder.put("trigger", execution.getTrigger().getVariables());
-            }
-
-            if (execution.getLabels() != null) {
-                builder.put("labels", execution.getLabels()
-                    .stream()
-                    .filter(label -> label.value() != null && label.key() != null)
-                    .map(label -> new AbstractMap.SimpleEntry<>(
-                        label.key(),
-                        label.value()
-                    ))
-                    // using an accumulator in case labels with the same key exists: the first is kept
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first))
-                );
-            }
-
-            if (execution.getVariables() != null) {
-                builder.putAll(execution.getVariables());
+                ImmutableMap<String, Object> prebuildVariables = builder.build();
+                for (Input<?> input : flow.getInputs()) {
+                    if (input instanceof StringInput) {
+                        try {
+                            inputs.put(input.getId(), render((String) inputs.get(input.getId()), prebuildVariables));
+                        } catch (IllegalVariableEvaluationException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
             }
         }
 
@@ -375,7 +388,6 @@ public class RunContext {
                     "type", trigger.getType()
                 ));
         }
-
         return builder.build();
     }
 

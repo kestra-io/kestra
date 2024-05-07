@@ -33,7 +33,7 @@ class ToggleTest extends AbstractMemoryRunnerTest {
             .builder()
             .triggerId("schedule")
             .flowId("trigger-toggle")
-            .namespace("io.kestra.tests")
+            .namespace("io.kestra.tests.trigger")
             .date(ZonedDateTime.now())
             .disabled(true)
             .build();
@@ -48,7 +48,7 @@ class ToggleTest extends AbstractMemoryRunnerTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "trigger-toggle");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-toggle");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));

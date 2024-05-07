@@ -94,7 +94,7 @@
                         class="px-2"
                         @click="exportFiles()"
                     >
-                        <Export />
+                        <FolderDownloadOutline />
                     </el-button>
                 </el-tooltip>
             </el-button-group>
@@ -334,7 +334,7 @@
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
-    import Export from "vue-material-design-icons/Export.vue";
+    import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
     import CollapseAllOutline from "vue-material-design-icons/CollapseAllOutline.vue";
     import ExpandAllOutline from "vue-material-design-icons/ExpandAllOutline.vue";
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
@@ -365,7 +365,7 @@
             FilePlus,
             FolderPlus,
             PlusBox,
-            Export,
+            FolderDownloadOutline,
             CollapseAllOutline,
             ExpandAllOutline,
             FileDocumentOutline,

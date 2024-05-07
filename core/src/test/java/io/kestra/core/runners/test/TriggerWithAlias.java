@@ -25,27 +25,14 @@ import java.util.Optional;
     aliases = "io.kestra.core.runners.test.trigger.Alias"
 )
 public class TriggerWithAlias extends AbstractTrigger implements PollingTriggerInterface {
-    @PluginProperty
-    @NotNull
-    @Builder.Default
-    private Long duration = 1000L;
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws IllegalVariableEvaluationException {
-        // Try catch to avoid flaky test
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        Execution execution = TriggerService.generateExecution(this, conditionContext, context, Collections.emptyMap());
-
-        return Optional.of(execution);
+        return Optional.empty();
     }
 
     @Override
     public Duration getInterval() {
-        return Duration.of(1, ChronoUnit.MINUTES);
+        return Duration.of(1, ChronoUnit.HOURS);
     }
 }

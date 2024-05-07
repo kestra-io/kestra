@@ -1,0 +1,17 @@
+id: resume-execution
+namespace:  io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.core.tasks.flows.Parallel
+    tasks:
+      - id: pause
+        type: io.kestra.core.tasks.flows.Pause
+      - id: sequential
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: log
+            type: io.kestra.core.tasks.test.Sleep
+            duration: 100
+          - id: resume
+            type: io.kestra.core.tasks.executions.Resume

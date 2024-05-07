@@ -4,11 +4,6 @@ import {apiUrl} from "override/utils/route";
 const BASE = (namespace) => `${apiUrl(this)}/namespaces/${namespace}`;
 const HEADERS = {headers: {"Content-Type": "multipart/form-data"}};
 
-const NOTIFY = ({toast, status, action, name, type}) => {
-    if (status === 200) toast.success(`${type} ${name} is ${action}.`);
-    else toast.error("An unexpected error occurred.");
-};
-
 const slashPrefix = (path) => (path.startsWith("/") ? path : `/${path}`);
 const safePath = (path) => encodeURIComponent(path).replace(/%2C|%2F/g, "/");
 
@@ -21,15 +16,7 @@ export default {
         // Create a directory
         async createDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
-            const request = await this.$http.post(URL);
-
-            NOTIFY({
-                toast: this.$toast,
-                status: request.status,
-                action: "created",
-                name: payload.name,
-                type: "Directory",
-            });
+            await this.$http.post(URL);
         },
 
         // List directory content
@@ -47,15 +34,7 @@ export default {
             DATA.append("fileContent", BLOB);
 
             const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
-            const request = await this.$http.post(URL, DATA, HEADERS);
-
-            NOTIFY({
-                toast: this.$toast,
-                status: request.status,
-                action: payload.creation ? "created" : "updated",
-                name: payload.name ? payload.name : "content",
-                type: "File",
-            });
+            await this.$http.post(URL, DATA, HEADERS);
         },
 
         // Get namespace file content
@@ -87,43 +66,19 @@ export default {
         // Move a file or directory
         async moveFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
-            const request = await this.$http.put(URL);
-
-            NOTIFY({
-                toast: this.$toast,
-                status: request.status,
-                action: "moved",
-                name: payload.new,
-                type: payload.type,
-            });
+            await this.$http.put(URL);
         },
 
         // Rename a file or directory
         async renameFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
-            const request = await this.$http.put(URL);
-
-            NOTIFY({
-                toast: this.$toast,
-                status: request.status,
-                action: "renamed",
-                name: payload.new,
-                type: payload.type,
-            });
+            await this.$http.put(URL);
         },
 
         // Delete a file or directory
         async deleteFileDirectory(_, payload) {
             const URL = `${BASE(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
-            const request = await this.$http.delete(URL);
-
-            NOTIFY({
-                toast: this.$toast,
-                status: request.status,
-                action: "deleted",
-                name: payload.name,
-                type: payload.type,
-            });
+            await this.$http.delete(URL);
         },
 
         // Export namespace files as a ZIP
@@ -133,14 +88,6 @@ export default {
 
             const name = payload.namespace + "_files.zip";
             Utils.downloadUrl(request.request.responseURL, name);
-
-            NOTIFY({
-                toast: this.$toast,
-                status: request.status,
-                action: "exported",
-                name,
-                type: "File",
-            });
         },
 
         loadNamespacesForDatatype({commit}, options) {
@@ -168,7 +115,7 @@ export default {
                 formData,
                 HEADERS,
             );
-        }
+        },
     },
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {

@@ -96,26 +96,7 @@ export default {
                 .then((response) => {
                     commit("setDatatypeNamespaces", response.data);
                 });
-        },
-        importFile({_commit}, options) {
-            const file = options.file;
-            const formData = new FormData();
-            formData.append("fileContent", file);
-
-            let path;
-            if ((file.webkitRelativePath ?? "") === "") {
-                path = file.name;
-            } else {
-                path = file.webkitRelativePath.split("/").slice(1).join("/");
-            }
-            path = path.replace(" ", "_");
-
-            return this.$http.post(
-                `${apiUrl(this)}/namespaces/${options.namespace}/files?path=${slashPrefix(path)}`,
-                formData,
-                HEADERS,
-            );
-        },
+        }
     },
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {

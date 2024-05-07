@@ -38,7 +38,6 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import ChartTimeline from "vue-material-design-icons/ChartTimeline.vue";
     import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
-    import FolderEditOutline from "vue-material-design-icons/FolderEditOutline.vue";
     import ShieldAccountVariantOutline from "vue-material-design-icons/ShieldAccountVariantOutline.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
@@ -114,14 +113,6 @@
                             class: "menu-icon",
                         },
                         exact: false,
-                    },
-                    {
-                        href: {name: "editor"},
-                        title: this.$t("editor"),
-                        icon: {
-                            element: shallowRef(FolderEditOutline),
-                            class: "menu-icon",
-                        },
                     },
                     {
                         href: {name: "templates/list"},

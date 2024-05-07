@@ -45,16 +45,6 @@ import static org.hamcrest.core.Is.is;
 @MicronautTest
 class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     private static final String NAMESPACE = "io.namespace";
-    private static final String GETTING_STARTED_CONTENT;
-
-    static {
-        URL resource = NamespaceFileControllerTest.class.getResource("/static/getting-started.md");
-        try {
-            GETTING_STARTED_CONTENT = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset()).replace("${namespace}", NAMESPACE);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Inject
     @Client("/")
@@ -107,20 +97,12 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void gettingStarted() {
-        String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files?path=/getting-started.md"));
-        assertThat(res, is(GETTING_STARTED_CONTENT));
-        assertThat(GETTING_STARTED_CONTENT, containsString("namespace: " + NAMESPACE));
-    }
-
-    @Test
     void stats() throws IOException {
         String hw = "Hello World";
         storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test.txt")), new ByteArrayInputStream(hw.getBytes()));
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/stats?path=/test.txt"), TestFileAttributes.class);
         assertThat(res.getFileName(), is("test.txt"));
         assertThat(res.getType(), is(FileAttributes.FileType.File));
-        assertThat(res.isReadOnly(), is(false));
     }
 
     @Test
@@ -131,23 +113,13 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void gettingStartedStats() {
-        FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/stats?path=/getting-started.md"), TestFileAttributes.class);
-        assertThat(res.getFileName(), is("getting-started.md"));
-        assertThat(res.getType(), is(FileAttributes.FileType.File));
-        assertThat(res.isReadOnly(), is(true));
-        assertThat(res.getSize(), is((long) GETTING_STARTED_CONTENT.length()));
-    }
-
-    @Test
     void list() throws IOException {
         String hw = "Hello World";
         storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test/test.txt")), new ByteArrayInputStream(hw.getBytes()));
         storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test/test2.txt")), new ByteArrayInputStream(hw.getBytes()));
 
         List<FileAttributes> res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory"), TestFileAttributes[].class));
-        assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("getting-started.md", "test"));
-        assertThat(res.stream().filter(fileAttributes -> fileAttributes.getFileName().equals("getting-started.md")).findFirst().get().isReadOnly(), is(true));
+        assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("test"));
 
         res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/test"), TestFileAttributes[].class));
         assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("test.txt", "test2.txt"));
@@ -158,7 +130,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
         assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(false));
         List<FileAttributes> res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory"), TestFileAttributes[].class));
         assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(true));
-        assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("getting-started.md"));
+        assertThat(res.stream().map(FileAttributes::getFileName).count(), is(0L));
     }
 
     @Test
@@ -248,25 +220,6 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void modifyGettingStarted_ShouldNotWork() {
-        MultipartBody body = MultipartBody.builder()
-            .addPart("fileContent", "test.txt", "Hello".getBytes())
-            .build();
-
-        HttpClientResponseException exception = Assertions.assertThrows(HttpClientResponseException.class, () ->
-                client.toBlocking().exchange(
-                    HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/getting-started.md", body)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
-                )
-        );
-        assertThat(exception.getMessage(), is("Illegal argument: 'getting-started.md' file is read-only"));
-
-        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/getting-started.md"))), is(false));
-
-        gettingStarted();
-    }
-
-    @Test
     void move() throws IOException {
         storageInterface.createDirectory(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));
         client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/files?from=/test&to=/foo", null));
@@ -276,31 +229,11 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void moveGettingStarted_ShouldNotWork() {
-        HttpClientResponseException exception = Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/files?from=/getting-started.md&to=/my-getting-started.md", null))
-        );
-        assertThat(exception.getMessage(), is("Illegal argument: 'getting-started.md' file is read-only"));
-
-        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/my-getting-started.md"))), is(false));
-
-        gettingStarted();
-    }
-
-    @Test
     void delete() throws IOException {
         storageInterface.createDirectory(null, toNamespacedStorageUri("namespace", URI.create("/test")));
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/test", null));
         boolean res = storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));
         assertThat(res, is(false));
-    }
-
-    @Test
-    void deleteGettingStarted_ShouldNotWork() {
-        HttpClientResponseException exception = Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/getting-started.md", null))
-        );
-        assertThat(exception.getMessage(), is("Illegal argument: 'getting-started.md' file is read-only"));
     }
 
     @Test
@@ -330,6 +263,5 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
         long creationTime;
         FileType type;
         long size;
-        boolean readOnly;
     }
 }

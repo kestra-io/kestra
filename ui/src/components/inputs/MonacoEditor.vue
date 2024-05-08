@@ -614,8 +614,8 @@
             destroy: function () {
                 this.subflowAutocompletionProvider?.dispose();
                 this.nestedFieldAutocompletionProvider?.dispose();
-                this.editor?.getModel()?.dispose();
-                this.editor?.dispose();
+                this.editor?.getModel()?.dispose?.();
+                this.editor?.dispose?.();
             },
             needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;

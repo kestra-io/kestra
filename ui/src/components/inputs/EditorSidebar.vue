@@ -634,7 +634,7 @@
                                 const folderIndex = currentFolder.findIndex(
                                     (item) =>
                                         typeof item === "object" &&
-                                        item.name === folderName
+                                        item.fileName === folderName
                                 );
                                 if (folderIndex === -1) {
                                     // If the folder doesn't exist, create it

@@ -1,5 +1,5 @@
 <template>
-    <div v-show="explorerVisible" class="w-25 p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
+    <div v-show="explorerVisible" class="p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
         <div class="d-flex flex-row">
             <el-select
                 v-model="filter"
@@ -959,6 +959,8 @@
 
     .sidebar {
         flex: unset;
+        min-width: 250px;
+        max-width: 300px;
         background: var(--card-bg);
         border-right: 1px solid var(--bs-border-color);
 

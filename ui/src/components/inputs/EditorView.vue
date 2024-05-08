@@ -575,10 +575,8 @@
                     fetchGraph();
                 }
 
-                if (validationDomElement.value) {
-                    validationDomElement.value.onResize(
-                        editorDomElement.value.$el.offsetWidth
-                    );
+                if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
+                    validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
                 }
 
                 return value;
@@ -1297,6 +1295,7 @@
         display: flex;
         align-items: center;
         justify-content: end;
+        max-height: 49.5px;
 
         :deep(.validation) {
             border: 0;

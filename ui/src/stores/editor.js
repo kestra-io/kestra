@@ -1,7 +1,7 @@
 export default {
     namespaced: true,
     state: {
-        explorerVisible: true,
+        explorerVisible: false,
         current: undefined,
         tabs: [],
     },

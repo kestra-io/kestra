@@ -6,8 +6,8 @@ export default {
         tabs: [],
     },
     mutations: {
-        toggleExplorerVisibility(state) {
-            state.explorerVisible = !state.explorerVisible;
+        toggleExplorerVisibility(state, isVisible) {
+            state.explorerVisible = isVisible ?? !state.explorerVisible;
         },
         changeOpenedTabs(state, payload) {
             const {

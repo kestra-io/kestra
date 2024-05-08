@@ -1038,12 +1038,12 @@
                 )
             "
         >
-            <el-button @click="toggleExplorerVisibility()">
+            <el-button @click="toggleExplorerVisibility()" class="toggle-button">
                 <component :is="explorerVisible ? MenuOpen : MenuClose" />
             </el-button>
         </el-tooltip>
 
-        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="tabs">
+        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="ms-1 tabs">
             <el-button
                 v-for="(tab, index) in openedTabs"
                 :key="index"
@@ -1287,6 +1287,7 @@
 
 <style lang="scss" scoped>
     @use "element-plus/theme-chalk/src/mixins/mixins" as *;
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .button-top {
         background: var(--card-bg);
@@ -1396,6 +1397,10 @@
 
     .topology-display .el-alert {
         margin-top: calc(3 * var(--spacer));
+    }
+
+    .toggle-button {
+        color: $secondary;
     }
 
     .tabs {

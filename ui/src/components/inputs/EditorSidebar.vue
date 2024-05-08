@@ -406,7 +406,7 @@
             },
         },
         methods: {
-            ...mapMutations("editor", ["changeOpenedTabs"]),
+            ...mapMutations("editor", ["toggleExplorerVisibility", "changeOpenedTabs"]),
             ...mapActions("namespace", [
                 "createDirectory",
                 "readDirectory",
@@ -449,8 +449,10 @@
                     const payload = {namespace: this.$route.params.namespace};
                     const items = await this.readDirectory(payload);
 
-                    this.renderNodes(items);
+                    // Closing the file explorer sidebar if there are no files on the root level
+                    if(!items.length) this.toggleExplorerVisibility(false)
 
+                    this.renderNodes(items);
                     this.items = this.sorted(this.items)
                 }
 

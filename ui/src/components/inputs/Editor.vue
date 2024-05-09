@@ -216,12 +216,12 @@
                 this.decorations = this.editor.createDecorationsCollection();
 
                 if (!this.original) {
-                    this.editor.onDidBlurEditorWidget(() => {
+                    this.editor.onDidBlurEditorWidget?.(() => {
                         this.$emit("focusout", editor.getValue());
                         this.focus = false;
                     })
 
-                    this.editor.onDidFocusEditorText(() => {
+                    this.editor.onDidFocusEditorText?.(() => {
                         this.focus = true;
                     })
 
@@ -262,7 +262,7 @@
                 });
 
                 // TabFocus is global to all editor so revert the behavior on non inputs
-                this.editor.onDidFocusEditorText(() => {
+                this.editor.onDidFocusEditorText?.(() => {
                     TabFocus.setTabFocusMode(this.input);
                 })
 
@@ -349,7 +349,7 @@
                         }
                     });
 
-                    this.editor.onDidChangeCursorPosition(() => {
+                    this.editor.onDidChangeCursorPosition?.(() => {
                         let position = this.editor.getPosition();
                         let model = this.editor.getModel();
                         clearTimeout(this.lastTimeout);
@@ -377,8 +377,8 @@
             },
             highlightPebble() {
                 // Highlight code that match pebble content
-                let model = this.editor.getModel();
-                let text = model.getValue();
+                let model = this.editor?.getModel?.();
+                let text = model?.getValue?.();
                 let regex = new RegExp("\\{\\{(.+?)}}", "g");
                 let match;
                 const decorationsToAdd = [];
@@ -407,6 +407,7 @@
     @import "../../styles/layout/root-dark.scss";
 
     .ks-editor {
+        display: grid;
         width: 100%;
 
         .top-nav {

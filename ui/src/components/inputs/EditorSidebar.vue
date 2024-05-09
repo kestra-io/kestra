@@ -1,5 +1,5 @@
 <template>
-    <div v-show="explorerVisible" class="w-25 p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
+    <div v-show="explorerVisible" class="p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
         <div class="d-flex flex-row">
             <el-select
                 v-model="filter"
@@ -114,7 +114,6 @@
             :allow-drop="(_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'"
             draggable
             node-key="id"
-            empty-text=""
             v-loading="items === undefined"
             :props="{class: 'node', isLeaf: 'leaf'}"
             class="mt-3"
@@ -133,6 +132,11 @@
             @node-drop="nodeMoved"
             @keydown.delete.prevent="deleteKeystroke"
         >
+            <template #empty>
+                <div class="m-5 empty">
+                    {{ $t("namespace files.no_items") }}
+                </div>
+            </template>
             <template #default="{data, node}">
                 <el-dropdown
                     :ref="`dropdown__${data.fileName}`"
@@ -402,7 +406,7 @@
             },
         },
         methods: {
-            ...mapMutations("editor", ["changeOpenedTabs"]),
+            ...mapMutations("editor", ["toggleExplorerVisibility", "changeOpenedTabs"]),
             ...mapActions("namespace", [
                 "createDirectory",
                 "readDirectory",
@@ -446,7 +450,6 @@
                     const items = await this.readDirectory(payload);
 
                     this.renderNodes(items);
-
                     this.items = this.sorted(this.items)
                 }
 
@@ -631,7 +634,7 @@
                                 const folderIndex = currentFolder.findIndex(
                                     (item) =>
                                         typeof item === "object" &&
-                                        item.name === folderName
+                                        item.fileName === folderName
                                 );
                                 if (folderIndex === -1) {
                                     // If the folder doesn't exist, create it
@@ -922,6 +925,10 @@
         height: calc(100% - 64px);
         overflow: hidden auto;
 
+        .el-tree__empty-block {
+            height: auto;
+        }
+
         &::-webkit-scrollbar {
             width: 2px;
         }
@@ -948,10 +955,20 @@
 </style>
 
 <style lang="scss" scoped>
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
+
     .sidebar {
         flex: unset;
+        min-width: 250px;
+        max-width: 300px;
         background: var(--card-bg);
         border-right: 1px solid var(--bs-border-color);
+
+        .empty {
+            text-align: center;
+            color: $secondary;
+            font-size: $font-size-xs;
+        }
 
         :deep(.el-button):not(.el-dialog .el-button) {
             border: 0;

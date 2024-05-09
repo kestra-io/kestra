@@ -575,10 +575,8 @@
                     fetchGraph();
                 }
 
-                if (validationDomElement.value) {
-                    validationDomElement.value.onResize(
-                        editorDomElement.value.$el.offsetWidth
-                    );
+                if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
+                    validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
                 }
 
                 return value;
@@ -1038,12 +1036,12 @@
                 )
             "
         >
-            <el-button @click="toggleExplorerVisibility()">
+            <el-button @click="toggleExplorerVisibility()" class="toggle-button">
                 <component :is="explorerVisible ? MenuOpen : MenuClose" />
             </el-button>
         </el-tooltip>
 
-        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="tabs">
+        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="ms-1 tabs">
             <el-button
                 v-for="(tab, index) in openedTabs"
                 :key="index"
@@ -1287,6 +1285,7 @@
 
 <style lang="scss" scoped>
     @use "element-plus/theme-chalk/src/mixins/mixins" as *;
+    @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .button-top {
         background: var(--card-bg);
@@ -1296,6 +1295,7 @@
         display: flex;
         align-items: center;
         justify-content: end;
+        max-height: 49.5px;
 
         :deep(.validation) {
             border: 0;
@@ -1398,6 +1398,10 @@
         margin-top: calc(3 * var(--spacer));
     }
 
+    .toggle-button {
+        color: $secondary;
+    }
+
     .tabs {
         flex: 1;
         overflow-x: auto;
@@ -1405,7 +1409,12 @@
 
         .tab-active {
             background: var(--bs-gray-200) !important;
+            color: black;
             cursor: default;
+
+            html.dark & {
+                color: white;
+            }
 
             .tab-name {
                 font-weight: 600;

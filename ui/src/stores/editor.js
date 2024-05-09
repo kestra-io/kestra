@@ -1,13 +1,13 @@
 export default {
     namespaced: true,
     state: {
-        explorerVisible: true,
+        explorerVisible: false,
         current: undefined,
         tabs: [],
     },
     mutations: {
-        toggleExplorerVisibility(state) {
-            state.explorerVisible = !state.explorerVisible;
+        toggleExplorerVisibility(state, isVisible) {
+            state.explorerVisible = isVisible ?? !state.explorerVisible;
         },
         changeOpenedTabs(state, payload) {
             const {

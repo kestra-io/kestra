@@ -1409,7 +1409,12 @@
 
         .tab-active {
             background: var(--bs-gray-200) !important;
+            color: black;
             cursor: default;
+
+            html.dark & {
+                color: white;
+            }
 
             .tab-name {
                 font-weight: 600;

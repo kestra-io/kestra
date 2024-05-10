@@ -407,8 +407,10 @@
     @import "../../styles/layout/root-dark.scss";
 
     .ks-editor {
+        display: flex;
+        flex-direction: column;
         height: 100%;
-        
+
         .top-nav {
             background-color: var(--bs-white);
             padding: calc(var(--spacer) / 2);
@@ -423,7 +425,7 @@
 
         .editor-container {
             display: flex;
-            height: 100%;
+            flex-grow: 1;
 
             &.single-line {
                 min-height: var(--el-component-size);

@@ -407,9 +407,8 @@
     @import "../../styles/layout/root-dark.scss";
 
     .ks-editor {
-        display: grid;
-        width: 100%;
-
+        height: 100%;
+        
         .top-nav {
             background-color: var(--bs-white);
             padding: calc(var(--spacer) / 2);

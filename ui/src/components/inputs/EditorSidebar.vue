@@ -958,9 +958,6 @@
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .sidebar {
-        flex: unset;
-        min-width: 250px;
-        max-width: 300px;
         background: var(--card-bg);
         border-right: 1px solid var(--bs-border-color);
 

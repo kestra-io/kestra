@@ -236,7 +236,7 @@ export default class YamlUtils {
     }
 
     static extractAllTypes(source) {
-        return this.extractFieldFromMaps(source, "type", (yamlDoc) => yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks", "triggers", "errors"].includes(e.key.value)))
+        return this.extractFieldFromMaps(source, "type", (yamlDoc) => yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks", "triggers", "errors"].includes(e.key?.value)))
     }
 
     static getTaskType(source, position) {
@@ -603,7 +603,7 @@ export default class YamlUtils {
             return false;
         }
 
-        const tasks = yamlDoc.contents.items.find(item => item.key.value === "tasks");
+        const tasks = yamlDoc.contents.items.find(item => item.key?.value === "tasks");
         return tasks?.value?.items?.length >= 1;
     }
 

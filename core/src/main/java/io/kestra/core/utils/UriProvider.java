@@ -16,7 +16,7 @@ public class UriProvider {
     String uri;
 
     private URI build(String url) {
-        if (uri == null) {
+        if (uri == null || uri.isEmpty()) {
             return null;
         }
 

@@ -10,6 +10,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -258,14 +259,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
-            RunContext runContext = workerTask.getRunContext().forWorkingDirectory(applicationContext, workerTask);
-
+            
+            final RunContext workingDirectoryRunContext = workerTask
+                .getRunContext()
+                .forWorkingDirectory(applicationContext, workerTask);
+            
+            RunContext runContext = workingDirectoryRunContext;
             try {
                 // preExecuteTasks
                 try {
-                    workingDirectory.preExecuteTasks(runContext, workerTask.getTaskRun());
+                    workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
                 } catch (Exception e) {
-                    runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+                    workingDirectoryRunContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     workerTask = workerTask.fail();
                     this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
                     this.logTerminated(workerTask);
@@ -292,18 +297,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
                     runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
                 }
-                
+
                 // postExecuteTasks
                 try {
-                    workingDirectory.postExecuteTasks(runContext, workerTask.getTaskRun());
+                    workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
                 } catch (Exception e) {
-                    runContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+                    workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     workerTask = workerTask.fail();
                     this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
-                    this.logTerminated(workerTask);
-                    return;
                 }
             } finally {
+                this.logTerminated(workerTask);
                 runContext.cleanup();
             }
         } else {

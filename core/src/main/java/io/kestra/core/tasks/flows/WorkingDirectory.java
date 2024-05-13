@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -14,19 +15,23 @@ import io.kestra.core.models.tasks.NamespaceFilesInterface;
 import io.kestra.core.models.tasks.OutputFilesInterface;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -38,7 +43,6 @@ import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -190,7 +194,9 @@ import jakarta.validation.constraints.NotNull;
 )
 @WorkingDirectoryTaskValidation
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
-
+    
+    private static final String OUTPUTS_FILE = "outputs.ion";
+    
     @Schema(
         title = "Cache configuration.",
         description = """
@@ -206,9 +212,9 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @Getter(AccessLevel.PRIVATE)
     @Builder.Default
     private transient long cacheDownloadedTime = 0L;
-    
+
     private Object inputFiles;
-    
+
     private List<String> outputFiles;
 
     @Override
@@ -273,23 +279,29 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
             namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.tempDir(), this.namespaceFiles);
         }
-        
+
         if (this.inputFiles != null) {
            FilesService.inputFiles(runContext, Map.of(), this.inputFiles);
         }
     }
 
     public void postExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
-        
         if (this.outputFiles != null) {
             try {
-                FilesService.outputFiles(runContext, this.outputFiles);
+                Map<String, URI> outputFilesURIs = FilesService.outputFiles(runContext, this.outputFiles);
+                if (!outputFilesURIs.isEmpty()) {
+                    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try (os) {
+                        FileSerde.write(os, outputFilesURIs);
+                    }
+                    runContext.storage().putFile(new ByteArrayInputStream(os.toByteArray()), OUTPUTS_FILE);
+                }
             } catch (Exception e) {
                 runContext.logger().error("Unable to capture WorkingDirectory output files", e);
                 throw e;
             }
         }
-        
+
         if (cache == null) {
             return;
         }
@@ -357,9 +369,37 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             } catch (IOException e) {
                 runContext.logger().error("Unable to execute WorkingDirectory post actions", e);
             }
-
     }
-
+    
+    @Override
+    public Outputs outputs(final RunContext runContext) throws IOException {
+        URI uri = URI.create("kestra://" + runContext.storage().getContextBaseURI() + "/").resolve(OUTPUTS_FILE);
+        
+        if (!runContext.storage().isFileExist(uri)) {
+            // no outputs files was captured for that tasks
+            return null;
+        }
+        
+        try(InputStream is = runContext.storage().getFile(uri)) {
+            Map<String, URI> outputs = FileSerde
+                .readAll(is, new TypeReference<Map<String, URI>>() {})
+                .blockFirst();
+            return new Outputs(outputs);
+        }
+    }
+    
+    @Getter
+    public static class Outputs extends VoidOutput {
+        @Schema(
+            title = "The URIs for output files."
+        )
+        private final Map<String, URI> outputFiles;
+        
+        public Outputs(final Map<String, URI> outputsFiles) {
+            this.outputFiles = outputsFiles;
+        }
+    }
+    
     @SuperBuilder
     @ToString
     @EqualsAndHashCode

@@ -184,7 +184,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     @Override
-    public Switch.Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public Switch.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
         return Output.builder()
             .value(rendererValue(runContext))
             .defaults(cases

@@ -111,7 +111,7 @@ public class TaskDefaultsCaseTest {
         }
 
         @Override
-        public Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        public Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
             return Output.builder()
                 .def(this.def)
                 .build();

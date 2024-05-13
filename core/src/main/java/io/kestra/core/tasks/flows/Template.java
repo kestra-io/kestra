@@ -176,7 +176,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     }
 
     @Override
-    public Template.Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public Template.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
         Output.OutputBuilder builder = Output.builder();
 
         if (this.args != null) {

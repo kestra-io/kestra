@@ -201,7 +201,7 @@
                     {
                         href: {name: "settings"},
                         routes: this.routeStartWith("admin/settings"),
-                        title: this.$t("settings"),
+                        title: this.$t("settings.label"),
                         icon: {
                             element: shallowRef(CogOutline),
                             class: "menu-icon"

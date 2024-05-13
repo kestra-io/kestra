@@ -10,7 +10,6 @@
     "revision": "Revision",
     "Language": "Language",
     "Set default page": "Set default page",
-    "settings": "Settings",
     "theme": "Theme",
     "flows": "Flows",
     "flow": "Flow",
@@ -695,6 +694,47 @@
       "title2": "Search for tasks and triggers to build your flow.",
       "search": "Search across +{count} plugins"
     },
-    "no inputs": "This flow has no inputs."
+    "no inputs": "This flow has no inputs.",
+    "settings": {
+      "label": "Settings",
+      "blocks": {
+        "configuration": {
+          "label": "Main Configuration",
+          "fields": {
+            "default_namespace": "Default Namespace",
+            "log_level": "Default Log Level",
+            "log_display": "Default Log Display",
+            "execute_flow": "Execute the Flow"
+          }
+        },
+        "theme": {
+          "label": "Theme Preferences",
+          "fields": {
+            "mode": "Theme Mode",
+            "editor_theme": "Editor Theme",
+            "editor_font_size": "Editor Font Size",
+            "editor_font_family": "Editor Font Family",
+            "editor_folding_stratgy": "Editor Automatic Fold or Multi Lines",
+            "environment_name": "Environment Name",
+            "environment_color": "Environment Color"
+          }
+        },
+        "localization": {
+          "label": "Date and Time Settings",
+          "fields": {
+            "language": "Language",
+            "time_zone": "Time Zone",
+            "date_format": "Date Format"
+          }
+        },
+        "export": {
+          "label": "Export",
+          "fields": {
+            "flows": "Export All Flows",
+            "templates": "Export All Templates"
+          }
+        }
+      }
+    }
   }
 }

@@ -219,6 +219,19 @@ public class ExecutorService {
             );
 
             if (endedTask.isPresent()) {
+                WorkerTaskResult workerTaskResult = endedTask.get();
+                // Compute outputs for the parent Flowable task if a terminated state was resolved
+                if (workerTaskResult.getTaskRun().getState().isTerminated()) {
+                    try {
+                        Output outputs = flowableParent.outputs(runContext);
+                        return Optional.of(new WorkerTaskResult(workerTaskResult
+                            .getTaskRun()
+                            .withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of()))
+                        );
+                    } catch (Exception e) {
+                        runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
+                    }
+                }
                 return endedTask;
             }
 
@@ -289,10 +302,10 @@ public class ExecutorService {
                 );
 
                 if (!nexts.isEmpty()) {
+                    // TODO - saveFlowableOutput seems to be useless
                     return this.saveFlowableOutput(
                         nexts,
-                        executor,
-                        parentTaskRun
+                        executor
                     );
                 }
             } catch (Exception e) {
@@ -305,8 +318,7 @@ public class ExecutorService {
 
     private List<TaskRun> saveFlowableOutput(
         List<NextTaskRun> nextTaskRuns,
-        Executor executor,
-        TaskRun parentTaskRun
+        Executor executor
     ) {
         return nextTaskRuns
             .stream()
@@ -326,7 +338,7 @@ public class ExecutorService {
                         t.getTaskRun()
                     );
 
-                    Output outputs = flowableTask.outputs(runContext, executor.getExecution(), parentTaskRun);
+                    Output outputs = flowableTask.outputs(runContext);
                     taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
                 } catch (Exception e) {
                     executor.getFlow().logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
@@ -404,7 +416,8 @@ public class ExecutorService {
         }
 
         return executor.withTaskRun(
-            this.saveFlowableOutput(nextTaskRuns, executor, null),
+            // TODO - saveFlowableOutput seems to be only useful for Template
+            this.saveFlowableOutput(nextTaskRuns, executor),
             "handleNext"
         );
     }
@@ -607,15 +620,14 @@ public class ExecutorService {
 
         List<ResolvedTask> currentTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
 
+        // TODO - saveFlowableOutput seems to be useless
         List<TaskRun> nexts = this.saveFlowableOutput(
             FlowableUtils.resolveSequentialNexts(
                 executor.getExecution(),
                 currentTasks
             ),
-            executor,
-            null
+            executor
         );
-
         if (nexts.isEmpty()) {
             return executor;
         }

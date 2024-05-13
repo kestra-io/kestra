@@ -143,6 +143,11 @@ public class RunContext {
         );
         this.pluginConfiguration = Collections.emptyMap();
     }
+    
+    private RunContext(final ApplicationContext context) {
+        this.applicationContext = context;
+        this.initBean(context);
+    }
 
     private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
         this.pluginConfiguration = applicationContext.findBean(PluginConfigurations.class)
@@ -170,7 +175,10 @@ public class RunContext {
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
         this.variables = this.variables(flow, task, execution, taskRun, null, decryptVariables);
-
+        initStorage(taskRun);
+    }
+    
+    private void initStorage(TaskRun taskRun) {
         if (taskRun != null && this.storageInterface != null) {
             this.storage = new InternalStorage(
                 logger(),
@@ -179,7 +187,7 @@ public class RunContext {
             );
         }
     }
-
+    
     @SuppressWarnings("unchecked")
     private void initLogger(TaskRun taskRun, Task task) {
         this.runContextLogger = new RunContextLogger(
@@ -502,13 +510,10 @@ public class RunContext {
     @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
         this.initBean(applicationContext);
-
+        
         final TaskRun taskRun = workerTask.getTaskRun();
-
-        this.initLogger(taskRun, workerTask.getTask());
-
-        Map<String, Object> clone = new HashMap<>(this.variables);
-
+        
+        final Map<String, Object> clone = new HashMap<>(this.variables);
         clone.remove("taskrun");
         clone.put("taskrun", this.variables(taskRun));
 
@@ -526,11 +531,14 @@ public class RunContext {
         }
 
         clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
-
-        this.variables = ImmutableMap.copyOf(clone);
-        this.storage = new InternalStorage(logger(), StorageContext.forTask(taskRun), storageInterface);
-        this.initPluginConfiguration(applicationContext, workerTask.getTask().getType());
-        return this;
+        
+        final RunContext newContext = new RunContext(applicationContext);
+        newContext.variables = ImmutableMap.copyOf(clone);
+        newContext.temporaryDirectory = this.tempDir();
+        newContext.initLogger(taskRun, workerTask.getTask());
+        newContext.initStorage(taskRun);
+        newContext.initPluginConfiguration(applicationContext, workerTask.getTask().getType());
+        return newContext;
     }
 
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTrigger workerTrigger) {
@@ -546,15 +554,15 @@ public class RunContext {
     }
 
     public RunContext forWorkingDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
-        forWorker(applicationContext, workerTask);
-
-        Map<String, Object> clone = new HashMap<>(this.variables);
+        RunContext newContext = forWorker(applicationContext, workerTask);
+        
+        Map<String, Object> clone = new HashMap<>(newContext.variables);
 
         clone.put("workerTaskrun", clone.get("taskrun"));
+        
+        newContext.variables = ImmutableMap.copyOf(clone);
 
-        this.variables = ImmutableMap.copyOf(clone);
-
-        return this;
+        return newContext;
     }
 
     public RunContext forTaskRunner(TaskRunner taskRunner) {

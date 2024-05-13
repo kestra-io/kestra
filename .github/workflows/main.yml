@@ -122,7 +122,7 @@ jobs:
           report_paths: '**/build/test-results/**/TEST-*.xml'
 
       - name: Analyze with Sonar
-        if: ${{ env.SONAR_TOKEN != 0 }}
+        if: ${{ env.SONAR_TOKEN != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

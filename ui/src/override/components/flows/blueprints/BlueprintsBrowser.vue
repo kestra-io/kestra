@@ -320,6 +320,7 @@
     }
 
     .blueprints {
+        display: grid;
         width: 100%;
 
         .blueprint-card {

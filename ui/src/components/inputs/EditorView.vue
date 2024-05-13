@@ -1105,7 +1105,7 @@
             id="editorWrapper"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? `flex: 0 0 ${editorWidth}` : {}"
+            :style="`flex: 0 0 calc(${combinedEditor ? editorWidth : 100}% - 11px)`"
         >
             <editor
                 ref="editorDomElement"
@@ -1124,27 +1124,18 @@
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
-        <div :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 ${100 - editorWidth}%` : {}">
-            <Blueprints
-                v-if="viewType === 'source-blueprints' || blueprintsLoaded"
-                @loaded="blueprintsLoaded = true"
-                :class="{
-                    'd-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS,
-                }"
-                embed
-                class="combined-right-view enhance-readability"
-            />
+        <div class="d-flex" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : {}">           
             <div
+                v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
+                class="combined-right-view enhance-readability"
+            >
+                <Blueprints @loaded="blueprintsLoaded = true" embed />
+            </div>
+
+            <div
+                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
+                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
                 class="topology-display"
-                v-if="
-                    viewType === editorViewTypes.SOURCE_TOPOLOGY ||
-                        viewType === editorViewTypes.TOPOLOGY
-                "
-                :class="
-                    viewType === editorViewTypes.SOURCE_TOPOLOGY
-                        ? 'combined-right-view'
-                        : 'vueflow'
-                "
             >
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -1168,6 +1159,7 @@
                     {{ $t("unable to generate graph") }}
                 </el-alert>
             </div>
+            
             <PluginDocumentation
                 v-if="viewType === editorViewTypes.SOURCE_DOC"
                 class="plugin-doc combined-right-view enhance-readability"
@@ -1343,16 +1335,17 @@
         }
 
         &::-webkit-scrollbar {
-            width: 5px;
+            width: 2px;
+            height: 2px;
         }
 
         &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
+            background: var(--card-bg);
         }
 
         &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
             background: var(--bs-primary);
+            border-radius: 0px;
         }
     }
 
@@ -1362,8 +1355,7 @@
     }
 
     .plugin-doc {
-        overflow-x: hidden;
-        width: 100%;
+        overflow-x: scroll;
     }
 
     .slider {

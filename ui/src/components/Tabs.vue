@@ -17,9 +17,9 @@
     </el-tabs>
 
     <section ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" />
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 1 calc(${explorerWidth}% - 11px);`" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
-        <div :style="`flex: 0 0 calc(100% - (calc(${explorerWidth}% - 11px));`">
+        <div :key="`${explorerVisible}__${explorerWidth}`" :style="`flex: 0 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
             <component
                 v-bind="{...activeTab.props, ...attrsWithoutClass}"
                 v-on="activeTab['v-on'] ?? {}"

@@ -301,7 +301,8 @@
                 const namespacesWithRange = YamlUtils.extractFieldFromMaps(source, "namespace").reverse();
                 const namespace = namespacesWithRange.find(namespaceWithRange => {
                     const range = namespaceWithRange.range;
-                    return range[0] < position.offset && position.offset < range[2];
+                    const offset = model.getOffsetAt(position)
+                    return range[0] <= offset && offset <= range[2];
                 })?.namespace;
                 if (namespace === undefined) {
                     return undefined;
@@ -365,8 +366,8 @@
                     .find((subflowWithRange) => {
                         const range = subflowWithRange.range;
                         return (
-                            range[0] < previousWordOffset &&
-                            previousWordOffset < range[2]
+                            range[0] <= previousWordOffset &&
+                            previousWordOffset <= range[2]
                         );
                     });
 

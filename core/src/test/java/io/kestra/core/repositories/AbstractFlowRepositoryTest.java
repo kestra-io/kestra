@@ -30,6 +30,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,9 +64,13 @@ public abstract class AbstractFlowRepositoryTest {
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     private QueueInterface<Trigger> triggerQueue;
 
+    @BeforeAll
+    protected void initAll() throws IOException, URISyntaxException {
+        TestsUtils.loads(repositoryLoader);
+    }
+
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
-        TestsUtils.loads(repositoryLoader);
         FlowListener.reset();
     }
 

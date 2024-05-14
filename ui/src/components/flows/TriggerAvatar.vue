@@ -70,6 +70,25 @@
 </script>
 
 <style lang="scss" scoped>
+    .trigger {
+        max-width: 180px;
+        overflow-x: auto;
+
+        &::-webkit-scrollbar {
+            width: 2px;
+            height: 2px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--bs-primary);
+            border-radius: 0px;
+        }
+    }
+
     .el-button {
         display: inline-flex !important;
         margin-right: calc(var(--spacer) / 4);

@@ -416,6 +416,11 @@
         flex: 1;
     }
 
+    .el-dialog__body .ks-editor {
+        display: flex;
+        width: 100%;
+    }
+
     .ks-editor {
         display: flex;
 

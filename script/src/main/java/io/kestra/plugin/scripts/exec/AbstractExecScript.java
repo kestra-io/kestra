@@ -168,4 +168,12 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         // errexit option may be unsupported by non-shell interpreter.
         return List.of("set -e");
     }
+    
+    /** {@inheritDoc} **/
+    @Override
+    public void kill() {
+        if (this.taskRunner != null) {
+            this.taskRunner.kill();
+        }
+    }
 }

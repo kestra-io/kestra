@@ -74,7 +74,7 @@ public class WorkerTaskThread extends AbstractWorkerThread {
             }
         } catch (dev.failsafe.TimeoutExceededException e) {
             kill(false);
-            this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout, e));
+            this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout));
         } catch (Exception e) {
             this.exceptionHandler(this, e);
         }

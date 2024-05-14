@@ -10,4 +10,8 @@ public class TimeoutExceededException extends Exception {
     public TimeoutExceededException(Duration timeout, Exception e) {
         super("Timeout after " + DurationFormatUtils.formatDurationHMS(timeout.toMillis()), e);
     }
+
+    public TimeoutExceededException(final Duration timeout) {
+        super("Timeout after " + DurationFormatUtils.formatDurationHMS(timeout.toMillis()));
+    }
 }

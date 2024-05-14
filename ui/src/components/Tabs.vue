@@ -16,9 +16,10 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section v-bind="$attrs" :class="{...containerClass, 'flex-row': isEditorActiveTab}">
-        <EditorSidebar v-if="isEditorActiveTab" />
-        <div :class="{'w-75': isEditorActiveTab}">
+    <section ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 1 calc(${explorerWidth}% - 11px);`" />
+        <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
+        <div :key="`${explorerVisible}__${explorerWidth}`" :style="`flex: 0 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
             <component
                 v-bind="{...activeTab.props, ...attrsWithoutClass}"
                 v-on="activeTab['v-on'] ?? {}"
@@ -31,6 +32,8 @@
 </template>
 
 <script>
+    import {mapState, mapMutations} from "vuex";
+
     import EditorSidebar from "./inputs/EditorSidebar.vue";
 
     export default {
@@ -83,6 +86,26 @@
             this.setActiveName();
         },
         methods: {
+            ...mapMutations("editor", ["changeExplorerWidth"]),
+            dragSidebar(e){
+                const SELF = this;
+
+                let dragX = e.clientX;
+
+                let blockWidth = this.$refs.sidebar.$el.offsetWidth;
+                let parentWidth = this.$refs.container.offsetWidth;
+
+                let blockWidthPercent = (blockWidth / parentWidth) * 100;
+
+                document.onmousemove = function onMouseMove(e) {
+                    let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
+                    SELF.changeExplorerWidth(percent)               
+                };
+
+                document.onmouseup = () => {
+                    document.onmousemove = document.onmouseup = null;
+                };
+            },
             embeddedTabChange(tab) {
                 this.$emit("changed", tab);
             },
@@ -105,6 +128,10 @@
             },
         },
         computed: {
+            ...mapState({
+                explorerVisible: (state) => state.editor.explorerVisible,
+                explorerWidth: (state) => state.editor.explorerWidth,
+            }),
             containerClass() {
                 if (this.activeTab.containerClass) {
                     return {[this.activeTab.containerClass] : true};
@@ -147,6 +174,20 @@
             a {
                 color: var(--el-text-color-disabled);
             }
+        }
+    }
+
+    .slider {
+        flex: 0 0 3px;
+        border-radius: 0.15rem;
+        margin: 0 4px;
+        background-color: var(--bs-border-color);
+        border: none;
+        cursor: col-resize;
+        user-select: none; /* disable selection */
+
+        &:hover {
+            background-color: var(--bs-secondary);
         }
     }
 </style>

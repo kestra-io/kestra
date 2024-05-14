@@ -407,9 +407,17 @@
 <style lang="scss">
     @import "../../styles/layout/root-dark.scss";
 
+    :not(.el-drawer__body) > .ks-editor {
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .el-drawer__body .ks-editor {
+        flex: 1;
+    }
+
     .ks-editor {
-        display: grid;
-        width: 100%;
+        display: flex;
 
         .top-nav {
             background-color: var(--bs-white);
@@ -425,7 +433,7 @@
 
         .editor-container {
             display: flex;
-            height: 100%;
+            flex-grow: 1;
 
             &.single-line {
                 min-height: var(--el-component-size);

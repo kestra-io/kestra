@@ -269,10 +269,6 @@
         );
     });
 
-    const leftEditorWidth = computed(() => {
-        return editorWidth.value + "%";
-    });
-
     const autoRestorelocalStorageKey = computed(() => {
         return "autoRestore-" + localStorageKey.value;
     });
@@ -942,21 +938,15 @@
 
     const dragEditor = (e) => {
         let dragX = e.clientX;
-        let blockWidth = editorDomElement.value.$el.offsetWidth;
-        let parentWidth = editorDomElement.value.$el.parentNode.offsetWidth;
-        let blockWidthPercent = (blockWidth / parentWidth) * 100;
+
+        const {offsetWidth, parentNode} = document.getElementById("editorWrapper");
+        let blockWidthPercent = (offsetWidth / parentNode.offsetWidth) * 100;
 
         document.onmousemove = function onMouseMove(e) {
-            let percent =
-                blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-            if (percent > 75) {
-                percent = 75;
-            } else if (percent < 25) {
-                percent = 25;
-            }
+            let percent = blockWidthPercent + ((e.clientX - dragX) / parentNode.offsetWidth) * 100;
 
-            editorWidth.value = percent;
-            validationDomElement.value.onResize((percent * parentWidth) / 100);
+            editorWidth.value = percent > 75 ? 75 : percent < 25 ? 25 : percent;
+            validationDomElement.value.onResize((percent * parentNode.offsetWidth) / 100);
         };
 
         document.onmouseup = () => {
@@ -1111,50 +1101,41 @@
         </div>
     </div>
     <div v-bind="$attrs" class="main-editor" v-loading="isLoading">
-        <editor
-            ref="editorDomElement"
+        <div
+            id="editorWrapper"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="combinedEditor ? {flex: '0 0 ' + leftEditorWidth} : {}"
-            @save="save"
-            @execute="execute"
-            v-model="flowYaml"
-            schema-type="flow"
-            :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
-            :extension="currentTab?.extension"
-            @update:model-value="editorUpdate($event)"
-            @cursor="updatePluginDocumentation($event)"
-            :creating="isCreating"
-            @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
-            :read-only="isReadOnly"
-            :navbar="false"
-        />
-        <div class="slider" @mousedown="dragEditor" v-if="combinedEditor" />
-        <div
-            :style="
-                viewType === editorViewTypes.SOURCE ? {display: 'none'} : {}
-            "
+            :style="`flex: 0 0 calc(${combinedEditor ? editorWidth : 100}% - 11px)`"
         >
-            <Blueprints
-                v-if="viewType === 'source-blueprints' || blueprintsLoaded"
-                @loaded="blueprintsLoaded = true"
-                :class="{
-                    'd-none': viewType !== editorViewTypes.SOURCE_BLUEPRINTS,
-                }"
-                embed
-                class="combined-right-view enhance-readability"
+            <editor
+                ref="editorDomElement"
+                @save="save"
+                @execute="execute"
+                v-model="flowYaml"
+                schema-type="flow"
+                :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
+                :extension="currentTab?.extension"
+                @update:model-value="editorUpdate($event)"
+                @cursor="updatePluginDocumentation($event)"
+                :creating="isCreating"
+                @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                :read-only="isReadOnly"
+                :navbar="false"
             />
+        </div>
+        <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
+        <div class="d-flex" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : {}">           
             <div
+                v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
+                class="combined-right-view enhance-readability"
+            >
+                <Blueprints @loaded="blueprintsLoaded = true" embed />
+            </div>
+
+            <div
+                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
+                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
                 class="topology-display"
-                v-if="
-                    viewType === editorViewTypes.SOURCE_TOPOLOGY ||
-                        viewType === editorViewTypes.TOPOLOGY
-                "
-                :class="
-                    viewType === editorViewTypes.SOURCE_TOPOLOGY
-                        ? 'combined-right-view'
-                        : 'vueflow'
-                "
             >
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -1178,12 +1159,13 @@
                     {{ $t("unable to generate graph") }}
                 </el-alert>
             </div>
+            
             <PluginDocumentation
                 v-if="viewType === editorViewTypes.SOURCE_DOC"
                 class="plugin-doc combined-right-view enhance-readability"
             />
         </div>
-
+    
         <drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
@@ -1353,16 +1335,17 @@
         }
 
         &::-webkit-scrollbar {
-            width: 5px;
+            width: 2px;
+            height: 2px;
         }
 
         &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
+            background: var(--card-bg);
         }
 
         &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
             background: var(--bs-primary);
+            border-radius: 0px;
         }
     }
 
@@ -1372,14 +1355,13 @@
     }
 
     .plugin-doc {
-        overflow-x: hidden;
-        width: 100%;
+        overflow-x: scroll;
     }
 
     .slider {
-        flex: 0 0 calc(1rem / 7);
+        flex: 0 0 3px;
         border-radius: 0.15rem;
-        margin: 0 0.25rem;
+        margin: 0 4px;
         background-color: var(--bs-border-color);
         border: none;
         cursor: col-resize;

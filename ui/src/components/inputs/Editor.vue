@@ -406,10 +406,17 @@
 <style lang="scss">
     @import "../../styles/layout/root-dark.scss";
 
-    .ks-editor {
-        display: flex;
+    :not(.el-drawer__body) > .ks-editor {
         flex-direction: column;
         height: 100%;
+    }
+
+    .el-drawer__body .ks-editor {
+        flex: 1;
+    }
+
+    .ks-editor {
+        display: flex;
 
         .top-nav {
             background-color: var(--bs-white);

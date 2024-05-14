@@ -133,6 +133,9 @@
             isFlowEdit() {
                 return this.$route.name === "flows/update"
             },
+            isNamespaceEdit() {
+                return this.$route.name === "namespaces/update"
+            },
             selectedLogLevel() {
                 return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
             },
@@ -142,7 +145,7 @@
                 return this.$route.query.endDate ? this.$route.query.endDate : undefined;
             },
             namespace() {
-                return this.$route.params.namespace;
+                return this.$route.params.namespace ?? this.$route.params.id;
             },
             flowId() {
                 return this.$route.params.id;
@@ -170,9 +173,12 @@
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
+
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.namespace;
                     queryFilter["flowId"] = this.flowId;
+                } else if (this.isNamespaceEdit) {
+                    queryFilter["namespace"] = this.namespace;
                 }
 
                 if (!queryFilter["startDate"] || !queryFilter["endDate"]) {

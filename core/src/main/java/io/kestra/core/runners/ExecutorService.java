@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.tasks.flows.WaitFor;
 import io.kestra.core.tasks.flows.Pause;
 import io.kestra.core.tasks.flows.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
@@ -523,13 +524,37 @@ public class ExecutorService {
                             ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                     executionDelays.add(executionDelayBuilder.build());
                     executor.withExecution(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                            executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true):
+                            executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true) :
                             executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false),
                         "handleRetryTask");
                     // Prevent workerTaskResult of flowable to be sent
                     // because one of its children is retrying
                     if (taskRun.getParentTaskRunId() != null) {
                         list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                    }
+                }
+            }
+            // WaitFor case
+            else if (task instanceof WaitFor waitFor && taskRun.getState().isRunning()) {
+                TaskRun childTaskRun = waitFor.getChildTaskRun(executor.getExecution(), taskRun).orElse(null);
+                if (childTaskRun != null && childTaskRun.getState().isSuccess()) {
+                    Output newOutput = waitFor.outputs(null, executor.getExecution(), taskRun);
+                    TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), updatedTaskRun);
+                    List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
+                    Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
+                    if (next.isEmpty()) {
+                        return executor;
+                    } else if (nextDate != null && !next.isEmpty()) {
+                        executionDelays.add(ExecutionDelay.builder()
+                            .taskRunId(taskRun.getId())
+                            .executionId(executor.getExecution().getId())
+                            .date(nextDate)
+                            .state(State.Type.RUNNING)
+                            .delayType(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)
+                            .build());
+                        Execution execution = executionService.pauseFlowable(executor.getExecution(), taskRun.getId(), newOutput);
+                        executor.withExecution(execution, "pauseLoop");
                     }
                 }
             }

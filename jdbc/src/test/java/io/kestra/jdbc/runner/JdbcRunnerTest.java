@@ -28,7 +28,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
@@ -75,6 +74,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private ForEachItemCaseTest forEachItemCaseTest;
+
+    @Inject
+    private WaitForCaseTest waitForTestCaseTest;
 
     @Inject
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
@@ -323,5 +325,25 @@ public abstract class JdbcRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    void waitFor() throws TimeoutException {
+        waitForTestCaseTest.waitfor();
+    }
+
+    @Test
+    void waitforMaxIterations() throws TimeoutException {
+        waitForTestCaseTest.waitforMaxIterations();
+    }
+
+    @Test
+    void waitforMaxDuration() throws TimeoutException {
+        waitForTestCaseTest.waitforMaxDuration();
+    }
+
+    @Test
+    void waitforNoSuccess() throws TimeoutException {
+        waitForTestCaseTest.waitforNoSuccess();
     }
 }

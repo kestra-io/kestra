@@ -15,10 +15,9 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
-import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -472,12 +471,6 @@ public class RunContext {
         variables.put("outputs", outputs);
 
         return this.clone(variables);
-    }
-
-    public RunContext addVariables(String nameProperty, Map<String, Object> variables) {
-        Map<String, Object> merged = mergeWithNullableValues(this.variables, Map.of(nameProperty, variables));
-        this.variables = merged;
-        return this;
     }
 
     private RunContext clone(Map<String, Object> variables) {

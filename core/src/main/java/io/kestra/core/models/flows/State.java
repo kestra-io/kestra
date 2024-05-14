@@ -155,6 +155,11 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isSuccess() {
+        return this.current.isSuccess();
+    }
+
+    @JsonIgnore
     public boolean isRestartable() {
         return this.current.isFailed() || this.isPaused();
     }
@@ -203,6 +208,10 @@ public class State {
 
         public boolean isRetrying() {
             return this == Type.RETRYING || this == Type.RETRIED;
+        }
+
+        public boolean isSuccess() {
+            return this == Type.SUCCESS;
         }
 
     }

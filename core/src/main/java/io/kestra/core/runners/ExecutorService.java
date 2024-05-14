@@ -302,11 +302,9 @@ public class ExecutorService {
                 );
 
                 if (!nexts.isEmpty()) {
-                    // TODO - saveFlowableOutput seems to be useless
-                    return this.saveFlowableOutput(
-                        nexts,
-                        executor
-                    );
+                    return nexts.stream()
+                        .map(throwFunction(NextTaskRun::getTaskRun))
+                        .toList();
                 }
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);
@@ -620,14 +618,11 @@ public class ExecutorService {
 
         List<ResolvedTask> currentTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
 
-        // TODO - saveFlowableOutput seems to be useless
-        List<TaskRun> nexts = this.saveFlowableOutput(
-            FlowableUtils.resolveSequentialNexts(
-                executor.getExecution(),
-                currentTasks
-            ),
-            executor
-        );
+        List<TaskRun> nexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), currentTasks)
+            .stream()
+            .map(throwFunction(NextTaskRun::getTaskRun))
+            .toList();
+
         if (nexts.isEmpty()) {
             return executor;
         }

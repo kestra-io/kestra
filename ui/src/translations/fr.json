@@ -677,19 +677,19 @@
         "configuration": {
           "label": "Configuration Principale",
           "fields": {
-            "default_namespace": "Espace de Noms par Défaut",
-            "log_level": "Niveau de Journalisation par Défaut",
-            "log_display": "Affichage de Journal par Défaut",
-            "execute_flow": "Exécuter le Flux"
+            "default_namespace": "Espace de noms par défaut",
+            "log_level": "Niveau d'affichage des journaux par défaut",
+            "log_display": "Affichage des journaux par défaut",
+            "execute_flow": "Exécuter le flow"
           }
         },
         "theme": {
-          "label": "Préférences de Thème",
+          "label": "Préférences de thème",
           "fields": {
-            "mode": "Mode Thème",
-            "editor_theme": "Thème de l'Éditeur",
-            "editor_font_size": "Taille de Police de l'Éditeur",
-            "editor_font_family": "Police de Caractères de l'Éditeur",
+            "mode": "Mode thème",
+            "editor_theme": "Thème de l'éditeur",
+            "editor_font_size": "Taille de Police de l'éditeur",
+            "editor_font_family": "Police de caractères de l'éditeur",
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
             "environment_name": "Nom de l'Environnement",
             "environment_color": "Couleur de l'Environnement"
@@ -706,11 +706,12 @@
         "export": {
           "label": "Exporter",
           "fields": {
-            "flows": "Exporter Tous les Flux",
-            "templates": "Exporter Tous les Modèles"
+            "flows": "Exporter tous les Flux",
+            "templates": "Exporter tous les modèles"
           }
         }
       }
-    }    
+    },
+    "enable concurrency": "Activer la concurrence"
   }
 }

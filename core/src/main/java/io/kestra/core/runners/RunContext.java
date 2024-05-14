@@ -411,6 +411,10 @@ public class RunContext {
             builder.put("value", taskRun.getValue());
         }
 
+        if (taskRun.getIteration() != null) {
+            builder.put("iteration", taskRun.getIteration());
+        }
+
         return builder.build();
     }
 

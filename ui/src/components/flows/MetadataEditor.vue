@@ -104,12 +104,20 @@
             </template>
             <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
         </el-form-item>
+        <el-switch
+            :model-value="showConcurrency"
+            @update:model-value="updateConcurrency($event)"
+            :active-text="$t('enable concurrency')"
+        />
         <el-form-item v-if="concurrencySchema">
             <template #label>
                 <code>concurrency</code>
+                <br>
                 <task-basic
                     :schema="concurrencySchema"
                     v-model="newMetadata.concurrency"
+                    root="concurrency"
+                    v-if="showConcurrency"
                 />
             </template>
         </el-form-item>
@@ -198,7 +206,8 @@
                 },
                 concurrencySchema: null,
                 schemas: {},
-                preview: false
+                preview: false,
+                showConcurrency: false
             };
         },
         watch: {
@@ -222,6 +231,7 @@
                 this.newMetadata.outputs = yamlUtils.stringify(this.metadata.outputs) || ""
                 this.newMetadata.disabled = this.metadata.disabled || false
                 this.newMetadata.retry = yamlUtils.stringify(this.metadata.retry) || ""
+                this.showConcurrency = !!this.metadata.concurrency
             },
             addItem() {
                 const local = this.newMetadata.labels || [];
@@ -262,6 +272,14 @@
                     return null
                 }
                 return concurrency
+            },
+            updateConcurrency(value) {
+                if (value) {
+                    this.newMetadata.concurrency = this.newMetadata.concurrency || {}
+                } else {
+                    this.newMetadata.concurrency = null
+                }
+                this.showConcurrency = value;
             }
         },
         computed: {

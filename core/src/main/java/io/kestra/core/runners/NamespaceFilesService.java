@@ -34,9 +34,7 @@ public class NamespaceFilesService {
             return Collections.emptyList();
         }
 
-        List<URI> list = new ArrayList<>();
-        list.addAll(recursiveList(tenantId, namespace, null));
-
+        List<URI> list = recursiveList(tenantId, namespace, null);
 
         list = list
             .stream()
@@ -76,28 +74,28 @@ public class NamespaceFilesService {
     }
 
     public List<URI> recursiveList(String tenantId, String namespace, @Nullable URI path) throws IOException {
-        URI uri = uri(namespace, path);
+        return this.recursiveList(tenantId, namespace, path, false);
+    }
 
-        List<URI> result = new ArrayList<>();
-        List<FileAttributes> list;
-        try {
-            list = storageInterface.list(tenantId, uri);
-        } catch (FileNotFoundException e) {
-            // prevent crashing upon trying to inject namespace files while the root namespace files folder doesn't exist
-            return result;
-        }
+    public List<URI> recursiveList(String tenantId, String namespace, @Nullable URI path, boolean includeDirectoryEntries) throws IOException {
+        return storageInterface.allByPrefix(tenantId, URI.create(this.uri(namespace, path) + "/"), includeDirectoryEntries)
+            // We get rid of Kestra schema as we want to work on a folder-like basis
+            .stream().map(URI::getPath)
+            .map(URI::create)
+            .map(uri -> URI.create("/" + this.uri(namespace, null).relativize(uri)))
+            .toList();
+    }
 
-        for (var file: list) {
-            URI current = URI.create((path != null ? path.getPath() : "") +  "/" + file.getFileName());
+    public boolean delete(String tenantId, String namespace, URI path) throws IOException {
+        return storageInterface.delete(tenantId, this.uri(namespace, path));
+    }
 
-            if (file.getType() == FileAttributes.FileType.Directory) {
-                result.addAll(this.recursiveList(tenantId, namespace, current));
-            } else {
-                result.add(current);
-            }
-        }
+    public void createFile(String tenantId, String namespace, URI path, InputStream inputStream) throws IOException {
+        storageInterface.put(tenantId, this.uri(namespace, path), inputStream);
+    }
 
-        return result;
+    public void createDirectory(String tenantId, String namespace, URI path) throws IOException {
+        storageInterface.createDirectory(tenantId, this.uri(namespace, path));
     }
 
     private static boolean match(List<String> patterns, String file) {

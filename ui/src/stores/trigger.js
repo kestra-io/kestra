@@ -17,7 +17,7 @@ export default {
             return (await this.$http.post(`${apiUrl(this)}/triggers/${options.namespace}/${options.flowId}/${options.triggerId}/unlock`)).data;
         },
         find({_commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/triggers/${options.namespace}/${options.flowId}`).then(response => {
+            return this.$http.get(`${apiUrl(this)}/triggers/${options.namespace}/${options.flowId}`, {params: options}).then(response => {
                 return response.data;
             })
         },

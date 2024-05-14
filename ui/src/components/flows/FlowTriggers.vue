@@ -255,7 +255,7 @@
             },
             loadData() {
                 this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id})
+                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {

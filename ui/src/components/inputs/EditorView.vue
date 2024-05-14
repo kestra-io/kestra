@@ -428,8 +428,6 @@
         if (!store.getters["auth/isLogged"] && haveChange.value) {
             persistEditorContent(true);
         }
-
-        store.commit("editor/closeTabs");
     });
 
     const stopTour = () => {

@@ -94,6 +94,10 @@
             diffEditor: {
                 type: Boolean,
                 default: false
+            },
+            input: {
+                type: Boolean,
+                default: false
             }
         },
         emits: ["editorDidMount", "change"],
@@ -537,6 +541,7 @@
                     },
                     ...this.options
                 };
+
                 if (this.diffEditor) {
                     this.editor = monaco.editor.createDiffEditor(this.$el, options);
                     let originalModel = monaco.editor.createModel(this.original, this.language);
@@ -576,7 +581,7 @@
             },
             async changeTab(pathOrName, valueSupplier, useModelCache = true) {
                 let model;
-                if (pathOrName === undefined) {
+                if (this.input || pathOrName === undefined) {
                     model = monaco.editor.createModel(
                         await valueSupplier(),
                         this.language,

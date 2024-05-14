@@ -104,7 +104,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         title = "Whether to wait for the subflow execution to finish before continuing the current execution."
     )
     @PluginProperty
-    private final Boolean wait = false;
+    private final Boolean wait = true;
 
     @Builder.Default
     @Schema(
@@ -112,7 +112,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         description = "Note that this option works only if `wait` is set to `true`."
     )
     @PluginProperty
-    private final Boolean transmitFailed = false;
+    private final Boolean transmitFailed = true;
 
     @Builder.Default
     @Schema(

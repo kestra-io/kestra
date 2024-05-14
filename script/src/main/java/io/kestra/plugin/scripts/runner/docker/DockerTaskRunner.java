@@ -103,6 +103,9 @@ public class DockerTaskRunner extends TaskRunner {
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
     public static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
+    private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
+    private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
+
     @Schema(
         title = "Docker API URI."
     )
@@ -392,23 +395,27 @@ public class DockerTaskRunner extends TaskRunner {
     }
 
     private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException {
-        boolean volumesEnabled = runContext.<Boolean>pluginConfiguration("volume-enabled").orElse(Boolean.FALSE);
-        if (!volumesEnabled) {
+        Optional<Boolean> volumeEnabledConfig = runContext.pluginConfiguration(VOLUME_ENABLED_CONFIG);
+        if (volumeEnabledConfig.isEmpty()) {
             // check the legacy property and emit a warning if used
             Optional<Boolean> property = runContext.getApplicationContext().getProperty(
-                "kestra.tasks.scripts.docker.volume-enabled",
+                LEGACY_VOLUME_ENABLED_CONFIG,
                 Boolean.class
             );
             if (property.isPresent()) {
-                runContext.logger().warn("`kestra.tasks.scripts.docker.volume-enabled` is deprecated, please use the plugin configuration `volume-enabled` instead");
-                volumesEnabled = property.get();
+                runContext.logger().warn(
+                    "`{}` is deprecated, please use the plugin configuration `{}` instead",
+                    LEGACY_VOLUME_ENABLED_CONFIG,
+                    VOLUME_ENABLED_CONFIG
+                );
+                volumeEnabledConfig = property;
             }
         }
+        boolean volumesEnabled = volumeEnabledConfig.orElse(Boolean.FALSE);
 
         Path workingDirectory = taskCommands.getWorkingDirectory();
         String image = runContext.render(this.image, additionalVars);
-
-
+        
         CreateContainerCmd container = dockerClient.createContainerCmd(image);
         addMetadata(runContext, container);
 

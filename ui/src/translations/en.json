@@ -735,6 +735,7 @@
           }
         }
       }
-    }
+    },
+    "enable concurrency": "Enable concurrency"
   }
 }

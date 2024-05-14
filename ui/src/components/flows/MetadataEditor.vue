@@ -33,8 +33,22 @@
                 :full-height="false"
                 :input="true"
                 lang="text"
+                @update:model-value="(value) => newMetadata.description = value"
             />
             <markdown v-else :source="newMetadata.description" />
+        </el-form-item>
+        <el-form-item>
+            <template #label>
+                <code>retry</code>
+            </template>
+            <editor
+                :model-value="newMetadata.retry"
+                :navbar="false"
+                :full-height="false"
+                :input="true"
+                lang="yaml"
+                @update:model-value="(value) => newMetadata.retry = value"
+            />
         </el-form-item>
         <el-form-item>
             <template #label>
@@ -81,6 +95,7 @@
                 :full-height="false"
                 :input="true"
                 lang="yaml"
+                @update:model-value="(value) => newMetadata.outputs = value"
             />
         </el-form-item>
         <el-form-item>
@@ -116,6 +131,7 @@
                 :full-height="false"
                 :input="true"
                 lang="yaml"
+                @update:model-value="(value) => newMetadata.taskDefaults = value"
             />
         </el-form-item>
         <el-form-item>
@@ -179,6 +195,7 @@
                     id: "",
                     namespace: "",
                     description: "",
+                    retry: "",
                     labels: [["", undefined]],
                     inputs: [],
                     variables: [["", undefined]],
@@ -213,7 +230,7 @@
                 this.newMetadata.taskDefaults = yamlUtils.stringify(this.metadata.taskDefaults) || ""
                 this.newMetadata.outputs = yamlUtils.stringify(this.metadata.outputs) || ""
                 this.newMetadata.disabled = this.metadata.disabled || false
-                console.log("h")
+                this.newMetadata.retry = yamlUtils.stringify(this.metadata.retry) || ""
                 this.showConcurrency = !!this.metadata.concurrency
             },
             addItem() {
@@ -270,10 +287,12 @@
             cleanMetadata() {
                 const taskDefaults = yamlUtils.parse(this.newMetadata.taskDefaults);
                 const outputs = yamlUtils.parse(this.newMetadata.outputs);
+                const retry = yamlUtils.parse(this.newMetadata.retry);
                 const metadata = {
                     id: this.newMetadata.id,
                     namespace: this.newMetadata.namespace,
                     description: this.newMetadata.description,
+                    retry: retry,
                     labels: this.arrayToObject(this.newMetadata.labels),
                     inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),

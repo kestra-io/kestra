@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.WorkerJobLifecycle;
@@ -12,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -22,6 +22,7 @@ import java.util.*;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
     @NotBlank
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")

@@ -21,7 +21,6 @@ import jakarta.validation.constraints.Pattern;
 @Getter
 @NoArgsConstructor
 @Introspected
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ArrayInput.class, name = "ARRAY"),
@@ -39,6 +38,7 @@ import jakarta.validation.constraints.Pattern;
     @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
     @JsonSubTypes.Type(value = URIInput.class, name = "URI")
 })
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class Input<T> implements Data {
     @NotNull
     @NotBlank

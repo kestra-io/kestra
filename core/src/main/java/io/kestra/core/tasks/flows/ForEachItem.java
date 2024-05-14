@@ -97,7 +97,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                       INSTALL httpfs;
                       LOAD httpfs;
                       SELECT *
-                      FROM read_csv_auto('https://raw.githubusercontent.com/kestra-io/datasets/main/csv/orders.csv', header=True);
+                      FROM read_csv_auto('https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv', header=True);
                     store: true
 
                   - id: each

@@ -28,7 +28,6 @@ import java.util.List;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 abstract public class AbstractTrigger implements TriggerInterface {
-
     protected String id;
 
     protected String type;

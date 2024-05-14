@@ -42,6 +42,7 @@
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
+                    :input="input"
                     class="position-relative"
                 />
                 <div

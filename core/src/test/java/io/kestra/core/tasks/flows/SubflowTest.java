@@ -91,6 +91,7 @@ class SubflowTest {
         Map<String, Object> expected = Subflow.Output.builder()
             .executionId(EXECUTION_ID)
             .state(DEFAULT_SUCCESS_STATE.getCurrent())
+            .outputs(Collections.emptyMap())
             .build()
             .toMap();
         assertThat(result.get().getParentTaskRun().getOutputs(), is(expected));

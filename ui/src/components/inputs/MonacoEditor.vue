@@ -94,6 +94,10 @@
             diffEditor: {
                 type: Boolean,
                 default: false
+            },
+            input: {
+                type: Boolean,
+                default: false
             }
         },
         emits: ["editorDidMount", "change"],
@@ -301,7 +305,8 @@
                 const namespacesWithRange = YamlUtils.extractFieldFromMaps(source, "namespace").reverse();
                 const namespace = namespacesWithRange.find(namespaceWithRange => {
                     const range = namespaceWithRange.range;
-                    return range[0] < position.offset && position.offset < range[2];
+                    const offset = model.getOffsetAt(position)
+                    return range[0] <= offset && offset <= range[2];
                 })?.namespace;
                 if (namespace === undefined) {
                     return undefined;
@@ -365,8 +370,8 @@
                     .find((subflowWithRange) => {
                         const range = subflowWithRange.range;
                         return (
-                            range[0] < previousWordOffset &&
-                            previousWordOffset < range[2]
+                            range[0] <= previousWordOffset &&
+                            previousWordOffset <= range[2]
                         );
                     });
 
@@ -536,6 +541,7 @@
                     },
                     ...this.options
                 };
+
                 if (this.diffEditor) {
                     this.editor = monaco.editor.createDiffEditor(this.$el, options);
                     let originalModel = monaco.editor.createModel(this.original, this.language);
@@ -575,7 +581,7 @@
             },
             async changeTab(pathOrName, valueSupplier, useModelCache = true) {
                 let model;
-                if (pathOrName === undefined) {
+                if (this.input || pathOrName === undefined) {
                     model = monaco.editor.createModel(
                         await valueSupplier(),
                         this.language,

@@ -1,5 +1,7 @@
 package io.kestra.core.services;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -25,6 +27,10 @@ import jakarta.validation.ConstraintViolationException;
 
 @Singleton
 public class TaskDefaultService {
+    private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
+        .copy()
+        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+
     @Nullable
     @Inject
     protected TaskGlobalDefaultConfiguration globalDefault;
@@ -55,7 +61,7 @@ public class TaskDefaultService {
         return list;
     }
 
-    private static Map<String, List<TaskDefault>> taskDefaultsToMap(List<TaskDefault> taskDefaults) {
+    private Map<String, List<TaskDefault>> taskDefaultsToMap(List<TaskDefault> taskDefaults) {
         return taskDefaults
             .stream()
             .collect(Collectors.groupingBy(TaskDefault::getType));
@@ -90,7 +96,7 @@ public class TaskDefaultService {
             flow = ((FlowWithSource) flow).toFlow();
         }
 
-        Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
+        Map<String, Object> flowAsMap = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
         List<TaskDefault> allDefaults = mergeAllDefaults(flow);
         Map<Boolean, List<TaskDefault>> allDefaultsGroup = allDefaults
@@ -98,10 +104,10 @@ public class TaskDefaultService {
             .collect(Collectors.groupingBy(TaskDefault::isForced, Collectors.toList()));
 
         // non forced
-        Map<String, List<TaskDefault>> defaults = taskDefaultsToMap(allDefaultsGroup.getOrDefault(false, new ArrayList<>()));
+        Map<String, List<TaskDefault>> defaults = taskDefaultsToMap(allDefaultsGroup.getOrDefault(false, Collections.emptyList()));
 
         // forced task default need to be reverse, lower win
-        Map<String, List<TaskDefault>> forced = taskDefaultsToMap(Lists.reverse(allDefaultsGroup.getOrDefault(true, new ArrayList<>())));
+        Map<String, List<TaskDefault>> forced = taskDefaultsToMap(Lists.reverse(allDefaultsGroup.getOrDefault(true, Collections.emptyList())));
 
         Object taskDefaults = flowAsMap.get("taskDefaults");
         if (taskDefaults != null) {
@@ -124,7 +130,7 @@ public class TaskDefaultService {
         return yamlFlowParser.parse(flowAsMap, Flow.class, false);
     }
 
-    private static Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {
+    private Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {
         if (object instanceof Map<?, ?> value) {
             if (value.containsKey("type")) {
                 value = defaults(value, defaults);
@@ -149,7 +155,7 @@ public class TaskDefaultService {
     }
 
     @SuppressWarnings("unchecked")
-    protected static Map<?, ?> defaults(Map<?, ?> task, Map<String, List<TaskDefault>> defaults) {
+    private Map<?, ?> defaults(Map<?, ?> task, Map<String, List<TaskDefault>> defaults) {
         Object type = task.get("type");
         if (!(type instanceof String taskType)) {
             return task;

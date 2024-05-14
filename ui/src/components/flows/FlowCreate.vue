@@ -58,7 +58,7 @@
                 }
 
                 return `id: myflow
-namespace: myteam
+namespace: company.myteam
 description: Save and Execute the flow
 
 labels:

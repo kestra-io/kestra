@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -174,7 +175,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
                     .filter(t -> t.getTaskId().equals("exists"))
                     .findFirst().get()
                     .getOutputs(),
-                nullValue()
+                is(Map.of("uris", Collections.emptyMap()))
             );
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
             assertTrue(storageInterface.exists(null, cacheURI));

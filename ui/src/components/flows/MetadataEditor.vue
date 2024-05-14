@@ -73,6 +73,18 @@
         </el-form-item>
         <el-form-item>
             <template #label>
+                <code>outputs</code>
+            </template>
+            <editor
+                :model-value="newMetadata.outputs"
+                :navbar="false"
+                :full-height="false"
+                :input="true"
+                lang="yaml"
+            />
+        </el-form-item>
+        <el-form-item>
+            <template #label>
                 <code>variables</code>
             </template>
             <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
@@ -91,8 +103,7 @@
                 <code>taskDefaults</code>
             </template>
             <editor
-                v-if="!preview"
-                :v-model-value="newMetadata.taskDefaults"
+                :model-value="newMetadata.taskDefaults"
                 :navbar="false"
                 :full-height="false"
                 :input="true"
@@ -164,7 +175,8 @@
                     inputs: [],
                     variables: [["", undefined]],
                     concurrency: {},
-                    taskDefaults: [],
+                    taskDefaults: "",
+                    outputs: "",
                     disabled: false
                 },
                 concurrencySchema: null,
@@ -189,7 +201,8 @@
                 this.newMetadata.inputs = this.metadata.inputs || []
                 this.newMetadata.variables = this.metadata.variables ? Object.entries(toRaw(this.metadata.variables)) : [["", undefined]]
                 this.newMetadata.concurrency = this.metadata.concurrency || {}
-                this.newMetadata.taskDefaults = yamlUtils.stringify(this.metadata.taskDefaults) || []
+                this.newMetadata.taskDefaults = yamlUtils.stringify(this.metadata.taskDefaults) || ""
+                this.newMetadata.outputs = yamlUtils.stringify(this.metadata.outputs) || ""
                 this.newMetadata.disabled = this.metadata.disabled || false
             },
             addItem() {
@@ -237,6 +250,7 @@
             ...mapState("plugin", ["inputSchema", "inputsType"]),
             cleanMetadata() {
                 const taskDefaults = yamlUtils.parse(this.newMetadata.taskDefaults);
+                const outputs = yamlUtils.parse(this.newMetadata.outputs);
                 const metadata = {
                     id: this.newMetadata.id,
                     namespace: this.newMetadata.namespace,
@@ -246,8 +260,10 @@
                     variables: this.arrayToObject(this.newMetadata.variables),
                     concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
                     taskDefaults: taskDefaults,
+                    outputs: outputs,
                     disabled: this.newMetadata.disabled
                 }
+
                 return metadata;
             }
         }

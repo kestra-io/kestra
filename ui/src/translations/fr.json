@@ -10,7 +10,6 @@
     "revision": "Révision",
     "Language": "Langue",
     "Set default page": "Définir la page par défaut",
-    "settings": "Paramètres",
     "theme": "Thème",
     "flows": "Flows",
     "flow": "Flow",
@@ -671,6 +670,47 @@
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux.",
       "search": "Cherchez à travers +{count} plugins"
     },
-    "no inputs": "Ce flow n'a pas d'entrée."
+    "no inputs": "Ce flow n'a pas d'entrée.",    
+    "settings": {
+      "label": "Paramètres",
+      "blocks": {
+        "configuration": {
+          "label": "Configuration Principale",
+          "fields": {
+            "default_namespace": "Espace de Noms par Défaut",
+            "log_level": "Niveau de Journalisation par Défaut",
+            "log_display": "Affichage de Journal par Défaut",
+            "execute_flow": "Exécuter le Flux"
+          }
+        },
+        "theme": {
+          "label": "Préférences de Thème",
+          "fields": {
+            "mode": "Mode Thème",
+            "editor_theme": "Thème de l'Éditeur",
+            "editor_font_size": "Taille de Police de l'Éditeur",
+            "editor_font_family": "Police de Caractères de l'Éditeur",
+            "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
+            "environment_name": "Nom de l'Environnement",
+            "environment_color": "Couleur de l'Environnement"
+          }
+        },
+        "localization": {
+          "label": "Paramètres de Date et d'Heure",
+          "fields": {
+            "language": "Langue",
+            "time_zone": "Fuseau Horaire",
+            "date_format": "Format de Date"
+          }
+        },
+        "export": {
+          "label": "Exporter",
+          "fields": {
+            "flows": "Exporter Tous les Flux",
+            "templates": "Exporter Tous les Modèles"
+          }
+        }
+      }
+    }    
   }
 }

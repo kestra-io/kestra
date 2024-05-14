@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -199,10 +198,6 @@ public class DockerTaskRunner extends TaskRunner {
     @PluginProperty(dynamic = true)
     private String shmSize;
     
-    @Builder.Default
-    @Getter(AccessLevel.NONE)
-    private AtomicReference<Runnable> killable = new AtomicReference<>(); // Used for killing the Docker container.
-    
     public static DockerTaskRunner from(DockerOptions dockerOptions) {
         if (dockerOptions == null) {
             return DockerTaskRunner.builder().build();
@@ -262,7 +257,7 @@ public class DockerTaskRunner extends TaskRunner {
             );
             
             // register the runnable to be used for killing the container.
-            killable.set(() -> safelyKillContainer(dockerClient, exec.getId(), logger));
+            onKill(() -> kill(dockerClient, exec.getId(), logger));
             
             AtomicBoolean ended = new AtomicBoolean(false);
 
@@ -339,7 +334,7 @@ public class DockerTaskRunner extends TaskRunner {
                 try {
                     // kill container if it's still running, this means there was an exception and the container didn't
                     // come to a normal end.
-                    safelyKillContainer(dockerClient, exec.getId(), logger);
+                    kill();
                     dockerClient.removeContainerCmd(exec.getId()).exec();
                 } catch (Exception ignored) {
 
@@ -347,15 +342,18 @@ public class DockerTaskRunner extends TaskRunner {
             }
         }
     }
-    
-    private void safelyKillContainer(DockerClient dockerClient, String containerId, Logger logger) {
-        var inspect = dockerClient.inspectContainerCmd(containerId).exec();
-        if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
-            try {
+
+    private void kill(final DockerClient dockerClient, final String containerId, final Logger logger) {
+        try {
+            InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
+            if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
                 dockerClient.killContainerCmd(containerId).exec();
-            } catch (Exception e) {
-                logger.error("Unable to kill a running container", e);
+                logger.debug("Container was killed.");
             }
+        } catch (NotFoundException ignore) {
+            // silently ignore - container does not exist anymore
+        } catch (Exception e) {
+            logger.error("Failed to kill running container.", e);
         }
     }
 
@@ -570,15 +568,4 @@ public class DockerTaskRunner extends TaskRunner {
             );
         }
     }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public void kill() {
-        if (killable.get() != null) {
-            killable.get().run();
-        }
-    }
-    
 }

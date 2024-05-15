@@ -40,9 +40,9 @@ import java.util.stream.Stream;
 @Schema(
     title = "Run a specific task repeatedly until the expected condition is met.",
     description = """
-        Use this task if your downstream processing requires waiting for a specific HTTP response or a job to finish. 
+        Use this task if your downstream processing requires waiting for a specific HTTP response or a job to finish.
         You can access the task output in the `condition`.
-        
+
         The `condition` is always checked after the task execution.
         """
 )
@@ -54,7 +54,7 @@ import java.util.stream.Stream;
             code = """
                 id: exampleFlow
                 namespace: myteam
-                                
+
                 tasks:
                   - id: waitFor
                     type: io.kestra.core.tasks.flows.WaitFor
@@ -65,8 +65,8 @@ import java.util.stream.Stream;
                       format: "{{ outputs.waitFor.iterationCount }}"
                 """
         )
-
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.WaitFor"
 )
 public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Valid

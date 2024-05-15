@@ -33,7 +33,8 @@ import jakarta.validation.constraints.NotNull;
 
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.FlowNamespaceCondition"
 )
 @Deprecated
 public class FlowNamespaceCondition extends Condition {

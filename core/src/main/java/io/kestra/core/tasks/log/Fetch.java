@@ -51,7 +51,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                 "  - \"previous_task_id\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.log.Fetch"
 )
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(

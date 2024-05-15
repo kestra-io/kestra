@@ -47,7 +47,8 @@ import java.util.Map;
                 """
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.storages.FilterItems"
 )
 @SuperBuilder
 @ToString

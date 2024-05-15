@@ -66,7 +66,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "        expression: \"{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.executions.Labels"
 )
 public class Labels extends Task implements ExecutionUpdatableTask {
     @Schema(

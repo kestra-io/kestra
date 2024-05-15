@@ -34,7 +34,8 @@ import jakarta.validation.constraints.NotNull;
                 "      dayOfWeek: \"MONDAY\"",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.DayWeekCondition"
 )
 public class DayWeekCondition extends Condition implements ScheduleCondition {
     @NotNull

@@ -51,7 +51,8 @@ import java.util.Optional;
                 "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.AllowFailure"
 )
 public class AllowFailure extends Sequential implements FlowableTask<VoidOutput> {
     @Override

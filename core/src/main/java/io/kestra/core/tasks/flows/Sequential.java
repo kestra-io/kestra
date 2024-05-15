@@ -62,7 +62,8 @@ import java.util.stream.Stream;
                 "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Sequential"
 )
 public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Valid

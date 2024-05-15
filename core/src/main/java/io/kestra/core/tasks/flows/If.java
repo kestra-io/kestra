@@ -69,7 +69,8 @@ import java.util.stream.Stream;
                 "        message: 'Condition was false'",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.If"
 )
 public class If extends Task implements FlowableTask<VoidOutput> {
     @PluginProperty(dynamic = true)

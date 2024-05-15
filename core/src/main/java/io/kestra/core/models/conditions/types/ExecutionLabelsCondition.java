@@ -41,7 +41,8 @@ import java.util.Map;
                 "         owner: john.doe"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.ExecutionLabelsCondition"
 )
 public class ExecutionLabelsCondition extends Condition {
 

@@ -29,7 +29,8 @@ import java.net.URI;
                 "uri: \"kestra://long/url/file.txt\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.storages.Size"
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(

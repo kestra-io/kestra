@@ -36,7 +36,8 @@ import jakarta.validation.constraints.NotNull;
                 "      dayInMonth: FIRST",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.DayWeekInMonthCondition"
 )
 public class DayWeekInMonthCondition extends Condition implements ScheduleCondition {
     @NotNull

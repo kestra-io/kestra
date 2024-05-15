@@ -52,7 +52,8 @@ import java.util.Map;
             },
             full = true
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.states.Set"
 )
 public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Schema(

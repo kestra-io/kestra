@@ -53,7 +53,8 @@ import java.util.Locale;
                 """
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.PublicHolidayCondition"
 )
 public class PublicHolidayCondition extends Condition implements ScheduleCondition {
     @NotEmpty

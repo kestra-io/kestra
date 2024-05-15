@@ -106,7 +106,8 @@ import java.util.Optional;
                 "            - 'sleep 1'"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.EachParallel"
 )
 public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull

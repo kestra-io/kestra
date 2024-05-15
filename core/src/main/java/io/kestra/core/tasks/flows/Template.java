@@ -80,7 +80,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "    format: \"{{ task.id }} > {{ taskrun.startDate }}\"\n"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Template"
 )
 @TemplateEnabled
 public class Template extends Task implements FlowableTask<Template.Output> {

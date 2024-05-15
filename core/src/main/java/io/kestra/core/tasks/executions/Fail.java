@@ -85,7 +85,8 @@ import lombok.experimental.SuperBuilder;
                 "    format: I'm after the fail on condition "
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.executions.Fail"
 )
 public class Fail extends Task implements RunnableTask<VoidOutput> {
     @PluginProperty(dynamic = true)

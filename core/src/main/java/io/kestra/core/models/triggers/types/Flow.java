@@ -63,7 +63,8 @@ import jakarta.validation.constraints.NotNull;
             "        in:\n" +
             "          - SUCCESS"
 
-    )
+    ),
+    aliases = "io.kestra.core.models.triggers.types.Flow"
 )
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
 

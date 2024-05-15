@@ -83,7 +83,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "        format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Switch"
 )
 @Introspected
 @SwitchTaskValidation

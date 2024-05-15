@@ -34,7 +34,8 @@ import jakarta.validation.constraints.NotNull;
                 "      flowId: my-current-flow"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.FlowCondition"
 )
 @Deprecated
 public class FlowCondition extends Condition {

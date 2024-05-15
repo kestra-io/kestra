@@ -115,8 +115,8 @@ import java.util.stream.Stream;
                 stopAfter:
                   - FAILED"""
         ),
-    }
-
+    },
+    aliases = "io.kestra.core.models.triggers.types.Schedule"
 )
 public class Schedule extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<Schedule.Output> {
     private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";

@@ -42,7 +42,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "         dayOfWeek: \"SUNDAY\"",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.OrCondition"
 )
 public class OrCondition extends Condition implements ScheduleCondition {
     @NotNull

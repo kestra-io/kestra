@@ -27,7 +27,7 @@
                             "Powerful orchestration engine",
                             "Declarative workflows as code and from the UI",
                             "Event-driven automations",
-                            "Embedded Visual Studio code editor",
+                            "Embedded code editor",
                             "Embedded documentation",
                             "Live-updating topology view",
                             "Access to 400+ plugins",

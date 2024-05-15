@@ -862,6 +862,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         Execution newExecution = executionService.replay(executor.getExecution(), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
+                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
+                        Execution execution  = executionService.retryFlowable(executor.getExecution(), executionDelay.getTaskRunId());
+                        executor = executor.withExecution(execution, "continueLoop");
+                    }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);
                 }

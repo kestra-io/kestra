@@ -1,16 +1,15 @@
 package io.kestra.core.models.tasks;
 
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.hierarchies.AbstractGraph;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Optional;

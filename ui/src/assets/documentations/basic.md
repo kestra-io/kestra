@@ -106,6 +106,156 @@ triggers:
 
 You can add documentation to flows, tasks, inputs or triggers using the `description` property in which you can use the [Markdown](https://en.wikipedia.org/wiki/Markdown) syntax. All markdown descriptions will be rendered in the UI.
 
+## Pebble templating
+Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble) allowing you to dynamically render variables, inputs and outputs within the execution context using [Pebble expressions](https://kestra.io/docs/concepts/expression). For example, the `{{ flow.namespace }}` expression allows accessing the namespace of the current flow and the `{{ printContext() }}` function allows you to print the entire context of the execution, which is useful for debugging.
+
+The table below lists common Pebble expressions.
+
+| Expression                                                                                         | Description                                                                                                             |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `{{ flow.id }}`                                                                                    | The identifier of the flow.                                                                                             |
+| `{{ flow.namespace }}`                                                                             | The name of the flow namespace.                                                                                         |
+| `{{ flow.tenantId }}`                                                                              | The identifier of the tenant (EE only).                                                                                 |
+| `{{ flow.revision }}`                                                                              | The revision of the flow.                                                                                               |
+| `{{ execution.id }}`                                                                               | The execution ID, a generated unique id for each execution.                                                             |
+| `{{ execution.startDate }}`                                                                        | The start date of the current execution, can be formatted with `{{ execution.startDate                                  | date('yyyy-MM-dd HH:mm:ss.SSSSSS') }}`. |
+| `{{ execution.originalId }}`                                                                       | The original execution ID, this id will never change even in case of replay and keep the first execution ID.            |
+| `{{ task.id }}`                                                                                    | The current task ID.                                                                                                    |
+| `{{ task.type }}`                                                                                  | The current task Type (Java fully qualified class name).                                                                |
+| `{{ taskrun.id }}`                                                                                 | The current task run ID.                                                                                                |
+| `{{ taskrun.startDate }}`                                                                          | The current task run start date.                                                                                        |
+| `{{ taskrun.parentId }}`                                                                           | The current task run parent identifier. Only available with tasks inside a Flowable Task.                               |
+| `{{ taskrun.value }}`                                                                              | The value of the current task run, only available with tasks wrapped in Flowable Tasks.                                 |
+| `{{ taskrun.attemptsCount }}`                                                                      | The number of attempts for the current task (when retry or restart is performed).                                       |
+| `{{ parent.taskrun.value }}`                                                                       | The value of the closest (first) parent task run, only available with tasks inside a Flowable Task.                     |
+| `{{ parent.outputs }}`                                                                             | The outputs of the closest (first) parent task run Flowable Task, only available with tasks wrapped in a Flowable Task. |
+| `{{ parents }}`                                                                                    | The list of parent tasks, only available with tasks wrapped in a Flowable Task.                                         |
+| `{{ labels }}`                                                                                     | The executions labels accessible by keys, for example: `{{ labels.myKey1 }}`.                                           |
+| `{{ trigger.date }}`                                                                               | The date of the current schedule.                                                                                       |
+| `{{ trigger.next }}`                                                                               | The date of the next schedule.                                                                                          |
+| `{{ trigger.previous }}`                                                                           | The date of the previous schedule.                                                                                      |
+| `{{ trigger.executionId }}`                                                                        | The ID of the execution that triggers the current flow.                                                                 |
+| `{{ trigger.namespace }}`                                                                          | The namespace of the flow that triggers the current flow.                                                               |
+| `{{ trigger.flowId }}`                                                                             | The ID of the flow that triggers the current flow.                                                                      |
+| `{{ trigger.flowRevision }}`                                                                       | The revision of the flow that triggers the current flow.                                                                |
+| `{{ envs.foo }}`                                                                                   | Accesses environment variable `KESTRA_FOO`.                                                                             |
+| `{{ globals.foo }}`                                                                                | Accesses global variable `foo`.                                                                                         |
+| `{{ vars.my_variable }}`                                                                           | Accesses flow variable `my_variable`.                                                                                   |
+| `{{ inputs.myInput }}`                                                                             | Accesses flow input `myInput`.                                                                                          |
+| `{{ secret('MY_SECRET') }}`                                                                        | Retrieves secret `MY_SECRET`.                                                                                           |
+| `{{ namespace.myproject.myvariable }}`                                                             | Accesses namespace variable `myproject.myvariable`.                                                                     |
+| `{{ outputs.taskId.outputAttribute }}`                                                             | Accesses task output attribute.                                                                                         |
+| `{{ range(0, 3) }}`                                                                                | Generates a list from 0 to 3.                                                                                           |
+| `{{ block("post") }}`                                                                              | Renders the contents of the "post" block.                                                                               |
+| `{{ currentEachOutput(outputs.first) }}`                                                           | Retrieves the current output of a sibling task.                                                                         |
+| `{{ json('{"foo": [666, 1, 2]}').foo[0] }}`                                                        | Converts JSON string to object and accesses its properties.                                                             |
+| `{{ yaml('foo: [666, 1, 2]').foo[0] }}`                                                            | Converts YAML string to object and accesses its properties.                                                             |
+| `{{ max(user.age, 80) }}`                                                                          | Returns the largest of its numerical arguments.                                                                         |
+| `{{ min(user.age, 80) }}`                                                                          | Returns the smallest of its numerical arguments.                                                                        |
+| `{{ now() }}`                                                                                      | Returns the current datetime.                                                                                           |
+| `{{ parent() }}`                                                                                   | Renders the content of the parent block.                                                                                |
+| `{{ read('subdir/file.txt') }}`                                                                    | Reads an internal storage file and returns its content as a string.                                                     |
+| `{{ render(namespace.github.token) }}`                                                             | Recursively renders the variable containing Pebble expressions.                                                         |
+| `{{ renderOnce(expression_string) }}`                                                              | Renders nested Pebble expressions only once.                                                                            |
+| `{{ firstDefined outputs.task1.uri outputs.task2.uri }}`                                           | Returns the first defined variable.                                                                                     |
+| `{{ get object ["key"] }}`                                                                         | Retrieves an element from an array or map by key.                                                                       |
+| `{{ concat "apple" ~ "pear" ~ "banana" }}`                                                         | Concatenates multiple strings.                                                                                          |
+| `{{ contains ["apple", "pear", "banana"] "apple" }}`                                               | Checks if a collection contains a particular item.                                                                      |
+| `{% for user in users %}{{ loop.index }} - {{ user.id }}{% endfor %}`                              | Iterates over a list of values.                                                                                         |
+| `{% if users is empty %} ... {% endif %}`                                                          | Conditional block based on an expression.                                                                               |
+| `{% macro input(type, name) %} ... {% endmacro %}`                                                 | Creates a reusable template fragment.                                                                                   |
+| `{% raw %}{{ user.name }}{% endraw %}`                                                             | Writes a block of syntax that won't be parsed.                                                                          |
+| `{% set header = "Test Page" %}`                                                                   | Defines a variable in the current context.                                                                              |
+| `{% filter upper %}hello{% endfilter %}`                                                           | Applies a filter to a chunk of template.                                                                                |
+| `{% if user.age >= 18 %} ... {% endif %}`                                                          | Comparison within a conditional block.                                                                                  |
+| `{{ foo == null ? bar : baz }}`                                                                    | Ternary operator for conditional expressions.                                                                           |
+| `{{ foo ?? bar ?? baz }}`                                                                          | Null-coalescing operator to test if variables are defined.                                                              |
+| `{% for user in users %} ... {% else %} ... {% endfor %}`                                          | For loop with else block for empty collections.                                                                         |
+| `{{ 2 + 2 / ( 10 % 3 ) * (8 - 1) }}`                                                               | Basic mathematical operations.                                                                                          |
+| `{% if 3 is not even %} ... {% endif %}`                                                           | Negates a boolean expression.                                                                                           |
+| `{% if category == "news" %} ... {% elseif category == "sports" %} ... {% else %} ... {% endif %}` | Conditional statements with multiple branches.                                                                          |
+| `{{ secret('key') }}`                                                                              | Retrieves a secret value by key.                                                                                        |
+| `{{ trigger.date ?? execution.startDate \| date('yyyy-MM-dd') }}`                                  | Uses null-coalescing and date formatting together.                                                                      |
+| `{{ trigger.date ?? execution.startDate \| dateAdd(-1, 'DAYS') }}`                                 | Substracts one day from the execution start date                                                                        |
+| `{{ stringDate \| date('yyyy/MMMM/d', existingFormat='yyyy-MMMM-d') }}`                            | Uses named arguments in a filter.                                                                                       |
+| `{{ "apple" \| upper \| abbreviate(3) }}`                                                          | Chains multiple filters together.                                                                                       |
+| `{{ now(timeZone='Europe/Paris') }}`                                                               | Returns the current datetime in a specific timezone.                                                                    |
+| `{% macro input(type='text', name, value) %} ... {% endmacro %}`                                   | Macro with default argument values.                                                                                     |
+| `{# THIS IS A COMMENT #}`                                                                          | Adds a comment that won't appear in the output.                                                                         |
+| `{{ foo.bar }}`                                                                                    | Accesses a child attribute of a variable.                                                                               |
+| `{{ foo['foo-bar'] }}`                                                                             | Uses subscript notation to access attributes with special characters.                                                   |
+| `{{ "Hello #{who}" }}`                                                                             | String interpolation within a literal.                                                                                  |
+| `{{ "When life gives you lemons, make lemonade." \| upper \| abbreviate(13) }}`                    | Uses a filter to modify string content.                                                                                 |
+| `{{ max(user.score, highscore) }}`                                                                 | Uses a function to generate new content.                                                                                |
+| `{% for article in articles %} ... {% endfor %}`                                                   | Iterates over a list with a for loop.                                                                                   |
+| `{% if users is empty %} ... {% elseif users.length == 1 %} ... {% else %} ... {% endif %}`        | Uses an if statement to control template flow.                                                                          |
+| `{{ input("text", "name", "Mitchell") }}`                                                          | Invokes a macro like a function.                                                                                        |
+| `{% if missing is not defined %} ... {% endif %}`                                                  | Checks if a variable is defined.                                                                                        |
+| `{% if user.email is empty %} ... {% endif %}`                                                     | Checks if a variable is empty.                                                                                          |
+| `{% if 2 is even %} ... {% endif %}`                                                               | Checks if an integer is even.                                                                                           |
+| `{% if users is iterable %} ... {% endif %}`                                                       | Checks if a variable is iterable.                                                                                       |
+| `{% if '{"test": 1}' is json %} ... {% endif %}`                                                   | Checks if a variable is a valid JSON string.                                                                            |
+| `{% if {"apple":"red", "banana":"yellow"} is map %} ... {% endif %}`                               | Checks if a variable is a map.                                                                                          |
+| `{% if user.email is null %} ... {% endif %}`                                                      | Checks if a variable is null.                                                                                           |
+| `{% if 3 is odd %} ... {% endif %}`                                                                | Checks if an integer is odd.                                                                                            |
+
+---
+
+The table below lists Pebble filter expressions:
+
+| Filter           | Example and Description                                                                                                          |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `abs`            | `{{ -7 \| abs }}` — Returns the absolute value of -7, resulting in 7.                                                            |
+| `number`         | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                           |
+| `numberFormat`   | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                 |
+| `replace`        | `{{ "Hello, world!" \| replace("world", "Kestra") }}` — Replaces "world" with "Kestra", resulting in "Hello, Kestra!".           |
+| `yaml`           | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                               |
+| `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".          |
+| `nindent`        | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
+| `json`           | `{{ myObject \| json }}` — Converts `myObject` into a JSON string.                                                               |
+| `jq`             | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                            |
+| `length`         | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                           |
+| `merge`          | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                   |
+| `reverse`        | `{{ [1, 2, 3] \| reverse }}` — Reverses the list, resulting in [3, 2, 1].                                                        |
+| `rsort`          | `{{ [3, 1, 2] \| rsort }}` — Sorts the list in reverse order, resulting in [3, 2, 1].                                            |
+| `slice`          | `{{ "Hello, world!" \| slice(0, 5) }}` — Extracts a substring, resulting in "Hello".                                             |
+| `sort`           | `{{ [3, 1, 2] \| sort }}` — Sorts the list in ascending order, resulting in [1, 2, 3].                                           |
+| `split`          | `{{ "a,b,c" \| split(",") }}` — Splits the string into a list, resulting in ["a", "b", "c"].                                     |
+| `capitalize`     | `{{ "hello" \| capitalize }}` — Capitalizes the first letter, resulting in "Hello".                                              |
+| `join`           | `{{ ["a", "b", "c"] \| join(",") }}` — Joins the list into a string, resulting in "a,b,c".                                       |
+| `keys`           | `{{ {"a": 1, "b": 2} \| keys }}` — Returns the keys of the map, resulting in ["a", "b"].                                         |
+| `date`           | `{{ execution.startDate \| date("yyyy-MM-dd") }}` — Formats the date as "yyyy-MM-dd".                                            |
+| `dateAdd`        | `{{ execution.startDate \| dateAdd(1, "DAYS") }}` — Adds 1 day to the date.                                                      |
+| `timestamp`      | `{{ execution.startDate \| timestamp }}` — Converts the date to a Unix timestamp in seconds.                                     |
+| `timestampMicro` | `{{ execution.startDate \| timestampMicro }}` — Converts the date to a Unix timestamp in microseconds.                           |
+| `timestampNano`  | `{{ execution.startDate \| timestampNano }}` — Converts the date to a Unix timestamp in nanoseconds.                             |
+| `default`        | `{{ myVar \| default("default value") }}` — Returns "default value" if `myVar` is null or empty.                                 |
+| `trim`           | `{{ " Hello " \| trim }}` — Trims leading and trailing whitespace, resulting in "Hello".                                         |
+| `truncate`       | `{{ "Hello, world!" \| truncate(5) }}` — Truncates the string to 5 characters, resulting in "Hello".                             |
+| `lower`          | `{{ "HELLO" \| lower }}` — Converts the string to lowercase, resulting in "hello".                                               |
+| `upper`          | `{{ "hello" \| upper }}` — Converts the string to uppercase, resulting in "HELLO".                                               |
+| `first`          | `{{ [1, 2, 3] \| first }}` — Returns the first element of the list, resulting in 1.                                              |
+| `last`           | `{{ [1, 2, 3] \| last }}` — Returns the last element of the list, resulting in 3.                                                |
+| `unique`         | `{{ [1, 2, 2, 3] \| unique }}` — Returns a list of unique elements, resulting in [1, 2, 3].                                      |
+| `urlEncode`      | `{{ "a b" \| urlEncode }}` — URL encodes the string, resulting in "a%20b".                                                       |
+| `urlDecode`      | `{{ "a%20b" \| urlDecode }}` — URL decodes the string, resulting in "a b".                                                       |
+| `base64Encode`   | `{{ "hello" \| base64Encode }}` — Encodes the string in base64, resulting in "aGVsbG8=".                                         |
+| `base64Decode`   | `{{ "aGVsbG8=" \| base64Decode }}` — Decodes the base64 string, resulting in "hello".                                            |
+| `format`         | `{{ "Hello, %s!" \| format("world") }}` — Formats the string, resulting in "Hello, world!".                                      |
+| `md5`            | `{{ "hello" \| md5 }}` — Computes the MD5 hash of the string.                                                                    |
+| `sha1`           | `{{ "hello" \| sha1 }}` — Computes the SHA-1 hash of the string.                                                                 |
+| `sha256`         | `{{ "hello" \| sha256 }}` — Computes the SHA-256 hash of the string.                                                             |
+| `sha512`         | `{{ "hello" \| sha512 }}` — Computes the SHA-512 hash of the string.                                                             |
+| `map`            | `{{ [1, 2, 3] \| map(i => i * 2) }}` — Applies a function to each element, resulting in [2, 4, 6].                               |
+| `filter`         | `{{ [1, 2, 3] \| filter(i => i > 1) }}` — Filters the list based on a predicate, resulting in [2, 3].                            |
+| `reduce`         | `{{ [1, 2, 3] \| reduce((a, b) => a + b, 0) }}` — Reduces the list to a single value, resulting in 6.                            |
+| `zip`            | `{{ zip([1, 2], [3, 4]) }}` — Zips two lists together, resulting in [[1, 3], [2, 4]].                                            |
+| `unzip`          | `{{ unzip([[1, 3], [2, 4]]) }}` — Unzips a list of lists, resulting in [[1, 2], [3, 4]].                                         |
+| `flatten`        | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                         |
+| `groupBy`        | `{{ [{"name": "Alice"}, {"name": "Bob"}] \| groupBy("name") }}` — Groups elements by the "name" key.                             |
+| `chunk`          | `{{ [1, 2, 3, 4] \| chunk(2) }}` — Splits the list into chunks of size 2, resulting in [[1, 2], [3, 4]].                         |
+
+
 
 ## Links to learn more
 

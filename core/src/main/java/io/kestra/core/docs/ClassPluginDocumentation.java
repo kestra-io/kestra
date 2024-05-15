@@ -14,6 +14,7 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
     private String group;
     private String pluginTitle;
     private String subGroup;
+    private String replacement;
     private List<MetricDoc> docMetrics;
     private Map<String, Object> outputs = new TreeMap<>();
     private Map<String, Object> outputsSchema;
@@ -27,12 +28,15 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         this.group = plugin.group();
         this.pluginTitle = plugin.title();
         this.icon = plugin.icon(cls);
+        if (alias != null) {
+            replacement = cls.getName();
+        }
 
         if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length() && cls.getPackageName().charAt(this.group.length()) == '.') {
             this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
         }
 
-        this.shortName = cls.getSimpleName();
+        this.shortName = alias == null ? cls.getSimpleName() : alias.substring(alias.lastIndexOf('.') + 1);
 
         // outputs
         this.outputsSchema = jsonSchemaGenerator.outputs(baseCls, cls);

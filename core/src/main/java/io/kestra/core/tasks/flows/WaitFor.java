@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,11 +38,12 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a specific task until the expected result.",
+    title = "Run a specific task repeatedly until the expected condition is met.",
     description = """
-        Use it to wait for an HTTP response or a job to end.
-        Conditions is always check after the task execution.
-        So you can use the child task output
+        Use this task if your downstream processing requires waiting for a specific HTTP response or a job to finish. 
+        You can access the task output in the `condition`.
+        
+        The `condition` is always checked after the task execution.
         """
 )
 @Plugin(
@@ -52,17 +52,17 @@ import java.util.stream.Stream;
             full = true,
             title = "Wait for a task to return a specific output",
             code = """
-                id: waitFor
+                id: exampleFlow
                 namespace: myteam
                                 
                 tasks:
-                  - id: waitfor
+                  - id: waitFor
                     type: io.kestra.core.tasks.flows.WaitFor
+                    condition: "{{ outputs.return.value != '4' }}"
                     task:
                       id: return
                       type: io.kestra.core.tasks.debugs.Return
                       format: "{{ outputs.waitfor.iterationCount }}"
-                    condition: "{{ outputs.return.value != '4' }}"
                 """
         )
 
@@ -104,7 +104,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     private Duration interval = Duration.ofSeconds(1);
 
     @Schema(
-        title = "If true, the task will fail if the maxIterations or MaxDuration is reached."
+        title = "If true, the task will fail if the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
     private Boolean failOnMaxReached = false;
@@ -231,6 +231,5 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Integer iterationCount;
-        private Map<String, Object> lastOutputs;
     }
 }

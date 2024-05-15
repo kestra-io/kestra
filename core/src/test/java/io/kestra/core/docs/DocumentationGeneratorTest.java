@@ -1,7 +1,7 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.plugin.core.runner.ProcessTaskRunner;
+import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -163,13 +163,13 @@ class DocumentationGeneratorTest {
     void taskRunner() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class<ProcessTaskRunner> processTaskRunner = scan.findClass(ProcessTaskRunner.class.getName()).orElseThrow();
+        Class<Process> processTaskRunner = scan.findClass(Process.class.getName()).orElseThrow();
 
         ClassPluginDocumentation<? extends TaskRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, processTaskRunner, TaskRunner.class);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("title: ProcessTaskRunner"));
+        assertThat(render, containsString("title: Process"));
         assertThat(render, containsString("Task runner that executes a task as a subprocess on the Kestra host."));
         assertThat(render, containsString("This plugin is currently in beta"));
     }

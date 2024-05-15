@@ -90,7 +90,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                       - out.txt
                     containerImage: centos
                     taskRunner:
-                      type: io.kestra.plugin.scripts.runner.docker.DockerTaskRunner
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
                     commands:
                     - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
             full = true
@@ -98,7 +98,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     },
     beta = true // all task runners are beta for now, but this one is stable as it was the one used before
 )
-public class DockerTaskRunner extends TaskRunner {
+public class Docker extends TaskRunner {
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
     public static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
@@ -200,13 +200,13 @@ public class DockerTaskRunner extends TaskRunner {
     )
     @PluginProperty(dynamic = true)
     private String shmSize;
-    
-    public static DockerTaskRunner from(DockerOptions dockerOptions) {
+
+    public static Docker from(DockerOptions dockerOptions) {
         if (dockerOptions == null) {
-            return DockerTaskRunner.builder().build();
+            return Docker.builder().build();
         }
 
-        return DockerTaskRunner.builder()
+        return Docker.builder()
             .host(dockerOptions.getHost())
             .config(dockerOptions.getConfig())
             .credentials(dockerOptions.getCredentials())
@@ -258,10 +258,10 @@ public class DockerTaskRunner extends TaskRunner {
                 exec.getId(),
                 String.join(" ", taskCommands.getCommands())
             );
-            
+
             // register the runnable to be used for killing the container.
             onKill(() -> kill(dockerClient, exec.getId(), logger));
-            
+
             AtomicBoolean ended = new AtomicBoolean(false);
 
             try {
@@ -413,7 +413,7 @@ public class DockerTaskRunner extends TaskRunner {
 
         Path workingDirectory = taskCommands.getWorkingDirectory();
         String image = runContext.render(this.image, additionalVars);
-        
+
         CreateContainerCmd container = dockerClient.createContainerCmd(image);
         addMetadata(runContext, container);
 

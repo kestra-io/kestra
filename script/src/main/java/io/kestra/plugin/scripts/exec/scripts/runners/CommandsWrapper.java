@@ -3,7 +3,7 @@ package io.kestra.plugin.scripts.exec.scripts.runners;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.models.tasks.runners.*;
-import io.kestra.plugin.core.runner.ProcessTaskRunner;
+import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.NamespaceFilesService;
@@ -12,7 +12,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
-import io.kestra.plugin.scripts.runner.docker.DockerTaskRunner;
+import io.kestra.plugin.scripts.runner.docker.Docker;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.With;
@@ -175,8 +175,8 @@ public class CommandsWrapper implements TaskCommands {
     public TaskRunner getTaskRunner() {
         if (taskRunner == null) {
             taskRunner = switch (runnerType) {
-                case DOCKER -> DockerTaskRunner.from(this.dockerOptions);
-                case PROCESS -> new ProcessTaskRunner();
+                case DOCKER -> Docker.from(this.dockerOptions);
+                case PROCESS -> new Process();
             };
         }
 

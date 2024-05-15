@@ -1,12 +1,13 @@
-package io.kestra.plugin.scripts.runner.docker;
+package io.kestra.core.models.tasks.runners.types;
 
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
 import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.plugin.core.runner.Process;
 
+class ProcessTest extends AbstractTaskRunnerTest {
 
-class DockerTaskRunnerTest extends AbstractTaskRunnerTest {
     @Override
     protected TaskRunner taskRunner() {
-        return DockerTaskRunner.builder().image("centos").build();
+        return new Process();
     }
 }

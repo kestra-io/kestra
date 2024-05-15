@@ -52,7 +52,7 @@ import java.util.Map;
                   - id: shell
                     type: io.kestra.plugin.scripts.shell.Commands
                     taskRunner:
-                      type: io.kestra.core.models.tasks.runners.types.ProcessTaskRunner
+                      type: io.kestra.plugin.core.runner.Process
                     commands:
                     - echo "Hello World\"""",
             full = true
@@ -75,7 +75,7 @@ import java.util.Map;
                     outputFiles:
                       - out.txt
                     taskRunner:
-                      type: io.kestra.core.models.tasks.runners.types.ProcessTaskRunner
+                      type: io.kestra.plugin.core.runner.Process
                     commands:
                     - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
             full = true
@@ -83,14 +83,14 @@ import java.util.Map;
     },
     beta = true // all task runners are beta for now, but this one is stable as it was the one used before
 )
-public class ProcessTaskRunner extends TaskRunner {
+public class Process extends TaskRunner {
 
     @Override
     public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {
         Logger logger = runContext.logger();
         AbstractLogConsumer defaultLogConsumer = taskCommands.getLogConsumer();
 
-        ProcessBuilder processBuilder = new ProcessBuilder();
+        java.lang.ProcessBuilder processBuilder = new java.lang.ProcessBuilder();
 
         Map<String, String> environment = processBuilder.environment();
         environment.putAll(this.env(runContext, taskCommands));
@@ -98,7 +98,7 @@ public class ProcessTaskRunner extends TaskRunner {
         processBuilder.directory(taskCommands.getWorkingDirectory().toFile());
         processBuilder.command(taskCommands.getCommands());
 
-        Process process = processBuilder.start();
+        java.lang.Process process = processBuilder.start();
         long pid = process.pid();
         logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", taskCommands.getCommands()));
 

@@ -74,7 +74,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     },
     aliases = "io.kestra.core.tasks.executions.Counts"
 )
-public class Counts extends Task implements RunnableTask<Counts.Output> {
+public class Count extends Task implements RunnableTask<Count.Output> {
     @NotNull
     @NotEmpty
     @Schema(

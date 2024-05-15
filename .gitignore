@@ -29,8 +29,6 @@ node_modules
 yarn-error.log
 yarn.lock
 ui/node_modules
-ui/public/vscode
-ui/public/vscode-web
 ui/.env.local
 ui/.env.*.local
 webserver/src/main/resources/ui

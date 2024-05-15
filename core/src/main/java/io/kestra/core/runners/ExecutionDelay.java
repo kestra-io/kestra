@@ -42,6 +42,7 @@ public class ExecutionDelay {
     public enum DelayType {
         RESUME_FLOW,
         RESTART_FAILED_TASK,
-        RESTART_FAILED_FLOW
+        RESTART_FAILED_FLOW,
+        CONTINUE_FLOWABLE
     }
 }

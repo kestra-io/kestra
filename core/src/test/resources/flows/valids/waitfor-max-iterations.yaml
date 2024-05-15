@@ -1,0 +1,14 @@
+id: waitfor-max-iterations
+namespace: io.kestra.tests
+
+tasks:
+  - id: waitfor
+    type: io.kestra.core.tasks.flows.WaitFor
+    condition: "{{ outputs.output_values.values.count != '10'}}"
+    maxIterations: 3
+    failOnMaxReached: true
+    task:
+      id: output_values
+      type: io.kestra.core.tasks.outputs.OutputValues
+      values:
+        count: "{{ outputs.waitfor.iterationCount + 1 }}"

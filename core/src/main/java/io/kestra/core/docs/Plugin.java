@@ -29,6 +29,7 @@ public class Plugin {
     private List<String> secrets;
     private List<String> taskRunners;
     private List<String> guides;
+    private List<String> aliases;
     private List<PluginSubGroup.PluginCategory> categories;
     private String subGroup;
 
@@ -45,6 +46,7 @@ public class Plugin {
         plugin.longDescription = registeredPlugin.longDescription();
         plugin.version = registeredPlugin.version();
         plugin.guides = registeredPlugin.getGuides();
+        plugin.aliases = registeredPlugin.getAliases().keySet().stream().toList();
         plugin.manifest = registeredPlugin
             .getManifest()
             .getMainAttributes()

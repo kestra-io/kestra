@@ -37,7 +37,8 @@ import jakarta.validation.Valid;
                 "        - FAILED"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.ExecutionStatusCondition"
 )
 public class ExecutionStatusCondition extends Condition {
     @Valid

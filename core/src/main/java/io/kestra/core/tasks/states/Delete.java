@@ -38,7 +38,8 @@ import java.io.FileNotFoundException;
             },
             full = true
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.states.Delete"
 )
 public class Delete extends AbstractState implements RunnableTask<Delete.Output> {
     @Schema(

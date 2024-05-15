@@ -41,7 +41,8 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
                 "      expression: {{ trigger.outputs.status_code == '200' }}",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.ExecutionOutputsCondition"
 )
 public class ExecutionOutputsCondition extends Condition implements ScheduleCondition {
 

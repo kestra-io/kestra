@@ -37,7 +37,8 @@ import jakarta.validation.constraints.NotNull;
                 "      expression: {{ unknown is defined }}",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.VariableCondition"
 )
 public class VariableCondition extends Condition implements ScheduleCondition {
     @NotNull

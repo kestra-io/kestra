@@ -59,7 +59,8 @@ import java.util.stream.Collectors;
                 "transmitFailed: true"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Subflow"
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output>, ChildFlowInterface {
 

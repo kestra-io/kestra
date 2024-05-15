@@ -37,7 +37,8 @@ import java.nio.charset.StandardCharsets;
                 "from: \"kestra://long/url/file1.txt\"",
             }
         ),
-    }
+    },
+    aliases = "io.kestra.core.tasks.storages.Reverse"
 )
 public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Schema(

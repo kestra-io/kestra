@@ -84,7 +84,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
             },
             full = true
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.storages.Concat"
 )
 public class Concat extends Task implements RunnableTask<Concat.Output> {
     @Schema(

@@ -69,7 +69,8 @@ import java.util.Optional;
                             cron: "* * * * *\""""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.trigger.Toggle"
 )
 public class Toggle extends Task implements RunnableTask<VoidOutput> {
     @Schema(

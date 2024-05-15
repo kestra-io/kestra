@@ -34,7 +34,8 @@ import java.util.function.BiPredicate;
                 "      comparison: PREFIX"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.ExecutionNamespaceCondition"
 )
 public class ExecutionNamespaceCondition extends Condition {
     @NotNull

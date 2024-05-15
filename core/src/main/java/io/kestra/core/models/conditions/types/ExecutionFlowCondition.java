@@ -35,7 +35,8 @@ import jakarta.validation.constraints.NotNull;
                 "      flowId: my-current-flow"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.ExecutionFlowCondition"
 )
 public class ExecutionFlowCondition extends Condition {
     @NotNull

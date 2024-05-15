@@ -127,7 +127,8 @@ import java.util.stream.Stream;
                     message: Status is {{ outputs.wait_for_approval.onResume.reason }}. Process finished with {{ outputs.approve.body }}
                 """
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Pause"
 )
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(

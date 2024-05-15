@@ -59,7 +59,8 @@ import jakarta.validation.constraints.NotNull;
                 "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Parallel"
 )
 public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @NotNull

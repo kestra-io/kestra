@@ -31,7 +31,8 @@ import java.util.List;
             code = {
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.storages.PurgeExecution"
 )
 public class PurgeExecution extends Task implements RunnableTask<PurgeExecution.Output> {
     @Override

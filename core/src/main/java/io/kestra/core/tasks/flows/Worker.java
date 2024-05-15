@@ -41,7 +41,8 @@ import lombok.experimental.SuperBuilder;
                 "          echo '::{\"outputs\": {\"stay\":\"'$(cat {{ workingDir }}/stay.txt)'\"}}::'"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Worker"
 )
 @Deprecated
 public class Worker extends WorkingDirectory {}

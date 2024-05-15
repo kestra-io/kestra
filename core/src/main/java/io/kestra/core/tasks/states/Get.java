@@ -39,7 +39,8 @@ import java.util.Map;
             },
             full = true
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.states.Get"
 )
 public class Get extends AbstractState implements RunnableTask<Get.Output> {
     @Schema(

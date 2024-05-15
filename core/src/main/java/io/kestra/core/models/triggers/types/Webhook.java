@@ -77,7 +77,8 @@ import jakarta.validation.constraints.Size;
             },
             full = true
         )
-    }
+    },
+    aliases = "io.kestra.core.models.triggers.types.Webhook"
 )
 @WebhookValidation
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {

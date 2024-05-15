@@ -83,7 +83,8 @@ import java.util.stream.Stream;
                             - task3
                   """
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Dag"
 )
 public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull

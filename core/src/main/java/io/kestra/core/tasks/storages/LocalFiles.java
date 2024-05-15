@@ -117,7 +117,9 @@ import java.util.Map;
                     - sub/**
             """
     )
-})
+},
+    aliases = "io.kestra.core.tasks.storages.LocalFiles"
+)
 public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFilesOutput> {
     @Schema(
         title = "The files to be created on the local filesystem. It can be a map or a JSON object.",

@@ -71,7 +71,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "    cron: \"0 4 * * * \""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.executions.Counts"
 )
 public class Counts extends Task implements RunnableTask<Counts.Output> {
     @NotNull

@@ -34,7 +34,8 @@ import jakarta.validation.constraints.NotNull;
                 "      after: \"2013-09-08T16:19:12Z\"",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.DateTimeBetweenCondition"
 )
 public class DateTimeBetweenCondition extends Condition implements ScheduleCondition {
     @NotNull

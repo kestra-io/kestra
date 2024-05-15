@@ -88,7 +88,8 @@ import java.util.Optional;
                 "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
             }
         ),
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.EachSequential"
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull

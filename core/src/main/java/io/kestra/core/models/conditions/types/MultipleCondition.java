@@ -68,7 +68,8 @@ import java.util.stream.Stream;
                 "            flowId: multiplecondition-flow-b"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.MultipleCondition"
 )
 @Slf4j
 public class MultipleCondition extends Condition {

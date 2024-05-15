@@ -32,7 +32,8 @@ import lombok.experimental.SuperBuilder;
                 "transmitFailed: true"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.Flow"
 )
 @Deprecated
 public class Flow extends Subflow {}

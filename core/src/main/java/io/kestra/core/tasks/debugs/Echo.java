@@ -34,7 +34,8 @@ import jakarta.validation.constraints.NotBlank;
                 "format: \"{{task.id}} > {{taskrun.startDate}}\""
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.debugs.Echo"
 )
 @Deprecated
 public class Echo extends Task implements RunnableTask<VoidOutput> {

@@ -41,7 +41,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "         after: \"2013-09-08T16:19:12\"",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.NotCondition"
 )
 public class NotCondition extends Condition implements ScheduleCondition {
     @NotNull

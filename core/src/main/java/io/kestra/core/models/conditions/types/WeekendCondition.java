@@ -33,7 +33,8 @@ import jakarta.validation.constraints.NotNull;
                 "    - type: io.kestra.core.models.conditions.types.WeekendCondition",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.WeekendCondition"
 )
 public class WeekendCondition extends Condition implements ScheduleCondition {
     @NotNull

@@ -37,7 +37,8 @@ import jakarta.validation.Valid;
                 "        - KILLED",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.HasRetryAttemptCondition"
 )
 public class HasRetryAttemptCondition extends Condition {
     @Valid

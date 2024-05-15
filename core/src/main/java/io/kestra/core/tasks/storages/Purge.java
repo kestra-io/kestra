@@ -39,7 +39,8 @@ import java.util.Map;
                 " - SUCCESS"
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.storages.Purge"
 )
 public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Schema(

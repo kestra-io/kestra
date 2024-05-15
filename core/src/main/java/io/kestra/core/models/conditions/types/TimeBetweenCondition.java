@@ -34,7 +34,8 @@ import java.time.OffsetTime;
                 "      after: \"16:19:12+02:00\"",
             }
         )
-    }
+    },
+    aliases = "io.kestra.core.models.conditions.types.TimeBetweenCondition"
 )
 public class TimeBetweenCondition extends Condition implements ScheduleCondition {
     @NotNull

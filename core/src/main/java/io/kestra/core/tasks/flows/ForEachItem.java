@@ -222,7 +222,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     prefix: "sub-dir"
                     action: NONE"""
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.ForEachItem"
 )
 public class ForEachItem extends Task implements FlowableTask<VoidOutput>, ChildFlowInterface {
     @NotEmpty

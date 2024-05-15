@@ -190,13 +190,14 @@ import jakarta.validation.constraints.NotNull;
                         const colors = require("colors");
                         console.log(colors.red("Hello"));"""
         )
-    }
+    },
+    aliases = "io.kestra.core.tasks.flows.WorkingDirectory"
 )
 @WorkingDirectoryTaskValidation
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
-    
+
     private static final String OUTPUTS_FILE = "outputs.ion";
-    
+
     @Schema(
         title = "Cache configuration.",
         description = """
@@ -370,16 +371,16 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                 runContext.logger().error("Unable to execute WorkingDirectory post actions", e);
             }
     }
-    
+
     @Override
     public Outputs outputs(final RunContext runContext) throws IOException {
         URI uri = URI.create("kestra://" + runContext.storage().getContextBaseURI() + "/").resolve(OUTPUTS_FILE);
-        
+
         if (!runContext.storage().isFileExist(uri)) {
             // no outputs files was captured for that tasks
             return null;
         }
-        
+
         try(InputStream is = runContext.storage().getFile(uri)) {
             Map<String, URI> outputs = FileSerde
                 .readAll(is, new TypeReference<Map<String, URI>>() {})
@@ -387,19 +388,19 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             return new Outputs(outputs);
         }
     }
-    
+
     @Getter
     public static class Outputs extends VoidOutput {
         @Schema(
             title = "The URIs for output files."
         )
         private final Map<String, URI> outputFiles;
-        
+
         public Outputs(final Map<String, URI> outputsFiles) {
             this.outputFiles = outputsFiles;
         }
     }
-    
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode

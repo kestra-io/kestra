@@ -10,7 +10,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
-import io.kestra.plugin.scripts.runner.docker.DockerTaskRunner;
+import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -50,7 +50,7 @@ public class LogConsumerTest {
             "echo \"::{\\\"outputs\\\":{\\\"someOutput\\\":\\\"" + outputValue + "\\\"}}::\"\n" +
                 "echo -n another line"
         ));
-        RunnerResult run = DockerTaskRunner.from(DockerOptions.builder().image("alpine").build()).run(
+        RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
             Collections.emptyList(),
@@ -86,7 +86,7 @@ public class LogConsumerTest {
             "echo " + outputValue +
                 "echo -n another line"
         ));
-        RunnerResult run = DockerTaskRunner.from(DockerOptions.builder().image("alpine").build()).run(
+        RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
             Collections.emptyList(),

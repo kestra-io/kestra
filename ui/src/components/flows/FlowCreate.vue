@@ -2,8 +2,9 @@
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
         <editor-view
-            :flow-id="defaultFlowTemplate.id"
-            :namespace="defaultFlowTemplate.namespace"
+            v-if="this.source"
+            :flow-id="flowParsed?.id"
+            :namespace="flowParsed?.namespace"
             :is-creating="true"
             :flow-graph="flowGraph"
             :is-read-only="false"
@@ -23,12 +24,19 @@
     import {mapGetters, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import {apiUrl} from "override/utils/route";
+    import {YamlUtils} from "@kestra-io/ui-libs";
 
     export default {
         mixins: [RouteContext],
         components: {
             EditorView,
             TopNavBar
+        },
+        data() {
+            return {
+                source: null
+            }
         },
         created() {
             if (this.$route.query.reset) {
@@ -44,20 +52,23 @@
                 });
                 this.$tours["guidedTour"].start();
             }
+            this.setupFlow()
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);
         },
-        computed: {
-            sourceWrapper() {
-                return {source: this.defaultFlowTemplate};
+        methods: {
+            async queryBlueprint(blueprintId) {
+                return (await this.$http.get(`${this.blueprintUri}/${blueprintId}/flow`)).data;
             },
-            defaultFlowTemplate() {
-                if(this.$route.query.copy && this.flow){
-                    return this.flow.source;
+            async setupFlow() {
+                if (this.$route.query.copy && this.flow){
+                    this.source = this.flow.source;
                 }
-
-                return `id: myflow
+                if (this.$route.query.blueprintId) {
+                    this.source = await this.queryBlueprint(this.$route.query.blueprintId)
+                } else {
+                    this.source = `id: myflow
 namespace: company.myteam
 description: Save and Execute the flow
 
@@ -87,6 +98,12 @@ triggers:
   - id: daily
     type: io.kestra.core.models.triggers.types.Schedule
     cron: "0 9 * * *"`;
+                }
+            }
+        },
+        computed: {
+            sourceWrapper() {
+                return {source: this.source};
             },
             ...mapState("flow", ["flowGraph", "total"]),
             ...mapState("auth", ["user"]),
@@ -98,6 +115,12 @@ triggers:
                     title: this.$t("flows")
                 };
             },
+            blueprintUri() {
+                return `${apiUrl(this.$store)}/blueprints/community`
+            },
+            flowParsed() {
+                return YamlUtils.parse(this.source);
+            }
         },
         beforeRouteLeave(to, from, next) {
             this.$store.commit("flow/setFlow", null);

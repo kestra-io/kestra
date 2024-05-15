@@ -25,6 +25,7 @@ import java.util.Map;
     title = "Allow to create files in the local filesystem or to send files from the local filesystem to the Kestra's internal storage.",
     description = "This task should be used with the WorkingDirectory task to be able to access the same local filesystem within multiple tasks. Note that this task cannot be skipped, so setting `disabled: true` will not work on this task."
 )
+@Deprecated
 @Plugin(examples = {
     @Example(
         full = true,

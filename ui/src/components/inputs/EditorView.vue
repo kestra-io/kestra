@@ -261,18 +261,6 @@
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     };
 
-    const localStorageKey = computed(() => {
-        return (
-            (props.isCreating
-                ? "creation"
-                : `${props.flow.namespace}.${props.flow.id}`) + "_draft"
-        );
-    });
-
-    const autoRestorelocalStorageKey = computed(() => {
-        return "autoRestore-" + localStorageKey.value;
-    });
-
     watch(
         () => store.getters["flow/taskError"],
         async () => {
@@ -323,35 +311,6 @@
                 await fetchGraph();
             } else {
                 fetchGraph();
-            }
-        }
-
-        if (!props.isReadOnly) {
-            let restoredLocalStorageKey;
-            const sourceFromLocalStorage =
-                localStorage.getItem(
-                    (restoredLocalStorageKey = autoRestorelocalStorageKey.value)
-                ) ??
-                localStorage.getItem(
-                    (restoredLocalStorageKey = localStorageKey.value)
-                );
-            if (sourceFromLocalStorage !== null) {
-                if (restoredLocalStorageKey === autoRestorelocalStorageKey.value) {
-                    onEdit(sourceFromLocalStorage);
-                } else {
-                    toast.confirm(
-                        props.isCreating
-                            ? t("save draft.retrieval.creation")
-                            : t("save draft.retrieval.existing", {
-                                flowFullName: `${props.flow.namespace}.${props.flow.id}`,
-                            }),
-                        () => {
-                            onEdit(sourceFromLocalStorage);
-                        }
-                    );
-                }
-
-                localStorage.removeItem(restoredLocalStorageKey);
             }
         }
 
@@ -423,11 +382,6 @@
 
         window.removeEventListener("beforeunload", persistEditorWidth);
         persistEditorWidth();
-
-        // Will get redirected to login page
-        if (!store.getters["auth/isLogged"] && haveChange.value) {
-            persistEditorContent(true);
-        }
     });
 
     const stopTour = () => {
@@ -477,41 +431,6 @@
         } else {
             store.commit("plugin/setEditorPlugin", undefined);
         }
-    };
-
-    const persistEditorContent = (autoRestore) => {
-        if (autoRestore && localStorage.getItem(localStorageKey.value)) {
-            return;
-        }
-
-        localStorage.setItem(
-            autoRestore ? autoRestorelocalStorageKey.value : localStorageKey.value,
-            flowYaml.value
-        );
-        store.dispatch("core/isUnsaved", false);
-        haveChange.value = false;
-    };
-
-    const errorsToast = (title, message, errors) => {
-        store.dispatch("core/showMessage", {
-            title: title,
-            message: message,
-            content: {
-                _embedded: {
-                    errors: errors.map((error) => {
-                        return {
-                            message: error,
-                        };
-                    }),
-                },
-            },
-            variant: "error",
-        });
-    };
-
-    const saveAsDraft = (errors) => {
-        errorsToast(t("save draft.message"), t("invalid flow"), errors);
-        persistEditorContent(false);
     };
 
     const fetchGraph = () => {
@@ -745,12 +664,6 @@
                     .catch(() => {
                         return false;
                     });
-            }
-
-            if (!overrideFlow.value) {
-                saveAsDraft(flowErrors.value);
-
-                return;
             }
         }
 

@@ -2,7 +2,7 @@
     <top-nav-bar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
         <template #additional-right>
             <ul v-if="userCanCreateFlow">
-                <router-link :to="{name: 'flows/create'}" @click="asAutoRestoreDraft">
+                <router-link :to="{name: 'flows/create', query: {blueprintId: blueprint.id}}">
                     <el-button type="primary" v-if="!embed">
                         {{ $t('use') }}
                     </el-button>
@@ -132,9 +132,6 @@
                         }
                     })
                 }
-            },
-            asAutoRestoreDraft() {
-                localStorage.setItem("autoRestore-creation_draft", this.blueprint.flow);
             }
         },
         async created() {

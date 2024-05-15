@@ -39,6 +39,7 @@ public class FlowValidateCommand extends AbstractValidateCommand {
                 Flow flow = (Flow) object;
                 List<String> warnings = new ArrayList<>();
                 warnings.addAll(flowService.deprecationPaths(flow).stream().map(deprecation -> deprecation + " is deprecated").toList());
+                warnings.addAll(flowService.relocations(flow.generateSource()).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                 warnings.addAll(flowService.warnings(flow));
                 return warnings;
             }

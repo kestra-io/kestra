@@ -121,7 +121,7 @@ class FlowServiceTest {
 
     @Test
     void aliases() {
-        List<String> warnings = flowService.aliasesPaths("""
+        List<FlowService.Relocation> warnings = flowService.relocations("""
             id: hello-alias
             namespace: myteam
 
@@ -144,7 +144,8 @@ class FlowServiceTest {
                     message: Hello, {{taskrun.value}}""");
 
         assertThat(warnings.size(), is(2));
-        assertThat(warnings.get(0), is("io.kestra.core.runners.test.task.Alias"));
+        assertThat(warnings.get(0).from(), is("io.kestra.core.runners.test.task.Alias"));
+        assertThat(warnings.get(0).to(), is("io.kestra.core.runners.test.TaskWithAlias"));
     }
 
     @Test

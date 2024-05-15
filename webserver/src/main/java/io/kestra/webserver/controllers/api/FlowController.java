@@ -509,11 +509,11 @@ public class FlowController {
                         validateConstraintViolationBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                     }
 
-                    List<String> deprecationPaths = new ArrayList<>();
-                    deprecationPaths.addAll(flowService.deprecationPaths(flowParse));
-                    deprecationPaths.addAll(flowService.aliasesPaths(flow));
-                    validateConstraintViolationBuilder.deprecationPaths(deprecationPaths);
-                    validateConstraintViolationBuilder.warnings(flowService.warnings(flowParse));
+                    validateConstraintViolationBuilder.deprecationPaths(flowService.deprecationPaths(flowParse));
+                    List<String> warnings = new ArrayList<>();
+                    warnings.addAll(flowService.warnings(flowParse));
+                    warnings.addAll(flowService.relocations(flow).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
+                    validateConstraintViolationBuilder.warnings(warnings);
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
 

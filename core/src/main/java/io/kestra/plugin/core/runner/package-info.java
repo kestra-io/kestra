@@ -1,4 +1,4 @@
 @PluginSubGroup(categories = { PluginSubGroup.PluginCategory.CORE})
-package io.kestra.plugin.core.trigger;
+package io.kestra.plugin.core.runner;
 
 import io.kestra.core.models.annotations.PluginSubGroup;

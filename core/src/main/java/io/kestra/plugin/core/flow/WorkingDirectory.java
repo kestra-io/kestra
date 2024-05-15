@@ -191,7 +191,7 @@ import jakarta.validation.constraints.NotNull;
                         console.log(colors.red("Hello"));"""
         )
     },
-    aliases = "io.kestra.core.tasks.flows.WorkingDirectory"
+    aliases = {"io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker"}
 )
 @WorkingDirectoryTaskValidation
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {

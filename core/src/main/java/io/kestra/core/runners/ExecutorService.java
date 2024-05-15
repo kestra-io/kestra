@@ -538,7 +538,7 @@ public class ExecutorService {
             else if (task instanceof WaitFor waitFor && taskRun.getState().isRunning()) {
                 TaskRun childTaskRun = waitFor.getChildTaskRun(executor.getExecution(), taskRun).orElse(null);
                 if (childTaskRun != null && childTaskRun.getState().isSuccess()) {
-                    Output newOutput = waitFor.outputs(null, executor.getExecution(), taskRun);
+                    Output newOutput = waitFor.outputs(taskRun);
                     TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), updatedTaskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);

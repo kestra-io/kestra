@@ -218,7 +218,13 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     }
 
     @Override
-    public WaitFor.Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public WaitFor.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
+        return WaitFor.Output.builder()
+            .iterationCount(0)
+            .build();
+    }
+
+    public WaitFor.Output outputs(TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         String value = parentTaskRun != null ?
             parentTaskRun.getOutputs().get("iterationCount").toString() : "0";
 
